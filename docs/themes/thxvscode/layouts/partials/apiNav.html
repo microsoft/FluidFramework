@@ -28,19 +28,38 @@
                 data-parent="#main-nav" data-toggle="collapse">{{ $grouping | humanize | title }}</a>
 
             <ul id="{{ $grouping }}-articles" class="collapse {{if $isCurrentArea}}in{{end}}">
-                <!-- list all pages in area -->
                 {{- range $names }}
                 {{ $targetPage := $current }}
-                {{ $isCurrentPage := eq $package . }}
+                {{/* instead of a package name, we have a custom map used to create class/interface links */}}
+                {{- if reflect.IsMap .}}
+
+                {{$custom := index . "custom"}}
+                {{ $customLink := index $custom "url" }}
+                {{ $customTitle := index $custom "title"}}
+                {{ $isCurrentPage := eq (relURL $current.RelPermalink) $customLink }}
+                <li {{ if $isCurrentPage }}class="active" {{ end }}>
+                    <a href="{{$customLink}}"
+                        {{ if $isCurrentPage }}aria-label="Current Page: {{ $customTitle | humanize | title }} "
+                        {{ end }}>
+                        {{ $customTitle | humanize | title }} </a>
+                </li>
+
+                {{- else }}
+
+                {{ $isCurrentPage := eq $package .}}
                 {{- range where $packagePages "Params.package" . -}}
                 {{ $targetPage = . }}
                 {{- end }}
+                {{ if $isCurrentPage}}
+                {{ $isCurrentPage = eq $targetPage.RelPermalink $current.RelPermalink}}
+                {{ end }}
                 <li {{ if $isCurrentPage }}class="active" {{ end }}>
                     <a href="{{$targetPage.Permalink}}"
                         {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base .) | humanize | title }} "
                         {{ end }}>
                         {{ (path.Base .) | humanize | title }} </a>
                 </li>
+                {{- end }}
                 {{- end }}
             </ul>
         </li>
