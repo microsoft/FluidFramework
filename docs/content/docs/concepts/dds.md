@@ -4,7 +4,7 @@ menuPosition: 2
 ---
 
 Fluid Framework provides developers with _distributed data structures_ (DDSes) that automatically ensure that each
-client has access to the same state. We call them DDSes because they are similar to data structures used commonly when
+client has access to the same state. We call them _distributed data structures_ because they are similar to data structures used commonly when
 programming, like strings, maps/dictionaries, and sequences/lists. The APIs provided by distributed data structures are
 designed to be familiar to programmers who've used these types of data structures before. For example, the [SharedMap][]
 DDS is used to store key/value pairs, like a typical map or dictionary data structure, and provides `get` and `set`
