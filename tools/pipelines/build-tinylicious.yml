@@ -63,5 +63,6 @@ extends:
     taskBuildDocs: false
     taskLint: true
     taskTest: false
+    taskAuth: false
     namespace: false
     buildNumberInPatch: true
