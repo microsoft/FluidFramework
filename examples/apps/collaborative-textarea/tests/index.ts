@@ -9,7 +9,7 @@ import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 import { CollaborativeTextContainer } from "../src/container";
 import { CollaborativeText } from "../src/fluid-object";
 
-// Since this is a single page fluid application we are generating a new document id
+// Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
 let createNew = false;
 if (window.location.hash.length === 0) {
