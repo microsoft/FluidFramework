@@ -146,7 +146,7 @@ Now we've defined all the pieces and it's just time to put them all together!
 
 To orchestrate the collaboration, we need to connect to a service to send and receive the updates to the data.  The way we do this is to connect a Fluid [Container][] object to the service and load our container code into it.
 
-For now, we'll just run on a local test service called [Tinylicious][], and to make this easier we've provided a helper function `getTinyliciousContainer()`.  The helper function takes a unique ID to identify our document (the collection of data used by our app), the container code, and a flag to indicate whether we want to create a new document or load an existing one.
+For now, we'll just run on a local test service called [Tinylicious][], and to make it easier to connect to this service we've provided a helper function `getTinyliciousContainer()`.  The helper function takes a unique ID to identify our document (the collection of data used by our app), the container code, and a flag to indicate whether we want to create a new document or load an existing one.
 
 ```ts
 const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
