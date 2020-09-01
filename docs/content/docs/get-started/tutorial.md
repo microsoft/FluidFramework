@@ -128,7 +128,7 @@ And that's it -- our DiceRoller model is done!
 
 In our app, we only need a single instance of this single model for our single dice.  However, in more complex scenarios we might have multiple model types with many model instances.  The code you'll write to specify the type and number of data objects your application uses is the **container code**.
 
-Since we only need a single dice, Fluid Framework provides a class called [ContainerRuntimeFactoryWithDefaultDataStore][] that we can use.  This particular container code will instantiate a single instance of the model type we specify from the registry we provide.
+Since we only need a single dice, Fluid Framework provides a class called [ContainerRuntimeFactoryWithDefaultDataStore][] that we can use as our container code.  We'll give it two arguments:  the type of the model factory that we want a single instance of, and the list of model types that our container code needs (in this case, just the single model type).  This list is called the **container registry**.
 
 ```ts
 export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -146,15 +146,15 @@ Now we've defined all the pieces and it's just time to put them all together!
 
 To orchestrate the collaboration, we need to connect to a service to send and receive the updates to the data.  The way we do this is to connect a Fluid [Container][] object to the service and load our container code into it.
 
-For now, we'll just run on a local test service called [Tinylicious][], and to make it easier to connect to this service we've provided a helper function `getTinyliciousContainer()`.  The helper function takes a unique ID to identify our document (the collection of data used by our app), the container code, and a flag to indicate whether we want to create a new document or load an existing one.
+For now, we'll just run on a local test service called [Tinylicious][], and to make it easier to connect to this service we've provided a helper function `getTinyliciousContainer()`.  The helper function takes a unique ID to identify our **document** (the collection of data used by our app), the container code, and a flag to indicate whether we want to create a new document or load an existing one.  You can use any app logic you'd like to generate the ID and determine whether to create a new document.  In the [example repository](https://github.com/microsoft/FluidHelloWorld/blob/main/src/app.ts) we use the timestamp and URL hash as just one way of doing it.
 
 ```ts
 const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
 ```
 
-This will look a little different when moving to a production service, but you'll still ultimately be getting a reference to a Container object running your code and connected to a service. 
+This will look a little different when moving to a production service, but you'll still ultimately be getting a reference to a `Container` object running your code and connected to a service.
 
-After we have the connected Container object, our container code will have already run to create an instance of our model.  We used a ContainerRuntimeFactoryWithDefaultDataStore to build our container code, which adds the ability to request the model from the Container object using a URL of "/":
+After we have the connected `Container` object, our container code will have already run to create an instance of our model.  We used a `ContainerRuntimeFactoryWithDefaultDataStore` to build our container code, which adds the ability to request the model from the `Container` object using a URL of "/":
 
 ```ts
 const response = await container.request({ url: "/" });
@@ -167,6 +167,7 @@ if (response.status !== 200 || response.mimeType !== "fluid/object") {
 }
 const diceRoller: IDiceRoller = response.value;
 ```
+
 
 ### Connect model instance to view for rendering
 
@@ -200,7 +201,10 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivEleme
 }
 ```
 
-The [full code for this application is available](https://github.com/microsoft/FluidHelloWorld) for you to try out.
+
+### Running the app
+
+At this point we can run our app.  The [full code for this application is available](https://github.com/microsoft/FluidHelloWorld) for you to try out.  Try opening it in multiple browser windows to see the changes reflected between clients.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
