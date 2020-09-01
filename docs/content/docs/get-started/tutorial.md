@@ -103,7 +103,7 @@ Since the models you create will be persisted over time as users load and close 
 - `initializingFirstTime()` runs when a client creates the DiceRoller for the first time. It does not run when additional clients
   connect to the application. We'll use this to provide an initial value for the dice.
 
-- `hasInitialized()` runs when clients load the DiceRoller -- we'll use this to hook up our event listeners to respond to
+- `hasInitialized()` runs when clients load the DiceRoller. We'll use this to hook up our event listeners to respond to
   data changes made in other clients.
 
 DataObject also provides a "root" **Distributed Data Structure (DDS)**.  DDSes are collaborative data structures that you'll use like local data structures, but as each client modifies the data, all other clients will see the changes.  This "root" DDS is a [SharedDirectory][] which stores key/value pairs and works very similarly to a [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map), providing methods like `set()` and `get()`.  However, it also fires a `"valueChanged"` event so we can observe changes to the data coming in from other users.
@@ -201,7 +201,6 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivEleme
 ```
 
 The [full code for this application is available](https://github.com/microsoft/FluidHelloWorld) for you to try out.
-
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
