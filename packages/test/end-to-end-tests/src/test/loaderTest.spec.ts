@@ -9,12 +9,10 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {
-    createLocalLoader,
-    initializeLocalContainer,
-} from "@fluidframework/test-utils";
+import {  createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 class TestSharedDataObject1 extends DataObject {
@@ -62,6 +60,7 @@ const testSharedDataObjectFactory2 = new DataObjectFactory(
     []);
 
 describe("Loader.request", () => {
+    const documentId = "loaderRequestTest";
     const id = "fluid-test://localhost/loderRequestTest";
     const codeDetails: IFluidCodeDetails = {
         package: "loaderRequestTestPackage",
@@ -72,6 +71,12 @@ describe("Loader.request", () => {
     let dataStore1: TestSharedDataObject1;
     let dataStore2: TestSharedDataObject2;
     let loader: ILoader;
+    let urlResolver: IUrlResolver;
+
+    async function createContainer(): Promise<IContainer> {
+        loader = createLocalLoader([[codeDetails, testSharedDataObjectFactory1]], deltaConnectionServer, urlResolver);
+        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+    }
 
     async function resetLoader() {
         const runtimeFactory =
@@ -82,8 +87,8 @@ describe("Loader.request", () => {
                     ["TestSharedDataObject2", Promise.resolve(testSharedDataObjectFactory2)],
                 ],
             );
-        loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer);
-        await initializeLocalContainer(id, loader, codeDetails);
+        loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
+        await createContainer();
     }
 
     beforeEach(async () => {
@@ -92,7 +97,7 @@ describe("Loader.request", () => {
         const url = `${id}/default`;
         dataStore1 = await requestFluidObject(loader, url);
 
-        dataStore2 = await testSharedDataObjectFactory2.createInstance(dataStore1._context) as TestSharedDataObject2;
+        dataStore2 = await testSharedDataObjectFactory2.createInstance(dataStore1._context.containerRuntime);
         // this binds dataStore2 to dataStore1
         dataStore1._root.set("key",dataStore2.handle);
     });
