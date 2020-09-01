@@ -86,7 +86,7 @@ Consider a scenario where there are multiple containers and a Fluid object wants
 
 If the request/response model is used to achieve this, to request the object using its URL, the object loading it
 has to know which Container has the object so that it doesn't end up requesting it from the wrong one. It can become
-complicated quickly as the number of DFluid objects and containers grow.
+complicated quickly as the number of Fluid objects and containers grow.
 
 This is where handles become really powerful and make this scenario much simpler. You can pass around the handle to
 the DataObject across containers and to load it from anywhere, you just have to call `get()` on it.
