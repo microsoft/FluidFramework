@@ -33,7 +33,8 @@ export class DataObjectFactory<TObj extends DataObject<P, S>, P, S> extends Pure
         type: string,
         ctor: new (props: IDataObjectProps<P>) => TObj,
         sharedObjects: readonly IChannelFactory[] = [],
-        optionalProviders: FluidObjectSymbolProvider<P>,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        optionalProviders: FluidObjectSymbolProvider<P> = {} as FluidObjectSymbolProvider<P>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,
         onDemandInstantiation = true,
     ) {
