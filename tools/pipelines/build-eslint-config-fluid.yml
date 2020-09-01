@@ -63,4 +63,3 @@ extends:
     taskBuildDocs: false
     taskLint: false
     taskTest: false
-    taskAuth: false
