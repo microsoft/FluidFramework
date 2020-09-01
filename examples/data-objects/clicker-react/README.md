@@ -1,6 +1,6 @@
 # clicker-react
 
-**Clicker-React** contains two Fluid objects that use the new experimental Fluid React data object and hooks. These can be found in the @fluidframeworks/react package.
+**Clicker-React** contains two Fluid objects that use the new experimental Fluid React data object and hooks. These can be found in the @fluidframework/react package.
 
 **clicker-function** shows how to create a simple Clicker example using no DDSes by just calling the useSyncedObject hook.
 
