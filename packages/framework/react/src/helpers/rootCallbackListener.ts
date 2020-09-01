@@ -57,7 +57,7 @@ export const syncedStateCallbackListener = <
         fluidToView,
     );
     if (currentFluidState === undefined) {
-        throw Error("Synced state update triggered before fluid state was initialized");
+        throw Error("Synced state update triggered before Fluid state was initialized");
     }
     const viewToFluidKeys: string[] = viewToFluid !== undefined
         ? Array.from(viewToFluid.values()).map((item) => item.fluidKey as string)

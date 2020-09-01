@@ -3,16 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidExportDefaultFactoryName } from "@fluidframework/framework-interfaces";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { DependencyContainerRegistry } from "@fluidframework/synthesize";
-import { MountableView } from "@fluidframework/view-adapters";
 import {
     RuntimeRequestHandler,
     deprecated_innerRequestHandler,
 } from "@fluidframework/request-handler";
-import { mountableViewRequestHandler, defaultRouteRequestHandler } from "../request-handlers";
+import { defaultRouteRequestHandler } from "../request-handlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
 const defaultDataStoreId = "default";
@@ -23,8 +21,7 @@ const defaultDataStoreId = "default";
  *
  * This factory should be exposed as fluidExport off the entry point to your module.
  */
-export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory implements
-    IFluidExportDefaultFactoryName {
+export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
     public static readonly defaultDataStoreId = defaultDataStoreId;
 
     constructor(
@@ -37,21 +34,12 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
             registryEntries,
             providerEntries,
             [
-                // The mountable view request handler must go before any other request handlers that we might
-                // want to return mountable views, so it can correctly handle the header and reissue the request.
-                mountableViewRequestHandler(
-                    MountableView,
-                    [
-                        ...requestHandlers,
-                        defaultRouteRequestHandler(defaultDataStoreId),
-                        deprecated_innerRequestHandler,
-                    ]),
+                ...requestHandlers,
+                defaultRouteRequestHandler(defaultDataStoreId),
+                deprecated_innerRequestHandler,
             ],
         );
     }
-
-    public get IFluidExportDefaultFactoryName() { return this; }
-    public getDefaultFactoryName() { return this.defaultDataStoreName; }
 
     /**
      * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}

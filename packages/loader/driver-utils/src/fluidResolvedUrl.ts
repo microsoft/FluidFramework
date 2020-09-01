@@ -10,6 +10,6 @@ export const isFluidResolvedUrl =
 
 export function ensureFluidResolvedUrl(resolved: IResolvedUrl | undefined): asserts resolved is IFluidResolvedUrl {
     if (!isFluidResolvedUrl(resolved)) {
-        throw new Error(`resolved is not a fluid url. Type: ${resolved?.type}`);
+        throw new Error(`resolved is not a Fluid url. Type: ${resolved?.type}`);
     }
 }

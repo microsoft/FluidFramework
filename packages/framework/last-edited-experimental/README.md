@@ -27,11 +27,11 @@ The details returned in getLastEditDetails contain the `IUser` object and the `t
 
 LastEditedTrackerDataObject is a runtime component built on top of the LastEditedTracker. It creates and manages the SharedSummaryBlock so that the developer doesn't have to know about it or manage it.
 
-It implements IProvideComponentLastEditedTracker and returns an IComponentLastEditedTracker which is an instance of LastEditedTracker above.
+It implements IProvideComponentLastEditedTracker and returns an IFluidLastEditedTracker which is an instance of LastEditedTracker above.
 
 # Setup
 
-This package also provides a `setupLastEditedTrackerForContainer` method that can be used to set up a component that provides IComponentLastEditedTracker to track last edited in a Container:
+This package also provides a `setupLastEditedTrackerForContainer` method that can be used to set up a component that provides IFluidLastEditedTracker to track last edited in a Container:
 - This setup function should be called during container instantiation so that ops are not missed.
 - Registers an "op" listener on the runtime. On each message, it calls the shouldDiscardMessageFn to check if the message should be discarded. It also discards all scheduler message. If a message is not discarded, it passes the last edited information from the message to the last edited tracker in the component.
 
@@ -51,7 +51,7 @@ function shouldDiscardMessageDefault(message: ISequencedDocumentMessage) {
 
 ## For tracking the last edit on a Container:
 
-In instantiateRuntime, create a component that implements IComponentLastEditedTracker. Then call `setupLastEditedTrackerForContainer` with the id of the component:
+In instantiateRuntime, create a component that implements IFluidLastEditedTracker. Then call `setupLastEditedTrackerForContainer` with the id of the component:
 ```
 public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     const componentId = "root";
@@ -72,9 +72,9 @@ public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
 
 This will make sure that the root component loads before any other component and it tracks every op in the Container.
 
-The IComponentLastEditedTracker can be retrieved from the root component:
+The IFluidLastEditedTracker can be retrieved from the root component:
 ```
 const response = await containerRuntime.request({ url: "/" });
 const rootComponent = response.value;
-const lastEditedTracker = rootComponent.IComponentLastEditedTracker;
+const lastEditedTracker = rootComponent.IFluidLastEditedTracker;
 ```

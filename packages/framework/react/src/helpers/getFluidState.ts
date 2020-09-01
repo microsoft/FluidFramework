@@ -23,7 +23,7 @@ import {
  * @param syncedState - Shared map the synced state is stored on
  * @param fluidObjectMap - Map of Fluid handle paths to their respective Fluid objects
  * @param fluidToView - Map of the Fluid state keys contains the optional syncedState key parameter,
- * in case the fluid value is stored in the syncedState under a different key
+ * in case the Fluid value is stored in the syncedState under a different key
  */
 export function getFluidState<
     SV extends IViewState,

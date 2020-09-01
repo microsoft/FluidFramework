@@ -5,12 +5,28 @@
 
 name: $(Build.BuildId)
 
+parameters:
+- name: publishOverride
+  displayName: Publish Override
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+- name: releaseBuildOverride
+  displayName: Release Build Override
+  type: string
+  default: none
+  values:
+    - none
+    - prerelease
+    - release
+
 trigger:
   branches:
     include:
     - main
     - release/*
-    - refs/tags/client_v*
   paths:
     include:
     - packages
@@ -20,11 +36,13 @@ trigger:
     - package-lock.json
     - lerna.json
     - lerna-package-lock.json
-    - tools/build-server-resources
     - tools/pipelines/build-client.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
-    - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
 
 pr:
   branches:
@@ -40,36 +58,35 @@ pr:
     - package-lock.json
     - lerna.json
     - lerna-package-lock.json
-    - tools/build-server-resources
     - tools/pipelines/build-client.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
 
 extends:
   template: templates/build-npm-package.yml
   parameters:
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: .
+    tagName: client
     poolBuild: Main
     cgSubDirectory: packages
     checkoutSubmodules: true
     runBundleAnalysis: true
+    taskAuth: false
     preCG:
     - task: UseNode@1
       displayName: Use Node 12.x
       inputs: 
-        version: 12.x    
-    - task: npmAuthenticate@0
-      displayName: 'npm Authenticate root .npmrc'
-      inputs:
-        workingFile: .npmrc
-        customEndpoint: Offnet Packages
+        version: 12.x
     - task: Npm@1
       displayName: npm ci
       inputs:
         command: 'custom'
         customCommand: 'ci --ignore-scripts'
         customRegistry: 'useNpmrc'
-
     - task: Bash@3
       displayName: 'Generate Mono repo package json'
       inputs:

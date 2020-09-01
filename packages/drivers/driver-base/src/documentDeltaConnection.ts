@@ -386,8 +386,7 @@ export class DocumentDeltaConnection
                     return;
                 }
 
-                // TODO: Get latest server bits
-                this.checkpointSequenceNumber = (response as any).checkpointSequenceNumber;
+                this.checkpointSequenceNumber = response.checkpointSequenceNumber;
 
                 this.removeTrackedListeners(true);
                 resolve(response);
