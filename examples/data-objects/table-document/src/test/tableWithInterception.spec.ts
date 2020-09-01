@@ -59,8 +59,8 @@ describe("Table Document with Interception", () => {
                     "Properties should not exist on the cell because there was no interception");
             } else {
                 assert.deepEqual(
-                    table.getCellProperties(cell.row, cell.col),
-                    props,
+                    table.getCellProperties(cell.row, cell.col).userId,
+                    props.userId,
                     "The properties set via the interception callback should exist");
             }
         }
