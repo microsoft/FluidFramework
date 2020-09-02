@@ -17,6 +17,7 @@
 - [LastEditedTrackerComponent renamed to LastEditedTrackerDataObject](#lasteditedtrackercomponent-renamed)
 - [ComponentProvider renamed to FluidObjectProvider in @fluidframework/synthesize](#componentProvider-renamed-to-fluidobjectPpovider)
 - [Package @fluidframework/framework-experimental removed](#package-@fluidframework/framework-experimental-removed)
+- [IContainerRuntimeBase.request is removed](#IContainerRuntimeBase.request-is-removed)
 
 ### External Component Loader and IComponentDefaultFactoryName removed
 The @fluidframework/external-component-loader package has been removed from the repo. In addition to this, the IFluidExportDefaultFactoryName and the corresponding IProvideFluidExportDefaultFactoryName interfaces have also been dropped.
@@ -105,6 +106,19 @@ The clipboard interfaces have been removed:
 - `IProvideComponentClipboardData`
 - `IComponentClipboardConsumer`
 - `IProvideComponentClipboardConsumer`
+
+### IContainerRuntimeBase.request is removed
+
+The `requestFluidObject` helper found in @fluidframework/runtime-utils package should be used instead.
+
+Example:
+```typescript
+// old
+(await runtime.request(requestData)).value as TargetType
+
+// new
+await requestFluidObject<TargetType>(runtime.IFluidHandleContext, requestData)
+```
 
 ## 0.24 Breaking Changes
 This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
