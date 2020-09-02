@@ -4,21 +4,28 @@
  */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
-import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
-import { createComponentResponse } from "@fluidframework/request-handler";
-import { defaultRouteRequestHandler } from "../requestHandlers";
+import {
+    IRequest,
+    IResponse,
+    IFluidObject,
+    IFluidRouter,
+} from "@fluidframework/core-interfaces";
+import { createFluidObjectResponse } from "@fluidframework/request-handler";
+import { defaultRouteRequestHandler } from "../request-handlers";
 
 class MockRuntime {
-    public async getDataStore(id, wait): Promise<IFluidDataStoreChannel> {
-        if (id === "componentId") {
+    public get IFluidHandleContext() { return this; }
+
+    public async getRootDataStore(id, wait): Promise<IFluidRouter> {
+        if (id === "objectId") {
             return {
                 request: async (r) => {
                     if (r.url === "" || r.url === "route") {
-                        return createComponentResponse({ route: r.url } as IFluidObject);
+                        return createFluidObjectResponse({ route: r.url } as IFluidObject);
                     }
                     return { status: 404, mimeType: "text/plain", value: "not found" };
                 },
@@ -26,25 +33,25 @@ class MockRuntime {
         }
 
         assert(wait !== true);
-        throw new Error("No component");
+        throw new Error("No data store");
     }
 
-    public async resolveHandle(request: IRequest) {
+    protected async resolveHandle(request: IRequest) {
         const requestParser = new RequestParser(request);
 
         if (requestParser.pathParts.length > 0) {
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getDataStore(requestParser.pathParts[0], wait);
+            const dataStore = await this.getRootDataStore(requestParser.pathParts[0], wait);
             const subRequest = requestParser.createSubRequest(1);
             if (subRequest !== undefined) {
-                return component.request(subRequest);
+                return dataStore.request(subRequest);
             } else {
                 return {
                     status: 200,
                     mimeType: "fluid/object",
-                    value: component,
+                    value: dataStore,
                 };
             }
         }
@@ -56,29 +63,29 @@ async function assertRejected(p: Promise<IResponse | undefined>) {
     try {
         const res = await p;
         assert(res === undefined || res.status === 404, "not rejected");
-    } catch (err) {}
+    } catch (err) { }
 }
 
 describe("defaultRouteRequestHandler", () => {
-    const runtime = new MockRuntime() as IContainerRuntime;
+    const runtime = new MockRuntime() as any as IContainerRuntime;
 
-    it("Component request with default ID", async () => {
-        const handler = defaultRouteRequestHandler("componentId");
+    it("Data store request with default ID", async () => {
+        const handler = defaultRouteRequestHandler("objectId");
 
-        const requestParser = new RequestParser({ url: "", headers: { } });
+        const requestParser = new RequestParser({ url: "", headers: {} });
         const response = await handler(requestParser, runtime);
         assert(response);
         assert.equal(response.status, 200);
         assert.equal(response.value.route, "");
 
-        const requestParser2 = new RequestParser({ url: "/", headers: { } });
+        const requestParser2 = new RequestParser({ url: "/", headers: {} });
         const response2 = await handler(requestParser2, runtime);
         assert(response2);
         assert.equal(response2.status, 200);
         assert.equal(response.value.route, "");
     });
 
-    it("Component request with non-existing default ID", async () => {
+    it("Data store request with non-existing default ID", async () => {
         const handler = defaultRouteRequestHandler("foobar");
 
         const requestParser = new RequestParser({ url: "", headers: { wait: true } });

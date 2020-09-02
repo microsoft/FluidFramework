@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import path from "path";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
@@ -301,12 +301,12 @@ function serializeDirectory(root: SubDirectory): ITree {
  */
 export class DirectoryFactory {
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
      */
     public static readonly Type = "https://graph.microsoft.com/types/directory";
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
      */
     public static readonly Attributes: IChannelAttributes = {
         type: DirectoryFactory.Type,
@@ -315,21 +315,21 @@ export class DirectoryFactory {
     };
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
      */
     public get type() {
         return DirectoryFactory.Type;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
      */
     public get attributes() {
         return DirectoryFactory.Attributes;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
      */
     public async load(
         runtime: IFluidDataStoreRuntime,
@@ -344,7 +344,7 @@ export class DirectoryFactory {
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
      */
     public create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory {
         const directory = new SharedDirectory(id, runtime, DirectoryFactory.Attributes);

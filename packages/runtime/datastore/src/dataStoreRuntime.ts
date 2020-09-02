@@ -42,7 +42,6 @@ import {
 import {
     IAttachMessage,
     IFluidDataStoreContext,
-    IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
     IEnvelope,
     IInboundSignalMessage,
@@ -83,7 +82,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     public static load(
         context: IFluidDataStoreContext,
         sharedObjectRegistry: ISharedObjectRegistry,
-        dataStoreRegistry?: IFluidDataStoreRegistry,
     ): FluidDataStoreRuntime {
         const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { dataStoreId: uuid() });
         const runtime = new FluidDataStoreRuntime(
@@ -99,10 +97,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             context.getAudience(),
             context.snapshotFn,
             sharedObjectRegistry,
-            dataStoreRegistry,
             logger);
 
-        context.bindRuntime(runtime);
         return runtime;
     }
 
@@ -154,7 +150,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     public get IFluidSerializer() { return this.dataStoreContext.containerRuntime.IFluidSerializer; }
 
     public get IFluidHandleContext() { return this; }
-    public get IFluidDataStoreRegistry() { return this.dataStoreRegistry; }
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
@@ -185,7 +180,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
-        private readonly dataStoreRegistry: IFluidDataStoreRegistry | undefined,
         public readonly logger: ITelemetryLogger,
     ) {
         super();
@@ -239,6 +233,10 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         this._disposed = true;
 
         this.emit("dispose");
+    }
+
+    public async resolveHandle(request: IRequest): Promise<IResponse> {
+        return this.request(request);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -544,7 +542,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     public async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {
         const builder = new SummaryTreeBuilder();
 
-        // Iterate over each component and ask it to snapshot
+        // Iterate over each data store and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
             .filter(([key, _]) => {
                 const isAttached = this.isChannelAttached(key);

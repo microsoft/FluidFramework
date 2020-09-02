@@ -52,7 +52,7 @@ export class HTMLViewAdapter implements IFluidHTMLView {
         }
 
         // The ReactDOM.render call won't work if the adapted view is from a separate bundle.
-        // This is the usage scenario in webpack-component-loader currently, so prioritizing this below
+        // This is the usage scenario in webpack-fluid-loader currently, so prioritizing this below
         // IFluidHTMLView temporarily, so that we have the best chance of cross-bundle adaptation.
         if (React.isValidElement(this.view)) {
             ReactDOM.render(this.view, elm);

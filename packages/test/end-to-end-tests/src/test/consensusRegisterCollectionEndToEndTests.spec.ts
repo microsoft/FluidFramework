@@ -3,23 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     ConsensusRegisterCollection,
     IConsensusRegisterCollection,
     ReadPolicy,
 } from "@fluidframework/register-collection";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    createAndAttachContainer,
     createLocalLoader,
-    ITestFluidComponent,
-    initializeLocalContainer,
-    TestFluidComponentFactory,
+    ITestFluidObject,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 interface ISharedObjectConstructor<T> {
@@ -28,54 +30,57 @@ interface ISharedObjectConstructor<T> {
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
     describe(name, () => {
-        const id = "fluid-test://localhost/consensusRegisterCollectionTest";
+        const documentId = "consensusRegisterCollectionTest";
+        const documentLoadUrl = `fluid-test://localhost/${documentId}`;
         const mapId = "mapKey";
         const codeDetails: IFluidCodeDetails = {
             package: "consensusRegisterCollectionTestPackage",
             config: {},
         };
+        const factory = new TestFluidObjectFactory([
+            [mapId, SharedMap.getFactory()],
+            [undefined, ConsensusRegisterCollection.getFactory()],
+        ]);
 
         let deltaConnectionServer: ILocalDeltaConnectionServer;
-        let component1: ITestFluidComponent;
+        let urlResolver: IUrlResolver;
+        let dataStore1: ITestFluidObject;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
         let sharedMap3: ISharedMap;
 
-        async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
-            const response = await container.request({ url: componentId });
-            if (response.status !== 200 || response.mimeType !== "fluid/object") {
-                throw new Error(`Component with id: ${componentId} not found`);
-            }
-            return response.value as ITestFluidComponent;
+        async function createContainer(): Promise<IContainer> {
+            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+            return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
         }
 
-        async function createContainer(): Promise<Container> {
-            const factory = new TestFluidComponentFactory([
-                [mapId, SharedMap.getFactory()],
-                [undefined, ConsensusRegisterCollection.getFactory()],
-            ]);
-            const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-            return initializeLocalContainer(id, loader, codeDetails);
+        async function loadContainer(): Promise<IContainer> {
+            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+            return loader.resolve({ url: documentLoadUrl });
         }
 
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
+            urlResolver = new LocalResolver();
 
+            // Create a Container for the first client.
             const container1 = await createContainer();
-            component1 = await requestFluidObject("default", container1);
-            sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
+            dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+            sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
-            const container2 = await createContainer();
-            const component2 = await requestFluidObject("default", container2);
-            sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
+            // Load the Container that was created by the first client.
+            const container2 = await loadContainer();
+            const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+            sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
-            const container3 = await createContainer();
-            const component3 = await requestFluidObject("default", container3);
-            sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
+            // Load the Container that was created by the first client.
+            const container3 = await loadContainer();
+            const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+            sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
         });
 
         it("Basic functionality", async () => {
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
             await collection1.write("key1", "value1");
             await collection1.write("key2", "value2");
@@ -100,7 +105,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         });
 
         it("Should store all concurrent writings on a key in sequenced order", async () => {
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
@@ -126,7 +131,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         });
 
         it("Happened after updates should overwrite previous versions", async () => {
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
@@ -176,7 +181,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 
         it("Can store handles", async () => {
             // Set up the collection with two handles and add it to the map so other containers can find it
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("test", "sampleValue");
             sharedMap1.set("collection", collection1.handle);
             await collection1.write("handleA", sharedMap1.handle);

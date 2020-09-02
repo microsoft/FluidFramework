@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { TestHistorian } from "../testHistorian";
 import { GitManager } from "@fluidframework/server-services-client";
 import { ICreateCommitParams } from "@fluidframework/gitresources";

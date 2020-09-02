@@ -3,19 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IProvideDocumentFactory,
-    IProvideMicrosoftGraph,
-    IProvidePackageManager,
-} from "@fluidframework/host-service-interfaces";
+/* TODO: @fluid-example packages are not published. Duplicate the interface here for now */
+// import { IProvideDocumentFactory } from "@fluid-example/host-service-interfaces";
+
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+
+export const IDocumentFactory: keyof IProvideDocumentFactory = "IDocumentFactory";
+
+export interface IProvideDocumentFactory {
+    readonly IDocumentFactory: IDocumentFactory;
+}
+
+export interface IDocumentFactory extends IProvideDocumentFactory {
+    create(fluidCodeDetails: IFluidCodeDetails): Promise<string>;
+}
+
+declare module "@fluidframework/core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideDocumentFactory>> { }
+}
 
 /**
  * Host services provides a collection of interfaces exposed by a gateway host
  */
 /* eslint-disable @typescript-eslint/no-empty-interface */
 export interface IHostServices extends Partial<
-    IProvideDocumentFactory
-    & IProvideMicrosoftGraph
-    & IProvidePackageManager> {
+    IProvideDocumentFactory> {
 }
 /* eslint-enable @typescript-eslint/no-empty-interface */

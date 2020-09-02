@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import {
     IBlob,
     ISequencedDocumentMessage,
@@ -567,9 +567,9 @@ function processDataStoreAttachOp(
         parsedAttachMessage = attachMessage;
     }
     for (const entry of parsedAttachMessage.snapshot.entries) {
-        if (entry.type === TreeEntry[TreeEntry.Tree]) {
+        if (entry.type === TreeEntry.Tree) {
             for (const entry2 of (entry.value as ITree).entries) {
-                if (entry2.path === ".attributes" && entry2.type === TreeEntry[TreeEntry.Blob]) {
+                if (entry2.path === ".attributes" && entry2.type === TreeEntry.Blob) {
                     const attrib = JSON.parse((entry2.value as IBlob).contents);
                     let objectType = attrib.type;
                     if (objectType.startsWith(objectTypePrefix)) {

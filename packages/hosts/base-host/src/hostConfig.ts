@@ -19,8 +19,8 @@ export interface IBaseHostConfig {
     // Any config to be provided to loader.
     config?: any;
 
-    // A component that gives host provided capabilities/configurations
-    // to the component in the container(such as auth).
+    // A fluid object that gives host provided capabilities/configurations
+    // to the Fluid object in the container(such as auth).
     scope?: IFluidObject;
 
     proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;

@@ -68,7 +68,7 @@ export interface IRuntime extends IDisposable {
      */
     setConnectionState(connected: boolean, clientId?: string);
 
-    // Back-compat: supporting <= 0.16 components
+    // Back-compat: supporting <= 0.16 data stores
     changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
@@ -97,6 +97,9 @@ export interface IRuntime extends IDisposable {
      * @param attachState - State of the container.
      */
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+
+    // 0.24 back-compat attachingBeforeSummary
+    readonly runtimeVersion?: string;
 }
 
 export interface IContainerContext extends IMessageScheduler, IDisposable {

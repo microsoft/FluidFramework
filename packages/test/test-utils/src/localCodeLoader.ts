@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import {
     ICodeLoader,
@@ -10,13 +11,17 @@ import {
     IFluidModule,
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IProvideFluidDataStoreFactory, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
 
-// Represents the entry point for a fluid container.
-export type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IFluidModule>;
+// Represents the entry point for a Fluid container.
+export type fluidEntryPoint = Partial<
+    IProvideRuntimeFactory &
+    IProvideFluidDataStoreFactory &
+    IProvideFluidDataStoreRegistry &
+    IFluidModule>;
 
 /**
- * A simple code loader that caches a mapping of package name to a fluid entry point.
+ * A simple code loader that caches a mapping of package name to a Fluid entry point.
  * On load, it retrieves the entry point matching the package name in the given code details.
  */
 export class LocalCodeLoader implements ICodeLoader {
@@ -26,7 +31,7 @@ export class LocalCodeLoader implements ICodeLoader {
         for (const entry of packageEntries) {
             // Store the entry point against a unique id in the fluidPackageCache.
             // For code details containing a package name, use the package name as the id.
-            // For code details containing a fluid package, create a unique id from the package name and version.
+            // For code details containing a Fluid package, create a unique id from the package name and version.
             let pkgId: string;
 
             const source = entry[0];
@@ -42,7 +47,7 @@ export class LocalCodeLoader implements ICodeLoader {
 
     /**
      * It finds the entry point for the package name in the given source and return it
-     * as a fluid module.
+     * as a Fluid module.
      * @param source - Details of where to find chaincode
      */
     public async load(
@@ -50,7 +55,7 @@ export class LocalCodeLoader implements ICodeLoader {
     ): Promise<IFluidModule> {
         // Get the entry point for from the fluidPackageCache for the given code details.
         // For code details containing a package name, use the package name as the id.
-        // For code details containing a fluid package, create a unique id from the package name and version.
+        // For code details containing a Fluid package, create a unique id from the package name and version.
         let pkdId: string;
 
         if (typeof source.package === "string") {
@@ -63,13 +68,17 @@ export class LocalCodeLoader implements ICodeLoader {
         if (entryPoint === undefined) {
             throw new Error(`Cannot find package ${pkdId}`);
         }
-        const factory: Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory> =
-            entryPoint.fluidExport ?? entryPoint;
-        const runtimeFactory: IProvideRuntimeFactory =
-            factory.IRuntimeFactory ??
+
+        const factory = (entryPoint.fluidExport ?? entryPoint) as fluidEntryPoint;
+
+        if (factory.IRuntimeFactory !== undefined) {
+            return { fluidExport: factory.IRuntimeFactory };
+        }
+
+        assert(factory.IFluidDataStoreFactory !== undefined || factory.IFluidDataStoreRegistry !== undefined);
+        const fluidExport: IProvideRuntimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore("default", [["default", Promise.resolve(factory)]]);
 
-        const fluidModule: IFluidModule = { fluidExport: runtimeFactory };
-        return fluidModule;
+        return { fluidExport };
     }
 }

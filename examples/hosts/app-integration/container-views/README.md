@@ -1,12 +1,12 @@
 # @fluid-example/app-integration-container-views
 
-**Dice Roller** is a basic example that has a die and a button. Clicking the button re-rolls the die and persists the value in the root SharedDirectory. The Fluid Container is defined in container/, the component is defined in component/.
+**Dice Roller** is a basic example that has a die and a button. Clicking the button re-rolls the die and persists the value in the root SharedDirectory.
 
-This implementation demonstrates plugging that Container into a standalone application, rather than using the webpack-component-loader environment that most of our packages use.  This implementation relies on [Tinylicious](/server/tinylicious), so there are a few extra steps to get started.  We expect the container to respond with a mountable view that we can use for rendering.
+This implementation demonstrates plugging the container into a standalone application, rather than using the webpack-fluid-loader environment that most of our packages use.  This implementation relies on [Tinylicious](/server/tinylicious), so there are a few extra steps to get started.  We expect the container to respond with a mountable view that we can use for rendering.
 
 ## Getting Started
 
-If you want to run this container follow the following steps:
+If you want to run this example do the following steps:
 
 ### Start Tinylicious
 

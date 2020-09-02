@@ -10,11 +10,11 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable guard-for-in */
 /* eslint-disable @typescript-eslint/no-for-in-array */
-/* eslint-disable no-shadow */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 import fs from "fs";
 import path from "path";
+import { Trace } from "@fluidframework/common-utils";
 // eslint-disable-next-line import/no-duplicates
 import * as MergeTree from "@fluidframework/merge-tree";
 // eslint-disable-next-line no-duplicate-imports
@@ -43,13 +43,11 @@ import random from "random-js";
 import * as Xmldoc from "xmldoc";
 import * as SharedString from "../intervalCollection";
 
-const clock = () => process.hrtime();
+const clock = () => Trace.start();
 
-function elapsedMicroseconds(start: [number, number]) {
-    const end: number[] = process.hrtime(start);
-    const duration = Math.round((end[0] * 1000000) + (end[1] / 1000));
-    return duration;
-}
+const elapsedMicroseconds = (trace: Trace) => {
+    return trace.trace().duration * 1000;
+};
 
 // Enum AsyncRoundState {
 //     Insert,
@@ -261,12 +259,12 @@ export function TestPack(verbose = true) {
         if (measureBookmarks) {
             options = { blockUpdateMarkers: true };
         }
-        const server = new TestServer(options);
-        server.measureOps = true;
+        const testServer = new TestServer(options);
+        testServer.measureOps = true;
         if (startFile) {
-            loadTextFromFile(startFile, server.mergeTree, fileSegCount);
+            loadTextFromFile(startFile, testServer.mergeTree, fileSegCount);
         } else {
-            server.insertTextLocal(0, initString);
+            testServer.insertTextLocal(0, initString);
         }
 
         const clients = new Array<TestClient>(clientCount);
@@ -283,12 +281,12 @@ export function TestPack(verbose = true) {
             }
             clients[i].startOrUpdateCollaboration(`Fred${i}`);
         }
-        server.startOrUpdateCollaboration("theServer");
-        server.addClients(clients);
+        testServer.startOrUpdateCollaboration("theServer");
+        testServer.addClients(clients);
         if (measureBookmarks) {
-            references = makeReferences(server, referenceCount);
+            references = makeReferences(testServer, referenceCount);
             if (measureRanges) {
-                bookmarks = makeBookmarks(server, bookmarkCount);
+                bookmarks = makeBookmarks(testServer, bookmarkCount);
                 for (const bookmark of bookmarks) {
                     bookmarkRangeTree.put(bookmark);
                 }
@@ -301,7 +299,7 @@ export function TestPack(verbose = true) {
             const fromLoad = new MergeTree.MergeTree();
             // FromLoad.reloadFromSegments(segs);
             const fromLoadText = new MergeTreeTextHelper(fromLoad).getText(UniversalSequenceNumber, NonCollabClient);
-            const serverText = server.getText();
+            const serverText = testServer.getText();
             if (fromLoadText !== serverText) {
                 console.log("snap file vs. text file mismatch");
             }
@@ -314,18 +312,18 @@ export function TestPack(verbose = true) {
                 snapClient.insertTextLocal(0, initString);
             }
             snapClient.startOrUpdateCollaboration("snapshot");
-            server.addListeners([snapClient]);
+            testServer.addListeners([snapClient]);
         }
 
         function checkTextMatch() {
             // Console.log(`checking text match @${server.getCurrentSeq()}`);
             let clockStart = clock();
-            const serverText = server.getText();
+            const serverText = testServer.getText();
             getTextTime += elapsedMicroseconds(clockStart);
             getTextCalls++;
             if (checkIncr) {
                 clockStart = clock();
-                const serverIncrText = server.incrementalGetText();
+                const serverIncrText = testServer.incrementalGetText();
                 // IncrGetTextTime += elapsedMicroseconds(clockStart);
                 // incrGetTextCalls++;
                 if (serverIncrText !== serverText) {
@@ -335,7 +333,7 @@ export function TestPack(verbose = true) {
             for (const client of clients) {
                 const cliText = client.getText();
                 if (cliText !== serverText) {
-                    console.log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
+                    console.log(`mismatch @${testServer.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
                     // Console.log(serverText);
                     // console.log(cliText);
                     const diffParts = JsDiff.diffChars(serverText, cliText);
@@ -352,7 +350,7 @@ export function TestPack(verbose = true) {
                         }
                         console.log(`text: ${diffPart.value} ${annotes}`);
                     }
-                    console.log(server.mergeTree.toString());
+                    console.log(testServer.mergeTree.toString());
                     console.log(client.mergeTree.toString());
                     return true;
                 }
@@ -394,10 +392,10 @@ export function TestPack(verbose = true) {
             if (includeMarkers) {
                 const markerOp = client.insertMarkerLocal(pos, MergeTree.ReferenceType.Tile,
                     { [MergeTree.reservedTileLabelsKey]: "test" });
-                server.enqueueMsg(client.makeOpMessage(markerOp, UnassignedSequenceNumber));
+                testServer.enqueueMsg(client.makeOpMessage(markerOp, UnassignedSequenceNumber));
             }
             const textOp = client.insertTextLocal(pos, text);
-            server.enqueueMsg(client.makeOpMessage(textOp, UnassignedSequenceNumber));
+            testServer.enqueueMsg(client.makeOpMessage(textOp, UnassignedSequenceNumber));
             if (TestClient.useCheckQ) {
                 client.enqueueTestString();
             }
@@ -408,7 +406,7 @@ export function TestPack(verbose = true) {
             const preLen = client.getLength();
             const pos = random.integer(0, preLen)(mt);
             const op = client.removeRangeLocal(pos, pos + dlen);
-            server.enqueueMsg(client.makeOpMessage(op));
+            testServer.enqueueMsg(client.makeOpMessage(op));
             if (TestClient.useCheckQ) {
                 client.enqueueTestString();
             }
@@ -422,7 +420,7 @@ export function TestPack(verbose = true) {
                 const ops: IMergeTreeDeltaOp[] = [];
                 const removeOp = client.removeRangeLocal(removeStart, removeEnd);
                 if (!useGroupOperationsForMoveWord) {
-                    server.enqueueMsg(client.makeOpMessage(removeOp));
+                    testServer.enqueueMsg(client.makeOpMessage(removeOp));
                     if (TestClient.useCheckQ) {
                         client.enqueueTestString();
                     }
@@ -447,7 +445,7 @@ export function TestPack(verbose = true) {
                 }
 
                 if (!useGroupOperationsForMoveWord) {
-                    server.enqueueMsg(
+                    testServer.enqueueMsg(
                         client.makeOpMessage(insertOp));
                     if (TestClient.useCheckQ) {
                         client.enqueueTestString();
@@ -459,14 +457,14 @@ export function TestPack(verbose = true) {
                 if (annotateProps) {
                     const annotateOp = client.annotateRangeLocal(pos, pos + word1.text.length, annotateProps, undefined);
                     if (!useGroupOperationsForMoveWord) {
-                        server.enqueueMsg(client.makeOpMessage(annotateOp));
+                        testServer.enqueueMsg(client.makeOpMessage(annotateOp));
                     } else {
                         ops.push(annotateOp);
                     }
                 }
 
                 if (useGroupOperationsForMoveWord) {
-                    server.enqueueMsg(client.makeOpMessage(createGroupOp(...ops)));
+                    testServer.enqueueMsg(client.makeOpMessage(createGroupOp(...ops)));
                     if (TestClient.useCheckQ) {
                         client.enqueueTestString();
                     }
@@ -548,7 +546,7 @@ export function TestPack(verbose = true) {
         let extractSnapOps = 0;
         function finishRound(roundCount: number) {
             // Process remaining messages
-            if (serverProcessSome(server, true)) {
+            if (serverProcessSome(testServer, true)) {
                 return;
             }
             for (const client of clients) {
@@ -566,20 +564,20 @@ export function TestPack(verbose = true) {
                 }
                 refReadTime += elapsedMicroseconds(clockStart);
                 if (testOrdinals) {
-                    const mt = random.engines.mt19937();
-                    mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+                    const mt2 = random.engines.mt19937();
+                    mt2.seedWithArray([0xdeadbeef, 0xfeedbed]);
                     const checkRange = <number[][]>[];
-                    const len = server.mergeTree.getLength(UniversalSequenceNumber, server.getClientId());
+                    const len = testServer.mergeTree.getLength(UniversalSequenceNumber, testServer.getClientId());
                     for (let i = 0; i < rangeChecksPerRound; i++) {
-                        const e = random.integer(0, len - 2)(mt);
-                        const rangeSize = random.integer(1, Math.min(1000, len - 2))(mt);
+                        const e = random.integer(0, len - 2)(mt2);
+                        const rangeSize = random.integer(1, Math.min(1000, len - 2))(mt2);
                         let b = e - rangeSize;
                         if (b < 0) {
                             b = 0;
                         }
                         checkRange[i] = [b, b + rangeSize];
-                        const segoff1 = server.getContainingSegment(checkRange[i][0]);
-                        const segoff2 = server.getContainingSegment(checkRange[i][1]);
+                        const segoff1 = testServer.getContainingSegment(checkRange[i][0]);
+                        const segoff2 = testServer.getContainingSegment(checkRange[i][1]);
                         if (segoff1 && segoff2 && segoff1.segment && segoff2.segment) {
                             // Console.log(`[${checkRange[i][0]},${checkRange[i][1]})`);
                             if (segoff1.segment === segoff2.segment) {
@@ -588,7 +586,7 @@ export function TestPack(verbose = true) {
                                 ordErrors++;
                                 console.log(`reverse ordinals ${MergeTree.ordinalToArray(segoff1.segment.ordinal)} > ${MergeTree.ordinalToArray(segoff2.segment.ordinal)}`);
                                 console.log(`segments ${segoff1.segment.toString()} ${segoff2.segment.toString()}`);
-                                console.log(server.mergeTree.toString());
+                                console.log(testServer.mergeTree.toString());
                                 break;
                             } else {
                                 ordSuccess++;
@@ -600,38 +598,38 @@ export function TestPack(verbose = true) {
                     }
                 }
                 if (measureRanges) {
-                    const mt = random.engines.mt19937();
-                    mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-                    const len = server.mergeTree.getLength(UniversalSequenceNumber, server.getClientId());
+                    const mt2 = random.engines.mt19937();
+                    mt2.seedWithArray([0xdeadbeef, 0xfeedbed]);
+                    const len = testServer.mergeTree.getLength(UniversalSequenceNumber, testServer.getClientId());
                     const checkPos = <number[]>[];
                     const checkRange = <number[][]>[];
                     const checkPosRanges = <SharedString.SequenceInterval[]>[];
                     const checkRangeRanges = <SharedString.SequenceInterval[]>[];
                     for (let i = 0; i < posChecksPerRound; i++) {
-                        checkPos[i] = random.integer(0, len - 2)(mt);
-                        const segoff1 = server.getContainingSegment(checkPos[i]);
-                        const segoff2 = server.getContainingSegment(checkPos[i] + 1);
+                        checkPos[i] = random.integer(0, len - 2)(mt2);
+                        const segoff1 = testServer.getContainingSegment(checkPos[i]);
+                        const segoff2 = testServer.getContainingSegment(checkPos[i] + 1);
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
-                            const lrefPos1 = new MergeTree.LocalReference(server, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
-                            const lrefPos2 = new MergeTree.LocalReference(server, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
+                            const lrefPos1 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
+                            const lrefPos2 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
                             checkPosRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
                         } else {
                             i--;
                         }
                     }
                     for (let i = 0; i < rangeChecksPerRound; i++) {
-                        const e = random.integer(0, len - 2)(mt);
-                        const rangeSize = random.integer(1, Math.min(1000, len - 2))(mt);
+                        const e = random.integer(0, len - 2)(mt2);
+                        const rangeSize = random.integer(1, Math.min(1000, len - 2))(mt2);
                         let b = e - rangeSize;
                         if (b < 0) {
                             b = 0;
                         }
                         checkRange[i] = [b, b + rangeSize];
-                        const segoff1 = server.getContainingSegment(checkRange[i][0]);
-                        const segoff2 = server.getContainingSegment(checkRange[i][1]);
+                        const segoff1 = testServer.getContainingSegment(checkRange[i][0]);
+                        const segoff2 = testServer.getContainingSegment(checkRange[i][1]);
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
-                            const lrefPos1 = new MergeTree.LocalReference(server, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
-                            const lrefPos2 = new MergeTree.LocalReference(server, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
+                            const lrefPos1 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
+                            const lrefPos2 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
                             checkRangeRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
                         } else {
                             i--;
@@ -645,8 +643,8 @@ export function TestPack(verbose = true) {
                         if (showResults) {
                             console.log(`results for point [${checkPos[i]},${checkPos[i] + 1})`);
                             for (const ival of ivals) {
-                                const pos1 = server.mergeTree.referencePositionToLocalPosition(ival.key.start);
-                                const pos2 = server.mergeTree.referencePositionToLocalPosition(ival.key.end);
+                                const pos1 = testServer.mergeTree.referencePositionToLocalPosition(ival.key.start);
+                                const pos2 = testServer.mergeTree.referencePositionToLocalPosition(ival.key.end);
                                 console.log(`[${pos1},${pos2})`);
                             }
                         }
@@ -661,8 +659,8 @@ export function TestPack(verbose = true) {
                         if (showResults) {
                             console.log(`results for [${checkRange[i][0]},${checkRange[i][1]})`);
                             for (const ival of ivals) {
-                                const pos1 = server.mergeTree.referencePositionToLocalPosition(ival.key.start);
-                                const pos2 = server.mergeTree.referencePositionToLocalPosition(ival.key.end);
+                                const pos1 = testServer.mergeTree.referencePositionToLocalPosition(ival.key.start);
+                                const pos2 = testServer.mergeTree.referencePositionToLocalPosition(ival.key.end);
                                 console.log(`[${pos1},${pos2})`);
                             }
                         }
@@ -700,19 +698,19 @@ export function TestPack(verbose = true) {
                 if (verbose) {
                     console.log(`wall clock is ${((Date.now() - startTime) / 1000.0).toFixed(1)}`);
                 }
-                const stats = server.mergeTree.getStats();
+                const stats = testServer.mergeTree.getStats();
                 const liveAve = (stats.liveCount / stats.nodeCount).toFixed(1);
                 const posLeaves = stats.leafCount - stats.removedLeafCount;
                 let aveExtractSnapTime = "off";
                 if (extractSnapOps > 0) {
                     aveExtractSnapTime = (extractSnapTime / extractSnapOps).toFixed(1);
                 }
-                console.log(`round: ${roundCount} seq ${server.seq} char count ${server.getLength()} height ${stats.maxHeight} lv ${stats.leafCount} rml ${stats.removedLeafCount} p ${posLeaves} nodes ${stats.nodeCount} pop ${liveAve} histo ${stats.histo}`);
+                console.log(`round: ${roundCount} seq ${testServer.seq} char count ${testServer.getLength()} height ${stats.maxHeight} lv ${stats.leafCount} rml ${stats.removedLeafCount} p ${posLeaves} nodes ${stats.nodeCount} pop ${liveAve} histo ${stats.histo}`);
                 if (extractSnapOps > 0) {
                     aveExtractSnapTime = (extractSnapTime / extractSnapOps).toFixed(1);
                     console.log(`ave extract snap time ${aveExtractSnapTime}`);
                 }
-                reportTiming(server);
+                reportTiming(testServer);
                 if (measureBookmarks) {
                     const timePerRead = (refReadTime / refReads).toFixed(2);
                     const bookmarksPerSeg = (bookmarkCount / stats.leafCount).toFixed(2);
@@ -733,7 +731,7 @@ export function TestPack(verbose = true) {
                     }
                 }
                 reportTiming(clients[2]);
-                let totalTime = server.accumTime + server.accumWindowTime;
+                let totalTime = testServer.accumTime + testServer.accumWindowTime;
                 for (const client of clients) {
                     totalTime += (client.accumTime + client.localTime + client.accumWindowTime);
                 }
@@ -757,7 +755,7 @@ export function TestPack(verbose = true) {
                         randomSpateOfInserts(client, j);
                     }
                 }
-                if (serverProcessSome(server)) {
+                if (serverProcessSome(testServer)) {
                     return;
                 }
                 clientProcessSome(client);
@@ -779,7 +777,7 @@ export function TestPack(verbose = true) {
                         }
                     }
                 }
-                if (serverProcessSome(server)) {
+                if (serverProcessSome(testServer)) {
                     return;
                 }
                 clientProcessSome(client);
@@ -822,7 +820,7 @@ export function TestPack(verbose = true) {
 
         function asyncStep() {
             round(asyncRoundCount);
-            const curmin = server.getCollabWindow().minSeq;
+            const curmin = testServer.getCollabWindow().minSeq;
             if ((!snapInProgress) && (lastSnap < curmin)) {
                 ohSnap("snapit");
             }
@@ -846,7 +844,7 @@ export function TestPack(verbose = true) {
             tail();
         }
         function tail() {
-            reportTiming(server);
+            reportTiming(testServer);
             reportTiming(clients[2]);
             // Console.log(server.getText());
             // console.log(server.mergeTree.toString());
@@ -860,16 +858,16 @@ export function TestPack(verbose = true) {
         const fileSegCount = 0;
         const initString = "don't ask for whom the bell tolls; it tolls for thee";
 
-        const serverA = new TestServer();
-        serverA.measureOps = true;
-        const serverB = new TestServer();
-        serverB.measureOps = true;
+        const testServerA = new TestServer();
+        testServerA.measureOps = true;
+        const testServerB = new TestServer();
+        testServerB.measureOps = true;
         if (startFile) {
-            loadTextFromFile(startFile, serverA.mergeTree, fileSegCount);
-            loadTextFromFile(startFile, serverB.mergeTree, fileSegCount);
+            loadTextFromFile(startFile, testServerA.mergeTree, fileSegCount);
+            loadTextFromFile(startFile, testServerB.mergeTree, fileSegCount);
         } else {
-            serverA.insertTextLocal(0, initString);
-            serverB.insertTextLocal(0, initString);
+            testServerA.insertTextLocal(0, initString);
+            testServerB.insertTextLocal(0, initString);
         }
 
         const clientsA = new Array<TestClient>(clientCountA);
@@ -898,7 +896,7 @@ export function TestPack(verbose = true) {
         }
         for (let i = 0; i < clientCountB; i++) {
             const clientB = clientsB[i];
-            serverB.getOrAddShortClientId(clientB.longClientId, 1);
+            testServerB.getOrAddShortClientId(clientB.longClientId, 1);
             for (let j = 0; j < clientCountB; j++) {
                 const otherBClient = clientsB[j];
                 if (otherBClient !== clientB) {
@@ -906,12 +904,12 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        serverA.startOrUpdateCollaboration("theServerA");
-        serverA.addClients(clientsA);
-        serverA.addListeners([serverB]);
-        serverB.startOrUpdateCollaboration("theServerB", /* minSeq: */ 0, /* currentSeq: */ 0, /* branchId: */ 1);
-        serverB.addClients(clientsB);
-        serverB.addUpstreamClients(clientsA);
+        testServerA.startOrUpdateCollaboration("theServerA");
+        testServerA.addClients(clientsA);
+        testServerA.addListeners([testServerB]);
+        testServerB.startOrUpdateCollaboration("theServerB", /* minSeq: */ 0, /* currentSeq: */ 0, /* branchId: */ 1);
+        testServerB.addClients(clientsB);
+        testServerB.addUpstreamClients(clientsA);
 
         function crossBranchTextMatch(serverA: TestServer, serverB: TestServer, aClientId: string) {
             let clockStart = clock();
@@ -1044,10 +1042,10 @@ export function TestPack(verbose = true) {
 
         function finishRound(roundCount: number) {
             // Process remaining messages
-            if (serverProcessSome(serverA, true)) {
+            if (serverProcessSome(testServerA, true)) {
                 return;
             }
-            if (serverProcessSome(serverB, true)) {
+            if (serverProcessSome(testServerB, true)) {
                 return;
             }
             for (const client of clientsA) {
@@ -1059,15 +1057,15 @@ export function TestPack(verbose = true) {
             const allRounds = false;
             if (allRounds || (0 === (roundCount % 100))) {
                 const clockStart = clock();
-                if (crossBranchTextMatch(serverA, serverB, clientsA[0].longClientId)) {
+                if (crossBranchTextMatch(testServerA, testServerB, clientsA[0].longClientId)) {
                     errorCount++;
                 }
-                if (checkTextMatch(clientsA, serverA)) {
+                if (checkTextMatch(clientsA, testServerA)) {
                     console.log(`round: ${roundCount} BREAK`);
                     errorCount++;
                     return errorCount;
                 }
-                if (checkTextMatch(clientsB, serverB)) {
+                if (checkTextMatch(clientsB, testServerB)) {
                     console.log(`round: ${roundCount} BREAK`);
                     errorCount++;
                     return errorCount;
@@ -1076,18 +1074,18 @@ export function TestPack(verbose = true) {
                 if (verbose) {
                     console.log(`wall clock is ${((Date.now() - startTime) / 1000.0).toFixed(1)}`);
                 }
-                const statsA = serverA.mergeTree.getStats();
-                const statsB = serverB.mergeTree.getStats();
+                const statsA = testServerA.mergeTree.getStats();
+                const statsB = testServerB.mergeTree.getStats();
                 const liveAve = (statsA.liveCount / statsA.nodeCount).toFixed(1);
                 const liveAveB = (statsB.liveCount / statsB.nodeCount).toFixed(1);
 
                 const posLeaves = statsA.leafCount - statsA.removedLeafCount;
                 const posLeavesB = statsB.leafCount - statsB.removedLeafCount;
 
-                console.log(`round: ${roundCount} A> seqA ${serverA.seq} char count ${serverA.getLength()} height ${statsA.maxHeight} lv ${statsA.leafCount} rml ${statsA.removedLeafCount} p ${posLeaves} nodes ${statsA.nodeCount} pop ${liveAve} histo ${statsA.histo}`);
-                console.log(`round: ${roundCount} B> seqB ${serverB.seq} char count ${serverB.getLength()} height ${statsB.maxHeight} lv ${statsB.leafCount} rml ${statsB.removedLeafCount} p ${posLeavesB} nodes ${statsB.nodeCount} pop ${liveAveB} histo ${statsB.histo}`);
-                reportTiming(serverA);
-                reportTiming(serverB);
+                console.log(`round: ${roundCount} A> seqA ${testServerA.seq} char count ${testServerA.getLength()} height ${statsA.maxHeight} lv ${statsA.leafCount} rml ${statsA.removedLeafCount} p ${posLeaves} nodes ${statsA.nodeCount} pop ${liveAve} histo ${statsA.histo}`);
+                console.log(`round: ${roundCount} B> seqB ${testServerB.seq} char count ${testServerB.getLength()} height ${statsB.maxHeight} lv ${statsB.leafCount} rml ${statsB.removedLeafCount} p ${posLeavesB} nodes ${statsB.nodeCount} pop ${liveAveB} histo ${statsB.histo}`);
+                reportTiming(testServerA);
+                reportTiming(testServerB);
                 reportTiming(clientsA[1]);
                 reportTiming(clientsB[1]);
                 const aveGetTextTime = (getTextTime / getTextCalls).toFixed(1);
@@ -1104,7 +1102,7 @@ export function TestPack(verbose = true) {
                 // }
                 console.log(`get text time: ${aveGetTextTime}; ${perLeafAveGetTextTime}/leaf cross: ${aveCrossGetTextTime}; ${perLeafAveCrossGetTextTime}/leaf`);
 
-                let totalTime = serverA.accumTime + serverA.accumWindowTime;
+                let totalTime = testServerA.accumTime + testServerA.accumWindowTime;
                 for (const client of clientsA) {
                     totalTime += (client.accumTime + client.localTime + client.accumWindowTime);
                 }
@@ -1165,8 +1163,8 @@ export function TestPack(verbose = true) {
         let checkTime = 0;
 
         for (let i = 0; i < rounds; i++) {
-            round(i, clientsA, serverA);
-            round(i, clientsB, serverB);
+            round(i, clientsA, testServerA);
+            round(i, clientsB, testServerB);
             finishRound(i);
             if (errorCount > 0) {
                 break;
@@ -1174,7 +1172,7 @@ export function TestPack(verbose = true) {
         }
         tail();
         function tail() {
-            reportTiming(serverA);
+            reportTiming(testServerA);
             reportTiming(clientsA[1]);
             reportTiming(clientsB[1]);
             // Console.log(server.getText());
@@ -2116,10 +2114,10 @@ const docTree = false;
 const chktst = false;
 const clientServerTest = true;
 const tstTest = false;
-const firstTest = false;
+const doFirstTest = false;
 const ivalTest = false;
 
-if (firstTest) {
+if (doFirstTest) {
     const testPack = TestPack(true);
     testPack.firstTest();
 }

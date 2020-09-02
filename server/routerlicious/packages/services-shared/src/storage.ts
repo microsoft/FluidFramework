@@ -11,6 +11,7 @@ import {
     MessageType,
     ITreeEntry,
     ICommittedProposal,
+    ISequencedDocumentMessage,
     ISummaryTree,
     SummaryType,
     SummaryObject,
@@ -28,6 +29,9 @@ import {
     IScribe,
     ITenantManager,
     RawOperationType,
+    SequencedOperationType,
+    ISequencedOperationMessage,
+    IDocument,
 } from "@fluidframework/server-services-core";
 import {
     getQuorumTreeEntries,
@@ -38,7 +42,7 @@ import {
 } from "@fluidframework/protocol-base";
 import * as moniker from "moniker";
 import * as winston from "winston";
-import { gitHashFile } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8, gitHashFile, IsoBuffer, toUtf8, Uint8ArrayToString } from "@fluidframework/common-utils";
 
 const StartingSequenceNumber = 0;
 
@@ -91,8 +95,9 @@ export class DocumentStorage implements IDocumentStorage {
             gitManager.getTree(handle, false),
         ]);
 
-        winston.info(JSON.stringify(protocolTree));
-        winston.info(JSON.stringify(appSummaryTree));
+        const messageMetaData = { documentId, tenantId };
+        winston.info(`protocolTree ${JSON.stringify(protocolTree)}`, { messageMetaData });
+        winston.info(`appSummaryTree ${JSON.stringify(appSummaryTree)}`, { messageMetaData });
 
         // Combine the app summary with .protocol
         const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
@@ -112,8 +117,7 @@ export class DocumentStorage implements IDocumentStorage {
         const commit = await gitManager.createCommit(commitParams);
         await gitManager.createRef(documentId, commit.sha);
 
-        winston.info(JSON.stringify(documentId));
-        winston.info(JSON.stringify(commit.sha));
+        winston.info(`commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
 
         const scribe: IScribe = {
             logOffset: -1,
@@ -199,7 +203,7 @@ export class DocumentStorage implements IDocumentStorage {
             let quorumValues;
             for (const blob of fullTree.blobs) {
                 if (blob.sha === fullTree.quorumValues) {
-                    quorumValues = JSON.parse(Buffer.from(blob.content, blob.encoding).toString()) as
+                    quorumValues = JSON.parse(toUtf8(blob.content, blob.encoding)) as
                         [string, { value: string }][];
 
                     for (const quorumValue of quorumValues) {
@@ -255,7 +259,7 @@ export class DocumentStorage implements IDocumentStorage {
             const branchP = gitManager.upsertRef(name, head.object.sha);
             const [attributesContent] = await Promise.all([attributesContentP, branchP]);
 
-            const attributesJson = Buffer.from(attributesContent.content, "base64").toString("utf-8");
+            const attributesJson = fromBase64ToUtf8(attributesContent.content);
             const attributes = JSON.parse(attributesJson) as IDocumentAttributes;
             minimumSequenceNumber = attributes.minimumSequenceNumber;
             sequenceNumber = attributes.sequenceNumber;
@@ -308,29 +312,97 @@ export class DocumentStorage implements IDocumentStorage {
         return name;
     }
 
+    private async createObject(
+        collection: ICollection<IDocument>,
+        tenantId: string,
+        documentId: string,
+        deli?: string,
+        scribe?: string): Promise<IDocument> {
+        const value: IDocument = {
+            branchMap: undefined,
+            clients: undefined,
+            createTime: Date.now(),
+            deli,
+            documentId,
+            forks: [],
+            logOffset: 0,
+            parent: null,
+            scribe,
+            sequenceNumber: StartingSequenceNumber,
+            tenantId,
+            version: "0.1",
+        };
+        await collection.insertOne(value);
+        return value;
+    }
+
+    // Looks up the DB and summary for the document.
     private async getOrCreateObject(tenantId: string, documentId: string): Promise<IDocumentDetails> {
         const collection = await this.databaseManager.getDocumentCollection();
-        const result = await collection.findOrCreate(
-            {
-                documentId,
-                tenantId,
-            },
-            {
-                branchMap: undefined,
-                clients: undefined,
-                createTime: Date.now(),
-                deli: undefined,
-                documentId,
-                forks: [],
-                logOffset: 0,
-                parent: null,
-                scribe: undefined,
-                sequenceNumber: StartingSequenceNumber,
-                tenantId,
-                version: "0.1",
+        const document = await collection.findOne({ documentId, tenantId });
+        if (document === null) {
+            // Guard against storage failure. Returns false if storage is unresponsive.
+            const foundInSummaryP = this.readFromSummary(tenantId, documentId).then((result) => {
+                return result;
+            }, (err) => {
+                winston.error(`Error while fetching summary for ${tenantId}/${documentId}`);
+                winston.error(err);
+                return false;
             });
 
-        return result;
+            const inSummary = await foundInSummaryP;
+
+            // Setting an empty string to deli and scribe denotes that the checkpoints should be loaded from summary.
+            const value = inSummary ?
+                await this.createObject(collection, tenantId, documentId, "", "") :
+                await this.createObject(collection, tenantId, documentId);
+
+            return {
+                value,
+                existing: inSummary,
+            };
+        } else {
+            return {
+                value: document,
+                existing: true,
+            };
+        }
+    }
+
+    private async readFromSummary(tenantId: string, documentId: string): Promise<boolean> {
+        const tenant = await this.tenantManager.getTenant(tenantId);
+        const gitManager = tenant.gitManager;
+        const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
+        if (existingRef) {
+            // Fetch ops from logTail and insert into deltas collection.
+            // TODO: Make the rest endpoint handle this case.
+            const opsContent = await gitManager.getContent(existingRef.object.sha, ".logTail/logTail");
+            const ops = JSON.parse(
+                Buffer.from(opsContent.content, opsContent.encoding).toString()) as ISequencedDocumentMessage[];
+            const dbOps: ISequencedOperationMessage[] = ops.map((op: ISequencedDocumentMessage) => {
+                return {
+                    documentId,
+                    operation: op,
+                    tenantId,
+                    type: SequencedOperationType,
+                };
+            });
+            const opsCollection = await this.databaseManager.getDeltaCollection(tenantId, documentId);
+            await opsCollection
+                .insertMany(dbOps, false)
+                // eslint-disable-next-line @typescript-eslint/promise-function-async
+                .catch((error) => {
+                    // Duplicate key errors are ignored
+                    if (error.code !== 11000) {
+                        // Needs to be a full rejection here
+                        return Promise.reject(error);
+                    }
+                });
+            winston.info(`Inserted ${dbOps.length} ops into deltas DB`);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -472,16 +544,16 @@ function getIdFromPathCore(
 }
 
 async function writeSummaryBlob(
-    content: string | Buffer,
+    content: string | Uint8Array,
     blobsShaCache: Set<string>,
     manager: IGitManager,
 ): Promise<string> {
     const { parsedContent, encoding } = typeof content === "string"
         ? { parsedContent: content, encoding: "utf-8" }
-        : { parsedContent: content.toString("base64"), encoding: "base64" };
+        : { parsedContent: Uint8ArrayToString(content, "base64"), encoding: "base64" };
 
     // The gitHashFile would return the same hash as returned by the server as blob.sha
-    const hash = gitHashFile(Buffer.from(parsedContent, encoding));
+    const hash = await gitHashFile(IsoBuffer.from(parsedContent, encoding));
     if (!blobsShaCache.has(hash)) {
         const blob = await manager.createBlob(parsedContent, encoding);
         blobsShaCache.add(blob.sha);

@@ -7,13 +7,15 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
+    IContainer,
     IFluidCodeDetails,
     IFluidModule,
     ILoader,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
@@ -21,16 +23,17 @@ import { SharedString } from "@fluidframework/sequence";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     ChannelFactoryRegistry,
+    createAndAttachContainer,
     createLocalLoader,
-    initializeLocalContainer,
     TestContainerRuntimeFactory,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
 /* eslint-enable import/no-extraneous-dependencies */
 
-const id = "fluid-test://localhost/compatibilityTest";
+const documentId = "compatibilityTest";
+const documentLoadUrl = `fluid-test://localhost/${documentId}`;
 const codeDetails: IFluidCodeDetails = {
     package: "compatibilityTestPackage",
     config: {},
@@ -43,21 +46,23 @@ export interface ICompatTestArgs {
     /**
      * Used to create a test Container. In compatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
-    makeTestContainer: (testFluidComponentFactoryRegistry?) => Promise<Container | old.Container>,
+    makeTestContainer: (testFluidDataObjectFactoryRegistry?) => Promise<IContainer | old.IContainer>,
+    loadTestContainer: (testFluidDataObjectFactoryRegistry?) => Promise<IContainer | old.IContainer>,
     deltaConnectionServer?: ILocalDeltaConnectionServer,
+    urlResolver?: IUrlResolver,
 }
 
 export interface ICompatTestOptions {
     /**
-     * Use TestFluidComponent instead of PrimedComponent
+     * Use TestFluidDataObject instead of PrimedDataStore
      */
-    testFluidComponent?: boolean,
+    testFluidDataObject?: boolean,
 }
 
 // TODO: once 0.25 is released this can be replaced with the old imported type
 type OldChannelFactoryRegistry = Iterable<[string | undefined, old.IChannelFactory]>;
 
-// convert a channel factory registry for TestFluidComponentFactory to one with old channel factories
+// convert a channel factory registry for TestFluidDataStoreFactory to one with old channel factories
 function convertRegistry(registry: ChannelFactoryRegistry = []): OldChannelFactoryRegistry {
     const oldRegistry = [];
     for (const [key, factory] of registry) {
@@ -71,88 +76,97 @@ function convertRegistry(registry: ChannelFactoryRegistry = []): OldChannelFacto
     return oldRegistry;
 }
 
-export class TestComponent extends DataObject {
-    public static readonly type = "@fluid-example/test-component";
+export class TestDataObject extends DataObject {
+    public static readonly type = "@fluid-example/test-dataStore";
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
 
-export class OldTestComponent extends old.DataObject {
-    public static readonly type = "@fluid-example/test-component";
+export class OldTestDataObject extends old.DataObject {
+    public static readonly type = "@fluid-example/test-dataStore";
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
 
-export const createPrimedComponentFactory = (): IFluidDataStoreFactory => {
-    return new DataObjectFactory(TestComponent.type, TestComponent, [], {});
+export const createPrimedDataStoreFactory = (): IFluidDataStoreFactory => {
+    return new DataObjectFactory(TestDataObject.type, TestDataObject, [], {});
 };
 
-export const createOldPrimedComponentFactory = (): old.IFluidDataStoreFactory => {
-    return new old.DataObjectFactory(OldTestComponent.type, OldTestComponent, [], {});
+export const createOldPrimedDataStoreFactory = (): old.IFluidDataStoreFactory => {
+    return new old.DataObjectFactory(OldTestDataObject.type, OldTestDataObject, [], {});
 };
 
-export const createTestFluidComponentFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
-    return new TestFluidComponentFactory(registry);
+export const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
+    return new TestFluidObjectFactory(registry);
 };
 
-export const createOldTestFluidComponentFactory = (registry?: ChannelFactoryRegistry): old.IFluidDataStoreFactory => {
-    return new old.TestFluidComponentFactory(convertRegistry(registry));
+export const createOldTestFluidDataStoreFactory = (registry?: ChannelFactoryRegistry): old.IFluidDataStoreFactory => {
+    return new old.TestFluidObjectFactory(convertRegistry(registry));
 };
 
 export const createRuntimeFactory = (
     type: string,
-    componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
+    dataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): IRuntimeFactory => {
-    return new TestContainerRuntimeFactory(type, componentFactory as IFluidDataStoreFactory, runtimeOptions);
+    return new TestContainerRuntimeFactory(type, dataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
 };
 
 // TODO: once 0.25 is released this can import the old version of TestContainerRuntimeFactory used above
 export const createOldRuntimeFactory = (
     type: string,
-    componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
+    dataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): old.IRuntimeFactory => {
-    const builder = new old.RuntimeRequestHandlerBuilder();
-    builder.pushHandler(
-        old.dataStoreRuntimeRequestHandler,
-        old.defaultDataStoreRuntimeRequestHandler("default"));
-
-    return {
-        get IRuntimeFactory() { return this; },
-        instantiateRuntime: async (context: old.IContainerContext) => {
-            const runtime = await old.ContainerRuntime.load(
-                context,
-                [[type, Promise.resolve(componentFactory as old.IFluidDataStoreFactory)]],
-                async (req, rt) => builder.handleRequest(req, rt),
-                runtimeOptions,
-            );
-            if (!runtime.existing) {
-                const componentRuntime = await runtime._createDataStore("default", type);
-                await componentRuntime.request({ url: "/" });
-                componentRuntime.bindToContext();
-            }
-            return runtime;
-        },
-    };
+    return new old.TestContainerRuntimeFactory(type, dataStoreFactory as old.IFluidDataStoreFactory, runtimeOptions);
 };
 
 export async function createContainer(
     fluidModule: IFluidModule | old.IFluidModule,
     deltaConnectionServer: ILocalDeltaConnectionServer,
-): Promise<Container> {
-    const loader: ILoader = createLocalLoader([[codeDetails, fluidModule as IFluidModule]], deltaConnectionServer);
-    return initializeLocalContainer(id, loader, codeDetails);
+    urlResolver: IUrlResolver,
+): Promise<IContainer> {
+    const loader: ILoader = createLocalLoader(
+        [[codeDetails, fluidModule as IFluidModule]],
+        deltaConnectionServer,
+        urlResolver);
+    return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+}
+
+export async function loadContainer(
+    fluidModule: IFluidModule | old.IFluidModule,
+    deltaConnectionServer: ILocalDeltaConnectionServer,
+    urlResolver: IUrlResolver,
+): Promise<IContainer> {
+    const loader: ILoader = createLocalLoader(
+        [[codeDetails, fluidModule as IFluidModule]],
+        deltaConnectionServer,
+        urlResolver);
+    return loader.resolve({ url: documentLoadUrl });
 }
 
 export async function createContainerWithOldLoader(
     fluidModule: IFluidModule | old.IFluidModule,
     deltaConnectionServer: ILocalDeltaConnectionServer,
-): Promise<old.Container> {
+    urlResolver: IUrlResolver,
+): Promise<old.IContainer> {
     const loader = old.createLocalLoader(
         [[codeDetails, fluidModule as old.IFluidModule]],
-        deltaConnectionServer as any);
-    return old.initializeLocalContainer(id, loader, codeDetails);
+        deltaConnectionServer as any,
+        urlResolver);
+    return old.createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+}
+
+export async function loadContainerWithOldLoader(
+    fluidModule: IFluidModule | old.IFluidModule,
+    deltaConnectionServer: ILocalDeltaConnectionServer,
+    urlResolver: IUrlResolver,
+): Promise<old.IContainer> {
+    const loader = old.createLocalLoader(
+        [[codeDetails, fluidModule as old.IFluidModule]],
+        deltaConnectionServer as any,
+        urlResolver);
+    return loader.resolve({ url: documentLoadUrl });
 }
 
 export const compatTest = (
@@ -161,16 +175,27 @@ export const compatTest = (
 ) => {
     describe("old loader, new runtime", function() {
         let deltaConnectionServer: ILocalDeltaConnectionServer;
+        let urlResolver: IUrlResolver;
+        const runtimeFactory = (registry?: ChannelFactoryRegistry) => createRuntimeFactory(
+            TestDataObject.type,
+            options.testFluidDataObject
+                ? createTestFluidDataStoreFactory(registry)
+                : createPrimedDataStoreFactory(),
+        );
+
         const makeTestContainer = async (registry?: ChannelFactoryRegistry) => createContainerWithOldLoader(
             {
-                fluidExport: createRuntimeFactory(
-                    TestComponent.type,
-                    options.testFluidComponent
-                        ? createTestFluidComponentFactory(registry)
-                        : createPrimedComponentFactory(),
-                ),
+                fluidExport: runtimeFactory(registry),
             },
             deltaConnectionServer,
+            urlResolver,
+        );
+        const loadTestContainer = async (registry?: ChannelFactoryRegistry) => loadContainerWithOldLoader(
+            {
+                fluidExport: runtimeFactory(registry),
+            },
+            deltaConnectionServer,
+            urlResolver,
         );
 
         beforeEach(async function() {
@@ -179,13 +204,16 @@ export const compatTest = (
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 { summary: { maxOps: 1 } as ISummaryConfiguration },
             );
+            urlResolver = new LocalResolver();
         });
 
         tests({
             makeTestContainer,
-            // This is a getter because tests() is called before the beforeEach()
-            // callback, at which point deltaConnectionServer is undefined.
+            loadTestContainer,
+            // These are getters because tests() is called before the beforeEach() callback, at which point
+            // these are undefined.
             get deltaConnectionServer() { return deltaConnectionServer; },
+            get urlResolver() { return urlResolver; },
         });
 
         afterEach(async function() {
@@ -195,16 +223,27 @@ export const compatTest = (
 
     describe("new loader, old runtime", function() {
         let deltaConnectionServer: ILocalDeltaConnectionServer;
+        let urlResolver: IUrlResolver;
+        const runtimeFactory = (registry?: ChannelFactoryRegistry) => createOldRuntimeFactory(
+            OldTestDataObject.type,
+            options.testFluidDataObject
+                ? createOldTestFluidDataStoreFactory(registry)
+                : createOldPrimedDataStoreFactory(),
+        );
+
         const makeTestContainer = async (registry: ChannelFactoryRegistry) => createContainer(
             {
-                fluidExport: createOldRuntimeFactory(
-                    OldTestComponent.type,
-                    options.testFluidComponent
-                        ? createOldTestFluidComponentFactory(registry)
-                        : createOldPrimedComponentFactory(),
-                ),
+                fluidExport: runtimeFactory(registry),
             },
             deltaConnectionServer,
+            urlResolver,
+        );
+        const loadTestContainer = async (registry: ChannelFactoryRegistry) => loadContainer(
+            {
+                fluidExport: runtimeFactory(registry),
+            },
+            deltaConnectionServer,
+            urlResolver,
         );
 
         beforeEach(async function() {
@@ -213,11 +252,14 @@ export const compatTest = (
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 { summary: { maxOps: 1 } as ISummaryConfiguration },
             );
+            urlResolver = new LocalResolver();
         });
 
         tests({
             makeTestContainer,
+            loadTestContainer,
             get deltaConnectionServer() { return deltaConnectionServer; },
+            get urlResolver() { return urlResolver; },
         });
 
         afterEach(async function() {
@@ -227,16 +269,27 @@ export const compatTest = (
 
     describe("new ContainerRuntime, old DataStoreRuntime", function() {
         let deltaConnectionServer: ILocalDeltaConnectionServer;
+        let urlResolver: IUrlResolver;
+        const runtimeFactory = (registry?: ChannelFactoryRegistry) => createRuntimeFactory(
+            OldTestDataObject.type,
+            options.testFluidDataObject
+                ? createOldTestFluidDataStoreFactory(registry)
+                : createOldPrimedDataStoreFactory(),
+        );
+
         const makeTestContainer = async (registry: ChannelFactoryRegistry) => createContainer(
             {
-                fluidExport: createRuntimeFactory(
-                    OldTestComponent.type,
-                    options.testFluidComponent
-                        ? createOldTestFluidComponentFactory(registry)
-                        : createOldPrimedComponentFactory(),
-                ),
+                fluidExport: runtimeFactory(registry),
             },
             deltaConnectionServer,
+            urlResolver,
+        );
+        const loadTestContainer = async (registry: ChannelFactoryRegistry) => loadContainer(
+            {
+                fluidExport: runtimeFactory(registry),
+            },
+            deltaConnectionServer,
+            urlResolver,
         );
 
         beforeEach(async function() {
@@ -245,11 +298,14 @@ export const compatTest = (
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 { summary: { maxOps: 1 } as ISummaryConfiguration },
             );
+            urlResolver = new LocalResolver();
         });
 
         tests({
             makeTestContainer,
+            loadTestContainer,
             get deltaConnectionServer() { return deltaConnectionServer; },
+            get urlResolver() { return urlResolver; },
         });
 
         afterEach(async function() {

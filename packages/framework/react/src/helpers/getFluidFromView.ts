@@ -5,8 +5,8 @@
 
 import {
     IFluidConverter,
-    IFluidFunctionalComponentViewState,
-    IFluidFunctionalComponentFluidState,
+    IViewState,
+    IFluidState,
 } from "../interface";
 
 /**
@@ -18,8 +18,8 @@ import {
  * respective converters
  */
 export function getFluidFromView<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     state: SV,
     viewKey: keyof SV,

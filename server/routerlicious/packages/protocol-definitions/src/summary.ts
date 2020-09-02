@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Buffer } from "buffer";
-
 export type SummaryObject = ISummaryCommit | ISummaryTree | ISummaryBlob | ISummaryHandle;
 
 export type SummaryTree = ISummaryTree | ISummaryHandle;
@@ -41,7 +39,7 @@ export interface ISummaryHandle {
 
 export interface ISummaryBlob {
     type: SummaryType.Blob;
-    content: string | Buffer;
+    content: string | Uint8Array;
 }
 
 export interface ISummaryTree {

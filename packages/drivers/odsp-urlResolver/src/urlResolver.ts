@@ -32,7 +32,7 @@ export class OdspUrlResolver implements IUrlResolver {
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
     ): Promise<string> {
-        throw new Error("Not implmented");
+        throw new Error("Not implemented");
     }
 }
 

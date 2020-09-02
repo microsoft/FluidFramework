@@ -16,14 +16,14 @@
     "webpack": "webpack"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.24.0",
-    "@fluidframework/map": "^0.24.0",
-    "@fluidframework/view-interfaces": "^0.24.0",
+    "@fluidframework/aqueduct": "^0.26.0-0",
+    "@fluidframework/map": "^0.26.0-0",
+    "@fluidframework/view-interfaces": "^0.26.0-0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },
   "devDependencies": {
-    "@fluidframework/webpack-component-loader": "^0.24.0",
+    "@fluidframework/webpack-fluid-loader": "^0.26.0-0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
@@ -35,7 +35,7 @@
     "jest-junit": "^10.0.0",
     "jest-puppeteer": "^4.3.0",
     "puppeteer": "^1.20.0",
-    "ts-jest": "24.1.0",
+    "ts-jest": "^26.2.0",
     "ts-loader": "^4.5.0",
     "typescript": "~3.7.4",
     "webpack": "^4.43.0",

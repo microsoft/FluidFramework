@@ -10,7 +10,7 @@ parameters:
 - name: THIS_VERSION
   type: string
 
-- name: MASTER_BRANCH_VERSION
+- name: MAIN_BRANCH_VERSION
   type: string
 
 - name: N1_VERSION
@@ -52,7 +52,7 @@ steps:
     echo BASE_URL: $(BASE_URL)
     echo THIS_VERSION: $(THIS_VERSION)
     echo RELEASE_VERSION: $(RELEASE_VERSION)
-    echo MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+    echo MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
     echo N1_VERSION: $(N1_VERSION)
   displayName: Show Template Variables
 
@@ -66,19 +66,18 @@ steps:
     OverWrite: false
     flattenFolders: true
     CleanTargetFolder: true
-
-- task: npmAuthenticate@0
-  displayName: 'npm Authenticate root .npmrc'
+    
+- task: UseNode@1
+  displayName: Use Node 12.x
   inputs:
-    workingFile: .npmrc
+    version: 12.x
 
 - task: Npm@1
   displayName: npm ci
   inputs:
     command: 'custom'
     customCommand: 'ci --ignore-scripts'
-    customRegistry: 'useFeed'
-    customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+    customRegistry: 'useNpmrc'
 
 # Build the docs site
 - task: Docker@2
@@ -93,7 +92,7 @@ steps:
       --build-arg BASE_URL=${{ parameters.BASE_URL }}
       --build-arg VUEPRESS_BASE=${{ parameters.VUEPRESS_BASE }}
       --build-arg THIS_VERSION=${{ parameters.THIS_VERSION }}
-      --build-arg MASTER_BRANCH_VERSION=${{ parameters.MASTER_BRANCH_VERSION }}
+      --build-arg MAIN_BRANCH_VERSION=${{ parameters.MAIN_BRANCH_VERSION }}
       --build-arg RELEASE_VERSION=${{ parameters.RELEASE_VERSION }}
       --build-arg N1_VERSION=${{ parameters.N1_VERSION }}
     tags: |

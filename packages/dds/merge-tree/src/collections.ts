@@ -4,8 +4,9 @@
  */
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, object-shorthand */
-/* eslint-disable no-bitwise, no-param-reassign, no-shadow */
+/* eslint-disable no-bitwise, no-param-reassign */
 
+import { Trace } from "@fluidframework/common-utils";
 import * as Base from "./base";
 import * as MergeTree from "./mergeTree";
 
@@ -264,10 +265,10 @@ export class Heap<T> {
 
 // For testing
 export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDictionary<TKey, TData> {
-    const a: Base.Property<TKey, TData>[] = [];
+    const props: Base.Property<TKey, TData>[] = [];
     const compareProps = (a: Base.Property<TKey, TData>, b: Base.Property<TKey, TData>) => compareKeys(a.key, b.key);
     function diag() {
-        console.log(`size is ${a.length}`);
+        console.log(`size is ${props.length}`);
     }
     function mapRange<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
         if (start === undefined) {
@@ -276,13 +277,13 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
         if (end === undefined) {
             end = max().key;
         }
-        for (let i = 0, len = a.length; i < len; i++) {
-            if (compareKeys(start, a[i].key) <= 0) {
-                const ecmp = compareKeys(end, a[i].key);
+        for (let i = 0, len = props.length; i < len; i++) {
+            if (compareKeys(start, props[i].key) <= 0) {
+                const ecmp = compareKeys(end, props[i].key);
                 if (ecmp < 0) {
                     break;
                 }
-                if (!action(a[i], accum)) {
+                if (!action(props[i], accum)) {
                     break;
                 }
             }
@@ -294,20 +295,20 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
     }
 
     function min() {
-        if (a.length > 0) {
-            return a[0];
+        if (props.length > 0) {
+            return props[0];
         }
     }
     function max() {
-        if (a.length > 0) {
-            return a[a.length - 1];
+        if (props.length > 0) {
+            return props[props.length - 1];
         }
     }
 
     function get(key: TKey) {
-        for (let i = 0, len = a.length; i < len; i++) {
-            if (a[i].key == key) {
-                return a[i];
+        for (let i = 0, len = props.length; i < len; i++) {
+            if (props[i].key == key) {
+                return props[i];
             }
         }
     }
@@ -318,18 +319,18 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
                 remove(key);
             }
             else {
-                a.push({ key, data });
-                a.sort(compareProps); // Go to insertion sort if too slow
+                props.push({ key, data });
+                props.sort(compareProps); // Go to insertion sort if too slow
             }
         }
     }
     function remove(key: TKey) {
         if (key !== undefined) {
-            for (let i = 0, len = a.length; i < len; i++) {
-                if (a[i].key == key) {
-                    a[i] = a[len - 1];
-                    a.length--;
-                    a.sort(compareProps);
+            for (let i = 0, len = props.length; i < len; i++) {
+                if (props[i].key == key) {
+                    props[i] = props[len - 1];
+                    props.length--;
+                    props.sort(compareProps);
                     break;
                 }
             }
@@ -951,18 +952,18 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
         let buf = "";
         let indentAmt = 0;
         const actions = {
-            pre: (node: IntegerRangeNode) => {
+            pre: (n: IntegerRangeNode) => {
                 let red = "";
-                if (node.color === RBColor.RED) {
+                if (n.color === RBColor.RED) {
                     red = "R ";
                 }
                 buf += MergeTree.internedSpaces(indentAmt);
                 // eslint-disable-next-line max-len
-                buf += `${red}key: ${integerRangeToString(node.key)} minmax: ${integerRangeToString(node.data.minmax)}\n`;
+                buf += `${red}key: ${integerRangeToString(n.key)} minmax: ${integerRangeToString(n.data.minmax)}\n`;
                 indentAmt += 2;
                 return true;
             },
-            post: (node: IntegerRangeNode) => {
+            post: (n: IntegerRangeNode) => {
                 indentAmt -= 2;
                 return true;
             },
@@ -1049,9 +1050,9 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
             };
         }
         if (this.timePut) {
-            const clockStart = MergeTree.clock();
+            const trace = Trace.start();
             this.intervals.put(x, { minmax: x.clone() }, rbConflict);
-            this.putTime += MergeTree.elapsedMicroseconds(clockStart);
+            this.putTime += trace.trace().duration * 1000;
             this.putCount++;
         } else {
             this.intervals.put(x, { minmax: x.clone() }, rbConflict);

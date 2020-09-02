@@ -1,16 +1,31 @@
 # Breaking changes
 
 ## 0.25 Breaking Changes
+- [External Component Loader and IComponentDefaultFactoryName removed](#External-Component-Loader-and-IComponentDefaultFactoryName-removed)
+- [MockFluidDataStoreRuntime api rename](#MockFluidDataStoreRuntime-api-rename)
+- [Local Web Host API change](#Local-Web-Host-API-change)
 - [Container runtime event changes](#Container-runtime-event-changes)
 - [Component is removed from telemetry event names](#Component-is-removed-from-telemetry-event-names)
 - [IComponentContextLegacy is removed](#IComponentContextLegacy-is-removed)
 - [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
-- [createDataStoreWithRealizationFn() APIs moved](#createDataStoreWithRealizationFn()-APIs-moved)
+- [createDataStoreWithRealizationFn() APIs are removed](#createDataStoreWithRealizationFn()-APIs-are-removed)
+- [getDataStore() APIs is removed](#getDataStore()-APIs-is-removed)
 - [Package Renames](#package-renames)
 - [IComponent and IComponent Interfaces Removed](#IComponent-and-IComponent-Interfaces-Removed)
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
 - [LastEditedTrackerComponent renamed to LastEditedTrackerDataObject](#lasteditedtrackercomponent-renamed)
+- [ComponentProvider renamed to FluidObjectProvider in @fluidframework/synthesize](#componentProvider-renamed-to-fluidobjectPpovider)
+
+
+### External Component Loader and IComponentDefaultFactoryName removed
+The @fluidframework/external-component-loader package has been removed from the repo. In addition to this, the IFluidExportDefaultFactoryName and the corresponding IProvideFluidExportDefaultFactoryName interfaces have also been dropped.
+
+### MockFluidDataStoreRuntime api rename
+Runtime Test Utils's MockFluidDataStoreRuntime now has "requestDataStore" instead of "requestComponent"
+
+### Local Web Host API change
+The renderDefaultComponent function has been updated to be renderDefaultFluidObject
 
 ### Container runtime event changes
 Container runtime now emits the event "fluidDataStoreInstantiated" instead of "componentInstantiated"
@@ -27,7 +42,7 @@ Deprecated in 0.18, removed.
 
 ### IContainerRuntimeBase._createDataStoreWithProps is removed
 `IContainerRuntimeBase._createDataStoreWithProps()` has been removed. Please use `IContainerRuntimeBase.createDataStore()` (returns IFluidRouter).
-If you need to pass props to data store, either use request() route to pass initial props directly, or to query fluid object to interact with it (pass props / call methods to configure object).
+If you need to pass props to data store, either use request() route to pass initial props directly, or to query Fluid object to interact with it (pass props / call methods to configure object).
 
 ### _createDataStore APIs are removed
 `IFluidDataStoreContext._createDataStore()` & `IContainerRuntimeBase._createDataStore()` are removed
@@ -35,15 +50,22 @@ Please switch to using one of the following APIs:
 1. `IContainerRuntime.createRootDataStore()` - data store created that way is automatically bound to container. It will immediately be visible to remote clients (when/if container is attached). Such data stores are never garbage collected. Note that this API is on `IContainerRuntime` interface, which is not directly accessible to data stores. The intention is that only container owners are creating roots.
 2. `IContainerRuntimeBase.createDataStore()` - creates data store that is not bound to container. In order for this store to be bound to container (and thus be observable on remote clients), ensure that handle to it (or any of its objects / DDS) is stored into any other DDS that is already bound to container. In other words, newly created data store has to be reachable (there has to be a path) from some root data store in container. If, in future, such data store becomes unreachable from one of the roots, it will be garbage collected (implementation pending).
 
-### createDataStoreWithRealizationFn() APIs moved
+### createDataStoreWithRealizationFn() APIs are removed
 Removed from IFluidDataStoreContext  & IContainerRuntime.
-Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altogether in same release (more info to follow)
+Consider using (Pure)DataObject(Factory) for your objects - they support passing initial args.
+Otherwise consider implementing similar flow of exposing interface from your Fluid object that is used to initialize object after creation.
+
+## getDataStore() APIs is removed
+IContainerRuntime.getDataStore() is removed. Only IContainerRuntime.getRootDataStore() is available to retrieve root data stores.
+For couple versions we will allow retrieving non-root data stores using this API, but this functionality is temporary and will be removed soon.
+You can use handleFromLegacyUri() for creating handles from container-internal URIs (i.e., in format `/${dataStoreId}`) and resolving those containers to get to non-root data stores. Please note that this functionality is strictly added for legacy files! In future, not using handles to refer to content (and storing handles in DDSes) will result in such data stores not being reachable from roots, and thus garbage collected (deleted) from file.
 
 ### Package Renames
 As a follow up to the changes in 0.24 we are updating a number of package names
 - `@fluidframework/core-interfaces` is renamed to `@fluidframework/core-interfaces`
 - `@fluidframework/datastore-definitions` is renamed to `@fluidframework/datastore-definitions`
 - `@fluidframework/datastore` is renamed to `@fluidframework/datastore`
+- `@fluidframework/webpack-component-loader` is renamed to `@fluidframework/webpack-fluid-loader`
 
 ### IComponent and IComponent Interfaces Removed
 In 0.24 IComponent and IComponent interfaces were deprecated, they are being removed in this build. Please move to IFluidObject and IFluidObject interfaces.
@@ -53,6 +75,17 @@ To support additional authentication scenarios, the signature and/or name of a f
 
 ### LastEditedTrackerComponent renamed
 It is renamed to LastEditedTrackerDataObject
+
+### ComponentProvider renamed to FluidObjectProvider
+
+In the package @fluidframework/synthesize, these types are renamed:
+
+ComponentKey -> FluidObjectKey
+ComponentSymbolProvider -> FluidObjectProvider
+AsyncRequiredcomponentProvider -> AsyncRequiredFluidObjectProvider
+AsyncOptionalComponentProvider -> AsyncOptionalFluidObjectProvider
+AsyncComponentProvider -> AsyncFluidObjectProvider
+NonNullableComponent -> NonNullableFluidObject
 
 ## 0.24 Breaking Changes
 This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
@@ -93,7 +126,7 @@ All renames are 1-1, and global case senstive and whole word find replace for al
     },
 
     "aquaduct":{
-        "icomponentInterfaces":{
+        "IComponentInterfaces":{
             "IProvideComponentDefaultFactoryName": "IProvideFluidExportDefaultFactoryName",
             "IComponentDefaultFactoryName": "IFluidExportDefaultFactoryName"
         },
@@ -121,7 +154,7 @@ All renames are 1-1, and global case senstive and whole word find replace for al
     },
 
     "fluidObject":{
-        "icomponentInterfaces":{
+        "IComponentInterfaces":{
 
             "IProvideComponentRouter": "IProvideFluidRouter",
             "IComponentRouter": "IFluidRouter",
@@ -176,7 +209,7 @@ All renames are 1-1, and global case senstive and whole word find replace for al
 
             "SharedObjectComponentHandle": "SharedObjectHandle",
             "RemoteComponentHandle": "RemoteFluidObjectHandle",
-            "ComponentHandle": "FluidOjectHandle",
+            "ComponentHandle": "FluidObjectHandle",
             "ComponentSerializer": "FluidSerializer",
 
             "ComponentHandleContext": "FluidHandleContext",
@@ -306,7 +339,7 @@ getAbsoluteUrl on the container runtime and component context now returns `strin
 import { waitForAttach } from "@fluidframework/aqueduct";
 
 
-protected async componentHasInitialized() {
+protected async hasInitialized() {
         waitForAttach(this.runtime)
             .then(async () => {
                 const url = await this.context.getAbsoluteUrl(this.url);
@@ -405,7 +438,7 @@ aqueduct-react is actually just a react library and renamed it to reflect such.
 - [Package rename from `@microsoft/fluid-*` to `@fluidframework/*`](#package-rename)
 
 ### Package rename
-Package with the prefix "@microsoft/fluid-" is renamed to "@fluidframework/" to take advanage a separate namespace for fluid framework SDK packages.
+Package with the prefix "@microsoft/fluid-" is renamed to "@fluidframework/" to take advanage a separate namespace for Fluid Framework SDK packages.
 
 ### Container Error Event
 "error" event is gone. All critical errors are raised on "closed" event via optiona error object.

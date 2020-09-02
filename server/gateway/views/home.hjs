@@ -12,14 +12,14 @@
         Documentation for Routerlicious will be available at <a
             href="https://www.FluidFramework.com">FluidFramework.com</a>.
         There's also documentation in the <a
-            href="https://github.com/microsoft/FluidFramework/tree/master/server/routerlicious">Routerlicious README</a>.
+            href="https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious">Routerlicious README</a>.
     </p>
 
     <h2>Using Fluid Framework with the Webpack Component Loader</h2>
     <p>
         If you'd like to use Routerlicious with the Fluid Framework Webpack Dev Server,
-        run the webpack-dev-server with the <a href="https://github.com/microsoft/FluidFramework/tree/master/packages/tools/webpack-component-loader"> 
-        Webpack-Component-Loader</a> plugin and pass in the docker environment variable.
+        run the webpack-dev-server with the <a href="https://github.com/microsoft/FluidFramework/tree/main/packages/tools/webpack-fluid-loader">
+        webpack-fluid-loader</a> plugin and pass in the docker environment variable.
 
         For instance, you can add the below to your bootstrapped package.json.
     <div style="color:#005cc5;font-family:monospace;padding-left:50px">
@@ -28,18 +28,6 @@
 
         </p>
     </div>
-    </p>
-
-    <h3>Component Waterpark</h3>
-    <p>
-        The Component Waterpark is a place to explore, test, and share components.
-        It can load any component made with "yo fluid" and published to a local instance of <a href="https://verdaccio.org/">Verdaccio</a>.
-
-        We document our usage of Verdaccio in the <a
-            href="https://github.com/microsoft/FluidFramework/tree/master/server/routerlicious">Routerlicious README</a>.
-        <br>
-        <a href="/waterpark">Water Park</a>
-    </p>
     </p>
 </div>
 {{/content}}

@@ -1,7 +1,8 @@
 {
   "name": "@fluidframework/test-tools",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fluid test tools",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

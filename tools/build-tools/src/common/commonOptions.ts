@@ -20,8 +20,8 @@ export const commonOptions : CommonOptions = {
 }
 
 export const commonOptionString =
-`     --defroot <path> Default root directory of the fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
-     --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
+`     --defroot <path> Default root directory of the Fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
+     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
      --timer          Measure elapsed time of each step
      --logtime        Display the current time on every status message for logging
   -v --verbose        Verbose messages

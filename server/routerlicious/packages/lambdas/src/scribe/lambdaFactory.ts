@@ -20,8 +20,11 @@ import {
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
+import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
-import { fetchLatestSummaryState, initializeProtocol } from "./summaryHelper";
+import { SummaryReader } from "./summaryReader";
+import { SummaryWriter } from "./summaryWriter";
+import { initializeProtocol } from "./utils";
 
 const DefaultScribe: IScribe = {
     lastClientSummaryHead: undefined,
@@ -55,8 +58,9 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         const tenant = await this.tenantManager.getTenant(tenantId);
         const gitManager = tenant.gitManager;
 
+        const summaryReader = new SummaryReader(documentId, gitManager);
         const [latestSummary, document] = await Promise.all([
-            fetchLatestSummaryState(gitManager, documentId, context.log),
+            summaryReader.readLastSummary(),
             this.documentCollection.findOne({ documentId, tenantId }),
         ]);
 
@@ -74,38 +78,54 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
         let opMessages = dbMessages.map((message) => message.operation);
 
+        let lastCheckpoint: IScribe;
+
         // Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
         if (document.scribe === undefined || document.scribe === null) {
             context.log.info(`New document. Setting empty scribe checkpoint`, { messageMetaData });
-            document.scribe = JSON.stringify(DefaultScribe);
+            lastCheckpoint = DefaultScribe;
             opMessages = [];
         } else if (document.scribe === "") {
+            context.log.info(`Existing document. Fetching checkpoint from summary`, { messageMetaData });
             if (!latestSummary.fromSummary) {
-                context.log.error(`Required summary can't be fetched for`, { messageMetaData });
-                document.scribe = JSON.stringify(DefaultScribe);
+                context.log.error(`Summary can't be fetched`, { messageMetaData });
+                lastCheckpoint = DefaultScribe;
                 opMessages = [];
             } else {
-                context.log.info(`Loading scribe state from service summary`, { messageMetaData });
-                document.scribe = latestSummary.scribe;
+                lastCheckpoint = JSON.parse(latestSummary.scribe);
                 opMessages = latestSummary.messages;
+                // Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.
+                // Currently the lambda checkpoints only after updating the logOffset so setting this to lower
+                // is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
+                // the sequence number is 'n' rather than '0'.
+                lastCheckpoint.logOffset = -1;
+                context.log.info(JSON.stringify(lastCheckpoint));
             }
         } else {
-            context.log.info(`Loading scribe state from cache`, { messageMetaData });
+            lastCheckpoint = JSON.parse(document.scribe);
         }
 
-        const term = latestSummary.fromSummary ? latestSummary.term : 1;
-        const scribe: IScribe = JSON.parse(document.scribe);
-        const protocolHandler = initializeProtocol(document.documentId, scribe.protocolState, term);
+        const protocolHandler = initializeProtocol(
+            document.documentId,
+            lastCheckpoint.protocolState,
+            latestSummary.term);
+
+        const summaryWriter = new SummaryWriter(tenantId, documentId, gitManager, this.messageCollection);
+        const checkpointManager = new CheckpointManager(
+            tenantId,
+            documentId,
+            this.documentCollection,
+            this.messageCollection);
 
         return new ScribeLambda(
             context,
-            this.documentCollection,
-            this.messageCollection,
             document.tenantId,
             document.documentId,
-            scribe,
-            gitManager,
+            summaryWriter,
+            summaryReader,
+            checkpointManager,
+            lastCheckpoint,
             this.producer,
             protocolHandler,
             latestSummary.term,

@@ -84,6 +84,11 @@ export interface IGenericNetworkError extends IDriverErrorBase {
     readonly statusCode?: number;
 }
 
+export interface IAuthorizationError extends IDriverErrorBase {
+    readonly errorType: DriverErrorType.authorizationError;
+    readonly claims?: string;
+}
+
 /**
  * Having this uber interface without types that have their own interfaces
  * allows compiler to differentiate interfaces based on error type
@@ -104,4 +109,5 @@ export interface IDriverBasicError extends IDriverErrorBase {
 export type DriverError =
     | IThrottlingWarning
     | IGenericNetworkError
+    | IAuthorizationError
     | IDriverBasicError;

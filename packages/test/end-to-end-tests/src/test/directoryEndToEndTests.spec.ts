@@ -3,70 +3,75 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { MessageType } from "@fluidframework/protocol-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    createAndAttachContainer,
     createLocalLoader,
     OpProcessingController,
-    ITestFluidComponent,
-    initializeLocalContainer,
-    TestFluidComponentFactory,
+    ITestFluidObject,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 describe("Directory", () => {
-    const id = "fluid-test://localhost/directoryTest";
+    const documentId = "directoryTest";
+    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const directoryId = "directoryKey";
     const codeDetails: IFluidCodeDetails = {
         package: "sharedDirectoryTestPackage",
         config: {},
     };
+    const factory = new TestFluidObjectFactory([[directoryId, SharedDirectory.getFactory()]]);
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
+    let urlResolver: IUrlResolver;
     let opProcessingController: OpProcessingController;
-    let component1: ITestFluidComponent;
+    let dataObject1: ITestFluidObject;
     let sharedDirectory1: ISharedDirectory;
     let sharedDirectory2: ISharedDirectory;
     let sharedDirectory3: ISharedDirectory;
 
-    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
-        }
-        return response.value as ITestFluidComponent;
+    async function createContainer(): Promise<IContainer> {
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
     }
 
-    async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[directoryId, SharedDirectory.getFactory()]]);
-        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-        return initializeLocalContainer(id, loader, codeDetails);
+    async function loadContainer(): Promise<IContainer> {
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        return loader.resolve({ url: documentLoadUrl });
     }
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
+        urlResolver = new LocalResolver();
 
+        // Create a Container for the first client.
         const container1 = await createContainer();
-        component1 = await requestFluidObject("default", container1);
-        sharedDirectory1 = await component1.getSharedObject<SharedDirectory>(directoryId);
+        dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(directoryId);
 
-        const container2 = await createContainer();
-        const component2 = await requestFluidObject("default", container2);
-        sharedDirectory2 = await component2.getSharedObject<SharedDirectory>(directoryId);
+        // Load the Container that was created by the first client.
+        const container2 = await loadContainer();
+        const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(directoryId);
 
-        const container3 = await createContainer();
-        const component3 = await requestFluidObject("default", container3);
-        sharedDirectory3 = await component3.getSharedObject<SharedDirectory>(directoryId);
+        // Load the Container that was created by the first client.
+        const container3 = await loadContainer();
+        const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        sharedDirectory3 = await dataObject3.getSharedObject<SharedDirectory>(directoryId);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
         opProcessingController.addDeltaManagers(
-            component1.runtime.deltaManager,
-            component2.runtime.deltaManager,
-            component3.runtime.deltaManager);
+            dataObject1.runtime.deltaManager,
+            dataObject2.runtime.deltaManager,
+            dataObject3.runtime.deltaManager);
 
         await opProcessingController.process();
     });
@@ -310,7 +315,7 @@ describe("Directory", () => {
 
         describe("Nested map support", () => {
             it("supports setting a map as a value", async () => {
-                const newMap = SharedMap.create(component1.runtime);
+                const newMap = SharedMap.create(dataObject1.runtime);
                 sharedDirectory1.set("mapKey", newMap.handle);
 
                 await opProcessingController.process();
@@ -573,7 +578,7 @@ describe("Directory", () => {
 
             it("can process set in local state", async () => {
                 // Create a new directory in local (detached) state.
-                const newDirectory1 = SharedDirectory.create(component1.runtime);
+                const newDirectory1 = SharedDirectory.create(dataObject1.runtime);
 
                 // Set a value while in local state.
                 newDirectory1.set("newKey", "newValue");
@@ -610,7 +615,7 @@ describe("Directory", () => {
 
             it("can process sub directory ops in local state", async () => {
                 // Create a new directory in local (detached) state.
-                const newDirectory1 = SharedDirectory.create(component1.runtime);
+                const newDirectory1 = SharedDirectory.create(dataObject1.runtime);
 
                 // Create a sub directory while in local state.
                 const subDirName = "testSubDir";

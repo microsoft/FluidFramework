@@ -10,13 +10,13 @@ This directory contains our reference server implementation. [Routerlicious](./r
 
 [Charts](./charts) Kubernetes charts for some micro-services
 
-[Gateway](./gateway) Internal landing page for Fluid, hosts Waterpark
+[Gateway](./gateway) Internal landing page for the Fluid server
 
 [Gitrest](./gitrest) provides a REST API to a GitHub repository. Its API is based off of GitHub's REST APIs.
 
 [Gitssh](./gitssh) is a git ssh server client container.
 
-[Headless-agent](./headless-agent) loads Fluid components on a headless chromium browser.
+[Headless-agent](./headless-agent) loads Fluid data stores on a headless chromium browser.
 
 [Historian](./historian) provides a REST API to git repositories. The API is similar to that exposed by GitHub but can be used in local development.
 
@@ -52,7 +52,7 @@ For development, you'll also need to give docker access to your drive (Shared Dr
   * Allocate more RAM
 
 ## Routerlicious for Local Development
-### With Webpack Dev Server && the Webpack Component Loader (Yo-Fluid Output)
+### With Webpack Dev Server && the Webpack Fluid Loader (Yo-Fluid Output)
 
 To use Routerlicious with a Yo-Fluid container, you should start the Routerlicious docker containers, and then start the webpack dev server with the docker env command.
 ```
@@ -65,5 +65,5 @@ Gateway is an example of a service providing its own Fluid Container host. [Gate
 
 You can access this loader by using the following URL Schema
 ```
-https://localhost:3000/loader/fluid/${container-identifier}?chaincode=${component-package-name}@${version}
+https://localhost:3000/loader/fluid/${container-identifier}?chaincode=${data-store-package-name}@${version}
 ```

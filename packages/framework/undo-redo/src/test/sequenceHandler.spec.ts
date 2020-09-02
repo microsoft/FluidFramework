@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import {
     MockContainerRuntimeFactory,
@@ -15,7 +15,7 @@ import { UndoRedoStackManager } from "../undoRedoStackManager";
 
 const text =
     // eslint-disable-next-line max-len
-    "The SharedSegementSequenceRevertable does the heavy lifting of tracking and reverting changes on the underlying SharedSegementSequence. This is accomplished via TrackingGroup objects.";
+    "The SharedSegementSequenceRevertible does the heavy lifting of tracking and reverting changes on the underlying SharedSegementSequence. This is accomplished via TrackingGroup objects.";
 
 function insertTextAsChunks(sharedString: SharedString, targetLength = text.length) {
     let chunks = 0;

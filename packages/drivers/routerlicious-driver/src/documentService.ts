@@ -29,7 +29,7 @@ export class DocumentService implements api.IDocumentService {
         private readonly disableCache: boolean,
         private readonly historianApi: boolean,
         private readonly directCredentials: ICredentials | undefined,
-        private readonly gitCache: IGitCache | null | undefined,
+        private readonly gitCache: IGitCache | undefined,
         protected tokenProvider: TokenProvider,
         protected tenantId: string,
         protected documentId: string,
@@ -66,7 +66,7 @@ export class DocumentService implements api.IDocumentService {
         const gitManager = new GitManager(historian);
 
         // Insert cached seed data
-        if (this.gitCache) {
+        if (this.gitCache !== undefined) {
             for (const ref of Object.keys(this.gitCache.refs)) {
                 gitManager.addRef(ref, this.gitCache.refs[ref]);
             }
