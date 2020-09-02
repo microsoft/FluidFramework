@@ -1,7 +1,7 @@
 ---
 title: Total Order Broadcast & Eventual Consistency
 draft: false
-menuPosition: 2
+menuPosition: 1
 ---
 
 ## Fluid Data: Operations all the way down

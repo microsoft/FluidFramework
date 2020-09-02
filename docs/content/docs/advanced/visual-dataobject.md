@@ -1,6 +1,6 @@
 ---
 title: How to write a visual data store
-menuPosition: 3
+menuPosition: 2
 draft: false
 ---
 
