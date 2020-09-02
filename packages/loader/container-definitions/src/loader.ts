@@ -98,7 +98,8 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     /**
-     * The Quorum of connected clients participating in the Container's collab window
+     * The collection of clients which were connected as of the current sequence number.
+     * Also contains a map of key-value pairs that must be agreed upon by all clients before being accepted.
      */
     getQuorum(): IQuorum;
 
