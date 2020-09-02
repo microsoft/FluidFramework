@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {  createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -61,7 +62,7 @@ const testSharedDataObjectFactory2 = new DataObjectFactory(
 
 describe("Loader.request", () => {
     const documentId = "loaderRequestTest";
-    const id = "fluid-test://localhost/loderRequestTest";
+    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const codeDetails: IFluidCodeDetails = {
         package: "loaderRequestTestPackage",
         config: {},
@@ -74,11 +75,6 @@ describe("Loader.request", () => {
     let urlResolver: IUrlResolver;
 
     async function createContainer(): Promise<IContainer> {
-        loader = createLocalLoader([[codeDetails, testSharedDataObjectFactory1]], deltaConnectionServer, urlResolver);
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
-    }
-
-    async function resetLoader() {
         const runtimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
@@ -88,42 +84,50 @@ describe("Loader.request", () => {
                 ],
             );
         loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
-        await createContainer();
+        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
     }
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        await resetLoader();
-        const url = `${id}/default`;
-        dataStore1 = await requestFluidObject(loader, url);
+        urlResolver = new LocalResolver();
+
+        const container = await createContainer();
+        dataStore1 = await requestFluidObject(container, "default");
 
         dataStore2 = await testSharedDataObjectFactory2.createInstance(dataStore1._context.containerRuntime);
+
         // this binds dataStore2 to dataStore1
         dataStore1._root.set("key",dataStore2.handle);
     });
 
     it("can create the data objects with correct types", async () => {
-        assert(dataStore1 instanceof TestSharedDataObject1, "requestFromLoader returns the wrong type for default");
-        assert(dataStore2 instanceof TestSharedDataObject2, "requestFromLoader returns the wrong type for object2");
+        const testUrl1 = `${documentLoadUrl}/${dataStore1.id}`;
+        const testDataStore1 = await requestFluidObject(loader, testUrl1);
+        const testUrl2 = `${documentLoadUrl}/${dataStore2.id}`;
+        const testDataStore2 = await requestFluidObject(loader, testUrl2);
+
+        assert(testDataStore1 instanceof TestSharedDataObject1, "requestFromLoader returns the wrong type for default");
+        assert(testDataStore2 instanceof TestSharedDataObject2, "requestFromLoader returns the wrong type for object2");
     });
 
     it("can create data object using url with second id, having correct type and id", async () => {
-        const url = `${id}/${dataStore2.id}`;
-        const myDataStore = await requestFluidObject(loader, url);
+        const longUrl = `${documentLoadUrl}/${dataStore2.id}`;
+        const testDataStore = await requestFluidObject(loader, longUrl);
 
-        assert(myDataStore instanceof TestSharedDataObject2, "requestFromLoader returns the wrong type with long url");
-        assert.equal(myDataStore.id, dataStore2.id, "id is not correct");
+        assert(testDataStore instanceof TestSharedDataObject2, "request returns the wrong type with long url");
+        assert.equal(testDataStore.id, dataStore2.id, "id is not correct");
     });
 
     it("can create data object using url with second id, having distinct value from default", async () => {
-        const url = `${id}/${dataStore2.id}`;
-        const myDataStore = await requestFluidObject<TestSharedDataObject2>(loader, url);
+        const url = `${documentLoadUrl}/${dataStore2.id}`;
+        const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, url);
 
-        dataStore1._root.set("test_value","a");
-        dataStore2._root.set("test_value","b");
+        dataStore1._root.set("color","purple");
+        dataStore2._root.set("color","pink");
 
-        assert.equal(dataStore1._root.get("test_value"), "a", "datastore1 value incorrect");
-        assert.equal(myDataStore._root.get("test_value"), dataStore2._root.get("test_value"), "values do not match");
+        assert.equal(dataStore1._root.get("color"), "purple", "datastore1 value incorrect");
+        assert.equal(await testDataStore._root.wait("color"), dataStore2._root.get("color"),
+            "two instances of same dataStore have different values");
     });
 
     afterEach(async () => {
