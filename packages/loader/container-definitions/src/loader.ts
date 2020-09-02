@@ -129,7 +129,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * Get an absolute url for a provided container-relative request url.
      * If the container is not attached, this will return undefined.
      *
-     * @param relativeUrl - A relative request within the container
+     * @param relativeUrl - A container-relative request URL
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
@@ -197,7 +197,7 @@ export enum LoaderHeader {
 }
 
 /**
- * Header schema expected on requests coming to the Loader
+ * Set of Request Headers that the Loader understands and may inspect or modify
  */
 export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
