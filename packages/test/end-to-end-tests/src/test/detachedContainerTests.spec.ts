@@ -12,10 +12,10 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    ChannelFactoryRegistry,
     LocalCodeLoader,
     ITestFluidObject,
     TestFluidObjectFactory,
-    ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { Deferred } from "@fluidframework/common-utils";
@@ -168,7 +168,6 @@ const tests = (args: ICompatTestArgs) => {
 
         // Get the sub dataStore and assert that it is attached.
         const response2 = await container2.request({ url: `/${subDataStore1.context.id}` });
-        // const response2 = await container2.request({ url: "/" });
         const subDataStore2 = response2.value as ITestFluidObject;
         assert.strictEqual(subDataStore2.runtime.IFluidHandleContext.isAttached, true,
             "DataStore should be attached!!");
@@ -584,9 +583,9 @@ describe("Detached Container", () => {
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let documentServiceFactory: LocalDocumentServiceFactory;
 
-    function createTestLoader(a, b, urlResolver: IUrlResolver): Loader {
-        const factory: TestFluidObjectFactory = new TestFluidObjectFactory(registry);
-        const codeLoader = new LocalCodeLoader([[pkg, factory]]);
+    function createTestLoader(reg, code, urlResolver: IUrlResolver): Loader {
+        const factory: TestFluidObjectFactory = new TestFluidObjectFactory(reg);
+        const codeLoader = new LocalCodeLoader([[code, factory]]);
         return new Loader(
             urlResolver,
             documentServiceFactory,
@@ -605,7 +604,6 @@ describe("Detached Container", () => {
         makeTestLoader: createTestLoader,
         get documentServiceFactory() { return documentServiceFactory; },
     });
-    // console.log(createTestLoader);
 
     afterEach(async () => {
         await testDeltaConnectionServer.webSocketServer.close();

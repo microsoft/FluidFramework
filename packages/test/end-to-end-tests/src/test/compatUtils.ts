@@ -15,10 +15,14 @@ import {
     IProxyLoaderFactory,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import { Ink } from "@fluidframework/ink";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import { SharedDirectory, SharedMap } from "@fluidframework/map";
+import { SharedMatrix } from "@fluidframework/matrix";
+import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
@@ -26,25 +30,20 @@ import { SharedString, SparseMatrix } from "@fluidframework/sequence";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     ChannelFactoryRegistry,
-    LocalCodeLoader,
     createAndAttachContainer,
     createLocalLoader,
+    LocalCodeLoader,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { Ink } from "@fluidframework/ink";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { ConsensusQueue } from "@fluidframework/ordered-collection";
-import { Loader } from "@fluidframework/container-loader";
 import * as old from "./oldVersion";
 
 /* eslint-enable import/no-extraneous-dependencies */
 
-// const id = "fluid-test://localhost/detachedContainerTest";
 const documentId = "compatibilityTest";
 const documentLoadUrl = `fluid-test://localhost/${documentId}`;
 const defaultCodeDetails: IFluidCodeDetails = {
-    package: "compatContainerTestPackage",
+    package: "compatibilityTestPackage",
     config: {},
 };
 
@@ -158,7 +157,6 @@ export function createLoader(
     codeDetails = defaultCodeDetails,
     urlResolver: IUrlResolver = new LocalResolver(),
 ): ILoader {
-    // const codeLoader = new LocalCodeLoader([[codeDetails, fluidModule as IFluidModule]]);
     const codeLoader = new LocalCodeLoader([[codeDetails, fluidModule as IFluidModule]]);
 
     return new Loader(
