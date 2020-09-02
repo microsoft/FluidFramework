@@ -1,39 +1,24 @@
-// See https://aka.ms/vscode-remote/devcontainer.json for format details.
+// For format details, see https://aka.ms/vscode-remote/devcontainer.json
 {
-	"name": "Node.js 10",
-	// "dockerFile": "Dockerfile",
+	"name": "Fluid",
+	"build": {
+		"dockerfile": "Dockerfile",
 
-	"image": "prague.azurecr.io/devenv",
-
-	"service": "development",
-
-	"settings": { 
-		"terminal.integrated.shell.linux": "/usr/bin/zsh"
+		// Update 'NODE_VERSION' to pick a Node version: 10, 12, 14
+		"args": { "NODE_VERSION": "12" }
 	},
-	
-	// Uncomment the next line if you want to publish any ports.
-	// "appPort": [],
 
-	// Uncomment the next line if you want to add in default container specific settings.json values
-	// "settings":  { "workbench.colorTheme": "Quiet Light" },
+	"mounts": [ "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind" ],
 
-	// Uncomment the next line to run commands after the container is created.
-	// "postCreateCommand": "yarn install",
+	// Set *default* container specific settings.json values on container create.
+	"settings": { "terminal.integrated.shell.linux": "/usr/bin/zsh" },
 
-	// "runArgs": [
-	// 	"-v",
-	// 	"/var/run/docker.sock:/var/run/docker.sock",
-	// 	"-u",
-	// 	"node"
-	// ],
-	"runArgs": ["-v","//var/run/docker.sock:/var/run/docker.sock"],
-
+	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
-		"dbaeumer.vscode-eslint",
-		"ms-vscode.vscode-typescript-tslint-plugin"
-	],
+        "dbaeumer.vscode-eslint",
+        "editorconfig.editorconfig"
+    ]
 
-	"remote.extensionKind": {
-        "ms-azuretools.vscode-docker": "workspace"
-    }
+    // Required to provide non-root user w/access to docker (see Dockerfile)
+    // "overrideCommand": false,
 }

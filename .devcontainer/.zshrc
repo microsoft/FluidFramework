@@ -96,3 +96,11 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+
+# Returns the full path to the root of the current git repo
+function getRepoRoot {
+    git rev-parse --show-toplevel
+}
+
+# Alias 'fb' to the 'fluid-build' command
+alias fb='clear && node "$(getRepoRoot)/node_modules/.bin/fluid-build"'
