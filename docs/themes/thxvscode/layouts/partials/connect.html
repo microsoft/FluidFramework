@@ -1,0 +1,36 @@
+{{ $tweetLink := safeURL (printf "https://twitter.com/intent/tweet?original_referer=%s&ref_src=twsrc^tfw&text=%s&tw_p=tweetbutton&url=%s&via=%s" .Permalink .Title .Permalink .Site.Params.Twitterhandle )}}
+
+<div class="connect-widget">
+    <ul class="connect-links">
+        <li id="connect-twitter-link">
+            <a href={{$tweetLink}} target="_blank">
+                <img alt="Twitter" src="/assets/community/sidebar/twitter.svg" />
+                Tweet this link
+            </a>
+        </li>
+        <li id="connect-rssfeed">
+            <a href="/index.xml" target="_blank">
+                <img alt="RSS" src="/assets/community/sidebar/rss.svg" />
+                Subscribe
+            </a>
+        </li>
+        <li id="connect-stack-overflow">
+            <a href="https://stackoverflow.com/questions/tagged/{{.Site.Params.Twitterhandle}}" target="_blank">
+                <img alt="Stackoverflow" src="/assets/community/sidebar/stackoverflow.svg" />
+                Ask questions
+            </a>
+        </li>
+        <li id="connect-twitter">
+            <a href="https://twitter.com/{{.Site.Params.Twitterhandle}}" target="_blank">
+                <img alt="Twitter" src="/assets/community/sidebar/twitter.svg" />
+                @{{.Site.Params.Twitterhandle}}
+            </a>
+        </li>
+        <li id="connect-github">
+            <a href="https://www.github.com/{{.Site.Params.Githubrepo}}/issues/new/choose" target="_blank">
+                <img alt="Issues" src="/assets/community/sidebar/issue.svg" />
+                Report issues
+            </a>
+        </li>
+    </ul>
+</div>

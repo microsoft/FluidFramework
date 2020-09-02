@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { toUtf8 } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IRawOperationMessage,
@@ -125,9 +126,9 @@ async function getDeltasFromSummaryAndStorage(
             gitManager.getContent(existingRef.object.sha, ".logTail/logTail"),
         ]);
         const opsFromSummary = JSON.parse(
-            Buffer.from(opsContent.content, opsContent.encoding).toString()) as ISequencedDocumentMessage[];
+            toUtf8(opsContent.content, opsContent.encoding)) as ISequencedDocumentMessage[];
 
-        const deli = JSON.parse(Buffer.from(deliContent.content, deliContent.encoding).toString());
+        const deli = JSON.parse(toUtf8(deliContent.content, deliContent.encoding));
         const term = deli.term;
 
         const fromSeq = opsFromSummary.length > 0 ? opsFromSummary[opsFromSummary.length - 1].sequenceNumber : from;

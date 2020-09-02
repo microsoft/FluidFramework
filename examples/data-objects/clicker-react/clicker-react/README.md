@@ -1,9 +1,9 @@
 # @fluid-example/clicker-react
 
-**Clicker-React** is a Fluid Component that displays a number with a button. Pressing the button
-increments the counter. This is a basic example built using the new Fluid React component.
+**Clicker-React** is a Fluid object that displays a number with a button. Pressing the button
+increments the counter. This is a basic example built using the new FluidReactView class.
 
-**Clicker-React** demonstrates how you can use the initialization steps used to prepare the props for the component to enjoy React-like state updates from Fluid DDS' like SharedCounter.
+**Clicker-React** demonstrates how you can prepare the configuration for the Fluid object for the React view to enjoy state updates from Fluid DDSes like SharedCounter without event listeners.
 
 ## Getting Started
 

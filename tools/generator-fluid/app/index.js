@@ -13,10 +13,10 @@ const scaffoldingBeginner = "beginner";
 const scaffoldingAdvanced = "advanced";
 
 /**
- * Takes the user inputted component name, converts it to camelCase,
+ * Takes the user inputted DataObject name, converts it to camelCase,
  * and removes any non-word characters (equal to [^a-zA-Z0-9_])
  */
-function processComponentNameInput(nameArray) {
+function processDataObjectNameInput(nameArray) {
   const capitalize = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
@@ -29,12 +29,12 @@ function processComponentNameInput(nameArray) {
 }
 
 const questions = {
-    componentName: {
+    dataObjectName: {
         type: "input",
-        name: "componentName",
-        message: "What is the name of your new component?",
+        name: "dataObjectName",
+        message: "What is the name of your new Data Object?",
         filter: (input) => {
-          return processComponentNameInput(input.split(" "));
+          return processDataObjectNameInput(input.split(" "));
         },
     },
     viewFramework : {
@@ -87,29 +87,29 @@ module.exports = class extends Generator {
         description: `Sets ${scaffoldingAdvanced} as scaffolding`,
       });
 
-    // Adding argument to specify the component name inline
+    // Adding argument to specify the DataObject name inline
     this.argument(
-      "componentName",
+      "dataObjectName",
       {
         type: Array,
         required: false,
-        description: "Defines the Component Name"
+        description: "Defines the DataObject Name"
       });
 
-    if (this.options["componentName"]) {
-      // if there is a componentName option we need to strip out non-word characters
-      this.options["componentName"] = processComponentNameInput(this.options["componentName"]);
+    if (this.options["dataObjectName"]) {
+      // if there is a dataObjectName option we need to strip out non-word characters
+      this.options["dataObjectName"] = processDataObjectNameInput(this.options["dataObjectName"]);
     }
   }
 
   async prompting() {
-    this.log("Congratulations! You've started building your own Fluid Component.");
+    this.log("Congratulations! You've started building your own Fluid DataObject.");
     this.log("Let us help you get set up. Once we're done, you can start coding!");
     const questionsCollection = [];
-    if (this.options.componentName) {
-      this.log(`${chalk.green("?")} ${questions.componentName.message} ${chalk.blue(this._componentName())}`)
+    if (this.options.dataObjectName) {
+      this.log(`${chalk.green("?")} ${questions.dataObjectName.message} ${chalk.blue(this._dataObjectName())}`)
     } else {
-      questionsCollection.push(questions.componentName);
+      questionsCollection.push(questions.dataObjectName);
     }
 
     if (this.options["view-react"] && this.options["view-none"]) {
@@ -140,13 +140,13 @@ module.exports = class extends Generator {
       this.answers = await this.prompt(questionsCollection);
     }
 
-    this.destinationRoot(this._componentPkgName());
+    this.destinationRoot(this._dataObjectPkgName());
   }
 
   moveAndModifyTemplateFiles() {
 
     if (this._isBeginnerScaffolding()) {
-      this._copyAndModifySimpleComponentFile();
+      this._copyAndModifySimpleDataObjectFile();
       this.fs.copyTpl(
         this.templatePath("README-Simple.md"), // FROM
         this.destinationPath("./README.md"), // TO Root Folder,
@@ -154,7 +154,7 @@ module.exports = class extends Generator {
       );
     } else {
       // Copy and Modify Advanced Files
-      this._copyAndModifyComponentFile();
+      this._copyAndModifyDataObjectFile();
       this._copyAndModifyInterfaceFile();
       this._copyAndModifyViewFile();
       this.fs.copyTpl(
@@ -170,7 +170,7 @@ module.exports = class extends Generator {
 
     this.fs.copy(
       this.templatePath("tests/diceRoller.test.ts"), // FROM
-      this.destinationPath(`tests/${this._componentPkgName()}.test.ts`), // TO Root Folder
+      this.destinationPath(`tests/${this._dataObjectPkgName()}.test.ts`), // TO Root Folder
     );
 
     // Copy Remaining Files
@@ -201,7 +201,7 @@ module.exports = class extends Generator {
    */
   _copyAndModifyPackageJsonFile() {
     var packageJson = this.fs.readJSON(this.templatePath("package.json"));
-    packageJson.name = this._componentPkgName();
+    packageJson.name = this._dataObjectPkgName();
 
     if (!this._isReact()) {
       // REMOVE react-specific dependencies. This is preferred because it keeps all dependencies in one place
@@ -216,43 +216,43 @@ module.exports = class extends Generator {
     );
   }
 
-  _copyAndModifySimpleComponentFile() {
+  _copyAndModifySimpleDataObjectFile() {
     const file = this._generateNewProjectFile(
-      `src/component-simple${this._getFileExtension()}`,
-      `src/component${this._getFileExtension()}`);
+      `src/dataObject-simple${this._getFileExtension()}`,
+      `src/dataObject${this._getFileExtension()}`);
     const classObj = file.getClass("DiceRoller");
-    // Rename the class name with the component name provided
-    classObj.rename(this._componentClassName());
+    // Rename the class name with the DataObject name provided
+    classObj.rename(this._dataObjectClassName());
 
-    // Replace ComponentName response with package name
-    const accessor = classObj.getGetAccessor("ComponentName");
-    accessor.setBodyText(`return "${this._componentPkgName()}";`);
+    // Replace DataObjectName response with package name
+    const accessor = classObj.getGetAccessor("DataObjectName");
+    accessor.setBodyText(`return "${this._dataObjectPkgName()}";`);
 
     if(this._isReact()) {
       const viewClassObj = file.getClass("DiceRollerView");
-      viewClassObj.rename(`${this._componentClassName()}View`);
+      viewClassObj.rename(`${this._dataObjectClassName()}View`);
     }
 
     file.save();
   }
 
-  _copyAndModifyComponentFile() {
-    const file = this._generateNewProjectFile(`src/component${this._getFileExtension()}`);
+  _copyAndModifyDataObjectFile() {
+    const file = this._generateNewProjectFile(`src/dataObject${this._getFileExtension()}`);
     const classObj = file.getClass("DiceRoller");
-    // Rename the class name with the component name provided
-    classObj.rename(this._componentClassName());
+    // Rename the class name with the DataObject name provided
+    classObj.rename(this._dataObjectClassName());
 
-    // Replace ComponentName response with package name
-    const accessor = classObj.getGetAccessor("ComponentName");
-    accessor.setBodyText(`return "${this._componentPkgName()}";`);
+    // Replace DataObjectName response with package name
+    const accessor = classObj.getGetAccessor("DataObjectName");
+    accessor.setBodyText(`return "${this._dataObjectPkgName()}";`);
 
-    // Rename interface name to match new component name
+    // Rename interface name to match new DataObject name
     const imports = file.getImportDeclaration("./interface");
     const interfaceImport = imports.getNamedImports()[0];
-    interfaceImport.setName(this._componentInterfaceModelName());
+    interfaceImport.setName(this._dataObjectInterfaceModelName());
 
     classObj.removeImplements(0);
-    classObj.insertImplements(0, this._componentInterfaceModelName());
+    classObj.insertImplements(0, this._dataObjectInterfaceModelName());
 
     file.save();
   }
@@ -260,24 +260,24 @@ module.exports = class extends Generator {
   _copyAndModifyIndexFile() {
     const file = this._generateNewProjectFile("src/index.ts");
 
-    // Update the component name on import
-    const imports = file.getImportDeclaration("./component");
-    const componentImport = imports.getNamedImports()[0];
-    componentImport.setName(this._componentClassName());
+    // Update the DataObject name on import
+    const imports = file.getImportDeclaration("./dataObject");
+    const dataObjectImport = imports.getNamedImports()[0];
+    dataObjectImport.setName(this._dataObjectClassName());
 
-    // Update the component name on export
+    // Update the DataObject name on export
     const exportDeclaration = file.getExportDeclaration(d => d.hasNamedExports());
     const namedExport = exportDeclaration.getNamedExports()[0];
-    namedExport.setName(this._componentClassName());
+    namedExport.setName(this._dataObjectClassName());
 
-    // Update the usage of the component name
+    // Update the usage of the DataObject name
     const variableStatement = file.getVariableStatement("fluidExport");
     const varDec = variableStatement.getDeclarations()[0];
     const initializer = `new ContainerRuntimeFactoryWithDefaultDataStore(
-        ${this._componentClassName()}.ComponentName,
+        ${this._dataObjectClassName()}.factory.type,
         new Map([
-            [${this._componentClassName()}.ComponentName, Promise.resolve(${this._componentClassName()}.factory)],
-            // Add another component here to create it within the container
+            ${this._dataObjectClassName()}.factory.registryEntry,
+            // Add another data store here to create it within the container
         ]))`
     varDec.set({initializer});
 
@@ -295,7 +295,7 @@ module.exports = class extends Generator {
 
     // Update interface name
     const modelInterface = file.getInterface("IDiceRoller");
-    modelInterface.rename(this._componentInterfaceModelName())
+    modelInterface.rename(this._dataObjectInterfaceModelName())
 
     file.save();
   }
@@ -303,21 +303,21 @@ module.exports = class extends Generator {
   _copyAndModifyViewFile() {
     const file = this._generateNewProjectFile(`src/view${this._getFileExtension()}`);
 
-    // Rename model interface name to match new component name
+    // Rename model interface name to match new DataObject name
     const imports = file.getImportDeclaration("./interface");
     const interfaceImport = imports.getNamedImports()[0];
-    interfaceImport.setName(this._componentInterfaceModelName());
+    interfaceImport.setName(this._dataObjectInterfaceModelName());
 
     if (this._isReact()) {
       // For react we need to update our interface name on the model
       const propsInterface = file.getInterface("IDiceRollerViewProps");
       const modelProp = propsInterface.getProperty("model");
-      modelProp.setType(this._componentInterfaceModelName());
+      modelProp.setType(this._dataObjectInterfaceModelName());
     } else {
       // For vanillaJS we need to update the constructor param type
       const ctor = file.getClass("DiceRollerView").getConstructors()[0];
       const param = ctor.getParameter("model");
-      param.setType(this._componentInterfaceModelName());
+      param.setType(this._dataObjectInterfaceModelName());
     }
 
     file.save();
@@ -349,12 +349,12 @@ module.exports = class extends Generator {
     );
 
     // Change class name plus references
-    const componentDec = file.getImportDeclaration((dec) => {
+    const dataObjectDec = file.getImportDeclaration((dec) => {
       return dec.isModuleSpecifierRelative();
     });
 
-    const importSpecifier = componentDec.addNamedImport(this._componentFactoryClassName());
-    importSpecifier.setAlias("ComponentInstantiationFactory");
+    const importSpecifier = dataObjectDec.addNamedImport(this._dataObjectFactoryClassName());
+    importSpecifier.setAlias("DataObjectInstantiationFactory");
 
     file.save();
   }
@@ -369,23 +369,23 @@ module.exports = class extends Generator {
    */
   async end() {
     this.log("\n");
-    this.log(chalk.green("Success.") + " Created component", this._componentName());
-    this.log("Component is in", this.destinationRoot());
+    this.log(chalk.green("Success.") + " Created DataObject", this._dataObjectName());
+    this.log("DataObject is in", this.destinationRoot());
     this.log("\n");
     this.log("You can try the following commands");
     this.log("\n");
 
     this.log(chalk.cyan("    npm start"));
-    this.log("       Hosts the component at http://localhost:8080");
+    this.log("       Hosts the DataObject at http://localhost:8080");
     this.log("\n");
 
     this.log(chalk.cyan("    npm run build"));
-    this.log("       Builds the component into bundled js files");
+    this.log("       Builds the DataObject into bundled js files");
     this.log("\n");
 
-    this.log("We suggest you open your component with your favorite IDE.\n Then start by typing:");
-    if (this._componentPkgName() !== ".") {
-      const cdPath = "    cd " + this._componentPkgName();
+    this.log("We suggest you open your DataObject with your favorite IDE.\n Then start by typing:");
+    if (this._dataObjectPkgName() !== ".") {
+      const cdPath = "    cd " + this._dataObjectPkgName();
       this.log(chalk.cyan(cdPath));
     }
     this.log(chalk.cyan("    npm start"));
@@ -403,30 +403,30 @@ module.exports = class extends Generator {
     return this.options["view-react"] || (this.answers && this.answers.viewFramework === react);
   }
 
-  _componentName() {
-    return this.options.componentName ? this.options.componentName : this.answers.componentName;
+  _dataObjectName() {
+    return this.options.dataObjectName ? this.options.dataObjectName : this.answers.dataObjectName;
   }
 
   _getFileExtension() {
     return this._isReact() ? ".tsx" : ".ts";
   }
 
-  _componentPkgName() {
-    const name = this.options.componentName ? this.options.componentName : this.answers.componentName;
+  _dataObjectPkgName() {
+    const name = this.options.dataObjectName ? this.options.dataObjectName : this.answers.dataObjectName;
     return name.replace(" ", "-").toLowerCase();
   }
 
-  _componentInterfaceModelName() {
-    return `I${this._componentClassName()}`;
+  _dataObjectInterfaceModelName() {
+    return `I${this._dataObjectClassName()}`;
   }
 
-  _componentClassName() {
-    const name = this._componentName().replace(" ", "");
+  _dataObjectClassName() {
+    const name = this._dataObjectName().replace(" ", "");
     return `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
   }
 
-  _componentFactoryClassName() {
-    return `${this._componentClassName()}InstantiationFactory`;
+  _dataObjectFactoryClassName() {
+    return `${this._dataObjectClassName()}InstantiationFactory`;
   }
 
   _generateNewProjectFile(currentFilePath, destinationPath) {

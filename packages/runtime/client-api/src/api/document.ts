@@ -238,7 +238,7 @@ function attach(loader: Loader, url: string, deferred: Deferred<Document>): void
                 return;
             }
 
-            // Check if the fluid object is viewable
+            // Check if the Fluid object is viewable
             deferred.resolve(response.value);
         },
         (error) => {

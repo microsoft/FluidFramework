@@ -3,9 +3,6 @@
 
 FROM node:12.16.3-slim
 
-# To auth against private VSTS
-ARG NPM_TOKEN
-
 # Add Tini
 ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
@@ -18,7 +15,6 @@ RUN apt-get update && apt-get install -y python make g++
 WORKDIR /usr/src/server
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
-COPY .npmrc .
 COPY package-lock.json .
 COPY package.json .
 RUN npm install
@@ -33,9 +29,6 @@ RUN chmod -R 755 /tmp/chaincode/*
 # And now copy over our actual code and build
 COPY . .
 RUN npm run build
-
-# Remove the npmrc following the build
-RUN rm -f .npmrc
 
 # Expose the port the app runs under
 EXPOSE 3000

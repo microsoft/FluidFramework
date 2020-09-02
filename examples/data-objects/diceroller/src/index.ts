@@ -12,19 +12,19 @@ import { DiceRoller, DiceRollerInstantiationFactory } from "./main";
 export { DiceRoller, DiceRollerInstantiationFactory } from "./main";
 
 /**
- * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading in
- * the EmbeddedComponentLoader.
+ * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading by
+ * providing the fluidExport constant.
  *
  * There are two important things here:
- * 1. Default Component name
- * 2. Map of string to factory for all components
+ * 1. Default Fluid object name
+ * 2. Map of string to factory for all dependent Fluid objects
  *
- * In this example, we are only registering a single component, but more complex examples will register multiple
- * components.
+ * In this example, we are only registering a single Fluid object, but more complex examples will register multiple
+ * Fluid objects.
  */
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRoller.ComponentName,
+    DiceRoller.Name,
     new Map([
-        [DiceRoller.ComponentName, Promise.resolve(DiceRollerInstantiationFactory)],
+        [DiceRoller.Name, Promise.resolve(DiceRollerInstantiationFactory)],
     ]),
 );

@@ -5,19 +5,38 @@
 
 name: $(Build.BuildId)
 
+parameters:
+- name: publishOverride
+  displayName: Publish Override
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+- name: releaseBuildOverride
+  displayName: Release Build Override
+  type: string
+  default: none
+  values:
+    - none
+    - prerelease
+    - release
+
 trigger:
   branches:
     include:
     - main
     - release/*
-    - refs/tags/tinylicious_v*
   paths:
     include:
     - server/tinylicious
     - tools/pipelines/build-tinylicious.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
-    - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
 
 pr:
   branches:
@@ -28,13 +47,18 @@ pr:
     include:
     - server/tinylicious
     - tools/pipelines/build-tinylicious.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
 
 extends:
   template: templates/build-npm-package.yml
   parameters:
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: server/tinylicious
+    tagName: tinylicious
     taskBuild: build
     taskBuildDocs: false
     taskLint: true

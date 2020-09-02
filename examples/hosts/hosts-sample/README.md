@@ -11,11 +11,7 @@ of code.
 
 ## Build steps
 
-The first (and hardest) step to get up and running is to authenticate against the Fluid private npm feed. To do so
-navigate to <https://offnet.visualstudio.com/officenet/_packaging?feed=fluid&_a=feed>, click the "Connect to feed" link,
-choose "npm" and then follow the instructions.
-
-Once you've done that getting up and running is simple.
+Getting up and running is simple.
 
 ```bash
 npm install
@@ -100,7 +96,7 @@ export interface IUrlResolver {
 ```
 
 This simple interface defines a single method, `resolve`, which takes in an `IRequest` object and resolves it to an
-`IResolvedUrl`. An `IRequest` is simply the URL for the document. And the `IResolvedUrl` is the fluid based URL
+`IResolvedUrl`. An `IRequest` is simply the URL for the document. And the `IResolvedUrl` is the Fluid based URL
 along with associated access tokens.
 
 In our example the URL format is of the form `http://localhost:8080/<documentId>/<path>`. To implement the resolve
