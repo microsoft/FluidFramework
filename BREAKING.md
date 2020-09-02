@@ -62,9 +62,9 @@ You can use handleFromLegacyUri() for creating handles from container-internal U
 
 ### Package Renames
 As a follow up to the changes in 0.24 we are updating a number of package names
-- `@fluidframework/core-interfaces` is renamed to `@fluidframework/core-interfaces`
-- `@fluidframework/datastore-definitions` is renamed to `@fluidframework/datastore-definitions`
-- `@fluidframework/datastore` is renamed to `@fluidframework/datastore`
+- `@fluidframework/component-core-interfaces` is renamed to `@fluidframework/core-interfaces`
+- `@fluidframework/component-runtime-definitions` is renamed to `@fluidframework/datastore-definitions`
+- `@fluidframework/component-runtime` is renamed to `@fluidframework/datastore`
 - `@fluidframework/webpack-component-loader` is renamed to `@fluidframework/webpack-fluid-loader`
 
 ### IComponent and IComponent Interfaces Removed
