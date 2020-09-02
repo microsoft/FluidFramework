@@ -6,29 +6,29 @@
 /* eslint-disable import/no-extraneous-dependencies */
 export {
     ContainerRuntimeFactoryWithDefaultDataStore,
-    defaultDataStoreRuntimeRequestHandler,
     DataObject,
     DataObjectFactory,
 } from "old-aqueduct";
-export { IChannelFactory } from "old-component-runtime-definitions";
+export { IChannelFactory } from "old-datastore-definitions";
 export {
+    IContainer,
     IContainerContext,
     IFluidModule,
-    IRuntimeFactory,
     ILoader,
+    IRuntimeFactory,
     IProxyLoaderFactory,
 } from "old-container-definitions";
 export { Container, Loader } from "old-container-loader";
 export { ContainerRuntime, IContainerRuntimeOptions } from "old-container-runtime";
 export {
-    componentRuntimeRequestHandler as dataStoreRuntimeRequestHandler,
     RuntimeRequestHandlerBuilder,
 } from "old-request-handler";
 export { IFluidDataStoreFactory } from "old-runtime-definitions";
 export {
     createLocalLoader,
-    initializeLocalContainer,
-    TestFluidComponentFactory,
+    createAndAttachContainer,
+    TestFluidObjectFactory,
+    TestContainerRuntimeFactory,
     LocalCodeLoader,
 } from "old-test-utils";
 export { SharedDirectory, SharedMap } from "old-map";

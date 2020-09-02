@@ -4,11 +4,11 @@
 # repo-policy-check pipeline to ensure repo conventions
 
 trigger:
-- master
+- main
 - release/*
 
 pr:
-- master
+- main
 - release/*
 
 pool:
@@ -23,12 +23,6 @@ steps:
   displayName: Use Node 12.x
   inputs: 
     version: 12.x
-
-- task: npmAuthenticate@0
-  displayName: 'npm Authenticate root .npmrc'
-  inputs:
-    workingFile: .npmrc
-    customEndpoint: Offnet Packages
 
 - task: Npm@1
   displayName: npm ci

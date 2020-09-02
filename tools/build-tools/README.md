@@ -31,15 +31,15 @@ Options:
      --install        Run npm install for all packages/monorepo
   -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
      --reinstall      Same as --uninstall --install
-     --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
+     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
   -s --script <name>  npm script to execute (default:build)
      --server         Operate on the server monorepo
      --symlink        Fix symlink between packages within monorepo (isolate mode)
      --symlink:full   Fix symlink between packages across monorepo (full mode)
      --uninstall      Clean all node_modules
      --vscode         Output error message to work with default problem matcher in vscode
-     --defroot <path> Default root directory of the fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
-     --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
+     --defroot <path> Default root directory of the Fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
+     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
      --timer          Measure elapsed time of each step
      --logtime        Display the current time on every status message for logging
   -v --verbose        Verbose messages
@@ -84,7 +84,7 @@ Note that --symlink* changes any symlink, the tool will run the clean script for
 
 ## Running `fluid-build` (Fluid directory workspace in VSCode)
 
-To build fluid within VSCode, use Ctrl-Shift-B to break up the build task list and choose `fluid-build`.
+To build Fluid within VSCode, use Ctrl-Shift-B to break up the build task list and choose `fluid-build`.
 
 ## Running `fluid-layer-check` (Command Line)
 
@@ -92,8 +92,8 @@ To build fluid within VSCode, use Ctrl-Shift-B to break up the build task list a
 Usage: fluid-layer-check <options>
 Options:
      --dot <path>     Generate *.dot for GraphViz
-     --defroot <path> Default root directory of the fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
-     --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
+     --defroot <path> Default root directory of the Fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
+     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
      --timer          Measure elapsed time of each step
      --logtime        Display the current time on every status message for logging
   -v --verbose        Verbose messages
@@ -111,7 +111,7 @@ It make use of the dependencies in the package.json to build the dependency grap
 
 ### Incremental and Tasks
 
-The script recognized tasks in the fluid package and has logic to detect whether a task need to be built.
+The script recognized tasks in the Fluid package and has logic to detect whether a task need to be built.
 
 #### Tsc Task
 

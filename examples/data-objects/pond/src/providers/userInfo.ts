@@ -14,9 +14,9 @@ import { DependencyContainer } from "@fluidframework/synthesize";
 import { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
 
-import { IComponentUserInformation } from "../interfaces";
+import { IFluidUserInformation } from "../interfaces";
 
-export class UserInfo extends EventEmitter implements IComponentUserInformation {
+export class UserInfo extends EventEmitter implements IFluidUserInformation {
     private readonly quorum: IQuorum;
 
     public on(event: "membersChanged", listener: () => void): this;
@@ -37,7 +37,7 @@ export class UserInfo extends EventEmitter implements IComponentUserInformation 
         });
     }
 
-    public get IComponentUserInformation() { return this; }
+    public get IFluidUserInformation() { return this; }
     public get userCount(): number {
         return this.getHumanUsers().length;
     }

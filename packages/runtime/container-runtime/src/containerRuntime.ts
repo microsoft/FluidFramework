@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
+import { TaskManagerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -72,13 +72,13 @@ import {
     IAttachMessage,
     InboundAttachMessage,
     IFluidDataStoreContext,
+    IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedFluidDataStoreRegistryEntries,
-    SchedulerType,
     ISummaryTreeWithStats,
     ISummaryStats,
     ISummarizeInternalResult,
@@ -102,6 +102,7 @@ import { v4 as uuid } from "uuid";
 import {
     FluidDataStoreContext,
     LocalFluidDataStoreContext,
+    LocalDetachedFluidDataStoreContext,
     RemotedFluidDataStoreContext,
     createAttributesBlob,
 } from "./dataStoreContext";
@@ -209,7 +210,7 @@ export interface IContainerRuntimeOptions {
     initialSummarizerDelayMs?: number;
 
     // Flag to enable summarizing with new SummarizerNode strategy.
-    // Enabling this feature will allow components that fail to summarize to
+    // Enabling this feature will allow data stores that fail to summarize to
     // try to still summarize based on previous successful summary + ops since.
     // Enabled by default.
     enableSummarizerNode?: boolean;
@@ -433,14 +434,14 @@ export class ScheduleManager {
     }
 }
 
-export const schedulerId = SchedulerType;
+export const taskSchedulerId = "_scheduler";
 
 // Wraps the provided list of packages and augments with some system level services.
 class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
     constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
         super([
             ...namedEntries,
-            [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
+            TaskManagerFactory.registryEntry,
         ]);
     }
 }
@@ -454,6 +455,9 @@ export class ContainerRuntime extends EventEmitter
     public get IContainerRuntime() { return this; }
     public get IContainerRuntimeDirtyable() { return this; }
     public get IFluidRouter() { return this; }
+
+    // 0.24 back-compat attachingBeforeSummary
+    public readonly runtimeVersion = pkgVersion;
 
     /**
      * Load the stores from a snapshot and returns the runtime.
@@ -494,7 +498,7 @@ export class ContainerRuntime extends EventEmitter
 
         // Create all internal stores in first load.
         if (!context.existing) {
-            await runtime.createRootDataStore(schedulerId, schedulerId);
+            await runtime.createRootDataStore(TaskManagerFactory.type, taskSchedulerId);
         }
 
         runtime.subscribeToLeadership();
@@ -607,6 +611,8 @@ export class ContainerRuntime extends EventEmitter
         ) => CreateChildSummarizerNodeFn;
     } & ({ readonly enabled: true; readonly node: SummarizerNode } | { readonly enabled: false });
     private readonly notBoundContexts = new Set<string>();
+    // 0.24 back-compat attachingBeforeSummary
+    private readonly attachOpFiredForDataStore = new Set<string>();
 
     private tasks: string[] = [];
 
@@ -713,7 +719,7 @@ export class ContainerRuntime extends EventEmitter
                 // Must set to false to prevent sending summary handle which would be pointing to
                 // a summary with an older protocol state.
                 canReuseHandle: false,
-                // Must set to true to throw on any component failure that was too severe to be handled.
+                // Must set to true to throw on any data stores failure that was too severe to be handled.
                 // We also are not decoding the base summaries at the root.
                 throwOnFailure: true,
             },
@@ -913,15 +919,15 @@ export class ContainerRuntime extends EventEmitter
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getDataStore(requestParser.pathParts[0], wait);
+            const dataStore = await this.getDataStore(requestParser.pathParts[0], wait);
             const subRequest = requestParser.createSubRequest(1);
             if (subRequest !== undefined) {
-                return component.IFluidRouter.request(subRequest);
+                return dataStore.IFluidRouter.request(subRequest);
             } else {
                 return {
                     status: 200,
                     mimeType: "fluid/object",
-                    value: component,
+                    value: dataStore,
                 };
             }
         }
@@ -1016,7 +1022,7 @@ export class ContainerRuntime extends EventEmitter
 
         if (connected) {
             // Once we are connected, all acks are accounted.
-            // If there are any pending ops, DDSs will resubmit them right away (below) and
+            // If there are any pending ops, DDSes will resubmit them right away (below) and
             // we will switch back to dirty state in such case.
             this.updateDocumentDirtyState(false);
         }
@@ -1226,26 +1232,43 @@ export class ContainerRuntime extends EventEmitter
         }
     }
 
-    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
-        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg]).realize();
+    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter>
+    {
+        return this._createDataStore(pkg);
     }
 
-    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
-        const context = this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], rootDataStoreId);
-        const fluidDataStore = await context.realize();
+    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>
+    {
+        const fluidDataStore = await this._createDataStore(pkg, rootDataStoreId);
         fluidDataStore.bindToContext();
         return fluidDataStore;
+    }
+
+    public createDetachedDataStore(): IFluidDataStoreContextDetached {
+        const id = uuid();
+        const context = new LocalDetachedFluidDataStoreContext(
+            id,
+            this,
+            this.storage,
+            this.containerScope,
+            this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
+            this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
+            (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+        );
+        this.setupNewContext(context);
+        return context;
+    }
+
+    private async _createDataStore(pkg: string | string[], id = uuid()): Promise<IFluidDataStoreChannel>
+    {
+        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id).realize();
     }
 
     private canSendOps() {
         return this.connected && !this.deltaManager.readonly;
     }
 
-    private _createFluidDataStoreContext(pkg: string[], id = uuid()) {
-        this.verifyNotClosed();
-
-        assert(!this.contexts.has(id), "Creating store with existing ID");
-        this.notBoundContexts.add(id);
+    private _createFluidDataStoreContext(pkg: string[], id) {
         const context = new LocalFluidDataStoreContext(
             id,
             pkg,
@@ -1256,41 +1279,18 @@ export class ContainerRuntime extends EventEmitter
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
         );
-
-        const deferred = new Deferred<FluidDataStoreContext>();
-        this.contextsDeferred.set(id, deferred);
-        this.contexts.set(id, context);
-
+        this.setupNewContext(context);
         return context;
     }
 
-    public async createDataStoreWithRealizationFn(
-        pkg: string[],
-        realizationFn?: (context: IFluidDataStoreContext) => void,
-    ): Promise<IFluidDataStoreChannel> {
+    private setupNewContext(context) {
         this.verifyNotClosed();
-        const id: string = uuid();
+        const id = context.id;
+        assert(!this.contexts.has(id), "Creating store with existing ID");
         this.notBoundContexts.add(id);
-        const context = new LocalFluidDataStoreContext(
-            id,
-            pkg,
-            this,
-            this.storage,
-            this.containerScope,
-            this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
-            (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
-        );
-
         const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
         this.contexts.set(id, context);
-
-        if (realizationFn) {
-            return context.realizeWithFn(realizationFn);
-        } else {
-            return context.realize();
-        }
     }
 
     public getQuorum(): IQuorum {
@@ -1309,7 +1309,7 @@ export class ContainerRuntime extends EventEmitter
     /**
      * Notifies this object to register tasks to be performed.
      * @param tasks - List of tasks.
-     * @param version - Version of the fluid package.
+     * @param version - Version of the Fluid package.
      */
     public registerTasks(tasks: string[], version?: string) {
         this.verifyNotClosed();
@@ -1350,12 +1350,12 @@ export class ContainerRuntime extends EventEmitter
     private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
         if (type === ContainerMessageType.Attach) {
             const attachMessage = contents as InboundAttachMessage;
-            if (attachMessage.id === schedulerId) {
+            if (attachMessage.id === taskSchedulerId) {
                 return false;
             }
         } else if (type === ContainerMessageType.FluidDataStoreOp) {
             const envelope = contents as IEnvelope;
-            if (envelope.address === schedulerId) {
+            if (envelope.address === taskSchedulerId) {
                 return false;
             }
         }
@@ -1397,10 +1397,10 @@ export class ContainerRuntime extends EventEmitter
                 assert(value.attachState !== AttachState.Attaching);
                 return value.attachState === AttachState.Attached;
             }).map(async ([key, value]) => {
-                const componentSummary = this.summarizerNode.enabled
+                const contextSummary = this.summarizerNode.enabled
                     ? await value.summarize(fullTree)
                     : convertToSummaryTree(await value.snapshot(fullTree), fullTree);
-                builder.addWithStats(key, componentSummary);
+                builder.addWithStats(key, contextSummary);
             }));
 
         this.serializeContainerBlobs(builder);
@@ -1475,13 +1475,14 @@ export class ContainerRuntime extends EventEmitter
         const context = this.getContext(fluidDataStoreRuntime.id) as LocalFluidDataStoreContext;
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
-        // clients but we do need to submit op if container forced us to do so.
+        // clients.
         if (this.attachState !== AttachState.Detached) {
             context.emit("attaching");
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(fluidDataStoreRuntime.id, message);
             this.submit(ContainerMessageType.Attach, message);
+            this.attachOpFiredForDataStore.add(fluidDataStoreRuntime.id);
         }
 
         // Resolve the deferred so other local stores can access it.
@@ -1546,11 +1547,15 @@ export class ContainerRuntime extends EventEmitter
         do {
             const builderTree = builder.summary.tree;
             notBoundContextsLength = this.notBoundContexts.size;
-            // Iterate over each component and ask it to snapshot
+            // Iterate over each data store and ask it to snapshot
             Array.from(this.contexts)
                 .filter(([key, _]) =>
-                    // Take summary of bounded components only and make sure we haven't summarized them already.
-                    !(this.notBoundContexts.has(key) || builderTree[key]),
+                    // Take summary of bounded data stores only, make sure we haven't summarized them already
+                    // and no attach op has been fired for that data store because for loader versions <= 0.24
+                    // we set attach state as "attaching" before taking createNew summary.
+                    !(this.notBoundContexts.has(key)
+                        || builderTree[key]
+                        || this.attachOpFiredForDataStore.has(key)),
                 )
                 .map(([key, value]) => {
                     const snapshot = value.generateAttachMessage().snapshot;
@@ -1908,7 +1913,7 @@ export class ContainerRuntime extends EventEmitter
 
     public async getTaskManager(): Promise<ITaskManager> {
         return requestFluidObject<ITaskManager>(
-            await this.getDataStore(schedulerId, true),
+            await this.getDataStore(taskSchedulerId, true),
             "");
     }
 

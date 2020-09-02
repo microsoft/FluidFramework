@@ -106,9 +106,7 @@ export class SharedTextRunner
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url.startsWith(this.taskManager.url)) {
-            return this.taskManager.request(request);
-        } else if (request.url === "" || request.url === "/") {
+        if (request.url === "" || request.url === "/") {
             return { status: 200, mimeType: "fluid/object", value: this };
         } else {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
@@ -199,7 +197,6 @@ export class SharedTextRunner
         const taskScheduler = new TaskScheduler(
             this.context,
             this.taskManager,
-            this.url,
             this.sharedString,
             this.insightsMap,
         );
@@ -275,7 +272,6 @@ class TaskScheduler {
     constructor(
         private readonly componentContext: IFluidDataStoreContext,
         private readonly taskManager: ITaskManager,
-        private readonly componentUrl: string,
         private readonly sharedString: SharedString,
         private readonly insightsMap: ISharedMap,
     ) {
@@ -295,7 +291,7 @@ class TaskScheduler {
                 instance: new TextAnalyzer(this.sharedString, this.insightsMap, intelTokens),
             };
             this.taskManager.register(intelTask);
-            this.taskManager.pick(this.componentUrl, "intel").then(() => {
+            this.taskManager.pick(intelTask.id).then(() => {
                 console.log(`Picked text analyzer`);
             }, (err) => {
                 console.log(JSON.stringify(err));
@@ -306,7 +302,7 @@ class TaskScheduler {
     }
 }
 
-export function instantiateDataStore(context: IFluidDataStoreContext): void {
+export function instantiateDataStore(context: IFluidDataStoreContext) {
     const modules = new Map<string, any>();
 
     // Create channel factories
@@ -335,4 +331,6 @@ export function instantiateDataStore(context: IFluidDataStoreContext): void {
         const runner = await runnerP;
         return runner.request(request);
     });
+
+    return runtime;
 }

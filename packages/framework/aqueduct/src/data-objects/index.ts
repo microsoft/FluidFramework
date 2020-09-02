@@ -6,6 +6,6 @@
 export { BlobHandle } from "./blobHandle";
 export { DataObject } from "./dataObject";
 export {
-    ISharedComponentProps,
+    IDataObjectProps,
     PureDataObject,
 } from "./pureDataObject";

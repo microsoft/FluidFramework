@@ -1,6 +1,6 @@
 # @fluidframework/matrix
 
-SharedMatrix is a rectangular 2D array of values.  Matrix values are a superset of JSON serializable types that includes embedded IComponentHandle references to Fluid components.
+SharedMatrix is a rectangular 2D array of values.  Matrix values are a superset of JSON serializable types that includes embedded IFluidHandle references to Fluid object.
 
 ## Operations
 

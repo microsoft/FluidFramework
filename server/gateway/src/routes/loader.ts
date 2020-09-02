@@ -17,7 +17,7 @@ import winston from "winston";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
-import { getConfig, getJWTClaims, getUserDetails } from "../utils";
+import { getConfig, getJWTClaims, getUserDetails, queryParamAsString } from "../utils";
 import { defaultPartials } from "./partials";
 
 export function create(
@@ -49,12 +49,11 @@ export function create(
     };
 
     /**
-     * Loading of a specific fluid document.
+     * Loading of a specific Fluid document.
      */
     router.get("/:tenantId/*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response) => {
         const start = Date.now();
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        const chaincode: string = request.query.chaincode ? request.query.chaincode : "";
+        const chaincode: string = queryParamAsString(request.query.chaincode);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         getUrlWithVersion(chaincode).then((version: string) => {
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -89,14 +88,13 @@ export function create(
                         return codeResolver.resolveCodeDetails(fullTree.code);
                     }
 
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                    if (!request.query.chaincode) {
+                    if (request.query.chaincode === undefined) {
                         return;
                     }
 
                     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     const cdn = request.query.cdn ? request.query.cdn : config.get("worker:npm");
-                    const entryPoint = request.query.entrypoint;
+                    const entryPoint = queryParamAsString(request.query.entrypoint);
 
                     let codeDetails: IFluidCodeDetails;
                     if (chaincode.startsWith("http")) {

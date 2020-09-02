@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDataStoreContext } from "./dataStoreContext";
+import { IFluidDataStoreContext, IFluidDataStoreChannel } from "./dataStoreContext";
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -24,11 +24,11 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
     /**
      * String that uniquely identifies the type of data store created by this factory.
      */
-    type?: string;
+    type: string;
 
     /**
      * Generates runtime for the data store from the data store context. Once created should be bound to the context.
      * @param context - Context for the data store.
      */
-    instantiateDataStore(context: IFluidDataStoreContext): void;
+    instantiateDataStore(context: IFluidDataStoreContext): Promise<IFluidDataStoreChannel>;
 }

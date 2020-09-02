@@ -1,0 +1,16 @@
+{{ define "header" }}
+{{ partial "header.html" . }}
+{{ end }}
+
+{{ define "main" }}
+{{ partial "navbarSticky.html" . }}
+
+<h2>This body is replaced when storybook is inject here.</h2>
+
+{{ block "footer" . -}}{{ end }}
+{{- partial "analytics.html" . }}
+{{- if templates.Exists "partials/extra-foot.html" -}}
+{{ partial "extra-foot.html" . }}
+{{- end }}
+
+{{ end }}

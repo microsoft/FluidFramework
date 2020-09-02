@@ -1,14 +1,14 @@
 # @fluid-example/clicker-context
 
-**Clicker** is a Fluid Component that displays a number with a button. Pressing the button
-increments the counter. This is a basic example component using the interface model and stock
+**Clicker** is a Fluid object that displays a number with a button. Pressing the button
+increments the counter. This is a basic example using the interface model and stock
 classes.
 
 **Clicker-Context** contains an implementations of Clicker using the createContextFluid hook
 
 ## Getting Started
 
-If you want to run this component follow the following steps:
+If you want to run this example follow the following steps:
 
 1. Run `npm install` from the `FluidFramework` root directory
 2. Navigate to this directory

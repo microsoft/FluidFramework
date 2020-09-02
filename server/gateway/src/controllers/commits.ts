@@ -68,10 +68,10 @@ function generateGraph(
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const path = pathPostfix ? `${fullId}/${pathPostfix}` : fullId;
 
-    const master = graph.branch("master");
+    const main = graph.branch("main");
     for (const version of versions) {
         const commitTag = version.commit.message.split(";");
-        master.commit({
+        main.commit({
             dotSize: 20,
             message: commitTag.length >= 1 ? commitTag[0] : "",
             onClick: (commit: any) => {

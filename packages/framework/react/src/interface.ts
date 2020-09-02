@@ -12,7 +12,7 @@ import {
 import { SyncedDataObject } from "./syncedDataObject";
 
 /**
- * The combined state contains the fluid and view states and the data props
+ * The combined state contains the Fluid and view states and the data props
  * that are passed in to all reducers and selectors
  */
 export interface ICombinedState<
@@ -25,20 +25,20 @@ export interface ICombinedState<
      */
     viewState: SV;
     /**
-     * The fluid state that will be used to update the synced values in the state. This will be
+     * The Fluid state that will be used to update the synced values in the state. This will be
      * undefined until it is initialized, after which the state will update with the defined values
      */
     fluidState?: SF;
     /**
      * Data props that are loaded in during the Fluid initialization step. This contains the runtime
-     * and the fluid object map, along with any other properties the user wants to pass to reducers
+     * and the Fluid object map, along with any other properties the user wants to pass to reducers
      * and selectors
      */
     dataProps: C;
 }
 
 /**
- * The fluid schema that is generated on load and will be stored in the synced state
+ * The Fluid schema that is generated on load and will be stored in the synced state
  */
 export interface IFluidSchema {
     /**
@@ -68,7 +68,7 @@ export type ViewToFluidMap<SV, SF> = Map<keyof SV, IFluidConverter<SV, SF>>;
 export type FluidToViewMap<SV, SF> = Map<keyof SF, IViewConverter<SV, SF>>;
 
 /**
- * The fluid reducer, containing an object that is keyed by function name and contains state update and
+ * The Fluid reducer, containing an object that is keyed by function name and contains state update and
  * effect functions. Each function will have the view state, fluid state, and data props passed into it
  * as parameters in the combined state. State update functions are used to modify values on the state and return
  * the updated state and any new Fluid object handles. Effect functions use values on the state to apply changes
@@ -87,7 +87,7 @@ export interface IFluidReducer<
 }
 
 /**
- * The fluid selector, containing an object that is keyed by function name and contains selector
+ * The Fluid selector, containing an object that is keyed by function name and contains selector
  * functions. Each function will have the view state, fluid state, and data props passed into it
  * as parameters in the combined state. Selector functions can also optionally pass in a
  * handle to fetch from the Fluid object map.
@@ -206,7 +206,7 @@ export interface IFluidState {
      */
     syncedStateId?: string;
     /**
-     * Boolean indicating if any DDS' or Fluid objects on this state are being listened on
+     * Boolean indicating if any DDSes or Fluid objects on this state are being listened on
      * for synced state updates to trigger React state updates
      */
     isInitialized?: boolean;
@@ -343,7 +343,7 @@ export interface FluidStateUpdateFunction<
     > {
     /**
      * The function defined here will take the combined state and update either
-     * the fluid state, the view state, or both. The new combined state and any new Fluid object
+     * the Fluid state, the view state, or both. The new combined state and any new Fluid object
      * handles to load in are returned by the function.
      */
     function: (
@@ -371,7 +371,7 @@ export interface FluidAsyncStateUpdateFunction<
     > {
     /**
      * The function defined here will take the combined state and update either
-     * the fluid state, the view state, or both in an async manner. The new combined state and any new
+     * the Fluid state, the view state, or both in an async manner. The new combined state and any new
      * Fluid object handles to load in will be returned by the function when it finishes.
      */
     asyncFunction: (
@@ -389,7 +389,7 @@ export interface IStateUpdateResult<
     C extends IFluidDataProps
     > {
     /**
-     * The new view and fluid states that were updated by the function
+     * The new view and Fluid states that were updated by the function
      */
     state: ICombinedState<SV, SF, C>;
     /**
@@ -499,7 +499,7 @@ export interface IFluidReducerProps<
     selector: B;
     /**
      * Data props that are loaded in during the Fluid initialization step. This contains the runtime
-     * and the fluid object map
+     * and the Fluid object map
      * TODO: Move data props out as it can be fetched from synced Fluid data object but
      * still needs to be extensible for reducers
      */

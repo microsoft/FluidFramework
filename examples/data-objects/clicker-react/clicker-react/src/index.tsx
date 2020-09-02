@@ -17,7 +17,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 /**
- * Basic Clicker example using new interfaces and stock component classes.
+ * Basic Clicker example using FluidReactView
  */
 export class Clicker extends SyncedDataObject {
     constructor(props) {

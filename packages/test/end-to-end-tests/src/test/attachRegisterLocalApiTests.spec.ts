@@ -375,17 +375,17 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
                 await createDetachedContainerAndGetRootDataStore();
             await container.attach(request);
 
-            // Create another component which returns the runtime channel.
+            // Create another data store which returns the runtime channel.
             const peerDataStore1 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
             const dataStore2 = peerDataStore1.peerDataStore as TestFluidObject;
             assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
-                "Component2 should be unattached");
+                "DataStore2 should be unattached");
 
-            // Create another component which returns the runtime channel.
+            // Create another data store which returns the runtime channel.
             const peerDataStore2 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
             const dataStore3 = peerDataStore2.peerDataStore as TestFluidObject;
             assert.strictEqual(dataStore3.runtime.IFluidHandleContext.isAttached, false,
-                "Component3 should be unattached");
+                "DataStore3 should be unattached");
 
             // Create first channel from dataStore2
             const channel2 = await dataStore2.getSharedObject<SharedMap>(mapId1);

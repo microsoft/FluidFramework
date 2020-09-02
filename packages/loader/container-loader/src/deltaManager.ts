@@ -313,7 +313,7 @@ export class DeltaManager
      * (server can return "write" mode even when asked for "read")
      * Leveraging same "readonly" event as runtime & data stores should behave the same in such case
      * as in read-only permissions.
-     * But this.active can be used by some DDSs to figure out if ops can be sent
+     * But this.active can be used by some DDSes to figure out if ops can be sent
      * (for example, read-only view still participates in code proposals / upgrades decisions)
      */
     public forceReadonly(readonly: boolean) {
@@ -456,8 +456,8 @@ export class DeltaManager
         // if we have any non-acked ops from last connection, reconnect as "write".
         // without that we would connect in view-only mode, which will result in immediate
         // firing of "connected" event from Container and switch of current clientId (as tracked
-        // by all DDSs). This will make it impossible to figure out if ops actually made it through,
-        // so DDSs will immediately resubmit all pending ops, and some of them will be duplicates, corrupting document
+        // by all DDSes). This will make it impossible to figure out if ops actually made it through,
+        // so DDSes will immediately resubmit all pending ops, and some of them will be duplicates, corrupting document
         if (this.clientSequenceNumberObserved !== this.clientSequenceNumber) {
             requestedMode = "write";
         }
@@ -911,7 +911,7 @@ export class DeltaManager
             return;
         }
 
-        // We cancel all ops on lost of connectivity, and rely on DDSs to resubmit them.
+        // We cancel all ops on lost of connectivity, and rely on DDSes to resubmit them.
         // Semantics are not well defined for batches (and they are broken right now on disconnects anyway),
         // but it's safe to assume (until better design is put into place) that batches should not exist
         // across multiple connections. Right now we assume runtime will not submit any ops in disconnected
@@ -1047,7 +1047,7 @@ export class DeltaManager
             return;
         }
 
-        // We cancel all ops on lost of connectivity, and rely on DDSs to resubmit them.
+        // We cancel all ops on lost of connectivity, and rely on DDSes to resubmit them.
         // Semantics are not well defined for batches (and they are broken right now on disconnects anyway),
         // but it's safe to assume (until better design is put into place) that batches should not exist
         // across multiple connections. Right now we assume runtime will not submit any ops in disconnected

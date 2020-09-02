@@ -36,19 +36,18 @@ parameters:
 trigger: none
 
 variables:
-- name: skipComponentGovernanceDetection
-  value: true
-- name: pushImage
-  value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
-- name: generateNotice
-  value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
+- template: include-vars.yml
 - group: container-registry-info
 - name: baseContainerTag
   value: ${{ parameters.containerName }}:$(Build.BuildNumber)
 - ${{ if eq(variables.pushImage, false) }}:
+  - name: containerRegistry
+    value:
   - name: containerTag
     value: $(baseContainerTag)
 - ${{ if eq(variables.pushImage, true) }}:
+  - name: containerRegistry
+    value: $(containerRegistryConnection)
   - name: containerTag
     value: $(containerRegistryUrl)/$(baseContainerTag)
 
@@ -63,8 +62,8 @@ jobs:
       lfs: false
       submodules: false
 
-    # Component detection (not pull request)
-    - ${{ if eq(variables.generateNotice, true) }}:
+    # Component detection
+    - ${{ if eq(variables.componentDetection, true) }}:
       - template: include-generate-notice-steps.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
@@ -100,7 +99,7 @@ jobs:
     - task: Docker@2
       displayName: Docker Build
       inputs:
-        containerRegistry: $(containerRegistryConnection)
+        containerRegistry: $(containerRegistry)
         repository: ${{ parameters.containerName }}
         command: build
         dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
