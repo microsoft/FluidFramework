@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
 
