@@ -111,8 +111,8 @@ describe("Loader.request", () => {
     });
 
     it("can create data object using url with second id, having correct type and id", async () => {
-        const longUrl = `${documentLoadUrl}/${dataStore2.id}`;
-        const testDataStore = await requestFluidObject(loader, longUrl);
+        const dataStore2Url = `${documentLoadUrl}/${dataStore2.id}`;
+        const testDataStore = await requestFluidObject(loader, dataStore2Url);
 
         assert(testDataStore instanceof TestSharedDataObject2, "request returns the wrong type with long url");
         assert.equal(testDataStore.id, dataStore2.id, "id is not correct");

@@ -35,8 +35,6 @@ export class LocalResolver implements IUrlResolver {
         const parsedUrl = new URL(request.url);
         const fullPath = parsedUrl.pathname.substr(1);
         const documentId = fullPath.split("/")[0];
-        const uri = parsedUrl.pathname.substr(documentId.length + 1);
-
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const resolved: IFluidResolvedUrl = {
             endpoints: {
@@ -46,7 +44,7 @@ export class LocalResolver implements IUrlResolver {
             },
             tokens: { jwt: generateToken(this.tenantId, documentId, this.tokenKey, scopes) },
             type: "fluid",
-            url: `fluid-test://localhost:3000/${this.tenantId}/${documentId}${uri}`,
+            url: `fluid-test://localhost:3000/${this.tenantId}/${fullPath}`,
         };
 
         return resolved;
