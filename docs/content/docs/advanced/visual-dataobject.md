@@ -1,5 +1,5 @@
 ---
-title: How to write a visual DataObject
+title: How to write a visual Fluid object
 menuPosition: 2
 draft: false
 ---
