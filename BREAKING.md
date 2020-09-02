@@ -16,7 +16,7 @@
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
 - [LastEditedTrackerComponent renamed to LastEditedTrackerDataObject](#lasteditedtrackercomponent-renamed)
 - [ComponentProvider renamed to FluidObjectProvider in @fluidframework/synthesize](#componentProvider-renamed-to-fluidobjectPpovider)
-
+- [Package @fluidframework/framework-experimental removed](#package-@fluidframework/framework-experimental-removed)
 
 ### External Component Loader and IComponentDefaultFactoryName removed
 The @fluidframework/external-component-loader package has been removed from the repo. In addition to this, the IFluidExportDefaultFactoryName and the corresponding IProvideFluidExportDefaultFactoryName interfaces have also been dropped.
@@ -54,7 +54,7 @@ Please switch to using one of the following APIs:
 Removed from IFluidDataStoreContext  & IContainerRuntime.
 Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altogether in same release (more info to follow)
 
-## getDataStore() APIs is removed
+### getDataStore() APIs is removed
 IContainerRuntime.getDataStore() is removed. Only IContainerRuntime.getRootDataStore() is available to retrieve root data stores.
 For couple versions we will allow retrieving non-root data stores using this API, but this functionality is temporary and will be removed soon.
 You can use handleFromLegacyUri() for creating handles from container-internal URIs (i.e., in format `/${dataStoreId}`) and resolving those containers to get to non-root data stores. Please note that this functionality is strictly added for legacy files! In future, not using handles to refer to content (and storing handles in DDSes) will result in such data stores not being reachable from roots, and thus garbage collected (deleted) from file.
@@ -85,6 +85,26 @@ AsyncRequiredcomponentProvider -> AsyncRequiredFluidObjectProvider
 AsyncOptionalComponentProvider -> AsyncOptionalFluidObjectProvider
 AsyncComponentProvider -> AsyncFluidObjectProvider
 NonNullableComponent -> NonNullableFluidObject
+
+### Package @fluidframework/framework-experimental removed
+
+The layout functionality has been moved from `@fluidframework/framework-experimental` to the package `@fluid-example/client-ui-lib`, and has been renamed:
+
+from | to
+- | -
+`IComponentLayout` | `IViewLayout`
+`IProvideComponentLayout` | `IProvideViewLayout`
+`IComponentKeyHandlers` | `IKeyHandlers`
+`IProvideComponentKeyHandlers` | `IProvideKeyHandlers`
+`IComponentCursor` | `IViewCursor`
+`IProvideComponentCursor` | `IProvideViewCursor`
+`ComponentCursorDirection` | `CursorDirection`
+
+The clipboard interfaces have been removed:
+- `IComponentClipboardData`
+- `IProvideComponentClipboardData`
+- `IComponentClipboardConsumer`
+- `IProvideComponentClipboardConsumer`
 
 ## 0.24 Breaking Changes
 This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
