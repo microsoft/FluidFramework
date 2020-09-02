@@ -39,7 +39,7 @@ export function create(
     }
 
     /**
-     * Loading of a specific fluid document.
+     * Loading of a specific Fluid document.
      */
     router.get("/:tenantId/*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response) => {
         const start = Date.now();

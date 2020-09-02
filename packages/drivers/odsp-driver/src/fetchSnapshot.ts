@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IOdspSnapshot } from "./contracts";
+import { IOdspSnapshot, ISnapshotOptions } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { fetchHelper, IOdspResponse } from "./odspUtils";
@@ -27,13 +27,13 @@ export async function fetchSnapshot(
     logger: ITelemetryLogger,
 ): Promise<IOdspResponse<IOdspSnapshot>> {
     const path = `/trees/${versionId}`;
-    let queryParams: { [key: string]: string } = {};
+    let queryParams: ISnapshotOptions = {};
 
     if (fetchFullSnapshot) {
         if (versionId !== "latest") {
-            queryParams = { channels: "1", blobs: "2" };
+            queryParams = { channels: 1, blobs: 2 };
         } else {
-            queryParams = { deltas: "1", channels: "1", blobs: "2" };
+            queryParams = { deltas: 1, channels: 1, blobs: 2 };
         }
     }
 

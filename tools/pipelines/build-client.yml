@@ -16,18 +16,17 @@ parameters:
 - name: releaseBuildOverride
   displayName: Release Build Override
   type: string
-  default: default
+  default: none
   values:
-    - default
-    - false
-    - true
+    - none
+    - prerelease
+    - release
 
 trigger:
   branches:
     include:
     - main
     - release/*
-    - refs/tags/client_v*
   paths:
     include:
     - packages
@@ -81,11 +80,6 @@ extends:
       displayName: Use Node 12.x
       inputs: 
         version: 12.x
-    - task: npmAuthenticate@0
-      displayName: 'npm Authenticate root .npmrc'
-      inputs:
-        workingFile: .npmrc
-        customEndpoint: Offnet Packages
     - task: Npm@1
       displayName: npm ci
       inputs:

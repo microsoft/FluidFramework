@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
@@ -386,8 +386,7 @@ export class DocumentDeltaConnection
                     return;
                 }
 
-                // TODO: Get latest server bits
-                this.checkpointSequenceNumber = (response as any).checkpointSequenceNumber;
+                this.checkpointSequenceNumber = response.checkpointSequenceNumber;
 
                 this.removeTrackedListeners(true);
                 resolve(response);

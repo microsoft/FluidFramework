@@ -19,7 +19,7 @@ export {
 export { IFluidDataStoreFactory } from "old-runtime-definitions";
 export {
     createLocalLoader,
-    initializeLocalContainer,
+    createAndAttachContainer,
     TestFluidObjectFactory,
     TestContainerRuntimeFactory,
 } from "old-test-utils";

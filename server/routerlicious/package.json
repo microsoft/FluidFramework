@@ -1,6 +1,7 @@
 {
   "name": "root",
   "private": true,
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -18,7 +19,7 @@
     "clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
-    "docker-build": "docker-compose build --build-arg NPM_TOKEN=$NPM_TOKEN",
+    "docker-build": "docker-compose build",
     "docker-clean": "docker-compose down --rmi local -v",
     "postinstall": "npm run postinstall:lerna",
     "lint": "lerna run lint --no-sort --stream",
@@ -70,7 +71,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.1787",
+    "@fluidframework/build-tools": "^0.2.3049",
     "@microsoft/api-documenter": "^7.4.6",
     "@microsoft/api-extractor": "^7.7.2",
     "concurrently": "^5.2.0",

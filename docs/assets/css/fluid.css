@@ -7,20 +7,33 @@ footer {
     background-color: #2c2c32;
 }
 
-.home .ctas {
+.ctas {
     font-size: 2rem;
     font-family: #000000;
     text-align: center;
     background-color: #404049;
 }
 
-.home .cta {
+.row-cta {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.cta {
     padding: 2rem 0;
     width: 100%;
     height: 100%;
-    display: block;
+    display: flex;
+    flex-flow: column;
     color:#f3f5f7;
     transition: .1s ease-in;
+    background: #404049;
+}
+
+.cta-subtext {
+    font-size: medium;
+    margin: 1em 1em 1em 1em;
+    text-align: center;
 }
 
 .filler {
@@ -37,25 +50,8 @@ footer {
 .cta:hover {
     text-decoration: none;
     transition: none;
-}
-
-.cta.get-started {
-    background: #404049;
-}
-
-.cta.get-started:hover,
-.cta.learn-more:hover,
-.cta.play:hover
-    {
     background: #5a5a66;
-}
-
-.cta.play {
-    background: #404049;
-}
-
-.cta.learn-more {
-    background: #404049;
+    color: #f3f5f7;
 }
 
 .cta-icon {
@@ -64,7 +60,8 @@ footer {
     background-size: 48px 48px;
     width: 15rem;
     height: 10rem;
-    margin: auto;
+    margin-left: auto;
+    margin-right: auto;
     margin-bottom: 1rem;
     display: block;
 }
@@ -78,6 +75,25 @@ footer {
 }
 
 .cta-icon.play {
+    background-image: url("/images/Beaker.svg");
+}
+
+.cta-icon.octocat {
+    background-image: url("/images/Octocat.png");
+    background-size: 64px 64px;
+}
+
+.cta-icon.github {
+    background-image: url("/images/GitHub-Mark.png");
+    background-size: 64px 64px;
+}
+
+.cta-icon.stack-overflow {
+    background-image: url("/images/so-icon.svg");
+    background-size: 64px 64px;
+}
+
+.cta-icon.issues {
     background-image: url("/images/Beaker.svg");
 }
 
@@ -101,6 +117,7 @@ footer {
 
 .callout {
     font-size: 1.6rem;
+    background-color: #f3f5f7;
 }
 
 .callout .callout-title {
@@ -110,17 +127,14 @@ footer {
 }
 
 .callout.tip {
-    background-color: #f3f5f7;
     border-color: #42b983;
 }
 
 .callout.important {
-    background-color: #f3f5f7;
     border-color: #00bcf2;
 }
 
 .callout.tip {
-    background-color: #f3f5f7;
     border-color: #42b983;
 }
 

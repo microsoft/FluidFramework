@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
-import { getRandomName, choose } from "../dockerNames";
+import { getRandomName, choose } from "../generateNames";
 
 describe("DockerNames", () => {
     describe("getRandomName", () => {
@@ -36,7 +36,7 @@ describe("DockerNames", () => {
     describe("choose", () => {
         it("generates a random name", async () => {
             const name = choose();
-            assert(typeof(name) === "string");
+            assert(typeof (name) === "string");
             assert(name.includes("_"));
         });
     });

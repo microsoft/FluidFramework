@@ -65,8 +65,8 @@ export interface IFluidPackage extends IPackage {
 }
 
 /**
- * Check if the package.json defines a fluid module, which requires a `fluid` entry
- * @param pkg - the package json data to check if it is a fluid package.
+ * Check if the package.json defines a Fluid module, which requires a `fluid` entry
+ * @param pkg - the package json data to check if it is a Fluid package.
  */
 export const isFluidPackage = (pkg: IPackage): pkg is IFluidPackage =>
     pkg.fluid?.browser?.umd !== undefined;
@@ -84,7 +84,7 @@ export interface IPackageConfig {
 export interface IFluidCodeDetails {
     /**
      * The code package to be used on the Fluid document. This is either the package name which will be loaded
-     * from a package manager. Or the expanded fluid package.
+     * from a package manager. Or the expanded Fluid package.
      */
     package: string | IFluidPackage;
 

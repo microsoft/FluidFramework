@@ -279,7 +279,7 @@ Some of the `useSynced*` hooks that we discussed above use this underlying call 
 
 ## useReducerFluid
 
-This is the hook of choice for larger-scale applications that require more complex mutations, need to work with multiple Fluid objects, and need to have a division between data and view models. Here, instead of having only the view state to manipulate, users have both the view state and the fluid state, with the former containing primitives used for rendering and the latter containing Fluid views to manipulate data in a synced manner. This hook also introduces the concept of a local FluidObjectMap that stores and listens to changes on already fetched Fluid objects.
+This is the hook of choice for larger-scale applications that require more complex mutations, need to work with multiple Fluid objects, and need to have a division between data and view models. Here, instead of having only the view state to manipulate, users have both the view state and the Fluid state, with the former containing primitives used for rendering and the latter containing Fluid views to manipulate data in a synced manner. This hook also introduces the concept of a local FluidObjectMap that stores and listens to changes on already fetched Fluid objects.
 
 
 Reducers offer ways of mutating the state whereas selectors offer ways of fetching data from other Fluid objects. When either involves the addition of new Fluid objects locally, these are added to the FluidObjectMap so that they can be accessed by the view synchronously.

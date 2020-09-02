@@ -122,7 +122,7 @@ _This will use an in-memory implementation of the Fluid server to sync between t
 
 _This will run the local Fluid server implementation we like to call "tinylicious", so you can sync between multiple browser instances._
 
-First, start Tinylicous by running these commands from `/server/tinylicous`:
+First, start Tinylicious by running these commands from `/server/tinylicious`:
 
 ```shell
 npm install

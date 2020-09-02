@@ -93,7 +93,7 @@ class ProseMirrorView implements IFluidHTMLView {
 }
 
 /**
- * ProseMirror builds a fluid collaborative text editor on top of the open source text editor ProseMirror.
+ * ProseMirror builds a Fluid collaborative text editor on top of the open source text editor ProseMirror.
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
@@ -175,7 +175,7 @@ class ProseMirrorFactory implements IFluidDataStoreFactory {
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public instantiateDataStore(context: IFluidDataStoreContext): void {
+    public async instantiateDataStore(context: IFluidDataStoreContext) {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         const sequenceFactory = SharedString.getFactory();
@@ -193,6 +193,8 @@ class ProseMirrorFactory implements IFluidDataStoreFactory {
             const proseMirror = await proseMirrorP;
             return proseMirror.request(request);
         });
+
+        return runtime;
     }
 }
 
