@@ -15,3 +15,12 @@ package-deps.json
 
 # Temporary api-extractor build artifacts
 **/_api-extractor-temp/**
+
+# Bundle analysis artifacts
+bundleAnalysis
+
+# Misc pipeline artifacts
+artifacts
+
+# Windows ADS files in docs.
+docs/**/*:Zone.Identifier

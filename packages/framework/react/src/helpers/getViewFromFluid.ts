@@ -3,67 +3,66 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory } from "@fluidframework/map";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
-    FluidComponentMap,
+    FluidObjectMap,
     IViewConverter,
-    IFluidFunctionalComponentViewState,
-    IFluidFunctionalComponentFluidState,
+    IViewState,
+    IFluidState,
+    ISyncedState,
 } from "../interface";
-import { getFluidStateFromRoot } from "./getFluidStateFromRoot";
+import { getFluidState } from "./getFluidState";
 
 /**
- * Return a partial view state containing the fluid state key identified converted into its
+ * Return a partial view state containing the Fluid state key identified converted into its
  * corresponding view state value in the partial view state returned
- * @param syncedStateId - Unique ID for this synced component's state
- * @param root - The shared directory this component shared state is stored on
- * @param rootKey - The key of the value within the Fluid state that we want converted
- * @param fluidComponentMap - A map of component handle paths to their respective components
+ * @param syncedStateId - Unique ID for the synced state of this view
+ * @param syncedState - The shared map this shared state is stored on
+ * @param fluidKey - The key of the value within the Fluid state that we want converted
+ * @param fluidObjectMap - A map of Fluid handle paths to their Fluid objects
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
- * @param combinedRootState - Optional param containing the combined root state so far to fetch from, instead of getting
- * the current value on the root
+ * @param combinedFluidState - Optional param containing the combined Fluid state so far to fetch from
  */
 export function getViewFromFluid<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     syncedStateId: string,
-    root: ISharedDirectory,
-    rootKey: keyof SF,
-    fluidComponentMap: FluidComponentMap,
-    fluidToView?: Map<keyof SF, IViewConverter<SV, SF>>,
-    combinedRootState?: Partial<SF>,
+    syncedState: ISyncedState,
+    fluidKey: keyof SF,
+    fluidObjectMap: FluidObjectMap,
+    fluidToView: Map<keyof SF, IViewConverter<SV, SF>>,
+    viewState: SV,
+    combinedFluidState?: Partial<SF>,
 ): Partial<SV> {
-    const syncedState = getFluidStateFromRoot(
+    const fluidObjectState = getFluidState(
         syncedStateId,
-        root,
-        fluidComponentMap,
+        syncedState,
+        fluidObjectMap,
         fluidToView,
     );
-    if (syncedState === undefined) {
+    if (fluidObjectState === undefined) {
         throw Error(
-            "Attempted to fetch view from fluid state before it was initialized",
+            "Attempted to fetch view from Fluid state before it was initialized",
         );
     }
-    let value = syncedState[rootKey];
-    if (combinedRootState) {
-        value = (combinedRootState[rootKey] || value) as SF[keyof SF];
+    let value = fluidObjectState[fluidKey];
+    if (combinedFluidState !== undefined) {
+        value = combinedFluidState[fluidKey] ?? value;
     }
-    const viewConverter =
-        fluidToView && fluidToView.get(rootKey)?.viewConverter;
-    if (viewConverter) {
-        const partialRootState: Partial<SF> = {};
-        partialRootState[rootKey] = value;
-        return viewConverter(partialRootState, fluidComponentMap);
+    const viewConverter = fluidToView.get(fluidKey)?.viewConverter;
+    if (viewConverter !== undefined) {
+        const partialFluidState: Partial<SF> = {};
+        partialFluidState[fluidKey] = value;
+        return viewConverter(viewState, partialFluidState, fluidObjectMap);
     } else {
         const partialViewState: Partial<SV> = {};
-        const valueAsIComponentHandle = (value as IComponent).IComponentHandle;
-        const convertedValue = valueAsIComponentHandle
-            ? fluidComponentMap.get(valueAsIComponentHandle.path)
+        const valueAsIFluidHandle = (value as IFluidObject).IFluidHandle;
+        const convertedValue = valueAsIFluidHandle !== undefined
+            ? fluidObjectMap.get(valueAsIFluidHandle.absolutePath)
             : value;
-        partialViewState[rootKey as string] = convertedValue;
+        partialViewState[fluidKey as string] = convertedValue;
         return partialViewState;
     }
 }

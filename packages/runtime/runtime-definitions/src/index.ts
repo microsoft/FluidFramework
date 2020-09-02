@@ -4,7 +4,8 @@
  */
 
 export * from "./agent";
-export * from "./componentFactory";
-export * from "./componentRegistry";
-export * from "./componentContext";
+export * from "./dataStoreFactory";
+export * from "./dataStoreRegistry";
+export * from "./dataStoreContext";
 export * from "./protocol";
+export * from "./summary";

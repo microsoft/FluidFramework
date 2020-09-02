@@ -6,19 +6,35 @@
 import { IConsumer, IProducer } from "@fluidframework/server-services-core";
 import { KafkaNodeConsumer } from "./kafkaNodeConsumer";
 import { KafkaNodeProducer } from "./kafkaNodeProducer";
+import { RdkafkaConsumer } from "./rdkafkaConsumer";
+import { RdkafkaProducer } from "./rdkafkaProducer";
 
-export const createConsumer = (
+export function createConsumer(
+    type: string,
     kafkaEndPoint: string,
     zookeeperEndPoint: string,
     clientId: string,
     groupId: string,
-    topic: string): IConsumer =>
-    new KafkaNodeConsumer({ kafkaHost: kafkaEndPoint }, clientId, groupId, topic, zookeeperEndPoint);
+    topic: string): IConsumer {
+    if (type === "rdkafka") {
+        const endpoints = { kafka: [kafkaEndPoint], zooKeeper: [zookeeperEndPoint] };
+        return new RdkafkaConsumer(endpoints, clientId, topic, groupId);
+    }
 
-export const createProducer = (
+    return new KafkaNodeConsumer({ kafkaHost: kafkaEndPoint }, clientId, groupId, topic, zookeeperEndPoint);
+}
+
+export function createProducer(
     type: string,
-    endPoint: string,
+    kafkaEndPoint: string,
     clientId: string,
     topic: string,
-    maxKafkaMessageSize: number): IProducer =>
-    new KafkaNodeProducer({ kafkaHost: endPoint }, clientId, topic);
+    maxKafkaMessageSize: number,
+    enableIdempotence?: boolean,
+    pollIntervalMs?: number): IProducer {
+    if (type === "rdkafka") {
+        return new RdkafkaProducer({ kafka: [kafkaEndPoint] }, clientId, topic, enableIdempotence, pollIntervalMs);
+    }
+
+    return new KafkaNodeProducer({ kafkaHost: kafkaEndPoint }, clientId, topic);
+}

@@ -47,7 +47,7 @@ export class TenantInfoModal extends React.Component<ITenantInfoProps> {
                     <p><b>Orderer:</b> {orderer}</p>
                     <p><b>Storage:</b> {storage}</p>
                     <a
-                        href="https://github.com/microsoft/FluidFramework/blob/master/server/admin/INSTRUCTION.md"
+                        href="https://github.com/microsoft/FluidFramework/blob/main/server/admin/INSTRUCTION.md"
                         rel="noopener noreferrer"
                         target="_blank"
                     >

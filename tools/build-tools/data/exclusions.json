@@ -1,0 +1,8 @@
+[
+    "docs/layouts/",
+    "docs/themes/thxvscode/assets/",
+    "docs/themes/thxvscode/layouts/",
+    "docs/themes/thxvscode/static/assets/",
+    "docs/tutorials/.*\\.tsx?",
+    "tools/generator-fluid/app/templates/"
+]

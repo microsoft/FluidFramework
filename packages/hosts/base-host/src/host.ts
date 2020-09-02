@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
     IFluidModule,
 } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { Loader, Container } from "@fluidframework/container-loader";
 import { WebCodeLoader } from "@fluidframework/web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
 import { initializeContainerCode } from "./initializeContainerCode";
@@ -24,7 +24,7 @@ async function createWebLoader(
     hostConfig: IBaseHostConfig,
     seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>): Promise<Loader> {
     // Create the web loader and prefetch the chaincode we will need
-    const codeLoader = new WebCodeLoader(hostConfig.codeResolver, hostConfig.whiteList);
+    const codeLoader = new WebCodeLoader(hostConfig.codeResolver, hostConfig.allowList);
 
     if (seedPackages !== undefined) {
         for (const [codeDetails, maybeModule] of seedPackages) {
@@ -67,7 +67,7 @@ export class BaseHost {
         return this.loaderP;
     }
 
-    public async initializeContainer(url: string, codeDetails?: IFluidCodeDetails) {
+    public async initializeContainer(url: string, codeDetails?: IFluidCodeDetails): Promise<Container> {
         const loader = await this.getLoader();
         const container = await loader.resolve({ url });
 
@@ -87,18 +87,18 @@ export class BaseHost {
         return container;
     }
 
-    public async getComponent(url: string) {
+    public async requestFluidObject(url: string) {
         const loader = await this.getLoader();
         const response = await loader.request({ url });
 
         if (response.status !== 200 ||
             !(
                 response.mimeType === "fluid/component" ||
-                response.mimeType === "prague/component"
+                response.mimeType === "fluid/object"
             )) {
             return undefined;
         }
 
-        return response.value as IComponent;
+        return response.value as IFluidObject;
     }
 }

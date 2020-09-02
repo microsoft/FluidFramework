@@ -1,7 +1,10 @@
 {
   "name": "chaincode-loader",
   "version": "0.0.1",
+  "private": true,
   "description": "Headless chaincode loader",
+  "homepage": "https://fluidframework.com",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "index.js"

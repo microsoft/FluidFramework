@@ -4,7 +4,7 @@
 FROM node:10.16.0-slim
 
 # See https://crbug.com/795759
-RUN apt-get update && apt-get install -yq libgconf-2-4
+RUN apt-get update && apt-get install -yq libgconf-2-4 python make g++
 
 # Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
 # Note: this installs the necessary libs to make the bundled version of Chromium that Puppeteer
@@ -39,8 +39,6 @@ USER pptruser
 WORKDIR /home/pptruser
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
-ARG NPM_TOKEN
-COPY --chown=pptruser:pptruser .npmrc .
 COPY --chown=pptruser:pptruser package.json .
 COPY --chown=pptruser:pptruser package-lock.json .
 RUN npm install
@@ -48,8 +46,5 @@ RUN npm install
 # And now copy over our actual code and build
 COPY --chown=pptruser:pptruser . .
 RUN npm run build:full
-
-# Remove the npmrc following the build
-RUN rm -f .npmrc
 
 ENTRYPOINT ["dumb-init", "--", "node", "dist/index.js"]

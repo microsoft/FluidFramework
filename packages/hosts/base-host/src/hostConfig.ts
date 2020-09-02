@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
-import { ICodeWhiteList, IProxyLoaderFactory, IFluidCodeResolver } from "@fluidframework/container-definitions";
+import { IFluidObject } from "@fluidframework/core-interfaces";
+import { ICodeAllowList, IProxyLoaderFactory, IFluidCodeResolver } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 
 /**
@@ -19,14 +19,14 @@ export interface IBaseHostConfig {
     // Any config to be provided to loader.
     config?: any;
 
-    // A component that gives host provided capabilities/configurations
-    // to the component in the container(such as auth).
-    scope?: IComponent;
+    // A fluid object that gives host provided capabilities/configurations
+    // to the Fluid object in the container(such as auth).
+    scope?: IFluidObject;
 
     proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
 
-    // White List for the code loader
-    whiteList?: ICodeWhiteList;
+    // Allow List for the code loader
+    allowList?: ICodeAllowList;
 
     // The code resolver
     codeResolver: IFluidCodeResolver;

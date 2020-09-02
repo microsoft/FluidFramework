@@ -52,8 +52,8 @@ export class OrdererManager implements core.IOrdererManager {
     public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
         const tenant = await this.tenantManager.getTenant(tenantId);
 
-        winston.info(tenant.orderer);
-        winston.info(tenant.orderer.url);
+        const messageMetaData = { documentId, tenantId };
+        winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
 
         if (tenant.orderer.url !== this.ordererUrl) {
             return Promise.reject("Invalid ordering service endpoint");
@@ -107,12 +107,15 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const topic = config.get("alfred:topic");
         const metricClientConfig = config.get("metric");
         const maxKafkaMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
+        const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
         const producer = services.createProducer(
             kafkaLibrary,
             kafkaEndpoint,
             kafkaClientId,
             topic,
-            maxKafkaMessageSize);
+            maxKafkaMessageSize,
+            false,
+            kafkaProducerPollIntervalMs);
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");

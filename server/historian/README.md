@@ -1,7 +1,5 @@
 # historian
 
-[![Historian Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/7/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=7)
-
 The historian service tracks the historical record for a document. It serves as a proxy to the underlying git repository
 that maintains the versioned snapshots.
 
@@ -9,15 +7,13 @@ that maintains the versioned snapshots.
 
 For consistency we recommend building and developing within a container
 
-To begin you'll need to connect to the Fluid private npm repository. Instructions can be found [here](../routerlicious/README.md#authorizing-to-private-npm-feed)
-
 You can build the production container by running.
 
-`docker build --build-arg NPM_TOKEN=${NPM_TOKEN} -t historian .`
+`docker build -t historian .`
 
 And then mount it for development by running.
 
-`docker run -it -v "$(pwd):/home/node/server" -e NPM_TOKEN=${NPM_TOKEN} -p 3000:3000 node:8.15.0-slim /bin/bash`
+`docker run -it -v "$(pwd):/home/node/server" -p 3000:3000 node:8.15.0-slim /bin/bash`
 
 When mounted for development you'll want to run the following commands. These also work if you would like to
 develop outside of the container.
@@ -33,3 +29,9 @@ your local files into the container so you will need to npm install, npm run bui
 ## Testing
 
 `docker run -t historian npm test`
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

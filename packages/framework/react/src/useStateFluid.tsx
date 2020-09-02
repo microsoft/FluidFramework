@@ -5,29 +5,33 @@
 
 import * as React from "react";
 import {
-    IFluidFunctionalComponentViewState,
+    IViewState,
     IFluidProps,
-    IFluidFunctionalComponentFluidState,
+    IFluidState,
+    ISyncedStateConfig,
 } from "./interface";
-import { initializeState, syncStateAndRoot } from "./helpers";
+import { initializeState, syncState } from "./helpers";
 
 /**
  * A wrapper around the useState React hook that combines local and Fluid state updates
  */
 export function useStateFluid<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     props: IFluidProps<SV, SF>, initialViewState: SV,
-): [SV, (newState: SV, fromRootUpdate?: boolean) => void] {
+): [SV, (newState: SV, isSyncedStateUpdate?: boolean) => void] {
     const {
         syncedStateId,
-        root,
-        fluidToView,
-        viewToFluid,
-        dataProps,
+        syncedDataObject,
     } = props;
-
+    const config = syncedDataObject.getConfig(syncedStateId);
+    if (config === undefined) {
+        throw Error(`Failed to find configuration for synced state ID: ${syncedStateId}`);
+    }
+    const syncedState = syncedDataObject.syncedState;
+    const dataProps = props.dataProps ?? syncedDataObject.dataProps;
+    const { fluidToView, viewToFluid } = config as ISyncedStateConfig<SV, SF>;
     // Establish the react state and setState functions using the initialViewState passed in
     const [reactState, reactSetState] = React.useState<SV>(initialViewState);
 
@@ -36,9 +40,9 @@ export function useStateFluid<
     // after the async call has finished
     if (!reactState.isInitialized) {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        initializeState(
+        initializeState<SV, SF>(
             syncedStateId,
-            root,
+            syncedState,
             dataProps,
             reactState,
             reactSetState,
@@ -51,7 +55,7 @@ export function useStateFluid<
     // update to both the local and Fluid state or just the local state respectively based off of
     // if the state update is coming locally, i.e. not from the root
     const fluidSetState = React.useCallback(
-        (newState: Partial<SV>, fromRootUpdate = false, isLocal = false) => {
+        (newState: Partial<SV>, fromRootUpdate = false, isLocal: boolean = false) => {
             const newCombinedState = {
                 ...reactState,
                 ...newState,
@@ -60,20 +64,20 @@ export function useStateFluid<
             if (isLocal) {
                 reactSetState(newCombinedState);
             } else {
-                syncStateAndRoot(
+                syncState(
                     fromRootUpdate,
                     syncedStateId,
-                    root,
+                    syncedState,
                     dataProps.runtime,
                     newCombinedState,
                     reactSetState,
-                    dataProps.fluidComponentMap,
+                    dataProps.fluidObjectMap,
                     fluidToView,
                     viewToFluid,
                 );
             }
         },
-        [root, viewToFluid, reactState, reactSetState, dataProps],
+        [syncedState, viewToFluid, reactState, reactSetState, dataProps],
     );
     return [reactState, fluidSetState];
 }

@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { merge } from "lodash";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import {
     ActivityCheckingTimeout,
     BroadcasterLambda,
+    CheckpointManager,
     ClientSequenceTimeout,
     DefaultServiceConfiguration,
     DeliLambda,
@@ -17,6 +18,8 @@ import {
     NoopConsolidationTimeout,
     ScribeLambda,
     ScriptoriumLambda,
+    SummaryReader,
+    SummaryWriter,
 } from "@fluidframework/server-lambdas";
 import { IGitManager } from "@fluidframework/server-services-client";
 import {
@@ -41,12 +44,7 @@ import { LocalKafka } from "./localKafka";
 import { LocalLambdaController } from "./localLambdaController";
 import { LocalOrdererConnection } from "./localOrdererConnection";
 import { LocalOrdererSetup } from "./localOrdererSetup";
-
-export interface ISubscriber {
-    id: string;
-    readonly webSocket?: IWebSocket;
-    send(topic: string, ...args: any[]): void;
-}
+import { IPubSub, ISubscriber, PubSub, WebSocketSubscriber } from "./pubsub";
 
 const DefaultScribe: IScribe = {
     lastClientSummaryHead: undefined,
@@ -65,74 +63,6 @@ const DefaultDeli: IDeliCheckpoint = {
     sequenceNumber: 0,
     term: 1,
 };
-
-class WebSocketSubscriber implements ISubscriber {
-    public get id(): string {
-        return this.webSocket.id;
-    }
-
-    constructor(public readonly webSocket: IWebSocket) {
-    }
-
-    public send(topic: string, ...args: any[]): void {
-        this.webSocket.emit(args[0], ...args.slice(1));
-    }
-}
-
-export interface IPubSub {
-    // Registers a subscriber for the given message
-    subscribe(topic: string, subscriber: ISubscriber);
-
-    // Removes the subscriber
-    unsubscribe(topic: string, subscriber: ISubscriber);
-
-    // Publishes a message to the given topic
-    publish(topic: string, ...args: any[]): void;
-}
-
-class PubSub implements IPubSub {
-    private readonly topics = new Map<string, Map<string, { subscriber: ISubscriber, count: number }>>();
-
-    public publish(topic: string, ...args: any[]): void {
-        const subscriptions = this.topics.get(topic);
-        if (subscriptions) {
-            for (const [, value] of subscriptions) {
-                value.subscriber.send(topic, ...args);
-            }
-        }
-    }
-
-    // Subscribes to a topic. The same subscriber can be added multiple times. In this case we maintain a ref count
-    // on the total number of times it has been subscribed. But we will only publish to it once.
-    public subscribe(topic: string, subscriber: ISubscriber) {
-        if (!this.topics.has(topic)) {
-            this.topics.set(topic, new Map<string, { subscriber: ISubscriber, count: number }>());
-        }
-
-        const subscriptions = this.topics.get(topic);
-        if (!subscriptions.has(subscriber.id)) {
-            subscriptions.set(subscriber.id, { subscriber, count: 0 });
-        }
-
-        subscriptions.get(subscriber.id).count++;
-    }
-
-    public unsubscribe(topic: string, subscriber: ISubscriber) {
-        assert(this.topics.has(topic));
-        const subscriptions = this.topics.get(topic);
-
-        assert(subscriptions.has(subscriber.id));
-        const details = subscriptions.get(subscriber.id);
-        details.count--;
-        if (details.count === 0) {
-            subscriptions.delete(subscriber.id);
-        }
-
-        if (subscriptions.size === 0) {
-            this.topics.delete(topic);
-        }
-    }
-}
 
 class LocalSocketPublisher implements IPublisher {
     constructor(private readonly publisher: IPubSub) {
@@ -180,7 +110,7 @@ export class LocalOrderer implements IOrderer {
         scribeContext: IContext = new LocalContext(logger),
         deliContext: IContext = new LocalContext(logger),
         clientTimeout: number = ClientSequenceTimeout,
-        serviceConfiguration = DefaultServiceConfiguration,
+        serviceConfiguration: Partial<IServiceConfiguration> = {},
         scribeNackOnSummarizeException = false,
     ) {
         const documentDetails = await setup.documentP();
@@ -202,7 +132,7 @@ export class LocalOrderer implements IOrderer {
             scribeContext,
             deliContext,
             clientTimeout,
-            serviceConfiguration,
+            merge({}, DefaultServiceConfiguration, serviceConfiguration),
             scribeNackOnSummarizeException);
     }
 
@@ -265,7 +195,6 @@ export class LocalOrderer implements IOrderer {
         client: IClient): IOrdererConnection {
         // Create the connection
         const connection = new LocalOrdererConnection(
-            this.pubSub,
             subscriber,
             this.existing,
             this.details.value,
@@ -391,19 +320,31 @@ export class LocalOrderer implements IOrderer {
             () => -1,
             () => { return; });
 
-        return new ScribeLambda(
-            context,
-            documentCollection,
-            scribeMessagesCollection,
+        const summaryWriter = new SummaryWriter(
             this.tenantId,
             this.documentId,
-            scribe,
             this.gitManager,
+            scribeMessagesCollection);
+        const summaryReader = new SummaryReader(this.documentId, this.gitManager);
+        const checkpointManager = new CheckpointManager(
+            this.tenantId,
+            this.documentId,
+            documentCollection,
+            scribeMessagesCollection);
+        return new ScribeLambda(
+            context,
+            this.tenantId,
+            this.documentId,
+            summaryWriter,
+            summaryReader,
+            checkpointManager,
+            scribe,
             this.rawDeltasKafka,
             protocolHandler,
             1, // TODO (Change when local orderer also ticks epoch)
             protocolHead,
             scribeMessages.map((message) => message.operation),
+            false,
             false,
             this.scribeNackOnSummarizeException);
     }

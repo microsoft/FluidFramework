@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// TODO: Move this in a seperate package.
-// import { ICodeLoader, ICodeWhiteList, IFluidCodeDetails } from "@fluidframework/container-definitions";
+// TODO: Move this in a separate package.
+// import { ICodeLoader, ICodeAllowList, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { exec } from "child_process";
 import * as fs from "fs";
 import { promisify } from "util";
@@ -15,7 +15,7 @@ const asyncExec = promisify(exec);
 // A sentinel file to indicate install completion.
 const signalFileName = "dummy";
 
-export class NodeWhiteList {
+export class NodeAllowList {
     constructor() {
 
     }
@@ -29,11 +29,11 @@ export class NodeCodeLoader {
     constructor(
         private readonly packageDirectory: string,
         private readonly waitTimeoutMSec: number,
-        private readonly whiteList: any) {
+        private readonly allowList: any) {
     }
 
     public async load<T>(pkg: any): Promise<T> {
-        if (await this.whiteList.testSource(pkg)) {
+        if (await this.allowList.testSource(pkg)) {
             let packageName = "";
             if (typeof pkg.package === "string") {
                 packageName = pkg.package;
@@ -51,18 +51,18 @@ export class NodeCodeLoader {
 
     private async installOrWaitForPackages(pkg: string): Promise<string> {
         // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-        const components = pkg.match(/(.*)\/(.*)@(.*)/);
-        if (!components) {
+        const dataStores = pkg.match(/(.*)\/(.*)@(.*)/);
+        if (!dataStores) {
             return Promise.reject("Invalid package");
         }
-        const [, scope, name] = components;
+        const [, scope, name] = dataStores;
 
         const packageDirectory = `${this.packageDirectory}/${pkg}`;
         const signalPath = `${packageDirectory}/${signalFileName}`;
         const codeEntrypoint = `${packageDirectory}/node_modules/${scope}/${name}`;
 
         if (!fs.existsSync(packageDirectory)) {
-            // Our node verison (8.15) does not support recursive directory creation.
+            // Our node version (8.15) does not support recursive directory creation.
             // Need to create each subdirectories manually.
             const dirs = pkg.split("/");
             if (!fs.existsSync(`${this.packageDirectory}/${dirs[0]}`)) {

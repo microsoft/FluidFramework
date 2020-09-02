@@ -5,15 +5,14 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 import assert from "assert";
-import { IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { RequestParser } from "@fluidframework/container-runtime";
-
+import { RequestParser } from "@fluidframework/runtime-utils";
 import {
     BaseContainerService,
     generateContainerServicesRequestHandler,
     serviceRoutePathRoot,
-} from "../containerServices";
+} from "../container-services";
 
 class ContainerServiceMock extends BaseContainerService {
     public route: string = "";
@@ -22,7 +21,7 @@ class ContainerServiceMock extends BaseContainerService {
         this.route = request.url;
         return {
             status: 200,
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             value: this,
         };
     }

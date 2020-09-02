@@ -1,8 +1,8 @@
-const fluidRoute = require("@fluidframework/webpack-component-loader");
+const fluidRoute = require("@fluidframework/webpack-fluid-loader");
 const path = require("path");
 
 const pkg = require("./package.json");
-const componentName = pkg.name.slice(1);
+const dataObjectName = pkg.name.slice(1);
 
 module.exports = env => {
     return({
@@ -24,7 +24,7 @@ module.exports = env => {
             library: "main",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939
-            devtoolNamespace: componentName,
+            devtoolNamespace: dataObjectName,
             libraryTarget: "umd",
         },
         devServer: {
@@ -32,6 +32,9 @@ module.exports = env => {
             stats: "minimal",
             before: (app, server) => fluidRoute.before(app, server),
             after: (app, server) => fluidRoute.after(app, server, __dirname, env),
+            watchOptions: {
+                ignored: "**/node_modules/**",
+            }
         },
         mode: "development",
         devtool: "source-map"

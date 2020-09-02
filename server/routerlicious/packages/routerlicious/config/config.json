@@ -23,7 +23,8 @@
     "kafka": {
         "lib": {
             "name": "kafka-node",
-            "endpoint": "kafka:9092"
+            "endpoint": "kafka:9092",
+            "producerPollIntervalMs": 10
         },
         "maxMessageSize": "1MB"
     },
@@ -78,21 +79,21 @@
     "auth": {
         "endpoint": "http://riddler:5000"
     },
-    "routemaster": {
+    "routemanager": {
         "topics": {
             "receive": "deltas",
             "send": "rawdeltas"
         },
-        "clientId": "routemaster",
-        "groupId": "routemaster"
+        "clientId": "routemanager",
+        "groupId": "routemanager"
     },
     "lambdas": {
         "deli": {
             "group": "deli",
             "topic": "rawdeltas"
         },
-        "routemaster": {
-            "group": "routemaster",
+        "routemanager": {
+            "group": "routemanager",
             "topic": "deltas"
         },
         "scriptorium": {

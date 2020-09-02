@@ -8,10 +8,10 @@ import child_process from "child_process";
 import fs from "fs";
 import * as API from "@fluid-internal/client-api";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/common-utils";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -52,10 +52,10 @@ function expandTreeForReadability(tree: ITree): ITree {
     const newTree: ITree = { entries: [], id: undefined };
     for (const node of tree.entries) {
         const newNode = { ...node };
-        if (node.type === TreeEntry[TreeEntry.Tree]) {
+        if (node.type === TreeEntry.Tree) {
             newNode.value = expandTreeForReadability(node.value as ITree);
         }
-        if (node.type === TreeEntry[TreeEntry.Blob]) {
+        if (node.type === TreeEntry.Blob) {
             const blob = node.value as IBlob;
             try {
                 newNode.value = {
@@ -470,10 +470,10 @@ export class ReplayTool {
                     storage = new FluidFetchReaderFileSnapshotWriter(this.args.initalizeFromSnapshotsDir, node.name);
                 } else {
                     if (node.name.startsWith("snapshot_")) {
-                        storage = FileSnapshotReader.createFromPath(
-                            `${this.args.initalizeFromSnapshotsDir}/${node.name}`);
-                    }
-                    else {
+                        const content = fs.readFileSync(`${this.args.initalizeFromSnapshotsDir}/${node.name}`, "utf-8");
+                        const snapshot = JSON.parse(content) as IFileSnapshot;
+                        storage = new FileSnapshotReader(snapshot);
+                    } else {
                         continue;
                     }
                 }

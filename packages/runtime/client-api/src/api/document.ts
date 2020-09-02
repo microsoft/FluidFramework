@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import * as cell from "@fluidframework/cell";
-import { ComponentRuntime } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     IDeltaManager,
     IFluidCodeDetails,
@@ -23,7 +23,7 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { CodeLoader } from "./codeLoader";
@@ -99,8 +99,8 @@ export class Document extends EventEmitter {
      * Constructs a new document from the provided details
      */
     constructor(
-        public readonly runtime: ComponentRuntime,
-        public readonly context: IComponentContext,
+        public readonly runtime: FluidDataStoreRuntime,
+        public readonly context: IFluidDataStoreContext,
         private readonly root: ISharedMap,
         private readonly closeFn: () => void,
     ) {
@@ -185,11 +185,6 @@ export class Document extends EventEmitter {
         return this.runtime.snapshot(tagMessage);
     }
 
-    // eslint-disable-next-line no-null/no-null
-    public save(tag: string = null) {
-        this.runtime.save(tag);
-    }
-
     /**
      * Closes the document and detaches all listeners
      */
@@ -239,11 +234,11 @@ function attach(loader: Loader, url: string, deferred: Deferred<Document>): void
 
     responseP.then(
         (response) => {
-            if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            if (response.status !== 200 || response.mimeType !== "fluid/object") {
                 return;
             }
 
-            // Check if the component is viewable
+            // Check if the Fluid object is viewable
             deferred.resolve(response.value);
         },
         (error) => {

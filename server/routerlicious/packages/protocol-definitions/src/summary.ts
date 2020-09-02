@@ -39,7 +39,7 @@ export interface ISummaryHandle {
 
 export interface ISummaryBlob {
     type: SummaryType.Blob;
-    content: string | Buffer;
+    content: string | Uint8Array;
 }
 
 export interface ISummaryTree {

@@ -37,7 +37,7 @@ export type IGenericBlob = IDataBlob | IImageBlob | IVideoBlob;
 
 /** Properties common to all Blobs */
 export interface IBaseBlob {
-    content: Buffer;
+    content: Uint8Array;
     id: string;
     size: number;
     fileName: string;

@@ -1,6 +1,6 @@
 # Fluid
 
-The Fluid Framework is a TypeScript library for building distributed, real-time collaborative web components and
+The Fluid Framework is a TypeScript library for building distributed, real-time collaborative web
 applications.
 
 ## Getting started using the Fluid Framework
@@ -8,9 +8,11 @@ applications.
 You may be here because you want to...
 
 - Learn more about the Fluid Framework
-- Build a Fluid component
+- Build a Fluid object
 
-Relevant documentation and guides can be found at <https://aka.ms/fluid>.
+Documentation and guides can be found at <https://fluidframework.com/>
+Hello World Repo can be found at <https://github.com/microsoft/FluidHelloWorld>
+Core Examples Repo can be found at <https://github.com/microsoft/FluidExamples>
 
 Got questions? Engage with other Fluid Framework users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
 
@@ -24,9 +26,7 @@ Here's the breakdown of the repo:
 
 * Fluid Framework Client Minirepo ([lerna.json](./lerna.json))
   * [Packages](./packages)
-  * [Example Components](./components/examples)
-  * [Experimental Components](./components/experimental)
-  * [Example Hosts](./examples/hosts)
+  * [Fluid Examples](./examples)
 * Reference Fluid Ordering Service ("Routerlicious") Minirepo ([dir](./server/routerlicious) | [lerna.json](server/routerlicious/lerna.json))
   * [Packages](./server/routerlicious/packages)
 * Common Packages
@@ -39,6 +39,8 @@ Here's the breakdown of the repo:
   * [ESlint Config](./common/build/eslint-config-fluid)
   * [Docs](./docs)
   * [Tools](./tools)
+
+Dependencies between packages in various layers of the system are enforced via a build step called [layer-check](./tools/build-tools/src/layerCheck). You can view the full list of packages and layers in [PACKAGES.md](./docs/PACKAGES.md).
 
 ## Building
 
@@ -61,6 +63,8 @@ Run the following to build the client packages:
 npm install
 npm run build:fast
 ```
+
+See also: [Contributing](#Contributing)
 
 ## Testing
 
@@ -101,7 +105,7 @@ npm run test:copyresults
 
 ### Run tests from within VS Code
 
-We've checked in [VS Code configuration](https://github.com/microsoft/FluidFramework/blob/master/.vscode/launch.json) enabling F5 from a `spec.ts` file to run those tests, if you set the debug configuration to "Debug Current Test".
+We've checked in [VS Code configuration](https://github.com/microsoft/FluidFramework/blob/main/.vscode/launch.json) enabling F5 from a `spec.ts` file to run those tests, if you set the debug configuration to "Debug Current Test".
 
 ## Run it locally
 
@@ -109,16 +113,16 @@ We've checked in [VS Code configuration](https://github.com/microsoft/FluidFrame
 
 _This will use an in-memory implementation of the Fluid server to sync between the two panes in the browser window._
 
-* Choose a component under `/components`
-* Navigate to the component's directory, e.g. `/components/experimental/clicker`
+* Choose an example under `/examples`
+* Navigate to the example's directory, e.g. `/examples/data-objects/clicker`
 * `npm run start`
-* Browse to <http://localhost:8080> to interact with two copies of the component side-by-side
+* Browse to <http://localhost:8080> to interact with two copies of the example side-by-side
 
 ### Multiple browser instances on the same device
 
 _This will run the local Fluid server implementation we like to call "tinylicious", so you can sync between multiple browser instances._
 
-First, start Tinylicous by running these commands from `/server/tinylicous`:
+First, start Tinylicious by running these commands from `/server/tinylicious`:
 
 ```shell
 npm install
@@ -128,18 +132,24 @@ npm run start
 
 Then:
 
-* Navigate to your component of choice (same as above)
+* Navigate to the example of your choice (same as above)
 * `npm run start:tinylicious`
 * Browse to <http://localhost:8080,> copy the full URL you're redirected to, and open in a second window to collaborate
 
 ## Contributing
 
-There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/master/CONTRIBUTING.md) to Fluid.
+There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
 
+* Participate in Q&A on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
 * [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
 * Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
-* [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/master/CONTRIBUTING.md).
+* [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see
 the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com)
 with any additional questions or comments.
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

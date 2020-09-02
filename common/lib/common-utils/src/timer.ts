@@ -44,7 +44,7 @@ interface IRunningTimerState extends ITimeout {
     /**
      * JavaScript Timeout object.
      */
-    timeout: NodeJS.Timeout;
+    timeout: ReturnType<typeof setTimeout>;
 
     /**
      * Intended duration in ms.

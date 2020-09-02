@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
 import {
     IClientDetails,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IFluidCodeDetails, IFluidModule, IFluidPackage } from "./chaincode";
 import { IDeltaManager } from "./deltas";
-import { CriticalContainerError, ContainerWarning } from "./error";
+import { ICriticalContainerError, ContainerWarning } from "./error";
+import { IFluidModule } from "./fluidModule";
+import { IFluidCodeDetails, IFluidPackage } from "./fluidPackage";
+import { AttachState } from "./runtime";
 
 /**
  * Code loading interface
@@ -33,7 +34,7 @@ export interface ICodeLoader {
  */
 export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
     /**
-     * A resolved version of the fluid package. All fluid browser file entries should be absolute urls.
+     * A resolved version of the Fluid package. All Fluid browser file entries should be absolute urls.
      */
     resolvedPackage: IFluidPackage;
     /**
@@ -43,18 +44,18 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 }
 
 /**
- * Fluid code resolvers take a fluid code details, and resolve the
- * full fluid package including absolute urls for the browser file entries.
- * The fluid code resolver is coupled to a specific cdn and knows how to resolve
+ * Fluid code resolvers take a Fluid code details, and resolve the
+ * full Fluid package including absolute urls for the browser file entries.
+ * The Fluid code resolver is coupled to a specific cdn and knows how to resolve
  * the code detail for loading from that cdn. This include resolving to the most recent
  * version of package that supports the provided code details.
  */
 export interface IFluidCodeResolver {
     /**
-     * Resolves a fluid code details into a form that can be loaded
-     * @param details - The fluid code details to resolve
+     * Resolves a Fluid code details into a form that can be loaded
+     * @param details - The Fluid code details to resolve
      * @returns - A IResolvedFluidCodeDetails where the
-     *            resolvedPackage's fluid file entries are absolute urls, and
+     *            resolvedPackage's Fluid file entries are absolute urls, and
      *            an optional resolvedPackageCacheId if the loaded package should be
      *            cached.
      */
@@ -62,9 +63,9 @@ export interface IFluidCodeResolver {
 }
 
 /**
- * Code WhiteListing Interface
+ * Code AllowListing Interface
  */
-export interface ICodeWhiteList {
+export interface ICodeAllowList {
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
@@ -73,19 +74,23 @@ export interface ICodeWhiteList {
  */
 export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
-    (event: "connected" | "contextChanged", listener: (clientId: string) => void);
-    (event: "disconnected" | "joining", listener: () => void);
-    (event: "closed", listener: (error?: CriticalContainerError) => void);
+    (event: "connected", listener: (clientId: string) => void);
+    /**
+     * @param opsBehind - number of ops this client is behind (if present).
+     */
+    (event: "connect", listener: (opsBehind?: number) => void);
+    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
+    (event: "disconnected" | "attaching" | "attached", listener: () => void);
+    (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
-    (event: MessageType.BlobUploaded, listener: (contents: any) => void);
 }
 
 /**
  * The Host's view of the ContainerThing and its connection to storage
  */
-export interface IContainer extends IEventProvider<IContainerEvents> {
+export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
 
     /**
      * The Delta Manager supporting the op stream for this Container
@@ -103,10 +108,9 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     resolvedUrl: IResolvedUrl | undefined;
 
     /**
-     * Flag indicating if this the ContainerThing has been attached to a host service.
-     * False if the ContainerThing is attached to storage.
+     * Indicates the attachment state of the container to a host service.
      */
-    isLocal(): boolean;
+    readonly attachState: AttachState;
 
     /**
      * Attaches the ContainerThing to the Container specified by the given Request.
@@ -117,9 +121,23 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     attach(request: IRequest): Promise<void>;
 
     /**
-     * Get an absolute url for a provided container-relative request url.
+     * Extract the snapshot from the detached container.
      */
-    getAbsoluteUrl(relativeUrl: string): Promise<string>;
+    serialize(): string;
+
+    /**
+     * Get an absolute url for a provided container-relative request url.
+     * If the container is not attached, this will return undefined.
+     *
+     * @param relativeUrl - A relative request within the container
+     */
+    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+    /**
+     * Issue a request against the container for a resource.
+     * @param request - The request to be issued against the container
+     */
+    request(request: IRequest): Promise<IResponse>;
 }
 
 /**
@@ -191,7 +209,7 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined | null;
 }
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
 }

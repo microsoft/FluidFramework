@@ -1,0 +1,148 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# build-docker-service template to build services docker container
+
+parameters:
+- name: buildDirectory
+  type: string
+
+- name: containerName
+  type: string
+
+- name: test
+  type: boolean
+
+- name: lint
+  type: boolean
+  default: false
+
+- name: containerBaseDir
+  type: string
+  default: /home/node/server
+
+- name: buildNumberInPatch
+  type: string
+  default: true
+
+- name: setVersion
+  type: boolean
+  default: true
+
+trigger: none
+
+variables:
+- template: include-vars.yml
+- group: container-registry-info
+- name: baseContainerTag
+  value: ${{ parameters.containerName }}:$(Build.BuildNumber)
+- ${{ if eq(variables.pushImage, false) }}:
+  - name: containerRegistry
+    value:
+  - name: containerTag
+    value: $(baseContainerTag)
+- ${{ if eq(variables.pushImage, true) }}:
+  - name: containerRegistry
+    value: $(containerRegistryConnection)
+  - name: containerTag
+    value: $(containerRegistryUrl)/$(baseContainerTag)
+
+jobs:
+  - job: build
+    displayName: Build Container - ${{ parameters.containerName }}
+    pool: Lite
+    steps:
+    # Setup
+    - checkout: self
+      clean: true
+      lfs: false
+      submodules: false
+
+    # Component detection
+    - ${{ if eq(variables.componentDetection, true) }}:
+      - template: include-generate-notice-steps.yml
+        parameters:
+          buildDirectory: ${{ parameters.buildDirectory }}
+
+    # Set version
+    - ${{ if eq(parameters.setVersion, true) }}:
+      - task: UseNode@1
+        displayName: Use Node 12.x
+        inputs:
+          version: 12.x
+      - template: include-set-package-version.yml
+        parameters:
+          buildDirectory: ${{ parameters.buildDirectory }}
+          buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+
+    # Build
+    - task: Docker@2
+      displayName: Docker Build
+      inputs:
+        containerRegistry: $(containerRegistry)
+        repository: ${{ parameters.containerName }}
+        command: build
+        dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
+        buildContext: ${{ parameters.buildDirectory }}
+        tags: |
+          $(Build.BuildNumber)
+
+    # Lint
+    - ${{ if eq(parameters.lint, true) }}:
+      - task: Docker@0
+        displayName: npm run lint
+        inputs:
+          action: 'Run a Docker command'
+          customCommand: 'run -t $(containerTag) npm run lint'
+
+    # Test
+    - ${{ if eq(parameters.test, true) }}:
+      - task: Docker@0
+        displayName: npm run test
+        inputs:
+          action: 'Run a Docker command'
+          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(containerTag) npm run test'
+        
+      - task: PublishTestResults@2
+        displayName: Publish Test Results
+        inputs:
+          testResultsFormat: 'JUnit'
+          testResultsFiles: '**/*junit-report.xml'
+          searchFolder: $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc
+          mergeTestResults: true
+        condition: succeededOrFailed()
+
+      - task: PublishCodeCoverageResults@1
+        displayName: Publish Code Coverage
+        inputs:
+          codeCoverageTool: Cobertura
+          summaryFileLocation: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
+          reportDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
+
+    # Push
+    - ${{ if eq(variables.pushImage, true) }}:
+      - task: Docker@2
+        displayName: Docker Push
+        inputs:
+          containerRegistry: $(containerRegistryConnection)
+          repository: ${{ parameters.containerName }}
+          command: push
+          tags: |
+            $(Build.BuildNumber)
+
+    # Cleanup
+    - task: Docker@0
+      displayName: Docker Cleanup - Container prune
+      inputs:
+        action: Run a Docker command
+        customCommand: container prune -f
+      continueOnError: true
+      condition: succeededOrFailed()
+
+    - task: Docker@0
+      displayName: Docker Cleanup - $(containerTag)
+      inputs:
+        action: Run a Docker command
+        customCommand: rmi $(containerTag)
+      continueOnError: true
+      condition: succeededOrFailed()

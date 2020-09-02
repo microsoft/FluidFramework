@@ -1,7 +1,8 @@
 {
   "name": "@fluidframework/view-interfaces",
-  "version": "0.20.0",
-  "description": "View interfaces for rendering components",
+  "version": "0.26.0",
+  "description": "View interfaces for rendering views",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -19,20 +20,19 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run tsfmt && npm run eslint",
-    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.20.0"
+    "@fluidframework/core-interfaces": "^0.26.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.17.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
+    "@fluidframework/build-common": "^0.19.2-0",
+    "@fluidframework/eslint-config-fluid": "^0.19.1-0",
     "@microsoft/api-extractor": "^7.7.2",
-    "@types/react": "^16.9.15",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^5.2.0",

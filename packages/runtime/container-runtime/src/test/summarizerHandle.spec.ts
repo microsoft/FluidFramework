@@ -4,36 +4,32 @@
  */
 import assert from "assert";
 import {
-    IComponentHandleContext,
-    IComponentHandle,
-    IComponentLoadable,
-} from "@fluidframework/component-core-interfaces";
+    IFluidHandleContext,
+    IFluidHandle,
+    IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import { SummarizerHandle } from "../summarizerHandle";
 
-const mockHandleContext: IComponentHandleContext = {
-    path: "",
+const mockHandleContext: IFluidHandleContext = {
+    absolutePath: "",
     isAttached: false,
-    IComponentRouter: undefined as any,
-    IComponentHandleContext: undefined as any,
+    IFluidHandleContext: undefined as any,
 
-    attach: () => {
+    attachGraph: () => {
         throw new Error("Method not implemented.");
     },
-    bind: () => {
-        throw new Error("Method not implemented.");
-    },
-    request: () => {
+    resolveHandle: () => {
         throw new Error("Method not implemented.");
     },
 };
-class MockSummarizer implements IComponentLoadable {
-    public get IComponentLoadable() { return this; }
+class MockSummarizer implements IFluidLoadable {
+    public get IFluidLoadable() { return this; }
     public get url() { return "url123"; }
     public get handle() { return new SummarizerHandle(this, "", mockHandleContext); }
 }
 
 describe("SummarizerHandle", () => {
-    let handle: IComponentHandle | undefined;
+    let handle: IFluidHandle | undefined;
     beforeEach(async () => {
         const summarizer = new MockSummarizer();
         handle = summarizer.handle;
@@ -43,13 +39,6 @@ describe("SummarizerHandle", () => {
             await handle?.get();
         } catch (e) {
             assert(e.message === "Do not try to get a summarizer object from the handle. Reference it directly.");
-        }
-    });
-    it("request should fail", async () => {
-        try {
-            await handle?.request({} as any);
-        } catch (e) {
-            assert(e.message === "Do not try to request on a summarizer handle object.");
         }
     });
 });

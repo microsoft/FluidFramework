@@ -22,30 +22,26 @@ import {
  * ???
  */
 export interface IConnectionDetails {
-    /** ??? */
     clientId: string;
-    /** ??? */
     claims: ITokenClaims;
-    /** ??? */
     existing: boolean;
-    /** ??? */
     mode: ConnectionMode;
-    /** ??? */
     parentBranch: string | null;
-    /** ??? */
     version: string;
-    /** ??? */
-    initialClients?: ISignalClient[];
-    /** ??? */
-    initialMessages?: ISequencedDocumentMessage[];
-    /** ??? */
-    initialContents?: IContentMessage[];
-    /** ??? */
-    initialSignals?: ISignalMessage[];
-    /** ??? */
+    initialClients: ISignalClient[];
+    initialMessages: ISequencedDocumentMessage[];
+    initialContents: IContentMessage[];
+    initialSignals: ISignalMessage[];
     maxMessageSize: number;
-    /** ??? */
     serviceConfiguration: IServiceConfiguration;
+    /**
+     * Last known sequence number to ordering service at the time of connection
+     * It may lap actual last sequence number (quite a bit, if container  is very active).
+     * But it's best information for client to figure out how far it is behind, at least
+     * for "read" connections. "write" connections may use own "join" op to similar information,
+     * that is likely to be more up-to-date.
+     */
+    checkpointSequenceNumber: number | undefined;
 }
 
 /**
@@ -63,9 +59,9 @@ export interface IDeltaHandlerStrategy {
     processSignal: (message: ISignalMessage) => void;
 }
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface IComponent extends Readonly<Partial<IProvideDeltaSender>> { }
+    interface IFluidObject extends Readonly<Partial<IProvideDeltaSender>> { }
 }
 
 export const IDeltaSender: keyof IProvideDeltaSender = "IDeltaSender";
@@ -101,7 +97,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
     (event: "allSentOpsAckd" | "caughtUp", listener: () => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
-    (event: "connect", listener: (details: IConnectionDetails) => void);
+    (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void);
     (event: "disconnect", listener: (reason: string) => void);
     (event: "readonly", listener: (readonly: boolean) => void);
 }
@@ -111,51 +107,54 @@ export interface IDeltaManagerEvents extends IEvent {
  */
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender, IDisposable {
     /** The queue of inbound delta messages */
-    inbound: IDeltaQueue<T>;
+    readonly inbound: IDeltaQueue<T>;
 
     /** The queue of outbound delta messages */
-    outbound: IDeltaQueue<U[]>;
+    readonly outbound: IDeltaQueue<U[]>;
 
     /** The queue of inbound delta signals */
-    inboundSignal: IDeltaQueue<ISignalMessage>;
+    readonly inboundSignal: IDeltaQueue<ISignalMessage>;
 
     /** The current minimum sequence number */
-    minimumSequenceNumber: number;
+    readonly minimumSequenceNumber: number;
 
     /** The last sequence number processed by the delta manager */
-    lastSequenceNumber: number;
+    readonly lastSequenceNumber: number;
+
+    /** The latest sequence number the delta manager is aware of */
+    readonly lastKnownSeqNumber: number;
 
     /** The initial sequence number set when attaching the op handler */
-    initialSequenceNumber: number;
+    readonly initialSequenceNumber: number;
 
     /** Details of client */
-    clientDetails: IClientDetails;
+    readonly clientDetails: IClientDetails;
 
     /** Protocol version being used to communicate with the service */
-    version: string;
+    readonly version: string;
 
     /** Max message size allowed to the delta manager */
-    maxMessageSize: number;
+    readonly maxMessageSize: number;
 
     /** Service configuration provided by the service. */
-    serviceConfiguration: IServiceConfiguration | undefined;
+    readonly serviceConfiguration: IServiceConfiguration | undefined;
 
-    /** Flag to indicate whether the client can write or not */
-    active: boolean;
+    /** Flag to indicate whether the client can write or not. */
+    readonly active: boolean;
 
     /**
      * Tells if container is in read-only mode.
-     * Components should listen for "readonly" notifications and disallow user making changes to components.
+     * Data stores should listen for "readonly" notifications and disallow user making changes to data stores.
      * Readonly state can be because of no storage write permission,
      * or due to host forcing readonly mode for container.
      *
      * We do not differentiate here between no write access to storage vs. host disallowing changes to container -
-     * in all cases container runtime and components should respect readonly state and not allow local changes.
+     * in all cases container runtime and data stores should respect readonly state and not allow local changes.
      *
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
      */
-    readonly?: boolean;
+    readonly readonly?: boolean;
 
     /** Terminate the connection to storage */
     close(): void;

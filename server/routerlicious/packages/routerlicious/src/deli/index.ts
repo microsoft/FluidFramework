@@ -17,6 +17,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
     const maxMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
+    const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
 
     const kafkaForwardClientId = config.get("deli:kafkaClientId");
     const kafkaReverseClientId = config.get("alfred:kafkaClientId");
@@ -42,13 +43,17 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         kafkaEndpoint,
         kafkaForwardClientId,
         forwardSendTopic,
-        maxMessageSize);
+        maxMessageSize,
+        true,
+        kafkaProducerPollIntervalMs);
     const reverseProducer = services.createProducer(
         kafkaLibrary,
         kafkaEndpoint,
         kafkaReverseClientId,
         reverseSendTopic,
-        maxMessageSize);
+        maxMessageSize,
+        false,
+        kafkaProducerPollIntervalMs);
 
     const redisConfig = config.get("redis");
     const redisOptions: any = { password: redisConfig.pass };

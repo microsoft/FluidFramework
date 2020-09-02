@@ -1,10 +1,10 @@
-# A Fluid Component Appeared...
+# A Fluid DataObject Appeared...
 
 This project was bootstrapped with the [yo-fluid generator](...)
 
 ## Getting Started
 
-### Running your Fluid Component
+### Running your Fluid DataObject
 
 To start testing run the following:
 
@@ -14,25 +14,25 @@ To start testing run the following:
 
 ### Code Structure
 
-All the code logic lives within the `./src` folder. There are 4 files that makeup a basic component.
+All the code logic lives within the `./src` folder. There are 4 files that makeup a basic DataObject.
 
-The important thing to note is that the Fluid component represents the data model which is separated out from our view via an interface. This separation allows us to build view agnostic, reusable, and scalable Fluid component objects.
+The important thing to note is that the Fluid DataObject represents the data model which is separated out from our view via an interface. This separation allows us to build view agnostic, reusable, and scalable Fluid DataObject objects.
 
-#### `./src/component<%= extension %>`
+#### `./src/dataObject<%= extension %>`
 
-The `component<%= extension %>` file contains the Fluid component and the logic for our data model.
+The `dataObject<%= extension %>` file contains the Fluid DataObject and the logic for our data model.
 
 #### `./src/index.ts`
 
 The `index.ts` file is not very interesting and simply defines our exports. We are exporting two things:
 
-**The Fluid component itself** which allows other packages to consume the Fluid component object directly.
+**The Fluid DataObject itself** which allows other packages to consume the Fluid DataObject object directly.
 
-**The `fluidExport`** which points to our Fluid component factory is used for dynamic Fluid component loading. Our `webpack-component-loader` uses this to find the Fluid component entry point when running `npm start`.
+**The `fluidExport`** which points to our Fluid DataObject factory is used for dynamic Fluid DataObject loading. Our `webpack-fluid-loader` uses this to find the Fluid DataObject entry point when running `npm start`.
 
 #### `./src/interface.ts`
 
-The `interface.ts` file defines the interface between our Fluid component and our view. This abstraction is important to ensure we are building reusable and scalable components.
+The `interface.ts` file defines the interface between our Fluid DataObject and our view. This abstraction is important to ensure we are building reusable and scalable DataObjects.
 
 #### `./src/view<%= extension %>`
 
@@ -43,15 +43,17 @@ The `view<%= extension %>` file contains all the view logic.
 ```text
 .
 ├── src
-|   ├── component<%= extension %>              // Fluid Component source code
+|   ├── dataObject<%= extension %>              // Fluid DataObject source code
 |   ├── index.ts                   // Export file
 |   ├── interface.ts               // Model Interface Definition
 |   └── view<%= extension %>                   // View Logic
+├── tests
+|   └── dataObject.test.<%= extension %>         // Fluid DataObject test
 ├── .gitignore                     // Ignore dist and node_modules
 ├── jest-puppeteer.config.js       // jest-puppeteer configuration
 ├── jest.config.js                 // Jest configuration
 ├── package.json                   // Package manifest
-├── README.md                      // Description of your component's functionality
+├── README.md                      // Description of your DataObject's functionality
 ├── tsconfig.json                  // TypeScript configuration
 └── webpack.config.js              // Webpack configuration
 ```

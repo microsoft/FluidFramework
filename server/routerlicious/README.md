@@ -1,4 +1,4 @@
-# Routerlicious
+# root
 
 Routerlicious handles the receiving of delta operations and is responsible for the ordering and assignment of a
 sequence number to them. Once assigned it is also responsible for notifying connected clients of a new sequence
@@ -20,7 +20,7 @@ Get up and running quickly using our [Getting Started guide](https://aka.ms/flui
 
 ## Help and Questions
 
-Questions can be directed to [Stack Overflow](https://stackoverflow.microsoft.com/questions/tagged/fluid)
+Questions can be directed to [Stack Overflow](https://stackoverflow.com/questions/tagged/fluidframework)
 
 ## Building and Running
 
@@ -41,46 +41,21 @@ below steps if you'd like to run a local version of the service or need to make 
 * [Node v12.x](https://nodejs.org/en/)
 * [Node-gyp](https://github.com/nodejs/node-gyp) dependencies
 
-### Authorizing to private NPM feed
-
-Routerlicious takes a dependency on a set of common Fluid Framework packages stored in VSTS. We follow the standard
-practices defined at https://docs.npmjs.com/docker-and-private-modules in order to make use of these inside of
-our container builds.
-
-In order to get an access token navigate to https://offnet.visualstudio.com/officenet/_packaging?_a=connect&feed=fluid.
-Then choose NPM and then follow the steps in the "Other" tab. Then store the base64 encoded token in a `NPM_TOKEN`
-environment variable. Be sure to choose the correct permissions for the personal access token.
-
-In Powershell
-```
-[System.Environment]::SetEnvironmentVariable('NPM_TOKEN','[BASE64_ENCODED_PERSONAL_ACCESS_TOKEN]',[System.EnvironmentVariableTarget]::User)
-```
-
-In Bash
-```
-$EDITOR ~/.profile
-```
-Add the following line at the bottom of the file 
-```
-     export NPM_TOKEN=[BASE64_ENCODED_PERSONAL_ACCESS_TOKEN]
-```
-
 ### Development
 
-Docker is the preferred method of development. To build the service simply type:
+Docker is the preferred method of development.
 
-In Powershell
+To build the service:
+
 ```
-docker-compose build --build-arg NPM_TOKEN=$env:NPM_TOKEN
-```
-In Bash
-```
-docker-compose build --build-arg NPM_TOKEN=$NPM_TOKEN
+docker-compose build
 ```
 
-And to run
+And to run the service:
 
-`docker-compose up`
+```
+docker-compose up
+```
 
 We also support volume mounting your local drive into the container which provides a faster dev loop.
 
@@ -112,11 +87,7 @@ or
 
 ### Standalone
 
-You can also just run the service directly with Docker. To do so you first need to authenticate to our private
-container registry by following the steps at https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication#individual-login-with-azure-ad
-
-Once you've installed the Azure CLI and authenticated you can auth against our container registry with
-* `az acr login --name prague`
+You can also just run the service directly with Docker. You'll need to connect to our container registry to start.
 
 Docker Compose is used to run the service locally. To start up an instance of the service simply run the following two commands.
 
@@ -129,7 +100,8 @@ The standalone app is meant to be run in a Linux container. If when running eith
 
 To test simply run `npm test` - either inside of the container or after building locally.
 
-You can use the --grep parameter of mocha to limit to a particilar test or suite of tests. For example, to just run the deli tests, you can use `npm run test -- --grep Deli`.
+You can use the --grep parameter of mocha to limit to a particular test or suite of tests. For example, to just run the
+deli tests, you can use `npm run test -- --grep Deli`.
 
 To debug simply add the mocha --inspect-brk parameter `npm run test -- --inspect-brk`. After which you can
 attach to the running tests with VS Code or any other node debugger.
@@ -137,10 +109,6 @@ attach to the running tests with VS Code or any other node debugger.
 ### Documentation
 
 If you want to build API documentation locally, see [Building Documentation](https://praguedocs.azurewebsites.net/contributing/building-documentation.html).
-
-## CI/CD
-
-We make use of continuous integration and deployment via VSTS at https://offnet.visualstudio.com/officenet/
 
 ## Design principals
 
@@ -203,10 +171,9 @@ across the pool of Paparazzi instances (snapshot, spell check, entity extraction
 Historian is in charge of storing document snapshots. It itself is a cached proxy to an underlying
 content-addressable file system represented via the [Git REST API](https://developer.github.com/v3/git/).
 Storage providers that implement this interface are then able to plug into the system as a whole. Currently we have
-support for [GitHub](https://developer.github.com/v3/git/), [Git](../gitrest), and
-[Cobalt](https://offnet.visualstudio.com/officenet/_git/cobalt-netcore).
+support for [GitHub](https://developer.github.com/v3/git/) and [Git](../gitrest).
 
-More details on content-adressable file systems and Git can be found at 
+More details on content-addressable file systems and Git can be found at 
 * https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain
 * http://stefan.saasen.me/articles/git-clone-in-haskell-from-the-bottom-up/
 
@@ -330,3 +297,12 @@ Add a token field to api load call.
 await prague.api.load(id, { encrypted: false, token });
 ```
 Passing an invalid token will fail the load call.
+
+## Verdaccio and the Chaincode CDN
+Coming Soon...
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

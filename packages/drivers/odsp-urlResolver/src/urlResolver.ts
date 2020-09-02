@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
     createOdspUrl,
@@ -32,7 +32,7 @@ export class OdspUrlResolver implements IUrlResolver {
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
     ): Promise<string> {
-        throw new Error("Not implmented");
+        throw new Error("Not implemented");
     }
 }
 
