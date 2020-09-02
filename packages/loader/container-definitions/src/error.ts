@@ -4,7 +4,7 @@
  */
 
 /**
- * Different error types the ContainerThing may report out to the Host
+ * Different error types the Container may report out to the Host
  */
 export enum ContainerErrorType {
     /**

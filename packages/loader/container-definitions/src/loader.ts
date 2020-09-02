@@ -70,7 +70,7 @@ export interface ICodeAllowList {
 }
 
 /**
- * Events emitted by the ContainerThing "upwards" to the Loader and Host
+ * Events emitted by the Container "upwards" to the Loader and Host
  */
 export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
@@ -88,7 +88,7 @@ export interface IContainerEvents extends IEvent {
 }
 
 /**
- * The Host's view of the ContainerThing and its connection to storage
+ * The Host's view of the Container and its connection to storage
  */
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
 
@@ -113,7 +113,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly attachState: AttachState;
 
     /**
-     * Attaches the ContainerThing to the Container specified by the given Request.
+     * Attaches the Container to the Container specified by the given Request.
      *
      * TODO - in the case of failure options should give a retry policy. Or some continuation function
      * that allows attachment to a secondary document.

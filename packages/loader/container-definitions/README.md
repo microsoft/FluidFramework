@@ -1,6 +1,6 @@
 # @fluidframework/container-definitions
 
-This package contains the interfaces and types concerning the Loader and loading the ContainerThing.
+This package contains the interfaces and types concerning the Loader and loading the Container.
 
 Some important interfaces in here include:
 
