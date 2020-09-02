@@ -5,86 +5,26 @@ It uses a SharedString, SharedCounter, and a SharedObjectSequence as part of its
 
 ## Getting Started
 
-To run this follow the steps below:
+If you want to run this example follow the following steps:
 
-1. Run `npm install` from the Likes and Comments root
+1. Run `npm install` from the `FluidFramework` root directory
 2. Start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious)
-3. Run `npm run start` (from a different command window) to start the example
+3. On another terminal, navigate to this likes-and-comments directory
+4. Run `npm run start` from this directory and open localhost:8080 on the browser to see the app running
 
-## Available Scripts
+## Files
 
-### `build`
+#### app.tsx
+This is the main file that starts running the likes-and-comments app. It fetches the container for the Fluid object the app is using and proceeds to render the object on the browser at localhost:8080, and uses the locally running Tinylicious server instance.
 
-```bash
-npm run build
-```
+#### container.ts
+This is where the likes-and-comments Fluid object registry entry is added to the container and a data store for it is generated.
 
-Runs [`tsc`](###-tsc) and [`webpack`](###-webpack) and outputs the results in `./dist`.
+#### fluidObject.tsx
+This contains the actual definition for the Fluid object that the app is using. It extends the `SyncedDataObject` class and defines the DDSes that will be needed in the configuration set in the constructor. It then passes these DDSes to the view to consume the data in the `render` function. This is the `render` that is ultimately being called in `app.tsx` to view the Fluid object.
 
-### `start`
+#### view.tsx
+The functional React view responsible for rendering the data provided by the Fluid object. It fetches the configured DDSes using the provided synced hooks.
 
-```bash
-npm run start
-```
-
-Uses `webpack-dev-server` to start a local webserver that will host your webpack file.
-
-Once you run `start` you can navigate to `http://localhost:8080` in any browser window to use your fluid example.
-
-> The Tinylicious Fluid server must be running. See `start:server` below.
-
-### `start:server`
-
-```bash
-npm run start:server
-```
-
-Starts an instance of the Tinylicious Fluid server running locally at `http://localhost:3000`.
-
-> Tinylicious only needs to be running once on a machine and can support multiple examples.
-
-### `start:test`
-
-```bash
-npm run start:test
-```
-
-Uses `webpack-dev-server` to start a local webserver that will host your webpack file.
-
-Once you run `start:test` you can navigate to `http://localhost:8080` in any browser window to test your fluid example.
-
-`start:test` uses a Fluid server with storage to local tab session storage and launches two instances side by side. It does not require Tinylicious.
-
-This is primarily used for testing scenarios.
-
-### `test`
-
-```bash
-npm run test
-```
-
-Runs end to end test using [Jest](https://jestjs.io/) and [Puppeteer](https://github.com/puppeteer/puppeteer/).
-
-### `test:report`
-
-```bash
-npm run test:report
-```
-
-Runs `npm run test` with additional properties that will report success/failure to a file in `./nyc/*`. This is used for CI validation.
-
-### `tsc`
-
-Compiles the TypeScript code. Output is written to the `./dist` folder.
-
-### `webpack`
-
-Compiles and webpacks the TypeScript code. Output is written to the `./dist` folder.
-
-## Known Issues
-
-### [Issue #22](https://github.com/microsoft/FluidExamples/issues/22) - Presence stored in the ShareMap
-
-### [Issue #23](https://github.com/microsoft/FluidExamples/issues/23) - No Undo/Redo Support
-
-### [Issue #24](https://github.com/microsoft/FluidExamples/issues/24) - No FluidObject Canvas Support
+#### utils.ts
+Helper functions for the app.
