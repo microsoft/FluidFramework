@@ -142,27 +142,31 @@ export async function loadContainer(
         [[codeDetails, fluidModule as IFluidModule]],
         deltaConnectionServer,
         urlResolver);
-    return old.initializeLocalContainer(documentLoadUrl, loader, codeDetails) as unknown as IContainer;
+    return loader.resolve({ url: documentLoadUrl });
 }
 
 export async function createContainerWithOldLoader(
     fluidModule: IFluidModule | old.IFluidModule,
     deltaConnectionServer: ILocalDeltaConnectionServer,
+    urlResolver: IUrlResolver,
 ): Promise<old.IContainer> {
     const loader = old.createLocalLoader(
         [[codeDetails, fluidModule as old.IFluidModule]],
-        deltaConnectionServer as any);
-    return old.initializeLocalContainer(documentLoadUrl, loader, codeDetails);
+        deltaConnectionServer as any,
+        urlResolver);
+    return old.createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
 }
 
 export async function loadContainerWithOldLoader(
     fluidModule: IFluidModule | old.IFluidModule,
     deltaConnectionServer: ILocalDeltaConnectionServer,
+    urlResolver: IUrlResolver,
 ): Promise<old.IContainer> {
     const loader = old.createLocalLoader(
         [[codeDetails, fluidModule as old.IFluidModule]],
-        deltaConnectionServer as any);
-    return old.initializeLocalContainer(documentLoadUrl, loader, codeDetails);
+        deltaConnectionServer as any,
+        urlResolver);
+    return loader.resolve({ url: documentLoadUrl });
 }
 
 export const compatTest = (
@@ -184,12 +188,14 @@ export const compatTest = (
                 fluidExport: runtimeFactory(registry),
             },
             deltaConnectionServer,
+            urlResolver,
         );
         const loadTestContainer = async (registry?: ChannelFactoryRegistry) => loadContainerWithOldLoader(
             {
                 fluidExport: runtimeFactory(registry),
             },
             deltaConnectionServer,
+            urlResolver,
         );
 
         beforeEach(async function() {
