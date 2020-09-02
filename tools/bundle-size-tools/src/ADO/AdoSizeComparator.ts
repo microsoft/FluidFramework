@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { WebApi } from 'azure-devops-node-api';
+import JSZip from 'jszip';
+import { join } from 'path';
 import { getBaselineCommit, getCiBuildWithCommit, getPriorCommit } from '../utilities';
 import { getAzureDevopsApi } from './getAzureDevopsApi';
 import { BuildStatus, BuildResult } from 'azure-devops-node-api/interfaces/BuildInterfaces';
@@ -17,11 +20,8 @@ import { getBuildTagForCommit } from './getBuildTagForCommit';
 import { getCommentForBundleDiff, getSimpleComment } from './getCommentForBundleDiff';
 import { DefaultStatsProcessors } from './DefaultStatsProcessors';
 import { compareBundles } from '../compareBundles';
-import { join } from 'path';
 import { getBundleSummaries } from './getBundleSummaries';
 import { getBundleBuddyConfigMap } from './getBundleBuddyConfigMap';
-import { WebApi } from 'azure-devops-node-api';
-
 
 export class ADOSizeComparator {
   constructor(
@@ -41,8 +41,25 @@ export class ADOSizeComparator {
      * Optional current PR build id to use, such as to tag for
      * later update when the baseline build has not completed
      */
-    private readonly adoBuildId: number | undefined
+    private readonly adoBuildId: number | undefined,
+    /**
+     * Option to do fallback on commits when either there is no associated CI build or
+     * it does not have the needed artifacts.  Fallback is not attempted for other
+     * issues, such as for a failed (but still present) CI build.  This generator is
+     * only used for fallback (it should not provide the first commit to check)
+     */
+    private readonly getFallbackCommit: ((previousCommit: string) => Generator<string>) | undefined = undefined
   ) {}
+
+  /**
+   * Naive fallback generator provided for convenience.  It yields the commit directly
+   * prior to the previous commit.
+   */
+  public * naiveFallbackCommitGenerator(previousCommit: string) {
+    for (let i = 0; i < 5; i++) {
+      yield getPriorCommit(previousCommit);
+    }
+  }
 
   /**
    * Create a size comparison message that can be posted to a PR
@@ -51,67 +68,81 @@ export class ADOSizeComparator {
    * @returns The size comparison message
    */
   public async createSizeComparisonMessage(tagWaiting: boolean): Promise<string> {
-    let baselineCommit = getBaselineCommit();
+    let baselineCommit: string | undefined = getBaselineCommit();
     console.log(`The baseline commit for this PR is ${baselineCommit}`);
 
-    // Sometimes a commit will not have a build, such as when it did not trigger
-    // any CI loops.  Try looking back a few commits in this case.
-    let baselineBuild;
-    for (let i = 0; i < 5; i++) {
-      baselineBuild = await getCiBuildWithCommit({
+    // Some circumstances may want us to try a fallback, such as when a commit does
+    // not trigger any CI loops.  If a fallback generator is provided, use that.
+    let baselineZip;
+    while (baselineCommit !== undefined) {
+      let baselineBuild = await getCiBuildWithCommit({
         adoConnection: this.adoConnection,
         commitHash: baselineCommit,
         adoProjectName: this.adoConstants.projectName,
         buildDefinitionId: this.adoConstants.ciBuildDefinitionId
       });
 
-      if (baselineBuild !== undefined) {
-        break;
+      if (baselineBuild === undefined) {
+        baselineCommit = this.getFallbackCommit ? this.getFallbackCommit(baselineCommit).next().value : undefined;
+        console.log(`Trying backup baseline commit ${baselineCommit}`);
+        continue;
       }
 
-      baselineCommit = getPriorCommit(baselineCommit);
-      console.log(`Trying backup baseline commit ${baselineCommit}`);
-  }
-
-    // No baseline build
-    if (!baselineBuild) {
-      const message = `Could not find baseline build for CI ${baselineCommit}`;
-      console.log(message);
-      return message;
-    }
-
-    // Baseline build does not have id
-    if (baselineBuild.id === undefined) {
-      const message = `Baseline build does not have a build id`;
-      console.log(message);
-      return message;
-    }
-
-    // Baseline build is pending
-    if (baselineBuild.status !== BuildStatus.Completed) {
-      const message = getSimpleComment('Baseline build for this PR has not yet completed.', baselineCommit);
-      console.log(message);
-
-      if (tagWaiting) {
-        this.tagBuildAsWaiting(baselineCommit);
+      // Baseline build does not have id
+      if (baselineBuild.id === undefined) {
+        const message = `Baseline build does not have a build id`;
+        console.log(message);
+        return message;
       }
 
-      return message;
+      // Baseline build is pending
+      if (baselineBuild.status !== BuildStatus.Completed) {
+        const message = getSimpleComment('Baseline build for this PR has not yet completed.', baselineCommit);
+        console.log(message);
+
+        if (tagWaiting) {
+          this.tagBuildAsWaiting(baselineCommit);
+        }
+
+        return message;
+      }
+
+      // Baseline build failed
+      if (baselineBuild.result !== BuildResult.Succeeded) {
+        const message = getSimpleComment(
+          'Baseline CI build failed, cannot generate bundle analysis at this time',
+          baselineCommit
+        );
+        console.log(message);
+        return message;
+      }
+
+      // Baseline build succeeded
+      console.log(`Found baseline build with id: ${baselineBuild.id}`);
+      baselineZip = await getZipObjectFromArtifact(
+        this.adoConnection,
+        this.adoConstants.projectName,
+        baselineBuild.id,
+        this.adoConstants.bundleAnalysisArtifactName).catch(() => {
+          return undefined;
+        });
+
+      // Successful baseline build does not have the needed build artifacts
+      if (baselineZip === undefined) {
+        baselineCommit = this.getFallbackCommit ? this.getFallbackCommit(baselineCommit).next().value : undefined;
+        console.log(`Trying backup baseline commit ${baselineCommit}`);
+        continue;
+      }
     }
 
-    // Baseline build failed
-    if (baselineBuild.result !== BuildResult.Succeeded) {
-      const message = getSimpleComment(
-        'Baseline CI build failed, cannot generate bundle analysis at this time',
-        baselineCommit
-      );
+    // Unable to find a usable baseline
+    if (baselineCommit === undefined || baselineZip === undefined) {
+      const message = `Could not find a usable baseline build with search starting at CI ${getBaselineCommit()}`;
       console.log(message);
       return message;
     }
 
-    // Baseline build succeeded
-    console.log(`Found baseline build with id: ${baselineBuild.id}`);
-    const message = await this.createMessage(baselineCommit, baselineBuild.id);
+    const message = await this.createMessageFromZip(baselineCommit, baselineZip);
     console.log(message);
     return message;
   }
@@ -128,12 +159,8 @@ export class ADOSizeComparator {
     }
   }
 
-  private async createMessage(baselineCommit: string, baselineBuildId: number): Promise<string> {
-    const baselineZip = await getZipObjectFromArtifact(
-      this.adoConnection,
-      this.adoConstants.projectName,
-      baselineBuildId,
-      this.adoConstants.bundleAnalysisArtifactName);
+  private async createMessageFromZip(baselineCommit: string, baselineZip: JSZip): Promise<string> {
+
     const baselineZipBundlePaths = getBundlePathsFromZipObject(baselineZip);
 
     const prBundleFileSystemPaths = await getBundlePathsFromFileSystem(this.localReportPath);
