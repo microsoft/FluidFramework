@@ -156,7 +156,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         // TODO: Make agent uploader run locally.
         const foremanConfig = config.get("foreman");
         const taskMessageSender = services.createMessageSender(config.get("rabbitmq"), foremanConfig);
-        await taskMessageSender.initialize();
+        winston.info(`Debug alfred Created dummy message sender in alfred`);
+        await taskMessageSender.initialize().then(() => { console.log("done"); });
 
         const nodeCollectionName = config.get("mongo:collectionNames:nodes");
         const nodeManager = new NodeManager(mongoManager, nodeCollectionName);
