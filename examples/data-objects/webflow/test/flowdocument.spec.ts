@@ -3,7 +3,7 @@
 * Licensed under the MIT License.
 */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { TagName } from "@fluid-example/flow-util-lib";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { Marker, ReferenceType } from "@fluidframework/merge-tree";

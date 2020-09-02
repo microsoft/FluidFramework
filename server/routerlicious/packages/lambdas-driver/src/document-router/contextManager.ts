@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { IContext, IQueuedMessage } from "@fluidframework/server-services-core";
 import { DocumentContext } from "./documentContext";

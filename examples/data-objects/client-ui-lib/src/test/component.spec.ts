@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { JSDOM } from "jsdom";
 import { ui } from "../";
 
@@ -26,7 +26,7 @@ describe("Routerlicious", () => {
 
             describe(".getChildren()", () => {
                 it("Should return the children of the component", () => {
-                    assert.equal(0, component.getChildren());
+                    assert.equal(0, component.getChildren().length);
                 });
             });
         });

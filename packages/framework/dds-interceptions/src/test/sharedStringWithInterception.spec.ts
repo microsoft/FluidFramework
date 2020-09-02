@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
@@ -37,8 +37,8 @@ describe("Shared String with Interception", () => {
         function verifyString(ss: SharedString, text: string, props: PropertySet, position: number) {
             assert.equal(ss.getText(), text, "The retrieved text should match the inserted text");
             assert.deepEqual(
-                ss.getPropertiesAtPosition(position),
-                props,
+                { ...ss.getPropertiesAtPosition(position) },
+                { ...props },
                 "The properties set via the interception callback should exist");
         }
 

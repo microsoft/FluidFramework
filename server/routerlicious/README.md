@@ -110,12 +110,6 @@ attach to the running tests with VS Code or any other node debugger.
 
 If you want to build API documentation locally, see [Building Documentation](https://praguedocs.azurewebsites.net/contributing/building-documentation.html).
 
-## CI/CD
-
-Historically: We make use of continuous integration and deployment via VSTS at https://offnet.visualstudio.com/officenet/
-
-Coming Soon... a public facing CI/CD loop
-
 ## Design principals
 
 * Leverage the Client
@@ -177,8 +171,7 @@ across the pool of Paparazzi instances (snapshot, spell check, entity extraction
 Historian is in charge of storing document snapshots. It itself is a cached proxy to an underlying
 content-addressable file system represented via the [Git REST API](https://developer.github.com/v3/git/).
 Storage providers that implement this interface are then able to plug into the system as a whole. Currently we have
-support for [GitHub](https://developer.github.com/v3/git/), [Git](../gitrest), and
-[Cobalt](https://offnet.visualstudio.com/officenet/_git/cobalt-netcore).
+support for [GitHub](https://developer.github.com/v3/git/) and [Git](../gitrest).
 
 More details on content-addressable file systems and Git can be found at 
 * https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain

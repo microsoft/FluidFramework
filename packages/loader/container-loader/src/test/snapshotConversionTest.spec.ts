@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { convertProtocolAndAppSummaryToSnapshotTree } from "../utils";
