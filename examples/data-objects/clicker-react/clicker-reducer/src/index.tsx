@@ -20,7 +20,7 @@ import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-// ---- React Functional Component w/ useReducer ----
+// ---- Fluid Object w/ Functional React View using the useReducer hook ----
 
 interface ICounterReducerViewState extends IViewState {
     value: number;

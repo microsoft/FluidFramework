@@ -98,11 +98,6 @@ stages:
 
         # Component detection (not pull request)
         - ${{ if eq(variables.componentDetection, true) }}:
-          - task: npmAuthenticate@0
-            displayName: 'npm Authenticate root .npmrc'
-            inputs:
-              workingFile: .npmrc
-              customEndpoint: Offnet Packages
           - task: Npm@1
             displayName: npm ci
             inputs:
@@ -122,20 +117,6 @@ stages:
               rm server/routerlicious/packages/package.json
               rm server/routerlicious/packages/package-lock.json
             displayName: 'Cleanup mono repo package json'
-
-        # Setup
-        - task: Bash@3
-          displayName: Strip npmrc auth token preamble
-          inputs:
-            targetType: 'inline'
-            script: |
-              # In order to simplify the build and use the npm authenticate task we strip the auth token preamble from the npmrc
-              sed -i '/^; begin auth token/,/^\; end auth token/d;' server/routerlicious/.npmrc
-        - task: npmAuthenticate@0
-          displayName: npm Authenticate
-          inputs:
-            workingFile: server/routerlicious/.npmrc
-            customEndpoint: Offnet Packages
 
         # Set version
         - template: templates/include-set-package-version.yml

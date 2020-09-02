@@ -33,6 +33,4 @@ extends:
     buildDirectory: server/gitssh
     containerName: gitssh
     test: false
-    authnpmrc: false
     setVersion: false
-

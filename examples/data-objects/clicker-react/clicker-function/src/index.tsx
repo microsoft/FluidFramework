@@ -14,7 +14,7 @@ import {
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-// ---- React Function Component w/ useSyncedObject ----
+// ---- Fluid Object w/ Functional React View using the useSyncedObject hook ----
 
 interface ICounterReactFunctionalProps {
     syncedDataObject: SyncedDataObject,
@@ -47,7 +47,7 @@ function CounterReactFunction(
 }
 
 /**
- * Basic ClickerFunction example showing Clicker as a React Function component
+ * Basic ClickerFunction example showing Clicker Fluid object as a React Function component
  */
 export class ClickerFunction extends SyncedDataObject {
     constructor(props) {

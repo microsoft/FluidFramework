@@ -6,9 +6,6 @@
 import {
     IFluidHandle,
     IFluidHandleContext,
-    IFluidRouter,
-    IRequest,
-    IResponse,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
@@ -16,13 +13,11 @@ import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 /**
  * This class represents blob (long string)
  * This object is used only when creating (writing) new blob and serialization purposes.
- * De-serialization process goes through FluidOjectHandle and request flow:
+ * De-serialization process goes through FluidObjectHandle and request flow:
  * DataObject.request() recognizes requests in the form of `/blobs/<id>`
  * and loads blob.
  */
 export class BlobHandle implements IFluidHandle {
-    public get IFluidRouter(): IFluidRouter { return this; }
-    public get IFluidHandleContext(): IFluidHandleContext { return this; }
     public get IFluidHandle(): IFluidHandle { return this; }
 
     public get isAttached(): boolean {
@@ -42,14 +37,6 @@ export class BlobHandle implements IFluidHandle {
 
     public bind(handle: IFluidHandle) {
         throw new Error("Cannot bind to blob handle");
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-    }
-
-    public async resolveHandle(request: IRequest): Promise<IResponse> {
-        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }
 }
 
