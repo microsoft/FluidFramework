@@ -5,8 +5,8 @@ Fluid storage as well as consensus over a quorum of clients.
 
 Storage includes snapshots as well as the live and persisted operation stream.
 
-The consensus system allows clients within the collaboration window to agree on document properties. One
-example of this is the npm package that should be loaded to process operations applied to the document.
+The consensus system allows clients within the collaboration window to agree on container's properties. One
+example of this is the npm package that should be loaded to process operations applied to the container.
 
 ## Document and channels
 

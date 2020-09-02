@@ -1,15 +1,15 @@
 # @fluidframework/container-loader
 
+For an overview of the Fluid Loader, please refer to [The Fluid Loader README](../README.md).
+
 - [Expectations from host implementers](#Expectations-from-host-implementers)
 - [Expectations from container runtime and data store implementers](#Expectations-from-container-runtime-and-data-store-implementers)
-- [Fluid loader](#Fluid-loader)
 - [Container Lifetime](#Container-lifetime)
 - [Audience](#Audience)
 - [ClientID and client identification](#ClientId-and-client-identification)
 - [Error Handling](#Error-handling)
 - [Connectivity events](#Connectivity-events)
 - [Readonly states](#Readonly-states)
-- [Proposal Lifetime](#Proposal-lifetime)
 
 ## Expectations from host implementers
 It's expected that host will listen to various events described in other sections of this document and conveys correctly (in some form) information to the user to ensure that user is aware of various situations and is not going to lose data.
@@ -23,16 +23,6 @@ Please see specific sections for more details on these states and events - this 
 2. Maintain Ops in flight until observed they are acknowledged by server. Resubmit any lost Ops on reconnection. This is done by DDSes in stock implementations of container & data store runtimes provided by Fluid Framework
 3. Respect "["disconnected" and "connected"](#Connectivity-events) states and do not not submit Ops when disconnected.
 4. Respect ["dispose"](#Closure) event and treat it as combination of "readonly" and "disconnected" states. I.e. it should be fully operatable (render content), but not allow edits. This is equivalent to "closed" event on container for hosts, but is broader (includes container's code version upgrades).
-
-## Fluid Loader
-
-The loader makes up the minimal kernel of the Fluid runtime. This kernel is responsible for providing access to
-Fluid storage as well as consensus over a quorum of clients.
-
-Storage includes snapshots as well as the live and persisted operation stream.
-
-The consensus system allows clients within the collaboration window to agree on container's properties. One
-example of this is the npm package that should be loaded to process operations applied to the container.
 
 ## Container Lifetime
 
@@ -148,18 +138,3 @@ Container and DeltaManager expose `"readonly"` event and property. It can have 3
 - **undefined**: Same as above, but we do not know yet if current user has write access to a file (because there were no successful connection to ordering service yet).
 
 Readonly events are accessible by data stores and DDSes (through ContainerRuntime.deltaManager). It's expected that data stores adhere to requirements and expose read-only (or rather 'no edit') experiences.
-
-## Proposal lifetime
-
-A quorum proposal transitions between four possible states: propose, accept, reject, and commit.
-
-A proposal begins in the propose state. The proposal is sent to the server and receives a sequence number which is
-used to uniquely identify it. Clients within the collaboration window accept the proposal by allowing their
-reference sequence number to go above the sequence number for the proposal. They reject it by submitting a reject
-message prior to sending a reference sequence number above the proposal number. Once the minimum sequence number
-goes above the sequence number for the proposal without any rejections it is considered accepted.
-
-The proposal enters the commit state when the minimum sequence number goes above the sequence number at which it
-became accepted. In the commit state all subsequent messages are guaranteed to have been sent with knowledge of
-the proposal. Between the accept and commit state there may be messages with reference sequence numbers prior to
-the proposal being accepted.
