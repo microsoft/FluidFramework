@@ -55,7 +55,7 @@ export class ADOSizeComparator {
    * Naive fallback generator provided for convenience.  It yields the commit directly
    * prior to the previous commit.
    */
-  public * naiveFallbackCommitGenerator(previousCommit: string) {
+  public static * naiveFallbackCommitGenerator(previousCommit: string): Generator<string> {
     for (let i = 0; i < 5; i++) {
       yield getPriorCommit(previousCommit);
     }
@@ -133,6 +133,9 @@ export class ADOSizeComparator {
         console.log(`Trying backup baseline commit ${baselineCommit}`);
         continue;
       }
+
+      // Found usable baseline zip
+      break;
     }
 
     // Unable to find a usable baseline
