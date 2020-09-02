@@ -1,6 +1,6 @@
 ---
 title: Summarizer
-menuPosition: 1
+menuPosition: 2
 draft: false
 ---
 
