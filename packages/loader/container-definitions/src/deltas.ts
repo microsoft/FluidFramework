@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 /**
- * ???
+ * Details about the realtime connection to the server used to sync deltas
  */
 export interface IConnectionDetails {
     clientId: string;
@@ -71,7 +71,7 @@ export interface IProvideDeltaSender {
 }
 
 /**
- * ???
+ * Contract supporting delivery of outbound messages to the server
  */
 export interface IDeltaSender extends IProvideDeltaSender {
     /**
@@ -85,7 +85,7 @@ export interface IDeltaSender extends IProvideDeltaSender {
     submit(type: MessageType, contents: any, batch: boolean, metadata: any): number;
 
     /**
-     * ???
+     * Flush all pending messages through the outbound queue
      */
     flush(): void;
 }
@@ -159,7 +159,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     /** Terminate the connection to storage */
     close(): void;
 
-    /** ??? */
+    /** Submit a signal to the service to be broadcast to other connected clients, but not persisted */
     submitSignal(content: any): void;
 }
 
