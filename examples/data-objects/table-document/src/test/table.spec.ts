@@ -119,7 +119,7 @@ describe("TableDocument", () => {
             tableDocument.insertRows(0, 2);
             tableDocument.insertCols(0, 1);
             tableDocument.annotateRows(0, 1, { id: "row0" });
-            assert.equal({ ...tableDocument.getRowProperties(0) }, { id: "row0" });
+            assert.deepEqual({ ...tableDocument.getRowProperties(0) }, { id: "row0" });
             assert.strictEqual(tableDocument.getRowProperties(1), undefined);
         });
 
@@ -127,7 +127,7 @@ describe("TableDocument", () => {
             tableDocument.insertRows(0, 1);
             tableDocument.insertCols(0, 2);
             tableDocument.annotateCols(0, 1, { id: "col0" });
-            assert.equal({ ...tableDocument.getColProperties(0) }, { id: "col0" });
+            assert.deepEqual({ ...tableDocument.getColProperties(0) }, { id: "col0" });
             assert.strictEqual(tableDocument.getColProperties(1), undefined);
         });
     });
