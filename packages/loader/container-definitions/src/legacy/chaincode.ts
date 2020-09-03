@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IProvideMessageScheduler } from "../messageScheduler";
 import { IProvideRuntimeFactory } from "../runtime";
 
 export const IFluidTokenProvider: keyof IProvideFluidTokenProvider = "IFluidTokenProvider";
@@ -20,7 +19,6 @@ declare module "@fluidframework/core-interfaces" {
     /* eslint-disable @typescript-eslint/no-empty-interface */
     export interface IFluidObject extends Readonly<Partial<
         IProvideRuntimeFactory &
-        IProvideFluidTokenProvider &
-        IProvideMessageScheduler>> { }
+        IProvideFluidTokenProvider>> { }
     /* eslint-enable @typescript-eslint/no-empty-interface */
 }
