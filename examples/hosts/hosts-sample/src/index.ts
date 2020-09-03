@@ -79,7 +79,7 @@ export async function start(url: string, code: string, createNew: boolean): Prom
 
     let fluidDocument;
     if (createNew) {
-        // This flow is used to create a new fluid document and then attach it to storage.
+        // This flow is used to create a new Fluid document and then attach it to storage.
         const parsedPackage = extractPackageIdentifierDetails(code);
         const details: IFluidCodeDetails = {
             config: {
@@ -90,7 +90,7 @@ export async function start(url: string, code: string, createNew: boolean): Prom
         fluidDocument = await loader.createDetachedContainer(details);
         await fluidDocument.attach(insecureResolver.createCreateNewRequest("example"));
     } else {
-        // This flow is used to get the existing fluid document.
+        // This flow is used to get the existing Fluid document.
         fluidDocument = await loader.resolve({ url });
     }
 

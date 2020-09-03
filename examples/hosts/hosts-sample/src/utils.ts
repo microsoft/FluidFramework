@@ -9,7 +9,7 @@ import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 /**
- * getFluidObjectAndRender is used to make a request against the loader to load a fluid data store and then render
+ * getFluidObjectAndRender is used to make a request against the loader to load a Fluid data store and then render
  * it once found.
  */
 async function getFluidObjectAndRenderCore(loader: Loader, url: string, div: HTMLDivElement) {
