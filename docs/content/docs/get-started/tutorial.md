@@ -183,19 +183,11 @@ This will look a little different when moving to a production service, but you'l
 reference to a `Container` object running your code and connected to a service.
 
 After we have the connected `Container` object, our container code will have already run to create an instance of our
-model.  We used a `ContainerRuntimeFactoryWithDefaultDataStore` to build our container code, which adds the ability to
-request the model from the `Container` object using a URL of "/":
+model.  Because we used a `ContainerRuntimeFactoryWithDefaultDataStore` to build our container code, we can also use a
+helper function Fluid provides called `getDefaultObjectFromContainer` to get a reference to the model instance:
 
 ```ts
-const response = await container.request({ url: "/" });
-
-// Verify the response to make sure we got what we expected.
-if (response.status !== 200 || response.mimeType !== "fluid/object") {
-    throw new Error("Unable to retrieve data object");
-} else if (response.value === undefined) {
-    throw new Error("Empty response");
-}
-const diceRoller: IDiceRoller = response.value;
+const diceRoller: IDiceRoller = await getDefaultObjectFromContainer<IDiceRoller>(container);
 ```
 
 
