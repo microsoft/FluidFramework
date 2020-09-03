@@ -17,7 +17,10 @@
 	"extensions": [
         "dbaeumer.vscode-eslint",
         "editorconfig.editorconfig"
-    ]
+    ],
+
+    // Forward port for Tinylicious
+    "forwardPorts": [ 3000 ]
 
     // Required to provide non-root user w/access to docker (see Dockerfile)
     // "overrideCommand": false,
