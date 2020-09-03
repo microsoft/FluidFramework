@@ -73,7 +73,7 @@ export interface IRuntime extends IDisposable {
     setConnectionState(connected: boolean, clientId?: string);
 
     /**
-     * Deprecated: Back-compat, supporting <= 0.16 data stores
+     * Deprecated: Back-compat, supporting 0.16 data stores and earlier
      */
     changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
