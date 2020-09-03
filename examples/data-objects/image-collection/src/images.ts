@@ -12,7 +12,7 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
-import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
+import { IFluidObjectCollection } from "@fluid-example/fluid-object-interfaces";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";

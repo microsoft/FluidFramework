@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { Uint8ArrayToString } from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
@@ -33,6 +33,7 @@ import {
     invalidFileNameStatusCode,
     fetchIncorrectResponse,
 } from "./odspError";
+import { TokenFetchOptions } from "./tokenFetch";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -44,7 +45,7 @@ const isInvalidFileName = (fileName: string): boolean => {
  * Returns resolved url
  */
 export async function createNewFluidFile(
-    getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
+    getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,
@@ -60,15 +61,16 @@ export async function createNewFluidFile(
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
         `${filePath}/${encodedFilename}`;
 
-    const itemId = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
-        const storageToken = await getStorageToken(newFileInfo.siteUrl, refresh);
+    const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
+    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot`;
+
+    const itemId = await getWithRetryForTokenRefresh(async (options) => {
+        const storageToken = await getStorageToken(options, "CreateNewFile");
 
         return PerformanceEvent.timedExecAsync(
             logger,
             { eventName: "createNewFile" },
             async (event) => {
-                const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
-                const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot`;
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
 
@@ -104,7 +106,7 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
     }
     const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
     // Currently for the scenarios we have we don't have ops in the detached container. So the
-    // sequence number would always be 0 here. However odsp requires to have atleast 1 snapshot.
+    // sequence number would always be 0 here. However odsp requires to have at least 1 snapshot.
     assert(documentAttributes.sequenceNumber === 0, "Sequence No for detached container snapshot should be 0");
     documentAttributes.sequenceNumber = 1;
     const attributesSummaryBlob: ISummaryBlob = {

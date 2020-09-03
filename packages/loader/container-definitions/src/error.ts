@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Different error types the Container may report out to the Host
+ */
 export enum ContainerErrorType {
     /**
      * Some error, most likely an exception caught by runtime and propagated to container as critical error
@@ -41,7 +44,7 @@ export type ContainerWarning = IErrorBase;
 export type ICriticalContainerError = IErrorBase;
 
 /**
- * Generic container error
+ * Generic wrapper for an unrecognized/uncategorized error object
  */
 export interface IGenericError extends IErrorBase {
     readonly errorType: ContainerErrorType.genericError;
@@ -49,7 +52,7 @@ export interface IGenericError extends IErrorBase {
 }
 
 /**
- * Throttling container error
+ * Warning emitted when requests to storage are being throttled
  */
 export interface IThrottlingWarning extends IErrorBase {
     readonly errorType: ContainerErrorType.throttlingError;

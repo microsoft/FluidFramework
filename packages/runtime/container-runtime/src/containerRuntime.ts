@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { EventEmitter } from "events";
-import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
+import { TaskManagerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -72,13 +72,13 @@ import {
     IAttachMessage,
     InboundAttachMessage,
     IFluidDataStoreContext,
+    IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedFluidDataStoreRegistryEntries,
-    SchedulerType,
     ISummaryTreeWithStats,
     ISummaryStats,
     ISummarizeInternalResult,
@@ -102,6 +102,7 @@ import { v4 as uuid } from "uuid";
 import {
     FluidDataStoreContext,
     LocalFluidDataStoreContext,
+    LocalDetachedFluidDataStoreContext,
     RemotedFluidDataStoreContext,
     createAttributesBlob,
 } from "./dataStoreContext";
@@ -433,14 +434,14 @@ export class ScheduleManager {
     }
 }
 
-export const schedulerId = SchedulerType;
+export const taskSchedulerId = "_scheduler";
 
 // Wraps the provided list of packages and augments with some system level services.
 class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
     constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
         super([
             ...namedEntries,
-            [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
+            TaskManagerFactory.registryEntry,
         ]);
     }
 }
@@ -497,7 +498,7 @@ export class ContainerRuntime extends EventEmitter
 
         // Create all internal stores in first load.
         if (!context.existing) {
-            await runtime.createRootDataStore(schedulerId, schedulerId);
+            await runtime.createRootDataStore(TaskManagerFactory.type, taskSchedulerId);
         }
 
         runtime.subscribeToLeadership();
@@ -1231,26 +1232,43 @@ export class ContainerRuntime extends EventEmitter
         }
     }
 
-    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
-        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg]).realize();
+    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter>
+    {
+        return this._createDataStore(pkg);
     }
 
-    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
-        const context = this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], rootDataStoreId);
-        const fluidDataStore = await context.realize();
+    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>
+    {
+        const fluidDataStore = await this._createDataStore(pkg, rootDataStoreId);
         fluidDataStore.bindToContext();
         return fluidDataStore;
+    }
+
+    public createDetachedDataStore(): IFluidDataStoreContextDetached {
+        const id = uuid();
+        const context = new LocalDetachedFluidDataStoreContext(
+            id,
+            this,
+            this.storage,
+            this.containerScope,
+            this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
+            this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
+            (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+        );
+        this.setupNewContext(context);
+        return context;
+    }
+
+    private async _createDataStore(pkg: string | string[], id = uuid()): Promise<IFluidDataStoreChannel>
+    {
+        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id).realize();
     }
 
     private canSendOps() {
         return this.connected && !this.deltaManager.readonly;
     }
 
-    private _createFluidDataStoreContext(pkg: string[], id = uuid()) {
-        this.verifyNotClosed();
-
-        assert(!this.contexts.has(id), "Creating store with existing ID");
-        this.notBoundContexts.add(id);
+    private _createFluidDataStoreContext(pkg: string[], id) {
         const context = new LocalFluidDataStoreContext(
             id,
             pkg,
@@ -1261,41 +1279,18 @@ export class ContainerRuntime extends EventEmitter
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
         );
-
-        const deferred = new Deferred<FluidDataStoreContext>();
-        this.contextsDeferred.set(id, deferred);
-        this.contexts.set(id, context);
-
+        this.setupNewContext(context);
         return context;
     }
 
-    public async createDataStoreWithRealizationFn(
-        pkg: string[],
-        realizationFn?: (context: IFluidDataStoreContext) => void,
-    ): Promise<IFluidDataStoreChannel> {
+    private setupNewContext(context) {
         this.verifyNotClosed();
-        const id: string = uuid();
+        const id = context.id;
+        assert(!this.contexts.has(id), "Creating store with existing ID");
         this.notBoundContexts.add(id);
-        const context = new LocalFluidDataStoreContext(
-            id,
-            pkg,
-            this,
-            this.storage,
-            this.containerScope,
-            this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
-            (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
-        );
-
         const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
         this.contexts.set(id, context);
-
-        if (realizationFn) {
-            return context.realizeWithFn(realizationFn);
-        } else {
-            return context.realize();
-        }
     }
 
     public getQuorum(): IQuorum {
@@ -1355,12 +1350,12 @@ export class ContainerRuntime extends EventEmitter
     private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
         if (type === ContainerMessageType.Attach) {
             const attachMessage = contents as InboundAttachMessage;
-            if (attachMessage.id === schedulerId) {
+            if (attachMessage.id === taskSchedulerId) {
                 return false;
             }
         } else if (type === ContainerMessageType.FluidDataStoreOp) {
             const envelope = contents as IEnvelope;
-            if (envelope.address === schedulerId) {
+            if (envelope.address === taskSchedulerId) {
                 return false;
             }
         }
@@ -1918,7 +1913,7 @@ export class ContainerRuntime extends EventEmitter
 
     public async getTaskManager(): Promise<ITaskManager> {
         return requestFluidObject<ITaskManager>(
-            await this.getDataStore(schedulerId, true),
+            await this.getDataStore(taskSchedulerId, true),
             "");
     }
 

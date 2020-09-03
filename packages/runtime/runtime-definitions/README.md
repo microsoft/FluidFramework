@@ -10,3 +10,5 @@ Contains handshake interfaces for communication between the container runtime la
 - `IContainerRuntimeBase` is a temporary interface that includes a reduced set of data and functionalities from `IContainerRuntime` that the IFluidDataStoreRuntimeChannel or data store writer will need from `ContainerRuntime`.Eventually, all of the these should be shim by the `IFluidDataStoreContext`
 
 These interfaces needs to have strong back-compat guaranetee to support dynamic data store loading scenario where the FluidDataStoreRuntime might be built with different version.
+
+See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.

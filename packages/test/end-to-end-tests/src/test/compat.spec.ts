@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -82,10 +82,12 @@ describe("loader/runtime compatibility", () => {
                     args.urlResolver),
                 loadContainerWithOldLoader( // old loader, new container/data store runtimes
                     { fluidExport: createRuntimeFactory(TestDataObject.type, createPrimedDataStoreFactory()) },
-                    args.deltaConnectionServer),
+                    args.deltaConnectionServer,
+                    args.urlResolver),
                 loadContainerWithOldLoader( // old everything
                     { fluidExport: createOldRuntimeFactory(TestDataObject.type, createOldPrimedDataStoreFactory()) },
-                    args.deltaConnectionServer),
+                    args.deltaConnectionServer,
+                    args.urlResolver),
                 loadContainer( // new loader, old container/data store runtimes
                     { fluidExport: createOldRuntimeFactory(TestDataObject.type, createOldPrimedDataStoreFactory()) },
                     args.deltaConnectionServer,

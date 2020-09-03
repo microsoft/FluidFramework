@@ -37,7 +37,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
             this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(
                 storeFactories.map(
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    (factory) => [factory.type!, factory]) as NamedFluidDataStoreRegistryEntries);
+                    (factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries);
         }
 
         this.ISharedObjectRegistry = new Map(
@@ -48,7 +48,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public instantiateDataStore(context: IFluidDataStoreContext): void {
+    public async instantiateDataStore(context: IFluidDataStoreContext) {
         const runtime = this.createRuntime(context);
 
         // Note this may synchronously return an instance or a deferred LazyPromise,
@@ -66,6 +66,8 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
 
             return instance.request(request);
         });
+
+        return runtime;
     }
 
     public async create(parentContext: IFluidDataStoreContext, props?: any) {
@@ -105,7 +107,6 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         return FluidDataStoreRuntime.load(
             context,
             this.ISharedObjectRegistry,
-            this.IFluidDataStoreRegistry,
         );
     }
 }

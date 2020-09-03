@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import * as ClientUI from "@fluid-example/client-ui-lib";
-import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
+import { IFluidObjectCollection } from "@fluid-example/fluid-object-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";

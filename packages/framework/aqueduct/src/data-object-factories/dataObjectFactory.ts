@@ -4,9 +4,6 @@
  */
 
 import {
-    IFluidObject,
-} from "@fluidframework/core-interfaces";
-import {
     DirectoryFactory,
     MapFactory,
     SharedDirectory,
@@ -30,14 +27,11 @@ import { PureDataObjectFactory } from "./pureDataObjectFactory";
  * P - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced data object may take during creation
  */
-export class DataObjectFactory<
-    P extends IFluidObject = object,
-    S = undefined>
-    extends PureDataObjectFactory<P, S>
+export class DataObjectFactory<TObj extends DataObject<P, S>, P, S> extends PureDataObjectFactory<TObj, P, S>
 {
     constructor(
         type: string,
-        ctor: new (props: IDataObjectProps<P>) => DataObject<P, S>,
+        ctor: new (props: IDataObjectProps<P>) => TObj,
         sharedObjects: readonly IChannelFactory[] = [],
         optionalProviders: FluidObjectSymbolProvider<P>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,

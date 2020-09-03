@@ -16,11 +16,11 @@ parameters:
 - name: releaseBuildOverride
   displayName: Release Build Override
   type: string
-  default: default
+  default: none
   values:
-    - default
-    - false
-    - true
+    - none
+    - prerelease
+    - release
 
 trigger:
   branches:
@@ -64,5 +64,4 @@ extends:
     taskLint: false
     taskTest: test
     namespace: false
-    extraAuth: app/templates
     buildNumberInPatch: true

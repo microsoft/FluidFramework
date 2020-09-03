@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import React from "react";
-import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import {
     IButtonStyles,
     IconButton,
@@ -14,6 +14,7 @@ import {
     IIconProps,
     IContextualMenuItem,
 } from "office-ui-fabric-react";
+import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 
 import { ITabsTypes } from "./dataModel";
 
@@ -24,7 +25,7 @@ export interface IButtonExampleProps {
     // These are set based on the toggles shown above the examples (not needed in real code)
     disabled?: boolean;
     checked?: boolean;
-    createTab: (type: string) => void;
+    createTab: (factory: IFluidDataStoreFactory) => void;
     fluidObjects: ITabsTypes[];
 }
 
@@ -48,11 +49,11 @@ export const NewTabButton: React.FC<IButtonExampleProps> =
         props.fluidObjects.forEach((fluidObject) => {
             items.push(
                 {
-                    key: fluidObject.type,
+                    key: fluidObject.factory.type,
                     text: fluidObject.friendlyName,
                     iconProps: { iconName: fluidObject.fabricIconName },
                     onClick: () => {
-                        props.createTab(fluidObject.type);
+                        props.createTab(fluidObject.factory);
                     },
                 },
             );
@@ -67,7 +68,7 @@ export const NewTabButton: React.FC<IButtonExampleProps> =
                 styles={customSplitButtonStyles}
                 menuProps={menuProps}
                 ariaLabel="New item"
-                onClick={() => props.createTab(pmfe.type)} // this should be taken from the list
+                onClick={() => props.createTab(pmfe)} // this should be taken from the list
                 disabled={disabled}
                 checked={checked}
                 text="hello"
