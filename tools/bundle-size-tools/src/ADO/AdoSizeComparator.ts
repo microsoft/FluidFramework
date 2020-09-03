@@ -76,7 +76,7 @@ export class ADOSizeComparator {
     // Some circumstances may want us to try a fallback, such as when a commit does
     // not trigger any CI loops.  If a fallback generator is provided, use that.
     let baselineZip;
-    const fallbackGen = this.getFallbackCommit ? this.getFallbackCommit(baselineCommit!) : undefined;
+    const fallbackGen = this.getFallbackCommit?.(baselineCommit!);
     const recentBuilds = await getBuilds(this.adoConnection, {
       project: this.adoConstants.projectName,
       definitions: [this.adoConstants.ciBuildDefinitionId],
@@ -86,7 +86,7 @@ export class ADOSizeComparator {
       let baselineBuild = recentBuilds.find((build) => build.sourceVersion === baselineCommit);
 
       if (baselineBuild === undefined) {
-        baselineCommit = fallbackGen ? fallbackGen.next().value : undefined;
+        baselineCommit = fallbackGen?.next().value;
         console.log(`Trying backup baseline commit ${baselineCommit}`);
         continue;
       }

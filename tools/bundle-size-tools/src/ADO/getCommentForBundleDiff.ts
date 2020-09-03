@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from 'assert';
 import { BundleComparison, BundleMetric } from '../BundleBuddyTypes';
 import { totalSizeMetricName } from './Constants';
 
@@ -63,11 +64,10 @@ function getBundleDetails(bundleDiff: BundleComparison) {
 
   const totalMetric = commonBundleMetrics[totalSizeMetricName];
 
-  if (!totalMetric) {
-    throw new Error(
-      `Could not compute the total size for a bundle, missing metric with name ${totalSizeMetricName}`
-    );
-  }
+  assert(
+    totalMetric,
+    `Could not compute the total size for a bundle, missing metric with name ${totalSizeMetricName}`,
+  );
 
   const totalParsedSizeDiff = totalMetric.compare.parsedSize - totalMetric.baseline.parsedSize;
 
