@@ -34,6 +34,16 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 
 export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker | MergeTree.ExternalSegment;
 
+/**
+ * The Shared String is a specialized data structure for handling collaborative
+ *  text. It is based on a more general Sequence data structure but has
+ * additional features that make working with text easier.
+ *
+ * In addition to text, a Shared String can also contain markers. Markers can be
+ * used to store metadata at positions within the text, like the details of an
+ * image or Fluid object that should be rendered with the text.
+ *
+ */
 export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
     /**
      * Create a new shared string

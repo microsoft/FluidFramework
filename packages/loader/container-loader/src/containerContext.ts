@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -147,10 +147,6 @@ export class ContainerContext implements IContainerContext {
             scopes: this.container.scopes,
         };
         return config as IFluidConfiguration;
-    }
-
-    public get IMessageScheduler() {
-        return this;
     }
 
     public get baseSnapshot() {

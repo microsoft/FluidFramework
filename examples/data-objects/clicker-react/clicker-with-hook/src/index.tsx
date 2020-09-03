@@ -15,7 +15,7 @@ import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-// ---- React Functional Component w/ useSyncedCounter ----
+// ---- Fluid Object w/ Functional React View using the useSyncedCounter hook ----
 
 interface ICounterReactHookProps {
     syncedDataObject: SyncedDataObject,

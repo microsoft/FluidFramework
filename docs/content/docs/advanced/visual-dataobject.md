@@ -1,7 +1,6 @@
 ---
 title: How to write a visual data store
-menuPosition: 3
-draft: false
+draft: true
 ---
 
 ## Introducing IFluidHtmlView

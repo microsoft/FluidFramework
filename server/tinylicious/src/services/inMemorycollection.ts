@@ -84,13 +84,14 @@ export class Collection<T> implements ICollection<T> {
     }
 
     private findOneInternal(query: any): any {
+        let returnValue: any;
         if (query._id) {
-            const returnValue = this.collection.find((value) => (value as any)._id === query._id);
-            return returnValue === undefined ? null : returnValue;
+            returnValue = this.collection.find((value) => (value as any)._id === query._id);
         } else {
             const found = this.findInternal(query);
-            return found[0];
+            returnValue = found[0];
         }
+        return returnValue === undefined ? null : returnValue;
     }
 
     private findInternal(query: any, sort?: any): T[] {
@@ -106,6 +107,9 @@ export class Collection<T> implements ICollection<T> {
         const queryKeys = Object.keys(query);
         let filteredCollection = this.collection;
         queryKeys.forEach((key) => {
+            if (!query[key]) {
+                return;
+            }
             if (query[key].$gt > 0 || query[key].$lt > 0) {
                 if (query[key].$gt > 0) {
                     filteredCollection = filteredCollection.filter(

@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
-import assert from "assert";
+import { strict as assert } from "assert";
 import {
     IRequest,
     IResponse,
@@ -65,7 +65,7 @@ async function assertRejected(p: Promise<IResponse | undefined>) {
     try {
         const res = await p;
         assert(res === undefined || res.status === 404, "not rejected");
-    } catch (err) {}
+    } catch (err) { }
 }
 
 describe("RequestParser", () => {

@@ -1,5 +1,10 @@
 # Breaking changes
 
+- [Local Web Host Removed](#Local-Web-Host-Removed)
+
+### Local Web Host Removed
+Local Web host is removed. Users who are using the local web host can use examples/utils/get-session-storage-container which provides the same functionality with the detached container flow.
+
 ## 0.25 Breaking Changes
 - [External Component Loader and IComponentDefaultFactoryName removed](#External-Component-Loader-and-IComponentDefaultFactoryName-removed)
 - [MockFluidDataStoreRuntime api rename](#MockFluidDataStoreRuntime-api-rename)

@@ -4,7 +4,7 @@
  */
 
 import { globals } from "../jest.config";
-import assert from "assert";
+import { strict as assert } from "assert";
 
 describe("CoordinateContainerRuntimeFactory", () => {
     beforeAll(async () => {

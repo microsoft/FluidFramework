@@ -7,7 +7,7 @@ require("jsdom-global")("", { url: "http://localhost" });
 window.performance.mark = window.performance.mark || (() => { });
 window.performance.measure = window.performance.measure || (() => { });
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
