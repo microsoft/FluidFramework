@@ -48,16 +48,18 @@ export class ADOSizeComparator {
      * issues, such as for a failed (but still present) CI build.  This generator is
      * only used for fallback (it should not provide the first commit to check)
      */
-    private readonly getFallbackCommit: ((previousCommit: string) => Generator<string>) | undefined = undefined
+    private readonly getFallbackCommit: ((startingCommit: string) => Generator<string>) | undefined = undefined
   ) {}
 
   /**
    * Naive fallback generator provided for convenience.  It yields the commit directly
    * prior to the previous commit.
    */
-  public static * naiveFallbackCommitGenerator(previousCommit: string): Generator<string> {
+  public static * naiveFallbackCommitGenerator(startingCommit: string): Generator<string> {
+    let currentCommit = startingCommit;
     for (let i = 0; i < 5; i++) {
-      yield getPriorCommit(previousCommit);
+      currentCommit = getPriorCommit(currentCommit);
+      yield currentCommit;
     }
   }
 
@@ -74,6 +76,7 @@ export class ADOSizeComparator {
     // Some circumstances may want us to try a fallback, such as when a commit does
     // not trigger any CI loops.  If a fallback generator is provided, use that.
     let baselineZip;
+    const fallbackGen = this.getFallbackCommit ? this.getFallbackCommit(baselineCommit!) : undefined;
     while (baselineCommit !== undefined) {
       let baselineBuild = await getCiBuildWithCommit({
         adoConnection: this.adoConnection,
@@ -83,7 +86,7 @@ export class ADOSizeComparator {
       });
 
       if (baselineBuild === undefined) {
-        baselineCommit = this.getFallbackCommit ? this.getFallbackCommit(baselineCommit).next().value : undefined;
+        baselineCommit = fallbackGen ? fallbackGen.next().value : undefined;
         console.log(`Trying backup baseline commit ${baselineCommit}`);
         continue;
       }
