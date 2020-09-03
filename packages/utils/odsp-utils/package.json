@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/odsp-utils",
-  "version": "0.26.0",
+  "version": "0.26.1",
   "description": "ODSP utilities",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
