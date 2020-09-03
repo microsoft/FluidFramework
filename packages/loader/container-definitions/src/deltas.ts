@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 /**
- * Details about the realtime connection to the server used to sync deltas
+ * Contract representing the result of a newly established connection to the server for syncing deltas
  */
 export interface IConnectionDetails {
     clientId: string;
