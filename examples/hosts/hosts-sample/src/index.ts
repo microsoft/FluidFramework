@@ -105,7 +105,7 @@ if (document.location.pathname === "/") {
     window.location.href = `/example?${defaultPackage}#CreateNew`;
 } else {
     let createNew = false;
-    if (window.location.hash.substring(1) === "CreateNew") {
+    if (window.location.hash.toLocaleLowerCase().includes("createnew")) {
         createNew = true;
         window.location.hash = "";
     }
