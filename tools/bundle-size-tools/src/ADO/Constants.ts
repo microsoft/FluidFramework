@@ -24,6 +24,11 @@ export interface IADOConstants {
   // The guid of the repo
   // Used to post/update comments in ADO
   projectRepoGuid: string | undefined,
+
+  // The number of most recent ADO builds to pull when searching for one associated
+  // with a specific commit, default 20.  Pulling more builds takes longer, but may
+  // be useful when there are a high volume of commits/builds.
+  buildsToSearch: number | undefined,
 }
 
 // The name of the metric that represents the size of the whole bundle

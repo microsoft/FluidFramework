@@ -6,7 +6,7 @@
 import { WebApi } from 'azure-devops-node-api';
 import JSZip from 'jszip';
 import { join } from 'path';
-import { getBaselineCommit, getCiBuildWithCommit, getPriorCommit } from '../utilities';
+import { getBaselineCommit, getBuilds, getPriorCommit } from '../utilities';
 import { getAzureDevopsApi } from './getAzureDevopsApi';
 import { BuildStatus, BuildResult } from 'azure-devops-node-api/interfaces/BuildInterfaces';
 import { IADOConstants } from './Constants';
@@ -77,13 +77,13 @@ export class ADOSizeComparator {
     // not trigger any CI loops.  If a fallback generator is provided, use that.
     let baselineZip;
     const fallbackGen = this.getFallbackCommit ? this.getFallbackCommit(baselineCommit!) : undefined;
+    const recentBuilds = await getBuilds(this.adoConnection, {
+      project: this.adoConstants.projectName,
+      definitions: [this.adoConstants.ciBuildDefinitionId],
+      maxBuildsPerDefinition: this.adoConstants.buildsToSearch ?? 20
+    });
     while (baselineCommit !== undefined) {
-      let baselineBuild = await getCiBuildWithCommit({
-        adoConnection: this.adoConnection,
-        commitHash: baselineCommit,
-        adoProjectName: this.adoConstants.projectName,
-        buildDefinitionId: this.adoConstants.ciBuildDefinitionId
-      });
+      let baselineBuild = recentBuilds.find((build) => build.sourceVersion === baselineCommit);
 
       if (baselineBuild === undefined) {
         baselineCommit = fallbackGen ? fallbackGen.next().value : undefined;
@@ -166,7 +166,6 @@ export class ADOSizeComparator {
   }
 
   private async createMessageFromZip(baselineCommit: string, baselineZip: JSZip): Promise<string> {
-
     const baselineZipBundlePaths = getBundlePathsFromZipObject(baselineZip);
 
     const prBundleFileSystemPaths = await getBundlePathsFromFileSystem(this.localReportPath);
