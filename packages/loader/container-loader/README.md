@@ -14,7 +14,7 @@
 
 **Related topics covered elsewhere:**
 
-- [Quorum and Proposals](../../server/routerlicious/packages/protocol-base\README.md)
+- [Quorum and Proposals](../../server/routerlicious/packages/protocol-base/README.md)
 
 
 ## Fluid Loader
