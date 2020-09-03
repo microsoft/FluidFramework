@@ -4,9 +4,8 @@ menuPosition: 1
 draft: false
 ---
 
-A Fluid handle is any JavaScript object that implements the [IFluidHandle](/apis/core-interfaces/ifluidhandle) interface.
-The primary use case for handles in the Fluid Framework is for storing collaborative objects (Ex. Fluid objects or
-Distributed Data Structures (DDSes)) into other DDSes.
+The primary use case for handles in the Fluid Framework is for storing [DataObject](/apis/aqueduct/dataobject/) or
+Distributed Data Structures (DDSes) into other DDSes. This doc covers how to consume and use Fluid handles.
 
 A basic example is if we have a SharedMap `myMap` and want to store a SharedString `myText` as a value. The SharedString
 instance lives within the Fluid Runtime and we don't want to store the object itself. What we want is to be able to get
