@@ -6,6 +6,9 @@
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { ILoader } from "./loader";
 
+/**
+ * Abstraction layer to support different Loaders in different Node execution contexts
+ */
 export interface IProxyLoaderFactory {
     /**
      * Loader environment
