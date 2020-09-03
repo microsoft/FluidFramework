@@ -42,8 +42,8 @@ generally fall into two broad categories: _optimistic_ and _consensus-based_.
 
 {{% callout tip "See also" %}}
 
-- [Fluid Framework architecture](./architecture.md)
-- [Fluid service](./server.md)
+* [Fluid Framework architecture](./architecture.md)
+* [Fluid service](./server.md)
 
 {{% /callout %}}
 
@@ -58,14 +58,13 @@ Many of the most commonly used DDSes are optimistic, including [SharedMap][], [S
 
 ### Consensus-based data structures
 
-Clients must always assume their local DDS state is stale since there may be changes from remote clients that they have
-not yet received. In cases where you can only safely update data if you have the latest in-hand, Fluid provides
-consensus-based data structures. These data structures are different from optimistic DDSes because they wait to get
-confirmation from the Fluid service before apply operations -- even local operations.
+Consensus-based DDSes are different from optimistic DDSes because they wait for confirmation from the Fluid service
+before applying operations -- even local operations. These data structures offer additional behavior guarantees and can
+be used when you need atomicity or synchronous behavior.
 
-However, there are cases where you require behavioral guarantees that cannot be implemented in an optimistic way. The
-cost is performance; optimistic DDSes are part of what makes Fluid so fast, so using optimistic DDSes is almost always
-preferred, but you can trade performance for behavioral guarantees.
+These behavioral guarantees cannot be implemented in an optimistic way. The cost is performance; optimistic DDSes are
+part of what makes Fluid so fast, so using optimistic DDSes is almost always preferred, but you can trade performance
+for behavioral guarantees.
 
 #### Why consensus-based DDSes are useful
 
