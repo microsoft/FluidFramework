@@ -77,9 +77,9 @@ export async function start(url: string, code: string, createNew: boolean): Prom
         {},
         new Map<string, IProxyLoaderFactory>());
 
-    let fluidDocument;
+    let container;
     if (createNew) {
-        // This flow is used to create a new Fluid document and then attach it to storage.
+        // This flow is used to create a new container and then attach it to storage.
         const parsedPackage = extractPackageIdentifierDetails(code);
         const details: IFluidCodeDetails = {
             config: {
@@ -87,17 +87,16 @@ export async function start(url: string, code: string, createNew: boolean): Prom
             },
             package: code,
         };
-        fluidDocument = await loader.createDetachedContainer(details);
-        await fluidDocument.attach(insecureResolver.createCreateNewRequest("example"));
+        container = await loader.createDetachedContainer(details);
+        await container.attach(insecureResolver.createCreateNewRequest("example"));
     } else {
-        // This flow is used to get the existing Fluid document.
-        fluidDocument = await loader.resolve({ url });
+        // This flow is used to get the existing container.
+        container = await loader.resolve({ url });
     }
 
     // The getFluidObjectAndRender helper method performs the rendering of the data store identified
     // by the URL in the browser.
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    getFluidObjectAndRender(loader, fluidDocument, url, document.getElementById("content") as HTMLDivElement);
+    await getFluidObjectAndRender(loader, container, url, document.getElementById("content") as HTMLDivElement);
 }
 
 // Load the initial page based on the URL. If no document ID is specified default to one named example.
@@ -105,7 +104,7 @@ if (document.location.pathname === "/") {
     window.location.href = `/example?${defaultPackage}#CreateNew`;
 } else {
     let createNew = false;
-    if (window.location.hash.toLocaleLowerCase().includes("createnew")) {
+    if (window.location.hash === "#CreateNew") {
         createNew = true;
         window.location.hash = "";
     }
