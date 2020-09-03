@@ -1,7 +1,6 @@
 {
-  "name": "@fluid-internal/server-routerlicious",
+  "name": "@fluidframework/server-routerlicious",
   "version": "0.1012.1",
-  "private": true,
   "description": "Fluid reference server implementation",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
