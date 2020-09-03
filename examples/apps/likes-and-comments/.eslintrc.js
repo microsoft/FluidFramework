@@ -8,6 +8,9 @@ module.exports = {
         "@fluidframework/eslint-config-fluid"
     ],
     "rules": {
-        "@typescript-eslint/strict-boolean-expressions": "off"
+        "@typescript-eslint/indent": "off",
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "no-null/no-null": "off",
+        "react/prop-types": "off"
     }
 }
