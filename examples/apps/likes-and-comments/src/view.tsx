@@ -4,25 +4,15 @@
  */
 
 import {
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import {
     SyncedDataObject,
-    setSyncedCounterConfig,
     useSyncedCounter,
-    setSyncedArrayConfig,
     useSyncedArray,
-    setSyncedStringConfig,
     useSyncedString,
 } from "@fluidframework/react";
 import { CollaborativeInput } from "@fluidframework/react-inputs";
-import { SharedCounter } from "@fluidframework/counter";
-import { SharedObjectSequence, SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence";
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import { getAuthorName } from "./utils";
-
-const defaultImgUrl = "https://picsum.photos/id/221/1200/800";
 
 // Interfaces
 
@@ -30,14 +20,14 @@ interface ILikesAndCommentsViewProps {
     syncedDataObject: SyncedDataObject,
 }
 
-interface IComment {
+export interface IComment {
     author: string,
     message: string;
 }
 
 // ---- Fluid Object w/ a Functional React view using a mixture of DDSes and local state ----
 
-function LikesAndCommentsView(
+export function LikesAndCommentsView(
     props: ILikesAndCommentsViewProps,
 ) {
     // Use synced states
@@ -96,51 +86,3 @@ function LikesAndCommentsView(
         </div>
     );
 }
-
-/**
- * LikesAndComments example using multiple DDS hooks
- */
-export class LikesAndComments extends SyncedDataObject {
-    constructor(props) {
-        super(props);
-        // Declare configs for each synced state the view will need
-        setSyncedCounterConfig(
-            this,
-            "likes",
-        );
-        setSyncedArrayConfig<IComment>(
-            this,
-            "comments",
-        );
-        setSyncedStringConfig(
-            this,
-            "imgUrl",
-            defaultImgUrl,
-        );
-    }
-
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <div>
-                <LikesAndCommentsView
-                    syncedDataObject={this}
-                />
-            </div>,
-            div,
-        );
-        return div;
-    }
-}
-
-// ----- FACTORY SETUP -----
-export const LikesAndCommentsInstantiationFactory = new DataObjectFactory(
-    "likes-and-comments",
-    LikesAndComments,
-    [
-        SharedCounter.getFactory(),
-        SharedObjectSequence.getFactory(),
-        SharedString.getFactory(),
-    ],
-    {},
-);
-export const fluidExport = LikesAndCommentsInstantiationFactory;
