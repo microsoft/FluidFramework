@@ -5,7 +5,7 @@
 
 /* eslint-disable unicorn/filename-case, max-len */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { Provider } from "nconf";

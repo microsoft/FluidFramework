@@ -98,7 +98,8 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     /**
-     * The Quorum of connected clients participating in the Container's collab window
+     * The collection of write clients which were connected as of the current sequence number.
+     * Also contains a map of key-value pairs that must be agreed upon by all clients before being accepted.
      */
     getQuorum(): IQuorum;
 
@@ -141,14 +142,9 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 }
 
 /**
- * The Host's view of the Loader, used for loading The_Containers
+ * The Host's view of the Loader, used for loading Containers
  */
-export interface ILoader {
-    /**
-     * Loads the resource specified by the URL + headers contained in the request object.
-     */
-    request(request: IRequest): Promise<IResponse>;
-
+export interface ILoader extends IFluidRouter {
     /**
      * Resolves the resource specified by the URL + headers contained in the request object
      * to the underlying container that will resolve the request.

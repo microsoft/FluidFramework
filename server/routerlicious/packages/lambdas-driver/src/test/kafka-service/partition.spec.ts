@@ -4,7 +4,7 @@
  */
 
 import { KafkaMessageFactory, TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
-import assert from "assert";
+import { strict as assert } from "assert";
 import { Provider } from "nconf";
 import { Partition } from "../../kafka-service/partition";
 import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";

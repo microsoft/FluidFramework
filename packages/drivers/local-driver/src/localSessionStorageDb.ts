@@ -29,6 +29,9 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         const queryKeys = Object.keys(query);
         let filteredCollection = this.getAllInternal();
         queryKeys.forEach((key) => {
+            if (!query[key]) {
+                return;
+            }
             if (query[key].$gt > 0 || query[key].$lt > 0) {
                 if (query[key].$gt > 0) {
                     filteredCollection = filteredCollection.filter(

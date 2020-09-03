@@ -43,7 +43,7 @@ below steps if you'd like to run a local version of the service or need to make 
 
 ### Development
 
-Docker is the preferred method of development.
+Docker is the preferred method of development. Run the following commands from this directory.
 
 To build the service:
 
