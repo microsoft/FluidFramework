@@ -33,11 +33,8 @@ export class LocalResolver implements IUrlResolver {
      */
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const parsedUrl = new URL(request.url);
-        const documentId = parsedUrl.pathname.substr(1).split("/")[0];
-        return this.resolveHelper(documentId);
-    }
-
-    private resolveHelper(documentId: string) {
+        const fullPath = parsedUrl.pathname.substr(1);
+        const documentId = fullPath.split("/")[0];
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const resolved: IFluidResolvedUrl = {
             endpoints: {
@@ -47,7 +44,7 @@ export class LocalResolver implements IUrlResolver {
             },
             tokens: { jwt: generateToken(this.tenantId, documentId, this.tokenKey, scopes) },
             type: "fluid",
-            url: `fluid-test://localhost:3000/${this.tenantId}/${documentId}`,
+            url: `fluid-test://localhost:3000/${this.tenantId}/${fullPath}`,
         };
 
         return resolved;

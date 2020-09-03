@@ -42,13 +42,17 @@ export enum BindState {
     Bound = "Bound",
 }
 
+/**
+ * Represents the data that will be preserved from the previous IRuntime during a context reload.
+ */
 export interface IRuntimeState {
     snapshot?: ITree,
     state?: unknown,
 }
 
 /**
- * The IRuntime represents an instantiation of a code package within a container.
+ * The IRuntime represents an instantiation of a code package within a Container.
+ * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
  */
 export interface IRuntime extends IDisposable {
 
@@ -67,7 +71,9 @@ export interface IRuntime extends IDisposable {
      */
     setConnectionState(connected: boolean, clientId?: string);
 
-    // Back-compat: supporting <= 0.16 data stores
+    /**
+     * Deprecated: Back-compat, supporting 0.16 data stores and earlier
+     */
     changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
@@ -80,7 +86,7 @@ export interface IRuntime extends IDisposable {
     stop(): Promise<IRuntimeState>;
 
     /**
-     * Processes the given message
+     * Processes the given op (message)
      */
     process(message: ISequencedDocumentMessage, local: boolean, context: any);
 
@@ -101,6 +107,14 @@ export interface IRuntime extends IDisposable {
     readonly runtimeVersion?: string;
 }
 
+/**
+ * The ContainerContext is a proxy standing between the Container and the Container's IRuntime.
+ * This allows the Container to terminate the connection to the IRuntime.
+ *
+ * Specifically, there is an event on Container, onContextChanged, which mean a new code proposal has been loaded,
+ * so the old IRuntime is no longer valid, as its ContainerContext has been revoked,
+ * and the Container has created a new ContainerContext.
+ */
 export interface IContainerContext extends IMessageScheduler, IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
@@ -158,12 +172,17 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 export interface IProvideRuntimeFactory {
     readonly IRuntimeFactory: IRuntimeFactory;
 }
+
 /**
  * Exported module definition
+ *
+ * Provides the entry point for the ContainerContext to load the proper IRuntime
+ * to start up the running instance of the Container.
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
     /**
-     * Instantiates a new chaincode container
+     * Instantiates a new IRuntime for the given IContainerContext to proxy to
+     * This is the main entry point to the Container's business logic
      */
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }
