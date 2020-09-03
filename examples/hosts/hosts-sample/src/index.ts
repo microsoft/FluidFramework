@@ -111,4 +111,5 @@ if (document.location.pathname === "/") {
     }
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     start(document.location.href, parsePackageName(document.location, defaultPackage), createNew);
+
 }
