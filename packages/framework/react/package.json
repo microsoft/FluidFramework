@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@fluidframework/aqueduct": "^0.26.0",
-    "@fluidframework/common-definitions": "^0.19.1-0",
+    "@fluidframework/common-definitions": "^0.19.1",
     "@fluidframework/core-interfaces": "^0.26.0",
     "@fluidframework/counter": "^0.26.0",
     "@fluidframework/datastore-definitions": "^0.26.0",
