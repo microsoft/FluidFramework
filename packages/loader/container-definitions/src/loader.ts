@@ -142,14 +142,9 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 }
 
 /**
- * The Host's view of the Loader, used for loading The_Containers
+ * The Host's view of the Loader, used for loading Containers
  */
-export interface ILoader {
-    /**
-     * Loads the resource specified by the URL + headers contained in the request object.
-     */
-    request(request: IRequest): Promise<IResponse>;
-
+export interface ILoader extends IFluidRouter {
     /**
      * Resolves the resource specified by the URL + headers contained in the request object
      * to the underlying container that will resolve the request.

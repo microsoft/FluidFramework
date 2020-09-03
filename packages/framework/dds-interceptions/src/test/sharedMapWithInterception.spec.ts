@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { ISharedMap, SharedMap, MapFactory } from "@fluidframework/map";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";

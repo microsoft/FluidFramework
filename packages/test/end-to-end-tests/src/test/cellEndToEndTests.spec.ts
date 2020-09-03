@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
