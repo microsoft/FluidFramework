@@ -5,14 +5,12 @@
 
 import { IProvideRuntimeFactory } from "./runtime";
 import { IProvideFluidTokenProvider } from "./tokenProvider";
-import { IProvideMessageScheduler } from "./messageScheduler";
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<
         IProvideRuntimeFactory &
-        IProvideFluidTokenProvider &
-        IProvideMessageScheduler>> { }
+        IProvideFluidTokenProvider>> { }
 }
 
 export * from "./audience";
