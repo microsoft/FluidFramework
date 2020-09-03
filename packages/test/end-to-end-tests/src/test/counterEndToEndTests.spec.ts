@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { IUrlResolver } from "@fluidframework/driver-definitions";

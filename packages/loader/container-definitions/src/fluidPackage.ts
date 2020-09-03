@@ -47,6 +47,9 @@ export interface IPackage {
     private?: boolean;
 }
 
+/**
+ * Fluid-specific properties expected on a package to be loaded by the Fluid code loader
+ */
 export interface IFluidPackage extends IPackage {
     // https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
     fluid: {

@@ -1,5 +1,5 @@
 ---
-Title: Anatomy of a distributed data structure
+title: Anatomy of a distributed data structure
 ---
 
 Although each Distributed Data Structure (DDS) has its own unique functionality, they all share some broad traits.  Understanding these traits is the first step to understanding how DDSes work.  They are:

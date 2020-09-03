@@ -1,8 +1,17 @@
 ---
 title: Total Order Broadcast & Eventual Consistency
-draft: false
+draft: true
 menuPosition: 2
 ---
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
+{{% callout warning "Draft!" %}}
+
+This documentation is a **Draft**. It is technically accurate but has not yet been reviewed for consistency and clarity.
+
+{{% /callout %}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Fluid Data: Operations all the way down
 

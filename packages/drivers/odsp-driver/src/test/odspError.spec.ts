@@ -4,7 +4,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IOdspSocketError } from "../contracts";
 import {
