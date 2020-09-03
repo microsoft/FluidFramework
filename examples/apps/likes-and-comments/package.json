@@ -44,7 +44,6 @@
     "@fluidframework/shared-object-base": "^0.27.0",
     "@fluidframework/view-interfaces": "^0.27.0",
     "draft-js": "^0.11.0",
-    "immutable": "~3.7.4",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
