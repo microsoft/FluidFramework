@@ -5,56 +5,51 @@
 
 ARG NODE_VERSION=12
 ARG USERNAME=node
+
+# Base image begins with 'node:${VARIANT}' and adds the following:
+#
+#    zsh
+#    yarn
+#    nvm
+#    eslint (global)
+#
+# (See https://github.com/microsoft/vscode-dev-containers/tree/master/containers/javascript-node/.devcontainer)
 FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:${NODE_VERSION}
 
 # Avoid warnings by switching to noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
 
-COPY library-scripts/*.sh /tmp/library-scripts/
+# Retrieve script to install Docker CLI / Docker-Compose from the 'Docker-from-Docker' dev container template.
 
 # Configure apt and install packages
 RUN apt-get update \
     && apt-get -y install --no-install-recommends apt-utils 2>&1 \
+
+    # Install Fluid build dependencies and developer conveniences.
     #
-    # Verify git and needed tools are installed
-    && apt-get install -y git procps \
-    #
-    # Remove outdated yarn from /opt and install via package
-    # so it can be easily updated via apt-get upgrade yarn
-    && rm -rf /opt/yarn-* \
-    && rm -f /usr/local/bin/yarn \
-    && rm -f /usr/local/bin/yarnpkg \
-    && apt-get install -y curl apt-transport-https lsb-release \
-    && curl -sS https://dl.yarnpkg.com/$(lsb_release -is | tr '[:upper:]' '[:lower:]')/pubkey.gpg | apt-key add - 2>/dev/null \
-    && echo "deb https://dl.yarnpkg.com/$(lsb_release -is | tr '[:upper:]' '[:lower:]')/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
-    && apt-get update \
-    && apt-get -y install --no-install-recommends yarn \
-    #
-    # Install eslint globally
-    && npm install -g eslint \
-    #
-    # zsh
     # https://jilles.me/badassify-your-terminal-and-shell/
     # https://billgrant.io/post/2019-05-05-vsremote/
-    && apt-get install -y zsh \
-        wget \
+    && apt-get install -y \
+        curl \
+        g++ \
+        git \
+        make \
+        procps \
+        python \
         vim \
+        wget \
+        zsh \
 
     # Install Docker CLI / Docker-Compose and create 'docker-init.sh' to proxy docker socket.
+    # (We retrieve the install script from the 'docker-from-docker' dev container template)
+    && mkdir /tmp/library-scripts \
+    && curl -o /tmp/library-scripts/docker-debian.sh -sS https://raw.githubusercontent.com/microsoft/vscode-dev-containers/c3214ad7fcf5086e898e3941a36e0171959a48ca/containers/azure-ansible/.devcontainer/library-scripts/docker-debian.sh \
     && /bin/bash /tmp/library-scripts/docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${SOURCE_SOCKET}" "${TARGET_SOCKET}" "${USERNAME}" \
 
     # Clean up
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/* /tmp/library-scripts/
-
-# Fluid specific dependencies
-RUN apt-get update && apt-get install -y \
-        python \
-        make \
-        git \
-        curl \
-        g++
 
 # terminal colors with xterm
 ENV TERM xterm
