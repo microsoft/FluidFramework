@@ -12,7 +12,7 @@ module.exports = env => {
 
     return merge({
         entry: {
-            main: "./src/index.tsx"
+            main: "./src/app.ts"
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
