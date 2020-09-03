@@ -20,22 +20,20 @@ etc. This prefix indicates that the object is shared between multiple clients.
 
 {{% /callout %}}
 
-When a DDS is changed by another client, it raises an [event](#events) locally. Your code can listen to these events so
-that you know when data is changed and can react appropriately. For example, you may need to recalculate a derived value
-when some data in a DDS changes.
-
+When a DDS is changed by any client, it raises an [event](#events) locally. Your code can listen to these events so that
+you know when data is changed and can react appropriately. For example, you may need to recalculate a derived value when
+some data in a DDS changes.
 
 ## Merge behavior
 
-In a distributed system like Fluid, it is critical to understand how to merge changes from multiple clients because it
-enables you to "preserve user intent" when users are collaborating on data. This means that the merge behavior should
-match what users intend or expect as they are editing data.
+In a distributed system like Fluid, it is critical to understand how changes from multiple clients are merged.
+Understanding the merge logic enables you to "preserve user intent" when users are collaborating on data. This means
+that the merge behavior should match what users intend or expect as they are editing data.
 
 In Fluid, the merge behavior is defined by the DDS. The simplest merge strategy, employed by key-value distributed data
 structures like SharedMap, is _last writer wins_ (LWW). With this merge strategy, when multiple clients write different
-values to the same key, the value that was written last will overwrite the others. Refer to the API documentation for
-each DDS for more details about the merge strategy it uses.
-
+values to the same key, the value that was written last will overwrite the others. Refer to the
+[API documentation]({{< relref "/apis" >}}) for each DDS for more details about the merge strategy it uses.
 
 ## Performance characteristics
 
@@ -44,8 +42,8 @@ generally fall into two broad categories: _optimistic_ and _consensus-based_.
 
 {{% callout tip "See also" %}}
 
-* [Fluid Framework architecture](./architecture.md)
-* [Fluid service](./server.md)
+- [Fluid Framework architecture](./architecture.md)
+- [Fluid service](./server.md)
 
 {{% /callout %}}
 
@@ -93,7 +91,6 @@ sequence number to the operation before applying it locally. With this approach,
 local changes until they get back a sequenced op from the server. Once they do, they apply the ops in order, which
 results in consistent behavior across all remote clients.
 
-
 ## Creating and storing distributed data structures
 
 A distributed data structure object is created using its type's static `create` method.
@@ -104,7 +101,6 @@ const myMap = SharedMap.create(this.runtime);
 
 You must pass in an `IFluidDataStoreRuntime` that the DDS will be managed by. We'll cover the runtime in more detail in
 the [Encapsulating data with DataObject](./dataobject-aqueduct.md) section.
-
 
 ### Storing a DDS within another DDS
 
@@ -128,7 +124,6 @@ myMap.set("counter", myCounter.handle);
 That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles,
 see [Fluid handles](../advanced/handles.md) in the Advanced section.
 
-
 ## Events
 
 When a distributed data structure is changed by the Fluid runtime, it raises events. You can listen to these events so
@@ -137,12 +132,11 @@ recalculate a derived value when some data in a DDS changes.
 
 ```ts
 myMap.on("valueChanged", () => {
-    recalculate();
+  recalculate();
 });
 ```
 
 Refer to the sections below for more details about the events raised by each DDS.
-
 
 ## Picking the right data structure
 
@@ -159,43 +153,75 @@ length, width, etc.
 When users edit this data, what pieces of the data can be edited simultaneously? This is an important question to answer
 because it influences how you structure the data in your DDSes.
 
-Let's assume for a moment that all of the data about a shape is stored as a single JSON object in a SharedMap. Recall
-that the [SharedMap uses a last writer wins merge strategy](#merge-behavior). This means that if two users are editing
-the data at the same time, then the one who made the most recent change will overwrite the changes made by the other
-user.
+Let's assume for a moment that all of the data about a shape is stored as a single object that looks like this:
 
-This may be perfectly fine for your needs. However, if your scenario requires users to edit individual properties of the
-shape, then the SharedMap LWW merge strategy probably won't give you the behavior you want.
+```json
+{
+  "x": 0,
+  "y": 0,
+  "height": 60,
+  "width": 40
+}
+```
+
+If we want to make this data collaborative using Fluid, the most direct -- _but ultimately flawed_ -- approach is to
+store our shape object in a SharedMap. Our SharedMap would look something like this:
+
+```json
+{
+  "aShape": {
+    "x": 0,
+    "y": 0,
+    "height": 60,
+    "width": 40
+  }
+}
+```
+
+Recall that the [SharedMap uses a last writer wins merge strategy](#merge-behavior). This means that if two users are
+editing the data at the same time, then the one who made the most recent change will overwrite the changes made by the
+other user.
+
+Imagine that you are collaborating with a colleague, and you change the shape's width while your colleague changes the
+shape's height. This will generate two operations: a `set` operation for you, and another `set` operation for your
+colleague. Both operations will be sequenced by the Fluid service, but only one will 'win,' because the SharedMap's
+merge behavior is LWW. Since we're storing the shape as an object, both `set` operations _set the whole object_.
+
+This results in someone's changes being "lost" from a user's perspective. This may be perfectly fine for your needs.
+However, if your scenario requires users to edit individual properties of the shape, then the SharedMap LWW merge
+strategy probably won't give you the behavior you want.
 
 However, you could address this problem by storing individual shape properties in SharedMap keys. Instead of storing a
-JSON object with all the data, you can break it apart and store the length in one SharedMap key, the color in another,
+JSON object with all the data, you can break it apart and store the length in one SharedMap key, the width in another,
 etc. With this data model, users can change individual properties of the shape without overwriting other users' changes.
 
 You likely have more than one shape in your data model, so you could create a SharedMap to store all your shapes, then
 store the SharedMaps representing each shape within that SharedMap.
 
+To learn more about how you use DDSes to create more complex Fluid objects, see the [Encapsulating data with
+DataObject](./dataobject-aqueduct.md) section.
 
 ### Key-value data
 
-These DDSes are used for storing key-value data. They are all optimistic, and use a last-writer-wins merge policy.
+These DDSes are used for storing key-value data. They are all optimistic and use a last-writer-wins merge policy.
 
 - [SharedMap][] -- a basic key-value distributed data structure.
-- [SharedDirectory][] -- a SharedMap with and API more suited to hierarchical data.
+- [SharedDirectory][] -- a SharedMap with an API more suited to hierarchical data.
 - [SharedCell][] -- a "single-object SharedMap"; useful for wrapping objects.
 
 ### Sequences
 
-These DDSes are used for storing sequential data.
+These DDSes are used for storing sequential data. They are all optimistic.
 
-- [SharedNumberSequence][]
-- [SharedObjectSequence][]
-- [SharedMatrix][]
+- [SharedNumberSequence][] -- a distributed sequence of numbers.
+- [SharedObjectSequence][] -- a distributed sequence of objects.
+- [SharedMatrix][] -- a distributed data structure to efficiently use two-dimensional tabular data.
 
 ### Specialized data structures
 
-- [SharedCounter][]
-- [SharedString][]
-- [Ink][]
+- [SharedCounter][] -- a distributed counter.
+- [SharedString][] -- specialized data structure for handling collaborative text.
+- [Ink][] -- specialized daa structure for ink data.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
