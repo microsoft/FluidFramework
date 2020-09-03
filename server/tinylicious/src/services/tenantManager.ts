@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { 
+import {
     ITenant,
     ITenantConfig,
     ITenantManager,
     ITenantOrderer,
-    ITenantStorage
+    ITenantStorage,
 } from "@fluidframework/server-services-core";
 import { GitManager, Historian } from "@fluidframework/server-services-client";
 
