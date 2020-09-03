@@ -8,7 +8,7 @@ A Fluid handle is any JavaScript object that implements the [IFluidHandle](/apis
 The primary use case for handles in the Fluid Framework is for storing collaborative objects (Ex. Fluid objects or
 Distributed Data Structures (DDSes)) into other DDSes.
 
-A example is if we have a SharedMap `myMap` and want to store a SharedString `myText` as a value. The SharedString
+A basic example is if we have a SharedMap `myMap` and want to store a SharedString `myText` as a value. The SharedString
 instance lives within the Fluid Runtime and we don't want to store the object itself. What we want is to be able to get
 the SharedString instance from our SharedMap later. So instead of storing the SharedString we will store a handle to the
 SharedString so we can retrieve it later.
@@ -51,21 +51,18 @@ console.log(text === text2) // true
 
 ### Why use Fluid handles?
 
-- You should **always** use handles to represent collaborative objects and you should store the handles in a DDSes. This
-  allows the Fluid runtime to manage the lifetime of the object and perform important operations such as garbage collection.
-  Objects that are not referenced by a handle are subject to garbage collection.
+- Collaborative objects, such as Fluid objects or DDSes, cannot be stored directly in another DDS. There are two primary
+  reasons for this:
+     1. Content stored in a DDS needs to be serializable. Complex objects and classes should never be directly stored in
+        a DDS.
+     2. Handles are references so if a handle is stored in multiple DDSes they will all reference the same underlying
+        collaborative object.
 
-  The exception to this is when the object has to be handed off to an external entity. For example, when copy/pasting
-  an object, the URL of the object should be handed off to the destination so that it can request the object from the
-  source Loader or the Container. In this case, it is the responsibility of the code managing the copy/paste to ensure
-  the object is not garbage collected by storing its handle somewhere.
+- Handles encapsulate where the underlying object lives and how to retrieve it. This reduces the complexity from the caller
+  and abstracts away the need for the caller to know where the underlying object lives.
 
-- With handles, the user doesn't have to worry about how to get the underlying object since that itself can differ in
-  different scenarios. It is the responsibility of the handle to retrieve the object and return it.
-
-  For example, the handle for a `PureDataObject` simply returns the underlying object. But when this handle is stored in
-  a DDS so that it is serialized and then de-serialized in a remote client, it is represented by a _remote handle_.
-  The remote handle only has the absolute url to the object, requests the object from the root, and then returns it.
+- Handles allow the underlying Fluid runtime to build a dependency hierarchy. This will eventually allow for features such
+  as garbage collection.
 
 ### Scenarios in Practice
 
@@ -121,13 +118,3 @@ protected async hasInitialized() {
 
 // ...
 ```
-
-### How to create a handle
-
-A handle's primary job is to be able to return the collaborative object it is representing when `get` is called. So, it
-needs to have access to the object either by directly storing it or by having a mechanism to retrieve it when asked. The
-creation depends on the uses and the implementation.
-
-For example, it can be created with the absolute URL of the object and a routeContext which knows how to get the
-object via the URL. When `get()` is called, it can request the object from the routeContext by providing the URL. This
-is how the [remote handle][] retrieves the underlying object.
