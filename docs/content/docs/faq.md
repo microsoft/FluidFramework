@@ -127,25 +127,25 @@ prototyped several games.
 Keeping track of and sharing each user's position in a grid, a document, or some other virtual space is an ideal
 task for Fluid Framework because it is designed to enable extraordinary performance.
 
-## Fluid Server
+## Fluid Service
 
 ### What needs to be running on the server?
 
-Fluid Framework requires a Fluid server to sync data between clients. The role of the server is very simple;
+Fluid Framework requires a Fluid service to sync data between clients. The role of the server is very simple;
 it orders operations and broadcasts them to all clients. It's also responsible for saving operations to
 persistent data storage.
 
-The Fluid server is general purpose and, as a rule, Fluid solutions will work with any Fluid server. Developers of
+The Fluid service is general purpose and, as a rule, Fluid solutions will work with any Fluid service. Developers of
 Fluid solutions can use a local server or a "test quality" server for development and trust that their solution
 will work against whatever production server their solution is pointed at.
 
-Fluid Framework include a reference implementation of the Fluid server called Routerlicious that you can use for
+Fluid Framework include a reference implementation of the Fluid service called Routerlicious that you can use for
 development or as the basis for a production quality server.
 
 ### Where is the shared data stored?
 
 The specifics of data storage (both session data and persistent data) will depend on the implementation of
-the Fluid server. There is a great deal of flexibility here and developers of Fluid servers may choose to offer
+the Fluid service. There is a great deal of flexibility here and developers of Fluid services may choose to offer
 options around where and how data is stored.
 
 ### Is there a dedicated cloud service for syncing the clients?
@@ -168,13 +168,13 @@ Yes. Fluid Framework is designed to stand alone. It has no dependencies on other
 ### Can Fluid Framework be used in a situation without access to the internet?
 
 There are two angles to this question. One is whether the client must be connected to the internet. The other is
-whether an organization could run the Fluid server on site to support an intranet.
+whether an organization could run the Fluid service on site to support an intranet.
 
-Clients do have to be connected to the Fluid server. Fluid can tolerate brief network outages and continue operating but
-eventually the promise of being able to merge local changes weakens. We are investigating ways to improve this using
+Clients do have to be connected to the Fluid service. Fluid can tolerate brief network outages and continue operating
+but eventually the promise of being able to merge local changes weakens. We are investigating ways to improve this using
 other merging techniques designed to reason over large deltas but no final solution is in place today.
 
-In principle there is nothing preventing an organization from hosting a Fluid server on an intranet. However, Microsoft
+In principle there is nothing preventing an organization from hosting a Fluid service on an intranet. However, Microsoft
 has no plans to support that scenario directly.
 
 ### Is the Fluid reference server implementation production ready?

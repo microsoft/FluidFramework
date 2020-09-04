@@ -32,7 +32,7 @@ distributed data structures (DDSes). Each of these data structures is eventually
 no new changes to the data structures, all clients reach an identical state in a finite amount of time.
 
 Fluid guarantees eventual consistency via total order broadcast. That is, when a DDS is changed locally by a client,
-that change -- that is, the operation -- is first sent to the Fluid server, which does three things:
+that change -- that is, the operation -- is first sent to the Fluid service, which does three things:
 
 * Assigns a monotonically increasing sequence number to the operation; this is the "total order" part of total order
   broadcast.
@@ -49,7 +49,7 @@ eventually be consistent with the client that originated the change.
 Fluid is also efficient when communicating with the server. When you change a data structure, Fluid doesn't send the
 whole data structure to the server. Rather, it sends operations. For example, consider the [SharedNumberSequence][] data
 structure. When a client inserts, appends, or deletes items in the sequence, Fluid sends the server the operation that
-was performed and the data that was inserted/appended/etc. When the Fluid server broadcasts the operation to all the
+was performed and the data that was inserted/appended/etc. When the Fluid service broadcasts the operation to all the
 other connected clients, it again sends only the operation itself, not the full data structure. This efficiency in
 bytes-over-wire helps both performance and bandwidth.
 

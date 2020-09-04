@@ -150,10 +150,9 @@ export const ClickerInstantiationFactory = new DataObjectFactory(
 export const fluidExport = ClickerInstantiationFactory;
 ```
 
-These two lines in combination allow the Clicker to be consumed as a Fluid object. While the first two
-parameters that `DataObjectFactory` takes in simply define `Clicker`'s name and pass the class itself, the third
-parameter is important to keep in mind for later as it will list the Fluid DDSes (Distributed Data Structures) that
-`Clicker` utilizes.
+These two lines in combination allow the Clicker to be consumed as a Fluid object. While the first two parameters that
+`DataObjectFactory` takes in simply define `Clicker`'s name and pass the class itself, the third parameter is important
+to keep in mind for later as it will list the Fluid distributed data structures that `Clicker` utilizes.
 
 Finally, the last line consisting of an exported `fluidExport` variable is what Fluid containers look for in order to
 instantiate our `Clicker` using the factory it provides.

@@ -3,8 +3,8 @@ title: Handles
 menuPosition: 1
 ---
 
-A Fluid handle is an object that holds a reference to a collaborative object, such as a [`DataObject`](/apis/aqueduct/dataobject/)
-or a Distributed Data Structure (DDS).
+A Fluid handle is an object that holds a reference to a collaborative object, such as a
+[`DataObject`](/apis/aqueduct/dataobject/) or a distributed data structure (DDS).
 
 The primary use case for handles in the Fluid Framework is for storing a [`DataObject`](/apis/aqueduct/dataobject/), or
 a DDS, into another DDS. This doc covers how to consume and use Fluid handles.
@@ -15,13 +15,16 @@ a DDS, into another DDS. This doc covers how to consume and use Fluid handles.
   reasons for this:
      1. Content stored in a DDS needs to be serializable. Complex objects and classes should never be directly stored in
         a DDS.
-     2. Frequently the same collaborative object (not merely a copy) has to be available in different DDSes. The only way to make this possible is to store _references_ (which is what a handle is) to the collaborative objects in the DDSes.
+     2. Frequently the same collaborative object (not merely a copy) has to be available in different DDSes. The only
+        way to make this possible is to store _references_ (which is what a handle is) to the collaborative objects in
+        the DDSes.
 
-- Handles encapsulate where the underlying object instance exists within the Fluid runtime and how to retrieve it. 
-  This reduces the complexity from the caller by abstracting away the need to know how to make a `request` to the 
+- Handles encapsulate where the underlying object instance exists within the Fluid runtime and how to retrieve it.
+  This reduces the complexity from the caller by abstracting away the need to know how to make a `request` to the
   Fluid runtime to retrieve the object.
 
-- Handles enable the underlying Fluid runtime to build a dependency hierarchy. This will enable us to add garbage collection to the runtime in a future version.
+- Handles enable the underlying Fluid runtime to build a dependency hierarchy. This will enable us to add garbage
+  collection to the runtime in a future version.
 
 ### Basic Scenario
 
@@ -29,7 +32,8 @@ Given a SharedMap DDS `myMap`, and a SharedString DDS `myText`, we want to store
 we now know we can't directly store one DDS object in another DDS, we need to store a handle to `myText` then use that handle
 to retrieve the `myText` SharedString.
 
-In practice this looks like the following. Note that you don't have to construct the handle. The `create` method of the DDS does that for you and assigns it to the `handle` property of the DDS.
+In practice this looks like the following. Note that you don't have to construct the handle. The `create` method of the
+DDS does that for you and assigns it to the `handle` property of the DDS.
 
 ```typescript
 const myMap = SharedMap.create(this.runtime);
@@ -71,9 +75,12 @@ The following examples outline the uses of handles to retrieve the underlying ob
 
 #### Storing DDSes on the DataObject `root`
 
-When developing a Fluid object from a `DataObject` you will often find yourself wanting to create and store new DDSes. In the scenario below we
-want to create a new `SharedMap` that all users have access to, and we also want to ensure it is only created once. We can do that by
-creating a new SharedMap in our `initializingFirstTime` lifecycle method and storing it on our `root` SharedDirectory. The `initializingFirstTime` function in the `DataObject` only runs the first time our `MyFluidObject` is ever created. The `hasInitialized` lifecycle method runs every time `MyFluidObject` instance is initialized and we can use this to get and store our SharedMap locally in the class.
+When developing a Fluid object from a `DataObject` you will often find yourself wanting to create and store new DDSes.
+In the scenario below we want to create a new `SharedMap` that all users have access to, and we also want to ensure it
+is only created once. We can do that by creating a new SharedMap in our `initializingFirstTime` lifecycle method and
+storing it on our `root` SharedDirectory. The `initializingFirstTime` function in the `DataObject` only runs the first
+time our `MyFluidObject` is ever created. The `hasInitialized` lifecycle method runs every time `MyFluidObject` instance
+is initialized and we can use this to get and store our SharedMap locally in the class.
 
 ```typescript
 export class MyFluidObject extends DataObject {
@@ -92,15 +99,16 @@ export class MyFluidObject extends DataObject {
 
 #### Storing other DataObjects
 
-One of the advanced uses of a Fluid handle is creating and storing other DataObjects within the DataObject `root`. We can
-do this the same as a DDS by storing the handle to the Fluid object then later using that to retrieve the handle and
+One of the advanced uses of a Fluid handle is creating and storing other DataObjects within the DataObject `root`. We
+can do this the same as a DDS by storing the handle to the Fluid object then later using that to retrieve the handle and
 `get` the object.
 
 The following code snippet from the
 [Pond](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/pond/src/index.tsx) DataObject
 demonstrates this. It creates a Clicker object (which is a DataObject) during first time initialization and stores its
-handle in the root SharedDirectory. By following the convention of using the Fluid object's name as the key for the handle, you enable any remote client to retrieve the handle from the root and get the Clicker by
-calling `get()` on the handle:
+handle in the root SharedDirectory. By following the convention of using the Fluid object's name as the key for the
+handle, you enable any remote client to retrieve the handle from the root and get the Clicker by calling `get()` on the
+handle:
 
 ```typescript
 // ...

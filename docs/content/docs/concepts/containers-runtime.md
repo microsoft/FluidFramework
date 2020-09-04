@@ -27,7 +27,7 @@ often multiple Fluid objects are composed together to create the overall experie
 From the Fluid service perspective, the container is the atomic unit of Fluid. The service does not know about anything
 inside of a Fluid container.
 
-That being said, app logic is handled by Fluid objects and state is handled by the Distributed Data Structures within
+That being said, app logic is handled by Fluid objects and state is handled by the distributed data structures within
 the Fluid objects.
 
 ## What does the Fluid container do?

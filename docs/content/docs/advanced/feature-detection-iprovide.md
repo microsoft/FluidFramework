@@ -4,8 +4,17 @@ menuPosition: 3
 draft: true
 ---
 
-In the previous section we introduced the DataObject, a convenient way to combine distributed data structures and our own
-code (business logic) into a modular, reusable piece. This in turn enables us to modularize pieces of our application –-
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
+{{% callout warning "Draft!" %}}
+
+This documentation is a **Draft**. It is technically accurate but has not yet been reviewed for consistency and clarity.
+
+{{% /callout %}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+In an earlier section we introduced the DataObject, a convenient way to combine distributed data structures and our own
+code (business logic) into a modular, reusable piece. This in turn enables us to modularize pieces of our application --
 data included.
 
 Fluid can be a very dynamic system. There are scenarios in which your code will call certain members of an object, _if
