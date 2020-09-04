@@ -100,7 +100,7 @@ do this the same as a DDS by storing the handle to the Fluid object then later u
 The following code snippet from the
 [Pond](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/pond/src/index.tsx) DataObject
 demonstrates this. It creates a Clicker object (which is a DataObject) during first time initialization and stores its
-handle in the root SharedDirectory. Any remote client can retrieve the handle from the root and get the Clicker by
+handle in the root SharedDirectory. By following the convention of using the Fluid object's name as the key for the handle, you enable any remote client to retrieve the handle from the root and get the Clicker by
 calling `get()` on the handle:
 
 ```typescript
