@@ -19,7 +19,7 @@ Fluid Framework was designed with performance and ease of development as top pri
 ### What is a DDS?
 
 DDS is short for _distributed data structure_. DDSes are the foundation of the Fluid Framework. They are designed such
-that the Fluid Runtime is able to keep them in sync across clients while each client operates on the DDSes in largely
+that the Fluid runtime is able to keep them in sync across clients while each client operates on the DDSes in largely
 the same way they would operate on local data. The data source for a Fluid solution can represent numerous DDSes.
 
 There are many types of DDSes including a SharedMap that is a distributed version of a JavaScript Map and a SharedString
@@ -32,8 +32,8 @@ requires thought, just as it does when working with local data.
 
 ### Where is the data stored?
 
-There are two classes of data storage to discuss when answering this question:
-**session storage** and **persistent storage**.
+There are two classes of data storage to discuss when answering this question: **session storage** and
+**persistent storage**.
 
 **Session storage** is managed by the Fluid service and is, essentially, a central record of all the operations (ops)
 performed on the DDSes. This record is used by the Fluid clients to produce identical local instances of the DDSes.
