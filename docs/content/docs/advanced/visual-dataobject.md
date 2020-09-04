@@ -111,7 +111,7 @@ export const fluidExport = ClickerInstantiationFactory;
 ```
 
 Believe it or not, we are now 90% of the way to having a visual Fluid object! Do not worry if it doesn't compile yet.
-Let's take a quick summary of what we've written though before going the last bit to attain compilation.
+Let's take a quick summary of what we've written though before going through the last bit so we can compile.
 
 ```typescript
 export class Clicker extends DataObject
@@ -120,14 +120,14 @@ export class Clicker extends DataObject
 By extending the abstract `DataObject` class, we have actually let it do a lot of the necessary set up work for us
 through its constructor. Specifically, the `DataObject` class gives us access to two items
 
-- `root`: The `root` is a `SharedDirectory` [object](../docs/SharedDirectory.md) which, as the name implies, is a
-  directory that is shared amongst all users that are rendering our view in the same session. Any items that are
-  set here on a key will be accessible to other users using the same key on their respective client's root. The stored
+- `root`: The `root` is a `SharedDirectory` [object]({{< relref "SharedDirectory" >}}) which, as the name implies, is a
+  directory that is shared amongst all users that are rendering our view in the same session. Any items that are set
+  here on a key will be accessible to other users using the same key on their respective client's root. The stored
   values can be primitives or the handles of other `SharedObject` items. If you don't know what handles are, don't
   worry! We'll take a look at them in the next section.
 
-- `runtime`: The `runtime` is a `ComponentRuntime` object that manages the Fluid object lifecycle. The key thing to
-  note here is that it will be used for the creation of other Fluid objects and DDSes.
+- `runtime`: The `runtime` is an `IFluidDataStoreRuntime` object that manages the Fluid object lifecycle. The key thing
+  to note here is that it will be used for the creation of other Fluid objects and DDSes.
 
 ```typescript
 export const ClickerInstantiationFactory = new DataObjectFactory(
@@ -711,19 +711,20 @@ fluid states do not match, but they are not needed here.
 If you read Option A above, you will notice that we no longer need to set up the `SharedCounter` in the Fluid object
 lifecycle and that we only have the `render` function now. This is because this initialization is happening within the
 React lifecycle, and the `SharedCounter` instance will be made available through a state update after it finishes
-initializing. This is why you see that `CounterState` is defined as `{counter?: SharedCounter}` instead of `{counter: SharedCounter}`. Prior to initialization, `state.counter` will return undefined.
+initializing. This is why you see that `CounterState` is defined as `{counter?: SharedCounter}` instead of
+`{counter: SharedCounter}`. Prior to initialization, `state.counter` will return undefined.
 
 Okay, now we have everything necessary to pass in as props to our `CounterReactView`.
 
 - `syncedStateId` - This should be unique for each Fluid object that shares the same root, i.e. if there was another
   clicker being render alongside this one in this Fluid object, it should receive its own ID to prevent one from
-  interfering in the updates of the other
-- `root` - The same `SharedDirectory` provided by `this.root` from `DataObject`
+  interfering in the updates of the other.
+- `root` - The same `SharedDirectory` provided by `this.root` from `DataObject`.
 - `dataProps.fluidObjectMap` - This can just take a new `Map` instance for now but will need to be filled when
   establishing multi Fluid object relationships in more complex cases. This map is where all the DDSes that we use are
-  stored after being fetched from their handles, and it used to make the corresponding Fluid object synchronously available
-  in the view.
-- `dataProps.runtime` - The same `ComponentRuntime` provided by `this.runtime` from `DataObject`
+  stored after being fetched from their handles, and it used to make the corresponding Fluid object synchronously
+  available in the view.
+- `dataProps.runtime` - The same `IFluidDataStoreRuntime` provided by `this.runtime` from `DataObject`.
 - `fluidToView` - The fluidToView relationship map we set up above.
 
 We're ready to go through our view, which is now super simple due to the setup we did in the Fluid object itself.
