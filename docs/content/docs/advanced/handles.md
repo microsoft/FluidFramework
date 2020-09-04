@@ -4,13 +4,32 @@ menuPosition: 1
 draft: false
 ---
 
-The primary use case for handles in the Fluid Framework is for storing [DataObject](/apis/aqueduct/dataobject/) or
-Distributed Data Structures (DDSes) into other DDSes. This doc covers how to consume and use Fluid handles.
+A Fluid handle is an object that holds a reference to a collaborative object, such as a [`DataObject`](/apis/aqueduct/dataobject/)
+or DDS.
 
-A basic example is if we have a SharedMap `myMap` and want to store a SharedString `myText` as a value. The SharedString
-instance lives within the Fluid Runtime and we don't want to store the object itself. What we want is to be able to get
-the SharedString instance from our SharedMap later. So instead of storing the SharedString we will store a handle to the
-SharedString so we can retrieve it later.
+The primary use case for handles in the Fluid Framework is for storing a [`DataObject`](/apis/aqueduct/dataobject/), or
+Distributed Data Structures (DDSes), into other DDSes. This doc covers how to consume and use Fluid handles.
+
+### Why use Fluid handles?
+
+- Collaborative objects, such as Fluid objects or DDSes, cannot be stored directly in another DDS. There are two primary
+  reasons for this:
+     1. Content stored in a DDS needs to be serializable. Complex objects and classes should never be directly stored in
+        a DDS.
+     2. Handles are references so if a handle is stored in multiple DDSes they will all reference the same underlying
+        collaborative object.
+
+- Handles encapsulate where the underlying object lives and how to retrieve it. This reduces the complexity from the caller
+  and abstracts away the need for the caller to know where the underlying object lives.
+
+- Handles allow the underlying Fluid runtime to build a dependency hierarchy. This will eventually allow for features such
+  as garbage collection.
+
+### Basic Scenario
+
+Given a SharedMap DDS `myMap`, and a SharedString DDS `myText`, we want to store `myText` as a value in `myMap`. Because
+we now know we can't directly store DDS objects in other DDSes, we need to store a handle to `myText` then use that handle
+to retrieve the `myText` SharedString.
 
 In practice this looks like:
 
@@ -47,21 +66,6 @@ const text2 = await myMap2.get("my-text").get();
 
 console.log(text === text2) // true
 ```
-
-### Why use Fluid handles?
-
-- Collaborative objects, such as Fluid objects or DDSes, cannot be stored directly in another DDS. There are two primary
-  reasons for this:
-     1. Content stored in a DDS needs to be serializable. Complex objects and classes should never be directly stored in
-        a DDS.
-     2. Handles are references so if a handle is stored in multiple DDSes they will all reference the same underlying
-        collaborative object.
-
-- Handles encapsulate where the underlying object lives and how to retrieve it. This reduces the complexity from the caller
-  and abstracts away the need for the caller to know where the underlying object lives.
-
-- Handles allow the underlying Fluid runtime to build a dependency hierarchy. This will eventually allow for features such
-  as garbage collection.
 
 ### Scenarios in Practice
 
