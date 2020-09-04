@@ -74,7 +74,7 @@ The following examples outline the uses of handles to retrieve the underlying ob
 
 When developing a Fluid object from a `DataObject` you will often find yourself wanting to create and store new DDSes. In the scenario below we
 want to create a new `SharedMap` that all users have access to, and we also want to ensure it is only created once. We can do that by
-creating the map.
+creating a new SharedMap in our `initializingFirstTime` lifecycle method and storing it on our `root` SharedDirectory. The `initializingFirstTime` function in the `DataObject` only runs the first time our `MyFluidObject` is ever created. The `hasInitialized` lifecycle method runs every time `MyFluidObject` instance is initialized and we can use this to get and store our SharedMap locally in the class.
 
 ```typescript
 export class MyFluidObject extends DataObject {
