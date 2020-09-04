@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
+import { parse } from "url";
 import { PromiseCache } from "@fluidframework/common-utils";
 import {
     IRequest,
@@ -10,6 +12,7 @@ import {
 import {
     IResolvedUrl,
     IUrlResolver,
+    IFluidResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { default as Axios, AxiosInstance } from "axios";
 
@@ -53,6 +56,18 @@ export class ContainerUrlResolver implements IUrlResolver {
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
     ): Promise<string> {
-        throw new Error("Not implmented");
+        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
+
+        const parsedUrl = parse(fluidResolvedUrl.url);
+        assert(parsedUrl.pathname);
+        const [, tenantId, documentId] = parsedUrl.pathname.split("/");
+        assert(documentId !== undefined && tenantId !== undefined);
+
+        let url = relativeUrl;
+        if (url.startsWith("/")) {
+            url = url.substr(1);
+        }
+        return `${this.baseUrl}/${encodeURIComponent(
+            tenantId)}/${encodeURIComponent(documentId)}/${url}`;
     }
 }

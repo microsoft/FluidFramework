@@ -13,19 +13,16 @@ import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import * as jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import { NodeCodeLoader } from "./nodeCodeloader";
-import { fetchFluidObject, initializeChaincode } from "./utils";
+import { fetchFluidObject } from "./utils";
 
 // Base service configuration.
-const ordererEndpoint = "";
-const storageEndpoint = "";
-const tenantId = "";
-const tenantKey = "";
-const bearerSecret = "";
-
+const ordererEndpoint = "http://localhost:3000";
+const storageEndpoint = "http://localhost:3000";
+const tenantId = "tinylicious";
+const tenantKey = "12345";
 // Code package details.
-const defaultPackage = "@fluid-example/key-value-cache@0.19.0-28557";
+const defaultPackage = "@fluid-example/key-value-cache@0.27.0-3935";
 const installPath = "/tmp/fluid-objects";
-const timeoutMS = 60000;
 
 // Document id (randomly chosen if not specified)
 const docId = "";
@@ -40,12 +37,8 @@ const user = {
 export async function start(): Promise<void> {
     // TODO: Create a url resolver for node environment.
     // Generate access tokens.
+    const createNew = docId.length === 0 ? true : false;
     const documentId = docId.length === 0 ? uuid() : docId;
-    const hostToken = jwt.sign(
-        {
-            user,
-        },
-        bearerSecret);
     const token = jwt.sign(
         {
             documentId,
@@ -76,12 +69,12 @@ export async function start(): Promise<void> {
 
     const resolver = new ContainerUrlResolver(
         ordererEndpoint,
-        hostToken,
+        "token",
         new Map([[documentUrl, resolved]]));
 
     // A code loader that installs the code package in a specified location (installPath).
     // Once installed, the loader returns an entry point to Fluid Container to invoke the code.
-    const nodeCodeLoader = new NodeCodeLoader(installPath, timeoutMS);
+    const nodeCodeLoader = new NodeCodeLoader(installPath);
 
     // Construct the loader
     const loader = new Loader(
@@ -93,23 +86,21 @@ export async function start(): Promise<void> {
         new Map<string, IProxyLoaderFactory>(),
     );
 
+    const details: IFluidCodeDetails = {
+        config: {},
+        package: defaultPackage,
+    };
     // Resolving the URL to its underlying Fluid document.
-    const fluidDocument = await loader.resolve({ url: documentUrl });
+    let container;
+    if (createNew) {
+        container = await loader.createDetachedContainer(details);
+        await container.attach({ url: documentUrl });
+    } else {
+        container = await loader.resolve({ url: documentUrl });
+    }
 
     // Fetches the underlying Fluid object.
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    fetchFluidObject(loader, fluidDocument, documentUrl);
-
-    // Proposes the code package for a new document.
-    if (!fluidDocument.existing) {
-        const details: IFluidCodeDetails = {
-            config: {},
-            package: defaultPackage,
-        };
-
-        await initializeChaincode(fluidDocument, details)
-            .catch((error) => console.error("chaincode error", error));
-    }
+    await fetchFluidObject(loader, container, documentUrl);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
