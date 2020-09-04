@@ -8,7 +8,7 @@ A Fluid handle is an object that holds a reference to a collaborative object, su
 or a Distributed Data Structure (DDS).
 
 The primary use case for handles in the Fluid Framework is for storing a [`DataObject`](/apis/aqueduct/dataobject/), or
-Distributed Data Structures (DDSes), into other DDSes. This doc covers how to consume and use Fluid handles.
+a DDS, into another DDS. This doc covers how to consume and use Fluid handles.
 
 ### Why use Fluid handles?
 
