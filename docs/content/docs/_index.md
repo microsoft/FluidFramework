@@ -5,7 +5,7 @@ meta: "What is Fluid Framework"
 
 ## What is Fluid Framework?
 
-Fluid Framework is a collection of client libraries for building applications with distributed state. These libraries
+Fluid Framework is a collection of client libraries for distributing and syncing state. These libraries
 allow multiple clients to create and operate on shared, synchronized data structures using coding
 patterns similar to those used to work with local data.
 
@@ -15,7 +15,7 @@ Because building low-latency, collaborative experiences is hard!
 
 Fluid Framework offers:
 
-* Serverless application model with data persistence
+* Client-centric application model with data persistence requiring no custom server code
 * Distributed data structures with familiar programming patterns
 * Very low latency
 
