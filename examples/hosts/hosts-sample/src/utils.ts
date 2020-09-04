@@ -12,7 +12,31 @@ import { IFluidHTMLView } from "@fluidframework/view-interfaces";
  * getFluidObjectAndRender is used to make a request against the loader to load a Fluid data store and then render
  * it once found.
  */
-async function getFluidObjectAndRenderCore(loader: Loader, url: string, div: HTMLDivElement) {
+export async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails): Promise<void> {
+    if (pkg === undefined) {
+        return;
+    }
+
+    const quorum = document.getQuorum();
+
+    // Wait for connection so that proposals can be sent
+    if (!document.connected) {
+        await new Promise<void>((resolve) => document.on("connected", () => resolve()));
+    }
+
+    // And then make the proposal if a code proposal has not yet been made
+    if (!quorum.has("code")) {
+        await quorum.propose("code", pkg);
+    }
+
+    console.log(`Code is ${quorum.get("code")}`);
+}
+
+/**
+ * attachCore is used to make a request against the loader to load a Fluid object. And then attaches to it once
+ * found.
+ */
+async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
 
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
@@ -20,7 +44,7 @@ async function getFluidObjectAndRenderCore(loader: Loader, url: string, div: HTM
     }
 
     const fluidObject = response.value as IFluidObject;
-    // Try to render the fluid object if it is a view
+    // Try to render the Fluid object if it is a view
     const view: IFluidHTMLView | undefined = fluidObject.IFluidHTMLView;
     if (view !== undefined) {
         view.render(div, { display: "block" });
