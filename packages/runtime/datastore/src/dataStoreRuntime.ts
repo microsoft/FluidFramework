@@ -38,6 +38,8 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
     ITreeEntry,
+    TreeEntry,
+    FileMode,
 } from "@fluidframework/protocol-definitions";
 import {
     IAttachMessage,
@@ -49,7 +51,7 @@ import {
     ISummaryTreeWithStats,
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { generateHandleContextPath, SummaryTreeBuilder, requestFluidObject } from "@fluidframework/runtime-utils";
 import { IChannel, IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
@@ -103,6 +105,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             logger);
 
         context.bindRuntime(runtime);
+
         return runtime;
     }
 
@@ -541,6 +544,29 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                 // And then store the tree
                 return new TreeTreeEntry(key, snapshot);
             }));
+
+        // NOTE: Search blob concept
+        // if (this.dataStoreContext.options.search === true) {
+        //     // Grab search blob content back from component:
+        //     // TODO: Was unclear to me which method is proper, based on debugging:
+        //     // requestFluidObject(this.requestHandler) OR this.sharedObjectRegistry
+
+        //     const searchBlobContent = "";
+        //     // Add as an entry to snapshot:
+        //     const newTreeEntry: ITreeEntry = {
+        //         path: "",
+        //         type: TreeEntry.Blob,
+        //         value: searchBlobContent,
+        //         mode: FileMode.File,
+        //     };
+        //     const newTree: ITree = {
+        //         entries: [newTreeEntry],
+        //         id: searchBlobContent,
+        //     };
+
+        //     const newEntry = new TreeTreeEntry("searchBlobContent", newTree);
+        //     entries.push(newEntry);
+        }
 
         return entries;
     }

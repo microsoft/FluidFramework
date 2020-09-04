@@ -86,7 +86,12 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
     public get IRuntimeFactory() { return this; }
 
     public instantiateDataStore(context: IFluidDataStoreContext): void {
-        return sharedTextComponent.instantiateDataStore(context);
+        // NOTE: Search blob concept
+        // Add an option to the context that indicates this component will
+        // use search blobs:
+        const testContext = context;
+        testContext.options.search = true;
+        return sharedTextComponent.instantiateDataStore(testContext);
     }
 
     /**

@@ -75,6 +75,9 @@ export class SharedTextRunner
     public get IFluidHTMLView() { return this; }
     public get ISharedString() { return this.sharedString; }
 
+    // NOTE: Search blob concept
+    public get getSearchBlobContent() { return this.sharedString.getText(); }
+
     public readonly url = "/text";
     private sharedString: SharedString;
     private insightsMap: ISharedMap;
