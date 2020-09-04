@@ -35,4 +35,4 @@ margin-right: auto;">
 The [Sudoku](https://github.com/microsoft/FluidExamples/tree/main/sudoku) example demonstrates how to build
 a collaborative game. This example includes key features like presence.
 
-Try out Sudoku in our [Playground](/playground/?path=/docs/react-demos-sudoku--demo).
+Try out Sudoku in the [Playground](/playground/?path=/docs/react-demos-sudoku--demo).
