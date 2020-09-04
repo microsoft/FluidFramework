@@ -80,18 +80,20 @@ storage and broadcast an event to the connected clients acknowledging that the s
 the clients will ignore both the summary op itself and the acknowledgement, since connected clients already receive all
 ops and are thus already consistent.
 
-Summary ops summarize the state of distributed data structures, so Data Objects (which are a collection of distributed
+Summary ops summarize the state of distributed data structures, so Fluid objects (which are a collection of distributed
 data structures) don't need to do anything to participate in summarization; it happens automatically, and all
-Data Objects' data structures will be summarized.
+Fluid objects' data structures will be summarized.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
 
 <!-- Packages -->
+
 [Aqueduct]: {{< relref "/apis/aqueduct.md" >}}
 [undo-redo]: {{< relref "/apis/undo-redo.md" >}}
 
 <!-- Classes and interfaces -->
+
 [ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
 [DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
 [DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
@@ -103,10 +105,12 @@ Data Objects' data structures will be summarized.
 [SharedMatrix]: {{< relref "SharedMatrix" >}}
 [SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
 [SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[SharedSequence]: {{< relref "SharedSequence" >}}
 [SharedString]: {{< relref "SharedString" >}}
 [Quorum]: {{< relref "/apis/protocol-base/quorum.md" >}}
 
 <!-- Sequence methods -->
+
 [sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
 [sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
 [sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
