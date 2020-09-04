@@ -33,6 +33,9 @@ menu:
   - name: "Community"
     url: "/community/"
     weight: -40
+  - name: "Playground"
+    url: "/playground/"
+    weight: -40
 
   docs:
   - identifier: "get-started"
