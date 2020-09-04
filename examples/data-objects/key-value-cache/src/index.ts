@@ -112,7 +112,7 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
 export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/key-value-cache";
     public readonly type = KeyValueFactoryComponent.type;
-
+    private readonly defaultComponentId = "default";
     public get IRuntimeFactory() { return this; }
     public get IFluidDataStoreFactory() { return this; }
 
@@ -140,13 +140,13 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
             context,
             new Map([[ComponentName, Promise.resolve(this)]]),
             buildRuntimeRequestHandler(
-                defaultRouteRequestHandler(ComponentName),
+                defaultRouteRequestHandler(this.defaultComponentId),
                 deprecated_innerRequestHandler,
             ),
         );
 
         if (!runtime.existing) {
-            await runtime.createRootDataStore(ComponentName, ComponentName);
+            await runtime.createRootDataStore(ComponentName, this.defaultComponentId);
         }
 
         return runtime;
