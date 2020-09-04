@@ -38,4 +38,3 @@ extends:
     buildDirectory: server/gitrest
     containerName: gitrest
     test: true
-

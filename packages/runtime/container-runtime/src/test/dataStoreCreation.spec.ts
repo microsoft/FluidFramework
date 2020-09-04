@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import assert from "assert";
+import { strict as assert } from "assert";
 import {
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
@@ -55,10 +55,9 @@ describe("Data Store Creation Tests", () => {
         ): FluidDataStoreRegistryEntry {
             const registryEntries = new Map(entries);
             const factory: IFluidDataStoreFactory = {
+                type: "store-type",
                 get IFluidDataStoreFactory() { return factory; },
-                instantiateDataStore: (context: IFluidDataStoreContext) => {
-                    context.bindRuntime(new MockFluidDataStoreRuntime());
-                },
+                instantiateDataStore: async (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime(),
             };
             const registry: IFluidDataStoreRegistry = {
                 get IFluidDataStoreRegistry() { return registry; },

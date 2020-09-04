@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
@@ -54,8 +54,9 @@ describe("Data Store Context Tests", () => {
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             const factory: IFluidDataStoreFactory = {
+                type: "store-type",
                 get IFluidDataStoreFactory() { return factory; },
-                instantiateDataStore: (context: IFluidDataStoreContext) => { },
+                instantiateDataStore: async (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime(),
             };
             const registry: IFluidDataStoreRegistry = {
                 get IFluidDataStoreRegistry() { return registry; },
@@ -69,7 +70,7 @@ describe("Data Store Context Tests", () => {
             } as ContainerRuntime;
         });
 
-        it("Check LocalDataStore Attributes", () => {
+        it("Check LocalDataStore Attributes", async () => {
             localDataStoreContext = new LocalFluidDataStoreContext(
                 dataStoreId,
                 ["TestDataStore1"],
@@ -80,9 +81,7 @@ describe("Data Store Context Tests", () => {
                 createSummarizerNodeFn,
                 attachCb);
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            localDataStoreContext.realize();
-            localDataStoreContext.bindRuntime(new MockFluidDataStoreRuntime());
+            await localDataStoreContext.realize();
             const attachMessage = localDataStoreContext.generateAttachMessage();
 
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
@@ -125,7 +124,8 @@ describe("Data Store Context Tests", () => {
             registryWithSubRegistries.IFluidDataStoreFactory = registryWithSubRegistries;
             registryWithSubRegistries.IFluidDataStoreRegistry = registryWithSubRegistries;
             registryWithSubRegistries.get = async (pkg) => Promise.resolve(registryWithSubRegistries);
-            registryWithSubRegistries.instantiateDataStore = (context: IFluidDataStoreContext) => { };
+            registryWithSubRegistries.instantiateDataStore =
+                async (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
@@ -143,9 +143,7 @@ describe("Data Store Context Tests", () => {
                 createSummarizerNodeFn,
                 attachCb);
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            localDataStoreContext.realize();
-            localDataStoreContext.bindRuntime(new MockFluidDataStoreRuntime());
+            await localDataStoreContext.realize();
 
             const attachMessage = localDataStoreContext.generateAttachMessage();
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
@@ -174,7 +172,7 @@ describe("Data Store Context Tests", () => {
             const factory: { [key: string]: any } = {};
             factory.IFluidDataStoreFactory = factory;
             factory.instantiateDataStore =
-                (context: IFluidDataStoreContext) => { context.bindRuntime(new MockFluidDataStoreRuntime()); };
+                (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime();
             const registry: { [key: string]: any } = {};
             registry.IFluidDataStoreRegistry = registry;
             registry.get = async (pkg) => Promise.resolve(factory);

@@ -43,7 +43,7 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectIn
 
     public async get(name: string): Promise<Readonly<IProvideFluidDataStoreFactory | undefined>> {
         const index = this.containerFluidObjectArray.findIndex(
-            (containerFluidObject) => name === containerFluidObject.type,
+            (containerFluidObject) => name === containerFluidObject.factory.type,
         );
         if (index >= 0) {
             return this.containerFluidObjectArray[index].factory;
@@ -59,7 +59,7 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectIn
 
     public hasCapability(type: string, capability: keyof IFluidObject) {
         const index = this.containerFluidObjectArray.findIndex(
-            (containerFluidObject) => type === containerFluidObject.type,
+            (containerFluidObject) => type === containerFluidObject.factory.type,
         );
         return index >= 0 && this.containerFluidObjectArray[index].capabilities.includes(capability);
     }
@@ -90,36 +90,31 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultData
 const generateFactory = () => {
     const containerFluidObjectsDefinition: IInternalRegistryEntry[] = [
         {
-            type: ClickerInstantiationFactory.type,
-            factory: Promise.resolve(ClickerInstantiationFactory),
+            factory: ClickerInstantiationFactory,
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
         },
         {
-            type: TabsFluidObject.getFactory().type,
-            factory: Promise.resolve(TabsFluidObject.getFactory()),
+            factory: TabsFluidObject.getFactory(),
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Tabs",
             fabricIconName: "BrowserTab",
         },
         {
-            type: Spaces.getFactory().type,
-            factory: Promise.resolve(Spaces.getFactory()),
+            factory: Spaces.getFactory(),
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
         },
         {
-            type: cmfe.type,
-            factory: Promise.resolve(cmfe),
+            factory: cmfe,
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Codemirror",
             fabricIconName: "Code",
         },
         {
-            type: pmfe.type,
-            factory: Promise.resolve(pmfe),
+            factory: pmfe,
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Prosemirror",
             fabricIconName: "Edit",
@@ -128,7 +123,7 @@ const generateFactory = () => {
 
     const containerFluidObjects: [string, Promise<IProvideFluidDataStoreFactory>][] = [];
     containerFluidObjectsDefinition.forEach((value) => {
-        containerFluidObjects.push([value.type, value.factory]);
+        containerFluidObjects.push([value.factory.type, Promise.resolve(value.factory)]);
     });
 
     // TODO: You should be able to specify the default registry instead of just a list of fluidObjects
@@ -141,7 +136,7 @@ const generateFactory = () => {
             // We don't want to include the default wrapper fluidObject in our list of available fluidObjects
             Anchor.getFactory().registryEntry,
             Vltava.getFactory().registryEntry,
-            ["", Promise.resolve(new InternalRegistry(containerFluidObjectsDefinition))],
+            ["internalRegistry", Promise.resolve(new InternalRegistry(containerFluidObjectsDefinition))],
         ],
     );
 };

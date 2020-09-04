@@ -7,6 +7,9 @@ distributed-data-structures:
 - "@fluidframework/ordered-collection"
 - "@fluidframework/register-collection"
 - "@fluidframework/sequence"
+- custom:
+    title: "SharedString"
+    url: "/apis/sequence/sharedstring/"
 - "@fluidframework/shared-object-base"
 - "@fluidframework/synthesize"
 - "@fluidframework/shared-summary-block"
@@ -21,7 +24,6 @@ container-runtime:
 - "@fluidframework/runtime-definitions"
 libraries:
 - "@fluidframework/aqueduct"
-- "@fluidframework/framework-interfaces"
 - "@fluidframework/undo-redo"
 - "@fluidframework/view-adapters"
 - "@fluidframework/view-interfaces"

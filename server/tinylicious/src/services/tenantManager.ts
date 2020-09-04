@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITenant, ITenantManager, ITenantOrderer, ITenantStorage } from "@fluidframework/server-services-core";
+import {
+    ITenant,
+    ITenantConfig,
+    ITenantManager,
+    ITenantOrderer,
+    ITenantStorage,
+} from "@fluidframework/server-services-core";
 import { GitManager, Historian } from "@fluidframework/server-services-client";
 
 export class TinyliciousTenant implements ITenant {
@@ -43,6 +49,10 @@ export class TinyliciousTenant implements ITenant {
 
 export class TenantManager implements ITenantManager {
     constructor(private readonly url: string) {
+    }
+
+    public async createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }> {
+        throw new Error("Method not implemented.");
     }
 
     public getTenant(tenantId: string): Promise<ITenant> {

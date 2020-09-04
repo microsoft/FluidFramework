@@ -14,7 +14,7 @@ import {
     WebCodeLoader,
     AllowList,
 } from "@fluidframework/web-code-loader";
-import { attach, initializeChaincode, parsePackageName } from "./utils";
+import { getFluidObjectAndRender, parsePackageName } from "./utils";
 
 // Base service configuration. (Tinylicious)
 const hostUrl = "http://localhost:3000";
@@ -38,7 +38,7 @@ const user = {
     name: "Test User",       // Optional value that we included
 } as IUser;
 
-export async function start(url: string, code: string): Promise<void> {
+export async function start(url: string, code: string, createNew: boolean): Promise<void> {
     // Create the InsecureUrlResolve so we can generate access tokens to connect to Fluid documents stored in our
     // tenant. Note that given we are storing the tenant secret in the clear on the client side this is a security
     // hole but it simplifies setting up this example. To make this clear we named it the InsecureUrlResolver. You would
@@ -77,20 +77,9 @@ export async function start(url: string, code: string): Promise<void> {
         {},
         new Map<string, IProxyLoaderFactory>());
 
-    // We start by resolving the URL to its underlying Fluid document. This gives low-level access which will enable
-    // us to quorum on code later or detect when the code quorum has changed. In many cases you may not need this
-    // behavior and can instead just directly make requests against the document.
-    const fluidDocument = await loader.resolve({ url });
-
-    // The attach helper method performs the actual attachment of the above platform to the fluid object identified
-    // by the URL in the browser. Once the attach is complete the fluid object will render to the provided div.
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    attach(loader, fluidDocument, url, document.getElementById("content") as HTMLDivElement);
-
-    // This step is used when creating a new document. In the case that your host is only loading existing documents
-    // then this is not necessary. But should you wish to create new ones this step goes and proposes the passed in
-    // package name on the code quorum. We only perform this check for new documents.
-    if (!fluidDocument.existing) {
+    let container;
+    if (createNew) {
+        // This flow is used to create a new container and then attach it to storage.
         const parsedPackage = extractPackageIdentifierDetails(code);
         const details: IFluidCodeDetails = {
             config: {
@@ -98,16 +87,27 @@ export async function start(url: string, code: string): Promise<void> {
             },
             package: code,
         };
-
-        await initializeChaincode(fluidDocument, details)
-            .catch((error) => console.error("chaincode error", error));
+        container = await loader.createDetachedContainer(details);
+        await container.attach(insecureResolver.createCreateNewRequest("example"));
+    } else {
+        // This flow is used to get the existing container.
+        container = await loader.resolve({ url });
     }
+
+    // The getFluidObjectAndRender helper method performs the rendering of the data store identified
+    // by the URL in the browser.
+    await getFluidObjectAndRender(loader, container, url, document.getElementById("content") as HTMLDivElement);
 }
 
 // Load the initial page based on the URL. If no document ID is specified default to one named example.
 if (document.location.pathname === "/") {
-    window.location.href = `/example?${defaultPackage}`;
+    window.location.href = `/example?${defaultPackage}#CreateNew`;
 } else {
+    let createNew = false;
+    if (window.location.hash === "#CreateNew") {
+        createNew = true;
+        window.location.hash = "";
+    }
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    start(document.location.href, parsePackageName(document.location, defaultPackage));
+    start(document.location.href, parsePackageName(document.location, defaultPackage), createNew);
 }

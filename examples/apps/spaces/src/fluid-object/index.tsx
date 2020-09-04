@@ -9,6 +9,7 @@ import { Layout } from "react-grid-layout";
 import {
     DataObject,
     DataObjectFactory,
+    getFluidObjectFactoryFromInstance,
 } from "@fluidframework/aqueduct";
 import {
     IFluidHandle,
@@ -126,8 +127,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
     }
 
     protected async initializingFirstTime() {
-        const storageComponent =
-            await this.createFluidObject<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName);
+        const storageComponent = await SpacesStorage.getFactory().createChildInstance(this.context);
         this.root.set(SpacesStorageKey, storageComponent.handle);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
@@ -184,8 +184,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
             throw new Error("Unknown item, can't add");
         }
 
-        // Don't really want to hand out createFluidObject here, see spacesItemMap.ts for more info.
-        const serializableObject = await itemMapEntry.create(this.createFluidObject.bind(this));
+        const serializableObject = await itemMapEntry.create(getFluidObjectFactoryFromInstance(this.context));
         return this.storageComponent.addItem(
             {
                 serializableObject,

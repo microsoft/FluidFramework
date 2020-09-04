@@ -7,16 +7,13 @@ parameters:
 - name: buildNumberInPatch
   type: string
   default:
-- name: release
-  type: string
-  default:
 
 # Set version
 steps:
 - task: Bash@3
   displayName: Set Package Version
   env:
-    VERSION_RELEASE: ${{ parameters.release }}
+    VERSION_RELEASE: $(release)
     VERSION_BUILDNUMBER: $(Build.BuildNumber)
     VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
   inputs:

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import fs from "fs";
 import nodePath from "path";
 import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";

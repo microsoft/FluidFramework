@@ -4,9 +4,8 @@
  */
 
 import { getPersonalAccessTokenHandler, WebApi } from 'azure-devops-node-api';
-import { Constants } from './Constants';
 
-export function getAzureDevopsApi(accessToken: string) {
+export function getAzureDevopsApi(accessToken: string, orgUrl: string) {
   const authHandler = getPersonalAccessTokenHandler(accessToken);
-  return new WebApi(Constants.orgUrl, authHandler);
+  return new WebApi(orgUrl, authHandler);
 }
