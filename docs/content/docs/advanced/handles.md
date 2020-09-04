@@ -72,7 +72,7 @@ The following examples outline the uses of handles to retrieve the underlying ob
 
 #### Storing DDSes on the DataObject `root`
 
-When developing a Fluid object from a `DataObject` you will often find yourself wanting to create and store new DDSes. We
+When developing a Fluid object from a `DataObject` you will often find yourself wanting to create and store new DDSes. In the scenario below we
 want to ensure that the `SharedMap` is only created once but all users of this object have access to it. We can do that by
 creating the map.
 
