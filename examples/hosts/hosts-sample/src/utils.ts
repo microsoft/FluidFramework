@@ -5,39 +5,14 @@
 
 import { parse } from "querystring";
 import { IFluidObject } from "@fluidframework/core-interfaces";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 /**
- * The initializeChaincode method takes in a document and a desired npm package and establishes a code quorum
- * on this package.
+ * getFluidObjectAndRender is used to make a request against the loader to load a Fluid data store and then render
+ * it once found.
  */
-export async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails): Promise<void> {
-    if (pkg === undefined) {
-        return;
-    }
-
-    const quorum = document.getQuorum();
-
-    // Wait for connection so that proposals can be sent
-    if (!document.connected) {
-        await new Promise<void>((resolve) => document.on("connected", () => resolve()));
-    }
-
-    // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code")) {
-        await quorum.propose("code", pkg);
-    }
-
-    console.log(`Code is ${quorum.get("code")}`);
-}
-
-/**
- * attachCore is used to make a request against the loader to load a prague component. And then attaches to it once
- * found.
- */
-async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
+async function getFluidObjectAndRenderCore(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
 
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
@@ -57,12 +32,12 @@ async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
  * on the document it listens for the "contextChanged" event which fires when a new code value is quorumed on. In this
  * case it simply runs the attach method again.
  */
-export async function attach(loader: Loader, container: Container, url: string, div: HTMLDivElement) {
+export async function getFluidObjectAndRender(loader: Loader, container: Container, url: string, div: HTMLDivElement) {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    attachCore(loader, url, div);
+    getFluidObjectAndRenderCore(loader, url, div);
     container.on("contextChanged", () => {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        attachCore(loader, url, div);
+        getFluidObjectAndRenderCore(loader, url, div);
     });
 }
 

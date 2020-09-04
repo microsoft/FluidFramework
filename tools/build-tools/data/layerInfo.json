@@ -206,7 +206,6 @@
             "Test": {
                 "dev": true,
                 "packages": [
-                    "@fluidframework/local-web-host",
                     "@fluidframework/local-driver",
                     "@fluidframework/test-runtime-utils",
                     "@fluidframework/webpack-fluid-loader"
