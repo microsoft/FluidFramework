@@ -18,8 +18,9 @@ a DDS, into another DDS. This doc covers how to consume and use Fluid handles.
         a DDS.
      2. Frequently the same collaborative object (not merely a copy) has to be available in different DDSes. The only way to make this possible is to store _references_ (which is what a handle is) to the collaborative objects in the DDSes.
 
-- Handles encapsulate where the underlying object lives and how to retrieve it. This reduces the complexity from the caller
-  and abstracts away the need for the caller to know where the underlying object lives.
+- Handles encapsulate where the underlying object instance exists within the Fluid runtime and how to retrieve it. 
+  This reduces the complexity from the caller by abstracting away the need to know how to make a `request` to the 
+  Fluid runtime to retrieve the object.
 
 - Handles enable the underlying Fluid runtime to build a dependency hierarchy. This will enable us to add garbage collection to the runtime in a future version.
 
