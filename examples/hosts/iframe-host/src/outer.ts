@@ -57,13 +57,13 @@ export async function loadFrame(iframeId: string, logId: string) {
     log(proxyContainer, "Container", "error", "connected", "disconnected");
 }
 
-async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    const component = await baseHost.requestFluidObject(url);
-    if (component === undefined) {
+async function getFluidObjectAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
+    const fluidObject = await baseHost.requestFluidObject(url);
+    if (fluidObject === undefined) {
         return;
     }
-    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
-    const view = new HTMLViewAdapter(component);
+    // Render the Fluid object with an HTMLViewAdapter to abstract the UI framework used by the Fluid object
+    const view = new HTMLViewAdapter(fluidObject);
     view.render(div, { display: "block" });
 }
 
@@ -94,7 +94,7 @@ export async function loadDiv(divId: string) {
 
     // Handle the code upgrade scenario (which fires contextChanged)
     container.on("contextChanged", (value) => {
-        getComponentAndRender(baseHost, url, div).catch(() => { });
+        getFluidObjectAndRender(baseHost, url, div).catch(() => { });
     });
 }
 

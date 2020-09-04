@@ -239,7 +239,7 @@ if (response.status !== 200) {
 ```
 
 A mime type is also provided with the request to distinguish the type of object.  The most common thing you'll receive
-is a Fluid object. Fluid objects implement the attach interface which allow them to participate in the web component
+is a Fluid object. Fluid objects implement the attach interface which allow them to participate in the web
 model. But a document could also return different mime types like static images, videos, etc...
 
 The host can then switch on the mime type and act accordingly. In the case of the Fluid object, we check if is a viewable
