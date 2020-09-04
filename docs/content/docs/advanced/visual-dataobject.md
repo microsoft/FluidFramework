@@ -48,7 +48,7 @@ removed.
   reference.
 - `render` is a function that takes in the parent HTML document element and allows children to inject their views into
   it. The `elm` parameter passed in here can be modified and returned. If you are using React as your view framework,
-  this is where you would pass the `elm` to the `ReactDOM.render` function to start rendering React components
+  this is where you would pass the `elm` to the `ReactDOM.render` function to start rendering React components.
 
 ```typescript
 public render(elm: HTMLElement) {

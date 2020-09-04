@@ -20,7 +20,7 @@ graph LR
   A --> C1([DataStore_1])
   A --> C2([DataStore_2])
   A --> CH([.chunks])
-  DS1 --> .DS([.component])
+  DS1 --> .DS([.fluid-object])
   DS1 --> D1([DDS_1])
   DS1 --> D2([DDS_2])
   D1 --> .D([.attributes])
