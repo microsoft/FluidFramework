@@ -132,7 +132,7 @@ export class ADOSizeComparator {
 
       // Successful baseline build does not have the needed build artifacts
       if (baselineZip === undefined) {
-        baselineCommit = this.getFallbackCommit ? this.getFallbackCommit(baselineCommit).next().value : undefined;
+        baselineCommit = this.getFallbackCommit?.(baselineCommit).next().value;
         console.log(`Trying backup baseline commit ${baselineCommit}`);
         continue;
       }
