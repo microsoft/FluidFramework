@@ -27,7 +27,7 @@ a DDS, into another DDS. This doc covers how to consume and use Fluid handles.
 ### Basic Scenario
 
 Given a SharedMap DDS `myMap`, and a SharedString DDS `myText`, we want to store `myText` as a value in `myMap`. Because
-we now know we can't directly store DDS objects in other DDSes, we need to store a handle to `myText` then use that handle
+we now know we can't directly store one DDS object in other DDS, we need to store a handle to `myText` then use that handle
 to retrieve the `myText` SharedString.
 
 In practice this looks like the following. Note that you don't have to construct the handle. The `create` method of the DDS does that for you and assigns it to the `handle` property of the DDS.
