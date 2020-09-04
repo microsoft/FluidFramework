@@ -25,7 +25,7 @@ shows how simple experiences become compelling when you make them collaborative.
 maps (Shared Maps) to update the state of sticky notes as well as keep track of who added which ideas and who
 voted for those ideas.
 
-Try out Brainstorm in our [Playground](/playground/?path=/docs/react-demos-brainstorm--demo).
+Try out Brainstorm in the [Playground](/playground/?path=/docs/react-demos-brainstorm--demo).
 
 ## Sudoku
 
