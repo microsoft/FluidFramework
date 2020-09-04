@@ -11,7 +11,7 @@ permalinks:
 
 params:
   appInsightKey: "8baf6e9c-253e-4207-82e5-94778984c28e"
-  customCSS: ["css/fluid.css"]
+  customCSS: ["css/fluid.css", "css/tango.css"]
   dateform: "Jan 2, 2006"
   dateformNum: "2006-01-02"
   dateformNumTime: "2006-01-02 15:04 -0700"
@@ -76,8 +76,7 @@ markup:
     # if you need to turn on line nos, use the highlight shortcode
     lineNos: false
     lineNumbersInTable: false
-    noClasses: true
-    style: "tango"
+    noClasses: false
     tabWidth: 2
 
   tableOfContents:
