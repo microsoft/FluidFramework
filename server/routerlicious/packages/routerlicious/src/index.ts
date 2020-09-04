@@ -14,5 +14,6 @@ export * as alfredApi from "./alfred/routes/api";
 // Riddler
 export { RiddlerResources, RiddlerResourcesFactory, RiddlerRunnerFactory } from "./riddler/runnerFactory";
 export { RiddlerRunner } from "./riddler/runner";
+export { ITenantDocument, TenantManager } from "./riddler/tenantManager";
 export * as riddlerApp from "./riddler/app";
 export * as riddlerApi from "./riddler/api";
