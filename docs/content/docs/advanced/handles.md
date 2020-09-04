@@ -16,8 +16,7 @@ a DDS, into another DDS. This doc covers how to consume and use Fluid handles.
   reasons for this:
      1. Content stored in a DDS needs to be serializable. Complex objects and classes should never be directly stored in
         a DDS.
-     2. Handles are references so if a handle is stored in multiple DDSes they will all reference the same underlying
-        collaborative object.
+     2. Frequently the same collaborative object (not merely a copy) has to be available in different DDSes. The only way to make this possible is to store _references_ (which is what a handle is) to the collaborative objects in the DDSes.
 
 - Handles encapsulate where the underlying object lives and how to retrieve it. This reduces the complexity from the caller
   and abstracts away the need for the caller to know where the underlying object lives.
