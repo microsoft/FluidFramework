@@ -3,17 +3,30 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-internal-modules */
+
+import * as alfredUtils from "./alfred/utils";
+import * as alfredApp from "./alfred/app";
+import * as alfredRoutes from "./alfred/routes";
+import * as alfredApi from "./alfred/routes/api";
+import * as riddlerApp from "./riddler/app";
+import * as riddlerApi from "./riddler/api";
+
 // Alfred
-export { AlfredResources, AlfredResourcesFactory, AlfredRunnerFactory } from "./alfred/runnerFactory";
-export { AlfredRunner } from "./alfred/runner";
-export * as alfredUtils from "./alfred/utils";
-export * as alfredApp from "./alfred/app";
-export * as alfredRoutes from "./alfred/routes";
-export * as alfredApi from "./alfred/routes/api";
+export * from "./alfred/runnerFactory";
+export * from "./alfred/runner";
+export const alfred = {
+    app: alfredApp,
+    routes: alfredRoutes,
+    api: alfredApi,
+    utils: alfredUtils,
+};
 
 // Riddler
-export { RiddlerResources, RiddlerResourcesFactory, RiddlerRunnerFactory } from "./riddler/runnerFactory";
-export { RiddlerRunner } from "./riddler/runner";
-export { ITenantDocument, TenantManager } from "./riddler/tenantManager";
-export * as riddlerApp from "./riddler/app";
-export * as riddlerApi from "./riddler/api";
+export * from "./riddler/runnerFactory";
+export * from "./riddler/runner";
+export * from "./riddler/tenantManager";
+export const riddler = {
+    app: riddlerApp,
+    api: riddlerApi,
+};
