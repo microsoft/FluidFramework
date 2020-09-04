@@ -1,21 +1,26 @@
 ---
 title: Feature detection via IFluidObject
 menuPosition: 3
+draft: true
 ---
 
 In the previous section we introduced the DataObject, a convenient way to combine distributed data structures and our own
 code (business logic) into a modular, reusable piece. This in turn enables us to modularize pieces of our application –-
 data included.
 
-Fluid can be a very dynamic system. There are scenarios in which your code will call certain members of an object, _if and only if_, the object has certain capabilities; that is, it implements certain interfaces. So, your code needs a way of detecting whether the object implements specific interfaces. To make this easier, Fluid has a feature detection mechanism, which centers around a special interface called `IFluidObject`. Feature detection is a technique by which one Fluid object can dynamically determine the capabilities of another Fluid object.
+Fluid can be a very dynamic system. There are scenarios in which your code will call certain members of an object, _if
+and only if_, the object has certain capabilities; that is, it implements certain interfaces. So, your code needs a way
+of detecting whether the object implements specific interfaces. To make this easier, Fluid has a feature detection
+mechanism, which centers around a special interface called `IFluidObject`. Feature detection is a technique by which one
+Fluid object can dynamically determine the capabilities of another Fluid object.
 
 In order to detect features supported by an unknown object, you cast it to an `IFluidObject` and then query the object
 for a specific interface that it may support. The interfaces exposed via `IFluidObject` include many core Fluid
-interfaces, such as `IFluidHandle` or `IFluidLoadable`, and this list can be augmented using [TypeScript's interface merging
-capabilities](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#merging-interfaces). This discovery system (see example below) enables
-any Fluid object to record what interfaces it implements and make it possible for other Fluid objects to discover them. The specifics of how these
-interfaces are declared is not relevant until you want to define your own interfaces, which we'll cover in a later
-section.
+interfaces, such as `IFluidHandle` or `IFluidLoadable`, and this list can be augmented using [TypeScript's interface
+merging capabilities](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#merging-interfaces). This
+discovery system (see example below) enables any Fluid object to record what interfaces it implements and make it
+possible for other Fluid objects to discover them. The specifics of how these interfaces are declared is not relevant
+until you want to define your own interfaces, which we'll cover in a later section.
 
 The following is an example of feature detection using `IFluidObject`:
 

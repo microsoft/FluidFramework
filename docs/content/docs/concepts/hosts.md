@@ -109,6 +109,3 @@ object).
 
 The host is responsible for checking that this response is valid. Did the loader return a 200? Is the mimeType correct?
 As the Fluid Framework expands, we intend to make further use of these responses.
-
-The host can then use [feature detection via IFluidObject](./feature-detection-iprovide.md) to query for features and
-then integrate the container into the application.

@@ -1,7 +1,6 @@
 ---
 title: Handles
 menuPosition: 1
-draft: false
 ---
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
@@ -35,7 +34,7 @@ system and anyone who has the handle can easily get the underlying object by sim
 
   For example, the handle for a `PureDataObject` simply returns the underlying object. But when this handle is stored in
   a DDS so that it is serialized and then de-serialized in a remote client, it is represented by a _remote handle_.
-  The remote handle only has the absolute url to the object, requests the object from the root, and then returns it.
+  The remote handle only has the absolute URL to the object, requests the object from the root, and then returns it.
 
 ### How to create a handle
 

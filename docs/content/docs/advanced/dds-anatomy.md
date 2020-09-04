@@ -1,8 +1,19 @@
 ---
 title: Anatomy of a distributed data structure
+draft: true
 ---
 
-Although each Distributed Data Structure (DDS) has its own unique functionality, they all share some broad traits.  Understanding these traits is the first step to understanding how DDSes work.  They are:
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
+{{% callout warning "Draft!" %}}
+
+This documentation is a **Draft**. It is technically accurate but has not yet been reviewed for consistency and clarity.
+
+{{% /callout %}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+Although each Distributed Data Structure (DDS) has its own unique functionality, they all share some broad traits.
+Understanding these traits is the first step to understanding how DDSes work.  They are:
 
 1. Local representation
 1. Op vocabulary

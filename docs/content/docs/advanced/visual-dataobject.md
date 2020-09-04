@@ -4,10 +4,19 @@ menuPosition: 3
 draft: true
 ---
 
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
+{{% callout warning "Draft!" %}}
+
+This documentation is a **Draft**. It is technically accurate but has not yet been reviewed for consistency and clarity.
+
+{{% /callout %}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Introducing IFluidHtmlView
 
 All Fluid objects expose their capabilities using the `IFluidX` interface pattern. Please see [Feature detection
-and delegation](../concepts/feature-detection-iprovide.md) for more information on this.
+and delegation](./feature-detection-iprovide.md) for more information on this.
 
 As such, any Fluid object that provides a view -- that is, a Fluid object that is presented to the user visually -- exposes
 this capability by implementing the `IFluidHTMLView` interface provided by the Fluid Framework. Let's take a look at

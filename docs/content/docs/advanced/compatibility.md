@@ -3,7 +3,14 @@ title: compatibility
 draft: true
 ---
 
-{{% include file="_includes/draft-doc.md" markdown="true" %}}
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
+{{% callout warning "Draft!" %}}
+
+This documentation is a **Draft**. It is technically accurate but has not yet been reviewed for consistency and clarity.
+
+{{% /callout %}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 Because the Fluid Framework is a platform, maintaining predictable backwards/forwards compatibility is an important part
 of development and documentation.  Any breaking changes should be placed in the [BREAKING.md](./breaking-changes.md)

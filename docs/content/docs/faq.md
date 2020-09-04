@@ -2,12 +2,13 @@
 title: Frequently Asked Questions
 ---
 
-The following are short, sometimes superficial answers to some of the most commonly asked questions about Fluid Framework.
+The following are short, sometimes superficial answers to some of the most commonly asked questions about Fluid
+Framework.
 
 ## What is Fluid Framework?
 
 Fluid Framework is a collection of client libraries for building applications with distributed state. These libraries
-allow multiple clients to create and operate on shared, synchronized Distributed Data Structures (DDSes) using coding
+allow multiple clients to create and operate on shared, synchronized distributed data structures (DDSes) using coding
 patterns similar to those used to work with local data. Fluid Framework manages connections to services and keeps all
 clients in sync so that developers can focus on the client experience.
 
@@ -17,7 +18,7 @@ Fluid Framework was designed with performance and ease of development as top pri
 
 ### What is a DDS?
 
-DDS is short for Distributed Data Structure. DDSes are the foundation of the Fluid Framework. They are designed such
+DDS is short for _distributed data structure_. DDSes are the foundation of the Fluid Framework. They are designed such
 that the Fluid Runtime is able to keep them in sync across clients while each client operates on the DDSes in largely
 the same way they would operate on local data. The data source for a Fluid solution can represent numerous DDSes.
 
@@ -53,8 +54,8 @@ responsibility is sequencing all the incoming Fluid operations and then broadcas
 the ops are ordered, and because each client is running the same code, the DDSes in each client eventually end up in an
 identical state.
 
-Note, there isn't a centralized Fluid service for all Fluid experiences. But for each Fluid experience, there is only one
-Fluid service.
+Note, there isn't a centralized Fluid service for all Fluid experiences. But for each Fluid experience, there is only
+one Fluid service.
 
 Fluid clients connect to the Fluid service using the WebSocket protocol. However, the Fluid runtime manages
 all of the connections so that Fluid client developers can focus on local experiences.
@@ -178,14 +179,14 @@ has no plans to support that scenario directly.
 
 ### Is the Fluid reference server implementation production ready?
 
-No. Routerlicious on it's own is not production ready. Using it would require more thought about storage, scale, security,
-and other typical considerations when building out a service on the internet. It is our expectation that most Fluid developers
-will be able to leverage existing Fluid services that will emerge as we approach version 1.0.
+No. Routerlicious on it's own is not production ready. Using it would require more thought about storage, scale,
+security, and other typical considerations when building out a service on the internet. It is our expectation that most
+Fluid developers will be able to leverage existing Fluid services that will emerge as we approach version 1.0.
 
 ### How are Fluid solutions deployed?
 
-Fluid solutions are, at the end of the day, simple JavaScript. At Microsoft Fluid solutions are deployed to CDNs like any
-other static resource. Because Fluid is very client-centric, deployment is very simple.
+Fluid solutions are, at the end of the day, simple JavaScript. At Microsoft Fluid solutions are deployed to CDNs like
+any other static resource. Because Fluid is very client-centric, deployment is very simple.
 
 ## Conflicts and History
 
@@ -202,8 +203,9 @@ operations and can write client code to reason over state in whatever way best s
 
 ### Can we have history of the changes?
 
-Yes. Fluid inherently keeps all changes and these are accessible through the framework. The only caveat is that for performance
-and storage efficiency, operations need to be summarized from time to time. This may cause a loss of granularity.
+Yes. Fluid inherently keeps all changes and these are accessible through the framework. The only caveat is that for
+performance and storage efficiency, operations need to be summarized from time to time. This may cause a loss of
+granularity.
 
 ### Is there any way to know which user caused each change?
 
@@ -229,10 +231,10 @@ Not at all. Fluid Framework is unopinionated about UX.
 
 ### Can I use ASP.NET, ASP.NET Core, and C\#
 
-Fluid Framework is written in TypeScript but we don't want it to be limited to the web. You can use
-Fluid Framework with non-web technologies by leveraging a JavaScript runtime to host the Fluid code.
-Ultimately it is critical that the same code be running in all clients to ensure eventual consistency of
-data so it is impractical to port Fluid to other coding frameworks.
+Fluid Framework is written in TypeScript but we don't want it to be limited to the web. You can use Fluid Framework with
+non-web technologies by leveraging a JavaScript runtime to host the Fluid code. Ultimately it is critical that the same
+code be running in all clients to ensure eventual consistency of data so it is impractical to port Fluid to other coding
+frameworks.
 
 This also applies to Blazor, Xamarin, MAUI, and other mobile frameworks.
 
