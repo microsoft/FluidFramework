@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -18,7 +18,6 @@ import {
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
@@ -28,6 +27,7 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { SharedCounter } from "@fluidframework/counter";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 describe(`Dehydrate Rehydrate Container Test`, () => {
     const documentId = "deReHydrateContainerTest";
@@ -88,13 +88,12 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     const createPeerDataStore = async (
         containerRuntime: IContainerRuntimeBase,
     ) => {
-        const peerDataStoreRuntimeChannel = await (containerRuntime as IContainerRuntime)
-            .createDataStoreWithRealizationFn(["default"]);
-        const peerDataStore =
-            (await peerDataStoreRuntimeChannel.request({ url: "/" })).value as ITestFluidObject;
+        const peerDataStore = await requestFluidObject<ITestFluidObject>(
+            await containerRuntime.createDataStore(["default"]),
+            "/");
         return {
             peerDataStore,
-            peerDataStoreRuntimeChannel,
+            peerDataStoreRuntimeChannel: peerDataStore.channel,
         };
     };
 

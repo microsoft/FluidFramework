@@ -1,59 +1,114 @@
-## Handles
+---
+title: Handles
+menuPosition: 1
+draft: false
+---
 
-A [Fluid Handle](../../packages/loader/core-interfaces/src/handles.ts) is a handle to a _Fluid object_. It is
-used to represent the object and has a function `get()` that returns the underlying object. Handles move the ownership
-of retrieving a Fluid object from the user of the object to the object itself. The handle can be passed around in the
-system and anyone who has the handle can easily get the underlying object by simply calling `get()`.
+A Fluid handle is an object that holds a reference to a collaborative object, such as a [`DataObject`](/apis/aqueduct/dataobject/)
+or a Distributed Data Structure (DDS).
 
-### Why use Fluid Handles?
+The primary use case for handles in the Fluid Framework is for storing a [`DataObject`](/apis/aqueduct/dataobject/), or
+a DDS, into another DDS. This doc covers how to consume and use Fluid handles.
 
-- You should **always** use handles to represent Fluid objects and you should store the handles in a distributed data
-  structure (DDS). This tells the runtime and the storage service that the object is referenced. The runtime / storage
-  can then manage the lifetime of the object and perform important operations such as garbage collection. Objects that
-  are not referenced by a handle are subject to garbage collection.
+### Why use Fluid handles?
 
-  The exception to this is when the object has to be handed off to an external entity. For example, when copy/pasting
-  an object, the URL of the object should be handed off to the destination so that it can request the object from the
-  source Loader or the Container. In this case, it is the responsiblity of the code managing the copy/paste to ensure
-  the object is not garbage collected by storing its handle somewhere.
+- Collaborative objects, such as Fluid objects or DDSes, cannot be stored directly in another DDS. There are two primary
+  reasons for this:
+     1. Content stored in a DDS needs to be serializable. Complex objects and classes should never be directly stored in
+        a DDS.
+     2. Frequently the same collaborative object (not merely a copy) has to be available in different DDSes. The only way to make this possible is to store _references_ (which is what a handle is) to the collaborative objects in the DDSes.
 
-- With handles, the user doesn't have to worry about how to get the underlying object since that itself can differ in
-  different scenarios. It is the responsibility of the handle to retrieve the object and return it.
+- Handles encapsulate where the underlying object instance exists within the Fluid runtime and how to retrieve it. 
+  This reduces the complexity from the caller by abstracting away the need to know how to make a `request` to the 
+  Fluid runtime to retrieve the object.
 
-  For example, the handle for a `PureDataObject` simply returns the underlying object. But when this handle is stored in
-  a DDS so that it is serialized and then de-serialized in a remote client, it is represented by a [remote handle][].
-  The remote handle only has the absolute url to the object, requests the object from the root, and then returns it.
+- Handles enable the underlying Fluid runtime to build a dependency hierarchy. This will enable us to add garbage collection to the runtime in a future version.
 
-### How to create a handle
+### Basic Scenario
 
-A handle's primary job is to be able to return the Fluid object it is representing when `get` is called. So, it needs to
-have access to the object either by directly storing it or by having a mechanism to retrieve it when asked. The creation
-depends on the uses and the implementation.
+Given a SharedMap DDS `myMap`, and a SharedString DDS `myText`, we want to store `myText` as a value in `myMap`. Because
+we now know we can't directly store one DDS object in another DDS, we need to store a handle to `myText` then use that handle
+to retrieve the `myText` SharedString.
 
-For example, it can be created with the absolute URL of the object and a routeContext which knows how to get the
-object via the URL. When `get()` is called, it can request the object from the routeContext by providing the URL. This
-is how the [remote handle][] retrieves the underlying object.
-
-### Scenarios for using handles
-
- The following examples outline the uses of handles to retrieve the underlying object in different scenarios.
-
-#### Basic scenario
-
-One of the basic uses of a Fluid handle is when a client creates a Fluid object and wants remote clients to be able
-to retrieve and load it. It can store the handle to the object in a DDS and the remote client can retrieve the handle
-and `get` the object.
-
-The following code snippet from the
-[Pond](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/pond) DataObject demonstrates this.
-It creates a Clicker object (which is a DataObject) during first time initialization and stores its handle in the root
-SharedDirectory. Any remote client can retrieve the handle from the root and get the Clicker by calling `get()` on the
-handle:
+In practice this looks like the following. Note that you don't have to construct the handle. The `create` method of the DDS does that for you and assigns it to the `handle` property of the DDS.
 
 ```typescript
+const myMap = SharedMap.create(this.runtime);
+const myText = SharedString.create(this.runtime);
+myMap.set("my-text", myText.handle);
+```
+
+The handle object itself has an async function `get()` that returns the underlying object. In this case the `myText`
+SharedString instance.
+
+Retrieving the object from the handle looks like this:
+
+```typescript
+const textHandle = myMap.get("my-text");
+const text = await textHandle.get();
+```
+
+Because we store handles to our collaborative objects, and not the objects themselves, the handle can be passed around in
+the system and anyone who has it can easily get the underlying object by simply calling `get()`. This means that if we have
+a second SharedMap called `myMap2` it can also store the same `myText` SharedString instance.
+
+```typescript
+const myMap = SharedMap.create(this.runtime);
+const myMap2 = SharedMap.create(this.runtime);
+const myText = SharedString.create(this.runtime);
+
+myMap.set("my-text", myText.handle);
+myMap2.set("my-text", myText.handle);
+
+const text = await myMap.get("my-text").get();
+const text2 = await myMap2.get("my-text").get();
+
+console.log(text === text2) // true
+```
+
+### Scenarios in Practice
+
+The following examples outline the uses of handles to retrieve the underlying object in different scenarios.
+
+#### Storing DDSes on the DataObject `root`
+
+When developing a Fluid object from a `DataObject` you will often find yourself wanting to create and store new DDSes. In the scenario below we
+want to create a new `SharedMap` that all users have access to, and we also want to ensure it is only created once. We can do that by
+creating a new SharedMap in our `initializingFirstTime` lifecycle method and storing it on our `root` SharedDirectory. The `initializingFirstTime` function in the `DataObject` only runs the first time our `MyFluidObject` is ever created. The `hasInitialized` lifecycle method runs every time `MyFluidObject` instance is initialized and we can use this to get and store our SharedMap locally in the class.
+
+```typescript
+export class MyFluidObject extends DataObject {
+  public myMap;
+
+  protected async initializingFirstTime() {
+      const map = await SharedMap.create(this.runtime)
+      this.root.set("map-id", map.handle);
+  }
+
+  protected async hasInitialized() {
+      this.myMap = await this.root.get<IFluidHandle<SharedMap>>("map-id").get();
+  }
+}
+```
+
+#### Storing other DataObjects
+
+One of the advanced uses of a Fluid handle is creating and storing other DataObjects within the DataObject `root`. We can
+do this the same as a DDS by storing the handle to the Fluid object then later using that to retrieve the handle and
+`get` the object.
+
+The following code snippet from the
+[Pond](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/pond/src/index.tsx) DataObject
+demonstrates this. It creates a Clicker object (which is a DataObject) during first time initialization and stores its
+handle in the root SharedDirectory. By following the convention of using the Fluid object's name as the key for the handle, you enable any remote client to retrieve the handle from the root and get the Clicker by
+calling `get()` on the handle:
+
+```typescript
+// ...
+
 protected async initializingFirstTime() {
     // The first client creates `Clicker` and stores the handle in the `root` DDS.
-    const clickerObject = await Clicker.getFactory().create(this.context);
+    const clickerObject = await Clicker.getFactory().createChildInstance(this.context);
     this.root.set(Clicker.Name, clickerObject.handle);
 }
 
@@ -62,22 +117,6 @@ protected async hasInitialized() {
     const clicker = await this.root.get<IFluidHandle>(Clicker.Name).get();
     this.clickerView = new HTMLViewAdapter(clicker);
 }
+
+// ...
 ```
-
-<!-- TODO: link to the reference docs below -->
-For more information about root.get and HTMLViewAdapter, see SharedDirectory.get and HTMLViewAdapter]
-
-#### A more complex scenario
-
-Consider a scenario where there are multiple Containers and a Fluid object wants to load another Fluid object.
-
-If the request/response model is used to achieve this, to request the object using its URL, the object loading it
-has to know which Container has the object so that it doesn't end up requesting it from the wrong one. It can become
-complicated quickly as the number of DataObjects and Containers grow.
-
-This is where handles become really powerful and make this scenario much simpler. You can pass around the handle to
-the DataObject across Containers and to load it from anywhere, you just have to call `get()` on it.
-
-
-[remote handle]:
-https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/runtime-utils/src/remoteComponentHandle.ts

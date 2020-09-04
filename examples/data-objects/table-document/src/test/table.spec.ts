@@ -3,15 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
+import { LocalResolver } from "@fluidframework/local-driver";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, OpProcessingController, initializeLocalContainer } from "@fluidframework/test-utils";
+import {
+    createAndAttachContainer,
+    createLocalLoader,
+    OpProcessingController,
+} from "@fluidframework/test-utils";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
 import { TableDocumentItem } from "../table";
 
 describe("TableDocument", () => {
-    const id = "fluid-test://localhost/tableTest";
+    const documentId = "fluid-test://localhost/tableTest";
     const codeDetails = {
         package: "tableTestPkg",
         config: {},
@@ -20,20 +26,19 @@ describe("TableDocument", () => {
     let opProcessingController: OpProcessingController;
 
     function makeId(type: string) {
-        const newId =  Math.random().toString(36).substr(2);
+        const newId = Math.random().toString(36).substr(2);
         return newId;
     }
 
     beforeEach(async () => {
         const deltaConnectionServer = LocalDeltaConnectionServer.create();
-        const loader = createLocalLoader([[codeDetails, TableDocument.getFactory()]], deltaConnectionServer);
-        const container = await initializeLocalContainer(id, loader, codeDetails);
-
-        const response = await container.request({ url: "default" });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Default component not found`);
-        }
-        tableDocument = response.value;
+        const urlResolver = new LocalResolver();
+        const loader = createLocalLoader(
+            [[codeDetails, TableDocument.getFactory()]],
+            deltaConnectionServer,
+            urlResolver);
+        const container = await createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+        tableDocument = await requestFluidObject<TableDocument>(container, "default");
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
         opProcessingController.addDeltaManagers(container.deltaManager);
@@ -114,7 +119,7 @@ describe("TableDocument", () => {
             tableDocument.insertRows(0, 2);
             tableDocument.insertCols(0, 1);
             tableDocument.annotateRows(0, 1, { id: "row0" });
-            assert.deepEqual(tableDocument.getRowProperties(0), { id: "row0" });
+            assert.deepEqual({ ...tableDocument.getRowProperties(0) }, { id: "row0" });
             assert.strictEqual(tableDocument.getRowProperties(1), undefined);
         });
 
@@ -122,7 +127,7 @@ describe("TableDocument", () => {
             tableDocument.insertRows(0, 1);
             tableDocument.insertCols(0, 2);
             tableDocument.annotateCols(0, 1, { id: "col0" });
-            assert.deepEqual(tableDocument.getColProperties(0), { id: "col0" });
+            assert.deepEqual({ ...tableDocument.getColProperties(0) }, { id: "col0" });
             assert.strictEqual(tableDocument.getColProperties(1), undefined);
         });
     });
@@ -165,11 +170,11 @@ describe("TableDocument", () => {
 
             const slice = await tableDocument.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
             slice.annotateRows(0, 1, { id: "row0" });
-            assert.deepEqual(slice.getRowProperties(0), { id: "row0" });
+            assert.deepEqual({ ...slice.getRowProperties(0) }, { id: "row0" });
             assert.strictEqual(slice.getRowProperties(1), undefined);
 
             slice.annotateRows(2, 3, { id: "row1" });
-            assert.deepEqual(slice.getRowProperties(2), { id: "row1" });
+            assert.deepEqual({ ...slice.getRowProperties(2) }, { id: "row1" });
         });
 
         it("Insert rows and columns work when proxied through table slice", async () => {

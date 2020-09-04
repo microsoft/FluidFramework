@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     acquireAndComplete,
@@ -15,13 +17,13 @@ import {
     IConsensusOrderedCollection,
     waitAcquireAndComplete,
 } from "@fluidframework/ordered-collection";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    createAndAttachContainer,
     createLocalLoader,
     OpProcessingController,
     ITestFluidObject,
-    initializeLocalContainer,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
@@ -33,14 +35,20 @@ function generate(
     name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
     input: any[], output: any[]) {
     describe(name, () => {
-        const id = "fluid-test://localhost/consensusOrderedCollectionTest";
+        const documentId = "consensusOrderedCollectionTest";
+        const documentLoadUrl = `fluid-test://localhost/${documentId}`;
         const mapId = "mapKey";
         const codeDetails: IFluidCodeDetails = {
             package: "consensusOrderedCollectionTestPackage",
             config: {},
         };
+        const factory = new TestFluidObjectFactory([
+            [mapId, SharedMap.getFactory()],
+            [undefined, ConsensusQueue.getFactory()],
+        ]);
 
         let deltaConnectionServer: ILocalDeltaConnectionServer;
+        let urlResolver: IUrlResolver;
         let opProcessingController: OpProcessingController;
         let dataStore1: ITestFluidObject;
         let dataStore2: ITestFluidObject;
@@ -48,36 +56,33 @@ function generate(
         let sharedMap2: ISharedMap;
         let sharedMap3: ISharedMap;
 
-        async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidObject> {
-            const response = await container.request({ url: dataStoreId });
-            if (response.status !== 200 || response.mimeType !== "fluid/object") {
-                throw new Error(`DataStore with id: ${dataStoreId} not found`);
-            }
-            return response.value as ITestFluidObject;
+        async function createContainer(): Promise<IContainer> {
+            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+            return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
         }
 
-        async function createContainer(): Promise<Container> {
-            const factory = new TestFluidObjectFactory([
-                [mapId, SharedMap.getFactory()],
-                [undefined, ConsensusQueue.getFactory()],
-            ]);
-            const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-            return initializeLocalContainer(id, loader, codeDetails);
+        async function loadContainer(): Promise<IContainer> {
+            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+            return loader.resolve({ url: documentLoadUrl });
         }
 
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
+            urlResolver = new LocalResolver();
 
+            // Create a Container for the first client.
             const container1 = await createContainer();
-            dataStore1 = await requestFluidObject("default", container1);
+            dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
-            const container2 = await createContainer();
-            dataStore2 = await requestFluidObject("default", container2);
+            // Load the Container that was created by the first client.
+            const container2 = await loadContainer();
+            dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
-            const container3 = await createContainer();
-            const dataStore3 = await requestFluidObject("default", container3);
+            // Load the Container that was created by the first client.
+            const container3 = await loadContainer();
+            const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
             sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 
             opProcessingController = new OpProcessingController(deltaConnectionServer);

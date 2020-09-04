@@ -14,10 +14,9 @@
       .lead,
       .lead p {
         padding: 0;
-        margin: 0;
       }
     }
-    @media (min-width: $screen-md) {
+    @media (min-width: $screen-sm) {
       .row:first-child {
         height: 511px;
       }

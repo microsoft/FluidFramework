@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import merge from "lodash/merge";
 import uuid from "uuid";
@@ -480,10 +480,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 {
                     eventName: "ContainerClose",
                     sequenceNumber: error.sequenceNumber ?? this._deltaManager.lastSequenceNumber,
+                    loading: !this.loaded,
                 },
                 error,
             );
         } else {
+            assert(this.loaded);
             this.logger.sendTelemetryEvent({ eventName: "ContainerClose" });
         }
 
@@ -506,10 +508,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
+        assert(this.loaded);
+
         // If container is already attached or attach is in progress, return.
         if (this._attachState === AttachState.Attached || this.attachInProgress) {
             return;
         }
+
         this.attachInProgress = true;
         try {
             assert.strictEqual(this.deltaManager.inbound.length, 0, "Inbound queue should be empty when attaching");
@@ -672,8 +677,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     protected resumeInternal(args: IConnectionArgs = {}) {
-        assert(this.loaded);
-
         if (this.closed) {
             throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
         }
@@ -995,15 +998,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         await this.loadContext(attributes, maybeSnapshotTree);
 
-        // Internal context is fully loaded at this point
-        this.loaded = true;
-
         // Propagate current connection state through the system.
         this.propagateConnectionState();
 
         if (!pause) {
             this.resume();
         }
+
+        // Internal context is fully loaded at this point
+        this.loaded = true;
 
         return {
             existing: this._existing,
@@ -1048,9 +1051,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // The load context - given we seeded the quorum - will be great
         await this.createDetachedContext(attributes);
 
-        this.loaded = true;
-
         this.propagateConnectionState();
+
+        this.loaded = true;
     }
 
     private async rehydrateDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
@@ -1442,7 +1445,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private propagateConnectionState() {
-        assert(this.loaded);
         const logOpsOnReconnect: boolean =
             this._connectionState === ConnectionState.Connected &&
             !this.firstConnection &&
@@ -1551,7 +1553,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const chaincode = this.pkg !== undefined ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
-        // are set. Global requests will still go to this loader
+        // are set. Global requests will still go directly to the loader
         const loader = new RelativeLoader(this.loader, () => this.originalRequest);
 
         this._context = await ContainerContext.createOrLoad(

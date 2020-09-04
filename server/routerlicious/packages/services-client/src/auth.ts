@@ -7,7 +7,7 @@ import { debug } from "util";
 import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import * as jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
-import { getRandomName } from "./dockerNames";
+import { getRandomName } from "./generateNames";
 
 /**
  * Generates a JWT token to authorize routerlicious

@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import { strict as assert } from "assert";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { TextSegment } from "@fluidframework/merge-tree";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
 import { FlowDocument } from "../src/document";
 import { SegmentSpan } from "../src/document/segmentspan";
 
 describe("SegmentSpan", () => {
-    const id = "fluid-test://localhost/segmentSpanTest";
+    const documentUrl = "fluid-test://localhost/segmentSpanTest";
     const codeDetails = {
         package: "segmentSpanTestPkg",
         config: {},
@@ -21,14 +23,10 @@ describe("SegmentSpan", () => {
 
     before(async () => {
         const deltaConnectionServer = LocalDeltaConnectionServer.create();
-        const loader = createLocalLoader([[codeDetails, FlowDocument.getFactory()]], deltaConnectionServer);
-        const container = await initializeLocalContainer(id, loader, codeDetails);
-
-        const response = await container.request({ url: "default" });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Default component not found`);
-        }
-        doc = response.value;
+        const urlResolver = new LocalResolver();
+        const loader = createLocalLoader([[codeDetails, FlowDocument.getFactory()]], deltaConnectionServer, urlResolver);
+        const container = await createAndAttachContainer(documentUrl, codeDetails, loader, urlResolver);
+        doc = await requestFluidObject<FlowDocument>(container, "default");
     });
 
     function setup(chunks: string[]) {

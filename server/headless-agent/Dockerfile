@@ -39,8 +39,6 @@ USER pptruser
 WORKDIR /home/pptruser
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
-ARG NPM_TOKEN
-COPY --chown=pptruser:pptruser .npmrc .
 COPY --chown=pptruser:pptruser package.json .
 COPY --chown=pptruser:pptruser package-lock.json .
 RUN npm install
@@ -48,8 +46,5 @@ RUN npm install
 # And now copy over our actual code and build
 COPY --chown=pptruser:pptruser . .
 RUN npm run build:full
-
-# Remove the npmrc following the build
-RUN rm -f .npmrc
 
 ENTRYPOINT ["dumb-init", "--", "node", "dist/index.js"]

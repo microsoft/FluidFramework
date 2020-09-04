@@ -22,10 +22,6 @@ parameters:
 - name: taskTest
   type: string
   default: ci:test
-
-- name: taskAuth
-  type: boolean
-  default: true
  
 - name: extraAuth
   type: string
@@ -126,33 +122,11 @@ stages:
                 publish=${{ variables.publish }}
                 release=$(release)"
 
-        - task: Bash@3
-          displayName: Strip MIT License
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
-            script: |
-              sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
-              perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
-              git status
-
         # Install
         - task: UseNode@1
           displayName: Use Node 12.x
           inputs:
             version: 12.x
-        - ${{ if eq(parameters.taskAuth, true) }}:
-          - task: npmAuthenticate@0
-            displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/.npmrc'
-            inputs:
-              workingFile: ${{ parameters.buildDirectory }}/.npmrc
-              customEndpoint: Offnet Packages
-        - ${{ if ne(parameters.extraAuth, '') }}:
-          - task: npmAuthenticate@0
-            displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/${{ parameters.extraAuth }}/.npmrc'
-            inputs:
-              workingFile: ${{ parameters.buildDirectory }}/${{ parameters.extraAuth }}/.npmrc
-              customEndpoint: Offnet Packages
         - task: Npm@1
           displayName: npm ci
           inputs:
@@ -166,7 +140,6 @@ stages:
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-            release: $(release)
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:

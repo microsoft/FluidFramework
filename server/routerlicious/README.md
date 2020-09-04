@@ -1,4 +1,4 @@
-# Routerlicious
+# root
 
 Routerlicious handles the receiving of delta operations and is responsible for the ordering and assignment of a
 sequence number to them. Once assigned it is also responsible for notifying connected clients of a new sequence
@@ -43,7 +43,7 @@ below steps if you'd like to run a local version of the service or need to make 
 
 ### Development
 
-Docker is the preferred method of development.
+Docker is the preferred method of development. Run the following commands from this directory.
 
 To build the service:
 
@@ -110,12 +110,6 @@ attach to the running tests with VS Code or any other node debugger.
 
 If you want to build API documentation locally, see [Building Documentation](https://praguedocs.azurewebsites.net/contributing/building-documentation.html).
 
-## CI/CD
-
-Historically: We make use of continuous integration and deployment via VSTS at https://offnet.visualstudio.com/officenet/
-
-Coming Soon... a public facing CI/CD loop
-
 ## Design principals
 
 * Leverage the Client
@@ -177,10 +171,9 @@ across the pool of Paparazzi instances (snapshot, spell check, entity extraction
 Historian is in charge of storing document snapshots. It itself is a cached proxy to an underlying
 content-addressable file system represented via the [Git REST API](https://developer.github.com/v3/git/).
 Storage providers that implement this interface are then able to plug into the system as a whole. Currently we have
-support for [GitHub](https://developer.github.com/v3/git/), [Git](../gitrest), and
-[Cobalt](https://offnet.visualstudio.com/officenet/_git/cobalt-netcore).
+support for [GitHub](https://developer.github.com/v3/git/) and [Git](../gitrest).
 
-More details on content-adressable file systems and Git can be found at 
+More details on content-addressable file systems and Git can be found at 
 * https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain
 * http://stefan.saasen.me/articles/git-clone-in-haskell-from-the-bottom-up/
 
@@ -307,3 +300,9 @@ Passing an invalid token will fail the load call.
 
 ## Verdaccio and the Chaincode CDN
 Coming Soon...
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

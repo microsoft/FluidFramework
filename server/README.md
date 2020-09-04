@@ -10,13 +10,13 @@ This directory contains our reference server implementation. [Routerlicious](./r
 
 [Charts](./charts) Kubernetes charts for some micro-services
 
-[Gateway](./gateway) Internal landing page for Fluid, hosts Waterpark
+[Gateway](./gateway) Internal landing page for the Fluid server
 
 [Gitrest](./gitrest) provides a REST API to a GitHub repository. Its API is based off of GitHub's REST APIs.
 
 [Gitssh](./gitssh) is a git ssh server client container.
 
-[Headless-agent](./headless-agent) loads Fluid components on a headless chromium browser.
+[Headless-agent](./headless-agent) loads Fluid data stores on a headless chromium browser.
 
 [Historian](./historian) provides a REST API to git repositories. The API is similar to that exposed by GitHub but can be used in local development.
 
@@ -32,11 +32,12 @@ To get started with Routerlicious and the Fluid reference implementation, you mu
 
 1. Download and install [Docker](https://docs.docker.com/desktop/)
 2. Configure Docker to have 4gb of RAM
-3. Find and connect to our Docker Image registry (Coming Soon...)
-4. Build and Start the Container (substitute in the path to the compose file)
+3. Find and connect to our Docker Image registry
+  - Microsoft-internal: run `docker login prague.azurecr.io` and provide the correct username/password
+  - Public access: Coming soon!
+4. Start the Container with `npm run start:docker` from the repo root, which does this:
   ```
-  docker-compose build -f FluidFramework/server/docker-compose.yml
-  docker-compose up -f FluidFramework/server/docker-compose.yml
+  "start:docker": "docker-compose -f server/docker-compose.yml up"
   ```
 
 For development, you'll also need to give docker access to your drive (Shared Drives). The instructions for local development are available in [Routerlicious](./routerlicious).
@@ -51,9 +52,9 @@ For development, you'll also need to give docker access to your drive (Shared Dr
   * Allocate more RAM
 
 ## Routerlicious for Local Development
-### With Webpack Dev Server && the Webpack Component Loader (Yo-Fluid Output)
+### With Webpack Dev Server && the Webpack Fluid Loader (Yo-Fluid Output)
 
-To use Routerlicious with a Yo-Fluid container, you should start the Routerlicious docker conatiners, and then start the webpack dev server with the docker env command.
+To use Routerlicious with a Yo-Fluid container, you should start the Routerlicious docker containers, and then start the webpack dev server with the docker env command.
 ```
     "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
 ```
@@ -64,5 +65,5 @@ Gateway is an example of a service providing its own Fluid Container host. [Gate
 
 You can access this loader by using the following URL Schema
 ```
-https://localhost:3000/loader/fluid/${container-identifier}?chaincode=${component-package-name}@${version}
+https://localhost:3000/loader/fluid/${container-identifier}?chaincode=${data-store-package-name}@${version}
 ```

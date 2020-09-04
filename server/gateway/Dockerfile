@@ -3,9 +3,6 @@
 
 FROM node:12.16.3-slim
 
-# To auth against private VSTS
-ARG NPM_TOKEN
-
 # Add Tini
 ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
@@ -15,15 +12,11 @@ RUN apt-get update && apt-get install -y python make g++
 
 # Copy over and build the server
 WORKDIR /usr/src/server
-COPY .npmrc .
 COPY package.json .
 COPY package-lock.json .
 RUN npm install
 COPY . .
 RUN npm run build
-
-# Remove the npmrc following the build
-RUN rm -f .npmrc
 
 # Expose the port the app runs under
 EXPOSE 3000

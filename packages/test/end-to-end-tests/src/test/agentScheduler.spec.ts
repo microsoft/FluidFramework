@@ -3,40 +3,73 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import { AgentSchedulerFactory, TaskManager } from "@fluidframework/agent-scheduler";
-import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { strict as assert } from "assert";
+import {
+    DataObject,
+    DataObjectFactory,
+} from "@fluidframework/aqueduct";
+import { TaskManager } from "@fluidframework/agent-scheduler";
+import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { taskSchedulerId } from "@fluidframework/container-runtime";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
-import { schedulerId } from "@fluidframework/container-runtime";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, OpProcessingController, initializeLocalContainer } from "@fluidframework/test-utils";
+import {
+    createAndAttachContainer,
+    createLocalLoader,
+    OpProcessingController,
+} from "@fluidframework/test-utils";
+
+class TestDataObject extends DataObject {
+    public get _root() {
+        return this.root;
+    }
+
+    public get _runtime() {
+        return this.runtime;
+    }
+
+    public get _context() {
+        return this.context;
+    }
+}
 
 describe("AgentScheduler", () => {
     const leader = "leader";
-    const id = "fluid-test://localhost/agentSchedulerTest";
+    const documentId = "agentSchedulerTest";
+    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const codeDetails: IFluidCodeDetails = {
         package: "agentSchedulerTestPackage",
         config: {},
     };
+    const factory = new DataObjectFactory(
+        "TestDataObject",
+        TestDataObject,
+        [],
+        []);
 
+    let urlResolver: IUrlResolver;
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
 
-    async function createContainer(): Promise<Container> {
-        const loader: ILoader = createLocalLoader([
-            [codeDetails, new AgentSchedulerFactory()],
-        ], deltaConnectionServer);
+    async function createContainer(): Promise<IContainer> {
+        const loader: ILoader = createLocalLoader(
+            [[codeDetails, factory]],
+            deltaConnectionServer,
+            urlResolver);
 
-        return initializeLocalContainer(id, loader, codeDetails);
+        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
     }
 
-    async function requestFluidObject(dataStoreId: string, container: Container): Promise<TaskManager> {
-        const response = await container.request({ url: dataStoreId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Data Store with id: ${dataStoreId} not found`);
-        }
-        return response.value as TaskManager;
+    async function loadContainer(): Promise<IContainer> {
+        const loader: ILoader = createLocalLoader(
+            [[codeDetails, factory]],
+            deltaConnectionServer,
+            urlResolver);
+
+        return loader.resolve({ url: documentLoadUrl });
     }
 
     describe("Single client", () => {
@@ -44,18 +77,21 @@ describe("AgentScheduler", () => {
 
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
+            urlResolver = new LocalResolver();
 
             const container = await createContainer();
-            scheduler = await requestFluidObject(schedulerId, container)
+            scheduler = await requestFluidObject<TaskManager>(container, taskSchedulerId)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
-            // Make sure all initial ops (around leadership) are processed.
-            // It takes a while because we start in unattached mode, and attach scheduler,
-            // which causes loss of all tasks and reassignment.
+            const dataObject = await requestFluidObject<TestDataObject>(container, "default");
+
             opProcessingController = new OpProcessingController(deltaConnectionServer);
             opProcessingController.addDeltaManagers(container.deltaManager);
+
+            // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
+            // tasks. Sending an op will switch it to "write" mode.
+            dataObject._root.set("tempKey", "tempValue");
             await opProcessingController.process();
-            opProcessingController.resumeProcessing(container.deltaManager);
         });
 
         it("No tasks initially", async () => {
@@ -64,6 +100,7 @@ describe("AgentScheduler", () => {
 
         it("Can pick tasks", async () => {
             await scheduler.pick("task1", async () => { });
+            await opProcessingController.process();
             assert.deepStrictEqual(scheduler.pickedTasks(), [leader, "task1"]);
         });
 
@@ -116,36 +153,40 @@ describe("AgentScheduler", () => {
     });
 
     describe("Multiple clients", () => {
-        let container1: Container;
-        let container2: Container;
+        let container1: IContainer;
+        let container2: IContainer;
         let scheduler1: IAgentScheduler;
         let scheduler2: IAgentScheduler;
-
-        async function syncContainers() {
-            // Pauses the deltaQueues of the containers. Waits until all pending ops in the container
-            // and the server are processed.
-            await opProcessingController.process();
-            // Resume the containes because they would have been paused by the above process call.
-            opProcessingController.resumeProcessing(container1.deltaManager, container2.deltaManager);
-        }
 
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
+            // Create a new Container for the first document.
             container1 = await createContainer();
-            scheduler1 = await requestFluidObject(schedulerId, container1)
+            scheduler1 = await requestFluidObject<TaskManager>(container1, taskSchedulerId)
                 .then((taskManager) => taskManager.IAgentScheduler);
+            const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
-            container2 = await createContainer();
-            scheduler2 = await requestFluidObject(schedulerId, container2)
-                .then((taskManager) => taskManager.IAgentScheduler);
-
-            // Make sure all initial ops (around leadership) are processed.
-            // It takes a while because we start in unattached mode, and attach scheduler,
-            // which causes loss of all tasks and reassignment.
             opProcessingController = new OpProcessingController(deltaConnectionServer);
-            opProcessingController.addDeltaManagers(container1.deltaManager, container2.deltaManager);
-            await syncContainers();
+            opProcessingController.addDeltaManagers(container1.deltaManager);
+
+            // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
+            // tasks. Sending an op will switch it to "write" mode.
+            dataObject1._root.set("tempKey1", "tempValue1");
+            await opProcessingController.process();
+
+            // Load existing Container for the second document.
+            container2 = await loadContainer();
+            scheduler2 = await requestFluidObject<TaskManager>(container2, taskSchedulerId)
+                .then((taskManager) => taskManager.IAgentScheduler);
+            const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
+
+            opProcessingController.addDeltaManagers(container2.deltaManager);
+
+            // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
+            // tasks. Sending an op will switch it to "write" mode.
+            dataObject2._root.set("tempKey2", "tempValue2");
+            await opProcessingController.process();
         });
 
         it("No tasks initially", async () => {
@@ -156,12 +197,12 @@ describe("AgentScheduler", () => {
         it("Clients agree on picking tasks sequentially", async () => {
             await scheduler1.pick("task1", async () => { });
 
-            await syncContainers();
+            await opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), []);
             await scheduler2.pick("task2", async () => { });
 
-            await syncContainers();
+            await opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task2"]);
         });
@@ -174,7 +215,7 @@ describe("AgentScheduler", () => {
             await scheduler2.pick("task3", async () => { });
             await scheduler2.pick("task4", async () => { });
 
-            await syncContainers();
+            await opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task3"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4"]);
         });
@@ -190,7 +231,7 @@ describe("AgentScheduler", () => {
             await scheduler2.pick("task5", async () => { });
             await scheduler2.pick("task6", async () => { });
 
-            await syncContainers();
+            await opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task5"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4", "task6"]);
         });
@@ -206,7 +247,7 @@ describe("AgentScheduler", () => {
             await scheduler2.pick("task5", async () => { });
             await scheduler2.pick("task6", async () => { });
 
-            await syncContainers();
+            await opProcessingController.process();
             await scheduler1.release("task4").catch((err) => {
                 assert.deepStrictEqual(err, "task4 was never picked");
             });
@@ -229,15 +270,15 @@ describe("AgentScheduler", () => {
             await scheduler2.pick("task5", async () => { });
             await scheduler2.pick("task6", async () => { });
 
-            await syncContainers();
+            await opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task5"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4", "task6"]);
             await scheduler1.release("task2", "task1", "task5");
 
-            await syncContainers();
+            await opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader]);
 
-            await syncContainers();
+            await opProcessingController.process();
             assert.deepStrictEqual(scheduler2.pickedTasks().sort(), ["task1", "task2", "task4", "task5", "task6"]);
             await scheduler1.pick("task1", async () => { });
             await scheduler1.pick("task2", async () => { });
@@ -245,7 +286,7 @@ describe("AgentScheduler", () => {
             await scheduler1.pick("task6", async () => { });
             await scheduler2.release("task2", "task1", "task4", "task5", "task6");
 
-            await syncContainers();
+            await opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks().sort(),
                 [leader, "task1", "task2", "task4", "task5", "task6"]);
         });
@@ -253,7 +294,7 @@ describe("AgentScheduler", () => {
         it("Releasing leadership should automatically elect a new leader", async () => {
             await scheduler1.release(leader);
 
-            await syncContainers();
+            await opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks(), []);
             assert.deepStrictEqual(scheduler2.pickedTasks(), [leader]);
         });

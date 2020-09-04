@@ -1,7 +1,9 @@
 {
   "name": "fluidframework-docs",
   "version": "0.25.0",
+  "private": true,
   "description": "Fluid Framework documentation",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -18,7 +20,7 @@
     "install:hugo": "hugo-installer --version 0.74.3 --destination bin",
     "postinstall:default": "[ ! -f bin/hugo ] && npm run install:hugo ; exit 0",
     "postinstall:win32": "if not exist bin/hugo.exe npm run install:hugo",
-    "start": "run-script-os",
+    "start": "npm run build:md-magic && run-script-os",
     "start:default": "\"./bin/hugo\" server",
     "start:win32": "call \"bin/hugo.exe\" server"
   },

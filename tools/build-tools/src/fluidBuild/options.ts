@@ -70,7 +70,7 @@ Options:
      --install        Run npm install for all packages/monorepo
   -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
      --reinstall      Same as --uninstall --install
-     --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
+     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
   -s --script <name>  npm script to execute (default:build)
      --server         Operate on the server monorepo
      --symlink        Fix symlink between packages within monorepo (isolate mode)

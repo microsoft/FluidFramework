@@ -98,7 +98,7 @@ export interface IPersistedCache {
      * Important - only serializable content is allowed since this cache may be persisted between sessions
      * @param entry - cache entry.
      * @param value - JSON-serializable content.
-     * @param seqNumber - (reference) sequence number of snapshot. Incomming Ops will start with this number
+     * @param seqNumber - (reference) sequence number of snapshot. Incoming Ops will start with this number
      * (see updateUsage API).
      */
     put(entry: ICacheEntry, value: any, seqNumber: number): void;

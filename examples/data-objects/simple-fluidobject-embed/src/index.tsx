@@ -24,7 +24,7 @@ export class SimpleFluidObjectEmbed extends DataObject implements IFluidHTMLView
    * but in this scenario we only want it to be created once.
    */
     protected async initializingFirstTime() {
-        const fluidObject = await ClickerInstantiationFactory.createInstance(this.context);
+        const fluidObject = await ClickerInstantiationFactory.createChildInstance(this.context);
         this.root.set("myEmbeddedCounter", fluidObject.handle);
     }
 

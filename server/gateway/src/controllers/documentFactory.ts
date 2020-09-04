@@ -5,8 +5,11 @@
 
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Deferred } from "@fluidframework/common-utils";
-import { IDocumentFactory } from "@fluid-example/host-service-interfaces";
 import Axios from "axios";
+
+/* TODO: @fluid-example packages are not published. Duplicate the interface here for now */
+// import { IDocumentFactory } from "@fluid-example/host-service-interfaces";
+import { IDocumentFactory } from "./services";
 
 export class DocumentFactory implements IDocumentFactory {
     private readonly loaderDeferred = new Deferred<ILoader>();

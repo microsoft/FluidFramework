@@ -29,6 +29,7 @@ import {
     ISnapshotTree,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
+import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
 import { IInboundSignalMessage } from "./protocol";
 import { ISummaryTreeWithStats, ISummarizerNode, SummarizeInternalFn, CreateChildSummarizerNodeParam } from "./summary";
@@ -98,16 +99,10 @@ export interface IContainerRuntimeBase extends
     createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
 
     /**
-     * Creates a new data store using an optional realization function.  This API does not allow specifying
-     * the data store's id and instead generates a uuid.  Consumers must save another reference to the
-     * data store, such as the handle.
-     * @param pkg - Package name of the data store
-     * @param realizationFn - Optional function to call to realize the data store over the context default
+     * Creates detached data store context. only after context.attachRuntime() is called,
+     * data store initialization is considered compete.
      */
-    createDataStoreWithRealizationFn(
-        pkg: string[],
-        realizationFn?: (context: IFluidDataStoreContext) => void,
-    ): Promise<IFluidDataStoreChannel>;
+    createDetachedDataStore(): IFluidDataStoreContextDetached;
 
     /**
      * Get an absolute url for a provided container-relative request.
@@ -232,7 +227,7 @@ export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalF
  * Represents the context for the data store. It is used by the data store runtime to
  * get information and call functionality to the container.
  */
-export interface IFluidDataStoreContext extends EventEmitter {
+export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFluidDataStoreRegistry> {
     readonly documentId: string;
     readonly id: string;
     /**
@@ -309,11 +304,6 @@ export interface IFluidDataStoreContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
-     * Binds a runtime to the context.
-     */
-    bindRuntime(dataStoreRuntime: IFluidDataStoreChannel): void;
-
-    /**
      * Register the runtime to the container
      * @param dataStoreRuntime - runtime to attach
      */
@@ -343,15 +333,17 @@ export interface IFluidDataStoreContext extends EventEmitter {
          */
         createParam: CreateChildSummarizerNodeParam,
     ): CreateChildSummarizerNodeFn;
+}
 
+export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
     /**
-     * Take a package name and transform it into a path that can be used to find it
-     * from this context, such as by looking into subregistries
-     * @param subpackage - The subpackage to find in this context
-     * @returns A list of packages to the subpackage destination if found,
-     * otherwise the original subpackage
+     * Binds a runtime to the context.
      */
-    composeSubpackagePath(subpackage: string): Promise<string[]>;
+    attachRuntime(
+        packagePath: Readonly<string[]>,
+        factory: IProvideFluidDataStoreFactory,
+        dataStoreRuntime: IFluidDataStoreChannel,
+    ): Promise<void>;
 }
 
 export interface IFluidDataStoreContextType extends IFluidDataStoreContext {

@@ -12,49 +12,7 @@ export class TestCollection implements ICollection<any> {
     }
 
     public async find(query: any, sort: any): Promise<any[]> {
-        function getValueByKey(propertyBag, key: string) {
-            const keys = key.split(".");
-            let value = propertyBag;
-            keys.forEach((splitKey) => {
-                value = value[splitKey];
-            });
-            return value;
-        }
-
-        const queryKeys = Object.keys(query);
-        let filteredCollection = this.collection;
-        queryKeys.forEach((key) => {
-            if (query[key].$gt > 0 || query[key].$lt > 0) {
-                if (query[key].$gt > 0) {
-                    filteredCollection = filteredCollection.filter(
-                        (value) => getValueByKey(value, key) > query[key].$gt);
-                }
-                if (query[key].$lt > 0) {
-                    filteredCollection = filteredCollection.filter(
-                        (value) => getValueByKey(value, key) < query[key].$lt);
-                }
-            } else {
-                filteredCollection = filteredCollection.filter(
-                    (value) => getValueByKey(value, key) === query[key]);
-            }
-        });
-
-        if (sort && Object.keys(sort).length === 1) {
-            // eslint-disable-next-line no-inner-declarations
-            function compare(a, b) {
-                const sortKey = Object.keys(sort)[0];
-                if (sort[sortKey] === 1) {
-                    // A goes before b, sorting in ascending order
-                    return getValueByKey(a, sortKey) - getValueByKey(b, sortKey);
-                } else {
-                    // B goes before a, sorting in descending order
-                    return getValueByKey(b, sortKey) - getValueByKey(a, sortKey);
-                }
-            }
-
-            filteredCollection = filteredCollection.sort(compare);
-        }
-        return filteredCollection;
+        return this.findInternal(query, sort);
     }
 
     public async findAll(): Promise<any[]> {
@@ -125,8 +83,63 @@ export class TestCollection implements ICollection<any> {
     }
 
     private findOneInternal(query: any): any {
-        const returnValue = this.collection.find((value) => value._id === query._id);
+        let returnValue: any;
+        if (query._id) {
+            returnValue = this.collection.find((value) => value._id === query._id);
+        } else {
+            const found = this.findInternal(query);
+            returnValue = found[0];
+        }
         return returnValue === undefined ? null : returnValue;
+    }
+
+    private findInternal(query: any, sort?: any): any[] {
+        function getValueByKey(propertyBag, key: string) {
+            const keys = key.split(".");
+            let value = propertyBag;
+            keys.forEach((splitKey) => {
+                value = value[splitKey];
+            });
+            return value;
+        }
+
+        const queryKeys = Object.keys(query);
+        let filteredCollection = this.collection;
+        queryKeys.forEach((key) => {
+            if (!query[key]) {
+                return;
+            }
+            if (query[key].$gt > 0 || query[key].$lt > 0) {
+                if (query[key].$gt > 0) {
+                    filteredCollection = filteredCollection.filter(
+                        (value) => getValueByKey(value, key) > query[key].$gt);
+                }
+                if (query[key].$lt > 0) {
+                    filteredCollection = filteredCollection.filter(
+                        (value) => getValueByKey(value, key) < query[key].$lt);
+                }
+            } else {
+                filteredCollection = filteredCollection.filter(
+                    (value) => getValueByKey(value, key) === query[key]);
+            }
+        });
+
+        if (sort && Object.keys(sort).length === 1) {
+            // eslint-disable-next-line no-inner-declarations
+            function compare(a, b) {
+                const sortKey = Object.keys(sort)[0];
+                if (sort[sortKey] === 1) {
+                    // A goes before b, sorting in ascending order
+                    return getValueByKey(a, sortKey) - getValueByKey(b, sortKey);
+                } else {
+                    // B goes before a, sorting in descending order
+                    return getValueByKey(b, sortKey) - getValueByKey(a, sortKey);
+                }
+            }
+
+            filteredCollection = filteredCollection.sort(compare);
+        }
+        return filteredCollection;
     }
 }
 

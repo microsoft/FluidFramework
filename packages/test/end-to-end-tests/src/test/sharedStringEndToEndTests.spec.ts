@@ -3,23 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { strict as assert } from "assert";
+import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     ChannelFactoryRegistry,
+    createAndAttachContainer,
     createLocalLoader,
-    initializeLocalContainer,
     ITestFluidObject,
     OpProcessingController,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { compatTest, ICompatTestArgs } from "./compatUtils";
 
-const id = "fluid-test://localhost/sharedStringTest";
+const documentId = "sharedStringTest";
+const documentLoadUrl = `fluid-test://localhost/${documentId}`;
 const stringId = "sharedStringKey";
 const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 const codeDetails: IFluidCodeDetails = {
@@ -34,15 +37,15 @@ const tests = (args: ICompatTestArgs) => {
 
     beforeEach(async () => {
         const container1 = await args.makeTestContainer(registry) as Container;
-        const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
-        sharedString1 = await dataStore1.getSharedObject<SharedString>(stringId);
+        const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
-        const container2 = await args.makeTestContainer(registry) as Container;
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        sharedString2 = await dataStore2.getSharedObject<SharedString>(stringId);
+        const container2 = await args.loadTestContainer(registry) as Container;
+        const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 
         opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-        opProcessingController.addDeltaManagers(dataStore1.runtime.deltaManager, dataStore2.runtime.deltaManager);
+        opProcessingController.addDeltaManagers(dataObject1.runtime.deltaManager, dataObject2.runtime.deltaManager);
     });
 
     it("can sync SharedString across multiple containers", async () => {
@@ -65,28 +68,36 @@ const tests = (args: ICompatTestArgs) => {
         await opProcessingController.process();
 
         // Create a initialize a new container with the same id.
-        const newContainer = await args.makeTestContainer(registry) as Container;
-        const newDataStore = await requestFluidObject<ITestFluidObject>(newContainer, "default");
-        const newSharedString = await newDataStore.getSharedObject<SharedString>(stringId);
+        const newContainer = await args.loadTestContainer(registry) as Container;
+        const newComponent = await requestFluidObject<ITestFluidObject>(newContainer, "default");
+        const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
         assert.equal(newSharedString.getText(), text, "The new container should receive the inserted text on creation");
     });
 };
 
 describe("SharedString", () => {
+    const factory = new TestFluidObjectFactory(registry);
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    async function makeTestContainer(): Promise<Container> {
-        const factory = new TestFluidObjectFactory(registry);
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-        return initializeLocalContainer(id, loader, codeDetails);
+    let urlResolver: IUrlResolver;
+    async function makeTestContainer(): Promise<IContainer> {
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+    }
+    async function loadTestContainer(): Promise<IContainer> {
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        return loader.resolve({ url: documentLoadUrl });
     }
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
+        urlResolver = new LocalResolver();
     });
 
     tests({
         makeTestContainer,
+        loadTestContainer,
         get deltaConnectionServer() { return deltaConnectionServer; },
+        get urlResolver() { return urlResolver; },
     });
 
     afterEach(async () => {
@@ -94,6 +105,6 @@ describe("SharedString", () => {
     });
 
     describe("compatibility", () => {
-        compatTest(tests, { testFluidDataStore: true });
+        compatTest(tests, { testFluidDataObject: true });
     });
 });
