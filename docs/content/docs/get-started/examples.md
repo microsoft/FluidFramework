@@ -14,7 +14,7 @@ The [Fluid Draft.js](https://github.com/microsoft/FluidExamples/tree/main/draft-
 Fluid Framework to take an existing project and make it collaborative. This example also demonstrates
 how to build an app that supports real-time updates in a rich text editor.
 
-Try out Draft.js in our [Playground](/playground/?path=/docs/react-demos-draft-js--demo).
+Try out Draft.js in the [Playground](/playground/?path=/docs/react-demos-draft-js--demo).
 
 ## Brainstorming
 
