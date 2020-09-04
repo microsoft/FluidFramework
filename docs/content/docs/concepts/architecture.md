@@ -3,7 +3,7 @@ title: Architecture
 menuPosition: 1
 ---
 
-Fluid Framework can be broken into three broad parts: The _Fluid loader_, _Fluid containers_, and the _Fluid service_. 
+Fluid Framework can be broken into three broad parts: The _Fluid loader_, _Fluid containers_, and the _Fluid service_.
 While each of these is covered in more detail elsewhere, we'll use this space to explain the areas at a high level,
 identify the important lower level concepts, and discuss some of our key design decisions.
 
@@ -17,7 +17,7 @@ If you want to load a Fluid container on your app or website, you'll load the co
 want to create a new collaborative experience using the Fluid Framework, you'll create a Fluid container.
 
 A Fluid container includes state and app logic. It's a serverless app model with data persistance. It has at least one
-_Fluid object_, which encapsulates app logic. Fluid objects can have state, which is managed by _distributed data 
+_Fluid object_, which encapsulates app logic. Fluid objects can have state, which is managed by _distributed data
 structures_ (DDSes).
 
 DDSes are used to distribute state to clients. Instead of centralizing merge logic in the
@@ -65,7 +65,7 @@ stored in **Fluid objects**.
 
 ### Fluid loader
 
-The Fluid loader loads Fluid containers (and their child Fluid Objects) by connecting to the Fluid service and fetching
+The Fluid loader loads Fluid containers (and their child Fluid objects) by connecting to the Fluid service and fetching
 Fluid container code. In this way, the Fluid loader 'mimics the web.' The Fluid loader resolves a URL using **container
 resolver,** connects to the Fluid service using the **Fluid service driver**, and loads the correct app code using the
 **code loader.**
@@ -94,6 +94,6 @@ the service knows nothing about the contents of any Fluid container.
 From the client perspective, this op flow is accessed through a **DeltaConnection** object.
 
 The service also stores old operations, accessible to clients through a **DeltaStorageService** object, and stores
-summaries of the Fluid Objects. It's worth discussing summaries at length, but for now we can consider that merging
+summaries of the Fluid objects. It's worth discussing summaries at length, but for now, consider that merging
 1,000,000 changes could take some time, so we summarize the state of the objects and store it on the service for faster
 loading.

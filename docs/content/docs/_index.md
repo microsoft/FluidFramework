@@ -51,8 +51,8 @@ accurately produce the current state regardless of the order it receives operati
 Here is a typical flow...
 
 * Client code changes data locally
-* Fluid runtime sends that change to the Fluid server
-* Fluid server sequences that operation and broadcasts it to all clients
+* Fluid runtime sends that change to the Fluid service
+* Fluid service sequences that operation and broadcasts it to all clients
 * Fluid runtime incorporates that operation into local data and raises a "valueChanged" event
 * Client code handles that event (updates view, runs business logic)
 
@@ -72,7 +72,8 @@ participation.
 If you want to learn a lot more about how Fluid works, start with our
 **[architecture](concepts/architecture.md)** overview.
 
-If you prefer to get your hands dirty right away, head for our coding **[tutorial](get-started/tutorial.md)** and **[examples](get-started/examples.md)**.
-But first, get your **[dev environment](get-started/quick-start.md)** set up.
+If you prefer to get your hands dirty right away, head for our coding **[tutorial](get-started/tutorial.md)** and
+**[examples](get-started/examples.md)**. But first, get your **[dev environment](get-started/quick-start.md)** set up.
 
-Still have questions? Maybe we've answered them in our **[FAQ](faq.md)**. If not, check out our **[Community page](/community/)**.
+Still have questions? Maybe we've answered them in our **[FAQ](faq.md)**. If not, check out our
+**[Community page](/community/)**.
