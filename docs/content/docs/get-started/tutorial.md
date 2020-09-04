@@ -21,7 +21,7 @@ Framework to sync the data across clients so everyone sees the same result.  We'
 1. Connect our model instance to our view for rendering
 
 
-### The view
+## The view
 
 In this app we're just going to render our view without any UI libraries such as React, Vue or Angular. We'll be using
 [TypeScript](https://www.typescriptlang.org/) and HTML/DOM methods.  Fluid is impartial to how you write your view, so
@@ -54,7 +54,7 @@ export function renderDiceRoller(div: HTMLDivElement) {
 ```
 
 
-### The model interface
+## The model interface
 
 To clarify what our model needs to support, let's start by defining its public interface.
 
@@ -73,7 +73,7 @@ event `"diceRolled"` in our interface.  We'll fire this event whenever the dice 
 This event is particularly important because we're building a collaborative experience. It's how each client will
 observe that other clients have rolled the dice remotely, so they know to update with the new value.
 
-### Implementing the model
+## Implementing the model
 
 Up to this point, we've just been using TypeScript.  Now that we're implementing the model for our collaborative
 DiceRoller, we'll start to use features from Fluid Framework.
@@ -139,7 +139,7 @@ export const DiceRollerInstantiationFactory = new DataObjectFactory(
 And that's it -- our DiceRoller model is done!
 
 
-### Defining the container contents
+## Defining the container contents
 
 In our app, we only need a single instance of this single model for our single dice.  However, in more complex scenarios
 we might have multiple model types with many model instances.  The code you'll write to specify the type and number of
@@ -162,7 +162,7 @@ export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactor
 Now we've defined all the pieces and it's just time to put them all together!
 
 
-### Connect container to service for collaboration
+## Connect container to service for collaboration
 
 To orchestrate the collaboration, we need to connect to a service to send and receive the updates to the data.  The way
 we do this is to connect a Fluid [Container][] object to the service and load our container code into it.
@@ -199,7 +199,7 @@ const diceRoller: IDiceRoller = response.value;
 ```
 
 
-### Connect model instance to view for rendering
+## Connect model instance to view for rendering
 
 That's it, now that we have a model instance, we can wire it to our view!  We'll update the function to take an
 `IDiceRoller`, connect our button to the `roll()` method, listen to the `"diceRolled"` event to detect value changes,
@@ -234,7 +234,7 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivEleme
 ```
 
 
-### Running the app
+## Running the app
 
 At this point we can run our app.  The [full code for this application is
 available](https://github.com/microsoft/FluidHelloWorld) for you to try out.  Try opening it in multiple browser windows
