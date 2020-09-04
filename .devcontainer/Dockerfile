@@ -6,12 +6,13 @@
 ARG NODE_VERSION=12
 ARG USERNAME=node
 
-# Base image begins with 'node:${VARIANT}' and adds the following:
+# 'node:${VARIANT}' base image includes the following:
 #
-#    zsh
-#    yarn
-#    nvm
-#    eslint (global)
+#    eslint (global), node/npm, nvm, yarn, zsh (+ oh-my-zsh)
+#
+# Debian base image includes the following:
+#
+#    curl, g++, git, make, procps, python, wget
 #
 # (See https://github.com/microsoft/vscode-dev-containers/tree/master/containers/javascript-node/.devcontainer)
 FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:${NODE_VERSION}
@@ -19,26 +20,13 @@ FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:${NODE_VERSION}
 # Avoid warnings by switching to noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Retrieve script to install Docker CLI / Docker-Compose from the 'Docker-from-Docker' dev container template.
-
 # Configure apt and install packages
 RUN apt-get update \
     && apt-get -y install --no-install-recommends apt-utils 2>&1 \
 
-    # Install Fluid build dependencies and developer conveniences.
-    #
-    # https://jilles.me/badassify-your-terminal-and-shell/
-    # https://billgrant.io/post/2019-05-05-vsremote/
+    # Install additional desired packages here
     && apt-get install -y \
-        curl \
-        g++ \
-        git \
-        make \
-        procps \
-        python \
         vim \
-        wget \
-        zsh \
 
     # Install Docker CLI / Docker-Compose and create 'docker-init.sh' to proxy docker socket.
     # (We retrieve the install script from the 'docker-from-docker' dev container template)
@@ -59,9 +47,11 @@ ENV DEBIAN_FRONTEND=dialog
 
 USER node
 
+# Install ZSH extensions (see https://jilles.me/badassify-your-terminal-and-shell/)
 RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting \
     && git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
+# Copy our custom .zshrc to user's home directory
 COPY .zshrc /home/node/.zshrc
 
 # Setting the ENTRYPOINT to docker-init.sh will configure non-root access to
