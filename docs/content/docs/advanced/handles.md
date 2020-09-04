@@ -74,7 +74,7 @@ The following examples outline the uses of handles to retrieve the underlying ob
 
 When developing a Fluid object from a `DataObject` you will often find yourself wanting to create and store new DDSes. We
 want to ensure that the `SharedMap` is only created once but all users of this object have access to it. We can do that by
-creating the map
+creating the map.
 
 ```typescript
 export class MyFluidObject extends DataObject {
