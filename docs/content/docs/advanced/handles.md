@@ -22,8 +22,7 @@ Distributed Data Structures (DDSes), into other DDSes. This doc covers how to co
 - Handles encapsulate where the underlying object lives and how to retrieve it. This reduces the complexity from the caller
   and abstracts away the need for the caller to know where the underlying object lives.
 
-- Handles allow the underlying Fluid runtime to build a dependency hierarchy. This will eventually allow for features such
-  as garbage collection.
+- Handles enable the underlying Fluid runtime to build a dependency hierarchy. This will enable us to add garbage collection to the runtime in a future version.
 
 ### Basic Scenario
 
