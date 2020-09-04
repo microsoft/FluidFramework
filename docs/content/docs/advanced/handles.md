@@ -3,21 +3,22 @@ title: Handles
 menuPosition: 1
 ---
 
-A Fluid handle is an object that holds a reference to a collaborative object, such as a
-[`DataObject`](/apis/aqueduct/dataobject/) or a distributed data structure (DDS).
+A Fluid handle is an object that holds a reference to a collaborative object, such as a [DataObject][] or a distributed
+data structure (DDS).
 
-The primary use case for handles in the Fluid Framework is for storing a [`DataObject`](/apis/aqueduct/dataobject/), or
-a DDS, into another DDS. This doc covers how to consume and use Fluid handles.
+The primary use case for handles in the Fluid Framework is for storing a [DataObject][], or a DDS, into another DDS.
+This section covers how to consume and use Fluid handles.
 
 ### Why use Fluid handles?
 
 - Collaborative objects, such as Fluid objects or DDSes, cannot be stored directly in another DDS. There are two primary
   reasons for this:
-     1. Content stored in a DDS needs to be serializable. Complex objects and classes should never be directly stored in
-        a DDS.
-     2. Frequently the same collaborative object (not merely a copy) has to be available in different DDSes. The only
-        way to make this possible is to store _references_ (which is what a handle is) to the collaborative objects in
-        the DDSes.
+
+  1. Content stored in a DDS needs to be serializable. Complex objects and classes should never be directly stored in
+     a DDS.
+  2. Frequently the same collaborative object (not merely a copy) has to be available in different DDSes. The only
+     way to make this possible is to store _references_ (which is what a handle is) to the collaborative objects in
+     the DDSes.
 
 - Handles encapsulate where the underlying object instance exists within the Fluid runtime and how to retrieve it.
   This reduces the complexity from the caller by abstracting away the need to know how to make a `request` to the
@@ -127,3 +128,37 @@ protected async hasInitialized() {
 
 // ...
 ```
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- Links -->
+
+<!-- Packages -->
+
+[Aqueduct]: {{< relref "/apis/aqueduct.md" >}}
+[undo-redo]: {{< relref "/apis/undo-redo.md" >}}
+
+<!-- Classes and interfaces -->
+
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
+[Ink]: {{< relref "/apis/ink/ink.md" >}}
+[SharedCell]: {{< relref "/apis/cell/sharedcell.md" >}}
+[SharedCounter]: {{< relref "SharedCounter" >}}
+[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
+[SharedMatrix]: {{< relref "SharedMatrix" >}}
+[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
+[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[SharedSequence]: {{< relref "SharedSequence" >}}
+[SharedString]: {{< relref "SharedString" >}}
+[Quorum]: {{< relref "/apis/protocol-base/quorum.md" >}}
+
+<!-- Sequence methods -->
+
+[sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/apis/sequence/sequencedeltaevent.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->

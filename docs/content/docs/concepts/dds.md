@@ -15,7 +15,7 @@ However, a DDS is not _just_ a local object. A DDS can also be changed by other 
 
 {{% callout tip %}}
 
-Most distributed data structures are prefixed with `Shared` by convention. _SharedMap_, _SharedMatrix_, _SharedString_,
+Most distributed data structures are prefixed with "Shared" by convention. _SharedMap_, _SharedMatrix_, _SharedString_,
 etc. This prefix indicates that the object is shared between multiple clients.
 
 {{% /callout %}}
@@ -42,8 +42,8 @@ generally fall into two broad categories: _optimistic_ and _consensus-based_.
 
 {{% callout tip "See also" %}}
 
-* [Fluid Framework architecture](./architecture.md)
-* [Fluid service](./server.md)
+* [Fluid Framework architecture]({{< relref "architecture" >}})
+* [Fluid service]({{< relref "service" >}})
 
 {{% /callout %}}
 
