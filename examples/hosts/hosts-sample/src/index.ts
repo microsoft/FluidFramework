@@ -77,20 +77,9 @@ export async function start(url: string, code: string, createNew: boolean): Prom
         {},
         new Map<string, IProxyLoaderFactory>());
 
-    // We start by resolving the URL to its underlying Fluid document. This gives low-level access which will enable
-    // us to quorum on code later or detect when the code quorum has changed. In many cases you may not need this
-    // behavior and can instead just directly make requests against the document.
-    const fluidDocument = await loader.resolve({ url });
-
-    // The attach helper method performs the actual attachment of the above platform to the Fluid object identified
-    // by the URL in the browser. Once the attach is complete the Fluid object will render to the provided div.
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    attach(loader, fluidDocument, url, document.getElementById("content") as HTMLDivElement);
-
-    // This step is used when creating a new document. In the case that your host is only loading existing documents
-    // then this is not necessary. But should you wish to create new ones this step goes and proposes the passed in
-    // package name on the code quorum. We only perform this check for new documents.
-    if (!fluidDocument.existing) {
+    let container;
+    if (createNew) {
+        // This flow is used to create a new container and then attach it to storage.
         const parsedPackage = extractPackageIdentifierDetails(code);
         const details: IFluidCodeDetails = {
             config: {
