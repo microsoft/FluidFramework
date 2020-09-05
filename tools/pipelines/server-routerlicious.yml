@@ -6,21 +6,22 @@
 name: $(Build.BuildId)
 
 parameters:
-- name: publishOverride
-  displayName: Publish Override
-  type: string
-  default: default
-  values:
-    - default
-    - skip
 - name: releaseBuildOverride
-  displayName: Release Build Override
+  displayName: Release Build (default = not released)
   type: string
   default: none
   values:
     - none
     - prerelease
     - release
+- name: publishOverride
+  displayName: Publish Override (default = based on branch)
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+    - force
 
 trigger:
   branches:
@@ -37,6 +38,8 @@ trigger:
     - tools/pipelines/templates/include-generate-notice-steps.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
+    - tools/pipelines/templates/include-publish-docker-service.yml
+    - tools/pipelines/templates/include-publish-docker-service-steps.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
   
@@ -56,13 +59,17 @@ pr:
     - server/routerlicious/kubernetes/routerlicious
 
 variables:
+- name: buildNumberInPatch
+  value: false
 - template: templates/include-vars.yml
   parameters:
+    releaseImage: true
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildNumberInPatch: ${{ variables.buildNumberInPatch }}
 - group: container-registry-info
 - name: containerName
-  value: fluid-server
+  value: fluidframework/routerlicious/server
 - name: baseContainerName
   value: $(containerName)-base
 - name: baseContainerTag
@@ -83,7 +90,52 @@ stages:
     - job: build
       displayName: Build - Server
       pool: Main
+      variables:
+        releaseBuildVar: $[variables.releaseBuild]
       steps:
+        - task: Bash@3
+          displayName: Parameters
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Show all task group conditions
+
+              echo "
+              Pipeline Variables:
+                releaseBuild=$(releaseBuildVar)
+
+              Override Parameters:
+                publishOverride=${{ parameters.publishOverride }}
+                releaseBuildOverride=${{ parameters.releaseBuildOverride }}
+
+              Computed variables:
+                shouldPublish=${{ variables.shouldPublish }}                
+                componentDetection=${{ variables.componentDetection }}
+                publish=${{ variables.publish }}
+                canRelease=${{ variables.canRelease }}
+
+                pushImage=${{ variables.pushImage }}
+                releaseImage=${{ variables.releaseImage }}
+                release=$(release)"
+
+              if [[ "$(release)" == "release" ]]; then
+                if [[ "${{ variables.canRelease }}" == "False" ]]; then
+                  echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
+                  exit -1;
+                fi
+              fi
+
+              if [[ "$(release)" != "none" ]]; then
+                if [[ "${{ variables.publish }}" != "True" ]]; then
+                  echo "##vso[task.logissue type=error]'$(release)' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
+                  exit -1;
+                fi
+                if [[ "${{ variables.pushImage }}" != "True" ]]; then
+                  echo "##vso[task.logissue type=error]'$(release)' is set but image is not pushed. Either the branch doesn't default to push image or it is skipped."
+                  exit -1;
+                fi
+              fi
+
         # Checkout
         - checkout: self
           clean: true
@@ -242,11 +294,19 @@ stages:
           continueOnError: true
           condition: succeededOrFailed()
 
-# Publish stage
+# Publish stages
 - ${{ if eq(variables.publish, true) }}:
   - template: templates/include-publish-npm-package.yml
     parameters:
       buildDirectory: server/routerlicious
       namespace: true
       tagName: server
-      buildNumberInPatch: false
+      buildNumberInPatch: ${{ variables.buildNumberInPatch }}
+
+- ${{ if eq(variables.releaseImage, true) }}:
+  - template: include-publish-docker-service.yml
+    parameters:
+      containerRegistry: $(containerRegistryConnection)
+      containerTag: $(fullRunnerContainerTag)
+      containerRegistryUrl: $(containerRegistryUrl)
+      containerName: ${{ parameters.containerName }}
