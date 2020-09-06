@@ -1,0 +1,70 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# include-publish-docker-service-steps
+
+parameters:
+- name: environment
+  type: string
+
+- name: pool
+  type: object
+  default: Lite
+
+- name: containerRegistry
+  type: string
+
+- name: containerTag
+  type: string
+
+- name: containerRegistryUrl
+  type: string
+
+- name: containerName
+  type: string
+
+jobs:
+- deployment: publish_${{ replace(parameters.environment, '-', '_') }}
+  displayName: Publish ${{ parameters.environment }}
+  environment: ${{ parameters.environment }}
+  pool: ${{ parameters.pool }}
+  workspace:
+    clean: all
+  strategy:
+    runOnce:
+        deploy:
+            steps:
+            - download: none
+            - task: Docker@2
+              displayName: Login to ACR
+              inputs:
+                command: login
+                containerRegistry: ${{ parameters.containerRegistry }}
+
+            - task: Docker@0
+              displayName: Pull image
+              inputs:
+                action: 'Run a Docker command'
+                customCommand: 'pull ${{ parameters.containerTag }}'
+
+            - task: Docker@0
+              displayName: Tag image
+              inputs:
+                action: 'Run a Docker command'
+                customCommand: 'tag ${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(Build.BuildNumber)'
+
+            - task: Docker@0
+              displayName: Tag image
+              inputs:
+                action: 'Run a Docker command'
+                customCommand: 'tag ${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest'
+
+            - task: Docker@2
+              displayName: Docker Push
+              inputs:
+                containerRegistry: ${{ parameters.containerRegistry }}
+                repository: ${{ parameters.containerName }}
+                command: push
+                tags: |
+                  $(Build.BuildNumber)
+                  latest
