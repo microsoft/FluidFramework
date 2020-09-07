@@ -45,8 +45,7 @@ packages/loader/**:
 - vladsud
 - anthony-murphy
 packages/runtime/**:
-- vladsud 
-- arinwt
+- anthony-murphy
 - curtisman
 packages/hosts/**:
 - anthony-murphy
