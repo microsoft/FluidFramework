@@ -82,7 +82,7 @@ variables:
 - name: baseContainerTag
   value: $(baseContainerName):$(containerTagSuffix)
 - name: fullRunnerContainerTag
-  value: $(containerRegistryUrl)/$(containerName):$(containerTagSuffix)
+  value: $(containerRegistryUrl)/build/$(containerName):$(containerTagSuffix)
 - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
   - name: testConfig
     value: :full
