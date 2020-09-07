@@ -44,7 +44,7 @@ packages/framework/**:
 packages/loader/**:
 - vladsud
 - anthony-murphy
-packages/runtime**:
+packages/runtime/**:
 - vladsud 
 - arinwt
 - curtisman
