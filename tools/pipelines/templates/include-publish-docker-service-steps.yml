@@ -30,6 +30,9 @@ jobs:
   pool: ${{ parameters.pool }}
   workspace:
     clean: all
+  variables:
+  - name: containerTagSuffix
+    value: $[ stageDependencies.build.build.outputs['SetVersion.version']]
   strategy:
     runOnce:
         deploy:
@@ -51,7 +54,7 @@ jobs:
               displayName: Tag image
               inputs:
                 action: 'Run a Docker command'
-                customCommand: 'tag ${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(Build.BuildNumber)'
+                customCommand: 'tag ${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)'
 
             - task: Docker@0
               displayName: Tag image
@@ -66,5 +69,5 @@ jobs:
                 repository: ${{ parameters.containerName }}
                 command: push
                 tags: |
-                  $(Build.BuildNumber)
+                  $(containerTagSuffix)
                   latest

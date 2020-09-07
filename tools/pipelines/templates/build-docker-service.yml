@@ -51,18 +51,16 @@ variables:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 - group: container-registry-info
-- name: baseContainerTag
-  value: ${{ parameters.containerName }}:$(Build.BuildNumber)
 - ${{ if eq(variables.pushImage, false) }}:
   - name: containerRegistry
     value:
   - name: containerTag
-    value: $(baseContainerTag)
+    value: ${{ parameters.containerName }}:$(containerTagSuffix)
 - ${{ if eq(variables.pushImage, true) }}:
   - name: containerRegistry
     value: $[variables.containerRegistryConnection]
   - name: containerTag
-    value: $(containerRegistryUrl)/$(baseContainerTag)
+    value: $(containerRegistryUrl)/${{ parameters.containerName }}:$(containerTagSuffix)
 
 stages:
 - stage: build
@@ -73,6 +71,7 @@ stages:
     pool: Lite
     variables:
       releaseBuildVar: $[variables.releaseBuild]
+      containerTagSuffix: $(SetVersion.version)
     steps:
     - task: Bash@3
       displayName: Parameters
@@ -144,6 +143,15 @@ stages:
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
           buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+    - ${{ if eq(parameters.setVersion, false) }}:
+      - task: Bash@3
+        name: SetVersion
+        displayName: Set Package version
+        inputs:
+          targetType: 'inline'
+          script: |
+            echo "0.0.$(Build.BuildNumber)"
+            echo "##vso[task.setvariable variable=version;isOutput=true]0.0.$(Build.BuildNumber)"
 
     # Build
     - task: Docker@2
@@ -155,7 +163,7 @@ stages:
         dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
         buildContext: ${{ parameters.buildDirectory }}
         tags: |
-          $(Build.BuildNumber)
+          $(containerTagSuffix)
 
     # Lint
     - ${{ if eq(parameters.lint, true) }}:
@@ -198,7 +206,7 @@ stages:
           repository: ${{ parameters.containerName }}
           command: push
           tags: |
-            $(Build.BuildNumber)
+            $(containerTagSuffix)
 
     # Cleanup
     - task: Docker@0
@@ -210,7 +218,7 @@ stages:
       condition: succeededOrFailed()
 
     - task: Docker@0
-      displayName: Docker Cleanup - $(baseContainerTag)
+      displayName: Docker Cleanup - ${{ parameters.containerName }}
       inputs:
         action: Run a Docker command
         customCommand: rmi $(containerTag)
