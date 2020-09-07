@@ -1,0 +1,17 @@
+name: "Auto Assign Pull Request"
+on:
+  pull_request_target:
+    types: [opened, reopened]
+    branches:
+    - master
+    - release/*
+    - pr_assign
+
+jobs:
+  assign_reviewer:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: shufo/auto-assign-reviewer-by-files@v1.1.1
+      with:
+        config: '.github/code_owners.yml'
+        token: ${{ secrets.GITHUB_TOKEN }}
