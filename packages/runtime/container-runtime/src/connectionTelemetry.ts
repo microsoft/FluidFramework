@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// test
 import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
