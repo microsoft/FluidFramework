@@ -149,10 +149,6 @@ export class ContainerContext implements IContainerContext {
         return config as IFluidConfiguration;
     }
 
-    public get IMessageScheduler() {
-        return this;
-    }
-
     public get baseSnapshot() {
         return this._baseSnapshot;
     }

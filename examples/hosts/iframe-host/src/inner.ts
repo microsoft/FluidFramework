@@ -8,13 +8,13 @@ import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 
-async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    const component = await baseHost.requestFluidObject(url);
-    if (component === undefined) {
+async function getFluidObjectAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
+    const fluidObject = await baseHost.requestFluidObject(url);
+    if (fluidObject === undefined) {
         return;
     }
-    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
-    const view = new HTMLViewAdapter(component);
+    // Render the Fluid object with an HTMLViewAdapter to abstract the UI framework used by the Fluid object
+    const view = new HTMLViewAdapter(fluidObject);
     view.render(div, { display: "block" });
 }
 
@@ -42,6 +42,6 @@ export async function runInner(divId: string) {
 
     // Handle the code upgrade scenario (which fires contextChanged)
     container.on("contextChanged", (value) => {
-        getComponentAndRender(baseHost, url, div).catch(() => { });
+        getFluidObjectAndRender(baseHost, url, div).catch(() => { });
     });
 }

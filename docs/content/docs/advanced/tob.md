@@ -1,8 +1,17 @@
 ---
 title: Total Order Broadcast & Eventual Consistency
-draft: false
 menuPosition: 2
+draft: true
 ---
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
+{{% callout warning "Draft!" %}}
+
+This documentation is a **Draft**. It is technically accurate but has not yet been reviewed for consistency and clarity.
+
+{{% /callout %}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Fluid Data: Operations all the way down
 
@@ -14,36 +23,33 @@ Operations describe changes to a data structure. By chaining a series of operati
 a data structure over time (history). This operation is also what we communicate to other clients to share those
 changes. When clients receive operations, they apply those operations to their local data.
 
-However, just sending operations is not enough – we need to be sure that each client applies the operations in the right
+However, just sending operations is not enough -- we need to be sure that each client applies the operations in the right
 order.
 
 Fluid is, at its core, a data model for distributed state. Building collaborative experiences boils down to managing
 distributed state, and Fluid provides powerful developer-friendly abstractions for managing this state in the form of
-Distributed Data Structures (DDSes). Each of these data structures is eventually consistent – this means that, assuming no new
-changes to the data structures, all clients reach an identical state in a finite amount of time.
+distributed data structures (DDSes). Each of these data structures is eventually consistent -- this means that, assuming
+no new changes to the data structures, all clients reach an identical state in a finite amount of time.
 
-Fluid guarantees eventual consistency via total order broadcast. That is, when a Distributed Data Structure (DDS) is
-changed locally by a client, that change – that is, the operation – is first sent to the Fluid server, which does three
-things:
+Fluid guarantees eventual consistency via total order broadcast. That is, when a DDS is changed locally by a client,
+that change -- that is, the operation -- is first sent to the Fluid service, which does three things:
 
 * Assigns a monotonically increasing sequence number to the operation; this is the "total order" part of total order
-  broadcast
-* Broadcasts the operation to all other connected clients; this is the "broadcast" part of total order broadcast
-* Stores the operation's data (see [data persistence](#data-persistence))
+  broadcast.
+* Broadcasts the operation to all other connected clients; this is the "broadcast" part of total order broadcast.
+* Stores the operation's data (see [data persistence](#data-persistence)).
 
 This means that each client receives every operation relayed from the server with enough information to apply them in
-the correct order. The clients can then apply the operations to their local state – which means that each client will
+the correct order. The clients can then apply the operations to their local state -- which means that each client will
 eventually be consistent with the client that originated the change.
 
-The quality of eventual consistency improves performance because local changes can be made optimistically, knowing that
-the Fluid runtime will merge the change in the appropriate way eventually.
 
 ## Operations
 
 Fluid is also efficient when communicating with the server. When you change a data structure, Fluid doesn't send the
-whole data structure to the server. Rather, it sends operations. For example, consider the SharedNumberSequence data
+whole data structure to the server. Rather, it sends operations. For example, consider the [SharedNumberSequence][] data
 structure. When a client inserts, appends, or deletes items in the sequence, Fluid sends the server the operation that
-was performed and the data that was inserted/appended/etc. When the Fluid server broadcasts the operation to all the
+was performed and the data that was inserted/appended/etc. When the Fluid service broadcasts the operation to all the
 other connected clients, it again sends only the operation itself, not the full data structure. This efficiency in
 bytes-over-wire helps both performance and bandwidth.
 
@@ -74,6 +80,40 @@ storage and broadcast an event to the connected clients acknowledging that the s
 the clients will ignore both the summary op itself and the acknowledgement, since connected clients already receive all
 ops and are thus already consistent.
 
-Summary ops summarize the state of distributed data structures, so Data Objects (which are a collection of distributed
+Summary ops summarize the state of distributed data structures, so Fluid objects (which are a collection of distributed
 data structures) don't need to do anything to participate in summarization; it happens automatically, and all
-Data Objects' data structures will be summarized.
+Fluid objects' data structures will be summarized.
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- Links -->
+
+<!-- Packages -->
+
+[Aqueduct]: {{< relref "/apis/aqueduct.md" >}}
+[undo-redo]: {{< relref "/apis/undo-redo.md" >}}
+
+<!-- Classes and interfaces -->
+
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
+[Ink]: {{< relref "/apis/ink/ink.md" >}}
+[SharedCell]: {{< relref "/apis/cell/sharedcell.md" >}}
+[SharedCounter]: {{< relref "SharedCounter" >}}
+[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
+[SharedMatrix]: {{< relref "SharedMatrix" >}}
+[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
+[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[SharedSequence]: {{< relref "SharedSequence" >}}
+[SharedString]: {{< relref "SharedString" >}}
+[Quorum]: {{< relref "/apis/protocol-base/quorum.md" >}}
+
+<!-- Sequence methods -->
+
+[sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/apis/sequence/sequencedeltaevent.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->

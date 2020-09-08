@@ -109,6 +109,29 @@ describe("SharedString", () => {
             }
         });
 
+        it("can handle null annotations in text", async () => {
+            const text = "hello world";
+            // eslint-disable-next-line no-null/no-null
+            const startingProps = { style: "bold", color: null };
+            sharedString.insertText(0, text, startingProps);
+
+            for (let i = 0; i < text.length; i++) {
+                assert.strictEqual(
+                    sharedString.getPropertiesAtPosition(i).color, undefined, "Null values allowed in properties");
+            }
+
+            // eslint-disable-next-line no-null/no-null
+            const updatedProps = { style: null };
+            sharedString.annotateRange(6, text.length, updatedProps);
+
+            for (let i = 6; i < text.length; i++) {
+                assert.strictEqual(
+                    sharedString.getPropertiesAtPosition(i).style,
+                    undefined,
+                    "Null values allowed in properties");
+            }
+        });
+
         it("can insert marker", () => {
             sharedString.insertText(0, "hello world");
             // Insert a simple marker.

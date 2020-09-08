@@ -1,4 +1,4 @@
-# root
+# Routerlicious
 
 Routerlicious handles the receiving of delta operations and is responsible for the ordering and assignment of a
 sequence number to them. Once assigned it is also responsible for notifying connected clients of a new sequence
@@ -16,16 +16,16 @@ The services follow the [twelve factor](https://12factor.net) methodology and ar
 
 ## Getting Started
 
-Get up and running quickly using our [Getting Started guide](https://aka.ms/fluid).
+Get up and running quickly using our Get Started guide at https://fluidframework.com.
 
 ## Help and Questions
 
-Questions can be directed to [Stack Overflow](https://stackoverflow.com/questions/tagged/fluidframework)
+Questions can be directed to [Stack Overflow](https://stackoverflow.com/questions/tagged/fluid-framework)
 
 ## Building and Running
 
 Note that we also provide an npm package of our client side API which allows you to program against the production
-Routerlicious service. See the [API documentation](https://aka.ms/fluid) for more details. You only need to follow the
+Routerlicious service. See the Documentation at https://fluidframework.com for more details. You only need to follow the
 below steps if you'd like to run a local version of the service or need to make changes to it.
 
 ### Prerequisities
@@ -33,7 +33,7 @@ below steps if you'd like to run a local version of the service or need to make 
 #### Standalone
 
 * [Docker](https://www.docker.com/)
-    * In Docker Settings -> Advanced Settings, give Docker at least 4GB of Memory--the more the better. You can give additional CPUs as well. 
+    * In Docker Settings -> Advanced Settings, give Docker at least 4GB of Memory--the more the better. You can give additional CPUs as well.
     * In Docker Settings -> Shared Drives, check the hard drive where your repository lives.
 
 #### For Development
@@ -43,7 +43,7 @@ below steps if you'd like to run a local version of the service or need to make 
 
 ### Development
 
-Docker is the preferred method of development.
+Docker is the preferred method of development. Run the following commands from this directory.
 
 To build the service:
 
@@ -173,7 +173,7 @@ content-addressable file system represented via the [Git REST API](https://devel
 Storage providers that implement this interface are then able to plug into the system as a whole. Currently we have
 support for [GitHub](https://developer.github.com/v3/git/) and [Git](../gitrest).
 
-More details on content-addressable file systems and Git can be found at 
+More details on content-addressable file systems and Git can be found at
 * https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain
 * http://stefan.saasen.me/articles/git-clone-in-haskell-from-the-bottom-up/
 

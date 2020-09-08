@@ -55,14 +55,13 @@ Start both the client and server.
 npm start
 ```
 
-A new browser tab will open to [http://localhost:8080](http://localhost:8080) and you will see the Dice Roller appear!
-To see collaboration in action copy the full url in the browser, including the id, into a new window or even a different
-browser. This opens a second client for your dice roller application. With both windows open, click the **Roll** button
-in either and note that the state of the dice changes in both clients.
+A new browser tab will open to <http://localhost:8080> and you will see the dice roller appear! To see collaboration in
+action copy the full URL in the browser, including the ID, into a new window or even a different browser. This opens a
+second client for your dice roller application. With both windows open, click the **Roll** button in either and note
+that the state of the dice changes in both clients.
 
 🥳**Congratulations**🎉 You have successfully taken the first step towards unlocking the world of Fluid collaboration.
 
 ## Next Steps
 
-See the code in the Dice Roller app in our [Tutorial](./tutorial.md).
-
+See the code for the dice roller app in the [tutorial](./tutorial.md).

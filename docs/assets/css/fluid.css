@@ -19,6 +19,10 @@ footer {
     flex-wrap: wrap;
 }
 
+.row:after, .row:before{
+    display: none;
+}
+
 .cta {
     padding: 2rem 0;
     width: 100%;
@@ -95,6 +99,17 @@ footer {
 
 .cta-icon.issues {
     background-image: url("/images/Beaker.svg");
+}
+
+.omt {
+    font-size: 16px;
+    padding: 8em 4em;
+    background-color: #2c2c32;
+    color: rgba(255, 255, 255, .6);
+}
+
+.omt .container {
+    max-width: 48em;
 }
 
 #github.swimlane .screenshot {

@@ -13,21 +13,23 @@
     "build:api-documenter:default": "[ -e ../_api-extractor-temp/doc-models ] && api-documenter generate --config api-documenter.json --input-folder ../_api-extractor-temp/doc-models/ --output-folder content/apis/ ; exit 0",
     "build:api-documenter:win32": "if exist ../_api-extractor-temp/doc-models api-documenter generate --config api-documenter.json --input-folder ../_api-extractor-temp/doc-models/ --output-folder content/apis/",
     "build:md-magic": "md-magic --path \"**/*.md\" --ignore \"node_modules\"",
+    "clean": "rimraf public/** content/apis/**",
     "hugo": "run-script-os",
     "hugo:default": "\"./bin/hugo\"",
     "hugo:win32": "call \"bin/hugo.exe\"",
     "postinstall": "run-script-os",
-    "install:hugo": "hugo-installer --version 0.74.3 --destination bin",
+    "install:hugo": "hugo-installer --version 0.74.3 --destination bin --extended",
     "postinstall:default": "[ ! -f bin/hugo ] && npm run install:hugo ; exit 0",
     "postinstall:win32": "if not exist bin/hugo.exe npm run install:hugo",
-    "start": "run-script-os",
+    "start": "npm run build:md-magic && run-script-os",
     "start:default": "\"./bin/hugo\" server",
     "start:win32": "call \"bin/hugo.exe\" server"
   },
   "dependencies": {
     "@mattetti/custom-api-documenter": "^0.3.2",
-    "hugo-installer": "^1.0.1",
+    "@tylerbu/hugo-installer": "^1.1.0",
     "markdown-magic": "^1.0.0",
+    "rimraf": "^2.6.2",
     "run-script-os": "^1.0.7"
   }
 }

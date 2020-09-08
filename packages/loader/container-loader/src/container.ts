@@ -1508,7 +1508,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const chaincode = this.pkg !== undefined ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
-        // are set. Global requests will still go to this loader
+        // are set. Global requests will still go directly to the loader
         const loader = new RelativeLoader(this.loader, () => this.originalRequest);
 
         this._context = await ContainerContext.createOrLoad(
