@@ -25,6 +25,8 @@ jobs:
       strategy:
         runOnce:
             deploy:
+                variables:
+                - 
                 steps:
                 - download: current
                   artifact: pack

@@ -1,0 +1,91 @@
+
+# Core client library
+common/build/**:
+- tylerbutler
+- curtisman
+common/lib/**:
+- vladsud
+- curtisman
+packages/agents/**:
+- tanviraumi
+- anthony-murphy
+packages/dds/**:
+- vladsud 
+- anthony-murphy
+
+packages/dds/(cell|counter|ink|map)/**:
+- ChumpChief
+
+packages/dds/(sequence|merge-tree|matrix)/**:
+- DLehnbauer
+- anthony-murphy
+
+packages/dds/ordered-collection/**:
+- vladsud
+- curtisman
+packages/dds/register-collection/**:
+- vladsud
+- tanviraumi
+packages/dds/shared-object-base/**:
+- vladsud
+- ChumpChief
+- curtisman
+packages/dds/shared-summary-block/**:
+- agarwal-navin
+- anthony-murphy
+
+packages/driver/**:
+- vladsud
+- jatgarg
+
+packages/framework/**:
+- skylerjokiel
+- ChumpChief
+packages/loader/**:
+- vladsud
+- anthony-murphy
+packages/runtime/**:
+- vladsud 
+- arinwt
+- curtisman
+packages/hosts/**:
+- anthony-murphy
+- ChumpChief
+- curtisman
+
+packages/test/**:
+- markfields
+- agarwal-navin
+packages/tools/**:
+- vladsud
+- anthony-murphy
+
+packages/utils/odsp-utils/**:
+- markfields
+- curtisman
+packages/utils/telemtry-utils/**:
+- markfields 
+- vladsud
+- wes-carlson
+packages/utils/tools-utils/**:
+- markfields
+- curtisman
+
+# Core server library
+server/**:
+- tanviraumi
+- anthony-murphy
+
+# examples
+examples/**:
+- skylerjokiel
+- ChumpChief
+
+# docs
+docs/**:
+- tylerbutler
+
+# tools
+tools/**:
+- curtisman
+
