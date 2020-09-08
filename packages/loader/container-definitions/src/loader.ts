@@ -69,6 +69,9 @@ export interface ICodeAllowList {
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
+/**
+ * Events emitted by the Container "upwards" to the Loader and Host
+ */
 export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected", listener: (clientId: string) => void);
@@ -84,14 +87,24 @@ export interface IContainerEvents extends IEvent {
     (event: "pong" | "processTime", listener: (latency: number) => void);
 }
 
+/**
+ * The Host's view of the Container and its connection to storage
+ */
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
 
+    /**
+     * The Delta Manager supporting the op stream for this Container
+     */
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
+    /**
+     * The collection of write clients which were connected as of the current sequence number.
+     * Also contains a map of key-value pairs that must be agreed upon by all clients before being accepted.
+     */
     getQuorum(): IQuorum;
 
     /**
-     * Represents the resolved url to the container.
+     * Represents the resolved url to the Container
      */
     resolvedUrl: IResolvedUrl | undefined;
 
@@ -101,7 +114,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly attachState: AttachState;
 
     /**
-     * Attaches the container to the provided host.
+     * Attaches the Container to the Container specified by the given Request.
      *
      * TODO - in the case of failure options should give a retry policy. Or some continuation function
      * that allows attachment to a secondary document.
@@ -114,10 +127,10 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     serialize(): string;
 
     /**
-     * Get an absolute url for a provided container-relative request.
+     * Get an absolute url for a provided container-relative request url.
      * If the container is not attached, this will return undefined.
      *
-     * @param relativeUrl - A relative request within the container
+     * @param relativeUrl - A container-relative request URL
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
@@ -128,8 +141,10 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     request(request: IRequest): Promise<IResponse>;
 }
 
+/**
+ * The Host's view of the Loader, used for loading Containers
+ */
 export interface ILoader extends IFluidRouter {
-
     /**
      * Resolves the resource specified by the URL + headers contained in the request object
      * to the underlying container that will resolve the request.
@@ -146,6 +161,9 @@ export interface ILoader extends IFluidRouter {
     createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer>;
 }
 
+/**
+ * Accepted header keys for requests coming to the Loader
+ */
 export enum LoaderHeader {
     /**
      * Use cache for this container. If true, we will load a container from cache if one with the same id/version exists
@@ -173,6 +191,10 @@ export enum LoaderHeader {
      */
     version = "version",
 }
+
+/**
+ * Set of Request Headers that the Loader understands and may inspect or modify
+ */
 export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
     [LoaderHeader.clientDetails]: IClientDetails;

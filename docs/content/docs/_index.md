@@ -5,8 +5,8 @@ meta: "What is Fluid Framework"
 
 ## What is Fluid Framework?
 
-Fluid Framework is a collection of client libraries for building applications with distributed state. These libraries
-allow multiple clients to create and operate on shared, synchronized data structures using coding
+Fluid Framework is a collection of client libraries for distributing and synchronizing shared state. These libraries
+allow multiple clients to simultaneously create and operate on shared data structures using coding
 patterns similar to those used to work with local data.
 
 ## Why Fluid?
@@ -15,7 +15,7 @@ Because building low-latency, collaborative experiences is hard!
 
 Fluid Framework offers:
 
-* Serverless application model with data persistence
+* Client-centric application model with data persistence requiring no custom server code
 * Distributed data structures with familiar programming patterns
 * Very low latency
 
@@ -51,8 +51,8 @@ accurately produce the current state regardless of the order it receives operati
 Here is a typical flow...
 
 * Client code changes data locally
-* Fluid runtime sends that change to the Fluid server
-* Fluid server sequences that operation and broadcasts it to all clients
+* Fluid runtime sends that change to the Fluid service
+* Fluid service sequences that operation and broadcasts it to all clients
 * Fluid runtime incorporates that operation into local data and raises a "valueChanged" event
 * Client code handles that event (updates view, runs business logic)
 
@@ -72,7 +72,8 @@ participation.
 If you want to learn a lot more about how Fluid works, start with our
 **[architecture](concepts/architecture.md)** overview.
 
-If you prefer to get your hands dirty right away, head for our coding **[tutorial](get-started/tutorial.md)** and **[examples](get-started/examples.md)**.
-But first, get your **[dev environment](get-started/quick-start.md)** set up.
+If you prefer to get your hands dirty right away, head for our coding **[tutorial](get-started/tutorial.md)** and
+**[examples](get-started/examples.md)**. But first, get your **[dev environment](get-started/quick-start.md)** set up.
 
-Still have questions? Maybe we've answered them in our **[FAQ](faq.md)**. If not, check out our **[Community page](/community/)**.
+Still have questions? Maybe we've answered them in our **[FAQ](faq.md)**. If not, check out our
+**[Community page](/community/)**.

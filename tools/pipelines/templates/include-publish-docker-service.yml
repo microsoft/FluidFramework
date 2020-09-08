@@ -1,0 +1,41 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# include-publish-docker-service
+
+parameters:
+- name: containerRegistry
+  type: string
+- name: containerTag
+  type: string
+- name: containerRegistryUrl
+  type: string
+- name: containerName
+  type: string
+
+stages:
+- stage: publish_docker_internal
+  dependsOn: build
+  displayName: Publish Stage - Internal Docker Image
+  condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
+  jobs:
+  - template: include-publish-docker-service-steps.yml
+    parameters:
+      environment: container-registry-internal
+      containerRegistry: ${{ parameters.containerRegistry }}
+      containerTag: ${{ parameters.containerTag }}
+      containerRegistryUrl: ${{ parameters.containerRegistryUrl }}
+      containerName: internal/${{ parameters.containerName }}
+
+- stage: publish_docker_official
+  dependsOn: build
+  displayName: Publish Stage - Official Docker Image
+  condition: and(succeeded(), eq(variables['release'], 'release'))
+  jobs:
+  - template: include-publish-docker-service-steps.yml
+    parameters:
+      environment: container-registry-public
+      containerRegistry: ${{ parameters.containerRegistry }}
+      containerTag: ${{ parameters.containerTag }}
+      containerRegistryUrl: ${{ parameters.containerRegistryUrl }}
+      containerName: pubic/${{ parameters.containerName }}
