@@ -261,7 +261,7 @@
             },
             "Routerlicious-Server": {
                 "packages": [
-                    "@fluid-internal/server-routerlicious"
+                    "@fluidframework/server-routerlicious"
                 ],
                 "deps": [
                     "Server-Libs"
