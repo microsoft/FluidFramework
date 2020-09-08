@@ -12,25 +12,28 @@ You may be here because you want to...
 
 Documentation and guides can be found at <https://fluidframework.com/>.
 
-Hello World Repo can be found at <https://github.com/microsoft/FluidHelloWorld>.
+Hello World repo can be found at <https://github.com/microsoft/FluidHelloWorld>.
 
-Core Examples Repo can be found at <https://github.com/microsoft/FluidExamples>.
+Core Examples repo can be found at <https://github.com/microsoft/FluidExamples>.
 
 Have questions? Engage with other Fluid Framework users and developers on
 [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
 
 ## Code structure
 
-The core code is built into several large chunks ("minirepos", managed using [Lerna](https://lerna.js.org/)) which are
-versioned separately from one another, but internally all packages in a minirepo are versioned together. And outside the
-minirepos there are plenty of packages which are versioned independently.
+The core code for both the Fluid client packages _and_ the reference ordering service is contained within this repo.
+
+The repo structure is somewhat unique because it contains two monorepos as well as several standalone packages. The
+monorepos are managed using [Lerna](https://lerna.js.org/) and are versioned separately from one another, but internally
+all packages in a monorepo are versioned together. Outside the monorepos there are plenty of packages which are
+versioned independently.
 
 Here's the breakdown of the repo:
 
-* Fluid Framework Client Minirepo ([lerna.json](./lerna.json))
+* Fluid Framework Client Monorepo ([lerna.json](./lerna.json))
   * [Packages](./packages)
   * [Fluid Examples](./examples)
-* Reference Fluid Ordering Service ("Routerlicious") Minirepo ([dir](./server/routerlicious) | [lerna.json](server/routerlicious/lerna.json))
+* Reference Fluid Ordering Service ("Routerlicious") Monorepo ([dir](./server/routerlicious) | [lerna.json](server/routerlicious/lerna.json))
   * [Packages](./server/routerlicious/packages)
 * Common Packages
   * [Common Definitions](./common/lib/common-definitions)
@@ -45,7 +48,7 @@ Here's the breakdown of the repo:
 
 Dependencies between packages in various layers of the system are enforced via a build step called
 [layer-check](./tools/build-tools/src/layerCheck). You can view the full list of packages and layers in
-[PACKAGES.md](./docs/PACKAGES.md).
+[docs/PACKAGES.md](./docs/PACKAGES.md).
 
 ## Building
 
