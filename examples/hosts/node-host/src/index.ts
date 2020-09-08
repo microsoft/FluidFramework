@@ -19,7 +19,9 @@ import { fetchFluidObject } from "./utils";
 const ordererEndpoint = "http://localhost:3000";
 const storageEndpoint = "http://localhost:3000";
 const tenantId = "tinylicious";
+// Tinylicious doesn't care about tenantKey and bearerSecret
 const tenantKey = "12345";
+const bearerSecret = "12345"
 // Code package details.
 const defaultPackage = "@fluid-example/key-value-cache@0.27.0-3935";
 const installPath = "/tmp/fluid-objects";
@@ -37,7 +39,7 @@ const user = {
 export async function start(): Promise<void> {
     // TODO: Create a url resolver for node environment.
     // Generate access tokens.
-    const createNew = docId.length === 0 ? true : false;
+    const createNew = docId.length === 0;
     const documentId = docId.length === 0 ? uuid() : docId;
     const token = jwt.sign(
         {
@@ -67,9 +69,15 @@ export async function start(): Promise<void> {
         url: documentUrl,
     };
 
+    const hostToken = jwt.sign(
+        {
+            user,
+        },
+        bearerSecret);
+
     const resolver = new ContainerUrlResolver(
         ordererEndpoint,
-        "token",
+        hostToken,
         new Map([[documentUrl, resolved]]));
 
     // A code loader that installs the code package in a specified location (installPath).
