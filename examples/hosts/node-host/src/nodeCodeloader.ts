@@ -50,6 +50,7 @@ export class NodeCodeLoader {
         const signalPath = `${packageDirectory}/${signalFileName}`;
         const codeEntrypoint = `${packageDirectory}/node_modules/${scope}/${name}`;
 
+        await this.waitForPackageFiles(packageDirectory, signalFileName, this.waitTimeoutMSec);
         // Install the versioned package if not already present.
         if (!fs.existsSync(signalPath) || !fs.existsSync(codeEntrypoint)) {
             if (!fs.existsSync(packageDirectory)) {
@@ -71,7 +72,6 @@ export class NodeCodeLoader {
             // Write dummy signal file to indicate package installation success.
             fs.closeSync(fs.openSync(signalPath, "w"));
         }
-        await this.waitForPackageFiles(packageDirectory, signalFileName, this.waitTimeoutMSec);
         // Return entry point.
         return codeEntrypoint;
     }
