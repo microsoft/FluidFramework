@@ -60,7 +60,7 @@ variables:
   - name: containerRegistry
     value: $[variables.containerRegistryConnection]
   - name: containerTag
-    value: $(containerRegistryUrl)/${{ parameters.containerName }}:$(containerTagSuffix)
+    value: $(containerRegistryUrl)/build/${{ parameters.containerName }}:$(containerTagSuffix)
 
 stages:
 - stage: build
