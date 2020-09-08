@@ -1,6 +1,6 @@
 ---
 name: Documentation issue
-about: Request additions or improvements to the documentation (http://aka.ms/fluid)
+about: Request additions or improvements to the documentation (https://fluidframework.com)
 title: ''
 labels: 'documentation'
 assignees: ''
