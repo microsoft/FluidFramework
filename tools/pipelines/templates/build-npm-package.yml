@@ -75,6 +75,7 @@ variables:
     parameters:
       publishOverride: ${{ parameters.publishOverride }}
       releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 
 stages:
   - stage: build
@@ -87,12 +88,6 @@ stages:
           testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
           releaseBuildVar: $[variables.releaseBuild]
         steps:
-        # Setup
-        - checkout: self
-          clean: true
-          lfs: ${{ parameters.checkoutSubmodules }}
-          submodules: ${{ parameters.checkoutSubmodules }}
-
         - task: Bash@3
           displayName: Parameters
           inputs:
@@ -118,9 +113,30 @@ stages:
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
                 componentDetection=${{ variables.componentDetection }}
-                pushImage=${{ variables.pushImage }}
                 publish=${{ variables.publish }}
+                canRelease=${{ variables.canRelease }}
+
                 release=$(release)"
+
+              if [[ "$(release)" == "release" ]]; then
+                if [[ "${{ variables.canRelease }}" == "False" ]]; then
+                  echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
+                  exit -1;
+                fi
+              fi
+
+              if [[ "$(release)" != "none" ]]; then
+                if [[ "${{ variables.publish }}" != "True" ]]; then
+                  echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
+                  exit -1;
+                fi
+              fi
+
+        # Setup
+        - checkout: self
+          clean: true
+          lfs: ${{ parameters.checkoutSubmodules }}
+          submodules: ${{ parameters.checkoutSubmodules }}
 
         # Install
         - task: UseNode@1
@@ -281,4 +297,3 @@ stages:
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
         buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-        

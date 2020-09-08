@@ -27,9 +27,6 @@ menu:
   - name: "API"
     url: "/apis/"
     weight: -80
-  - name: "Blog"
-    url: "/posts/"
-    weight: -50
   - name: "Community"
     url: "/community/"
     weight: -40
