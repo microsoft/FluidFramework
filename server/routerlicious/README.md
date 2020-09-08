@@ -20,7 +20,7 @@ Get up and running quickly using our [Getting Started guide](https://aka.ms/flui
 
 ## Help and Questions
 
-Questions can be directed to [Stack Overflow](https://stackoverflow.com/questions/tagged/fluidframework)
+Questions can be directed to [Stack Overflow](https://stackoverflow.com/questions/tagged/fluid-framework)
 
 ## Building and Running
 
@@ -33,7 +33,7 @@ below steps if you'd like to run a local version of the service or need to make 
 #### Standalone
 
 * [Docker](https://www.docker.com/)
-    * In Docker Settings -> Advanced Settings, give Docker at least 4GB of Memory--the more the better. You can give additional CPUs as well. 
+    * In Docker Settings -> Advanced Settings, give Docker at least 4GB of Memory--the more the better. You can give additional CPUs as well.
     * In Docker Settings -> Shared Drives, check the hard drive where your repository lives.
 
 #### For Development
@@ -173,7 +173,7 @@ content-addressable file system represented via the [Git REST API](https://devel
 Storage providers that implement this interface are then able to plug into the system as a whole. Currently we have
 support for [GitHub](https://developer.github.com/v3/git/) and [Git](../gitrest).
 
-More details on content-addressable file systems and Git can be found at 
+More details on content-addressable file systems and Git can be found at
 * https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain
 * http://stefan.saasen.me/articles/git-clone-in-haskell-from-the-bottom-up/
 

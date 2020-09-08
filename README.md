@@ -14,7 +14,7 @@ Documentation and guides can be found at <https://fluidframework.com/>
 Hello World Repo can be found at <https://github.com/microsoft/FluidHelloWorld>
 Core Examples Repo can be found at <https://github.com/microsoft/FluidExamples>
 
-Got questions? Engage with other Fluid Framework users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
+Got questions? Engage with other Fluid Framework users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/fluid-framework)
 
 ## Code Structure
 
@@ -140,7 +140,7 @@ Then:
 
 There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
 
-* Participate in Q&A on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
+* Participate in Q&A on [StackOverflow](https://stackoverflow.com/questions/tagged/fluid-framework)
 * [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
 * Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 * [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
