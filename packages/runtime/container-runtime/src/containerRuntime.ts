@@ -1598,27 +1598,18 @@ export class ContainerRuntime extends EventEmitter
                         || this.attachOpFiredForDataStore.has(key)),
                 )
                 .map(([key, value]) => {
+                    let dataStoreSummary: ISummarizeResult;
                     if (value.isLoaded) {
                         const snapshot = value.generateAttachMessage().snapshot;
-                        const dataStoreSummary = convertToSummaryTree(snapshot, true);
-                        builder.addWithStats(key, dataStoreSummary);
+                        dataStoreSummary = convertToSummaryTree(snapshot, true);
                     } else {
                         // If this data store is not yet loaded, then there should be no changes in the snapshot from
                         // which it was created as it is detached container. So just use the previous snapshot.
                         assert(this.context.baseSnapshot,
                             "BaseSnapshot should be there as detached container loaded from snapshot");
-                        const dataStoreSummary: ISummarizeResult = {
-                            summary: convertSnapshotToSummaryTree(this.context.baseSnapshot.trees[key]),
-                            // No need to build stats, because we don't need them anyway here.
-                            stats: {
-                                treeNodeCount: 0,
-                                blobNodeCount: 0,
-                                handleNodeCount: 0,
-                                totalBlobSize: 0,
-                            },
-                        };
-                        builder.addWithStats(key, dataStoreSummary);
+                        dataStoreSummary = convertSnapshotToSummaryTree(this.context.baseSnapshot.trees[key]);
                     }
+                    builder.addWithStats(key, dataStoreSummary);
                 });
         } while (notBoundContextsLength !== this.notBoundContexts.size);
 
