@@ -751,8 +751,7 @@ export class ContainerRuntime extends EventEmitter
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree | string>();
 
-        // back-compat 0.24 baseSnapshotCouldBeNull
-        if (context.baseSnapshot !== undefined && context.baseSnapshot !== null) {
+        if (typeof context.baseSnapshot === "object") {
             const baseSnapshot = context.baseSnapshot;
             Object.keys(baseSnapshot.trees).forEach((value) => {
                 if (value !== ".protocol" && value !== ".logTail" && value !== ".serviceProtocol") {
@@ -777,8 +776,7 @@ export class ContainerRuntime extends EventEmitter
                     this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
             } else {
                 let pkgFromSnapshot: string[];
-                // back-compat 0.24 baseSnapshotCouldBeNull
-                if (context.baseSnapshot === null || context.baseSnapshot === undefined) {
+                if (typeof context.baseSnapshot !== "object") {
                     throw new Error("Snapshot should be there to load from!!");
                 }
                 const snapshotTree = value as ISnapshotTree;
@@ -788,6 +786,8 @@ export class ContainerRuntime extends EventEmitter
                     snapshotTree.blobs[".component"]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
                 // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
+                // However the feature of loading a detached container from snapshot, is added when the
+                // snapshotFormatVersion is "0.1", so we don't expect it to be anything else.
                 if (snapshotFormatVersion === currentSnapshotFormatVersion) {
                     pkgFromSnapshot = JSON.parse(pkg) as string[];
                 } else {

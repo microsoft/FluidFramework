@@ -93,7 +93,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     ): FluidDataStoreRuntime {
         const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { dataStoreId: uuid() });
         const runtime = new FluidDataStoreRuntime(
-            context,
+            context as IFluidDataStoreContextType,
             context.documentId,
             context.id,
             context.parentBranch,
@@ -176,7 +176,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     private _attachState: AttachState;
 
     private constructor(
-        private readonly dataStoreContext: IFluidDataStoreContext,
+        private readonly dataStoreContext: IFluidDataStoreContextType,
         public readonly documentId: string,
         public readonly id: string,
         public readonly parentBranch: string | null,
@@ -199,7 +199,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             Object.keys(tree.trees).forEach((path) => {
                 let channelContext: IChannelContext;
                 // If already exists on storage, then create a remote channel.
-                if ((dataStoreContext as IFluidDataStoreContextType).isLocalDataStore) {
+                if (dataStoreContext.isLocalDataStore) {
                     const channelAttributes = readAndParseFromBlobs<IChannelAttributes>(
                         tree.trees[path].blobs, tree.trees[path].blobs[".attributes"]);
                     channelContext = new LocalChannelContext(

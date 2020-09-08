@@ -84,9 +84,14 @@ export class LocalChannelContext implements IChannelContext {
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         assert(this.attached, "Local channel must be attached when processing op");
 
+        // A local channel may not be loaded in case where we rehydrate the container from a snapshot because of
+        // delay loading. So after the container is attached and some other client joins which start generating
+        // ops for this channel. So not loaded local channel can still receive ops and we store them to process later.
         if (this.isLoaded) {
             this.services.deltaConnection.process(message, local, localOpMetadata);
         } else {
+            assert.strictEqual(local, false,
+                "Should always be remote because a local dds shouldn't generate ops before loading");
             this.pending.push(message);
         }
     }

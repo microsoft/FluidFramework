@@ -758,6 +758,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        snapshotTree: ISnapshotTree | undefined,
     ) {
         super(
             id,
@@ -767,7 +768,8 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
             scope,
             summaryTracker,
             createSummarizerNode,
-            bindChannel);
+            bindChannel,
+            snapshotTree);
     }
 }
 
@@ -789,6 +791,7 @@ export class LocalDetachedFluidDataStoreContext
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        snapshotTree: ISnapshotTree | undefined,
     ) {
         super(
             id,
@@ -798,7 +801,8 @@ export class LocalDetachedFluidDataStoreContext
             scope,
             summaryTracker,
             createSummarizerNode,
-            bindChannel);
+            bindChannel,
+            snapshotTree);
         assert(this.pkg === undefined);
         this.detachedRuntimeCreation = true;
     }
