@@ -36,13 +36,15 @@
 
 <style>
     .browser-window {
-        position:absolute;
-        top:0;
-        height:45px;
-        width:100%;
+        position: absolute;
+        top: 0;
+        height: 45px;
+        width: 100%;
         background-color: #e8e8e8;
         border-bottom: 1px solid lightgray;
+        user-select: none;
     }
+
     .browser-window-wrapper {
         flex-grow: 1;
         width: 50%;
@@ -52,20 +54,23 @@
         padding-bottom: 10px;
         margin: 2px;
     }
+
     .browser-window-icon-wrapper {
         position: absolute;
         display: flex;
         top: 0px;
         right: 0px;
     }
+
     .browser-window-icon {
         position: relative;
         top: 0px;
         right: 0px;
         color: #333333;
-        width:25px;
+        width: 25px;
         text-align: center;
     }
+
     .browser-window-nav {
         position: absolute;
         font-size: 10px;
@@ -74,13 +79,14 @@
         height: 20px;
         width: 65%;
         border-radius: 2px;
-        box-shadow: 0 30px 40px rgba(0,0,0,.1);
+        box-shadow: 0 30px 40px rgba(0, 0, 0, .1);
         background-color: white;
         border: 1px solid lightgray;
         overflow: hidden;
     }
+
     .browser-window-nav-url {
-        padding-left:2px;
+        padding-left: 2px;
     }
 </style>
 

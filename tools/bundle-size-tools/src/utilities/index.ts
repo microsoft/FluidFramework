@@ -5,9 +5,9 @@
 
 export * from './decompressStatsFile';
 export * from './getAllFilesInDirectory';
-export * from './getBaselineCommit';
+export * from './getBuilds';
 export * from './getChunkAndDependenciesSizes';
 export * from './getChunkParsedSize';
-export * from './getCiBuildWithCommit';
 export * from './getLastCommitHashFromPR';
+export * from './gitCommands';
 export * from './unzipStream';

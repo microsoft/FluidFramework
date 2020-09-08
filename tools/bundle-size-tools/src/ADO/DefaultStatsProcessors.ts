@@ -4,7 +4,7 @@
  */
 
 import { getEntryStatsProcessor, getTotalSizeStatsProcessor, getBundleBuddyConfigProcessor } from '../statsProcessors';
-import { Constants } from './Constants';
+import { totalSizeMetricName } from './Constants';
 
 /**
  * The set of stats file processors we will run on bundles
@@ -14,5 +14,5 @@ export const DefaultStatsProcessors = [
     metricNameProvider: (chunk) => `${chunk.name}.js <span title="Plus dependencies">ℹ</span>`
   }),
   getEntryStatsProcessor({ metricNameProvider: (chunkName) => `${chunkName}.js` }),
-  getTotalSizeStatsProcessor({ metricName: Constants.totalSizeMetricName })
+  getTotalSizeStatsProcessor({ metricName: totalSizeMetricName })
 ];

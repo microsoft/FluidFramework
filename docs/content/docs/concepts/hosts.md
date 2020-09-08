@@ -47,7 +47,7 @@ multiple containers from the loader.
 
 We'll talk about each of these parts, starting with the request and loader dependencies, over the next sections.
 
-## Loading a container - Class by Class
+## Loading a container: class by class
 
 Let's address the role of each part of the Fluid loader and dive in to some details.
 
@@ -58,9 +58,9 @@ information that will be parsed by the URL Resolver to identify where the contai
 
 This is not part of instantiating the loader. The request kicks of the process of loading a container.
 
-### URL Resolver
+### URL resolver
 
-The URL Resolver parses a request and returns an `IFluidResolvedUrl`. This object includes all the endpoints and tokens
+The URL resolver parses a request and returns an `IFluidResolvedUrl`. This object includes all the endpoints and tokens
 needed by the Fluid service driver to access the container.
 
 An example IFluidResolvedUrl includes the below information.
@@ -69,7 +69,7 @@ An example IFluidResolvedUrl includes the below information.
 const resolvedUrl: IFluidResolvedUrl = {
     endpoints: {
         deltaStorageUrl: "www.ContosoFluidService.com/deltaStorage",
-        ordererUrl: "www.ContosoFluidService.com/orderer"
+        ordererUrl: "www.ContosoFluidService.com/orderer",
         storageUrl: "www.ContosoFluidService.com/storage",
     },
     tokens: { jwt: "token" },
@@ -82,7 +82,7 @@ You may notice we are mimicking the DNS and protocol lookup a browser performs w
 loader may access containers stored on multiple Fluid services. Furthermore, each Fluid service could be operating with
 a different API and protocol.
 
-### Fluid Service Driver Factory (DocumentServiceFactory)
+### Fluid service driver factory (DocumentServiceFactory)
 
 The loader uses a Fluid service driver to connect to a Fluid service.
 
@@ -109,6 +109,3 @@ object).
 
 The host is responsible for checking that this response is valid. Did the loader return a 200? Is the mimeType correct?
 As the Fluid Framework expands, we intend to make further use of these responses.
-
-The host can then use [feature detection via IFluidObject](./feature-detection-iprovide.md) to query for features and
-then integrate the container into the application.

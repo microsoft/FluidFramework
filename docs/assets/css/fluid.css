@@ -19,6 +19,10 @@ footer {
     flex-wrap: wrap;
 }
 
+.row:after, .row:before{
+    display: none;
+}
+
 .cta {
     padding: 2rem 0;
     width: 100%;

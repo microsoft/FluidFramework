@@ -1582,8 +1582,8 @@ export class ContainerRuntime extends EventEmitter
                 )
                 .map(([key, value]) => {
                     const snapshot = value.generateAttachMessage().snapshot;
-                    const componentSummary = convertToSummaryTree(snapshot, true);
-                    builder.addWithStats(key, componentSummary);
+                    const dataStoreSummary = convertToSummaryTree(snapshot, true);
+                    builder.addWithStats(key, dataStoreSummary);
                 });
         } while (notBoundContextsLength !== this.notBoundContexts.size);
 

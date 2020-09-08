@@ -4,14 +4,13 @@
  */
 
 import { WebApi } from 'azure-devops-node-api';
-import { Constants } from '../ADO/Constants';
 
 /**
  * Fetches the last commit hash for a PR.
  */
-export async function getLastCommitHashFromPR(adoConnection: WebApi, prId: number) {
+export async function getLastCommitHashFromPR(adoConnection: WebApi, prId: number, repoGuid: string) {
   const gitApi = await adoConnection.getGitApi();
-  const prCommits = await gitApi.getPullRequestCommits(Constants.projectRepoGuid, prId);
+  const prCommits = await gitApi.getPullRequestCommits(repoGuid, prId);
 
   return prCommits[0].commitId;
 }

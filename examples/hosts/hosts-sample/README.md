@@ -92,10 +92,11 @@ The `IUrlResolver` interface is defined as
 ```typescript
 export interface IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl>;
+    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
 }
 ```
 
-This simple interface defines a single method, `resolve`, which takes in an `IRequest` object and resolves it to an
+This simple interface defines a method, `resolve`, which takes in an `IRequest` object and resolves it to an
 `IResolvedUrl`. An `IRequest` is simply the URL for the document. And the `IResolvedUrl` is the Fluid based URL
 along with associated access tokens.
 
@@ -139,6 +140,8 @@ const response: IFluidResolvedUrl = {
 
 return response;
 ```
+It also defines an api, `getAbsoluteUrl` which takes 2 arguments, `resolvedUrl` and `relativeUrl`. It creates a url for
+the created container with any data store path given in the relative url.
 
 #### Drivers
 
@@ -196,9 +199,26 @@ export interface IChaincodeFactory {
 
 Once the `IChaincodeFactory` is returned the loader then invokes the instantiateRuntime call to load the code package.
 
-### Loading a Fluid document
+### Creating a Fluid document
 
-Once the loader has been created then actually loading a Fluid document is a one line call
+Once the loader has been created then actually creating a Fluid document is very simple
+
+```typescript
+const container = await loader.createDetachedContainer(codeDetails);
+await container.attach(request);
+```
+In first line, we actually create an in-memory container without creating it on the actual storage. `codeDetails`
+is the code package to run for the container. It provides benefits like freaky fast container creation so that the
+user can start editing the container immediately and we don't have to propose code through the quorum.
+
+In the second line, we call attach on the container to actually create it on the storage. This is async and can
+be done in the background while the user is editing the container. It takes in a `request` which is a `createNewRequest`
+which can be resolved by the resolver. This resolved url might not contain the endpoints because the container is not yet
+created. The resolver can also provide this api on its instance to create the `createNewRequest`.
+
+### Loading a Fluid Document
+
+Loading a Fluid document is a one line call
 
 ```typescript
 const response = await loader.request({ url });
@@ -219,7 +239,7 @@ if (response.status !== 200) {
 ```
 
 A mime type is also provided with the request to distinguish the type of object.  The most common thing you'll receive
-is a Fluid object. Fluid objects implement the attach interface which allow them to participate in the web component
+is a Fluid object. Fluid objects implement the attach interface which allow them to participate in the web
 model. But a document could also return different mime types like static images, videos, etc...
 
 The host can then switch on the mime type and act accordingly. In the case of the Fluid object, we check if is a viewable
@@ -249,52 +269,6 @@ object interfaces. For example, if you need to determine the capabilities that a
 cast the object as an `IFluidObject`, and then access the property on the `IFluidObject` that matches the interface you
 are testing for.  The above checks if the object implements `IFluidHTMLView`, and uses it to get the instance
 that implements the rendering capability.
-
-### Quoruming on a code package
-
-In many cases your host will only be loading existing documents and so can skip these steps. But if you'd like to be
-able to create a new document and then establish the code package to run on it then these are the steps to follow.
-
-The first step is to resolve the document. This is a separate call from the request method shown earlier in that
-it doesn't fetch a URL from the document. But instead just resolves to the document represented by the given URL. If
-you've ever dug into the HTTP protocol this model will feel familiar. On a HTTP GET the first step is to take the
-domain name for the URL and resolve that to a server using DNS. Once that resolution has happened then you connect
-to the service and issue a GET request to it with the path contained in the URL. We follow a similar model. Internally
-when the loader receives a URL it first resolves it to a document - using the `resolve` function. And then issues
-a `request` against the resolved document. In general the only time you need to perform a `resolve` is when you want
-access to the low-level document to perform a task like changing the code quorum directly. Otherwise you should just
-be making use of `request` calls.
-
-```typescript
-const document = await loader.resolve({ url });
-```
-
-Once the document has been received we can ask for its quorum. The quorum contains the list of clients currently
-connected to the document. And also allows you to make proposals that are agreed upon by the members in the quorum. We
-use this mechanism to establish the code package to run for the document.
-
-```typescript
-const quorum = document.getQuorum();
-```
-
-Once we have the quorum we wait to become connected to the document. Proposals can only be made when you are part
-of the quorum and this occurs once you become connected.
-
-```typescript
-// Wait for connection so that proposals can be sent
-if (!document.connected) {
-    await new Promise<void>((resolve) => document.on("connected", () => resolve()));
-}
-```
-
-And then finally if no code has been proposed we go and make the proposal.
-
-```typescript
-// And then make the proposal if a code proposal has not yet been made
-if (!quorum.has("code")) {
-    await quorum.propose("code", pkg);
-}
-```
 
 ## Next Steps
 

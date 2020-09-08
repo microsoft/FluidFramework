@@ -32,8 +32,8 @@
     "@fluidframework/core-interfaces": "^0.27.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.19.2-0",
-    "@fluidframework/eslint-config-fluid": "^0.19.1-0",
+    "@fluidframework/build-common": "^0.19.2",
+    "@fluidframework/eslint-config-fluid": "^0.19.1",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
