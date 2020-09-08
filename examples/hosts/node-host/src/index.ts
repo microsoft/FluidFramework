@@ -21,10 +21,11 @@ const storageEndpoint = "http://localhost:3000";
 const tenantId = "tinylicious";
 // Tinylicious doesn't care about tenantKey and bearerSecret
 const tenantKey = "12345";
-const bearerSecret = "12345"
+const bearerSecret = "12345";
 // Code package details.
 const defaultPackage = "@fluid-example/key-value-cache@0.27.0-3935";
 const installPath = "/tmp/fluid-objects";
+const timeoutMS = 60000;
 
 // Document id (randomly chosen if not specified)
 const docId = "";
@@ -82,7 +83,7 @@ export async function start(): Promise<void> {
 
     // A code loader that installs the code package in a specified location (installPath).
     // Once installed, the loader returns an entry point to Fluid Container to invoke the code.
-    const nodeCodeLoader = new NodeCodeLoader(installPath);
+    const nodeCodeLoader = new NodeCodeLoader(installPath, timeoutMS);
 
     // Construct the loader
     const loader = new Loader(
