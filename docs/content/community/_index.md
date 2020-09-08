@@ -18,7 +18,7 @@ title: Welcome to the Fluid Community
 
   {{< cta
     linkClasses="stack-overflow"
-    linkURL="https://stackoverflow.com/questions/tagged/fluidframework"
+    linkURL="https://stackoverflow.com/questions/tagged/fluid-framework"
     iconClasses="stack-overflow"
     linkText="Ask Technical Questions"
     subtext="The team monitors questions tagged \"fluidframework\" on Stack Overflow. Feel free to ask questions or, if you can, give us a hand by answering some."
