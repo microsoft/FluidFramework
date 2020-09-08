@@ -50,27 +50,36 @@ export class NodeCodeLoader {
         const signalPath = `${packageDirectory}/${signalFileName}`;
         const codeEntrypoint = `${packageDirectory}/node_modules/${scope}/${name}`;
 
-        await this.waitForPackageFiles(packageDirectory, signalFileName, this.waitTimeoutMSec);
         // Install the versioned package if not already present.
         if (!fs.existsSync(signalPath) || !fs.existsSync(codeEntrypoint)) {
-            if (!fs.existsSync(packageDirectory)) {
-                fs.mkdirSync(packageDirectory, { recursive: true });
-            }
-
-            // Copy over the root .npmrc (if present) to the directory where npm install will be executed.
-            if (this.useLocalDirectory) {
-                if (fs.existsSync(`${__dirname}/../.npmrc`)) {
-                    fs.copyFileSync(`${__dirname}/../.npmrc`, `${packageDirectory}/.npmrc`);
+            const pkgDirExists = fs.existsSync(packageDirectory);
+            if (!pkgDirExists || this.useLocalDirectory) {
+                if (!pkgDirExists) {
+                    fs.mkdirSync(packageDirectory, { recursive: true });
                 }
-            } else if (fs.existsSync(`${this.packageDirectory}/.npmrc`)) {
-                    fs.copyFileSync(`${this.packageDirectory}/.npmrc`, `${packageDirectory}/.npmrc`);
+                // Copy over the root .npmrc (if present) to the directory where npm install will be executed.
+                if (this.useLocalDirectory) {
+                    if (fs.existsSync(`${__dirname}/../.npmrc`)) {
+                        fs.copyFileSync(`${__dirname}/../.npmrc`, `${packageDirectory}/.npmrc`);
+                    }
+                } else if (fs.existsSync(`${this.packageDirectory}/.npmrc`)) {
+                        fs.copyFileSync(`${this.packageDirectory}/.npmrc`, `${packageDirectory}/.npmrc`);
+                }
+
+                // Run npm install
+                await asyncExec(`npm install ${pkg}`, { cwd: packageDirectory });
+
+                // Write dummy signal file to indicate package installation success.
+                fs.closeSync(fs.openSync(signalPath, "w"));
+            } else {
+                // If the local flag is false and pkg directory exists, only then wait for the signal file.
+                // Consider 2 processes trying to load the code at same time. One process start and create the
+                // pkg directory, then other process tris to load the code. Process 2 will see that pkg directory
+                // is already created, so it will just wait for the process 1 to install the pkg and use that.
+                // However, there is a limitation, because if something bad happens while installing the pkg by
+                // Process 1, then even pkg 2 would not try to install the pkg. But for exp purposes, it is fine.
+                await this.waitForPackageFiles(packageDirectory, signalFileName, this.waitTimeoutMSec);
             }
-
-            // Run npm install
-            await asyncExec(`npm install ${pkg}`, { cwd: packageDirectory });
-
-            // Write dummy signal file to indicate package installation success.
-            fs.closeSync(fs.openSync(signalPath, "w"));
         }
         // Return entry point.
         return codeEntrypoint;
