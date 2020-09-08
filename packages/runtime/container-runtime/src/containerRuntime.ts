@@ -130,9 +130,6 @@ export enum ContainerMessageType {
 
     // Chunked operation.
     ChunkedOp = "chunkedOp",
-
-    // Notifies the server that an external blob has been attached
-    BlobAttach = "blobAttach"
 }
 
 export interface IChunkedOp {
@@ -229,7 +226,6 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.FluidDataStoreOp:
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
-        case ContainerMessageType.BlobAttach:
         case MessageType.Operation:
             return true;
         default:
@@ -773,7 +769,8 @@ export class ContainerRuntime extends EventEmitter
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
             () => this.storage,
-            (blobId) => this.submit(ContainerMessageType.BlobAttach, blobId),
+            // (blobId) => this.submit(ContainerMessageType.BlobAttach, blobId),
+            (blobId) => this.context.submitFn(MessageType.BlobAttach, undefined, false, { blobId }),
         );
 
         this.scheduleManager = new ScheduleManager(
@@ -1895,9 +1892,6 @@ export class ContainerRuntime extends EventEmitter
                 break;
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
-            case ContainerMessageType.BlobAttach:
-                this.submit(type, content, localOpMetadata);
-                break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }

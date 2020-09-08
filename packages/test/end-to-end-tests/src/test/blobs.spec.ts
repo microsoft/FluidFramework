@@ -7,8 +7,7 @@ import * as assert from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IFluidCodeDetails, IContainer } from "@fluidframework/container-definitions";
-import { ContainerMessageType } from "@fluidframework/container-runtime";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
+import { ISummaryConfiguration, MessageType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createLocalLoader, createAndAttachContainer, TestContainerRuntimeFactory } from "@fluidframework/test-utils";
@@ -60,7 +59,7 @@ describe("blobs", () => {
         const container = await createContainer();
 
         const blobOpP = new Promise((res) => container.on("op", (op) => {
-            if (op.contents?.type === ContainerMessageType.BlobAttach) {
+            if (op.contents?.type === MessageType.BlobAttach) {
                 res();
             }
         }));
