@@ -1612,6 +1612,7 @@ export class ContainerRuntime extends EventEmitter
                     builder.addWithStats(key, dataStoreSummary);
                 });
         } while (notBoundContextsLength !== this.notBoundContexts.size);
+
         this.serializeContainerBlobs(builder);
 
         return builder.summary;
