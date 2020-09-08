@@ -7,16 +7,19 @@ applications.
 
 You may be here because you want to...
 
-- Learn more about the Fluid Framework
-- Build a Fluid object
+* Learn more about the Fluid Framework
+* Build a Fluid object
 
-Documentation and guides can be found at <https://fluidframework.com/>
-Hello World Repo can be found at <https://github.com/microsoft/FluidHelloWorld>
-Core Examples Repo can be found at <https://github.com/microsoft/FluidExamples>
+Documentation and guides can be found at <https://fluidframework.com/>.
 
-Got questions? Engage with other Fluid Framework users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
+Hello World Repo can be found at <https://github.com/microsoft/FluidHelloWorld>.
 
-## Code Structure
+Core Examples Repo can be found at <https://github.com/microsoft/FluidExamples>.
+
+Have questions? Engage with other Fluid Framework users and developers on
+[StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
+
+## Code structure
 
 The core code is built into several large chunks ("minirepos", managed using [Lerna](https://lerna.js.org/)) which are
 versioned separately from one another, but internally all packages in a minirepo are versioned together. And outside the
@@ -40,11 +43,14 @@ Here's the breakdown of the repo:
   * [Docs](./docs)
   * [Tools](./tools)
 
-Dependencies between packages in various layers of the system are enforced via a build step called [layer-check](./tools/build-tools/src/layerCheck). You can view the full list of packages and layers in [PACKAGES.md](./docs/PACKAGES.md).
+Dependencies between packages in various layers of the system are enforced via a build step called
+[layer-check](./tools/build-tools/src/layerCheck). You can view the full list of packages and layers in
+[PACKAGES.md](./docs/PACKAGES.md).
 
 ## Building
 
-In order to build the Fluid Framework, ensure that you have installed [Git](https://git-scm.com/downloads) and [Node.js](https://nodejs.org/).
+In order to build the Fluid Framework, ensure that you have installed [Git](https://git-scm.com/downloads) and
+[Node.js](https://nodejs.org/).
 
 Note: we recommend using nvm (for [Windows](https://github.com/coreybutler/nvm-windows) or
 [MacOS/Linux](https://github.com/nvm-sh/nvm)) to install Node.js, in case you find yourself needing to install different
@@ -73,8 +79,9 @@ command from the package you're interested in.
 
 Note: Some of the tests depend on test collateral that lives in a submodule here:
 <https://github.com/microsoft/FluidFrameworkTestData>.  You may choose to fetch that collateral into your local
-repository, which is required to run all the tests - otherwise some will be skipped. First install git LFS from
-<https://git-lfs.github.com/>. Then, from the repo root:
+repository, which is required to run all the tests - otherwise some will be skipped.
+
+First install Git LFS from <https://git-lfs.github.com/>. Then, from the repo root:
 
 ```shell
 git lfs install
@@ -96,7 +103,7 @@ npm run test:coverage
 
 ### Mimic the official CI build
 
-_Note: The official build uses npm run test:full, which doesn’t work on windows._
+_Note: The official build uses npm run test:full, which doesn’t work on Windows._
 
 ```shell
 npm run test:coverage
@@ -105,7 +112,8 @@ npm run test:copyresults
 
 ### Run tests from within VS Code
 
-We've checked in [VS Code configuration](https://github.com/microsoft/FluidFramework/blob/main/.vscode/launch.json) enabling F5 from a `spec.ts` file to run those tests, if you set the debug configuration to "Debug Current Test".
+We've checked in [VS Code configuration](https://github.com/microsoft/FluidFramework/blob/main/.vscode/launch.json)
+enabling F5 from a `spec.ts` file to run those tests if you set the debug configuration to "Debug Current Test".
 
 ## Run it locally
 
@@ -120,7 +128,8 @@ _This will use an in-memory implementation of the Fluid server to sync between t
 
 ### Multiple browser instances on the same device
 
-_This will run the local Fluid server implementation we like to call "tinylicious", so you can sync between multiple browser instances._
+_This will run the local Fluid server implementation we call "Tinylicious", so you can sync between multiple browser
+instances._
 
 First, start Tinylicious by running these commands from `/server/tinylicious`:
 
@@ -145,11 +154,14 @@ There are many ways to [contribute](https://github.com/microsoft/FluidFramework/
 * Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 * [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+Detailed instructions for working in the repo can be found in the
+[Wiki](https://github.com/microsoft/FluidFramework/wiki).
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see
-the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com)
-with any additional questions or comments.
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact
+[opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
-This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these
+trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks). Use of
+Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft
+sponsorship.
