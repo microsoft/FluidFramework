@@ -17,7 +17,7 @@
     "hugo:default": "\"./bin/hugo\"",
     "hugo:win32": "call \"bin/hugo.exe\"",
     "postinstall": "run-script-os",
-    "install:hugo": "hugo-installer --version 0.74.3 --destination bin",
+    "install:hugo": "hugo-installer --version 0.74.3 --destination bin --extended",
     "postinstall:default": "[ ! -f bin/hugo ] && npm run install:hugo ; exit 0",
     "postinstall:win32": "if not exist bin/hugo.exe npm run install:hugo",
     "start": "npm run build:md-magic && run-script-os",
@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@mattetti/custom-api-documenter": "^0.3.2",
-    "hugo-installer": "^1.0.1",
+    "@tylerbu/hugo-installer": "^1.1.0",
     "markdown-magic": "^1.0.0",
     "run-script-os": "^1.0.7"
   }
