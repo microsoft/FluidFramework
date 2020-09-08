@@ -58,7 +58,7 @@ export class InsecureUrlResolver implements IUrlResolver {
             return this.resolveHelper(fileName);
         }
         const parsedUrl = new URL(request.url);
-
+        console.log("it goes here yay!");
         // If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
         // service using our bearer token.
         if (parsedUrl.host === window.location.host) {
