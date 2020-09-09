@@ -76,13 +76,15 @@ variables:
     buildNumberInPatch: ${{ variables.buildNumberInPatch }}
 - group: container-registry-info
 - name: containerName
-  value: fluidframework/routerlicious/server
+  value: fluidframework/routerlicious/server  
 - name: baseContainerName
   value: $(containerName)-base
 - name: baseContainerTag
   value: $(baseContainerName):$(containerTagSuffix)
+- name: buildContainerName
+  value: build/${{ variables.containerName }}
 - name: fullRunnerContainerTag
-  value: $(containerRegistryUrl)/build/$(containerName):$(containerTagSuffix)
+  value: $(containerRegistryUrl)/${{ variables.buildContainerName }}:$(containerTagSuffix)
 - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
   - name: testConfig
     value: :full
@@ -259,7 +261,7 @@ stages:
             displayName: 'Docker Build - Runner'
             inputs:
               containerRegistry: $(containerRegistryConnection)
-              repository: $(containerName)
+              repository: ${{ variables.buildContainerName }}
               command: build
               dockerFile: server/routerlicious/Dockerfile
               buildContext: server/routerlicious
@@ -271,7 +273,7 @@ stages:
             displayName: 'Docker Push - Runner'
             inputs:
               containerRegistry: $(containerRegistryConnection)
-              repository: $(containerName)
+              repository: ${{ variables.buildContainerName }}
               command: push
               tags: |
                 $(containerTagSuffix)
