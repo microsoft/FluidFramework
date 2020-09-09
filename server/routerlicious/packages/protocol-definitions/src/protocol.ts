@@ -51,6 +51,9 @@ export enum MessageType {
 
     // Service specific control messages that are never sequenced.
     Control = "control",
+
+    // Notifies the server that an external blob has been attached and should not be garbage collected
+    BlobAttach = "blobAttach",
 }
 
 /**
