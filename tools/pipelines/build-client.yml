@@ -99,6 +99,7 @@ extends:
 
     postBuildJobs:
     - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+      # TODO: Move to a template to be more concise here?
       - job: PostCheckinTests
         displayName: Run Post-Checkin Tests
         pool: Main
@@ -111,16 +112,10 @@ extends:
             version: 12.x
         - ${{ if eq(parameters.taskAuth, true) }}:
           - task: npmAuthenticate@0
-            displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/.npmrc'
+            displayName: npm Authenticate
             inputs:
-              workingFile: ${{ parameters.buildDirectory }}/.npmrc
-              customEndpoint: Offnet Packages
-        - ${{ if ne(parameters.extraAuth, '') }}:
-          - task: npmAuthenticate@0
-            displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/${{ parameters.extraAuth }}/.npmrc'
-            inputs:
-              workingFile: ${{ parameters.buildDirectory }}/${{ parameters.extraAuth }}/.npmrc
-              customEndpoint: Offnet Packages
+              workingFile: $(Pipeline.Workspace)/pack/.npmrc
+              customEndPoint: ${{ feed.customEndPoint }}
 
         # TODO: Download the artifact for the built client packages from Build stage
 

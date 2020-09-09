@@ -23,10 +23,6 @@ parameters:
   type: string
   default: ci:test
  
-- name: extraAuth
-  type: string
-  default:
-
 - name: poolCG
   type: object
   default: Lite
