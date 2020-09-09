@@ -104,40 +104,57 @@ extends:
         displayName: Run Post-Checkin Tests
         pool: Main
         steps:
-
-        # Install
-        - task: UseNode@1
-          displayName: Use Node 12.x
-          inputs:
-            version: 12.x
-        - ${{ if eq(parameters.taskAuth, true) }}:
+          # TODO: Share code with include-publish-npm-package-steps.yml?
+          - download: current
+            artifact: pack
+          - task: UseNode@1
+            displayName: Use Node 12.x
+            inputs: 
+              version: 12.x
+          - task: Bash@3
+            displayName: Generate .npmrc
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(Pipeline.Workspace)/pack
+              ${{ if eq(parameters.namespace, true) }}:
+                script: |
+                  echo Generating .npmrc for https://registry.npmjs.org
+                  echo "@fluidframework:registry=https://registry.npmjs.org" >> ./.npmrc
+                  echo "@fluid-example:registry=https://registry.npmjs.org" >> ./.npmrc
+                  echo "@fluid-internal:registry=https://registry.npmjs.org" >> ./.npmrc
+                  echo "always-auth=true" >> ./.npmrc
+                  cat .npmrc
+              ${{ if eq(parameters.namespace, false) }}:
+                script: |
+                  echo Generating .npmrc for https://registry.npmjs.org
+                  echo "registry=https://registry.npmjs.org" >> ./.npmrc
+                  echo "always-auth=true" >> ./.npmrc
+                  cat .npmrc
           - task: npmAuthenticate@0
             displayName: npm Authenticate
             inputs:
               workingFile: $(Pipeline.Workspace)/pack/.npmrc
-              customEndPoint: ${{ feed.customEndPoint }}
+              customEndPoint: npmjs
 
-        # TODO: Download the artifact for the built client packages from Build stage
+          # Run the tests
+          - task: Npm@1
+            displayName: npm run ci:test:realsvc
+            env:
+              fluid__webpack__bearerSecret: $(fluid__webpack__bearerSecret)
+              fluid__webpack__fluidHost: $(fluid__webpack__fluidHost)
+              fluid__webpack__tenantId: $(fluid__webpack__tenantId)
+              fluid__webpack__tenantSecret: $(fluid__webpack__tenantSecret)
+            inputs:
+              command: 'custom'
+              workingDir: packages/test/end-to-end-tests
+              customCommand: 'run ci:test:realsvc'
 
-        # Run the tests
-        - task: Npm@1
-          displayName: npm run ci:test:realsvc
-          env:
-            fluid__webpack__bearerSecret: $(fluid__webpack__bearerSecret)
-            fluid__webpack__fluidHost: $(fluid__webpack__fluidHost)
-            fluid__webpack__tenantId: $(fluid__webpack__tenantId)
-            fluid__webpack__tenantSecret: $(fluid__webpack__tenantSecret)
-          inputs:
-            command: 'custom'
-            workingDir: packages/test/end-to-end-tests
-            customCommand: 'run ci:test:realsvc'
-
-        # Publish the results
-        - task: PublishTestResults@2
-          displayName: Publish Post-Checkin Test Results
-          inputs:
-            testResultsFormat: 'JUnit'
-            testResultsFiles: '**/*junit-report.xml'
-            searchFolder: packages/test/end-to-end-tests/nyc-post
-            mergeTestResults: true
-          condition: succeededOrFailed()
+          # Publish the results
+          - task: PublishTestResults@2
+            displayName: Publish Post-Checkin Test Results
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/*junit-report.xml'
+              searchFolder: packages/test/end-to-end-tests/nyc-post
+              mergeTestResults: true
+            condition: succeededOrFailed()
