@@ -81,8 +81,10 @@ variables:
   value: $(containerName)-base
 - name: baseContainerTag
   value: $(baseContainerName):$(containerTagSuffix)
+- name: buildContainerName
+  value: build/${{ variables.containerName }}
 - name: fullRunnerContainerTag
-  value: $(containerRegistryUrl)/$(containerName):$(containerTagSuffix)
+  value: $(containerRegistryUrl)/${{ variables.buildContainerName }}:$(containerTagSuffix)
 - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
   - name: testConfig
     value: :full
@@ -133,7 +135,7 @@ stages:
                 fi
               fi
 
-              if [[ "$(release)" != "none" ]]; then
+              if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
                 if [[ "${{ variables.publish }}" != "True" ]]; then
                   echo "##vso[task.logissue type=error]'$(release)' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
                   exit -1;
@@ -259,7 +261,7 @@ stages:
             displayName: 'Docker Build - Runner'
             inputs:
               containerRegistry: $(containerRegistryConnection)
-              repository: $(containerName)
+              repository: ${{ variables.buildContainerName }}
               command: build
               dockerFile: server/routerlicious/Dockerfile
               buildContext: server/routerlicious
@@ -271,7 +273,7 @@ stages:
             displayName: 'Docker Push - Runner'
             inputs:
               containerRegistry: $(containerRegistryConnection)
-              repository: $(containerName)
+              repository: ${{ variables.buildContainerName }}
               command: push
               tags: |
                 $(containerTagSuffix)
