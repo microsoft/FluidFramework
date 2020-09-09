@@ -106,7 +106,7 @@ relies on a Total Order Broadcast to guarantee that all operations are applied i
 
 Fluid does not use Conflict-Free Replicated Data Types (CRDTs), but our model is more similar to CRDT than OT.
 The Fluid Framework relies on update-based operations that are ordered using our Total Order Broadcast to prevent
-conflicts. This allows us to have non-commutative operations because their is an explicit ordering.
+conflicts. This allows us to have non-commutative operations because there is an explicit ordering.
 
 ## Use Cases
 
