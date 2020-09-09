@@ -7,5 +7,3 @@ See [GitHub](https://github.com/microsoft/FluidFramework) for more details on th
 ## Exported Modules & Services
 
 All services are included in the package's `dist/` folder. These packaged services can be used in conjunction with customized or additional helper services. Alternatively, pick-and-choose which services to host if some are unnecessary for your use-case.
-
-Riddler and Alfred also have classes and functions exported to make it easier to mix-and-match implementation details within customized versions of each.

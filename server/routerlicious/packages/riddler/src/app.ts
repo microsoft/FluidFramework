@@ -8,8 +8,7 @@ import * as bodyParser from "body-parser";
 import express from "express";
 import morgan from "morgan";
 import * as winston from "winston";
-// eslint-disable-next-line import/no-internal-modules
-import { getTenantIdFromRequest } from "../alfred/utils";
+import { getTenantIdFromRequest } from "@fluidframework/server-alfred";
 import * as api from "./api";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
