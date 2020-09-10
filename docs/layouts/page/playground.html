@@ -1,12 +1,32 @@
 {{ define "header" }}
 {{ partial "header.html" . }}
+
 {{ end }}
 
+
 {{ define "main" }}
+<style>
+    /* move scroll into playground area */
+    html {
+        overflow-y: hidden;
+    }
+
+    /* body is overflow hidden, so it needs to fill the entire screen height */
+    body {
+        height: 100vh;
+    }
+
+    /* #root comes from storybook, and the first div child has 100vh height, which does not work in playground
+    due to the 50px header and 90px footer (50 + 90 = 140) */
+    #root>div {
+        height: calc(100vh - 140px);
+    }
+</style>
 {{ partial "navbarSticky.html" . }}
 
 <h2>This body is replaced when Storybook is injected during the build process.</h2>
-<p>To learn more about the Fluid & Storybook, you can go to <a href="https://github.com/microsoft/FluidStorybook">https://github.com/microsoft/FluidStorybook</a></p>
+<p>To learn more about the Fluid & Storybook, you can go to <a
+        href="https://github.com/microsoft/FluidStorybook">https://github.com/microsoft/FluidStorybook</a></p>
 
 {{ block "footer" . -}}{{ end }}
 {{- partial "analytics.html" . }}
