@@ -35,6 +35,7 @@
     "copyfiles": "^2.1.0",
     "download-cli": "^1.1.1",
     "markdown-magic": "^1.0.0",
+    "markdown-magic-package-scripts": "^1.2.1",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.0.7"
   }
