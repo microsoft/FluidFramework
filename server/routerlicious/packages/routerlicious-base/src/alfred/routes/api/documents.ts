@@ -6,7 +6,7 @@
 import { IDocumentStorage } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { getParam } from "../../utils";
+import { getParam } from "../../../utils";
 
 export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): Router {
     const router: Router = Router();

@@ -5,7 +5,7 @@
 
 import * as path from "path";
 import { runService } from "@fluidframework/server-services-utils";
-import { AlfredResourcesFactory, AlfredRunnerFactory } from "./runnerFactory";
+import { AlfredResourcesFactory, AlfredRunnerFactory } from "@fluidframework/server-routerlicious-base";
 
 runService(
     new AlfredResourcesFactory(),
