@@ -1,4 +1,4 @@
-# @fluidframework/server-alfred
+# Alfred
 
 ![Michael Caine as Alfred Pennyworth in The Dark Knight Trilogy](https://upload.wikimedia.org/wikipedia/en/1/18/Alfred_Pennyworth_%28Michael_Caine%29.jpg)
 
