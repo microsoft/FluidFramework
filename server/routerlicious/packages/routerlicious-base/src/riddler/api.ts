@@ -5,7 +5,7 @@
 
 import { MongoManager } from "@fluidframework/server-services-core";
 import { Response, Router } from "express";
-import { getParam } from "@fluidframework/server-alfred";
+import { getParam } from "../utils";
 import { TenantManager } from "./tenantManager";
 
 export function create(

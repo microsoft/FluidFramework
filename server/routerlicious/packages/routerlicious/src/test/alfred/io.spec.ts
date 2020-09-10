@@ -41,7 +41,7 @@ import {
     TestTenantManager,
     DebugLogger,
 } from "@fluidframework/server-test-utils";
-import { OrdererManager } from "@fluidframework/server-alfred";
+import { OrdererManager } from "@fluidframework/server-routerlicious-base";
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {

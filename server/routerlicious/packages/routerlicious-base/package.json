@@ -1,7 +1,7 @@
 {
-  "name": "@fluidframework/server-alfred",
+  "name": "@fluidframework/server-routerlicious-base",
   "version": "0.1013.0",
-  "description": "Fluid server entry point to Routerlicious",
+  "description": "Fluid server base classes for routerlicious",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

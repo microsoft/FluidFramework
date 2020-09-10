@@ -5,7 +5,7 @@
 
 import * as path from "path";
 import * as utils from "@fluidframework/server-services-utils";
-import { RiddlerResourcesFactory, RiddlerRunnerFactory } from "@fluidframework/server-riddler";
+import { RiddlerResourcesFactory, RiddlerRunnerFactory } from "@fluidframework/server-routerlicious-base";
 
 utils.runService(
     new RiddlerResourcesFactory(),
