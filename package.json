@@ -106,6 +106,7 @@
     "copyfiles": "^2.1.0",
     "lerna": "^3.14.1",
     "nyc": "^15.0.0",
+    "package-lock-sanitizer": "^1.0.1",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.0.7",
     "typescript": "~3.7.4"
