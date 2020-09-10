@@ -154,7 +154,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService,
     ): Promise<void> {
         const header = await storage.read(snapshotFileName);
