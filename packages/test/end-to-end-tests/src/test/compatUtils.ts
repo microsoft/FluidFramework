@@ -189,7 +189,10 @@ export const createContainer = async (
     loader: ILoader | old.ILoader,
     urlResolver: IUrlResolver,
 ): Promise<IContainer> => {
-    return createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
+    // Causing build break due to addition of api related to rehydrating container in Loader interface.
+    // Right now we are not using the back compat tests for rehydrating container.
+    // So just typecast for now. Will put a better sol after that.
+    return createAndAttachContainer(documentId, defaultCodeDetails, loader as ILoader, urlResolver);
 };
 
 export const createContainerWithOldLoader = async (
