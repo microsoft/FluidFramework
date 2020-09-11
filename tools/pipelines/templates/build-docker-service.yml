@@ -51,23 +51,25 @@ variables:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 - group: container-registry-info
+- name: buildContainerName
+  value: build/${{ parameters.containerName }}
 - ${{ if eq(variables.pushImage, false) }}:
   - name: containerRegistry
     value:
   - name: containerTag
-    value: ${{ parameters.containerName }}:$(containerTagSuffix)
+    value: $(buildContainerName):$(containerTagSuffix)
 - ${{ if eq(variables.pushImage, true) }}:
   - name: containerRegistry
     value: $[variables.containerRegistryConnection]
   - name: containerTag
-    value: $(containerRegistryUrl)/${{ parameters.containerName }}:$(containerTagSuffix)
+    value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
 
 stages:
 - stage: build
   displayName: Build Stage
   jobs:
   - job: build
-    displayName: Build Container - ${{ parameters.containerName }}
+    displayName: Build Container - ${{ variables.buildContainerName }}
     pool: Lite
     variables:
       releaseBuildVar: $[variables.releaseBuild]
@@ -109,7 +111,7 @@ stages:
             fi
           fi
 
-          if [[ "$(release)" != "none" ]]; then
+          if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
             if [[ "${{ variables.pushImage }}" != "True" ]]; then
               echo "##vso[task.logissue type=error]'$(release)' is set but image is not pushed. Either the branch doesn't default to push image or it is skipped."
               exit -1;
@@ -158,7 +160,7 @@ stages:
       displayName: Docker Build
       inputs:
         containerRegistry: $(containerRegistry)
-        repository: ${{ parameters.containerName }}
+        repository: ${{ variables.buildContainerName }}
         command: build
         dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
         buildContext: ${{ parameters.buildDirectory }}
@@ -203,7 +205,7 @@ stages:
         displayName: Docker Push
         inputs:
           containerRegistry: $(containerRegistryConnection)
-          repository: ${{ parameters.containerName }}
+          repository: ${{ variables.buildContainerName }}
           command: push
           tags: |
             $(containerTagSuffix)
@@ -218,7 +220,7 @@ stages:
       condition: succeededOrFailed()
 
     - task: Docker@0
-      displayName: Docker Cleanup - ${{ parameters.containerName }}
+      displayName: Docker Cleanup - ${{ variables.buildContainerName }}
       inputs:
         action: Run a Docker command
         customCommand: rmi $(containerTag)

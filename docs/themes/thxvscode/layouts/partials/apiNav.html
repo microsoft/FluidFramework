@@ -73,8 +73,20 @@
         {{- range $grouping, $names :=  $.Site.Data.packages }}
         <optgroup label="{{ $grouping }}">
             {{- range $names }}
+
+            {{/* instead of a package name, we have a custom map used to create class/interface links */}}
+            {{- if reflect.IsMap .}}
+
+            {{$custom := index . "custom"}}
+            {{ $customLink := index $custom "url" }}
+            {{ $customTitle := index $custom "title"}}
+            {{ $isCurrentPage := eq (relURL $current.RelPermalink) $customLink }}
+            <option value="{{ $customLink }}" {{ if $isCurrentPage }}selected{{end}}>
+                {{ $customTitle | humanize | title }}</option>
+            {{- else }}
             {{ $isCurrentPage := eq $package . }}
             <option value="{{.}}" {{ if $isCurrentPage }}selected{{end}}>{{ . }}</option>
+            {{- end }}
             {{ end }}
         </optgroup>
         {{- end }}

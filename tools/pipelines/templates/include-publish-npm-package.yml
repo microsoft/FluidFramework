@@ -19,7 +19,7 @@ parameters:
 stages:
 - stage: publish_npm_internal
   dependsOn: build
-  displayName: Publish Stage - Internal Packages
+  displayName: Publish Internal Packages
   jobs:
   - template: include-publish-npm-package-steps.yml
     parameters:
@@ -32,7 +32,7 @@ stages:
 
 - stage: publish_npm_official
   dependsOn: build
-  displayName: Publish Stage - Official Packages
+  displayName: Publish Official Packages
   condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
   jobs:
   - template: include-publish-npm-package-steps.yml

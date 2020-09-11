@@ -165,7 +165,7 @@ export interface IChannelFactory {
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
+        branchId: string | undefined,
         channelAttributes: Readonly<IChannelAttributes>,
     ): Promise<IChannel>;
 
