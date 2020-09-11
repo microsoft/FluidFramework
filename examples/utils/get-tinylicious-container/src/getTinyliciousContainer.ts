@@ -7,7 +7,7 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { Container } from "@fluidframework/container-loader";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
@@ -17,6 +17,7 @@ import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
+import { getContainer } from "./getContainer";
 
 /**
  * InsecureTinyliciousUrlResolver knows how to get the URLs to the service (in this case Tinylicious) to use
@@ -83,37 +84,12 @@ export async function getTinyliciousContainer(
 
     const urlResolver = new InsecureTinyliciousUrlResolver();
 
-    // To bypass proposal-based loading, we need a codeLoader that will return our already-in-memory container factory.
-    // The expected format of that response is an IFluidModule with a fluidExport.
-    const module = { fluidExport: containerRuntimeFactory };
-    const codeLoader = { load: async () => module };
-
-    const loader = new Loader(
+    return getContainer(
+        documentId,
+        createNew,
+        { url: documentId },
         urlResolver,
         documentServiceFactory,
-        codeLoader,
-        { blockUpdateMarkers: true },
-        {},
-        new Map(),
+        containerRuntimeFactory,
     );
-
-    let container: Container;
-
-    if (createNew) {
-        // We're not actually using the code proposal (our code loader always loads the same module regardless of the
-        // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
-        // proposal.
-        container = await loader.createDetachedContainer({ package: "", config: {} });
-        await container.attach({ url: documentId });
-    } else {
-        // The InsecureTinyliciousUrlResolver expects the url of the request to be the documentId.
-        container = await loader.resolve({ url: documentId });
-        // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
-        // new container here, where we expect this to be loading an existing container.
-        if (!container.existing) {
-            throw new Error("Attempted to load a non-existing container");
-        }
-    }
-
-    return container;
 }
