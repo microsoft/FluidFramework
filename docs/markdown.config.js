@@ -13,6 +13,7 @@ module.exports = {
             const fileContents = fs.readFileSync(options.path, "utf8");
             return fileContents;
         },
+        SCRIPTS: require("markdown-magic-package-scripts"),
     },
     callback: function () {
         console.log("done");

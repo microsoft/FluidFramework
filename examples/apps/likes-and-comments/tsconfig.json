@@ -1,4 +1,5 @@
 {
+    "extends": "@fluidframework/build-common/ts-common-config.json",
     "exclude": [
         "dist",
         "node_modules"
@@ -6,12 +7,8 @@
     "compilerOptions": {
         "allowSyntheticDefaultImports": true,
         "target": "es6",
-        "noUnusedLocals": true,
         "module": "esnext",
-        "moduleResolution": "node",
         "outDir": "dist",
-        "sourceMap": true,
-        "inlineSources": true,
         "jsx": "react",
         "types": [
             "react",

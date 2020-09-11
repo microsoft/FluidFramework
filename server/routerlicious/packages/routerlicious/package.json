@@ -68,6 +68,7 @@
     "@fluidframework/server-lambdas": "^0.1013.0",
     "@fluidframework/server-lambdas-driver": "^0.1013.0",
     "@fluidframework/server-memory-orderer": "^0.1013.0",
+    "@fluidframework/server-routerlicious-base": "^0.1013.0",
     "@fluidframework/server-services": "^0.1013.0",
     "@fluidframework/server-services-client": "^0.1013.0",
     "@fluidframework/server-services-core": "^0.1013.0",
