@@ -52,7 +52,6 @@ import { getWithRetryForTokenRefresh, fetchHelper } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { getQueryString } from "./getQueryString";
-import { getUrlAndHeadersAndOptionsWithAuth } from "./getUrlAndHeadersAndOptionsWithAuth";
 
 /* eslint-disable max-len */
 
@@ -465,61 +464,53 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
         // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-        const { headers, url, isOptionsCall } = getUrlAndHeadersAndOptionsWithAuth(`${this.snapshotUrl}/trees/latest${snapshotOptions}`, storageToken);
+        const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${snapshotOptions}`, storageToken);
 
+        let isOptionsCall = false;
+
+        if (headers) {
+            isOptionsCall = true;
+        }
         // This event measures only successful cases of getLatest call (no tokens, no retries).
         const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest" }, async (event) => {
+            const startTime = performance.now();
             const response = await fetchHelper<IOdspSnapshot>(url, { headers });
+            const endTime = performance.now();
+            const overallTime = endTime - startTime;
             const content = response.content;
-            let isResourceDataAvailable = false;
-            let dnstime; // domainLookupEnd - domainLookupStart
-            let redirectTime; // redirectEnd -redirectStart
-            let tcpHandshakeTime; // connectEnd  - connectStart
-            let secureConntime; // connectEnd  - secureConnectionStart
-            let responseTime; // responsEnd - responseStart
-            let fetchStToRespEndTime; // responseEnd  - fetchStart
-            let reqStToRespEndTime; // responseEnd - requestStart
-            let stToRespEnd; // responseEnd - startTime
+            let dnstime = -1; // domainLookupEnd - domainLookupStart
+            let redirectTime = -1; // redirectEnd -redirectStart
+            let tcpHandshakeTime = -1; // connectEnd  - connectStart
+            let secureConntime = -1; // connectEnd  - secureConnectionStart
+            let responseTime = -1; // responsEnd - responseStart
+            let fetchStToRespEndTime = -1; // responseEnd  - fetchStart
+            let reqStToRespEndTime = -1; // responseEnd - requestStart
+            let networkTime = -1; // responseEnd - startTime
             const spReqDuration = response.headers.get("sprequestduration");
 
-            if (performance) {
-                const resources1 = performance.getEntriesByType("resource");
-                for (let i = resources1.length - 1; i > 0; i--) {
-                    const indResTime = resources1[i] as PerformanceResourceTiming;
-                    const resource_name = indResTime.name;
-                    const resource_initiatortype = indResTime.initiatorType;
-                    if ((resource_initiatortype.localeCompare("fetch") === 0) && (resource_name.localeCompare(url) === 0)) {
-                        isResourceDataAvailable = true;
+            const resources1 = performance.getEntriesByType("resource");
+            // Usually the latest fetch call is to the end of resources, so we start from the end.
+            for (let i = resources1.length - 1; i > 0; i--) {
+                const indResTime = resources1[i] as PerformanceResourceTiming;
+                const resource_name = indResTime.name;
+                const resource_initiatortype = indResTime.initiatorType;
+                if ((resource_initiatortype.localeCompare("fetch") === 0) && (resource_name.localeCompare(url) === 0)) {
                         redirectTime = indResTime.redirectEnd - indResTime.redirectStart;
                         dnstime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
                         tcpHandshakeTime = indResTime.connectEnd - indResTime.connectStart;
-                        secureConntime = (indResTime.secureConnectionStart > 0) ? (indResTime.connectEnd - indResTime.secureConnectionStart) : "0";
+                        secureConntime = (indResTime.secureConnectionStart > 0) ? (indResTime.connectEnd - indResTime.secureConnectionStart) : 0;
                         responseTime = indResTime.responseEnd - indResTime.responseStart;
-                        fetchStToRespEndTime = (indResTime.fetchStart > 0) ? (indResTime.responseEnd - indResTime.fetchStart) : "0";
-                        reqStToRespEndTime = (indResTime.requestStart > 0) ? (indResTime.responseEnd - indResTime.requestStart) : "0";
-                        stToRespEnd = (indResTime.startTime > 0) ? (indResTime.responseEnd - indResTime.startTime) : "0";
+                        fetchStToRespEndTime = (indResTime.fetchStart > 0) ? (indResTime.responseEnd - indResTime.fetchStart) : 0;
+                        reqStToRespEndTime = (indResTime.requestStart > 0) ? (indResTime.responseEnd - indResTime.requestStart) : 0;
+                        networkTime = (indResTime.startTime > 0) ? (indResTime.responseEnd - indResTime.startTime) : 0;
                         break;
-                    } else {
-                        isResourceDataAvailable = false;
-                    }
                 }
             }
-            if (isResourceDataAvailable === false) {
-                redirectTime = -1;
-                dnstime = -1;
-                tcpHandshakeTime = -1;
-                secureConntime = -1;
-                responseTime = -1;
-                fetchStToRespEndTime = -1;
-                reqStToRespEndTime = -1;
-                stToRespEnd = -1;
-            }
-            let clientDuration;
-            if (spReqDuration == null) {
-                    clientDuration = -1;
-            } else {
+            let clientDuration = -1;
+            if (spReqDuration) {
                     clientDuration = parseInt(spReqDuration, 10) - responseTime;
             }
+            const clientTime = overallTime - networkTime;
             event.end({
                 trees: content.trees?.length ?? 0,
                 blobs: content.blobs?.length ?? 0,
@@ -527,16 +518,18 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 headers: Object.keys(headers).length !== 0 ? true : undefined,
                 sprequestguid: response.headers.get("sprequestguid"),
                 sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
-                isOptionsCall: isOptionsCall ? true : false,
-                clientDuration: TelemetryLogger.numberFromString(clientDuration),
-                redirecttime: TelemetryLogger.numberFromString(redirectTime),
-                dnsLookuptime: TelemetryLogger.numberFromString(dnstime),
-                responsenetworkTime: TelemetryLogger.numberFromString(responseTime),
-                tcphandshakeTime: TelemetryLogger.numberFromString(tcpHandshakeTime),
-                secureconnectiontime: TelemetryLogger.numberFromString(secureConntime),
-                fetchstarttorespendtime: TelemetryLogger.numberFromString(fetchStToRespEndTime),
-                reqstarttorespendtime: TelemetryLogger.numberFromString(reqStToRespEndTime),
-                starttorespend: TelemetryLogger.numberFromString(stToRespEnd),
+                isptionscall: isOptionsCall,
+                clientduration: clientDuration,
+                redirecttime: redirectTime,
+                dnsLookuptime: dnstime,
+                responsenetworkTime: responseTime,
+                tcphandshakeTime: tcpHandshakeTime,
+                secureconnectiontime: secureConntime,
+                fetchstarttorespendtime: fetchStToRespEndTime,
+                reqstarttorespendtime: reqStToRespEndTime,
+                overalltime: overallTime,
+                networktime: networkTime,
+                clienttime: clientTime,
                 contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
                 bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
             });
