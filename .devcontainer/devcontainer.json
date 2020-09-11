@@ -12,7 +12,9 @@
     // at the root of the ${workspaceFolder}.
     "postCreateCommand": ". /usr/local/share/nvm/nvm.sh; nvm install",
 
+    // Expose 'docker.sock' to the dev container and proxy access for the 'node' user.
 	"mounts": [ "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind" ],
+	"postStartCommand": "/usr/local/share/docker-init.sh",
 
 	// Set *default* container specific settings.json values on container create.
 	"settings": { "terminal.integrated.shell.linux": "/usr/bin/zsh" },
@@ -20,12 +22,10 @@
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
         "dbaeumer.vscode-eslint",
+        "ms-azuretools.vscode-docker",
         "editorconfig.editorconfig"
-    ],
+	],
 
     // Forward port for Tinylicious
     "forwardPorts": [ 3000 ]
-
-    // Required to provide non-root user w/access to docker (see Dockerfile)
-    // "overrideCommand": false,
 }
