@@ -116,20 +116,13 @@ extends:
             inputs:
               targetType: 'inline'
               workingDirectory: $(Pipeline.Workspace)/pack
-              ${{ if eq(parameters.namespace, true) }}:
-                script: |
-                  echo Generating .npmrc for https://registry.npmjs.org
-                  echo "@fluidframework:registry=https://registry.npmjs.org" >> ./.npmrc
-                  echo "@fluid-example:registry=https://registry.npmjs.org" >> ./.npmrc
-                  echo "@fluid-internal:registry=https://registry.npmjs.org" >> ./.npmrc
-                  echo "always-auth=true" >> ./.npmrc
-                  cat .npmrc
-              ${{ if eq(parameters.namespace, false) }}:
-                script: |
-                  echo Generating .npmrc for https://registry.npmjs.org
-                  echo "registry=https://registry.npmjs.org" >> ./.npmrc
-                  echo "always-auth=true" >> ./.npmrc
-                  cat .npmrc
+              script: |
+                echo Generating .npmrc for https://registry.npmjs.org
+                echo "@fluidframework:registry=https://registry.npmjs.org" >> ./.npmrc
+                echo "@fluid-example:registry=https://registry.npmjs.org" >> ./.npmrc
+                echo "@fluid-internal:registry=https://registry.npmjs.org" >> ./.npmrc
+                echo "always-auth=true" >> ./.npmrc
+                cat .npmrc
           - task: npmAuthenticate@0
             displayName: npm Authenticate
             inputs:
