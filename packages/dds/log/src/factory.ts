@@ -10,7 +10,6 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { SharedLog } from "./log";
-import { ISharedLog } from "./types";
 import { pkgVersion } from "./packageVersion";
 
 /**
@@ -38,13 +37,14 @@ export class SharedLogFactory implements IChannelFactory {
         id: string,
         services: IChannelServices,
         branchId: string,
-        attributes: IChannelAttributes): Promise<ISharedLog> {
+        attributes: IChannelAttributes,
+    ): Promise<SharedLog> {
         const instance = new SharedLog(id, runtime, attributes);
         await instance.load(branchId, services);
         return instance;
     }
 
-    public create(document: IFluidDataStoreRuntime, id: string): ISharedLog {
+    public create(document: IFluidDataStoreRuntime, id: string): SharedLog {
         const cell = new SharedLog(id, document, this.attributes);
         cell.initializeLocal();
         return cell;

@@ -23,6 +23,7 @@
                 "source-map-support/register",
                 "--no-timeouts",
                 "test/**/*.spec.ts",
+                //"test/**/log.spec.ts",
                 // "-f",
                 // "fail",
                 "--exit"

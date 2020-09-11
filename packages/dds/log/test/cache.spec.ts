@@ -5,22 +5,21 @@
 
 import "mocha";
 import { strict as assert } from "assert";
-import { LogCache } from "../src/cache";
+import { LogIndex } from "../src/cache";
 
-describe("LogCache", () => {
-    let cache: LogCache<any>;
+describe("LogIndex", () => {
+    let index: LogIndex<any>;
 
     beforeEach(async () => {
-        cache = new LogCache();
+        index = new LogIndex();
     });
 
     it("works", () => {
         for (let i = 0; i < (256 * 256 * 256); i++) {
-            cache.append(i);
-            assert.equal(cache.length, i + 1);
+            index.append(i);
         }
 
-        cache.forEach((value, index) => {
+        index.forEach((value, index) => {
             assert.equal(value, index);
         });
     });
