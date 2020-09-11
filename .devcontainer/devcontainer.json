@@ -8,7 +8,7 @@
 		"args": { "NODE_VERSION": "12" }
 	},
 
-    // Invoke 'nvm' to install our perferred version of node, per the '.nvmrc' file
+    // Invoke 'nvm' to install our preferred version of node, per the '.nvmrc' file
     // at the root of the ${workspaceFolder}.
     "postCreateCommand": ". /usr/local/share/nvm/nvm.sh; nvm install",
 
