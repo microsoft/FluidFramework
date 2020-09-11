@@ -82,7 +82,8 @@ describe(`r11s End-To-End tests`, () => {
             tenantId,
             tenantSecret,
             getUser(),
-            bearerSecret);
+            bearerSecret,
+            true);
     }
 
     beforeEach(async () => {
