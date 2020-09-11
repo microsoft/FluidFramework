@@ -172,7 +172,8 @@ export class DeltaManager
     private closed = false;
 
     // track clientId used last time when we sent any ops
-    private lastSubmittedClientId: string | undefined;
+    private lastSubmittedClientIds: string[] = [];
+    private maxSavedClientIds = 5;
 
     private handler: IDeltaHandlerStrategy | undefined;
     private deltaStorageP: Promise<IDocumentDeltaStorageService> | undefined;
@@ -588,8 +589,11 @@ export class DeltaManager
         // we keep info about old connection as long as possible to be able to account for all non-acked ops
         // that we pick up on next connection.
         assert(this.connection);
-        if (this.lastSubmittedClientId !== this.connection?.details.clientId) {
-            this.lastSubmittedClientId = this.connection?.details.clientId;
+        if (!this.lastSubmittedClientIds.includes(this.connection.details.clientId)) {
+            this.lastSubmittedClientIds.push(this.connection.details.clientId);
+            if (this.lastSubmittedClientIds.length > this.maxSavedClientIds) {
+                this.lastSubmittedClientIds.shift();
+            }
             this.clientSequenceNumber = 0;
             this.clientSequenceNumberObserved = 0;
         }
@@ -881,6 +885,8 @@ export class DeltaManager
      * @param connection - The newly established connection
      */
     private setupNewSuccessfulConnection(connection: DeltaConnection, requestedMode: ConnectionMode) {
+        // Old connection should have been cleaned up before establishing a new one
+        assert(this.connection === undefined);
         this.connection = connection;
 
         // Does information in scopes & mode matches?
@@ -1186,9 +1192,9 @@ export class DeltaManager
 
         // if we have connection, and message is local, then we better treat is as local!
         assert(!this.connection || this.connection.details.clientId !== message.clientId ||
-            this.lastSubmittedClientId === message.clientId, "Not accounting local messages correctly");
+            this.lastSubmittedClientIds.includes(message.clientId), "Not accounting local messages correctly");
 
-        if (this.lastSubmittedClientId !== undefined && this.lastSubmittedClientId === message.clientId) {
+        if (this.lastSubmittedClientIds.includes(message.clientId)) {
             const clientSequenceNumber = message.clientSequenceNumber;
 
             assert(this.clientSequenceNumberObserved < clientSequenceNumber, "client seq# not growing");
