@@ -92,7 +92,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
-            assert.strictEqual(collection1.read("key1"), "asdf", "Collection not initialize in document 1");
+            assert.strictEqual(collection1.read("key1"), "value1", "Collection not initialize in document 1");
             assert.strictEqual(collection2.read("key1"), "value1", "Collection not initialize in document 2");
             assert.strictEqual(collection3.read("key1"), "value1", "Collection not initialize in document 3");
             assert.strictEqual(collection1.read("key2"), "value2", "Collection not initialize in document 1");

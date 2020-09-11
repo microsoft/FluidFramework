@@ -110,6 +110,7 @@ stages:
                 releaseBuildOverride=${{ parameters.releaseBuildOverride }}
 
               Tasks Parameters:
+                BuildDir=${{ parameters.buildDirectory }}
                 Build=${{ parameters.taskBuild }}
                 Lint=${{ parameters.taskLint }}
                 Test=${{ parameters.taskTest }}
@@ -162,6 +163,15 @@ stages:
 
         # Test
         - ${{ if ne(parameters.taskTest, 'false') }}:
+          # "Soft" Tests - Don't fail the job if they fail
+          # TODO: Move specific task(s) to build-client.yml and then include here somehow
+          - task: Npm@1
+            displayName: '[end-to-end tests] npm run ci:test:realsvc'
+            inputs:
+              command: 'custom'
+              workingDir: packages/test/end-to-end-tests
+              customCommand: 'run ci:test:realsvc' # This script ends with 'exit 0' so this task should never fail
+
           # Test - No coverage
           - ${{ if ne(variables['testCoverage'], true) }}:
             - task: Npm@1
