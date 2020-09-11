@@ -52,7 +52,23 @@ export class LocalChannelContext implements IChannelContext {
         dirtyFn: (address: string) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
     ) {
-        this.services = new Lazy(() => this.servicesGenerator());
+        this.services = new Lazy(() => {
+            let blobMap: Map<string, string> | undefined;
+            if (this.snapshotTree !== undefined) {
+                blobMap = new Map<string, string>();
+                this.collectExtraBlobsAndSanitizeSnapshot(this.snapshotTree, blobMap);
+            }
+            return createServiceEndpoints(
+                this.id,
+                this.dataStoreContext.connected,
+                this.submitFn,
+                this.dirtyFn,
+                this.storageService,
+                this.snapshotTree !== undefined ? Promise.resolve(this.snapshotTree) : undefined,
+                blobMap !== undefined ?
+                    Promise.resolve(blobMap) : undefined,
+            );
+        });
         this.factory = registry.get(type);
         if (this.factory === undefined) {
             throw new Error(`Channel Factory ${type} not registered`);
@@ -168,24 +184,6 @@ export class LocalChannelContext implements IChannelContext {
             this.channel.connect(this.services.value);
         }
         this.attached = true;
-    }
-
-    private servicesGenerator() {
-        let blobMap: Map<string, string> | undefined;
-        if (this.snapshotTree !== undefined) {
-            blobMap = new Map<string, string>();
-            this.collectExtraBlobsAndSanitizeSnapshot(this.snapshotTree, blobMap);
-        }
-        return createServiceEndpoints(
-            this.id,
-            this.dataStoreContext.connected,
-            this.submitFn,
-            this.dirtyFn,
-            this.storageService,
-            this.snapshotTree !== undefined ? Promise.resolve(this.snapshotTree) : undefined,
-            blobMap !== undefined ?
-                Promise.resolve(blobMap) : undefined,
-        );
     }
 
     private collectExtraBlobsAndSanitizeSnapshot(snapshotTree: ISnapshotTree, blobMap: Map<string, string>) {
