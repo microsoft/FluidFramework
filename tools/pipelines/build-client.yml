@@ -97,57 +97,15 @@ extends:
           cp repo-package.json packages/package.json
           cp repo-package-lock.json packages/package-lock.json
 
-    postBuildJobs:
-    - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-      # TODO: Move to a template to be more concise here?
-      - job: PostCheckinTests
-        displayName: Run Post-Checkin Tests
-        pool: Main
-        steps:
-          # TODO: Share code with include-publish-npm-package-steps.yml?
-          - download: current
-            artifact: pack
-          - task: UseNode@1
-            displayName: Use Node 12.x
-            inputs: 
-              version: 12.x
-          - task: Bash@3
-            displayName: Generate .npmrc
-            inputs:
-              targetType: 'inline'
-              workingDirectory: $(Pipeline.Workspace)/pack
-              script: |
-                echo Generating .npmrc for https://registry.npmjs.org
-                echo "@fluidframework:registry=https://registry.npmjs.org" >> ./.npmrc
-                echo "@fluid-example:registry=https://registry.npmjs.org" >> ./.npmrc
-                echo "@fluid-internal:registry=https://registry.npmjs.org" >> ./.npmrc
-                echo "always-auth=true" >> ./.npmrc
-                cat .npmrc
-          - task: npmAuthenticate@0
-            displayName: npm Authenticate
-            inputs:
-              workingFile: $(Pipeline.Workspace)/pack/.npmrc
-              customEndPoint: npmjs
-
-          # Run the tests
-          - task: Npm@1
-            displayName: npm run ci:test:realsvc
-            env:
-              fluid__webpack__bearerSecret: $(fluid__webpack__bearerSecret)
-              fluid__webpack__fluidHost: $(fluid__webpack__fluidHost)
-              fluid__webpack__tenantId: $(fluid__webpack__tenantId)
-              fluid__webpack__tenantSecret: $(fluid__webpack__tenantSecret)
-            inputs:
-              command: 'custom'
-              workingDir: packages/test/end-to-end-tests
-              customCommand: 'run ci:test:realsvc'
-
-          # Publish the results
-          - task: PublishTestResults@2
-            displayName: Publish Post-Checkin Test Results
-            inputs:
-              testResultsFormat: 'JUnit'
-              testResultsFiles: '**/*junit-report.xml'
-              searchFolder: packages/test/end-to-end-tests/nyc-post
-              mergeTestResults: true
-            condition: succeededOrFailed()
+    additionalTests:
+      - task: Npm@1
+        displayName: '[end-to-end tests] npm run ci:test:realsvc'
+        env:
+          fluid__webpack__bearerSecret: $(fluid__webpack__bearerSecret)
+          fluid__webpack__fluidHost: $(fluid__webpack__fluidHost)
+          fluid__webpack__tenantId: $(fluid__webpack__tenantId)
+          fluid__webpack__tenantSecret: $(fluid__webpack__tenantSecret)
+        inputs:
+          command: 'custom'
+          workingDir: packages/test/end-to-end-tests
+          customCommand: 'run ci:test:realsvc' # This script ends with 'exit 0' so this task should never fail

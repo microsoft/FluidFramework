@@ -35,8 +35,9 @@ parameters:
   type: stepList
   default: []
 
-- name: postBuildJobs
-  type: jobList
+# These should output results under an /nyc/ dir (anywhere in the repo) to get included in the published test results
+- name: additionalTests
+  type: stepList
   default: []
 
 - name: cgSubDirectory
@@ -163,14 +164,8 @@ stages:
 
         # Test
         - ${{ if ne(parameters.taskTest, 'false') }}:
-          # "Soft" Tests - Don't fail the job if they fail
-          # TODO: Move specific task(s) to build-client.yml and then include here somehow
-          - task: Npm@1
-            displayName: '[end-to-end tests] npm run ci:test:realsvc'
-            inputs:
-              command: 'custom'
-              workingDir: packages/test/end-to-end-tests
-              customCommand: 'run ci:test:realsvc' # This script ends with 'exit 0' so this task should never fail
+          # Run any additional tests first so their results can be copied to the ~/nyc dir and published below
+          - ${{ parameters.additionalTests }}
 
           # Test - No coverage
           - ${{ if ne(variables['testCoverage'], true) }}:
@@ -283,13 +278,6 @@ stages:
               verbosity: Verbose
               scanType: Register
               alertWarningLevel: High
-
-  # Post-build stage, run in parallel to Publish below
-  - stage: postBuild
-    dependsOn: build
-    displayName: Post-Build Stage
-    jobs:
-    - ${{ parameters.postBuildJobs }}
 
   # Publish stage
   - ${{ if eq(variables.publish, true) }}:
