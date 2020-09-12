@@ -225,7 +225,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private storageService: IDocumentStorageService | undefined | null;
     private blobsCacheStorageService: IDocumentStorageService | undefined;
 
-    private _clientId: string | undefined;
+    /**
+     * Our current (and previous) clientIds, with the latest (and current) at the
+     * end of the array.  We keep a history so that messages with different IDs
+     * can be identified as originating from this client in cases of multiple
+     * disconnects/reconnects.
+     */
+    private readonly _clientIds: string[] = [];
+    private readonly maxClientIdHistory = 5;
     private _id: string | undefined;
     private originalRequest: IRequest | undefined;
     private readonly _deltaManager: DeltaManager;
@@ -314,7 +321,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Set once this.connected is true, otherwise undefined
      */
     public get clientId(): string | undefined {
-        return this._clientId;
+        return this._clientIds.length > 0 ? this._clientIds[this._clientIds.length - 1] : undefined;
     }
 
     /**
@@ -1086,7 +1093,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         protocol.quorum.on("removeMember", (clientId) => {
-            if (clientId === this._clientId) {
+            if (this._clientIds.includes(clientId)) {
                 this._deltaManager.updateQuorumLeave();
             }
         });
@@ -1332,7 +1339,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._connectionState = value;
 
         if (value === ConnectionState.Connected) {
-            this._clientId = this.pendingClientId;
+            this._clientIds.push(this.pendingClientId!);
+            if (this._clientIds.length > this.maxClientIdHistory) {
+                this._clientIds.shift();
+            }
             this._deltaManager.updateQuorumJoin();
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
@@ -1397,7 +1407,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
-        const local = this._clientId === message.clientId;
+        const foundIndex = this._clientIds.indexOf(message.clientId);
+        const local = foundIndex >= 0;
+
+        // Report if we're getting messages from a clientId older than the most recent
+        if (foundIndex !== this._clientIds.length - 1) {
+            this.logger.sendErrorEvent({ eventName: "matchedNonPreviousClientId" });
+        }
 
         // Forward non system messages to the loaded runtime for processing
         if (!isSystemMessage(message)) {
@@ -1428,7 +1444,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._audience.removeMember(leftClientId);
             }
         } else {
-            const local = this._clientId === message.clientId;
+            const local = this._clientIds.includes(message.clientId);
             this.context!.processSignal(message, local);
         }
     }
