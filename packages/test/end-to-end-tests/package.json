@@ -28,7 +28,7 @@
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:mocha": "mocha --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-    "test:realsvc:mocha": "mocha --recursive dist/post-checkin --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+    "test:realsvc:mocha": "mocha --recursive dist/real-service-tests --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:realsvc:mocha:report": "npm run test:realsvc:mocha -- --timeout 4s --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/mocha-realsvc-junit-report.xml",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
