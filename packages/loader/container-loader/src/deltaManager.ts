@@ -172,8 +172,8 @@ export class DeltaManager
     private closed = false;
 
     // track clientId used last time when we sent any ops
-    private lastSubmittedClientIds: string[] = [];
-    private maxSavedClientIds = 5;
+    private readonly lastSubmittedClientIds: string[] = [];
+    private readonly maxSavedClientIds = 5;
 
     private handler: IDeltaHandlerStrategy | undefined;
     private deltaStorageP: Promise<IDocumentDeltaStorageService> | undefined;
@@ -1194,7 +1194,12 @@ export class DeltaManager
         assert(!this.connection || this.connection.details.clientId !== message.clientId ||
             this.lastSubmittedClientIds.includes(message.clientId), "Not accounting local messages correctly");
 
-        if (this.lastSubmittedClientIds.includes(message.clientId)) {
+        const foundIndex = this.lastSubmittedClientIds.indexOf(message.clientId);
+        if (foundIndex >= 0) {
+            // Report if we're getting messages from a clientId older than the most recent
+            if (foundIndex !== this.lastSubmittedClientIds.length - 1) {
+                this.logger.sendTelemetryEvent({ eventName: "matchedNonPreviousClientId" });
+            }
             const clientSequenceNumber = message.clientSequenceNumber;
 
             assert(this.clientSequenceNumberObserved < clientSequenceNumber, "client seq# not growing");
