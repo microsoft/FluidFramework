@@ -167,8 +167,4 @@ describe(`r11s End-To-End tests`, () => {
 
         await defPromise.promise;
     });
-
-    it("Fail Fail Fail!", () => {
-        assert.strictEqual(1, 2, "fail! Hopefully the CI job still succeeds but this failure is reported.");
-    });
 });
