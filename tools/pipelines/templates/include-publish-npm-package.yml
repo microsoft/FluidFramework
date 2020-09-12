@@ -17,22 +17,22 @@ parameters:
   type: string
 
 stages:
-- stage: publish_internal
+- stage: publish_npm_internal
   dependsOn: build
-  displayName: Internal Publish Stage
+  displayName: Publish Internal Packages
   jobs:
   - template: include-publish-npm-package-steps.yml
     parameters:
       namespace: ${{ parameters.namespace }}
       feeds:
       - name: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/ 
-        environment: build-feed
+        environment: package-build-feed
         official: false
         tagSteps: []
 
-- stage: publish_official
+- stage: publish_npm_official
   dependsOn: build
-  displayName: Official Publish Stage
+  displayName: Publish Official Packages
   condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
   jobs:
   - template: include-publish-npm-package-steps.yml
@@ -40,7 +40,7 @@ stages:
       namespace: ${{ parameters.namespace }}
       feeds:
       - name: https://registry.npmjs.org
-        environment: npmjs-feed
+        environment: package-npmjs-feed
         customEndPoint: npmjs
         official: true
         publishFlags: --access public

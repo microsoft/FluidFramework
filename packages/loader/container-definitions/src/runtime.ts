@@ -22,12 +22,13 @@ import {
     MessageType,
     ISummaryTree,
     IVersion,
+    IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
+import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { ICodeLoader, ILoader } from "./loader";
-import { IMessageScheduler } from "./messageScheduler";
 
 // Represents the attachment state of the entity.
 export enum AttachState {
@@ -116,7 +117,7 @@ export interface IRuntime extends IDisposable {
  * so the old IRuntime is no longer valid, as its ContainerContext has been revoked,
  * and the Container has created a new ContainerContext.
  */
-export interface IContainerContext extends IMessageScheduler, IDisposable {
+export interface IContainerContext extends IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
@@ -128,11 +129,12 @@ export interface IContainerContext extends IMessageScheduler, IDisposable {
     readonly storage: IDocumentStorageService | undefined | null;
     readonly connected: boolean;
     readonly branch: string;
-    readonly baseSnapshot: ISnapshotTree | null;
+    readonly baseSnapshot: ISnapshotTree | undefined;
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: (error?: ICriticalContainerError) => void;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;

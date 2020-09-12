@@ -15,7 +15,7 @@
             href="https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious">Routerlicious README</a>.
     </p>
 
-    <h2>Using Fluid Framework with the Webpack Component Loader</h2>
+    <h2>Using Fluid Framework with the Webpack Fluid Loader</h2>
     <p>
         If you'd like to use Routerlicious with the Fluid Framework Webpack Dev Server,
         run the webpack-dev-server with the <a href="https://github.com/microsoft/FluidFramework/tree/main/packages/tools/webpack-fluid-loader">

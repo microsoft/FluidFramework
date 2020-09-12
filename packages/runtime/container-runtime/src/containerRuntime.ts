@@ -45,6 +45,7 @@ import {
     BlobCacheStorageService,
     buildSnapshotTree,
     readAndParse,
+    readAndParseFromBlobs,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
@@ -88,6 +89,7 @@ import {
     CreateSummarizerNodeSource,
     IAgentScheduler,
     ITaskManager,
+    ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
@@ -105,6 +107,8 @@ import {
     LocalDetachedFluidDataStoreContext,
     RemotedFluidDataStoreContext,
     createAttributesBlob,
+    currentSnapshotFormatVersion,
+    IFluidDataStoreAttributes,
 } from "./dataStoreContext";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -117,6 +121,7 @@ import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
+import { convertSnapshotToSummaryTree } from "./utils";
 
 const chunksBlobName = ".chunks";
 
@@ -483,10 +488,9 @@ export class ContainerRuntime extends EventEmitter
         const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
 
         const chunkId = context.baseSnapshot?.blobs[chunksBlobName];
-        const chunks = chunkId
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            ? await readAndParse<[string, string[]][]>(context.storage!, chunkId)
-            : [];
+        const chunks = context.baseSnapshot && chunkId ? context.storage ?
+            await readAndParse<[string, string[]][]>(context.storage, chunkId) :
+            readAndParseFromBlobs<[string, string[]][]>(context.baseSnapshot.blobs, chunkId) : [];
 
         const runtime = new ContainerRuntime(
             context,
@@ -496,7 +500,8 @@ export class ContainerRuntime extends EventEmitter
             containerScope,
             requestHandler);
 
-        // Create all internal stores in first load.
+        // Create all internal data stores if not already existing on storage or loaded a detached
+        // container from snapshot(ex. draft mode).
         if (!context.existing) {
             await runtime.createRootDataStore(TaskManagerFactory.type, taskSchedulerId);
         }
@@ -746,7 +751,7 @@ export class ContainerRuntime extends EventEmitter
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree | string>();
 
-        if (context.baseSnapshot) {
+        if (typeof context.baseSnapshot === "object") {
             const baseSnapshot = context.baseSnapshot;
             Object.keys(baseSnapshot.trees).forEach((value) => {
                 if (value !== ".protocol" && value !== ".logTail" && value !== ".serviceProtocol") {
@@ -758,15 +763,48 @@ export class ContainerRuntime extends EventEmitter
 
         // Create a context for each of them
         for (const [key, value] of fluidDataStores) {
-            const remoteContext = new RemotedFluidDataStoreContext(
-                key,
-                typeof value === "string" ? value : Promise.resolve(value),
-                this,
-                this.storage,
-                this.containerScope,
-                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
-                this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
-            this.setNewContext(key, remoteContext);
+            let dataStoreContext: FluidDataStoreContext;
+            // If we have a detached container, then create local data store contexts.
+            if (this.attachState !== AttachState.Detached) {
+                dataStoreContext = new RemotedFluidDataStoreContext(
+                    key,
+                    typeof value === "string" ? value : Promise.resolve(value),
+                    this,
+                    this.storage,
+                    this.containerScope,
+                    this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
+                    this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
+            } else {
+                let pkgFromSnapshot: string[];
+                if (typeof context.baseSnapshot !== "object") {
+                    throw new Error("Snapshot should be there to load from!!");
+                }
+                const snapshotTree = value as ISnapshotTree;
+                // Need to rip through snapshot.
+                const { pkg, snapshotFormatVersion } = readAndParseFromBlobs<IFluidDataStoreAttributes>(
+                    snapshotTree.blobs,
+                    snapshotTree.blobs[".component"]);
+                // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
+                // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
+                // However the feature of loading a detached container from snapshot, is added when the
+                // snapshotFormatVersion is "0.1", so we don't expect it to be anything else.
+                if (snapshotFormatVersion === currentSnapshotFormatVersion) {
+                    pkgFromSnapshot = JSON.parse(pkg) as string[];
+                } else {
+                    throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
+                }
+                dataStoreContext = new LocalFluidDataStoreContext(
+                    key,
+                    pkgFromSnapshot,
+                    this,
+                    this.storage,
+                    this.containerScope,
+                    this.summaryTracker.createOrGetChild(key, this.deltaManager.lastSequenceNumber),
+                    this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
+                    (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+                    snapshotTree);
+            }
+            this.setNewContext(key, dataStoreContext);
         }
 
         this.scheduleManager = new ScheduleManager(
@@ -1254,6 +1292,7 @@ export class ContainerRuntime extends EventEmitter
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            undefined,
         );
         this.setupNewContext(context);
         return context;
@@ -1278,6 +1317,7 @@ export class ContainerRuntime extends EventEmitter
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            undefined,
         );
         this.setupNewContext(context);
         return context;
@@ -1558,9 +1598,18 @@ export class ContainerRuntime extends EventEmitter
                         || this.attachOpFiredForDataStore.has(key)),
                 )
                 .map(([key, value]) => {
-                    const snapshot = value.generateAttachMessage().snapshot;
-                    const componentSummary = convertToSummaryTree(snapshot, true);
-                    builder.addWithStats(key, componentSummary);
+                    let dataStoreSummary: ISummarizeResult;
+                    if (value.isLoaded) {
+                        const snapshot = value.generateAttachMessage().snapshot;
+                        dataStoreSummary = convertToSummaryTree(snapshot, true);
+                    } else {
+                        // If this data store is not yet loaded, then there should be no changes in the snapshot from
+                        // which it was created as it is detached container. So just use the previous snapshot.
+                        assert(this.context.baseSnapshot,
+                            "BaseSnapshot should be there as detached container loaded from snapshot");
+                        dataStoreSummary = convertSnapshotToSummaryTree(this.context.baseSnapshot.trees[key]);
+                    }
+                    builder.addWithStats(key, dataStoreSummary);
                 });
         } while (notBoundContextsLength !== this.notBoundContexts.size);
 

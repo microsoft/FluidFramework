@@ -29,29 +29,100 @@ parameters:
   type: boolean
   default: true
 
+- name: releaseImage
+  type: boolean
+  default: false
+
+- name: publishOverride
+  type: string
+  default: default
+
+- name: releaseBuildOverride
+  type: string
+  default: none
+
 trigger: none
 
 variables:
 - template: include-vars.yml
+  parameters:
+    releaseImage: ${{ parameters.releaseImage }}
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 - group: container-registry-info
-- name: baseContainerTag
-  value: ${{ parameters.containerName }}:$(Build.BuildNumber)
+- name: buildContainerName
+  value: build/${{ parameters.containerName }}
 - ${{ if eq(variables.pushImage, false) }}:
   - name: containerRegistry
     value:
   - name: containerTag
-    value: $(baseContainerTag)
+    value: $(buildContainerName):$(containerTagSuffix)
 - ${{ if eq(variables.pushImage, true) }}:
   - name: containerRegistry
-    value: $(containerRegistryConnection)
+    value: $[variables.containerRegistryConnection]
   - name: containerTag
-    value: $(containerRegistryUrl)/$(baseContainerTag)
+    value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
 
-jobs:
+stages:
+- stage: build
+  displayName: Build Stage
+  jobs:
   - job: build
-    displayName: Build Container - ${{ parameters.containerName }}
+    displayName: Build Container - ${{ variables.buildContainerName }}
     pool: Lite
+    variables:
+      releaseBuildVar: $[variables.releaseBuild]
+      containerTagSuffix: $(SetVersion.version)
     steps:
+    - task: Bash@3
+      displayName: Parameters
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Show all task group conditions
+
+          echo "
+          Pipeline Variables:
+            releaseBuild=$(releaseBuildVar)
+
+          Override Parameters:
+            publishOverride=${{ parameters.publishOverride }}
+            releaseBuildOverride=${{ parameters.releaseBuildOverride }}
+
+          Tasks Parameters:
+            Lint=${{ parameters.lint }}
+            Test=${{ parameters.test }}
+
+          Computed variables:
+            shouldPublish=${{ variables.shouldPublish }}
+            componentDetection=${{ variables.componentDetection }}
+            publish=${{ variables.publish }}
+            canRelease=${{ variables.canRelease }}
+
+            pushImage=${{ variables.pushImage }}
+            releaseImage=${{ variables.releaseImage }}
+            release=$(release)"
+
+          if [[ "$(release)" == "release" ]]; then
+            if [[ "${{ variables.canRelease }}" == "False" ]]; then
+              echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
+              exit -1;
+            fi
+          fi
+
+          if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
+            if [[ "${{ variables.pushImage }}" != "True" ]]; then
+              echo "##vso[task.logissue type=error]'$(release)' is set but image is not pushed. Either the branch doesn't default to push image or it is skipped."
+              exit -1;
+            fi
+            
+            if [[ "${{ variables.releaseImage }}" != "True" ]]; then
+              echo "##vso[task.logissue type=error]'$(release)' is set but pipeline isn't declared to allow release image."
+              exit -1;
+            fi
+          fi
+
     # Setup
     - checkout: self
       clean: true
@@ -74,18 +145,27 @@ jobs:
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
           buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+    - ${{ if eq(parameters.setVersion, false) }}:
+      - task: Bash@3
+        name: SetVersion
+        displayName: Set Package version
+        inputs:
+          targetType: 'inline'
+          script: |
+            echo "0.0.$(Build.BuildNumber)"
+            echo "##vso[task.setvariable variable=version;isOutput=true]0.0.$(Build.BuildNumber)"
 
     # Build
     - task: Docker@2
       displayName: Docker Build
       inputs:
         containerRegistry: $(containerRegistry)
-        repository: ${{ parameters.containerName }}
+        repository: ${{ variables.buildContainerName }}
         command: build
         dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
         buildContext: ${{ parameters.buildDirectory }}
         tags: |
-          $(Build.BuildNumber)
+          $(containerTagSuffix)
 
     # Lint
     - ${{ if eq(parameters.lint, true) }}:
@@ -125,10 +205,10 @@ jobs:
         displayName: Docker Push
         inputs:
           containerRegistry: $(containerRegistryConnection)
-          repository: ${{ parameters.containerName }}
+          repository: ${{ variables.buildContainerName }}
           command: push
           tags: |
-            $(Build.BuildNumber)
+            $(containerTagSuffix)
 
     # Cleanup
     - task: Docker@0
@@ -140,9 +220,18 @@ jobs:
       condition: succeededOrFailed()
 
     - task: Docker@0
-      displayName: Docker Cleanup - $(containerTag)
+      displayName: Docker Cleanup - ${{ variables.buildContainerName }}
       inputs:
         action: Run a Docker command
         customCommand: rmi $(containerTag)
       continueOnError: true
       condition: succeededOrFailed()
+
+# Publish stage
+- ${{ if eq(variables.releaseImage, true) }}:
+  - template: include-publish-docker-service.yml
+    parameters:
+      containerRegistry: $(containerRegistry)
+      containerTag: $(containerTag)
+      containerRegistryUrl: $(containerRegistryUrl)
+      containerName: ${{ parameters.containerName }}

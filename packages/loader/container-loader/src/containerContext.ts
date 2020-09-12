@@ -50,7 +50,7 @@ export class ContainerContext implements IContainerContext {
         scope: IFluidObject,
         codeLoader: ICodeLoader,
         runtimeFactory: IRuntimeFactory,
-        baseSnapshot: ISnapshotTree | null,
+        baseSnapshot: ISnapshotTree | undefined,
         attributes: IDocumentAttributes,
         blobManager: BlobManager | undefined,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -149,10 +149,6 @@ export class ContainerContext implements IContainerContext {
         return config as IFluidConfiguration;
     }
 
-    public get IMessageScheduler() {
-        return this;
-    }
-
     public get baseSnapshot() {
         return this._baseSnapshot;
     }
@@ -180,7 +176,7 @@ export class ContainerContext implements IContainerContext {
         public readonly scope: IFluidObject,
         public readonly codeLoader: ICodeLoader,
         public readonly runtimeFactory: IRuntimeFactory,
-        private readonly _baseSnapshot: ISnapshotTree | null,
+        private readonly _baseSnapshot: ISnapshotTree | undefined,
         private readonly attributes: IDocumentAttributes,
         public readonly blobManager: BlobManager | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,

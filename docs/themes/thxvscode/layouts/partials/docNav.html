@@ -45,13 +45,19 @@
         <option value="/docs" {{if .IsHome}}selected{{end}}>Overview</option>
         {{- range .Site.Menus.docs }}
         {{ $menuArea := .Identifier}}
+        {{ $isCurrentPage := eq .URL $current.RelPermalink }}
 
-        <optgroup label="{{ $menuArea }}">
-            {{- range ((where $current.Site.RegularPages "Params.area" "==" $menuArea).ByParam "menuPosition") }}
-            {{ $isCurrentPage := eq .RelPermalink $current.RelPermalink }}
-            <option value="{{.RelPermalink}}" {{ if $isCurrentPage }}selected{{end}}>{{ .Title }}</option>
-            {{ end }}
+        {{- if ne .URL "" -}}
+        {{ $isCurrentPage := eq .URL $current.RelPermalink }}
+        <option value="{{.URL}}" {{ if $isCurrentPage }}selected{{end}}>{{ .Name }}</option>
+        {{- else -}}
+        <optgroup label="{{ $menuArea }}"></optgroup>
+        {{- range ((where $current.Site.RegularPages "Params.area" "==" $menuArea).ByParam "menuPosition") }}
+        {{ $isCurrentPage := eq .RelPermalink $current.RelPermalink }}
+        <option value="{{.RelPermalink}}" {{ if $isCurrentPage }}selected{{end}}>{{ .Title }}</option>
         </optgroup>
+        {{- end -}}
+        {{ end }}
         {{- end }}
     </select>
 </nav>
