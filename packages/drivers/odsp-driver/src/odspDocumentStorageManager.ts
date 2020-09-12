@@ -468,7 +468,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         let isOptionsCall = false;
 
-        if (headers) {
+        if (headers.Authorization) {
             isOptionsCall = true;
         }
         // This event measures only successful cases of getLatest call (no tokens, no retries).
@@ -486,7 +486,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             let fetchStToRespEndTime = -1; // responseEnd  - fetchStart
             let reqStToRespEndTime = -1; // responseEnd - requestStart
             let networkTime = -1; // responseEnd - startTime
-            const spReqDuration = response.headers.get("sprequestduration");
 
             const resources1 = performance.getEntriesByType("resource");
             // Usually the latest fetch call is to the end of resources, so we start from the end.
@@ -506,10 +505,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         break;
                 }
             }
-            let clientDuration = -1;
-            if (spReqDuration) {
-                    clientDuration = parseInt(spReqDuration, 10) - responseTime;
-            }
             const clientTime = overallTime - networkTime;
             event.end({
                 trees: content.trees?.length ?? 0,
@@ -518,8 +513,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 headers: Object.keys(headers).length !== 0 ? true : undefined,
                 sprequestguid: response.headers.get("sprequestguid"),
                 sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
-                isptionscall: isOptionsCall,
-                clientduration: clientDuration,
+                isOptionsCall,
                 redirecttime: redirectTime,
                 dnsLookuptime: dnstime,
                 responsenetworkTime: responseTime,
