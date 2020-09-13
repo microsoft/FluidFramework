@@ -22,6 +22,7 @@
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:test": "webpack-dev-server --config webpack.test.js",
     "test": "npm run test:jest",
     "test:jest": "jest",
     "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
