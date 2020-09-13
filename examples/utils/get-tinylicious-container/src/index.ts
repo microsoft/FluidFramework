@@ -4,5 +4,4 @@
  */
 
 export * from "./getTinyliciousContainer";
-export * from "./getRouterliciousContainer";
 export * from "./getContainer";
