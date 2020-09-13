@@ -31,8 +31,6 @@
     "@fluidframework/driver-definitions": "^0.27.0",
     "@fluidframework/protocol-definitions": "^0.1012.0",
     "@fluidframework/routerlicious-driver": "^0.27.0",
-    "@fluidframework/routerlicious-host": "^0.27.0",
-    "@fluidframework/routerlicious-urlresolver": "^0.27.0",
     "jsonwebtoken": "^8.4.0",
     "uuid": "^3.3.2"
   },
