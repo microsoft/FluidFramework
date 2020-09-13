@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { v4 as uuid } from "uuid";
 import {
     fromBase64ToUtf8,
     fromUtf8ToBase64,
@@ -281,143 +282,35 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
             this.firstVersionCall = false;
 
-            return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                if (tokenFetchOptions.refresh) {
-                    // This is the most critical code path for boot.
-                    // If we get incorrect / expired token first time, that adds up to latency of boot
-                    this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall", hasClaims: !!tokenFetchOptions.claims });
-                }
+            const hostPolicy: ISnapshotOptions = {
+                deltas: 1,
+                channels: 1,
+                blobs: 2,
+                ...this.hostPolicy.snapshotOptions,
+            };
 
-                const hostPolicy: ISnapshotOptions = {
-                    deltas: 1,
-                    channels: 1,
-                    blobs: 2,
-                    ...this.hostPolicy.snapshotOptions,
-                };
+            // No limit on size of snapshot, as otherwise we fail all clients to summarize
+            if (this.hostPolicy.summarizerClient) {
+                hostPolicy.mds = undefined;
+            }
+            try {
+                return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
+                    this.isTreesLatestSecondCallEvent(tokenFetchOptions);
 
-                // No limit on size of snapshot, as otherwise we fail all clients to summarize
-                if (this.hostPolicy.summarizerClient) {
-                    hostPolicy.mds = undefined;
-                }
+                    // Use the POST call for TreesLatest so as to save the OPTIONS call.
+                    const cachedSnapshot = await this.fetchSnapshotWithMultiPartRequest(tokenFetchOptions, hostPolicy);
+                    return this.processSnapshotAndGetVersion(cachedSnapshot);
+                });
+            } catch (error) {
+                this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToNonMultiPartRequest" });
+                // If the TreesLatest fails using the POST call, then fallback to the original get version of TreesLatest call.
+                return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
+                    this.isTreesLatestSecondCallEvent(tokenFetchOptions);
 
-                const snapshotOptions = getQueryString(hostPolicy);
-
-                let cachedSnapshot: IOdspSnapshot | undefined;
-
-                // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
-                if (tokenFetchOptions.refresh) {
-                    cachedSnapshot = await this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
-                } else {
-                    cachedSnapshot = await PerformanceEvent.timedExecAsync(
-                        this.logger,
-                        { eventName: "ObtainSnapshot" },
-                        async (event: PerformanceEvent) => {
-                            const cachedSnapshotP = this.cache.persistedCache.get(
-                                {
-                                    file: this.fileEntry,
-                                    type: "snapshot",
-                                    key: "",
-                                },
-                                this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
-                            ) as Promise<IOdspSnapshot | undefined>;
-
-                            let method: string;
-                            if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
-                                const snapshotP = this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
-
-                                const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
-                                cachedSnapshot = promiseRaceWinner.value;
-
-                                if (cachedSnapshot === undefined) {
-                                    cachedSnapshot = await snapshotP;
-                                }
-
-                                method = promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network";
-                            } else {
-                                // Note: There's a race condition here - another caller may come past the undefined check
-                                // while the first caller is awaiting later async code in this block.
-
-                                cachedSnapshot = await cachedSnapshotP;
-
-                                method = cachedSnapshot !== undefined ? "cache" : "network";
-
-                                if (cachedSnapshot === undefined) {
-                                    cachedSnapshot = await this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
-                                }
-                            }
-                            event.end({ method });
-                            return cachedSnapshot;
-                        });
-                }
-
-                const odspSnapshot: IOdspSnapshot = cachedSnapshot;
-
-                const { trees, blobs, ops } = odspSnapshot;
-                // id should be undefined in case of just ops in snapshot.
-                let id: string | undefined;
-                if (trees) {
-                    this.initTreesCache(trees);
-                    // versionId is the id of the first tree
-                    if (trees.length > 0) {
-                        id = trees[0].id;
-                    }
-                }
-                if (blobs) {
-                    this.initBlobsCache(blobs);
-                }
-
-                if (this.hostPolicy.summarizerClient && trees && blobs) {
-                    const blobsIdToPathMap: Map<string, string> = new Map();
-                    let appCommit: string | undefined;
-                    let appTree: string | undefined;
-
-                    for (const [key, treeVal] of this.treesCache.entries()) {
-                        if (!appCommit && !appTree) {
-                            for (const entry of treeVal.entries) {
-                                if (entry.path === ".app") {
-                                    if (entry.type === "commit") {
-                                        // This is the unacked handle of the latest summary generated.
-                                        appCommit = entry.id;
-                                    }
-                                    if (entry.type === "tree") {
-                                        appTree = entry.id;
-                                    }
-                                    break;
-                                }
-                            }
-                            assert(appCommit || appTree); // .app commit or tree should be first entry in first entry.
-                        }
-                        for (const entry of treeVal.entries) {
-                            if (entry.type === "blob") {
-                                blobsIdToPathMap.set(entry.id, key === appCommit ? `/.app/${entry.path}` : `/${entry.path}`);
-                            }
-                        }
-                    }
-
-                    // Populate the cache with paths from id-to-path mapping.
-                    for (const blob of this.blobCache.values()) {
-                        const path = blobsIdToPathMap.get(blob.id);
-                        // If this is the first container that was created for the service, it cannot be
-                        // the summarizing container (because the summarizing container is always created
-                        // after the main container). In this case, we do not need to do any hashing
-                        if (path) {
-                            // Schedule the hashes for later, but keep track of the tasks
-                            // to ensure they finish before they might be used
-                            const hashP = hashFile(IsoBuffer.from(blob.content, blob.encoding)).then((hash: string) => {
-                                this.blobsShaToPathCache.set(hash, path);
-                            });
-                            this.blobsCachePendingHashes.add(hashP);
-                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                            hashP.finally(() => {
-                                this.blobsCachePendingHashes.delete(hashP);
-                            });
-                        }
-                    }
-                }
-
-                this.ops = ops;
-                return id ? [{ id, treeId: undefined! }] : [];
-            });
+                    const cachedSnapshot = await this.fetchSnapshotFallback(tokenFetchOptions, hostPolicy);
+                    return this.processSnapshotAndGetVersion(cachedSnapshot);
+                });
+            }
         }
 
         return getWithRetryForTokenRefresh(async (options) => {
@@ -459,12 +352,261 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         });
     }
 
-    private async fetchSnapshot(snapshotOptions: string, tokenFetchOptions: TokenFetchOptions) {
+    private isTreesLatestSecondCallEvent(tokenFetchOptions: TokenFetchOptions) {
+        if (tokenFetchOptions.refresh) {
+            // This is the most critical code path for boot.
+            // If we get incorrect / expired token first time, that adds up to latency of boot
+            this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall", hasClaims: !!tokenFetchOptions.claims });
+        }
+    }
+
+    private async fetchSnapshotWithMultiPartRequest(
+        tokenFetchOptions: TokenFetchOptions,
+        hostPolicy: ISnapshotOptions,
+    ): Promise<IOdspSnapshot> {
+        let cachedSnapshot: IOdspSnapshot | undefined;
+
+        // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
+        if (tokenFetchOptions.refresh) {
+            cachedSnapshot = await this.fetchSnapshotWithMultiPartRequestCore(hostPolicy, tokenFetchOptions);
+        } else {
+            cachedSnapshot = await PerformanceEvent.timedExecAsync(
+                this.logger,
+                { eventName: "ObtainSnapshot" },
+                async (event: PerformanceEvent) => {
+                    const cachedSnapshotP = this.cache.persistedCache.get(
+                        {
+                            file: this.fileEntry,
+                            type: "snapshot",
+                            key: "",
+                        },
+                        this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
+                    ) as Promise<IOdspSnapshot | undefined>;
+
+                    let method: string;
+                    if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
+                        const snapshotP = this.fetchSnapshotWithMultiPartRequestCore(hostPolicy, tokenFetchOptions);
+
+                        const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
+                        cachedSnapshot = promiseRaceWinner.value;
+
+                        if (cachedSnapshot === undefined) {
+                            cachedSnapshot = await snapshotP;
+                        }
+
+                        method = promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network";
+                    } else {
+                        // Note: There's a race condition here - another caller may come past the undefined check
+                        // while the first caller is awaiting later async code in this block.
+
+                        cachedSnapshot = await cachedSnapshotP;
+
+                        method = cachedSnapshot !== undefined ? "cache" : "network";
+
+                        if (cachedSnapshot === undefined) {
+                            cachedSnapshot = await this.fetchSnapshotWithMultiPartRequestCore(hostPolicy, tokenFetchOptions);
+                        }
+                    }
+                    event.end({ method });
+                    return cachedSnapshot;
+                });
+        }
+        return cachedSnapshot;
+    }
+
+    private async fetchSnapshotFallback(
+        tokenFetchOptions: TokenFetchOptions,
+        hostPolicy: ISnapshotOptions,
+    ): Promise<IOdspSnapshot> {
+        let cachedSnapshot: IOdspSnapshot | undefined;
+
+        // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
+        if (tokenFetchOptions.refresh) {
+            cachedSnapshot = await this.fetchSnapshotFallbackCore(hostPolicy, tokenFetchOptions);
+        } else {
+            cachedSnapshot = await PerformanceEvent.timedExecAsync(
+                this.logger,
+                { eventName: "ObtainSnapshot" },
+                async (event: PerformanceEvent) => {
+                    const cachedSnapshotP = this.cache.persistedCache.get(
+                        {
+                            file: this.fileEntry,
+                            type: "snapshot",
+                            key: "",
+                        },
+                        this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
+                    ) as Promise<IOdspSnapshot | undefined>;
+
+                    let method: string;
+                    if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
+                        const snapshotP = this.fetchSnapshotFallbackCore(hostPolicy, tokenFetchOptions);
+
+                        const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
+                        cachedSnapshot = promiseRaceWinner.value;
+
+                        if (cachedSnapshot === undefined) {
+                            cachedSnapshot = await snapshotP;
+                        }
+
+                        method = promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network";
+                    } else {
+                        // Note: There's a race condition here - another caller may come past the undefined check
+                        // while the first caller is awaiting later async code in this block.
+
+                        cachedSnapshot = await cachedSnapshotP;
+
+                        method = cachedSnapshot !== undefined ? "cache" : "network";
+
+                        if (cachedSnapshot === undefined) {
+                            cachedSnapshot = await this.fetchSnapshotFallbackCore(hostPolicy, tokenFetchOptions);
+                        }
+                    }
+                    event.end({ method });
+                    return cachedSnapshot;
+                });
+        }
+        return cachedSnapshot;
+    }
+
+    private processSnapshotAndGetVersion(odspSnapshot: IOdspSnapshot) {
+        const { trees, blobs, ops } = odspSnapshot;
+        // id should be undefined in case of just ops in snapshot.
+        let id: string | undefined;
+        if (trees) {
+            this.initTreesCache(trees);
+            // versionId is the id of the first tree
+            if (trees.length > 0) {
+                id = trees[0].id;
+            }
+        }
+        if (blobs) {
+            this.initBlobsCache(blobs);
+        }
+
+        if (this.hostPolicy.summarizerClient && trees && blobs) {
+            const blobsIdToPathMap: Map<string, string> = new Map();
+            let appCommit: string | undefined;
+            let appTree: string | undefined;
+
+            for (const [key, treeVal] of this.treesCache.entries()) {
+                if (!appCommit && !appTree) {
+                    for (const entry of treeVal.entries) {
+                        if (entry.path === ".app") {
+                            if (entry.type === "commit") {
+                                // This is the unacked handle of the latest summary generated.
+                                appCommit = entry.id;
+                            }
+                            if (entry.type === "tree") {
+                                appTree = entry.id;
+                            }
+                            break;
+                        }
+                    }
+                    assert(appCommit || appTree); // .app commit or tree should be first entry in first entry.
+                }
+                for (const entry of treeVal.entries) {
+                    if (entry.type === "blob") {
+                        blobsIdToPathMap.set(entry.id, key === appCommit ? `/.app/${entry.path}` : `/${entry.path}`);
+                    }
+                }
+            }
+
+            // Populate the cache with paths from id-to-path mapping.
+            for (const blob of this.blobCache.values()) {
+                const path = blobsIdToPathMap.get(blob.id);
+                // If this is the first container that was created for the service, it cannot be
+                // the summarizing container (because the summarizing container is always created
+                // after the main container). In this case, we do not need to do any hashing
+                if (path) {
+                    // Schedule the hashes for later, but keep track of the tasks
+                    // to ensure they finish before they might be used
+                    const hashP = hashFile(IsoBuffer.from(blob.content, blob.encoding)).then((hash: string) => {
+                        this.blobsShaToPathCache.set(hash, path);
+                    });
+                    this.blobsCachePendingHashes.add(hashP);
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    hashP.finally(() => {
+                        this.blobsCachePendingHashes.delete(hashP);
+                    });
+                }
+            }
+        }
+
+        this.ops = ops;
+        return id ? [{ id, treeId: undefined! }] : [];
+    }
+
+    private async fetchSnapshotWithMultiPartRequestCore(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
 
         // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
         // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-        const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${snapshotOptions}`, storageToken);
+        const url = `${this.snapshotUrl}/trees/latest?ump=1`;
+        const formBoundary = uuid();
+        const crlf = "\r\n";
+        let postBody = `--${formBoundary}${crlf}Authorization: Bearer ${storageToken}${crlf}X-HTTP-Method-Override: GET${crlf}`;
+        Object.entries(snapshotOptions).forEach(([key, value]) => {
+            postBody += `${key}: ${value}${crlf}`;
+        });
+        postBody += `${crlf}--${formBoundary}--`;
+        const headers = {
+            "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+        };
+        // This event measures only successful cases of getLatest call (no tokens, no retries).
+        const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest" }, async (event) => {
+            const response = await fetchHelper<IOdspSnapshot>(
+                url,
+                {
+                    body: postBody,
+                    headers,
+                    method: "POST",
+                });
+            const content = response.content;
+            event.end({
+                trees: content.trees?.length ?? 0,
+                blobs: content.blobs?.length ?? 0,
+                ops: content.ops?.length ?? 0,
+                headers: Object.keys(headers).length !== 0 ? true : undefined,
+                sprequestguid: response.headers.get("sprequestguid"),
+                sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
+                contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
+                bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
+            });
+            return {
+                snapshot: content,
+                // There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we cannot cache using an HTTP response header.
+                canCache: response.headers.get("disablebrowsercachingofusercontent") !== "true",
+            };
+        });
+
+        assert(this._snapshotCacheEntry === undefined);
+        this._snapshotCacheEntry = {
+            file: this.fileEntry,
+            type: "snapshot",
+            key: "",
+        };
+
+        // There maybe no snapshot - TreesLatest would return just ops.
+        const seqNumber: number = (snapshot.trees && (snapshot.trees[0] as any).sequenceNumber) ?? 0;
+        const seqNumberFromOps = snapshot.ops && snapshot.ops.length > 0 ?
+            snapshot.ops[0].sequenceNumber - 1 :
+            undefined;
+
+        if (!Number.isInteger(seqNumber) || seqNumberFromOps !== undefined && seqNumberFromOps !== seqNumber) {
+            this.logger.sendErrorEvent({ eventName: "fetchSnapshotError", seqNumber, seqNumberFromOps });
+        } else if (canCache) {
+            this.cache.persistedCache.put(this._snapshotCacheEntry, snapshot, seqNumber);
+        }
+
+        return snapshot;
+    }
+
+    private async fetchSnapshotFallbackCore(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
+        const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
+        const queryString = getQueryString(snapshotOptions);
+        // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
+        // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
+        const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${queryString}`, storageToken);
 
         // This event measures only successful cases of getLatest call (no tokens, no retries).
         const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest" }, async (event) => {
