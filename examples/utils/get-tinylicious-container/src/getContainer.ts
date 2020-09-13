@@ -42,7 +42,7 @@ export async function getContainer(
         container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
         await container.attach({ url: documentId });
     } else {
-        // Request must be appropriate and parseable by resolver. 
+        // Request must be appropriate and parseable by resolver.
         container = await loader.resolve(request);
         // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
         // new container here, where we expect this to be loading an existing container.

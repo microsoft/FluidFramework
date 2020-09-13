@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getRouterliciousContainer } from "@fluidframework/get-tinylicious-container";
+import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
 import { LikesAndComments } from "./fluidObject";
@@ -24,7 +24,7 @@ const documentId = window.location.hash.substring(1);
  */
 async function start() {
     // Get the Fluid Container associated with the provided id
-    const container = await getRouterliciousContainer(documentId, LikesAndCommentsContainer, createNew);
+    const container = await getTinyliciousContainer(documentId, LikesAndCommentsContainer, createNew);
 
     // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<LikesAndComments>(container);
