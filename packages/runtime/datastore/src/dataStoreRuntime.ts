@@ -47,6 +47,7 @@ import {
     IInboundSignalMessage,
     ISummaryTreeWithStats,
     CreateSummarizerNodeSource,
+    ISnapshotContracts,
 } from "@fluidframework/runtime-definitions";
 import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IChannel, IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
@@ -166,6 +167,9 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     private readonly notBoundedChannelContextSet = new Set<string>();
     private boundhandles: Set<IFluidHandle> | undefined;
     private _attachState: AttachState;
+
+    // NOTE: Search blob concept
+    private extraSnapshotContracts: ISnapshotContracts;
 
     private constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -519,6 +523,11 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         );
     }
 
+    // NOTE: Search blob concept
+    public registerExtraSnapshotContracts(contracts: ISnapshotContracts) {
+        this.extraSnapshotContracts = contracts;
+    }
+
     public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
         // Craft the .attributes file for each shared object
         const entries = await Promise.all(Array.from(this.contexts)
@@ -535,6 +544,9 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                 // And then store the tree
                 return new TreeTreeEntry(key, snapshot);
             }));
+
+        // NOTE: Search blob concept:
+
 
         return entries;
     }

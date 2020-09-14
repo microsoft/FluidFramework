@@ -31,6 +31,7 @@ import {
     IFluidDataStoreContext,
     ITask,
     ITaskManager,
+    ISnapshotContracts,
 } from "@fluidframework/runtime-definitions";
 import {
     IProvideSharedString,
@@ -331,6 +332,18 @@ export function instantiateDataStore(context: IFluidDataStoreContext) {
         const runner = await runnerP;
         return runner.request(request);
     });
+
+    const runnerP2 = SharedTextRunner.load(runtime, context);
+    runtime.registerExtraSnapshotContracts(() => {
+        const runner2 = await runnerP2;
+        const searchContract: () => string = () => { return runner2.ISharedString.getText(); };
+        const contracts: ISnapshotContracts = {
+            search: searchContract,
+        };
+
+        return contracts;
+    });
+
 
     return runtime;
 }

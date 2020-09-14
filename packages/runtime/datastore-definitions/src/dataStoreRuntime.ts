@@ -140,4 +140,11 @@ export interface IFluidDataStoreRuntime extends
      * Errors raised by distributed data structures
      */
     raiseContainerWarning(warning: ContainerWarning): void;
+
+    /**
+     * NOTE: Search blob/extra concept
+     *
+     * Register extra information to be added to snapshot trees
+     */
+    registerExtraSnapshotContracts(): void;
 }

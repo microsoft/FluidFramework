@@ -10,6 +10,11 @@ import {
 } from "@fluidframework/core-interfaces";
 
 /**
+ * NOTE: Search blob concept
+ */
+export type ISnapshotContracts = Map<string, () => string>;
+
+/**
  * Definition of a Task.
  */
 export interface ITask {
