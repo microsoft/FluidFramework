@@ -468,9 +468,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         let isOptionsCall = false;
 
-        if (headers.Authorization) {
+        if (Object.keys(headers).length) {
             isOptionsCall = true;
         }
+
         // This event measures only successful cases of getLatest call (no tokens, no retries).
         const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest" }, async (event) => {
             const startTime = performance.now();
@@ -486,6 +487,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             let fetchStToRespEndTime = -1; // responseEnd  - fetchStart
             let reqStToRespEndTime = -1; // responseEnd - requestStart
             let networkTime = -1; // responseEnd - startTime
+            const spReqDuration = response.headers.get("sprequestduration");
 
             const resources1 = performance.getEntriesByType("resource");
             // Usually the latest fetch call is to the end of resources, so we start from the end.
@@ -505,7 +507,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         break;
                 }
             }
-            const clientTime = overallTime - networkTime;
+
+            let clientTime = overallTime - networkTime;
+            if (spReqDuration) {
+                clientTime = clientTime - parseInt(spReqDuration, 10);
+            }
             event.end({
                 trees: content.trees?.length ?? 0,
                 blobs: content.blobs?.length ?? 0,
