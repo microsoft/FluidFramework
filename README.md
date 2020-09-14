@@ -107,7 +107,7 @@ npm run test:coverage
 ### Mimic the official CI build
 
 Our CI pipelines runs on linux machines, and the npm scripts all have the `ci` prefix.
-To replicate the test steps from the CI pipeline locally, run the following commands for the packages or lerna repos:
+To replicate the test steps from the CI pipeline locally, run the following commands for the packages or Lerna monorepos:
 
 Run      | Non-Windows                | Windows                                               |
 ---------|----------------------------|-------------------------------------------------------|
