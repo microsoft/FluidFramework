@@ -46,3 +46,8 @@ Client code responsible for connecting to the Fluid service.
 
 Fluid's API surface makes use of URLs, for example in the `Loader`'s `resolve()` method and `Container`'s `request()`
 method.  The URL resolver is used to interpret these URLs for use with the Fluid service.
+
+## Aqueduct
+
+The Fluid Framework team's first attempt to reduce boilerplate code and create a more convenient wrapper around the core
+framework.
