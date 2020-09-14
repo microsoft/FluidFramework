@@ -1423,7 +1423,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 messageClientId: message.clientId,
                 historyIndex: this.clientIdHistory.indexOf(message.clientId),
                 sequenceNumber: message.sequenceNumber,
-                clientSequenceNumber: this._deltaManager.lastSequenceNumber,
+                clientSequenceNumber: message.clientSequenceNumber,
             });
         }
 
