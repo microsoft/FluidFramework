@@ -237,7 +237,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * this change
      */
     private readonly clientIdHistory: string[] = [];
-    private readonly maxClientIdHistory = 5;
+    private readonly maxClientIdHistory = 100;
     private _id: string | undefined;
     private originalRequest: IRequest | undefined;
     private readonly _deltaManager: DeltaManager;
@@ -1422,6 +1422,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 clientId: this._clientId,
                 messageClientId: message.clientId,
                 historyIndex: this.clientIdHistory.indexOf(message.clientId),
+                sequenceNumber: message.sequenceNumber,
+                clientSequenceNumber: this._deltaManager.lastSequenceNumber,
             });
         }
 
