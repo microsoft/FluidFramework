@@ -1451,7 +1451,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         } else {
             const local = this.clientIdHistory.includes(message.clientId);
             if (local && this._clientId !== message.clientId) {
-                this.logger.sendErrorEvent({ eventName: "matchedOldClientIdInSignal"})
+                this.logger.sendErrorEvent({ eventName: "matchedOldClientIdInSignal" });
             }
             this.context!.processSignal(message, local);
         }
