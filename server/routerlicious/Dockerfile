@@ -63,7 +63,7 @@ WORKDIR /usr/src/server
 # Set the version number
 ARG VERSION=0
 RUN if [ "$VERSION" != "0" ]; then npx lerna version $VERSION --no-git-tag-version --no-push --yes; fi
-RUN npm run build:ci
+RUN npm run ci:build
 
 # Build that alfred uses
 FROM base AS runner
