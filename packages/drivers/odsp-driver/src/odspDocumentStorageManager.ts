@@ -504,14 +504,15 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         fetchStToRespEndTime = (indResTime.fetchStart > 0) ? (indResTime.responseEnd - indResTime.fetchStart) : 0;
                         reqStToRespEndTime = (indResTime.requestStart > 0) ? (indResTime.responseEnd - indResTime.requestStart) : 0;
                         networkTime = (indResTime.startTime > 0) ? (indResTime.responseEnd - indResTime.startTime) : 0;
+                        if (spReqDuration) {
+                            networkTime = networkTime - parseInt(spReqDuration, 10);
+                        }
                         break;
                 }
             }
 
-            let clientTime = overallTime - networkTime;
-            if (spReqDuration) {
-                clientTime = clientTime - parseInt(spReqDuration, 10);
-            }
+            const clientTime = overallTime - networkTime;
+
             event.end({
                 trees: content.trees?.length ?? 0,
                 blobs: content.blobs?.length ?? 0,
