@@ -49,7 +49,7 @@ trigger:
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
-  
+
 pr:
   branches:
     include:
@@ -87,10 +87,10 @@ variables:
   value: $(containerRegistryUrl)/${{ variables.buildContainerName }}:$(containerTagSuffix)
 - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
   - name: testConfig
-    value: :full
+    value: ci:test:coverage
 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
   - name: testConfig
-    value: :ci
+    value: ci:test
 
 stages:
 - stage: build
@@ -155,7 +155,7 @@ stages:
         # for npm ci in component detection and set version
         - task: UseNode@1
           displayName: Use Node 12.x
-          inputs: 
+          inputs:
             version: 12.x
 
         # Component detection (not pull request)
@@ -220,11 +220,11 @@ stages:
 
         # Test
         - task: Docker@0
-          displayName: npm run test$(testConfig)
+          displayName: npm run $(testConfig)
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/server/routerlicious/nyc:/usr/src/server/nyc -t $(baseContainerTag) npm run test$(testConfig)'
-          
+            customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/server/routerlicious/nyc:/usr/src/server/nyc -t $(baseContainerTag) npm run $(testConfig)'
+
         - task: PublishTestResults@2
           displayName: Publish Test Results
           inputs:
@@ -268,7 +268,7 @@ stages:
               arguments: --target runner
               tags: |
                 $(containerTagSuffix)
-          
+
           - task: Docker@2
             displayName: 'Docker Push - Runner'
             inputs:

@@ -34,7 +34,6 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha && npm run test:jest",
-    "test:ci": "npm run test:report",
     "test:coverage": "nyc npm run test:report",
     "test:jest": "jest",
     "test:jest:report": "npm run test:jest -- --ci --reporters=default --reporters=jest-junit",
