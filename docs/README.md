@@ -35,7 +35,7 @@ npm start
 
 Open `http://localhost:1313` to preview the site. Any changes to the source
 content will automatically force an HTML re-render allowing you to preview your
-modications in quasi real time.
+modifications in quasi real time.
 
 If you want to debug the generated content, you can build the site and see the
 output in the `public/` folder:
