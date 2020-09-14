@@ -17,6 +17,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit
         getWebsocketToken: PushTokenFetcher,
         persistedCache?: IPersistedCache,
         hostPolicy?: HostStoragePolicy,
+        usePostForTreesLatest: boolean = false,
     ) {
         super(
             getStorageToken,
@@ -24,6 +25,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit
             async () => import("./getSocketIo").then((m) => m.getSocketIo()),
             persistedCache,
             hostPolicy,
+            usePostForTreesLatest,
         );
     }
 }
