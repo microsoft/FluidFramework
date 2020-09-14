@@ -298,7 +298,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.isTreesLatestSecondCallEvent(tokenFetchOptions);
 
                     // Use the POST call for TreesLatest so as to save the OPTIONS call.
-                    const cachedSnapshot = await this.fetchSnapshotWithMultiPartRequest(tokenFetchOptions, hostPolicy);
+                    const cachedSnapshot = await this.fetchSnapshotViaPost(tokenFetchOptions, hostPolicy);
                     return this.processSnapshotAndGetVersion(cachedSnapshot);
                 });
             } catch (error) {
@@ -360,7 +360,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
     }
 
-    private async fetchSnapshotWithMultiPartRequest(
+    private async fetchSnapshotViaPost(
         tokenFetchOptions: TokenFetchOptions,
         hostPolicy: ISnapshotOptions,
     ): Promise<IOdspSnapshot> {
@@ -368,7 +368,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
         if (tokenFetchOptions.refresh) {
-            cachedSnapshot = await this.fetchSnapshotWithMultiPartRequestCore(hostPolicy, tokenFetchOptions);
+            cachedSnapshot = await this.fetchSnapshotViaPostCore(hostPolicy, tokenFetchOptions);
         } else {
             cachedSnapshot = await PerformanceEvent.timedExecAsync(
                 this.logger,
@@ -385,7 +385,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                     let method: string;
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
-                        const snapshotP = this.fetchSnapshotWithMultiPartRequestCore(hostPolicy, tokenFetchOptions);
+                        const snapshotP = this.fetchSnapshotViaPostCore(hostPolicy, tokenFetchOptions);
 
                         const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
                         cachedSnapshot = promiseRaceWinner.value;
@@ -404,7 +404,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         method = cachedSnapshot !== undefined ? "cache" : "network";
 
                         if (cachedSnapshot === undefined) {
-                            cachedSnapshot = await this.fetchSnapshotWithMultiPartRequestCore(hostPolicy, tokenFetchOptions);
+                            cachedSnapshot = await this.fetchSnapshotViaPostCore(hostPolicy, tokenFetchOptions);
                         }
                     }
                     event.end({ method });
@@ -536,11 +536,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return id ? [{ id, treeId: undefined! }] : [];
     }
 
-    private async fetchSnapshotWithMultiPartRequestCore(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
+    private async fetchSnapshotViaPostCore(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
 
-        // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
-        // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
         const url = `${this.snapshotUrl}/trees/latest?ump=1`;
         const formBoundary = uuid();
         const crlf = "\r\n";
@@ -604,8 +602,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private async fetchSnapshotFallbackCore(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
         const queryString = getQueryString(snapshotOptions);
-        // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
-        // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
+
         const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${queryString}`, storageToken);
 
         // This event measures only successful cases of getLatest call (no tokens, no retries).
