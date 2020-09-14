@@ -345,3 +345,8 @@ export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
         dataStoreRuntime: IFluidDataStoreChannel,
     ): Promise<void>;
 }
+
+export interface IFluidDataStoreContextType extends IFluidDataStoreContext {
+    // True if the data store is LocalDataStoreContext.
+    readonly isLocalDataStore: boolean;
+}
