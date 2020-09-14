@@ -1413,11 +1413,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
-        const local = this.clientIdHistory.includes(message.clientId);
+        const local = this._clientId === message.clientId;
 
         // Report if we're getting messages from a clientId older than the most recent
-        if (local && this._clientId !== message.clientId) {
-            this.logger.sendErrorEvent({ eventName: "matchedOldClientIdInRemoteMessage" });
+        if (!local && this.clientIdHistory.includes(message.clientId)) {
+            this.logger.sendErrorEvent({
+                eventName: "matchedOldClientIdInRemoteMessage",
+                clientId: this._clientId,
+                messageClientId: message.clientId,
+                historyIndex: this.clientIdHistory.indexOf(message.clientId),
+            });
         }
 
         // Forward non system messages to the loaded runtime for processing
@@ -1449,10 +1454,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._audience.removeMember(leftClientId);
             }
         } else {
-            const local = this.clientIdHistory.includes(message.clientId);
-            if (local && this._clientId !== message.clientId) {
-                this.logger.sendErrorEvent({ eventName: "matchedOldClientIdInSignal" });
-            }
+            const local = this._clientId === message.clientId;
             this.context!.processSignal(message, local);
         }
     }
