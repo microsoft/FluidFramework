@@ -132,6 +132,10 @@ export type DetachedContainerSource = {
     create: false,
 };
 
+export interface IContainerClient extends IClient{
+    readonly containerId: string;
+}
+
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
@@ -254,6 +258,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
     private readonly _audience: Audience;
+    private readonly client: Readonly<IContainerClient>;
 
     private _context: ContainerContext | undefined;
     private get context() {
@@ -411,6 +416,28 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._canReconnect = config.canReconnect;
         }
 
+        const clientOptions: IClient =
+            this.options?.client !== undefined
+                ? (this.options.client as IClient)
+                : {
+                    details: {
+                        capabilities: { interactive: true },
+                    },
+                    mode: "read", // default reconnection mode on lost connection / connection error
+                    permission: [],
+                    scopes: [],
+                    user: { id: "" },
+                };
+
+        // Client info from headers overrides client info from loader options
+        const headerClientDetails = this.originalRequest?.headers?.[LoaderHeader.clientDetails];
+
+        if (headerClientDetails !== undefined) {
+            merge(clientOptions.details, headerClientDetails);
+        }
+
+        this.client = { containerId: uuid(), ... clientOptions };
+
         // Create logger for data stores to use
         const type = this.client.details.type;
         const interactive = this.client.details.capabilities.interactive;
@@ -424,7 +451,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 clientType, // Differentiating summarizer container from main container
                 loaderVersion: pkgVersion,
-                containerId: uuid(),
+                containerId: this.client.containerId,
             },
             {
                 docId: () => this.id,
@@ -443,7 +470,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 if (document.hidden) {
                     this.lastVisible = performanceNow();
                 } else {
-                    // settimeout so this will hopefully fire after disconnect event if being hidden caused it
+                    // setTimeout so this will hopefully fire after disconnect event if being hidden caused it
                     setTimeout(() => this.lastVisible = undefined, 0);
                 }
             });
@@ -775,8 +802,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
              * There are currently two scenarios where this is called:
              * 1. When a new code proposal is accepted - This should be set to true before `this.loadContext` is
              * called which creates and loads the ContainerRuntime. This is because for "read" mode clients this
-             * flag is false which causes ContainerRuntime to create the internal compoents again.
-             * 2. When the first client connects in "write" mode - This happens when a clent does not create the
+             * flag is false which causes ContainerRuntime to create the internal data stores again.
+             * 2. When the first client connects in "write" mode - This happens when a client does not create the
              * Container in detached mode. In this case, when the code proposal is accepted, we come here and we
              * need to create the internal data stores in ContainerRuntime.
              * Once we move to using detached container everywhere, this can move outside this block.
@@ -1248,29 +1275,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error(PackageNotFactoryError);
         }
         return factory;
-    }
-
-    private get client(): IClient {
-        const client: IClient = this.options?.client !== undefined
-            ? (this.options.client as IClient)
-            : {
-                details: {
-                    capabilities: { interactive: true },
-                },
-                mode: "read", // default reconnection mode on lost connection / connection error
-                permission: [],
-                scopes: [],
-                user: { id: "" },
-            };
-
-        // Client info from headers overrides client info from loader options
-        const headerClientDetails = this.originalRequest?.headers?.[LoaderHeader.clientDetails];
-
-        if (headerClientDetails !== undefined) {
-            merge(client.details, headerClientDetails);
-        }
-
-        return client;
     }
 
     private createDeltaManager() {
