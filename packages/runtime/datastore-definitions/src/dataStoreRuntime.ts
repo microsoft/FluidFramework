@@ -23,7 +23,11 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IInboundSignalMessage, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
+import {
+    IInboundSignalMessage,
+    IProvideFluidDataStoreRegistry,
+    ISnapshotContracts,
+} from "@fluidframework/runtime-definitions";
 import { IChannel } from ".";
 
 /**
@@ -146,5 +150,5 @@ export interface IFluidDataStoreRuntime extends
      *
      * Register extra information to be added to snapshot trees
      */
-    registerExtraSnapshotContracts(): void;
+    registerExtraSnapshotContracts(contracts: ISnapshotContracts): void;
 }

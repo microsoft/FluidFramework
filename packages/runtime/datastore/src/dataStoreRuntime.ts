@@ -39,6 +39,8 @@ import {
     ISequencedDocumentMessage,
     ITreeEntry,
     ITree,
+    TreeEntry,
+    FileMode,
 } from "@fluidframework/protocol-definitions";
 import {
     IAttachMessage,
@@ -195,6 +197,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         public readonly logger: ITelemetryLogger,
     ) {
         super();
+
+        this.extraSnapshotContracts = new Map<string, () => string>();
 
         const tree = dataStoreContext.baseSnapshot;
 
@@ -558,7 +562,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
     public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
         // Craft the .attributes file for each shared object
-        const entries = await Promise.all(Array.from(this.contexts)
+        const entries: ITreeEntry[] = await Promise.all(Array.from(this.contexts)
             .filter(([key, _]) => {
                 const isAttached = this.isChannelAttached(key);
                 // We are not expecting local dds! Summary may not capture local state.
@@ -573,8 +577,20 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                 return new TreeTreeEntry(key, snapshot);
             }));
 
-        // NOTE: Search blob concept:
-
+        // NOTE: Search blob concept (just testing one contract for now):
+        const searchContract = this.extraSnapshotContracts.get("search");
+        if (searchContract !== undefined) {
+            const searchEntry: ITreeEntry = {
+                path: "",
+                type: TreeEntry.Blob,
+                value: {
+                    contents: searchContract(),
+                    encoding: "utf-8",
+                },
+                mode: FileMode.File,
+            };
+            entries.push(searchEntry);
+        }
 
         return entries;
     }

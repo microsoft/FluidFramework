@@ -45,7 +45,7 @@ import {
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
 import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
-import { IFluidDataStoreChannel, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreChannel, ISummaryTreeWithStats, ISnapshotContracts } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 
@@ -537,6 +537,13 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public raiseContainerWarning(warning: ContainerWarning): void { }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
+        return;
+    }
+
+    /**
+     * Note: Search blob concept
+     */
+    public registerExtraSnapshotContracts(contracts: ISnapshotContracts): void {
         return;
     }
 }
