@@ -100,7 +100,7 @@ SharedDirectory.
 
 {{% callout important "See also" %}}
 
-- [Creating and storing distributed data structures](./dds.md#creating-and-storing-distributed-data-structures)
+- [Creating and storing distributed data structures](../dds/#creating-and-storing-distributed-data-structures)
 
 {{% /callout %}}
 
