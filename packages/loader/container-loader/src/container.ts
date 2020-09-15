@@ -1394,7 +1394,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         if (value === ConnectionState.Connected) {
             this._clientId = this.pendingClientId;
-            this.clientIdHistory.push(this.pendingClientId!);
+            if (this._clientId !== undefined) {
+                this.clientIdHistory.push(this._clientId);
+            }
             if (this.clientIdHistory.length > this.maxClientIdHistory) {
                 this.clientIdHistory.shift();
             }
