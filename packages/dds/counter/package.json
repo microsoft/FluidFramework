@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/counter",
-  "version": "0.24.3",
+  "version": "0.24.4",
   "description": "Counter DDS",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -49,16 +49,16 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.21.0",
-    "@fluidframework/component-core-interfaces": "^0.24.3",
-    "@fluidframework/component-runtime-definitions": "^0.24.3",
+    "@fluidframework/component-core-interfaces": "^0.24.4",
+    "@fluidframework/component-runtime-definitions": "^0.24.4",
     "@fluidframework/protocol-definitions": "^0.1010.0",
-    "@fluidframework/shared-object-base": "^0.24.3",
+    "@fluidframework/shared-object-base": "^0.24.4",
     "debug": "^4.1.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/test-runtime-utils": "^0.24.3",
+    "@fluidframework/test-runtime-utils": "^0.24.4",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/debug": "^4.1.5",
     "@types/mocha": "^5.2.5",
