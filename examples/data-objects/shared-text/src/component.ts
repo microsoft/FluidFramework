@@ -303,7 +303,7 @@ class TaskScheduler {
     }
 }
 
-export function instantiateDataStore(context: IFluidDataStoreContext) {
+export async function instantiateDataStore(context: IFluidDataStoreContext) {
     const modules = new Map<string, any>();
 
     // Create channel factories
@@ -333,17 +333,13 @@ export function instantiateDataStore(context: IFluidDataStoreContext) {
         return runner.request(request);
     });
 
+    // NOTE: Search blob concept
     const runnerP2 = SharedTextRunner.load(runtime, context);
-    runtime.registerExtraSnapshotContracts(() => {
-        const runner2 = await runnerP2;
-        const searchContract: () => string = () => { return runner2.ISharedString.getText(); };
-        const contracts: ISnapshotContracts = {
-            search: searchContract,
-        };
-
-        return contracts;
-    });
-
+    const runner2 = await runnerP2;
+    const searchContract: () => string = () => { return runner2.ISharedString.getText(); };
+    const contracts: ISnapshotContracts = new Map<string, () => string>();
+    contracts.set("search", searchContract);
+    runtime.registerExtraSnapshotContracts(contracts);
 
     return runtime;
 }
