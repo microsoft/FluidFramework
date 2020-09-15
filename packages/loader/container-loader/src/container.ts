@@ -1254,16 +1254,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private get client(): IClient {
-        // augments the IClient type with the container session id
-        // this client gets passed to the delta manager,
+        // augments the IClient type with the container session id.
+        // this IClient gets passed to the delta manager,
         // and will be serialized in the join message for the client
         // having the containerSessionId in the join message
         // will allow us to identify reconnecting clients
-        // in the ops stream, as they will have a consistent
-        // containerSessionId 
+        // in the op stream, as they will have a consistent
+        // containerSessionId
         const client: IClient & {containerSessionId: string} =
             this.options?.client !== undefined
-                ? ({ containerSessionId: this.containerSessionId, ... this.options.client as IClient })
+                ? {
+                    containerSessionId: this.containerSessionId,
+                    ... this.options.client as IClient,
+                }
                 : {
                     containerSessionId: this.containerSessionId,
                     details: {
