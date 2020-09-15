@@ -132,7 +132,7 @@ export type DetachedContainerSource = {
     create: false,
 };
 
-export interface IContainerClient extends IClient{
+interface IContainerClient extends IClient{
     readonly containerId: string;
 }
 
@@ -233,6 +233,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public subLogger: TelemetryLogger;
     private _canReconnect: boolean = true;
     private readonly logger: ITelemetryLogger;
+    private readonly containerId: string;
 
     private pendingClientId: string | undefined;
     private loaded = false;
@@ -258,7 +259,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
     private readonly _audience: Audience;
-    private readonly client: Readonly<IContainerClient>;
 
     private _context: ContainerContext | undefined;
     private get context() {
@@ -416,33 +416,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._canReconnect = config.canReconnect;
         }
 
-        const clientOptions: IClient =
-            this.options?.client !== undefined
-                ? (this.options.client as IClient)
-                : {
-                    details: {
-                        capabilities: { interactive: true },
-                    },
-                    mode: "read", // default reconnection mode on lost connection / connection error
-                    permission: [],
-                    scopes: [],
-                    user: { id: "" },
-                };
-
-        // Client info from headers overrides client info from loader options
-        const headerClientDetails = this.originalRequest?.headers?.[LoaderHeader.clientDetails];
-
-        if (headerClientDetails !== undefined) {
-            merge(clientOptions.details, headerClientDetails);
-        }
-
-        this.client = { containerId: uuid(), ... clientOptions };
-
         // Create logger for data stores to use
         const type = this.client.details.type;
         const interactive = this.client.details.capabilities.interactive;
         const clientType =
             `${interactive ? "interactive" : "noninteractive"}${type !== undefined && type !== "" ? `/${type}` : ""}`;
+        this.containerId = uuid();
+
         // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
         this.subLogger = ChildLogger.create(
@@ -451,7 +431,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 clientType, // Differentiating summarizer container from main container
                 loaderVersion: pkgVersion,
-                containerId: this.client.containerId,
+                containerId: this.containerId,
             },
             {
                 docId: () => this.id,
@@ -1275,6 +1255,30 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error(PackageNotFactoryError);
         }
         return factory;
+    }
+
+    private get client(): IClient {
+        const client: IContainerClient = this.options?.client !== undefined
+            ? ({ containerId: this.containerId, ... this.options.client as IClient })
+            : {
+                containerId: this.containerId,
+                details: {
+                    capabilities: { interactive: true },
+                },
+                mode: "read", // default reconnection mode on lost connection / connection error
+                permission: [],
+                scopes: [],
+                user: { id: "" },
+            };
+
+        // Client info from headers overrides client info from loader options
+        const headerClientDetails = this.originalRequest?.headers?.[LoaderHeader.clientDetails];
+
+        if (headerClientDetails !== undefined) {
+            merge(client.details, headerClientDetails);
+        }
+
+        return client;
     }
 
     private createDeltaManager() {
