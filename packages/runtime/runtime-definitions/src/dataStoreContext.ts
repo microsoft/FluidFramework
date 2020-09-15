@@ -90,6 +90,12 @@ export interface IContainerRuntimeBase extends
     on(event: "leader" | "notleader", listener: () => void): this;
 
     /**
+     * @deprecated 0.16 Issue #1537, #3631
+     * @internal
+     */
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IFluidDataStoreChannel>;
+
+    /**
      * Creates data store. Returns router of data store. Data store is not bound to container,
      * store in such state is not persisted to storage (file). Storing a handle to this store
      * (or any of its parts, like DDS) into already attached DDS (or non-attached DDS that will eventually
@@ -261,6 +267,11 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
      */
     readonly hostRuntime: IContainerRuntimeBase;
     readonly snapshotFn: (message: string) => Promise<void>;
+
+    /**
+     * @deprecated 0.16 Issue #1635, #3631
+     */
+    readonly createProps?: any;
 
     /**
      * Ambient services provided with the context
