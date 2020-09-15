@@ -25,4 +25,4 @@ stages:
       containerRegistry: ${{ parameters.containerRegistry }}
       containerTag: ${{ parameters.containerTag }}
       containerRegistryUrl: ${{ parameters.containerRegistryUrl }}
-      containerName: pubic/${{ parameters.containerName }}
+      containerName: public/${{ parameters.containerName }}
