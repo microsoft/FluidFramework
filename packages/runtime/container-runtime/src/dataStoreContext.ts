@@ -696,6 +696,10 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        /**
+         * @deprecated 0.16 Issue #1635, #3631
+         */
+        public readonly createProps?: any,
     ) {
         super(
             runtime,

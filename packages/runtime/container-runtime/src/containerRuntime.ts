@@ -1242,11 +1242,16 @@ export class ContainerRuntime extends EventEmitter
         return fluidDataStore;
     }
 
+    public async _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string):
+        Promise<IFluidDataStoreChannel> {
+        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props).realize();
+    }
+
     private canSendOps() {
         return this.connected && !this.deltaManager.readonly;
     }
 
-    private _createFluidDataStoreContext(pkg: string[], id = uuid()) {
+    private _createFluidDataStoreContext(pkg: string[], id = uuid(), props?: any) {
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "Creating store with existing ID");
@@ -1260,6 +1265,7 @@ export class ContainerRuntime extends EventEmitter
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            props,
         );
 
         const deferred = new Deferred<FluidDataStoreContext>();
