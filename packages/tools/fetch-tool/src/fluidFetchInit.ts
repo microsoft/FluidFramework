@@ -58,12 +58,15 @@ async function initializeODSPCore(
         return resolveWrapper(
             async (authRequestInfo: IOdspAuthRequestInfo) => {
                 if ((refresh || !authRequestInfo.accessToken) && authRequestInfo.refreshTokenFn) {
+                    console.log("refeedd");
                     return authRequestInfo.refreshTokenFn();
                 }
                 return authRequestInfo.accessToken;
             },
             server,
             clientConfig,
+            undefined,
+            true,
         );
     };
     // eslint-disable-next-line @typescript-eslint/promise-function-async

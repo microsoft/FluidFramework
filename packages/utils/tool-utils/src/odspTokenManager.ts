@@ -55,6 +55,10 @@ export class OdspTokenManager {
         private readonly tokenCache?: IAsyncCache<OdspTokenManagerCacheKey, IOdspTokens>,
     ) { }
 
+    public async updateTokenCache(key: OdspTokenManagerCacheKey, value: IOdspTokens) {
+        await this.tokenCache?.save(key, value);
+    }
+
     public async getOdspTokens(
         server: string,
         clientConfig: IClientConfig,
