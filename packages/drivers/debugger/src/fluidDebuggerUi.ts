@@ -101,8 +101,11 @@ Close debugger window to proceed to live document<br/><br/>
 </select>
 &nbsp; &nbsp; &nbsp;
 <button id='buttonVers' style='width:60px'>Go</button><br/>
-<input id='file' type='file'/>
-<br/><br/><div id='versionText'></div><br/>
+<input id='file' type='file' value='Load from file'/>
+<br/><br/><div id='versionText'></div>
+<br/><br/>
+<a href='#' id='viewStats'>View Op Stats</a> |
+<a href='#' id='downloadOps'>Download Ops</a>
 </body>`;
 
 const debuggerWindowHtml2 =

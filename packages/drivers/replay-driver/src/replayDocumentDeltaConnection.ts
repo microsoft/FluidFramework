@@ -60,6 +60,9 @@ export class ReplayControllerStatic extends ReplayController {
         return true;
     }
 
+    public async initDeltaStorage(storage: IDocumentDeltaStorageService): Promise<void> {
+    }
+
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
         return [];
     }

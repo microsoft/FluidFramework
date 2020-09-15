@@ -25,8 +25,11 @@ export class ReplayDocumentService implements api.IDocumentService {
             return documentService;
         }
 
+        const deltaStorageConnection = await documentService.connectToDeltaStorage();
+        await controller.initDeltaStorage(deltaStorageConnection);
+
         const deltaConnection = ReplayDocumentDeltaConnection.create(
-            await documentService.connectToDeltaStorage(),
+            deltaStorageConnection,
             controller);
         return new ReplayDocumentService(controller, deltaConnection);
     }

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { Deferred } from "@fluidframework/common-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService, IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     IDocumentAttributes,
@@ -32,7 +32,7 @@ const MaxBatchDeltas = 2000;
 export class DebugReplayController extends ReplayController implements IDebuggerController {
     public static create(
         createUi: debuggerUIFactory): DebugReplayController | null {
-        if (typeof localStorage === "object" && localStorage !== null && localStorage.FluidDebugger) {
+                if (typeof localStorage === "object" && localStorage !== null && localStorage.FluidDebugger) {
             const controller = new DebugReplayController();
             const ui = createUi(controller);
             if (ui) {
@@ -64,6 +64,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     protected retryFetchOpsOnEndOfFile = false;
 
     protected documentStorageService?: IDocumentStorageService;
+    private documentDeltaStorageService?: IDocumentDeltaStorageService;
     protected versions: IVersion[] = [];
     protected stepsToPlay: number = 0;
     protected lastOpReached = false;
@@ -74,6 +75,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
     // Member to prevent repeated initialization in initStorage(...), which also
     // returns if this controller should be used or function as a passthrough
     private shouldUseController: boolean | undefined;
+
+    private constructor() {
+        super();
+    }
 
     public connectToUi(ui: IDebuggerUI): void {
         this.ui = ui;
@@ -142,6 +147,27 @@ export class DebugReplayController extends ReplayController implements IDebugger
             }
         };
         reader.readAsText(file, "utf-8");
+    }
+
+    public onViewStats() {
+        // TODO
+    }
+
+    public onDownloadOps() {
+        this.fetchAllOps().then((result) => alert(`fetch complete. Result: ${result}`)).catch(() => {});
+    }
+
+    private async fetchAllOps(): Promise<string> {
+        if (this.documentDeltaStorageService !== undefined) {
+            const deltaGenerator = generateSequencedMessagesFromDeltaStorage(this.documentDeltaStorageService);
+            const messages: ISequencedDocumentMessage[] = [];
+            for await (const message of deltaGenerator) {
+                messages.concat(message);
+            }
+
+            return JSON.stringify(messages, undefined, 2);
+        }
+        return "N/A";
     }
 
     public fetchTo(currentOp: number): number {
@@ -215,6 +241,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
         this.shouldUseController = await this.startSeqDeferred.promise !== DebugReplayController.WindowClosedSeq;
         assert(this.isSelectionMade() === this.shouldUseController);
         return this.shouldUseController;
+    }
+
+    public async initDeltaStorage(storage: IDocumentDeltaStorageService): Promise<void> {
+        this.documentDeltaStorageService = storage;
     }
 
     public async read(blobId: string): Promise<string> {
@@ -309,4 +339,40 @@ export class DebugReplayController extends ReplayController implements IDebugger
         this.ui.versionSelected(seq, version);
         this.startSeqDeferred.resolve(seq);
     }
+}
+
+async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumentDeltaStorageService)  {
+    const timeStart = Date.now();
+    let requests = 0;
+    let opsStorage = 0;
+    let lastSeq = 0;
+    const batch = 2000;
+    while (true) {
+        requests++;
+        const messages = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
+        if (messages.length === 0) {
+            break;
+        }
+        yield messages;
+        opsStorage += messages.length;
+        lastSeq = messages[messages.length - 1].sequenceNumber;
+    }
+
+    if (requests > 0) {
+        // eslint-disable-next-line max-len
+        console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests`);
+    }
+}
+
+async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaStorageService) {
+    console.log(`Loading ops at ${from}`);
+    for (let iter = 0; iter < 3; iter++) {
+        try {
+            return await deltaStorage.get(from, to);
+        } catch (error) {
+            console.error("Hit error while downloading ops. Retrying");
+            console.error(error);
+        }
+    }
+    throw new Error("Giving up after 3 attempts to download chunk.");
 }
