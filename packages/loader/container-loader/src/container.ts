@@ -231,7 +231,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
     private blobsCacheStorageService: IDocumentStorageService | undefined;
 
+    /**
+     * The current client id
+     */
     private _clientId: string | undefined;
+    /**
+     * Our current (and previous) clientIds, with the latest (and current) at the
+     * end of the array.  We keep a history so that messages with different IDs
+     * can be identified as originating from this client in cases of multiple
+     * disconnects/reconnects.  _clientId exists above as well to minimize/stage
+     * this change
+     */
+    private readonly clientIdHistory: string[] = [];
+    private readonly maxClientIdHistory = 100;
     private _id: string | undefined;
     private originalRequest: IRequest | undefined;
     private readonly _deltaManager: DeltaManager;
@@ -1385,6 +1397,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         if (value === ConnectionState.Connected) {
             this._clientId = this.pendingClientId;
+            if (this._clientId !== undefined) {
+                this.clientIdHistory.push(this._clientId);
+            }
+            if (this.clientIdHistory.length > this.maxClientIdHistory) {
+                this.clientIdHistory.shift();
+            }
             this._deltaManager.updateQuorumJoin();
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
@@ -1445,6 +1463,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
         const local = this._clientId === message.clientId;
+
+        // Report if we're getting messages from a clientId older than the most recent
+        if (!local && this.clientIdHistory.includes(message.clientId)) {
+            this.logger.sendErrorEvent({
+                eventName: "matchedOldClientIdInRemoteMessage",
+                clientId: this._clientId,
+                messageClientId: message.clientId,
+                historyIndex: this.clientIdHistory.indexOf(message.clientId),
+                sequenceNumber: message.sequenceNumber,
+                clientSequenceNumber: message.clientSequenceNumber,
+            });
+        }
 
         // Forward non system messages to the loaded runtime for processing
         if (!isSystemMessage(message)) {
