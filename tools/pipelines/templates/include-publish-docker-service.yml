@@ -14,19 +14,6 @@ parameters:
   type: string
 
 stages:
-- stage: publish_docker_internal
-  dependsOn: build
-  displayName: Publish Stage - Internal Docker Image
-  condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
-  jobs:
-  - template: include-publish-docker-service-steps.yml
-    parameters:
-      environment: container-registry-internal
-      containerRegistry: ${{ parameters.containerRegistry }}
-      containerTag: ${{ parameters.containerTag }}
-      containerRegistryUrl: ${{ parameters.containerRegistryUrl }}
-      containerName: internal/${{ parameters.containerName }}
-
 - stage: publish_docker_official
   dependsOn: build
   displayName: Publish Stage - Official Docker Image
@@ -38,4 +25,4 @@ stages:
       containerRegistry: ${{ parameters.containerRegistry }}
       containerTag: ${{ parameters.containerTag }}
       containerRegistryUrl: ${{ parameters.containerRegistryUrl }}
-      containerName: pubic/${{ parameters.containerName }}
+      containerName: public/${{ parameters.containerName }}
