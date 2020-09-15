@@ -132,10 +132,6 @@ export type DetachedContainerSource = {
     create: false,
 };
 
-interface IContainerClient extends IClient{
-    readonly containerId: string;
-}
-
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
@@ -233,7 +229,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public subLogger: TelemetryLogger;
     private _canReconnect: boolean = true;
     private readonly logger: ITelemetryLogger;
-    private readonly containerId: string;
+    private readonly containerSessionId: string;
 
     private pendingClientId: string | undefined;
     private loaded = false;
@@ -421,7 +417,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const interactive = this.client.details.capabilities.interactive;
         const clientType =
             `${interactive ? "interactive" : "noninteractive"}${type !== undefined && type !== "" ? `/${type}` : ""}`;
-        this.containerId = uuid();
+        this.containerSessionId = uuid();
 
         // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
@@ -431,7 +427,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 clientType, // Differentiating summarizer container from main container
                 loaderVersion: pkgVersion,
-                containerId: this.containerId,
+                containerSessionId: this.containerSessionId,
             },
             {
                 docId: () => this.id,
@@ -1258,18 +1254,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private get client(): IClient {
-        const client: IContainerClient = this.options?.client !== undefined
-            ? ({ containerId: this.containerId, ... this.options.client as IClient })
-            : {
-                containerId: this.containerId,
-                details: {
-                    capabilities: { interactive: true },
-                },
-                mode: "read", // default reconnection mode on lost connection / connection error
-                permission: [],
-                scopes: [],
-                user: { id: "" },
-            };
+        const client: IClient & {containerSessionId: string} =
+            this.options?.client !== undefined
+                ? ({ containerSessionId: this.containerSessionId, ... this.options.client as IClient })
+                : {
+                    containerSessionId: this.containerSessionId,
+                    details: {
+                        capabilities: { interactive: true },
+                    },
+                    mode: "read", // default reconnection mode on lost connection / connection error
+                    permission: [],
+                    scopes: [],
+                    user: { id: "" },
+                };
 
         // Client info from headers overrides client info from loader options
         const headerClientDetails = this.originalRequest?.headers?.[LoaderHeader.clientDetails];
