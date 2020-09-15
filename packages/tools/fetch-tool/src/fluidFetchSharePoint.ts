@@ -49,7 +49,7 @@ export async function resolveWrapper<T>(
         // If this is used for getting a token, then refresh the cache with new token.
         if (forToken) {
             const key: IOdspCacheKey = { isPush: false, server };
-            await odspTokenManager.updateTokenCache(
+            await odspTokenManager.updateTokensCache(
                 key, { accessToken: result as any as string, refreshToken: tokens.refreshToken });
             return result;
         }
