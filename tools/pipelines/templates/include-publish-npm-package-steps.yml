@@ -38,7 +38,7 @@ parameters:
   type: string
   default:
 
-steps:
+jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
   pool: ${{ parameters.pool }}
