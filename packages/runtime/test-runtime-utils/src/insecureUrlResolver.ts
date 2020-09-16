@@ -92,8 +92,9 @@ export class InsecureUrlResolver implements IUrlResolver {
     private resolveHelper(documentId: string, uri: string) {
         const encodedTenantId = encodeURIComponent(this.tenantId);
         const encodedDocId = encodeURIComponent(documentId);
+        const encodedUri = encodeURIComponent(uri);
 
-        const documentUrl = `fluid://${new URL(this.ordererUrl).host}/${encodedTenantId}/${encodedDocId}/${uri}`;
+        const documentUrl = `fluid://${new URL(this.ordererUrl).host}/${encodedTenantId}/${encodedDocId}/${encodedUri}`;
         const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
         const storageUrl = `${this.storageUrl}/repos/${encodedTenantId}`;
 
