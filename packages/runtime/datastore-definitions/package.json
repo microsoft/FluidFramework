@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/datastore-definitions",
-  "version": "0.25.2",
+  "version": "0.25.3",
   "description": "Fluid Runtime definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,10 +26,10 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/container-definitions": "^0.25.2",
-    "@fluidframework/core-interfaces": "^0.25.2",
+    "@fluidframework/container-definitions": "^0.25.3",
+    "@fluidframework/core-interfaces": "^0.25.3",
     "@fluidframework/protocol-definitions": "^0.1011.1",
-    "@fluidframework/runtime-definitions": "^0.25.2",
+    "@fluidframework/runtime-definitions": "^0.25.3",
     "@types/node": "^10.17.24"
   },
   "devDependencies": {

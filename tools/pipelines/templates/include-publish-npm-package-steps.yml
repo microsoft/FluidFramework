@@ -18,12 +18,9 @@ parameters:
 jobs:
   - ${{ each feed in parameters.feeds }}:
     - deployment: publish_${{ replace(feed.environment, '-', '_') }}
-      variables:
-        enabled: ${{ feed.enabled }} 
       displayName: Publish ${{ feed.environment }}
       pool: ${{ parameters.pool }}
       environment: ${{ feed.environment }}
-      condition: and(succeeded(), eq(variables['enabled'], true))
       workspace:
         clean: all
       strategy:
@@ -34,7 +31,7 @@ jobs:
                   artifact: pack
                 - task: UseNode@1
                   displayName: Use Node 12.x
-                  inputs: 
+                  inputs:
                     version: 12.x
                 - task: Bash@3
                   displayName: Generate .npmrc
@@ -87,7 +84,7 @@ jobs:
                       cp .npmrc ~/.npmrc
                       t1=0
                       for f in *.tgz
-                      do 
+                      do
                           if ! npm publish $f $tag
                           then
                               let t1+=1
@@ -97,4 +94,3 @@ jobs:
                       exit $t1
 
                 - ${{ feed.tagSteps }}
-  

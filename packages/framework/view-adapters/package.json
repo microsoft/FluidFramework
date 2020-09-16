@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/view-adapters",
-  "version": "0.25.2",
+  "version": "0.25.3",
   "description": "View adapters for rendering views of alternate or unknown UI frameworks",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,8 +26,8 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.25.2",
-    "@fluidframework/view-interfaces": "^0.25.2",
+    "@fluidframework/core-interfaces": "^0.25.3",
+    "@fluidframework/view-interfaces": "^0.25.3",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
