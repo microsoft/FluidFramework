@@ -68,6 +68,7 @@
     "@fluidframework/telemetry-utils": "^0.27.0",
     "assert": "^2.0.0",
     "debug": "^4.1.1",
+    "lodash": "^4.17.19",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

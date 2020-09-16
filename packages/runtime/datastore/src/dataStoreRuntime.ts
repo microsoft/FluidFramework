@@ -198,7 +198,9 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         if (tree?.trees !== undefined) {
             Object.keys(tree.trees).forEach((path) => {
                 let channelContext: IChannelContext;
-                // If already exists on storage, then create a remote channel.
+                // If already exists on storage, then create a remote channel. However, if it is case of rehydrating a
+                // container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
+                // true. In this case create a LocalChannelContext.
                 if (dataStoreContext.isLocalDataStore) {
                     const channelAttributes = readAndParseFromBlobs<IChannelAttributes>(
                         tree.trees[path].blobs, tree.trees[path].blobs[".attributes"]);
@@ -212,6 +214,15 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
                         tree.trees[path]);
+                    // This is the case of rehydrating a detached container from snapshot. Now due to delay loading of
+                    // data store, if the data store is loaded after the container is attached, then we missed marking
+                    // the channel as attached. So mark it now. Otherwise add it to local channel context queue, so
+                    // that it can be mark attached later with the data store.
+                    if (dataStoreContext.attachState !== AttachState.Detached) {
+                        (channelContext as LocalChannelContext).markAttached();
+                    } else {
+                        this.localChannelContextQueue.set(path, channelContext as LocalChannelContext);
+                    }
                 } else {
                     channelContext = new RemoteChannelContext(
                         this,
@@ -375,7 +386,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         this.localChannelContextQueue.forEach((channel) => {
             // When we are attaching the data store we don't need to send attach for the registered services.
             // This is because they will be captured as part of the Attach data store snapshot
-            channel.attach();
+            channel.markAttached();
         });
 
         this.localChannelContextQueue.clear();
@@ -665,7 +676,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         }
 
         const context = this.contexts.get(channel.id) as LocalChannelContext;
-        context.attach();
+        context.markAttached();
     }
 
     private submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
