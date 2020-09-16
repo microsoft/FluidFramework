@@ -7,14 +7,15 @@
 import * as path from "path";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { Timer } from "../common/timer";
-import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { FluidRepoBase } from "../common/fluidRepoBase";
+import { getResolvedFluidRoot, getPackageManifest } from "../common/fluidUtils";
+import { FluidRepo } from "../common/fluidRepo";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import * as semver from "semver";
 import { Package } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
 import { GitRepo, fatal, exec, execNoError } from "./utils";
 import * as os from "os";
+import { assert } from "console";
 
 function printUsage() {
     console.log(
@@ -442,7 +443,7 @@ class ReferenceVersionBag extends VersionBag {
 
 class BumpVersion {
     private readonly timer: Timer;
-    private readonly repo: FluidRepoBase;
+    private readonly repo: FluidRepo;
     private readonly fullPackageMap: Map<string, Package>;
     private readonly generatorPackage: Package;
     private readonly templatePackage: Package;
@@ -457,7 +458,7 @@ class BumpVersion {
         this.timer = new Timer(commonOptions.timer);
 
         // Load the package
-        this.repo = new FluidRepoBase(this.gitRepo.resolvedRoot, false);
+        this.repo = new FluidRepo(this.gitRepo.resolvedRoot, false);
         this.timer.time("Package scan completed");
 
         this.fullPackageMap = this.repo.createPackageMap();
@@ -542,9 +543,9 @@ class BumpVersion {
 
         // Determine the kind of bump
         const branchName = this.originalBranchName;
-        if (branchName !== "main" && !branchName!.startsWith("release/")) {
-            fatal(`Unrecognized branch '${branchName}'`);
-        }
+        // if (branchName !== "main" && !branchName!.startsWith("release/")) {
+        //     fatal(`Unrecognized branch '${branchName}'`);
+        // }
         return branchName === "main" ? "minor" : "patch";
     }
 
@@ -563,7 +564,8 @@ class BumpVersion {
         if (releaseName === MonoRepoKind[MonoRepoKind.Client]) {
             processMonoRepo(this.repo.clientMonoRepo);
         } else if (releaseName === MonoRepoKind[MonoRepoKind.Server]) {
-            processMonoRepo(this.repo.serverMonoRepo);
+            assert(this.repo.serverMonoRepo, "Attempted to collect server info on a Fluid repo with no server directory");
+            processMonoRepo(this.repo.serverMonoRepo!);
         } else {
             const pkg = this.fullPackageMap.get(releaseName);
             if (!pkg) {
@@ -648,7 +650,8 @@ class BumpVersion {
             if (name === MonoRepoKind[MonoRepoKind.Client]) {
                 await processMonoRepo(this.repo.clientMonoRepo);
             } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
-                await processMonoRepo(this.repo.serverMonoRepo);
+                assert(this.repo.serverMonoRepo, "Attempted show server versions on a Fluid repo with no server directory");
+                await processMonoRepo(this.repo.serverMonoRepo!);
             } else {
                 pkg = this.fullPackageMap.get(name);
                 if (!pkg) {
@@ -679,7 +682,8 @@ class BumpVersion {
 
         if (serverNeedBump) {
             console.log("  Bumping server version");
-            await bumpMonoRepo(this.repo.serverMonoRepo);
+            assert(this.repo.serverMonoRepo, "Attempted server version bump on a Fluid repo with no server directory");
+            await bumpMonoRepo(this.repo.serverMonoRepo!);
         }
 
         for (const pkg of packageNeedBump) {
@@ -1006,13 +1010,13 @@ class BumpVersion {
     }
 
     /**
-     * Create release branch based on the repo state, bump minor version immediately 
+     * Create release branch based on the repo state, bump minor version immediately
      * and push it to `main` and the new release branch to remote
      */
     public async createReleaseBranch() {
         // Create release branch based on client version
         const releaseName = MonoRepoKind[MonoRepoKind.Client];
-        
+
         const depVersions = await this.collectBumpInfo(releaseName);
         const releaseVersion = depVersions.repoVersions.get(releaseName);
         if (!releaseVersion) {
@@ -1115,13 +1119,25 @@ class BumpVersion {
             await this.createBranch(pendingReleaseBranch);
         }
 
-        // TODO: Don't hard code order
-        await this.releasePackage(depVersions, ["@fluidframework/eslint-config-fluid", "@fluidframework/build-common"]);
-        await this.releasePackage(depVersions, ["@fluidframework/common-definitions"]);
-        await this.releasePackage(depVersions, ["@fluidframework/common-utils"]);
-        await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo);
+        const packageManifest = getPackageManifest(this.repo.resolvedRoot);
+
+        if (packageManifest.releaseOrder?.preRepo !== undefined) {
+            packageManifest.releaseOrder.preRepo.forEach(async packages =>
+                await this.releasePackage(depVersions, packages)
+            );
+        }
+
+        if (this.repo.serverMonoRepo) {
+            await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo);
+        }
+
         await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
-        await this.releasePackage(depVersions, [generatorFluidPackageName, "tinylicious"]);
+
+        if (packageManifest.releaseOrder?.postRepo !== undefined) {
+            packageManifest.releaseOrder.postRepo.forEach(async packages =>
+                await this.releasePackage(depVersions, packages)
+            );
+        }
 
         // ------------------------------------------------------------------------------------------------------------------
         // Create the minor version bump for development in a temporary merge/<original branch> on top of the release commit
@@ -1173,7 +1189,8 @@ class BumpVersion {
             }
         } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
             serverNeedBump = true;
-            const ret = await this.repo.serverMonoRepo.install();
+            assert(this.repo.serverMonoRepo, "Attempted to bump server version on a Fluid repo with no server directory");
+            const ret = await this.repo.serverMonoRepo!.install();
             if (ret.error) {
                 fatal("Install failed");
             }
@@ -1241,7 +1258,7 @@ class BumpVersion {
             if (updateLockPackage.length !== 0) {
                 if (updateLock) {
                     // Fix package lock
-                    if (!await FluidRepoBase.ensureInstalled(updateLockPackage, false)) {
+                    if (!await FluidRepo.ensureInstalled(updateLockPackage, false)) {
                         fatal("Install Failed");
                     }
                 } else {

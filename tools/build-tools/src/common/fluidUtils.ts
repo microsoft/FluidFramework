@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import * as fs from "fs";
 import { commonOptions } from "./commonOptions";
 import { existsSync, realpathAsync, readJsonAsync, lookUpDir } from "./utils";
 import * as path from "path";
 import { logVerbose } from "./logging";
+import { IPackageManifest } from "./fluidRepo";
 
 async function isFluidRootLerna(dir: string) {
     const filename = path.join(dir, "lerna.json");
@@ -14,9 +16,10 @@ async function isFluidRootLerna(dir: string) {
         logVerbose(`InferRoot: lerna.json not found`);
         return false;
     }
-
-    if (!existsSync(path.join(dir, "server", "routerlicious", "lerna.json"))) {
-        logVerbose(`InferRoot: server/routerlicious/lerna.json not found`);
+    const rootPackageManifest = await getPackageManifest(dir);
+    if (rootPackageManifest.serverPath !== undefined
+        && !existsSync(path.join(dir, rootPackageManifest.serverPath, "lerna.json"))) {
+        logVerbose(`InferRoot: ${dir}/${rootPackageManifest.serverPath}/lerna.json not found`);
         return false;
     }
 
@@ -87,4 +90,10 @@ export async function getResolvedFluidRoot() {
 
     // Use realpath.native to get the case-sensitive path on windows
     return await realpathAsync(resolvedRoot);
+}
+
+export function getPackageManifest(rootDir: string): IPackageManifest {
+    const pkgString = fs.readFileSync(`${rootDir}/package.json`);
+    console.log(JSON.parse(pkgString as any).fluidBuild);
+    return JSON.parse(pkgString as any).fluidBuild;
 }
