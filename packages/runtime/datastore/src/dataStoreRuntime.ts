@@ -212,6 +212,14 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
                         tree.trees[path]);
+                    // If the data store is loaded after the container is attached, then attach the channel right away.
+                    // Otherwise add it to local channel context queue, so that it can be attached later with the data
+                    // store.
+                    if (dataStoreContext.attachState !== AttachState.Detached) {
+                        (channelContext as LocalChannelContext).attach();
+                    } else {
+                        this.localChannelContextQueue.set(path, channelContext as LocalChannelContext);
+                    }
                 } else {
                     channelContext = new RemoteChannelContext(
                         this,

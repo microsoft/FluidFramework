@@ -15,6 +15,7 @@ import {
     TestFluidObjectFactory,
     ITestFluidObject,
     TestFluidObject,
+    OpProcessingController,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
@@ -312,5 +313,91 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             "Snapshot of shared string should match and contents should be same!!");
         assert.strictEqual(JSON.stringify(sharedMapAfter.snapshot()), JSON.stringify(sharedMapBefore.snapshot()),
             "Snapshot of shared map should match and contents should be same!!");
+    });
+
+    it("Rehydrate container, don't load a data store and then load after container attachment. Make changes to " +
+        "dds from rehydrated container and check reflection of changes in other container",
+    async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
+
+        // Create another dataStore
+        const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
+        peerDataStore.peerDataStoreRuntimeChannel.bindToContext();
+        const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
+        sharedMap1.set("0", "A");
+        const snapshotTree = JSON.parse(container.serialize());
+
+        const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+        await rehydratedContainer.attach(request);
+
+        // Now load the container from another loader.
+        const urlResolver2 = new LocalResolver();
+        const loader2 = createTestLoader(urlResolver2);
+        const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
+        const container2 = await loader2.resolve({ url: requestUrl2 });
+
+        // Get the sharedString1 from dataStore2 in rehydrated container.
+        const responseBefore = await rehydratedContainer.request({ url: `/${dataStore2.context.id}` });
+        const dataStore2FromRC = responseBefore.value as TestFluidObject;
+        const sharedMapFromRC = await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
+        sharedMapFromRC.set("1", "B");
+
+        const responseAfter = await container2.request({ url: `/${dataStore2.context.id}` });
+        const dataStore3 = responseAfter.value as TestFluidObject;
+        const sharedMap3 = await dataStore3.getSharedObject<SharedMap>(sharedMapId);
+
+        const opProcessingController = new OpProcessingController(testDeltaConnectionServer);
+        opProcessingController.addDeltaManagers(dataStore3.runtime.deltaManager, dataStore2FromRC.runtime.deltaManager);
+
+        await opProcessingController.process();
+        assert.strictEqual(sharedMap3.get("1"), "B", "Contents should be as required");
+        assert.strictEqual(JSON.stringify(sharedMap3.snapshot()), JSON.stringify(sharedMapFromRC.snapshot()),
+            "Snapshot of shared string should match and contents should be same!!");
+    });
+
+    it("Rehydrate container, create but don't load a data store. Attach rehydrated container and load " +
+        "container 2 from another loader. Then load the created dataStore from container 2, make changes to dds " +
+        "in it check reflection of changes in rehydrated container",
+    async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
+
+        // Create another dataStore
+        const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
+        peerDataStore.peerDataStoreRuntimeChannel.bindToContext();
+        const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
+        sharedMap1.set("0", "A");
+        const snapshotTree = JSON.parse(container.serialize());
+
+        const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+        await rehydratedContainer.attach(request);
+
+        // Now load the container from another loader.
+        const urlResolver2 = new LocalResolver();
+        const loader2 = createTestLoader(urlResolver2);
+        const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
+        const container2 = await loader2.resolve({ url: requestUrl2 });
+
+        // Get the sharedString1 from dataStore2 in container2.
+        const responseBefore = await container2.request({ url: `/${dataStore2.context.id}` });
+        const dataStore3 = responseBefore.value as TestFluidObject;
+        const sharedMap3 = await dataStore3.getSharedObject<SharedMap>(sharedMapId);
+        sharedMap3.set("1", "B");
+
+        // Get the sharedString1 from dataStore2 in rehydrated container.
+        const responseAfter = await rehydratedContainer.request({ url: `/${dataStore2.context.id}` });
+        const dataStore2FromRC = responseAfter.value as TestFluidObject;
+        const sharedMapFromRC = await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
+
+        const opProcessingController = new OpProcessingController(testDeltaConnectionServer);
+        opProcessingController.addDeltaManagers(dataStore3.runtime.deltaManager, dataStore2FromRC.runtime.deltaManager);
+
+        await opProcessingController.process();
+        assert.strictEqual(sharedMapFromRC.get("1"), "B", "Changes should be reflected in other map");
+        assert.strictEqual(JSON.stringify(sharedMap3.snapshot()), JSON.stringify(sharedMapFromRC.snapshot()),
+            "Snapshot of shared string should match and contents should be same!!");
     });
 });
