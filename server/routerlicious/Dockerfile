@@ -32,6 +32,7 @@ COPY packages/lambdas/package*.json packages/lambdas/
 COPY packages/local-server/package*.json packages/local-server/
 COPY packages/memory-orderer/package*.json packages/memory-orderer/
 COPY packages/routerlicious/package*.json packages/routerlicious/
+COPY packages/routerlicious-base/package*.json packages/routerlicious-base/
 COPY packages/services/package*.json packages/services/
 COPY packages/services-client/package*.json packages/services-client/
 COPY packages/services-core/package*.json packages/services-core/
@@ -62,7 +63,7 @@ WORKDIR /usr/src/server
 # Set the version number
 ARG VERSION=0
 RUN if [ "$VERSION" != "0" ]; then npx lerna version $VERSION --no-git-tag-version --no-push --yes; fi
-RUN npm run build:ci
+RUN npm run ci:build
 
 # Build that alfred uses
 FROM base AS runner

@@ -37,7 +37,7 @@ export class CellFactory implements IChannelFactory {
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
+        branchId: string | undefined,
         attributes: IChannelAttributes): Promise<ISharedCell> {
         const cell = new SharedCell(id, runtime, attributes);
         await cell.load(branchId, services);

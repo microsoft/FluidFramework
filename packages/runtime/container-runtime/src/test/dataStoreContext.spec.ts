@@ -79,7 +79,8 @@ describe("Data Store Context Tests", () => {
                 scope,
                 summaryTracker,
                 createSummarizerNodeFn,
-                attachCb);
+                attachCb,
+                undefined);
 
             await localDataStoreContext.realize();
             const attachMessage = localDataStoreContext.generateAttachMessage();
@@ -110,7 +111,8 @@ describe("Data Store Context Tests", () => {
                 scope,
                 summaryTracker,
                 createSummarizerNodeFn,
-                attachCb);
+                attachCb,
+                undefined);
 
             await localDataStoreContext.realize()
                 .catch((error) => {
@@ -141,7 +143,8 @@ describe("Data Store Context Tests", () => {
                 scope,
                 summaryTracker,
                 createSummarizerNodeFn,
-                attachCb);
+                attachCb,
+                undefined);
 
             await localDataStoreContext.realize();
 

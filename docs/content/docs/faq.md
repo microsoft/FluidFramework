@@ -2,7 +2,7 @@
 title: Frequently Asked Questions
 ---
 
-The following are short, sometimes superficial answers to some of the most commonly asked questions about Fluid
+The following are short, sometimes superficial, answers to some of the most commonly asked questions about Fluid
 Framework.
 
 ## What is Fluid Framework?
@@ -90,7 +90,7 @@ number of updates that are required. Of course, the right strategies will depend
 
 ### What's the difference between Fluid Framework and SignalR?
 
-Where SignalR is a technology principally aimed at simplifying real-time communication between servers and clients
+Where SignalR is a technology principally aimed at simplifying real-time communication between servers and clients,
 Fluid Framework further abstracts that communication and, more significantly, focuses on distributing state between
 multiple clients. So, while you might use Fluid to solve some of the same problems you solve with SignalR today,
 the two are not interchangeable. Notably, the server component of a Fluid solution is lightweight and general-purpose
@@ -98,7 +98,7 @@ while a SignalR solution designed to distribute state would require additional s
 
 ### Does Fluid use operational transforms?
 
-Fluid does not use Operational Transforms, but we learned a tremendous amount from the literature on OT. While
+Fluid does not use Operational Transforms (OT), but we learned a tremendous amount from the literature on OT. While
 OT uses operations that can be applied out of order by transforming operations to account for recent changes, Fluid
 relies on a Total Order Broadcast to guarantee that all operations are applied in a specific order.
 
@@ -106,7 +106,7 @@ relies on a Total Order Broadcast to guarantee that all operations are applied i
 
 Fluid does not use Conflict-Free Replicated Data Types (CRDTs), but our model is more similar to CRDT than OT.
 The Fluid Framework relies on update-based operations that are ordered using our Total Order Broadcast to prevent
-conflicts. This allows us to have non-commutative operations because their is an explicit ordering.
+conflicts. This allows us to have non-commutative operations because there is an explicit ordering.
 
 ## Use Cases
 
@@ -114,11 +114,11 @@ conflicts. This allows us to have non-commutative operations because their is an
 
 This is the scenario that Fluid was first designed to support. Consequently, Fluid Framework is an ideal foundation
 for rich text editors that support simultaneous editing by multiple clients. The SharedString DDS is
-tailor made for this scenario.
+tailor-made for this scenario.
 
 ### Turn-based games?
 
-DDSes can be used to distribute state for games, including who's turn it is. It's up to the client to enforce the rules
+DDSes can be used to distribute state for games, including whose turn it is. It's up to the client to enforce the rules
 of a game so there may be some interesting problems to solve around preventing cheating but the Fluid team has already
 prototyped several games.
 
@@ -131,15 +131,15 @@ task for Fluid Framework because it is designed to enable extraordinary performa
 
 ### What needs to be running on the server?
 
-Fluid Framework requires a Fluid service to sync data between clients. The role of the server is very simple;
+Fluid Framework requires a Fluid service to sync data between clients. The role of the server is very simple:
 it orders operations and broadcasts them to all clients. It's also responsible for saving operations to
 persistent data storage.
 
-The Fluid service is general purpose and, as a rule, Fluid solutions will work with any Fluid service. Developers of
+The Fluid service is general-purpose and, as a rule, Fluid solutions will work with any Fluid service. Developers of
 Fluid solutions can use a local server or a "test quality" server for development and trust that their solution
 will work against whatever production server their solution is pointed at.
 
-Fluid Framework include a reference implementation of the Fluid service called Routerlicious that you can use for
+Fluid Framework includes a reference implementation of the Fluid service called Routerlicious that you can use for
 development or as the basis for a production quality server.
 
 ### Where is the shared data stored?
@@ -168,7 +168,7 @@ Yes. Fluid Framework is designed to stand alone. It has no dependencies on other
 ### Can Fluid Framework be used in a situation without access to the internet?
 
 There are two angles to this question. One is whether the client must be connected to the internet. The other is
-whether an organization could run the Fluid service on site to support an intranet.
+whether an organization could run the Fluid service on-site to support an intranet.
 
 Clients do have to be connected to the Fluid service. Fluid can tolerate brief network outages and continue operating
 but eventually the promise of being able to merge local changes weakens. We are investigating ways to improve this using
@@ -177,15 +177,15 @@ other merging techniques designed to reason over large deltas but no final solut
 In principle there is nothing preventing an organization from hosting a Fluid service on an intranet. However, Microsoft
 has no plans to support that scenario directly.
 
-### Is the Fluid reference server implementation production ready?
+### Is the Fluid reference server implementation production-ready?
 
-No. Routerlicious on it's own is not production ready. Using it would require more thought about storage, scale,
+No. Routerlicious on its own is not production-ready. Using it would require more thought about storage, scale,
 security, and other typical considerations when building out a service on the internet. It is our expectation that most
 Fluid developers will be able to leverage existing Fluid services that will emerge as we approach version 1.0.
 
 ### How are Fluid solutions deployed?
 
-Fluid solutions are, at the end of the day, simple JavaScript. At Microsoft Fluid solutions are deployed to CDNs like
+Fluid solutions are, at the end of the day, simple JavaScript. At Microsoft, Fluid solutions are deployed to CDNs like
 any other static resource. Because Fluid is very client-centric, deployment is very simple.
 
 ## Conflicts and History
@@ -229,7 +229,7 @@ Not at all. Fluid Framework is unopinionated about UX.
 
 ## Coding Frameworks
 
-### Can I use ASP.NET, ASP.NET Core, and C\#
+### Can I use ASP.NET, ASP.NET Core, and C\#?
 
 Fluid Framework is written in TypeScript but we don't want it to be limited to the web. You can use Fluid Framework with
 non-web technologies by leveraging a JavaScript runtime to host the Fluid code. Ultimately it is critical that the same

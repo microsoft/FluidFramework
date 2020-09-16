@@ -52,9 +52,9 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.23.0",
+    "@fluidframework/common-utils": "^0.24.0-0",
     "@fluidframework/datastore-definitions": "^0.27.0",
-    "@fluidframework/protocol-definitions": "^0.1013.0",
+    "@fluidframework/protocol-definitions": "^0.1013.0-0",
     "@fluidframework/shared-object-base": "^0.27.0",
     "debug": "^4.1.1"
   },

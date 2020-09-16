@@ -14,7 +14,7 @@ import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import requestAPI from "request";
-import { getParam } from "../../utils";
+import { getParam } from "../../../utils";
 import {
     craftClientJoinMessage,
     craftClientLeaveMessage,

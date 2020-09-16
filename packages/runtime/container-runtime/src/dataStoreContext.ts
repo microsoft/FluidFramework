@@ -54,7 +54,7 @@ import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidfr
 import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in store attributes.
-const currentSnapshotFormatVersion = "0.1";
+export const currentSnapshotFormatVersion = "0.1";
 
 const attributesBlobKey = ".component";
 
@@ -152,6 +152,10 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._containerRuntime;
     }
 
+    public get isLoaded(): boolean {
+        return this.loaded;
+    }
+
     /**
      * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
      * Use containerRuntime instead of hostRuntime
@@ -196,12 +200,14 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         public readonly summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
+        public readonly isLocalDataStore: boolean,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
-        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
+        this._attachState = this.containerRuntime.attachState !== AttachState.Detached && existing ?
+            this.containerRuntime.attachState : AttachState.Detached;
 
         this.bindToContext = (channel: IFluidDataStoreChannel) => {
             assert(this.bindState === BindState.NotBound);
@@ -595,6 +601,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             summaryTracker,
             createSummarizerNode,
             BindState.Bound,
+            false,
             () => {
                 throw new Error("Already attached");
             },
@@ -674,16 +681,18 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        private readonly snapshotTree: ISnapshotTree | undefined,
     ) {
         super(
             runtime,
             id,
-            false,
+            snapshotTree !== undefined ? true : false,
             storage,
             scope,
             summaryTracker,
             createSummarizerNode,
-            BindState.NotBound,
+            snapshotTree ? BindState.Bound : BindState.NotBound,
+            true,
             bindChannel,
             pkg);
         this.attachListeners();
@@ -723,7 +732,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         assert(this.pkg !== undefined);
         return {
             pkg: this.pkg,
-            snapshot: undefined,
+            snapshot: this.snapshotTree,
         };
     }
 }
@@ -744,6 +753,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        snapshotTree: ISnapshotTree | undefined,
     ) {
         super(
             id,
@@ -753,7 +763,8 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
             scope,
             summaryTracker,
             createSummarizerNode,
-            bindChannel);
+            bindChannel,
+            snapshotTree);
     }
 }
 
@@ -775,6 +786,7 @@ export class LocalDetachedFluidDataStoreContext
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        snapshotTree: ISnapshotTree | undefined,
     ) {
         super(
             id,
@@ -784,7 +796,8 @@ export class LocalDetachedFluidDataStoreContext
             scope,
             summaryTracker,
             createSummarizerNode,
-            bindChannel);
+            bindChannel,
+            snapshotTree);
         assert(this.pkg === undefined);
         this.detachedRuntimeCreation = true;
     }

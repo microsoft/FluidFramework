@@ -1,4 +1,4 @@
-# root
+# Routerlicious
 
 Routerlicious handles the receiving of delta operations and is responsible for the ordering and assignment of a
 sequence number to them. Once assigned it is also responsible for notifying connected clients of a new sequence
@@ -16,7 +16,7 @@ The services follow the [twelve factor](https://12factor.net) methodology and ar
 
 ## Getting Started
 
-Get up and running quickly using our [Getting Started guide](https://aka.ms/fluid).
+Get up and running quickly using our Get Started guide at https://fluidframework.com.
 
 ## Help and Questions
 
@@ -25,7 +25,7 @@ Questions can be directed to [Stack Overflow](https://stackoverflow.com/question
 ## Building and Running
 
 Note that we also provide an npm package of our client side API which allows you to program against the production
-Routerlicious service. See the [API documentation](https://aka.ms/fluid) for more details. You only need to follow the
+Routerlicious service. See the Documentation at https://fluidframework.com for more details. You only need to follow the
 below steps if you'd like to run a local version of the service or need to make changes to it.
 
 ### Prerequisities
