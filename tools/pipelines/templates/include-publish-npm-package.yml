@@ -36,7 +36,7 @@ stages:
   - template: include-publish-npm-package-steps.yml
     parameters:
       namespace: ${{ parameters.namespace }}
-      name: https://registry.npmjs.org
+      feedName: https://registry.npmjs.org
       environment: package-npmjs-feed
       customEndPoint: npmjs
       official: true
