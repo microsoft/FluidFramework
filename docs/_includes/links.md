@@ -1,5 +1,9 @@
 <!-- Links -->
 
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "/docs/concepts/container-runtime.md" >}}
+
 <!-- Packages -->
 
 [Aqueduct]: {{< relref "/apis/aqueduct.md" >}}

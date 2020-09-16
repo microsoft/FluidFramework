@@ -5,10 +5,10 @@ menuPosition: 3
 
 In this walkthrough, we'll learn about using Fluid Framework by building a simple
 [DiceRoller](https://github.com/microsoft/FluidHelloWorld) application together. To get started, and follow along, go
-through our [Quick Start](./quick-start.md) guide.
+through our [Quick Start]({{< relref "./quick-start.md" >}}) guide.
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
-bundleName="dice-roller.9af6bdd702e6cd4ad6cf.js" >}}
+    bundleName="dice-roller.9af6bdd702e6cd4ad6cf.js" >}}
 
 In our DiceRoller app we'll show users a die with a button to roll it.  When the die is rolled, we'll use Fluid
 Framework to sync the data across clients so everyone sees the same result.  We'll do this using the following steps.
@@ -165,9 +165,9 @@ Now we've defined all the pieces and it's just time to put them all together!
 ## Connect container to service for collaboration
 
 To orchestrate the collaboration, we need to connect to a service to send and receive the updates to the data.  The way
-we do this is to connect a Fluid [Container][] object to the service and load our container code into it.
+we do this is to connect a [Fluid container][] object to the service and load our container code into it.
 
-For now, we'll just run on a local test service called [Tinylicious][], and to make it easier to connect to this service
+For now, we'll just run on a local test service called Tinylicious, and to make it easier to connect to this service
 we've provided a helper function `getTinyliciousContainer()`.  The helper function takes a unique ID to identify our
 **document** (the collection of data used by our app), the container code, and a flag to indicate whether we want to
 create a new document or load an existing one.  You can use any app logic you'd like to generate the ID and determine
