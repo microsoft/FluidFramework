@@ -5,15 +5,16 @@
 
 import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
+import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidRouter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
+    IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IBlobManager,
     IDeltaManager,
     ContainerWarning,
     ILoader,
@@ -112,6 +113,8 @@ export interface IContainerRuntimeBase extends
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
     getTaskManager(): Promise<ITaskManager>;
+
+    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
 }
 
 /**
@@ -244,7 +247,6 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
@@ -333,6 +335,8 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
          */
         createParam: CreateChildSummarizerNodeParam,
     ): CreateChildSummarizerNodeFn;
+
+    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

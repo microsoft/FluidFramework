@@ -5,15 +5,16 @@
 
 import { EventEmitter } from "events";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     IFluidHandleContext,
     IFluidSerializer,
     IFluidRouter,
+    IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IDeltaManager,
-    IGenericBlob,
     ContainerWarning,
     ILoader,
     AttachState,
@@ -101,7 +102,7 @@ export interface IFluidDataStoreRuntime extends
      * Api to upload a blob of data.
      * @param file - blob to be uploaded.
      */
-    uploadBlob(file: IGenericBlob): Promise<IGenericBlob>;
+    uploadBlob(file: IsoBuffer): Promise<IFluidHandle<string>>;
 
     /**
      * Submits the signal to be sent to other clients.
@@ -109,17 +110,6 @@ export interface IFluidDataStoreRuntime extends
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
-
-    /**
-     * Api to get the blob for a particular id.
-     * @param blobId - ID of the required blob.
-     */
-    getBlob(blobId: string): Promise<IGenericBlob | undefined>;
-
-    /**
-     * Api to get the blob metadata.
-     */
-    getBlobMetadata(): Promise<IGenericBlob[]>;
 
     /**
      * Returns the current quorum.

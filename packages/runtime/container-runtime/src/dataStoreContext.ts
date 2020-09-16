@@ -10,12 +10,11 @@ import {
     IFluidObject,
     IRequest,
     IResponse,
+    IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IBlobManager,
     IDeltaManager,
-    IGenericBlob,
     ContainerWarning,
     ILoader,
     BindState,
@@ -118,10 +117,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public get clientId(): string | undefined {
         return this._containerRuntime.clientId;
-    }
-
-    public get blobManager(): IBlobManager {
-        return this._containerRuntime.blobManager;
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -377,10 +372,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._containerRuntime.getAudience();
     }
 
-    public async getBlobMetadata(): Promise<IGenericBlob[]> {
-        return this.blobManager.getBlobMetadata();
-    }
-
     /**
      * Notifies the object to take snapshot of a store.
      * @deprecated in 0.22 summarizerNode
@@ -581,6 +572,10 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             // DDS will not create failure summaries
             { throwOnFailure: true },
         );
+    }
+
+    public async uploadBlob(blob: Buffer): Promise<IFluidHandle<string>> {
+        return this.containerRuntime.uploadBlob(blob);
     }
 }
 
