@@ -239,6 +239,4 @@ stages:
       containerTag: $(containerTag)
       containerRegistryUrl: $(containerRegistryUrl)
       containerName: ${{ parameters.containerName }}
-      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-      buildDirectory: ${{ parameters.buildDirectory }}
       tagName: ${{ parameters.tagName }}

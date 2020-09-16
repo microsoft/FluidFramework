@@ -23,12 +23,6 @@ parameters:
 - name: containerName
   type: string
 
-- name: buildNumberInPatch
-  type: string
-  default:
-- name: buildDirectory
-  type: string
-  default:
 - name: tagName
   type: string
   default:
@@ -41,8 +35,8 @@ jobs:
   workspace:
     clean: all
   variables:
-  - name: containerTagSuffix
-    value: $[ stageDependencies.build.build.outputs['SetVersion.version']]
+    version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
+    containerTagSuffix: $(version)
   strategy:
     runOnce:
         deploy:
@@ -84,6 +78,4 @@ jobs:
 
             - template: include-git-tag-steps.yml
               parameters:
-                buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-                buildDirectory: ${{ parameters.buildDirectory }}
                 tagName: ${{ parameters.tagName }}

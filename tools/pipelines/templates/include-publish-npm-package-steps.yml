@@ -28,12 +28,6 @@ parameters:
   type: string
   default:
 
-- name: buildNumberInPatch
-  type: string
-  default:
-- name: buildDirectory
-  type: string
-  default:
 - name: tagName
   type: string
   default:
@@ -45,6 +39,8 @@ jobs:
   environment: ${{ parameters.environment }}
   workspace:
     clean: all
+  variables:
+    version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
   strategy:
     runOnce:
         deploy:
@@ -117,6 +113,4 @@ jobs:
                   exit $t1
             - template: include-git-tag-steps.yml
               parameters:
-                buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-                buildDirectory: ${{ parameters.buildDirectory }}
                 tagName: ${{ parameters.tagName }}

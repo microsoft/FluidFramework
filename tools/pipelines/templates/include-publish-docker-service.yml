@@ -12,13 +12,6 @@ parameters:
   type: string
 - name: containerName
   type: string
-
-- name: buildNumberInPatch
-  type: string
-  default:
-- name: buildDirectory
-  type: string
-  default:
 - name: tagName
   type: string
   default:
@@ -36,7 +29,5 @@ stages:
       containerTag: ${{ parameters.containerTag }}
       containerRegistryUrl: ${{ parameters.containerRegistryUrl }}
       containerName: public/${{ parameters.containerName }}
-      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-      buildDirectory: ${{ parameters.buildDirectory }}
       tagName: ${{ parameters.tagName }}
 

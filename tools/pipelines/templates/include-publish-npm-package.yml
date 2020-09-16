@@ -4,12 +4,6 @@
 # include-publish-npm-package
 
 parameters:
-- name: buildDirectory
-  type: string
-
-- name: buildNumberInPatch
-  type: string
-
 - name: namespace
   type: boolean
 
@@ -41,6 +35,4 @@ stages:
       customEndPoint: npmjs
       official: true
       publishFlags: --access public
-      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-      buildDirectory: ${{ parameters.buildDirectory }}
       tagName: ${{ parameters.tagName }}
