@@ -47,6 +47,7 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-publish-docker-service.yml
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
@@ -308,10 +309,8 @@ stages:
 - ${{ if and(eq(variables.publish, true), ne(parameters.releaseKind, 'docker')) }}:
   - template: templates/include-publish-npm-package.yml
     parameters:
-      buildDirectory: server/routerlicious
       namespace: true
       tagName: server
-      buildNumberInPatch: ${{ variables.buildNumberInPatch }}
 
 - ${{ if and(eq(variables.releaseImage, true), ne(parameters.releaseKind, 'npm')) }}:
   - template: templates/include-publish-docker-service.yml
