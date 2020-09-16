@@ -72,7 +72,7 @@
     "@fluidframework/iframe-driver": "^0.26.0",
     "@fluidframework/odsp-driver": "^0.26.0",
     "@fluidframework/odsp-utils": "^0.26.0",
-    "@fluidframework/protocol-definitions": "^0.1013.0",
+    "@fluidframework/protocol-definitions": "^0.1012.0",
     "@fluidframework/routerlicious-driver": "^0.26.0",
     "@fluidframework/routerlicious-host": "^0.26.0",
     "@fluidframework/routerlicious-urlresolver": "^0.26.0",
