@@ -23,9 +23,6 @@ parameters:
 - name: containerName
   type: string
 
-- name: tagSteps
-  type: stepList
-
 steps:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
