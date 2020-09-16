@@ -41,6 +41,10 @@ parameters:
   type: string
   default: none
 
+- name: tagName
+  type: string
+  default:
+
 trigger: none
 
 variables:
@@ -116,7 +120,7 @@ stages:
               echo "##vso[task.logissue type=error]'$(release)' is set but image is not pushed. Either the branch doesn't default to push image or it is skipped."
               exit -1;
             fi
-            
+
             if [[ "${{ variables.releaseImage }}" != "True" ]]; then
               echo "##vso[task.logissue type=error]'$(release)' is set but pipeline isn't declared to allow release image."
               exit -1;
@@ -182,7 +186,7 @@ stages:
         inputs:
           action: 'Run a Docker command'
           customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(containerTag) npm run test'
-        
+
       - task: PublishTestResults@2
         displayName: Publish Test Results
         inputs:
@@ -235,3 +239,4 @@ stages:
       containerTag: $(containerTag)
       containerRegistryUrl: $(containerRegistryUrl)
       containerName: ${{ parameters.containerName }}
+      tagName: ${{ parameters.tagName }}
