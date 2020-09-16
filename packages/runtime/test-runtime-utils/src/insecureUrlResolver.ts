@@ -55,7 +55,7 @@ export class InsecureUrlResolver implements IUrlResolver {
             if (!fileName) {
                 throw new Error("FileName should be there!!");
             }
-            return this.resolveHelper(fileName);
+            return this.resolveHelper(fileName, "");
         }
         const parsedUrl = new URL(request.url);
         console.log("it goes here yay!");
@@ -63,7 +63,8 @@ export class InsecureUrlResolver implements IUrlResolver {
         // service using our bearer token.
         if (parsedUrl.host === window.location.host) {
             const documentId = parsedUrl.pathname.substr(1).split("/")[0];
-            return this.resolveHelper(documentId);
+            const uri = parsedUrl.pathname.replace(`/${documentId}/`,"");
+            return this.resolveHelper(documentId, uri);
         } else {
             const maybeResolvedUrl = this.cache.get(request.url);
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -88,11 +89,11 @@ export class InsecureUrlResolver implements IUrlResolver {
         }
     }
 
-    private resolveHelper(documentId: string) {
+    private resolveHelper(documentId: string, uri: string) {
         const encodedTenantId = encodeURIComponent(this.tenantId);
         const encodedDocId = encodeURIComponent(documentId);
 
-        const documentUrl = `fluid://${new URL(this.ordererUrl).host}/${encodedTenantId}/${encodedDocId}`;
+        const documentUrl = `fluid://${new URL(this.ordererUrl).host}/${encodedTenantId}/${encodedDocId}/${uri}`;
         const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
         const storageUrl = `${this.storageUrl}/repos/${encodedTenantId}`;
 
