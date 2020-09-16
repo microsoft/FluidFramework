@@ -544,9 +544,9 @@ class BumpVersion {
 
         // Determine the kind of bump
         const branchName = this.originalBranchName;
-        // if (branchName !== "main" && !branchName!.startsWith("release/")) {
-        //     fatal(`Unrecognized branch '${branchName}'`);
-        // }
+        if (branchName !== "main" && !branchName!.startsWith("release/")) {
+            fatal(`Unrecognized branch '${branchName}'`);
+        }
         return branchName === "main" ? "minor" : "patch";
     }
 
