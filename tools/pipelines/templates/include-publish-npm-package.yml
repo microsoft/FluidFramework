@@ -21,18 +21,21 @@ stages:
   dependsOn: build
   displayName: Publish Internal Packages
   jobs:
-  - template: include-publish-npm-package-steps.yml
-    parameters:
-      namespace: ${{ parameters.namespace }}
-      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
-      environment: package-build-feed
-      official: false
+  - job:
+    steps:
+    - template: include-publish-npm-package-steps.yml
+      parameters:
+        namespace: ${{ parameters.namespace }}
+        feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+        environment: package-build-feed
+        official: false
 
 - stage: publish_npm_official
   dependsOn: build
   displayName: Publish Official Packages
   condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
   jobs:
+  - job:
     steps:
     - template: include-publish-npm-package-steps.yml
       parameters:

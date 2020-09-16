@@ -29,6 +29,7 @@ stages:
   displayName: Publish Stage - Official Docker Image
   condition: and(succeeded(), eq(variables['release'], 'release'))
   jobs:
+  - job:
     steps:
     - template: include-publish-docker-service-steps.yml
       parameters:
