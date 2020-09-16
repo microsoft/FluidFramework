@@ -225,6 +225,10 @@ These DDSes are used for storing sequential data. They are all optimistic.
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
 
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
+
 <!-- Packages -->
 
 [Aqueduct]: {{< relref "/apis/aqueduct.md" >}}
