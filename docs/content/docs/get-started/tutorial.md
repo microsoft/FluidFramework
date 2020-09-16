@@ -176,7 +176,8 @@ repository](https://github.com/microsoft/FluidHelloWorld/blob/main/src/app.ts) w
 one way of doing it.
 
 ```ts
-const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
+const container =
+    await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
 ```
 
 This will look a little different when moving to a production service, but you'll still ultimately be getting a
@@ -234,6 +235,10 @@ to see the changes reflected between clients.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
 
 <!-- Packages -->
 

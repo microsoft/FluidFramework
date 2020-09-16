@@ -2,7 +2,7 @@
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "/docs/concepts/container-runtime.md" >}}
+[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
 
 <!-- Packages -->
 
