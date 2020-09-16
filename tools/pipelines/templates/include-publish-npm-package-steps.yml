@@ -28,6 +28,16 @@ parameters:
   type: string
   default:
 
+- name: buildNumberInPatch
+  type: string
+  default:
+- name: buildDirectory
+  type: string
+  default:
+- name: tagName
+  type: string
+  default:
+
 steps:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
@@ -105,3 +115,8 @@ steps:
                   # done
                   rm ~/.npmrc
                   exit $t1
+            - template: include-git-tag-steps.yml
+              parameters:
+                buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+                buildDirectory: ${{ parameters.buildDirectory }}
+                tagName: ${{ parameters.tagName }}

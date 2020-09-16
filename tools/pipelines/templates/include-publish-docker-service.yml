@@ -38,8 +38,6 @@ stages:
         containerTag: ${{ parameters.containerTag }}
         containerRegistryUrl: ${{ parameters.containerRegistryUrl }}
         containerName: public/${{ parameters.containerName }}
-    - template: include-git-tag-steps.yml
-      parameters:
         buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
         buildDirectory: ${{ parameters.buildDirectory }}
         tagName: ${{ parameters.tagName }}

@@ -23,7 +23,17 @@ parameters:
 - name: containerName
   type: string
 
-steps:
+- name: buildNumberInPatch
+  type: string
+  default:
+- name: buildDirectory
+  type: string
+  default:
+- name: tagName
+  type: string
+  default:
+
+jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
   environment: ${{ parameters.environment }}
@@ -71,3 +81,9 @@ steps:
             #     tags: |
             #       $(containerTagSuffix)
             #       latest
+
+            - template: include-git-tag-steps.yml
+              parameters:
+                buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+                buildDirectory: ${{ parameters.buildDirectory }}
+                tagName: ${{ parameters.tagName }}
