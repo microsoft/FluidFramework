@@ -96,7 +96,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
    * @param persistedCache - PersistedCache provided by host for use in this session.
-   * @param usePostForTreesLatest - Use post call to fetch the latest snapshot.
    */
     constructor(
         private readonly getStorageToken: StorageTokenFetcher,
@@ -104,7 +103,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         private readonly getSocketIOClient: () => Promise<SocketIOClientStatic>,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
-        private readonly usePostForTreesLatest: boolean,
     ) {
     }
 
@@ -126,7 +124,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.getSocketIOClient,
             cache,
             this.hostPolicy,
-            this.usePostForTreesLatest,
         );
     }
 

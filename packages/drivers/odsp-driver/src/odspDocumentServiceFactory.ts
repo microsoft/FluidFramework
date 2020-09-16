@@ -22,7 +22,6 @@ export class OdspDocumentServiceFactory
         getWebsocketToken: PushTokenFetcher,
         persistedCache?: IPersistedCache,
         hostPolicy?: HostStoragePolicy,
-        usePostForTreesLatest: boolean = false,
     ) {
         super(
             getStorageToken,
@@ -30,7 +29,6 @@ export class OdspDocumentServiceFactory
             async () => getSocketIo(),
             persistedCache,
             hostPolicy,
-            usePostForTreesLatest,
         );
     }
 }

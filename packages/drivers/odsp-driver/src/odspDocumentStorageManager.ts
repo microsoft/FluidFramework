@@ -129,7 +129,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
         private readonly hostPolicy: HostStoragePolicyInternal,
-        private readonly usePostForTreesLatest: boolean,
     ) {
         this.documentId = odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
@@ -299,7 +298,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.isTreesLatestSecondCallEvent(tokenFetchOptions);
 
                     let cachedSnapshot: IOdspSnapshot;
-                    if (this.usePostForTreesLatest) {
+                    if (this.hostPolicy.usePostForTreesLatest) {
                         // Use the POST call for TreesLatest so as to save the OPTIONS call.
                         cachedSnapshot = await this.fetchSnapshotViaPost(tokenFetchOptions, hostPolicy);
                     } else {
@@ -308,7 +307,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     return this.processSnapshotAndGetVersion(cachedSnapshot);
                 });
             } catch (error) {
-                if (this.usePostForTreesLatest) {
+                if (this.hostPolicy.usePostForTreesLatest) {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" });
                     // If the TreesLatest fails using the POST call, then fallback to the original get version of TreesLatest call.
                     return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
