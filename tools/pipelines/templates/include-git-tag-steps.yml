@@ -17,7 +17,10 @@ steps:
     clean: true
     persistCredentials: true
     condition: and(succeeded(), eq(variables['release'], 'release'))
-
+  - task: UseNode@1
+    displayName: Use Node 12.x
+    inputs:
+      version: 12.x
   - task: Bash@3
     displayName: Tag Release
     condition: and(succeeded(), eq(variables['release'], 'release'))
