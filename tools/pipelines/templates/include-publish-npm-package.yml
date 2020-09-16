@@ -24,58 +24,26 @@ stages:
   - template: include-publish-npm-package-steps.yml
     parameters:
       namespace: ${{ parameters.namespace }}
-      feeds:
-      - name: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/ 
-        environment: package-build-feed
-        official: false
-        tagSteps: []
+      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+      environment: package-build-feed
+      official: false
 
 - stage: publish_npm_official
   dependsOn: build
   displayName: Publish Official Packages
   condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
   jobs:
-  - template: include-publish-npm-package-steps.yml
-    parameters:
-      namespace: ${{ parameters.namespace }}
-      feeds:
-      - name: https://registry.npmjs.org
+    steps:
+    - template: include-publish-npm-package-steps.yml
+      parameters:
+        namespace: ${{ parameters.namespace }}
+        name: https://registry.npmjs.org
         environment: package-npmjs-feed
         customEndPoint: npmjs
         official: true
         publishFlags: --access public
-        tagSteps:
-        - ${{ if ne(parameters.tagName, '') }}:
-          - checkout: self
-            clean: true
-            persistCredentials: true
-            condition: and(succeeded(), eq(variables['release'], 'release'))
-
-          - task: Bash@3
-            displayName: Tag Release
-            condition: and(succeeded(), eq(variables['release'], 'release'))
-            env:
-              VERSION_RELEASE: $(release)
-              VERSION_BUILDNUMBER: $(Build.BuildNumber)
-              VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
-            inputs:
-              targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
-              script: |
-                # expect lerna.json and package.json be in the current working directory
-
-                echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
-                echo VERSION_RELEASE=$VERSION_RELEASE
-                echo VERSION_PATCH=$VERSION_PATCH
-          
-                version=`node $(Build.SourcesDirectory)/tools/pipelines/scripts/build-version.js`
-                echo COMPUTED_VERSION=$version
-                if [ "$version" = "" ]; then
-                  exit -1
-                fi
-
-                tag=${{ parameters.tagName }}_v$version
-
-                echo Tag=$tag
-                git tag $tag
-                git push origin $tag
+    - template: include-git-tag-steps.yml
+      parameters:
+        buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+        buildDirectory: ${{ parameters.buildDirectory }}
+        tagName: ${{ parameters.tagName }}

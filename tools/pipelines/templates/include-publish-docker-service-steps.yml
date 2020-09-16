@@ -23,7 +23,10 @@ parameters:
 - name: containerName
   type: string
 
-jobs:
+- name: tagSteps
+  type: stepList
+
+steps:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
   environment: ${{ parameters.environment }}
@@ -62,12 +65,12 @@ jobs:
                 action: 'Run a Docker command'
                 customCommand: 'tag ${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest'
 
-            - task: Docker@2
-              displayName: Docker Push
-              inputs:
-                containerRegistry: ${{ parameters.containerRegistry }}
-                repository: ${{ parameters.containerName }}
-                command: push
-                tags: |
-                  $(containerTagSuffix)
-                  latest
+            # - task: Docker@2
+            #   displayName: Docker Push
+            #   inputs:
+            #     containerRegistry: ${{ parameters.containerRegistry }}
+            #     repository: ${{ parameters.containerName }}
+            #     command: push
+            #     tags: |
+            #       $(containerTagSuffix)
+            #       latest

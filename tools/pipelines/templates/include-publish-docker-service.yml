@@ -13,16 +13,33 @@ parameters:
 - name: containerName
   type: string
 
+- name: buildNumberInPatch
+  type: string
+  default:
+- name: buildDirectory
+  type: string
+  default:
+- name: tagName
+  type: string
+  default:
+
 stages:
 - stage: publish_docker_official
   dependsOn: build
   displayName: Publish Stage - Official Docker Image
   condition: and(succeeded(), eq(variables['release'], 'release'))
   jobs:
-  - template: include-publish-docker-service-steps.yml
-    parameters:
-      environment: container-registry-public
-      containerRegistry: ${{ parameters.containerRegistry }}
-      containerTag: ${{ parameters.containerTag }}
-      containerRegistryUrl: ${{ parameters.containerRegistryUrl }}
-      containerName: public/${{ parameters.containerName }}
+    steps:
+    - template: include-publish-docker-service-steps.yml
+      parameters:
+        environment: container-registry-public
+        containerRegistry: ${{ parameters.containerRegistry }}
+        containerTag: ${{ parameters.containerTag }}
+        containerRegistryUrl: ${{ parameters.containerRegistryUrl }}
+        containerName: public/${{ parameters.containerName }}
+    - template: include-git-tag-steps.yml
+      parameters:
+        buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+        buildDirectory: ${{ parameters.buildDirectory }}
+        tagName: ${{ parameters.tagName }}
+

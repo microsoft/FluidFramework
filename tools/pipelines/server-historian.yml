@@ -38,6 +38,7 @@ trigger:
     - tools/pipelines/templates/include-publish-docker-service.yml
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
 
 pr:
   branches:
@@ -62,3 +63,4 @@ extends:
     buildDirectory: server/historian
     containerName: fluidframework/routerlicious/historian
     test: true
+    tagName: historian

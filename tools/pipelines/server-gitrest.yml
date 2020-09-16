@@ -38,7 +38,8 @@ trigger:
     - tools/pipelines/templates/include-publish-docker-service.yml
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
-  
+    - tools/pipelines/templates/include-git-tag-steps.yml
+
 pr:
   branches:
     include:
@@ -62,3 +63,4 @@ extends:
     buildDirectory: server/gitrest
     containerName: fluidframework/routerlicious/gitrest
     test: true
+    tagName: gitrest
