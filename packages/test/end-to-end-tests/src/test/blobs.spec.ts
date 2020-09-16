@@ -6,13 +6,14 @@
 import * as assert from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { IFluidCodeDetails, IContainer } from "@fluidframework/container-definitions";
-import { ISummaryConfiguration, MessageType } from "@fluidframework/protocol-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, createAndAttachContainer, TestContainerRuntimeFactory } from "@fluidframework/test-utils";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalResolver } from "@fluidframework/local-driver";
+import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { createAndAttachContainer, createLocalLoader, TestContainerRuntimeFactory } from "@fluidframework/test-utils";
 
 class TestComponent extends DataObject {
     public static readonly type = "@fluid-example/test-component";
@@ -21,7 +22,7 @@ class TestComponent extends DataObject {
 }
 
 describe("blobs", () => {
-    const docId = "fluid-test://localhost/localLoaderTest";
+    const docId = "localLoaderTest";
     const codeDetails: IFluidCodeDetails = {
         package: "localLoaderTestPackage",
         config: {},
@@ -59,7 +60,7 @@ describe("blobs", () => {
         const container = await createContainer();
 
         const blobOpP = new Promise((res) => container.on("op", (op) => {
-            if (op.contents?.type === MessageType.BlobAttach) {
+            if (op.contents?.type === ContainerMessageType.BlobAttach) {
                 res();
             }
         }));

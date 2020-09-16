@@ -41,6 +41,8 @@ export class BlobHandle implements IFluidHandle {
 }
 
 export class BlobManager {
+    public readonly basePath = "_blobs";
+
     constructor(
         private readonly routeContext: IFluidHandleContext,
         private readonly getStorage: () => IDocumentStorageService,
@@ -49,7 +51,7 @@ export class BlobManager {
 
     public async getBlob(blobId: string): Promise<BlobHandle> {
         return new BlobHandle(
-            `blobs/${blobId}`,
+            `${this.basePath}/${blobId}`,
             this.routeContext,
             async () => this.getStorage().read(blobId),
             () => null,
@@ -60,7 +62,7 @@ export class BlobManager {
         const response = await this.getStorage().createBlob(blob);
 
         const handle = new BlobHandle(
-            `blobs/${response.id}`,
+            `${this.basePath}/${response.id}`,
             this.routeContext,
             async () => this.getStorage().read(response.id),
             () => this.sendBlobAttachOp(response.id),

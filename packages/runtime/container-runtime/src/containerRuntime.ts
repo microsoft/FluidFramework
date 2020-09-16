@@ -135,6 +135,8 @@ export enum ContainerMessageType {
 
     // Chunked operation.
     ChunkedOp = "chunkedOp",
+
+    BlobAttach = "blobAttach",
 }
 
 export interface IChunkedOp {
@@ -231,6 +233,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.FluidDataStoreOp:
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
+        case ContainerMessageType.BlobAttach:
         case MessageType.Operation:
             return true;
         default:
@@ -807,8 +810,7 @@ export class ContainerRuntime extends EventEmitter
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
             () => this.storage,
-            // (blobId) => this.submit(ContainerMessageType.BlobAttach, blobId),
-            (blobId) => this.context.submitFn(MessageType.BlobAttach, undefined, false, { blobId }),
+            (blobId) => this.submit(ContainerMessageType.BlobAttach, { blobId }),
         );
 
         this.scheduleManager = new ScheduleManager(
@@ -957,7 +959,7 @@ export class ContainerRuntime extends EventEmitter
     public async resolveHandle(request: IRequest): Promise<IResponse> {
         const requestParser = new RequestParser(request);
 
-        if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === "blobs") {
+        if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === this.blobManager.basePath) {
             assert(requestParser.pathParts.length === 2 && !requestParser.query);
             const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
             if (handle) {
@@ -1941,6 +1943,9 @@ export class ContainerRuntime extends EventEmitter
                 break;
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
+            case ContainerMessageType.BlobAttach:
+                this.submit(type, content, localOpMetadata);
+                break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }
