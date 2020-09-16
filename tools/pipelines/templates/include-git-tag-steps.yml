@@ -19,7 +19,7 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        tag=${{ parameters.tagName }}_v$version
+        tag=${{ parameters.tagName }}_v$(version)
         echo Tag=$tag
         git tag $tag
         # git push origin $tag
