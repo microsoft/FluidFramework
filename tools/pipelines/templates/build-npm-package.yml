@@ -83,6 +83,7 @@ stages:
     jobs:
       # Job - Build
       - job: build
+        displayName: Build
         pool: ${{ parameters.poolBuild }}
         variables:
           testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
