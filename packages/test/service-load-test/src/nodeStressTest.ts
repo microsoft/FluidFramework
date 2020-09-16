@@ -16,7 +16,6 @@ import {
     getMicrosoftConfiguration,
     OdspTokenConfig,
 } from "@fluidframework/tool-utils";
-import { BaseTelemetryNullLogger } from "@fluidframework/common-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
 
@@ -77,7 +76,6 @@ function createLoader(config: IConfig, password: string) {
         {},
         {},
         new Map<string, IProxyLoaderFactory>(),
-        new BaseTelemetryNullLogger(),
     );
     return loader;
 }
