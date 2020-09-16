@@ -29,16 +29,14 @@ stages:
   displayName: Publish Stage - Official Docker Image
   condition: and(succeeded(), eq(variables['release'], 'release'))
   jobs:
-  - job:
-    steps:
-    - template: include-publish-docker-service-steps.yml
-      parameters:
-        environment: container-registry-public
-        containerRegistry: ${{ parameters.containerRegistry }}
-        containerTag: ${{ parameters.containerTag }}
-        containerRegistryUrl: ${{ parameters.containerRegistryUrl }}
-        containerName: public/${{ parameters.containerName }}
-        buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-        buildDirectory: ${{ parameters.buildDirectory }}
-        tagName: ${{ parameters.tagName }}
+  - template: include-publish-docker-service-steps.yml
+    parameters:
+      environment: container-registry-public
+      containerRegistry: ${{ parameters.containerRegistry }}
+      containerTag: ${{ parameters.containerTag }}
+      containerRegistryUrl: ${{ parameters.containerRegistryUrl }}
+      containerName: public/${{ parameters.containerName }}
+      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+      buildDirectory: ${{ parameters.buildDirectory }}
+      tagName: ${{ parameters.tagName }}
 
