@@ -1,0 +1,25 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# include-git-tag-steps
+
+parameters:
+- name: tagName
+  type: string
+
+steps:
+- ${{ if ne(parameters.tagName, '') }}:
+  - checkout: self
+    clean: true
+    persistCredentials: true
+    condition: and(succeeded(), eq(variables['release'], 'release'))
+  - task: Bash@3
+    displayName: Tag Release
+    condition: and(succeeded(), eq(variables['release'], 'release'))
+    inputs:
+      targetType: 'inline'
+      script: |
+        tag=${{ parameters.tagName }}_v$(version)
+        echo Tag=$tag
+        git tag $tag
+        git push origin $tag

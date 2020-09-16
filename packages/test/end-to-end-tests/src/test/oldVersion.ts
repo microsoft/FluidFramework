@@ -10,8 +10,15 @@ export {
     DataObjectFactory,
 } from "old-aqueduct";
 export { IChannelFactory } from "old-datastore-definitions";
-export { IContainer, IContainerContext, IFluidModule, IRuntimeFactory } from "old-container-definitions";
-export { Container } from "old-container-loader";
+export {
+    IContainer,
+    IContainerContext,
+    IFluidModule,
+    ILoader,
+    IRuntimeFactory,
+    IProxyLoaderFactory,
+} from "old-container-definitions";
+export { Container, Loader } from "old-container-loader";
 export { ContainerRuntime, IContainerRuntimeOptions } from "old-container-runtime";
 export {
     RuntimeRequestHandlerBuilder,
@@ -22,7 +29,15 @@ export {
     createAndAttachContainer,
     TestFluidObjectFactory,
     TestContainerRuntimeFactory,
+    LocalCodeLoader,
 } from "old-test-utils";
-export { SharedMap } from "old-map";
-export { SharedString } from "old-sequence";
+export { SharedDirectory, SharedMap } from "old-map";
+export { SharedString, SparseMatrix } from "old-sequence";
+export { LocalDocumentServiceFactory, LocalResolver } from "old-local-driver";
+export { ConsensusRegisterCollection } from "old-register-collection";
+export { SharedCell } from "old-cell";
+export { Ink } from "old-ink";
+export { SharedMatrix } from "old-matrix";
+export { ConsensusQueue } from "old-ordered-collection";
+
 /* eslint-enable import/no-extraneous-dependencies */

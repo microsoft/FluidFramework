@@ -5,8 +5,7 @@
 
 import { MongoManager } from "@fluidframework/server-services-core";
 import { Response, Router } from "express";
-// eslint-disable-next-line import/no-internal-modules
-import { getParam } from "../alfred/utils";
+import { getParam } from "../utils";
 import { TenantManager } from "./tenantManager";
 
 export function create(

@@ -41,6 +41,10 @@ parameters:
   type: string
   default: none
 
+- name: tagName
+  type: string
+  default:
+
 trigger: none
 
 variables:
@@ -51,23 +55,25 @@ variables:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 - group: container-registry-info
+- name: buildContainerName
+  value: build/${{ parameters.containerName }}
 - ${{ if eq(variables.pushImage, false) }}:
   - name: containerRegistry
     value:
   - name: containerTag
-    value: ${{ parameters.containerName }}:$(containerTagSuffix)
+    value: $(buildContainerName):$(containerTagSuffix)
 - ${{ if eq(variables.pushImage, true) }}:
   - name: containerRegistry
     value: $[variables.containerRegistryConnection]
   - name: containerTag
-    value: $(containerRegistryUrl)/${{ parameters.containerName }}:$(containerTagSuffix)
+    value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
 
 stages:
 - stage: build
   displayName: Build Stage
   jobs:
   - job: build
-    displayName: Build Container - ${{ parameters.containerName }}
+    displayName: Build Container - ${{ variables.buildContainerName }}
     pool: Lite
     variables:
       releaseBuildVar: $[variables.releaseBuild]
@@ -109,12 +115,12 @@ stages:
             fi
           fi
 
-          if [[ "$(release)" != "none" ]]; then
+          if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
             if [[ "${{ variables.pushImage }}" != "True" ]]; then
               echo "##vso[task.logissue type=error]'$(release)' is set but image is not pushed. Either the branch doesn't default to push image or it is skipped."
               exit -1;
             fi
-            
+
             if [[ "${{ variables.releaseImage }}" != "True" ]]; then
               echo "##vso[task.logissue type=error]'$(release)' is set but pipeline isn't declared to allow release image."
               exit -1;
@@ -158,7 +164,7 @@ stages:
       displayName: Docker Build
       inputs:
         containerRegistry: $(containerRegistry)
-        repository: ${{ parameters.containerName }}
+        repository: ${{ variables.buildContainerName }}
         command: build
         dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
         buildContext: ${{ parameters.buildDirectory }}
@@ -180,7 +186,7 @@ stages:
         inputs:
           action: 'Run a Docker command'
           customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(containerTag) npm run test'
-        
+
       - task: PublishTestResults@2
         displayName: Publish Test Results
         inputs:
@@ -203,7 +209,7 @@ stages:
         displayName: Docker Push
         inputs:
           containerRegistry: $(containerRegistryConnection)
-          repository: ${{ parameters.containerName }}
+          repository: ${{ variables.buildContainerName }}
           command: push
           tags: |
             $(containerTagSuffix)
@@ -218,7 +224,7 @@ stages:
       condition: succeededOrFailed()
 
     - task: Docker@0
-      displayName: Docker Cleanup - ${{ parameters.containerName }}
+      displayName: Docker Cleanup - ${{ variables.buildContainerName }}
       inputs:
         action: Run a Docker command
         customCommand: rmi $(containerTag)
@@ -233,3 +239,4 @@ stages:
       containerTag: $(containerTag)
       containerRegistryUrl: $(containerRegistryUrl)
       containerName: ${{ parameters.containerName }}
+      tagName: ${{ parameters.tagName }}
