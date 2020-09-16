@@ -26,6 +26,15 @@
                 @{{.Site.Params.Twitterhandle}}
             </a>
         </li>
+        {{- if (not (in .File.Path "apis")) -}}
+        {{- $editUrl := path.Join "https://github.com/" .Site.Params.Githubrepo "edit/main/docs/content/" .File.Path -}}
+        <li id="connect-editpage">
+            <a href="{{$editUrl}}" target="_blank">
+                <img alt="Issues" src="/assets/community/sidebar/github.svg" />
+                Edit this page
+            </a>
+        </li>
+        {{- end -}}
         <li id="connect-github">
             <a href="https://www.github.com/{{.Site.Params.Githubrepo}}/issues/new/choose" target="_blank">
                 <img alt="Issues" src="/assets/community/sidebar/issue.svg" />
