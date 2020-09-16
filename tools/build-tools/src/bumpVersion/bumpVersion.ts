@@ -1006,13 +1006,13 @@ class BumpVersion {
     }
 
     /**
-     * Create release branch based on the repo state, bump minor version immediately 
+     * Create release branch based on the repo state, bump minor version immediately
      * and push it to `main` and the new release branch to remote
      */
     public async createReleaseBranch() {
         // Create release branch based on client version
         const releaseName = MonoRepoKind[MonoRepoKind.Client];
-        
+
         const depVersions = await this.collectBumpInfo(releaseName);
         const releaseVersion = depVersions.repoVersions.get(releaseName);
         if (!releaseVersion) {

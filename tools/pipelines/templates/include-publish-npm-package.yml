@@ -25,23 +25,18 @@ stages:
     parameters:
       namespace: ${{ parameters.namespace }}
       feeds:
-      - name: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/ 
+      - name: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
         environment: build-feed
         internal: true
-        enabled: true
-        tagSteps: []
-      - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
-        environment: fluid-feed
-        customEndPoint: Offnet Packages
-        internal: false
-        enabled: $[variables.release]
         tagSteps:
         - ${{ if ne(parameters.tagName, '') }}:
           - checkout: self
             clean: true
             persistCredentials: true
+            condition: and(succeeded(), eq(variables['release'], true))
           - task: Bash@3
             displayName: Tag Release
+            condition: and(succeeded(), eq(variables['release'], true))
             env:
               VERSION_RELEASE: $(release)
               VERSION_BUILDNUMBER: $(Build.BuildNumber)
@@ -55,7 +50,7 @@ stages:
                 echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
                 echo VERSION_RELEASE=$VERSION_RELEASE
                 echo VERSION_PATCH=$VERSION_PATCH
-          
+
                 version=`node $(Build.SourcesDirectory)/tools/pipelines/scripts/build-version.js`
                 echo COMPUTED_VERSION=$version
                 if [ "$version" = "" ]; then

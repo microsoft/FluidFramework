@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/ordered-collection",
-  "version": "0.25.2",
+  "version": "0.25.3",
   "description": "Consensus Collection",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -52,16 +52,16 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.22.1",
-    "@fluidframework/datastore-definitions": "^0.25.2",
+    "@fluidframework/datastore-definitions": "^0.25.3",
     "@fluidframework/protocol-definitions": "^0.1011.1",
-    "@fluidframework/shared-object-base": "^0.25.2",
+    "@fluidframework/shared-object-base": "^0.25.3",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/mocha-test-setup": "^0.25.2",
-    "@fluidframework/test-runtime-utils": "^0.25.2",
+    "@fluidframework/mocha-test-setup": "^0.25.3",
+    "@fluidframework/test-runtime-utils": "^0.25.3",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
