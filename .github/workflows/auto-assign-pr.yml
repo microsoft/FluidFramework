@@ -3,9 +3,8 @@ on:
   pull_request_target:
     types: [opened, reopened]
     branches:
-    - master
+    - main
     - release/*
-    - pr_assign
 
 jobs:
   assign_reviewer:

@@ -14,7 +14,7 @@ import {
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { getParam } from "../../utils";
+import { getParam } from "../../../utils";
 
 const sequenceNumber = "sequenceNumber";
 

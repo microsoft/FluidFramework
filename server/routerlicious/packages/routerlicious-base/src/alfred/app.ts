@@ -3,14 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager } from "@fluidframework/server-services-core";
+import path from "path";
+import {
+    IDocumentStorage,
+    IProducer,
+    ITenantManager,
+    MongoManager,
+} from "@fluidframework/server-services-core";
 import * as bodyParser from "body-parser";
+import compression from "compression";
+import cookieParser from "cookie-parser";
+import cors from "cors";
 import express from "express";
+import safeStringify from "json-stringify-safe";
 import morgan from "morgan";
+import { Provider } from "nconf";
 import * as winston from "winston";
-// eslint-disable-next-line import/no-internal-modules
-import { getTenantIdFromRequest } from "../alfred/utils";
-import * as api from "./api";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { getTenantIdFromRequest } from "../utils";
+import * as alfredRoutes from "./routes";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");
@@ -25,21 +36,23 @@ const stream = split().on("data", (message) => {
 });
 
 export function create(
-    collectionName: string,
+    config: Provider,
+    tenantManager: ITenantManager,
+    storage: IDocumentStorage,
+    appTenants: IAlfredTenant[],
     mongoManager: MongoManager,
-    loggerFormat: string,
-    baseOrdererUrl: string,
-    defaultHistorianUrl: string,
-    defaultInternalHistorianUrl: string,
-) {
+    producer: IProducer) {
+    // Maximum REST request size
+    const requestSize = config.get("alfred:restJsonSize");
+
     // Express app configuration
     const app: express.Express = express();
 
     // Running behind iisnode
     app.set("trust proxy", 1);
 
-    // View engine setup.
-    app.set("view engine", "hjs");
+    app.use(compression());
+    const loggerFormat = config.get("logger:morganFormat");
     if (loggerFormat === "json") {
         app.use(morgan((tokens, req, res) => {
             const messageMetaData = {
@@ -49,20 +62,31 @@ export function create(
                 contentLength: tokens.res(req, res, "content-length"),
                 responseTime: tokens["response-time"](req, res),
                 tenantId: getTenantIdFromRequest(req.params),
-                serviceName: "riddler",
+                serviceName: "alfred",
                 eventName: "http_requests",
              };
              winston.info("request log generated", { messageMetaData });
              return undefined;
-        }));
+        }, { stream }));
     } else {
         app.use(morgan(loggerFormat, { stream }));
     }
-    app.use(bodyParser.json());
-    app.use(bodyParser.urlencoded({ extended: false }));
-    app.use(
-        "/api",
-        api.create(collectionName, mongoManager, baseOrdererUrl, defaultHistorianUrl, defaultInternalHistorianUrl));
+
+    app.use(cookieParser());
+    app.use(bodyParser.json({ limit: requestSize }));
+    app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
+
+    // Bind routes
+    const routes = alfredRoutes.create(
+        config,
+        tenantManager,
+        mongoManager,
+        storage,
+        producer,
+        appTenants);
+
+    app.use("/public", cors(), express.static(path.join(__dirname, "../../public")));
+    app.use(routes.api);
 
     // Catch 404 and forward to error handler
     app.use((req, res, next) => {
@@ -73,26 +97,9 @@ export function create(
 
     // Error handlers
 
-    // development error handler
-    // will print stacktrace
-    if (app.get("env") === "development") {
-        app.use((err, req, res, next) => {
-            res.status(err.status || 500);
-            res.render("error", {
-                error: err,
-                message: err.message,
-            });
-        });
-    }
-
-    // Production error handler
-    // no stacktraces leaked to user
     app.use((err, req, res, next) => {
         res.status(err.status || 500);
-        res.render("error", {
-            error: {},
-            message: err.message,
-        });
+        res.json({ error: safeStringify(err), message: err.message });
     });
 
     return app;
