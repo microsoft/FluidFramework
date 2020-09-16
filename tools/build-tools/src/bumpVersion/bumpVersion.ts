@@ -8,7 +8,7 @@ import * as path from "path";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot, getPackageManifest } from "../common/fluidUtils";
-import { FluidRepo } from "../common/fluidRepo";
+import { FluidRepo, IPackageManifest } from "../common/fluidRepo";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import * as semver from "semver";
 import { Package } from "../common/npmPackage";
@@ -46,8 +46,6 @@ let paramVersionName: string | undefined;
 let paramVersion: semver.SemVer | undefined;
 let paramBumpName: string | undefined;
 let paramBumpVersion: VersionChangeType | undefined;
-
-const generatorFluidPackageName = "generator-fluid";
 
 function parseNameVersion(arg: string | undefined) {
     let name = arg;
@@ -447,6 +445,7 @@ class BumpVersion {
     private readonly fullPackageMap: Map<string, Package>;
     private readonly generatorPackage: Package;
     private readonly templatePackage: Package;
+    private readonly packageManifest: IPackageManifest;
     private readonly newBranches: string[] = [];
     private readonly newTags: string[] = [];
 
@@ -462,10 +461,12 @@ class BumpVersion {
         this.timer.time("Package scan completed");
 
         this.fullPackageMap = this.repo.createPackageMap();
+        this.packageManifest = getPackageManifest(this.repo.resolvedRoot);
 
         // TODO: Is there a way to generate this automatically?
-        const generatorPackage = this.fullPackageMap.get(generatorFluidPackageName);
-        if (!generatorPackage) { fatal(`Unable to find ${generatorFluidPackageName} package`) };
+        if (!this.packageManifest.generatorName) { fatal(`Unable to find generator package name in package.json`)}
+        const generatorPackage = this.fullPackageMap.get(this.packageManifest.generatorName);
+        if (!generatorPackage) { fatal(`Unable to find ${this.packageManifest.generatorName} package`) };
         this.generatorPackage = generatorPackage;
         this.templatePackage = new Package(path.join(generatorPackage.directory, "app", "templates", "package.json"));
     }
@@ -1119,13 +1120,13 @@ class BumpVersion {
             await this.createBranch(pendingReleaseBranch);
         }
 
-        const packageManifest = getPackageManifest(this.repo.resolvedRoot);
-
-        if (packageManifest.releaseOrder?.preRepo !== undefined) {
-            packageManifest.releaseOrder.preRepo.forEach(async packages =>
-                await this.releasePackage(depVersions, packages)
+        const preRepoPromises: Promise<void>[] = [];
+        if (this.packageManifest.releaseOrder?.preRepo !== undefined) {
+            this.packageManifest.releaseOrder.preRepo.forEach(async packages =>
+                preRepoPromises.push(this.releasePackage(depVersions, packages))
             );
         }
+        await Promise.all(preRepoPromises);
 
         if (this.repo.serverMonoRepo) {
             await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo);
@@ -1133,11 +1134,13 @@ class BumpVersion {
 
         await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
 
-        if (packageManifest.releaseOrder?.postRepo !== undefined) {
-            packageManifest.releaseOrder.postRepo.forEach(async packages =>
-                await this.releasePackage(depVersions, packages)
+        const postRepoPromises: Promise<void>[] = [];
+        if (this.packageManifest.releaseOrder?.postRepo !== undefined) {
+            this.packageManifest.releaseOrder.postRepo.forEach(async packages =>
+                postRepoPromises.push(this.releasePackage(depVersions, packages))
             );
         }
+        await Promise.all(postRepoPromises);
 
         // ------------------------------------------------------------------------------------------------------------------
         // Create the minor version bump for development in a temporary merge/<original branch> on top of the release commit

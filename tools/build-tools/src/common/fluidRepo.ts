@@ -68,8 +68,6 @@ export class FluidRepo {
             });
         }
 
-        console.log(JSON.stringify(additionalPackages));
-
         this.packages = new Packages(
             [
                 ...this.clientMonoRepo.packages,

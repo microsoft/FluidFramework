@@ -94,6 +94,5 @@ export async function getResolvedFluidRoot() {
 
 export function getPackageManifest(rootDir: string): IPackageManifest {
     const pkgString = fs.readFileSync(`${rootDir}/package.json`);
-    console.log(JSON.parse(pkgString as any).fluidBuild);
     return JSON.parse(pkgString as any).fluidBuild;
 }
