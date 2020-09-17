@@ -468,7 +468,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             try {
                 return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, true);
             } catch (error) {
-                this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" });
+                this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
                 return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
             }
         } else if (usePost) {
@@ -490,15 +490,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (usePost) {
             url = `${this.snapshotUrl}/trees/latest?ump=1`;
             const formBoundary = uuid();
-            const crlf = "\r\n";
-            postBody = `--${formBoundary}${crlf}`;
-            postBody += `Authorization: Bearer ${storageToken}${crlf}`;
-            postBody += `X-HTTP-Method-Override: GET${crlf}`;
+            postBody = `--${formBoundary}\r\n`;
+            postBody += `Authorization: Bearer ${storageToken}\r\n`;
+            postBody += `X-HTTP-Method-Override: GET\r\n`;
             Object.entries(snapshotOptions).forEach(([key, value]) => {
-                postBody += `${key}: ${value}${crlf}`;
+                postBody += `${key}: ${value}\r\n`;
             });
-            postBody += `post: 1${crlf}`;
-            postBody += `${crlf}--${formBoundary}--`;
+            postBody += `_post: 1\r\n`;
+            postBody += `\r\n--${formBoundary}--`;
             headers = {
                 "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
             };
