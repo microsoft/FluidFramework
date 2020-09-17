@@ -230,6 +230,8 @@ export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalF
 export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFluidDataStoreRegistry> {
     readonly documentId: string;
     readonly id: string;
+    // True if the data store is LocalDataStoreContext.
+    readonly isLocalDataStore: boolean;
     /**
      * The package path of the data store as per the package factory.
      */
@@ -344,9 +346,4 @@ export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
         factory: IProvideFluidDataStoreFactory,
         dataStoreRuntime: IFluidDataStoreChannel,
     ): Promise<void>;
-}
-
-export interface IFluidDataStoreContextType extends IFluidDataStoreContext {
-    // True if the data store is LocalDataStoreContext.
-    readonly isLocalDataStore: boolean;
 }

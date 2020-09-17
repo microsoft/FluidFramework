@@ -48,7 +48,6 @@ import {
     IInboundSignalMessage,
     ISummaryTreeWithStats,
     CreateSummarizerNodeSource,
-    IFluidDataStoreContextType,
 } from "@fluidframework/runtime-definitions";
 import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -93,7 +92,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     ): FluidDataStoreRuntime {
         const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { dataStoreId: uuid() });
         const runtime = new FluidDataStoreRuntime(
-            context as IFluidDataStoreContextType,
+            context,
             context.documentId,
             context.id,
             context.parentBranch,
@@ -176,7 +175,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     private _attachState: AttachState;
 
     private constructor(
-        private readonly dataStoreContext: IFluidDataStoreContextType,
+        private readonly dataStoreContext: IFluidDataStoreContext,
         public readonly documentId: string,
         public readonly id: string,
         public readonly parentBranch: string | null,
