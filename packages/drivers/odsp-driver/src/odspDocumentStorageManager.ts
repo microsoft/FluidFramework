@@ -22,7 +22,8 @@ import { buildHierarchy, getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
-    IDocumentStorageService,, DriverErrorType
+    IDocumentStorageService,
+    DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import {
     IDocumentStorageGetVersionsResponse,
@@ -461,10 +462,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private async fetchSnapshot(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
         const usePost = this.hostPolicy.usePostForTreesLatest;
         // If usePost is false, then make get call for TreesLatest.
-        // If usePost is true, make a post call. In case of failure other than the reason for which
-        // getWithRetryForTokenRefresh will not retry, fallback to get call. In case of error for which
-        // getWithRetryForTokenRefresh will retry, let it retry only if it is first failure, otherwise
-        // fallback to get call.
+        // If usePost is true, make a post call. In case of failure other than the reason for which getWithRetryForTokenRefresh
+        // will retry, fallback to get call. In case of error for which getWithRetryForTokenRefresh will retry, let it retry
+        // only if it is first failure, otherwise fallback to get call.
         if (usePost) {
             try {
                 return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, true);
