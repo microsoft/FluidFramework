@@ -12,7 +12,7 @@ Local Web host is removed. Users who are using the local web host can use exampl
 - [Container runtime event changes](#Container-runtime-event-changes)
 - [Component is removed from telemetry event names](#Component-is-removed-from-telemetry-event-names)
 - [IComponentContextLegacy is removed](#IComponentContextLegacy-is-removed)
-- [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
+- [~~IContainerRuntimeBase._createDataStoreWithProps() is removed~~](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
 - [createDataStoreWithRealizationFn() APIs are removed](#createDataStoreWithRealizationFn()-APIs-are-removed)
 - [getDataStore() APIs is removed](#getDataStore()-APIs-is-removed)
@@ -46,6 +46,8 @@ SignalComponentNotFound -> SignalFluidDataStoreNotFound
 Deprecated in 0.18, removed.
 
 ### IContainerRuntimeBase._createDataStoreWithProps is removed
+**Note: This change has been reverted for 0.25 and will be pushed to a later release.**
+
 `IContainerRuntimeBase._createDataStoreWithProps()` has been removed. Please use `IContainerRuntimeBase.createDataStore()` (returns IFluidRouter).
 If you need to pass props to data store, either use request() route to pass initial props directly, or to query Fluid object to interact with it (pass props / call methods to configure object).
 
