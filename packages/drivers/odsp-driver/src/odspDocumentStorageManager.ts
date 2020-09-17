@@ -22,7 +22,7 @@ import { buildHierarchy, getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
-    IDocumentStorageService,
+    IDocumentStorageService,, DriverErrorType
 } from "@fluidframework/driver-definitions";
 import {
     IDocumentStorageGetVersionsResponse,
@@ -461,18 +461,21 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private async fetchSnapshot(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
         const usePost = this.hostPolicy.usePostForTreesLatest;
         // If usePost is false, then make get call for TreesLatest.
-        // If usePost is true, and token refresh is false, then it means we are trying it first time, so
-        // don't catch the error as getWithRetryForTokenRefresh will handle and try with refresh.
-        // If usePost is true and we are trying with a refreshed token, then use the fallback code in catch.
-        if (usePost && tokenFetchOptions.refresh) {
+        // If usePost is true, make a post call. In case of failure other than the reason for which
+        // getWithRetryForTokenRefresh will not retry, fallback to get call. In case of error for which
+        // getWithRetryForTokenRefresh will retry, let it retry only if it is first failure, otherwise
+        // fallback to get call.
+        if (usePost) {
             try {
                 return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, true);
             } catch (error) {
+                const errorType = error.errorType;
+                if ((errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.incorrectServerResponse) && tokenFetchOptions.refresh === false) {
+                    throw error;
+                }
                 this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
                 return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
             }
-        } else if (usePost) {
-            return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, true);
         } else {
             return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
         }
