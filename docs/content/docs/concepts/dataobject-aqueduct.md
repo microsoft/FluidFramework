@@ -167,6 +167,10 @@ The Aqueduct library contains more than just DataObject and DataObjectFactory. T
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
 
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
+
 <!-- Packages -->
 
 [Aqueduct]: {{< relref "/apis/aqueduct.md" >}}
