@@ -647,11 +647,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             connectionState: ConnectionState[this.connectionState],
         });
 
-        // If container state is not attached, then don't connect to delta stream. Also don't set the
+        // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
         // manual reconnection flag to true as we haven't made the initial connection yet.
-        if (reconnect && this._attachState === AttachState.Attached) {
-            // Attached container must have been resumed.
-            assert(this.resumedOpProcessingAfterLoad);
+        if (reconnect && this._attachState === AttachState.Attached && this.resumedOpProcessingAfterLoad) {
             if (this._connectionState === ConnectionState.Disconnected) {
                 // Only track this as a manual reconnection if we are truly the ones kicking it off.
                 this.manualReconnectInProgress = true;
