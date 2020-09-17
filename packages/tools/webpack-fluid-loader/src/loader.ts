@@ -244,10 +244,9 @@ export async function start(
         getFluidObjectAndRender(container1, fluidObjectUrl, leftDiv).catch(() => { });
     });
 
-    let currentContainer1 = container1;
     // We have rendered the Fluid object. If the container is detached, attach it now.
-    if (currentContainer1.attachState === AttachState.Detached) {
-        const result = await attachContainer(
+    if (container1.attachState === AttachState.Detached) {
+        container1 = await attachContainer(
             loader1,
             container1,
             fluidObjectUrl,
@@ -258,7 +257,6 @@ export async function start(
             rightDiv,
             manualAttach,
         );
-        currentContainer1 = result[1] as Container;
     }
 
     // For side by side mode, we need to create a second container and Fluid object.
@@ -267,7 +265,7 @@ export async function start(
         const loader2 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
 
         // Create a new request url from the resolvedUrl of the first container.
-        const requestUrl2 = await urlResolver.getAbsoluteUrl(currentContainer1.resolvedUrl, "");
+        const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
 
         await getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv);
@@ -415,6 +413,6 @@ async function attachContainer(
         replaceUrl();
         attached.resolve();
     }
-
-    return Promise.all([attached.promise, Promise.resolve(currentContainer)]);
+    await attached.promise;
+    return currentContainer;
 }
