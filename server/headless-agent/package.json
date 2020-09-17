@@ -53,10 +53,8 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.19.1",
-    "@types/async-lock": "^1.1.1",
     "@types/debug": "^4.1.5",
     "@types/jsonwebtoken": "^8.3.0",
-    "@types/mongodb": "^3.1.22",
     "@types/puppeteer": "^1.12.3",
     "@types/redis": "^2.8.10",
     "@types/request": "^2.48.4",
