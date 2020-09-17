@@ -505,7 +505,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             headers = result.headers;
         }
 
-        let isOptionsCall: boolean;
+        let isOptionsCall = false;
 
         if (Object.keys(headers).length && !usePost) {
             isOptionsCall = true;

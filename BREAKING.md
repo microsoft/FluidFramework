@@ -1,11 +1,5 @@
 # Breaking changes
 
-- [UsePostForTreesLatest added in Odsp driver factory](#UsePostForTreesLatest-added-in-Odsp-driver-factory)
-
-### UsePostForTreesLatest added in Odsp driver factory
-To use the post call for fetching latest snapshot in Odsp driver, supply this argument as true in Odsp driver factory.
-
-## 0.26 Breaking Changes
 - [Local Web Host Removed](#Local-Web-Host-Removed)
 
 ### Local Web Host Removed
