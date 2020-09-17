@@ -267,6 +267,7 @@ export class RunningSummarizer implements IDisposable {
 
     public get disposed() { return this._disposed; }
 
+    private stopping = false;
     private _disposed = false;
     private summarizing: Deferred<void> | undefined;
     private summarizeCount: number = 0;
@@ -362,6 +363,11 @@ export class RunningSummarizer implements IDisposable {
         if (this.disposed) {
             return;
         }
+        if (this.stopping) {
+            await this.summarizing?.promise;
+            return;
+        }
+        this.stopping = true;
         const outstandingOps = this.heuristics.lastOpSeqNumber - this.heuristics.lastAcked.refSequenceNumber;
         if (outstandingOps > minOpsForLastSummary) {
             this.trySummarize("lastSummary");
@@ -409,7 +415,7 @@ export class RunningSummarizer implements IDisposable {
         })().finally(() => {
             this.summarizing?.resolve();
             this.summarizing = undefined;
-            if (this.tryWhileSummarizing) {
+            if (this.tryWhileSummarizing && !this.stopping && !this.disposed) {
                 this.tryWhileSummarizing = false;
                 this.heuristics.run();
             }
