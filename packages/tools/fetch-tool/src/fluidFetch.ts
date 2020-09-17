@@ -33,10 +33,8 @@ async function fluidFetchOneFile(urlStr: string, name?: string) {
 
 async function tryFluidFetchOneSharePointFile(server: string, driveItem: IOdspDriveItem) {
     const { path, name, drive, item } = driveItem;
-    if (name.endsWith(".b") || name.endsWith(".fluid")) {
-        console.log(`File: ${path}/${name}`);
-        await fluidFetchOneFile(`https://${server}/_api/v2.1/drives/${drive}/items/${item}`, name);
-    }
+    console.log(`File: ${path}/${name}`);
+    await fluidFetchOneFile(`https://${server}/_api/v2.1/drives/${drive}/items/${item}`, name);
 }
 
 function getSharePointSpecificDriveItem(url: URL): { drive: string; item: string } | undefined {
@@ -89,7 +87,9 @@ async function fluidFetchMain() {
         if (serverRelativePath) {
             const files = await getSharepointFiles(server, serverRelativePath, false);
             for (const file of files) {
-                await tryFluidFetchOneSharePointFile(server, file);
+                if (file.name.endsWith(".b") || file.name.endsWith(".fluid")) {
+                    await tryFluidFetchOneSharePointFile(server, file);
+                }
             }
             return;
         }
