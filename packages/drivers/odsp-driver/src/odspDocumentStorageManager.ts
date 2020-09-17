@@ -460,6 +460,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private async fetchSnapshot(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
         const usePost = this.hostPolicy.usePostForTreesLatest;
+        // If usePost is false, then make get call for TreesLatest.
+        // If usePost is true, and token refresh is false, then it means we are trying it first time, so
+        // don't catch the error as getWithRetryForTokenRefresh will handle and try with refresh.
+        // If usePost is true and we are trying with a refreshed token, then use the fallback code in catch.
         if (usePost && tokenFetchOptions.refresh) {
             try {
                 return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, true);
