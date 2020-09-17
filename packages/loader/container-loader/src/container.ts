@@ -635,8 +635,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public setAutoReconnect(reconnect: boolean) {
-        assert(this.resumedOpProcessingAfterLoad);
-
         if (reconnect && this.closed) {
             throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
         }
