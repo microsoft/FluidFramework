@@ -1397,9 +1397,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         if (value === ConnectionState.Connected) {
             this._clientId = this.pendingClientId;
-            if (this._clientId !== undefined) {
-                this.clientIdHistory.push(this._clientId);
-            }
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.clientIdHistory.push(this._clientId!);
             if (this.clientIdHistory.length > this.maxClientIdHistory) {
                 this.clientIdHistory.shift();
             }
