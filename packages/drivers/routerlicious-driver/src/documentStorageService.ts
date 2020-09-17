@@ -92,6 +92,10 @@ export class DocumentStorageService implements IDocumentStorageService {
         return response.then((r) => ({ id: r.sha, url: r.url }));
     }
 
+    public async readBlob(blobId: string) {
+        return Buffer.from(await this.read(blobId), "base64");
+    }
+
     public getRawUrl(blobId: string): string {
         return this.manager.getRawUrl(blobId);
     }

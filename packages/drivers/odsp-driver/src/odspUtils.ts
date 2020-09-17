@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     OnlineStatus, isOnline,
 } from "@fluidframework/driver-utils";
@@ -71,6 +72,7 @@ export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOp
 export async function fetchHelper<T>(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
+    parse: boolean = true,
 ): Promise<IOdspResponse<T>> {
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
     return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
@@ -83,6 +85,13 @@ export async function fetchHelper<T>(
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
                 `Error ${response.status} from the server`, response.status, response);
+        }
+
+        if (!parse) {
+            return {
+                headers: response.headers,
+                content: IsoBuffer.from(await response.arrayBuffer()),
+            };
         }
 
         // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including

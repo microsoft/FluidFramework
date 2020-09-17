@@ -5,7 +5,6 @@
 
 import * as assert from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
@@ -87,6 +86,6 @@ describe("blobs", () => {
         const component2 = await requestFluidObject<TestComponent>(container2, "default");
 
         const blobHandle = await component2._root.wait(testKey);
-        assert.strictEqual(fromBase64ToUtf8(await blobHandle.get()), testString);
+        assert.strictEqual((await blobHandle.get()).toString(), testString);
     });
 });

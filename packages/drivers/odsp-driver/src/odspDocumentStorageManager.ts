@@ -106,6 +106,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private readonly documentId: string;
     private readonly snapshotUrl: string | undefined;
+    private readonly attachmentPOSTUrl: string | undefined;
+    private readonly attachmentGETUrl: string | undefined;
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
         assert(this._ops === undefined);
@@ -131,6 +133,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     ) {
         this.documentId = odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
+        this.attachmentPOSTUrl = odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
+        this.attachmentGETUrl = odspResolvedUrl.endpoints.attachmentGETStorageUrl;
 
         this.fileEntry = {
             resolvedUrl: odspResolvedUrl,
@@ -142,20 +146,51 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return "";
     }
 
-    public async createBlob(file: Uint8Array): Promise<api.ICreateBlobResponse> {
-        this.checkSnapshotUrl();
+    public async createBlob(file: IsoBuffer): Promise<api.ICreateBlobResponse> {
+        this.checkAttachmentPOSTUrl();
 
-        return PerformanceEvent.timedExecAsync(
-            this.logger,
-            {
-                eventName: "createBlob",
-                size: file.length,
-            },
-            async () => {
-                // Future implementation goes here
-                // Need to wrap implementation with getWithRetryForTokenRefresh()
-                throw new Error("StandardDocumentStorageManager.createBlob() not implemented");
-            });
+        const response = await getWithRetryForTokenRefresh(async (options) => {
+            const storageToken = await this.getStorageToken(options, "CreateBlob");
+            const { url, headers } = getUrlAndHeadersWithAuth(`${this.attachmentPOSTUrl}/content`, storageToken);
+            headers["Content-Type"] = "application/octet-stream";
+
+            return PerformanceEvent.timedExecAsync(
+                this.logger,
+                {
+                    eventName: "createBlob",
+                    size: file.length,
+                },
+                async () => fetchHelper<api.ICreateBlobResponse>(
+                    url,
+                    {
+                        body: file,
+                        headers,
+                        method: "POST",
+                    },
+                ),
+            );
+        });
+
+        return response.content;
+    }
+
+    public async readBlob(blobid: string) {
+        this.checkAttachmentGETUrl();
+
+        const response = await getWithRetryForTokenRefresh(async (options) => {
+            const storageToken = await this.getStorageToken(options, "ReadDataBlob");
+            const { url, headers } = getUrlAndHeadersWithAuth(`${this.attachmentGETUrl}/${blobid}/content`, storageToken);
+
+            return PerformanceEvent.timedExecAsync(
+                this.logger,
+                {
+                    eventName: "readDataBlob",
+                    headers: Object.keys(headers).length !== 0 ? true : undefined,
+                },
+                async () => fetchHelper<IsoBuffer>(url, { headers }, false),
+            );
+        });
+        return response.content;
     }
 
     public async read(blobid: string): Promise<string> {
@@ -611,6 +646,18 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private checkSnapshotUrl() {
         if (!this.snapshotUrl) {
             throwOdspNetworkError("Method not supported because no snapshotUrl was provided", 400);
+        }
+    }
+
+    private checkAttachmentPOSTUrl() {
+        if (!this.attachmentPOSTUrl) {
+            throwOdspNetworkError("Method not supported because no attachmentPOSTUrl was provided", 400);
+        }
+    }
+
+    private checkAttachmentGETUrl() {
+        if (!this.attachmentGETUrl) {
+            throwOdspNetworkError("Method not supported because no attachmentGETUrl was provided", 400);
         }
     }
 

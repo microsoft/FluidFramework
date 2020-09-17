@@ -53,7 +53,7 @@ export class BlobManager {
         return new BlobHandle(
             `${this.basePath}/${blobId}`,
             this.routeContext,
-            async () => this.getStorage().read(blobId),
+            async () => this.getStorage().readBlob(blobId),
             () => null,
         );
     }
@@ -64,7 +64,7 @@ export class BlobManager {
         const handle = new BlobHandle(
             `${this.basePath}/${response.id}`,
             this.routeContext,
-            async () => this.getStorage().read(response.id),
+            async () => this.getStorage().readBlob(response.id),
             () => this.sendBlobAttachOp(response.id),
         );
 
