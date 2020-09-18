@@ -6,3 +6,8 @@
 import { IsomorphicPerformance } from "./performanceIsomorphic";
 
 export const performance: IsomorphicPerformance = window.performance;
+
+// back-compat
+export function performanceNow() {
+    return performance.now();
+}
