@@ -82,10 +82,8 @@
         "blobStorageUrl": "http://historian:3000",
         "internalBlobStorageUrl": "http://historian:3000",
         "repository": "prague",
-        "npm": "https://pragueauspkn.azureedge.net",
-        "clusterNpm": "https://pragueauspkn.azureedge.net",
-        "localNpm": "http://localhost:3002",
-        "localClusterNpm": "http://auspkn:3000",
+        "npm": "https://unpkg.com",
+        "clusterNpm": "https://unpkg.com",
         "packageManager": {
             "endpoint": "https://packages.wu2.prague.office-int.com",
             "username": "prague",

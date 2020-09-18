@@ -90,7 +90,6 @@ data:
             "frsBlobStorageUrl": "{{ .Values.historian.frsExternalUrl }}",
             "internalBlobStorageUrl": "{{ .Values.historian.internalUrl }}",
             "repository": "FluidFramework",
-            "clusterNpm": "{{ .Values.worker.clusterNpm }}",
             "npm": "{{ .Values.worker.npm }}",
             "packageManager": {
                 "endpoint": "{{ .Values.packageManager.endpoint }}",
