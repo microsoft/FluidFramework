@@ -682,6 +682,10 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
+        /**
+         * @deprecated 0.16 Issue #1635, #3631
+         */
+        public readonly createProps?: any,
     ) {
         super(
             runtime,
@@ -754,6 +758,10 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
+        /**
+         * @deprecated 0.16 Issue #1635, #3631
+         */
+        createProps?: any,
     ) {
         super(
             id,
@@ -764,7 +772,8 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
             summaryTracker,
             createSummarizerNode,
             bindChannel,
-            snapshotTree);
+            snapshotTree,
+            createProps);
     }
 }
 

@@ -1321,6 +1321,11 @@ export class ContainerRuntime extends EventEmitter
         return context;
     }
 
+    public async _createDataStoreWithProps(pkg: string | string[], props?: any, id = uuid()):
+        Promise<IFluidDataStoreChannel> {
+        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props).realize();
+    }
+
     private async _createDataStore(pkg: string | string[], id = uuid()): Promise<IFluidDataStoreChannel>
     {
         return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id).realize();
@@ -1330,7 +1335,7 @@ export class ContainerRuntime extends EventEmitter
         return this.connected && !this.deltaManager.readonly;
     }
 
-    private _createFluidDataStoreContext(pkg: string[], id) {
+    private _createFluidDataStoreContext(pkg: string[], id: string, props?: any) {
         const context = new LocalFluidDataStoreContext(
             id,
             pkg,
@@ -1341,6 +1346,7 @@ export class ContainerRuntime extends EventEmitter
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
+            props,
         );
         this.setupNewContext(context);
         return context;
