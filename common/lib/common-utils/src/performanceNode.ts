@@ -5,8 +5,3 @@
 
 import { performance } from "perf_hooks";
 export { performance };
-
-// back-compat
-export function performanceNow() {
-    return performance.now();
-}
