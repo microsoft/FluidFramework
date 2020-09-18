@@ -8,11 +8,13 @@ import {
     IFluidRouter,
     IFluidRunnable,
 } from "@fluidframework/core-interfaces";
-
+import {
+    ITreeEntry,
+} from "@fluidframework/protocol-definitions";
 /**
  * NOTE: Search blob concept
  */
-export type ISnapshotContracts = Map<string, () => string>;
+export type ISnapshotContract = () => ITreeEntry[];
 
 /**
  * Definition of a Task.

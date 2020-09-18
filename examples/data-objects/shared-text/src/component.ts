@@ -41,6 +41,11 @@ import {
 } from "@fluidframework/sequence";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import {
+    ITreeEntry,
+    TreeEntry,
+    FileMode,
+} from "@fluidframework/protocol-definitions";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 
@@ -336,10 +341,20 @@ export async function instantiateDataStore(context: IFluidDataStoreContext) {
     // NOTE: Search blob concept
     const runnerP2 = SharedTextRunner.load(runtime, context);
     const runner2 = await runnerP2;
-    const searchContract: () => string = () => { return runner2.ISharedString.getText(); };
-    const contracts: ISnapshotContracts = new Map<string, () => string>();
-    contracts.set("search", searchContract);
-    runtime.registerExtraSnapshotContracts(contracts);
+    const searchContract: ISnapshotContract = () => {
+        const allText = runner2.ISharedString.getText();
+        const searchEntry: ITreeEntry = {
+            path: "",
+            type: TreeEntry.Blob,
+            value: {
+                contents: allText,
+                encoding: "utf-8",
+            },
+            mode: FileMode.File,
+        };
+        return [searchEntry];
+    };
+    runtime.registerExtraSnapshotContract(searchContract);
 
     return runtime;
 }

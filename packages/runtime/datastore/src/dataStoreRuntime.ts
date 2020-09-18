@@ -179,7 +179,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     private _attachState: AttachState;
 
     // NOTE: Search blob concept
-    private extraSnapshotContracts: ISnapshotContracts;
+    private extraSnapshotContract: ISnapshotContract;
 
     private constructor(
         private readonly dataStoreContext: IFluidDataStoreContextType,
@@ -556,8 +556,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     // NOTE: Search blob concept
-    public registerExtraSnapshotContracts(contracts: ISnapshotContracts) {
-        this.extraSnapshotContracts = contracts;
+    public registerExtraSnapshotContracts(contract: ISnapshotContract) {
+        this.extraSnapshotContract = contract;
     }
 
     public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
@@ -578,19 +578,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             }));
 
         // NOTE: Search blob concept (just testing one contract for now):
-        const searchContract = this.extraSnapshotContracts.get("search");
-        if (searchContract !== undefined) {
-            const searchEntry: ITreeEntry = {
-                path: "",
-                type: TreeEntry.Blob,
-                value: {
-                    contents: searchContract(),
-                    encoding: "utf-8",
-                },
-                mode: FileMode.File,
-            };
-            entries.push(searchEntry);
-        }
+        entries.push(this.extraSnapshotContract());
 
         return entries;
     }

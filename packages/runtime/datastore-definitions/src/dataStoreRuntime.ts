@@ -150,5 +150,5 @@ export interface IFluidDataStoreRuntime extends
      *
      * Register extra information to be added to snapshot trees
      */
-    registerExtraSnapshotContracts(contracts: ISnapshotContracts): void;
+    registerExtraSnapshotContract(contract: ISnapshotContract): void;
 }
