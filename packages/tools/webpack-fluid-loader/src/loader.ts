@@ -274,9 +274,6 @@ export async function start(
             getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv).catch(() => { });
         });
     }
-    const testUrl = window.location.href.replace("/doc", "");
-    console.log(testUrl);
-    console.log("here", loader1.request({ url : testUrl }));
 }
 
 async function getFluidObjectAndRender(container: Container, url: string, div: HTMLDivElement) {
