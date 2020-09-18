@@ -20,7 +20,7 @@ import {
     BindState,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred, IsoBuffer } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
@@ -574,7 +574,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         );
     }
 
-    public async uploadBlob(blob: Buffer): Promise<IFluidHandle<string>> {
+    public async uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>> {
         return this.containerRuntime.uploadBlob(blob);
     }
 }

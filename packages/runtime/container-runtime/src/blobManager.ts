@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IFluidHandle,
-    IFluidHandleContext,
-} from "@fluidframework/core-interfaces";
+import { IsoBuffer } from "@fluidframework/common-utils";
+import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
@@ -58,7 +56,7 @@ export class BlobManager {
         );
     }
 
-    public async createBlob(blob: Buffer): Promise<BlobHandle> {
+    public async createBlob(blob: IsoBuffer): Promise<BlobHandle> {
         const response = await this.getStorage().createBlob(blob);
 
         const handle = new BlobHandle(

@@ -93,7 +93,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     }
 
     public async readBlob(blobId: string) {
-        return Buffer.from(await this.read(blobId), "base64");
+        return IsoBuffer.from(await this.read(blobId), "base64");
     }
 
     public getRawUrl(blobId: string): string {
