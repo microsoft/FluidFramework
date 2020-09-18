@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidRepoBase } from "../common/fluidRepoBase";
+import { FluidRepo } from "../common/fluidRepo";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
@@ -85,7 +85,7 @@ async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJs
     const markNonDev = (name: string, item: any) => {
         totalDevCount--;
         delete item.dev;
-        if (item.dependencies) { 
+        if (item.dependencies) {
             // mark unhoisted dependencies recursively
             for (const dep in item.dependencies) {
                 markNonDev(dep, item.dependencies[dep]);
@@ -199,11 +199,13 @@ async function main() {
     const resolvedRoot = await getResolvedFluidRoot();
 
     // Load the package
-    const repo = new FluidRepoBase(resolvedRoot, false);
+    const repo = new FluidRepo(resolvedRoot, false);
     timer.time("Package scan completed");
 
     await generateMonoRepoInstallPackageJson(repo.clientMonoRepo);
-    await generateMonoRepoInstallPackageJson(repo.serverMonoRepo);
+    if (repo.serverMonoRepo) {
+        await generateMonoRepoInstallPackageJson(repo.serverMonoRepo);
+    }
 };
 
 main().catch(error => {
