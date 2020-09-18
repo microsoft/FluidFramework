@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/protocol-definitions",
-  "version": "0.1012.1",
+  "version": "0.1012.2",
   "description": "Fluid protocol definitions",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
