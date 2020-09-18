@@ -3,9 +3,5 @@
  * Licensed under the MIT License.
  */
 
-import { performance, PerformanceObserver } from "perf_hooks";
-export { performance, PerformanceObserver };
-
-export function performanceNow() {
-    return performance.now();
-}
+import { performance } from "perf_hooks";
+export { performance };
