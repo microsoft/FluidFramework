@@ -509,4 +509,18 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
         assert.strictEqual(dataStore2FromRC.runtime.id, dataStore2.runtime.id, "DataStore2 id should match");
     });
+
+    it("Not bounded/Unreferenced data store should not get serialized on container serialization", async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
+
+        // Create another not bounded dataStore
+        await createPeerDataStore(defaultDataStore.context.containerRuntime);
+
+        const snapshotTree = JSON.parse(container.serialize());
+
+        assert.strictEqual(Object.keys(snapshotTree.trees).length, 3,
+            "3 trees should be there(protocol, default dataStore, scheduler). Not bounded/Unreferenced " +
+                "data store should not get serialized");
+    });
 });
