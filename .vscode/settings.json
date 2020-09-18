@@ -21,4 +21,5 @@
         "tools/pipelines/*.yml": "azure-pipelines"
     },
     "[azure-pipelines].customSchemaFile": "",
+    "debug.javascript.warnOnLongPrediction": false,
 }
