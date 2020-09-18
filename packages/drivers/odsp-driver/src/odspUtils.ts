@@ -67,7 +67,7 @@ export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOp
 async function fetchHelperCore(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
-) {
+): Promise<Response> {
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
     return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
@@ -108,7 +108,7 @@ export async function fetchHelper(
 ): Promise<IOdspResponse<IsoBuffer>> {
     const response = await fetchHelperCore(requestInfo, requestInit);
     return {
-        headers: response.headers,
+        headers: new Map(response.headers),
         content: IsoBuffer.from(await response.arrayBuffer()),
     };
 }
@@ -123,6 +123,10 @@ export async function fetchAndParseHelper<T>(
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {
     const response = await fetchHelperCore(requestInfo, requestInit);
+    // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
+    // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
+    // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
+    // succeeds on retry.
     try {
         const text = await response.text();
 
