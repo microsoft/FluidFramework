@@ -74,6 +74,8 @@ variables:
 - group: container-registry-info
 - name: buildContainerName
   value: build/${{ parameters.containerName }}
+- name: baseContainerTag
+  value: base:$(containerTagSuffix)
 - ${{ if eq(variables.pushImage, false) }}:
   - name: containerRegistry
     value:
@@ -195,9 +197,9 @@ stages:
           command: build
           dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
           buildContext: ${{ parameters.buildDirectory }}
-          argument: --target base
+          arguments: --target base
           tags: |
-            latest
+            $(containerTagSuffix)
 
       # Pack
       - ${{ if eq(parameters.pack, true) }}:
@@ -205,7 +207,7 @@ stages:
           displayName: Pack
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack:/usr/src/pack -t base npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
+            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack:/usr/src/pack -t $(baseContainerTag) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
 
         - task: PublishBuildArtifacts@1
           displayName: Publish Artifact - pack
@@ -220,7 +222,7 @@ stages:
           displayName: npm run lint
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run -t base npm run lint'
+            customCommand: 'run -t $(baseContainerTag) npm run lint'
 
       # Test
       - ${{ if ne(parameters.test, '') }}:
@@ -230,7 +232,7 @@ stages:
             displayName: npm run ${{ parameters.test }}
             inputs:
               action: 'Run a Docker command'
-              customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t base npm run ${{ parameters.test }}'
+              customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ${{ parameters.test }}'
 
         # Test - With coverage
         - ${{ if eq(variables.testCoverage, true) }}:
@@ -238,7 +240,7 @@ stages:
             displayName: npm run ci:test:coverage
             inputs:
               action: 'Run a Docker command'
-              customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t base npm run ci:test:coverage'
+              customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ci:test:coverage'
 
           - task: PublishCodeCoverageResults@1
             displayName: Publish Code Coverage
@@ -264,7 +266,7 @@ stages:
           displayName: npm run build:docs
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t base npm run build:docs'
+            customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run build:docs'
 
         - task: PublishBuildArtifacts@1
           displayName: 'Docs: Publish Artifact'
@@ -304,20 +306,21 @@ stages:
       continueOnError: true
       condition: succeededOrFailed()
 
-    - task: Docker@0
-      displayName: Docker Cleanup - ${{ variables.buildContainerName }}
-      inputs:
-        action: Run a Docker command
-        customCommand: rmi $(containerTag)
-      continueOnError: true
-      condition: succeededOrFailed()
+    - ${{ if eq(variables.pushImage, true) }}:
+      - task: Docker@0
+        displayName: Docker Cleanup - ${{ variables.buildContainerName }}
+        inputs:
+          action: Run a Docker command
+          customCommand: rmi $(containerTag)
+        continueOnError: true
+        condition: succeededOrFailed()
 
     - ${{ if eq(variables.buildBase, true) }}:
       - task: Docker@0
         displayName: Docker Cleanup - base
         inputs:
           action: Run a Docker command
-          customCommand: rmi base
+          customCommand: rmi $(baseContainerTag)
         continueOnError: true
         condition: succeededOrFailed()
 
