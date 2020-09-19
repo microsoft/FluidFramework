@@ -274,7 +274,17 @@ stages:
             PathtoPublish: '$(System.DefaultWorkingDirectory)/_api-extractor-temp'
             ArtifactName: _api-extractor-temp
             publishLocation: 'Container'
-
+    # Build
+    - task: Docker@2
+      displayName: Docker Build - ${{ variables.buildContainerName }}
+      inputs:
+        containerRegistry: $(containerRegistry)
+        repository: ${{ variables.buildContainerName }}
+        command: build
+        dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
+        buildContext: ${{ parameters.buildDirectory }}
+        tags: |
+          $(containerTagSuffix)
     # Push
     - ${{ if eq(variables.pushImage, true) }}:
       # Build
