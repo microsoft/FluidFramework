@@ -220,7 +220,7 @@ These DDSes are used for storing sequential data. They are all optimistic.
 
 - [SharedCounter][] -- a distributed counter.
 - [SharedString][] -- specialized data structure for handling collaborative text.
-- [Ink][] -- specialized daa structure for ink data.
+- [Ink][] -- specialized data structure for ink data.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
