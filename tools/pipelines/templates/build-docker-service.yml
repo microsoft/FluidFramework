@@ -92,12 +92,16 @@ variables:
 - ${{ if eq(parameters.releaseKind, 'docker') }}:
   - name: tagNameOnReleaseImage
     value: ${{ parameters.tagName }}
+- ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+  - name: latestContainerTag
+    value: latest
+
 stages:
 - stage: build
   displayName: Build Stage
   jobs:
   - job: build
-    displayName: Build Container - ${{ variables.buildContainerName }}
+    displayName: Build Container - ${{ parameters.containerName }}
     pool: ${{ parameters.pool }}
     variables:
       buildBase: ${{ or(ne(parameters.test, ''), or(eq(parameters.pack, true), or(eq(parameters.lint, true), eq(parameters.docs, true)))) }}
@@ -191,7 +195,7 @@ stages:
     - ${{ if eq(variables.buildBase, true) }}:
       # Build - Base
       - task: Docker@2
-        displayName: Docker Build - Base
+        displayName: Docker Build - base
         inputs:
           repository: base
           command: build
@@ -274,17 +278,7 @@ stages:
             PathtoPublish: '$(System.DefaultWorkingDirectory)/_api-extractor-temp'
             ArtifactName: _api-extractor-temp
             publishLocation: 'Container'
-    # Build
-    - task: Docker@2
-      displayName: Docker Build - ${{ variables.buildContainerName }}
-      inputs:
-        containerRegistry: $(containerRegistry)
-        repository: ${{ variables.buildContainerName }}
-        command: build
-        dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
-        buildContext: ${{ parameters.buildDirectory }}
-        tags: |
-          $(containerTagSuffix)
+
     # Push
     - ${{ if eq(variables.pushImage, true) }}:
       # Build
@@ -298,6 +292,7 @@ stages:
           buildContext: ${{ parameters.buildDirectory }}
           tags: |
             $(containerTagSuffix)
+            $(latestContainerTag)
       - task: Docker@2
         displayName: Docker Push
         inputs:
@@ -306,6 +301,7 @@ stages:
           command: push
           tags: |
             $(containerTagSuffix)
+            $(latestContainerTag)
 
     # Cleanup
     - task: Docker@0
@@ -331,6 +327,15 @@ stages:
         inputs:
           action: Run a Docker command
           customCommand: rmi $(baseContainerTag)
+        continueOnError: true
+        condition: succeededOrFailed()
+
+    - ${{ if ne(variables.latestContainerTag, '') }}:
+      - task: Docker@0
+        displayName: Docker Cleanup - base:${{ variables.latestContainerTag }}
+        inputs:
+          action: Run a Docker command
+          customCommand: rmi base:${{ variables.latestContainerTag }}
         continueOnError: true
         condition: succeededOrFailed()
 
