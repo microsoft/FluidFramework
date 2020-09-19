@@ -31,7 +31,7 @@ variables:
       ),
       or(
         and(
-          eq(parameters.buildNumberInPatch, false),
+          ne(parameters.buildNumberInPatch, true),
           startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
         ),
         eq(variables['Build.SourceBranch'], 'refs/heads/main')
