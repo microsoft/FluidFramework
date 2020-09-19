@@ -728,7 +728,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         await Promise.all(this.blobsCachePendingHashes.values());
         // This cache is associated with mapping sha to path for currently generated summary.
         const blobsShaToPathCacheLatest: Map<string, string> = new Map();
-        const snapshotTree = await this.convertSummaryToSnapshotTree(parentHandle, tree, blobsShaToPathCacheLatest);
+        const { snapshotTree, reusedBlobs, blobs } = await this.convertSummaryToSnapshotTree(parentHandle, tree, blobsShaToPathCacheLatest);
 
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
@@ -751,6 +751,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     attempt: options.refresh ? 2 : 1,
                     hasClaims: !!options.claims,
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    blobs,
+                    reusedBlobs,
+                    size: postBody.length,
                 },
                 async () => {
                     const response = await fetchHelper<ISnapshotResponse>(
@@ -774,10 +777,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         blobsShaToPathCacheLatest: Map<string, string>,
         depth: number = 0,
         path: string = "",
-    ): Promise<ISnapshotTree> {
+    ) {
         const snapshotTree: ISnapshotTree = {
             entries: [],
         }!;
+
+        let reusedBlobs = 0;
+        let blobs = 0;
 
         const keys = Object.keys(tree.tree);
         for (const key of keys) {
@@ -788,12 +794,15 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             switch (summaryObject.type) {
                 case api.SummaryType.Tree: {
-                    value = await this.convertSummaryToSnapshotTree(
+                    const result = await this.convertSummaryToSnapshotTree(
                         parentHandle,
                         summaryObject,
                         blobsShaToPathCacheLatest,
                         depth + 1,
                         `${path}/${key}`);
+                    value = result.snapshotTree;
+                    reusedBlobs += result.reusedBlobs;
+                    blobs += result.blobs;
                     break;
                 }
                 case api.SummaryType.Blob: {
@@ -808,6 +817,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // to generate complete path for the given blob.
                     if (!completePath || !this.lastSummaryHandle) {
+                        blobs++;
                         value = {
                             content,
                             encoding,
@@ -815,6 +825,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         completePath = `/.app${path}/${key}`;
                         blobsShaToPathCacheLatest.set(hash, completePath);
                     } else {
+                        reusedBlobs++;
                         id = `${this.lastSummaryHandle}${completePath}`;
                     }
                     break;
@@ -868,7 +879,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             snapshotTree.entries!.push(entry);
         }
 
-        return snapshotTree;
+        return { snapshotTree, blobs, reusedBlobs };
     }
 }
 
