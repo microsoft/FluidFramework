@@ -196,7 +196,8 @@ stages:
           dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
           buildContext: ${{ parameters.buildDirectory }}
           argument: --target base
-          tag: latest
+          tags: |
+            latest
 
       # Pack
       - ${{ if eq(parameters.pack, true) }}:
