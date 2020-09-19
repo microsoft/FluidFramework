@@ -99,6 +99,7 @@ stages:
     displayName: Build Container - ${{ variables.buildContainerName }}
     pool: ${{ parameters.pool }}
     variables:
+      testCoverage: ${{ and(eq(parameters.test, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
       releaseBuildVar: $[variables.releaseBuild]
       containerTagSuffix: $(SetVersion.version)
     steps:
@@ -222,12 +223,32 @@ stages:
 
     # Test
     - ${{ if ne(parameters.test, '') }}:
-      - task: Docker@0
-        displayName: npm run ${{ parameters.test }}
-        inputs:
-          action: 'Run a Docker command'
-          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(containerTag) npm run ${{ parameters.test }}'
 
+      # Test - No coverage
+      - ${{ if ne(variables.testCoverage, true) }}:
+        - task: Docker@0
+          displayName: npm run ${{ parameters.test }}
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(containerTag) npm run ${{ parameters.test }}'
+
+      # Test - With coverage
+      - ${{ if ne(variables.testCoverage, true) }}:
+        - task: Docker@0
+          displayName: npm run ci:test:coverage
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(containerTag) npm run ci:test:coverage'
+
+        - task: PublishCodeCoverageResults@1
+          displayName: Publish Code Coverage
+          inputs:
+            codeCoverageTool: Cobertura
+            summaryFileLocation: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
+            reportDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
+          condition: succeededOrFailed()
+
+      # Test - Upload results
       - task: PublishTestResults@2
         displayName: Publish Test Results
         inputs:
@@ -236,13 +257,6 @@ stages:
           searchFolder: $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc
           mergeTestResults: true
         condition: succeededOrFailed()
-
-      - task: PublishCodeCoverageResults@1
-        displayName: Publish Code Coverage
-        inputs:
-          codeCoverageTool: Cobertura
-          summaryFileLocation: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
-          reportDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
 
     # Docs
     - ${{ if eq(parameters.docs, true) }}:

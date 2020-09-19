@@ -30,6 +30,7 @@ parameters:
     - default
     - skip
     - force
+
 trigger:
   branches:
     include:
@@ -68,14 +69,6 @@ pr:
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
-variables:
-- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-  - name: testConfig
-    value: ci:test:coverage
-- ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-  - name: testConfig
-    value: ci:test
-
 extends:
   template: templates/build-docker-service.yml
   parameters:
@@ -87,7 +80,7 @@ extends:
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
     lint: true
-    test: ${{ variables.testConfig }}
+    test: ci:test
     docs: true
     tagName: server
     pool: Main
