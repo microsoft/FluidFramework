@@ -85,5 +85,4 @@ extends:
     lint: true
     test: ci:test
     docs: true
-
-
+    containerBaseDir: /usr/src/server
