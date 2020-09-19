@@ -223,7 +223,6 @@ stages:
 
     # Test
     - ${{ if ne(parameters.test, '') }}:
-
       # Test - No coverage
       - ${{ if ne(variables.testCoverage, true) }}:
         - task: Docker@0

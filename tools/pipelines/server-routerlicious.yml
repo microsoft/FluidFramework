@@ -79,9 +79,11 @@ extends:
     buildDirectory: server/routerlicious
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
+    tagName: server
+    pool: Main
+    pack: true
     lint: true
     test: ci:test
     docs: true
-    tagName: server
-    pool: Main
+
 
