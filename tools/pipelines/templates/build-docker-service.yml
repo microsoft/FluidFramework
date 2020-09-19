@@ -10,10 +10,19 @@ parameters:
 - name: containerName
   type: string
 
-- name: test
+- name: pack
   type: boolean
+  default: false
 
 - name: lint
+  type: boolean
+  default: false
+
+- name: test
+  type: string
+  default:
+
+- name: docs
   type: boolean
   default: false
 
@@ -41,9 +50,17 @@ parameters:
   type: string
   default: none
 
+- name: releaseKind
+  type: string
+  default: docker
+
 - name: tagName
   type: string
   default:
+
+- name: pool
+  type: string
+  default: Lite
 
 trigger: none
 
@@ -67,6 +84,12 @@ variables:
     value: $[variables.containerRegistryConnection]
   - name: containerTag
     value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
+- ${{ if eq(parameters.releaseKind, 'docker') }}:
+  - name: tagNameOnReleaseImage
+    value:
+- ${{ if eq(parameters.releaseKind, 'docker') }}:
+  - name: tagNameOnReleaseImage
+    value: ${{ parameters.tagName }}
 
 stages:
 - stage: build
@@ -74,7 +97,7 @@ stages:
   jobs:
   - job: build
     displayName: Build Container - ${{ variables.buildContainerName }}
-    pool: Lite
+    pool: ${{ parameters.pool }}
     variables:
       releaseBuildVar: $[variables.releaseBuild]
       containerTagSuffix: $(SetVersion.version)
@@ -133,6 +156,12 @@ stages:
       lfs: false
       submodules: false
 
+    # for npm ci in component detection and set version
+    - task: UseNode@1
+      displayName: Use Node 12.x
+      inputs:
+        version: 12.x
+
     # Component detection
     - ${{ if eq(variables.componentDetection, true) }}:
       - template: include-generate-notice-steps.yml
@@ -141,10 +170,6 @@ stages:
 
     # Set version
     - ${{ if eq(parameters.setVersion, true) }}:
-      - task: UseNode@1
-        displayName: Use Node 12.x
-        inputs:
-          version: 12.x
       - template: include-set-package-version.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
@@ -172,6 +197,21 @@ stages:
         tags: |
           $(containerTagSuffix)
 
+    # Pack
+    - ${{ if eq(parameters.pack, true) }}:
+      - task: Docker@0
+        displayName: Pack
+        inputs:
+          action: 'Run a Docker command'
+          customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack:/usr/src/pack -t $(containerTag) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
+
+      - task: PublishBuildArtifacts@1
+        displayName: Publish Artifact - pack
+        inputs:
+          PathtoPublish: '$(System.DefaultWorkingDirectory)/pack'
+          ArtifactName: pack
+          publishLocation: 'Container'
+
     # Lint
     - ${{ if eq(parameters.lint, true) }}:
       - task: Docker@0
@@ -181,12 +221,12 @@ stages:
           customCommand: 'run -t $(containerTag) npm run lint'
 
     # Test
-    - ${{ if eq(parameters.test, true) }}:
+    - ${{ if ne(parameters.test, '') }}:
       - task: Docker@0
-        displayName: npm run test
+        displayName: npm run ${{ parameters.test }}
         inputs:
           action: 'Run a Docker command'
-          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(containerTag) npm run test'
+          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(containerTag) npm run ${{ parameters.test }}'
 
       - task: PublishTestResults@2
         displayName: Publish Test Results
@@ -203,6 +243,21 @@ stages:
           codeCoverageTool: Cobertura
           summaryFileLocation: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
           reportDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
+
+    # Docs
+    - ${{ if eq(parameters.docs, true) }}:
+      - task: Docker@0
+        displayName: npm run build:docs
+        inputs:
+          action: 'Run a Docker command'
+          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(containerTag) npm run build:docs'
+
+      - task: PublishBuildArtifacts@1
+        displayName: 'Docs: Publish Artifact'
+        inputs:
+          PathtoPublish: '$(System.DefaultWorkingDirectory)/_api-extractor-temp'
+          ArtifactName: _api-extractor-temp
+          publishLocation: 'Container'
 
     # Push
     - ${{ if eq(variables.pushImage, true) }}:
@@ -233,6 +288,12 @@ stages:
       condition: succeededOrFailed()
 
 # Publish stage
+- ${{ if and(eq(variables.publish, true), ne(parameters.releaseKind, 'docker')) }}:
+  - template: templates/include-publish-npm-package.yml
+    parameters:
+      namespace: true
+      tagName: ${{ parameters.tagName }}
+
 - ${{ if eq(variables.releaseImage, true) }}:
   - template: include-publish-docker-service.yml
     parameters:
@@ -240,4 +301,4 @@ stages:
       containerTag: $(containerTag)
       containerRegistryUrl: $(containerRegistryUrl)
       containerName: ${{ parameters.containerName }}
-      tagName: ${{ parameters.tagName }}
+      tagName: ${{ variables.tagNameOnReleaseImage }}
