@@ -86,15 +86,15 @@ variables:
     value: $[variables.containerRegistryConnection]
   - name: containerTag
     value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
+  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+    - name: latestContainerTag
+      value: latest
 - ${{ if eq(parameters.releaseKind, 'docker') }}:
   - name: tagNameOnReleaseImage
     value:
 - ${{ if eq(parameters.releaseKind, 'docker') }}:
   - name: tagNameOnReleaseImage
     value: ${{ parameters.tagName }}
-- ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
-  - name: latestContainerTag
-    value: latest
 
 stages:
 - stage: build
@@ -279,20 +279,21 @@ stages:
             ArtifactName: _api-extractor-temp
             publishLocation: 'Container'
 
+    # Build
+    - task: Docker@2
+      displayName: Docker Build - ${{ variables.buildContainerName }}
+      inputs:
+        containerRegistry: $(containerRegistry)
+        repository: ${{ variables.buildContainerName }}
+        command: build
+        dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
+        buildContext: ${{ parameters.buildDirectory }}
+        tags: |
+          $(containerTagSuffix)
+          $(latestContainerTag)
+
     # Push
     - ${{ if eq(variables.pushImage, true) }}:
-      # Build
-      - task: Docker@2
-        displayName: Docker Build - ${{ variables.buildContainerName }}
-        inputs:
-          containerRegistry: $(containerRegistry)
-          repository: ${{ variables.buildContainerName }}
-          command: build
-          dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
-          buildContext: ${{ parameters.buildDirectory }}
-          tags: |
-            $(containerTagSuffix)
-            $(latestContainerTag)
       - task: Docker@2
         displayName: Docker Push
         inputs:
@@ -312,14 +313,13 @@ stages:
       continueOnError: true
       condition: succeededOrFailed()
 
-    - ${{ if eq(variables.pushImage, true) }}:
-      - task: Docker@0
-        displayName: Docker Cleanup - ${{ variables.buildContainerName }}
-        inputs:
-          action: Run a Docker command
-          customCommand: rmi $(containerTag)
-        continueOnError: true
-        condition: succeededOrFailed()
+    - task: Docker@0
+      displayName: Docker Cleanup - ${{ variables.buildContainerName }}
+      inputs:
+        action: Run a Docker command
+        customCommand: rmi $(containerTag)
+      continueOnError: true
+      condition: succeededOrFailed()
 
     - ${{ if eq(variables.buildBase, true) }}:
       - task: Docker@0
