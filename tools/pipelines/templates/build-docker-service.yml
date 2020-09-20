@@ -341,7 +341,7 @@ stages:
 
 # Publish stage
 - ${{ if and(eq(variables.publish, true), ne(parameters.releaseKind, 'docker')) }}:
-  - template: templates/include-publish-npm-package.yml
+  - template: include-publish-npm-package.yml
     parameters:
       namespace: true
       tagName: ${{ parameters.tagName }}
