@@ -10,10 +10,19 @@ parameters:
 - name: containerName
   type: string
 
-- name: test
+- name: pack
   type: boolean
+  default: false
 
 - name: lint
+  type: boolean
+  default: false
+
+- name: test
+  type: string
+  default:
+
+- name: docs
   type: boolean
   default: false
 
@@ -41,9 +50,17 @@ parameters:
   type: string
   default: none
 
+- name: releaseKind
+  type: string
+  default: docker
+
 - name: tagName
   type: string
   default:
+
+- name: pool
+  type: string
+  default: Lite
 
 trigger: none
 
@@ -57,6 +74,8 @@ variables:
 - group: container-registry-info
 - name: buildContainerName
   value: build/${{ parameters.containerName }}
+- name: baseContainerTag
+  value: base:$(containerTagSuffix)
 - ${{ if eq(variables.pushImage, false) }}:
   - name: containerRegistry
     value:
@@ -67,15 +86,26 @@ variables:
     value: $[variables.containerRegistryConnection]
   - name: containerTag
     value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
+  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+    - name: latestContainerTagSuffix
+      value: latest
+- ${{ if eq(parameters.releaseKind, 'docker') }}:
+  - name: tagNameOnReleaseImage
+    value:
+- ${{ if eq(parameters.releaseKind, 'docker') }}:
+  - name: tagNameOnReleaseImage
+    value: ${{ parameters.tagName }}
 
 stages:
 - stage: build
   displayName: Build Stage
   jobs:
   - job: build
-    displayName: Build Container - ${{ variables.buildContainerName }}
-    pool: Lite
+    displayName: Build Container - ${{ parameters.containerName }}
+    pool: ${{ parameters.pool }}
     variables:
+      buildBase: ${{ or(ne(parameters.test, ''), or(eq(parameters.pack, true), or(eq(parameters.lint, true), eq(parameters.docs, true)))) }}
+      testCoverage: ${{ and(eq(parameters.test, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
       releaseBuildVar: $[variables.releaseBuild]
       containerTagSuffix: $(SetVersion.version)
     steps:
@@ -133,6 +163,12 @@ stages:
       lfs: false
       submodules: false
 
+    # for npm ci in component detection and set version
+    - task: UseNode@1
+      displayName: Use Node 12.x
+      inputs:
+        version: 12.x
+
     # Component detection
     - ${{ if eq(variables.componentDetection, true) }}:
       - template: include-generate-notice-steps.yml
@@ -141,10 +177,6 @@ stages:
 
     # Set version
     - ${{ if eq(parameters.setVersion, true) }}:
-      - task: UseNode@1
-        displayName: Use Node 12.x
-        inputs:
-          version: 12.x
       - template: include-set-package-version.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
@@ -160,9 +192,96 @@ stages:
             echo "0.0.$(Build.BuildNumber)"
             echo "##vso[task.setvariable variable=version;isOutput=true]0.0.$(Build.BuildNumber)"
 
+    - ${{ if eq(variables.buildBase, true) }}:
+      # Build - Base
+      - task: Docker@2
+        displayName: Docker Build - base
+        inputs:
+          repository: base
+          command: build
+          dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
+          buildContext: ${{ parameters.buildDirectory }}
+          arguments: --target base
+          tags: |
+            $(containerTagSuffix)
+
+      # Pack
+      - ${{ if eq(parameters.pack, true) }}:
+        - task: Docker@0
+          displayName: Pack
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack:/usr/src/pack -t $(baseContainerTag) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
+
+        - task: PublishBuildArtifacts@1
+          displayName: Publish Artifact - pack
+          inputs:
+            PathtoPublish: '$(System.DefaultWorkingDirectory)/pack'
+            ArtifactName: pack
+            publishLocation: 'Container'
+
+      # Lint
+      - ${{ if eq(parameters.lint, true) }}:
+        - task: Docker@0
+          displayName: npm run lint
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'run -t $(baseContainerTag) npm run lint'
+
+      # Test
+      - ${{ if ne(parameters.test, '') }}:
+        # Test - No coverage
+        - ${{ if ne(variables.testCoverage, true) }}:
+          - task: Docker@0
+            displayName: npm run ${{ parameters.test }}
+            inputs:
+              action: 'Run a Docker command'
+              customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ${{ parameters.test }}'
+
+        # Test - With coverage
+        - ${{ if eq(variables.testCoverage, true) }}:
+          - task: Docker@0
+            displayName: npm run ci:test:coverage
+            inputs:
+              action: 'Run a Docker command'
+              customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ci:test:coverage'
+
+          - task: PublishCodeCoverageResults@1
+            displayName: Publish Code Coverage
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
+              reportDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
+            condition: succeededOrFailed()
+
+        # Test - Upload results
+        - task: PublishTestResults@2
+          displayName: Publish Test Results
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: '**/*junit-report.xml'
+            searchFolder: $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc
+            mergeTestResults: true
+          condition: succeededOrFailed()
+
+      # Docs
+      - ${{ if eq(parameters.docs, true) }}:
+        - task: Docker@0
+          displayName: npm run build:docs
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run build:docs'
+
+        - task: PublishBuildArtifacts@1
+          displayName: 'Docs: Publish Artifact'
+          inputs:
+            PathtoPublish: '$(System.DefaultWorkingDirectory)/_api-extractor-temp'
+            ArtifactName: _api-extractor-temp
+            publishLocation: 'Container'
+
     # Build
     - task: Docker@2
-      displayName: Docker Build
+      displayName: Docker Build - ${{ variables.buildContainerName }}
       inputs:
         containerRegistry: $(containerRegistry)
         repository: ${{ variables.buildContainerName }}
@@ -171,38 +290,7 @@ stages:
         buildContext: ${{ parameters.buildDirectory }}
         tags: |
           $(containerTagSuffix)
-
-    # Lint
-    - ${{ if eq(parameters.lint, true) }}:
-      - task: Docker@0
-        displayName: npm run lint
-        inputs:
-          action: 'Run a Docker command'
-          customCommand: 'run -t $(containerTag) npm run lint'
-
-    # Test
-    - ${{ if eq(parameters.test, true) }}:
-      - task: Docker@0
-        displayName: npm run test
-        inputs:
-          action: 'Run a Docker command'
-          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(containerTag) npm run test'
-
-      - task: PublishTestResults@2
-        displayName: Publish Test Results
-        inputs:
-          testResultsFormat: 'JUnit'
-          testResultsFiles: '**/*junit-report.xml'
-          searchFolder: $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc
-          mergeTestResults: true
-        condition: succeededOrFailed()
-
-      - task: PublishCodeCoverageResults@1
-        displayName: Publish Code Coverage
-        inputs:
-          codeCoverageTool: Cobertura
-          summaryFileLocation: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
-          reportDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
+          ${{ variables.latestContainerTagSuffix }}
 
     # Push
     - ${{ if eq(variables.pushImage, true) }}:
@@ -214,6 +302,7 @@ stages:
           command: push
           tags: |
             $(containerTagSuffix)
+            ${{ variables.latestContainerTagSuffix }}
 
     # Cleanup
     - task: Docker@0
@@ -232,7 +321,31 @@ stages:
       continueOnError: true
       condition: succeededOrFailed()
 
+    - ${{ if eq(variables.buildBase, true) }}:
+      - task: Docker@0
+        displayName: Docker Cleanup - base
+        inputs:
+          action: Run a Docker command
+          customCommand: rmi $(baseContainerTag)
+        continueOnError: true
+        condition: succeededOrFailed()
+
+    - ${{ if ne(variables.latestContainerTagSuffix, '') }}:
+      - task: Docker@0
+        displayName: Docker Cleanup - base:${{ variables.latestContainerTagSuffix }}
+        inputs:
+          action: Run a Docker command
+          customCommand: rmi base:${{ variables.latestContainerTagSuffix }}
+        continueOnError: true
+        condition: succeededOrFailed()
+
 # Publish stage
+- ${{ if and(eq(variables.publish, true), ne(parameters.releaseKind, 'docker')) }}:
+  - template: templates/include-publish-npm-package.yml
+    parameters:
+      namespace: true
+      tagName: ${{ parameters.tagName }}
+
 - ${{ if eq(variables.releaseImage, true) }}:
   - template: include-publish-docker-service.yml
     parameters:
@@ -240,4 +353,4 @@ stages:
       containerTag: $(containerTag)
       containerRegistryUrl: $(containerRegistryUrl)
       containerName: ${{ parameters.containerName }}
-      tagName: ${{ parameters.tagName }}
+      tagName: ${{ variables.tagNameOnReleaseImage }}
