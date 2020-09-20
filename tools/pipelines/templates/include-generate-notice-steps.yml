@@ -9,11 +9,11 @@ steps:
 # special case server/routerlicious
 - ${{ if eq(parameters.buildDirectory, 'server/routerlicious') }}:
   - task: Npm@1
-      displayName: npm ci
-      inputs:
-        command: 'custom'
-        customCommand: 'ci --ignore-scripts'
-        customRegistry: 'useNpmrc'
+    displayName: npm ci
+    inputs:
+      command: 'custom'
+      customCommand: 'ci --ignore-scripts'
+      customRegistry: 'useNpmrc'
   - bash: |
       # Generate the package/package lock for the lerna project so we would scan it.
       node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
