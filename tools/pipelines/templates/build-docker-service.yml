@@ -302,7 +302,7 @@ stages:
           command: push
           tags: |
             $(containerTagSuffix)
-            $(latestContainerTag)
+            ${{ variables.latestContainerTag }}
 
     # Cleanup
     - task: Docker@0
