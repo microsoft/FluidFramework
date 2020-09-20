@@ -89,7 +89,11 @@ variables:
   - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
     - name: latestContainerTagSuffix
       value: latest
-- ${{ if eq(parameters.releaseKind, 'docker') }}:
+    - name: latestContainerTag
+      value: $(containerRegistryUrl)/$(buildContainerName):$(latestContainerTagSuffix)
+# tag the git repo when we published the docker image if the releaseKind is docker,
+# otherwise tag with the publishing the packages (where the releaseKind is both or npm)
+- ${{ if ne(parameters.releaseKind, 'docker') }}:
   - name: tagNameOnReleaseImage
     value:
 - ${{ if eq(parameters.releaseKind, 'docker') }}:
@@ -330,12 +334,12 @@ stages:
         continueOnError: true
         condition: succeededOrFailed()
 
-    - ${{ if ne(variables.latestContainerTagSuffix, '') }}:
+    - ${{ if ne(variables.latestContainerTag, '') }}:
       - task: Docker@0
-        displayName: Docker Cleanup - base:${{ variables.latestContainerTagSuffix }}
+        displayName: Docker Cleanup - ${{ variables.latestContainerTag }}
         inputs:
           action: Run a Docker command
-          customCommand: rmi base:${{ variables.latestContainerTagSuffix }}
+          customCommand: rmi ${{ variables.latestContainerTag }}
         continueOnError: true
         condition: succeededOrFailed()
 
