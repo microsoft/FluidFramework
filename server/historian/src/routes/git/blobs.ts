@@ -30,7 +30,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
     }
 
     /**
-     * Historian Https Ping Endpoint for Availability Monitoring System
+     * Historian https ping endpoint for availability monitoring system
      */
     router.get("/repos/ping", async (request, response) => {
         response.sendStatus(200);
