@@ -109,7 +109,7 @@
   },
   "fluidBuild": {
     "repoPackages": {
-      "client":  [
+      "client": [
         {
           "directory": "common"
         },
@@ -136,12 +136,22 @@
     "serverPath": "server/routerlicious",
     "releaseOrder": {
       "preRepo": [
-        ["@fluidframework/eslint-config-fluid", "@fluidframework/build-common"],
-        ["@fluidframework/common-definitions"],
-        ["@fluidframework/common-utils"]
+        [
+          "@fluidframework/eslint-config-fluid",
+          "@fluidframework/build-common"
+        ],
+        [
+          "@fluidframework/common-definitions"
+        ],
+        [
+          "@fluidframework/common-utils"
+        ]
       ],
       "postRepo": [
-        ["generator-fluid", "tinylicious"]
+        [
+          "generator-fluid",
+          "tinylicious"
+        ]
       ]
     },
     "generatorName": "generator-fluid"

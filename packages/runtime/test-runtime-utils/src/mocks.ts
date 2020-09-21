@@ -44,7 +44,7 @@ import {
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
 import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
-import { IFluidDataStoreChannel, ISummaryTreeWithStats, ISnapshotContracts } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreChannel, ISummaryTreeWithStats, ISnapshotContract } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 

@@ -31,7 +31,7 @@ import {
     IFluidDataStoreContext,
     ITask,
     ITaskManager,
-    ISnapshotContracts,
+    ISnapshotContract,
 } from "@fluidframework/runtime-definitions";
 import {
     IProvideSharedString,

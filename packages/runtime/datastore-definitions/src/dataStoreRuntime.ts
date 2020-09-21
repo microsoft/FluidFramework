@@ -27,7 +27,7 @@ import {
 import {
     IInboundSignalMessage,
     IProvideFluidDataStoreRegistry,
-    ISnapshotContracts,
+    ISnapshotContract,
 } from "@fluidframework/runtime-definitions";
 import { IChannel } from ".";
 

@@ -38,8 +38,8 @@ import {
     ISequencedDocumentMessage,
     ITreeEntry,
     ITree,
-    TreeEntry,
-    FileMode,
+    // TreeEntry,
+    // FileMode,
 } from "@fluidframework/protocol-definitions";
 import {
     IAttachMessage,
@@ -49,7 +49,7 @@ import {
     IInboundSignalMessage,
     ISummaryTreeWithStats,
     CreateSummarizerNodeSource,
-    ISnapshotContracts,
+    ISnapshotContract,
 } from "@fluidframework/runtime-definitions";
 import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -176,7 +176,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     private _attachState: AttachState;
 
     // NOTE: Search blob concept
-    private extraSnapshotContract: ISnapshotContract;
+    private extraSnapshotContract: ISnapshotContract | undefined;
 
     private constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -194,7 +194,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     ) {
         super();
 
-        this.extraSnapshotContracts = new Map<string, () => string>();
+        this.extraSnapshotContract = undefined;
 
         const tree = dataStoreContext.baseSnapshot;
 
@@ -548,7 +548,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     // NOTE: Search blob concept
-    public registerExtraSnapshotContracts(contract: ISnapshotContract) {
+    public registerExtraSnapshotContract(contract: ISnapshotContract) {
         this.extraSnapshotContract = contract;
     }
 
@@ -570,7 +570,9 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             }));
 
         // NOTE: Search blob concept (just testing one contract for now):
-        entries.push(this.extraSnapshotContract());
+        if (this.extraSnapshotContract !== undefined) {
+            entries.push(...this.extraSnapshotContract());
+        }
 
         return entries;
     }
