@@ -55,7 +55,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const container = await loader.createDetachedContainer(codeDetails);
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const defaultDataStore = response.value;
+        const defaultDataStore = response.value as TestFluidObject;
         return {
             container,
             defaultDataStore,
@@ -169,7 +169,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
 
         // Create a channel
-        const rootOfDataStore1 = await (defaultDataStore as TestFluidObject).getSharedObject<SharedMap>(sharedMapId);
+        const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
         rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
         const snapshotTree = JSON.parse(container.serialize());
@@ -399,5 +399,128 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         assert.strictEqual(sharedMapFromRC.get("1"), "B", "Changes should be reflected in other map");
         assert.strictEqual(JSON.stringify(sharedMap3.snapshot()), JSON.stringify(sharedMapFromRC.snapshot()),
             "Snapshot of shared string should match and contents should be same!!");
+    });
+
+    it("Container rehydration with not bounded dataStore handle stored in root of other bounded dataStore",
+    async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
+
+        // Create another dataStore
+        const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
+
+        const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+        rootOfDataStore1.set("dataStore2", dataStore2.handle);
+
+        const snapshotTree = JSON.parse(container.serialize());
+        const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+
+        const response = await rehydratedContainer.request({ url: `/${dataStore2.context.id}` });
+        const dataStore2FromRC = response.value as TestFluidObject;
+        assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
+        assert.strictEqual(dataStore2FromRC.runtime.id, dataStore2.runtime.id, "DataStore2 id should match");
+    });
+
+    it("Container rehydration with not bounded dds handle stored in root of bounded dataStore", async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
+
+        // Create another not bounded dds
+        const ddsId = "notbounddds";
+        const dds2 = defaultDataStore.runtime.createChannel(ddsId, SharedString.getFactory().type);
+
+        const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+        rootOfDataStore1.set("dd2", dds2.handle);
+
+        const snapshotTree = JSON.parse(container.serialize());
+        const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+
+        const response = await rehydratedContainer.request({ url: `/${defaultDataStore.runtime.id}/${ddsId}` });
+        const ddd2FromRC = response.value as SharedString;
+        assert(ddd2FromRC, "ddd2 should have been serialized properly");
+        assert.strictEqual(ddd2FromRC.id, ddsId, "DDS id should match");
+        assert.strictEqual(ddd2FromRC.id, dds2.id, "Both dds id should match");
+    });
+
+    it("Container rehydration with not bounded dds handle stored in root of bound dataStore. The not bounded dds " +
+        "also stores handle not bounded data store",
+    async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
+
+        // Create another not bounded dataStore
+        const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
+
+        // Create another not bounded dds
+        const ddsId = "notbounddds";
+        const dds2 = defaultDataStore.runtime.createChannel(ddsId, SharedMap.getFactory().type) as SharedMap;
+        dds2.set("dataStore2", dataStore2.handle);
+
+        const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+        rootOfDataStore1.set("dd2", dds2.handle);
+
+        const snapshotTree = JSON.parse(container.serialize());
+        const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+
+        const responseForDDS = await rehydratedContainer.request({ url: `/${defaultDataStore.runtime.id}/${ddsId}` });
+        const ddd2FromRC = responseForDDS.value as SharedString;
+        assert(ddd2FromRC, "ddd2 should have been serialized properly");
+        assert.strictEqual(ddd2FromRC.id, ddsId, "DDS id should match");
+        assert.strictEqual(ddd2FromRC.id, dds2.id, "Both dds id should match");
+
+        const responseForDataStore = await rehydratedContainer.request({ url: `/${dataStore2.context.id}` });
+        const dataStore2FromRC = responseForDataStore.value as TestFluidObject;
+        assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
+        assert.strictEqual(dataStore2FromRC.runtime.id, dataStore2.runtime.id, "DataStore2 id should match");
+    });
+
+    it("Container rehydration with not bounded data store handle stored in root of bound dataStore. The not bounded" +
+        "data store also stores handle not bounded dds",
+    async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
+
+        // Create another not bounded dataStore
+        const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
+
+        // Create another not bounded dds
+        const ddsId = "notbounddds";
+        const dds2 = dataStore2.runtime.createChannel(ddsId, SharedMap.getFactory().type) as SharedMap;
+        const rootOfDataStore2 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
+        rootOfDataStore2.set("dds2", dds2.handle);
+
+        const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+        rootOfDataStore1.set("dataStore2", dataStore2.handle);
+
+        const snapshotTree = JSON.parse(container.serialize());
+        const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+
+        const responseForDDS = await rehydratedContainer.request({ url: `/${dataStore2.runtime.id}/${ddsId}` });
+        const ddd2FromRC = responseForDDS.value as SharedString;
+        assert(ddd2FromRC, "ddd2 should have been serialized properly");
+        assert.strictEqual(ddd2FromRC.id, ddsId, "DDS id should match");
+        assert.strictEqual(ddd2FromRC.id, dds2.id, "Both dds id should match");
+
+        const responseForDataStore = await rehydratedContainer.request({ url: `/${dataStore2.context.id}` });
+        const dataStore2FromRC = responseForDataStore.value as TestFluidObject;
+        assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
+        assert.strictEqual(dataStore2FromRC.runtime.id, dataStore2.runtime.id, "DataStore2 id should match");
+    });
+
+    it("Not bounded/Unreferenced data store should not get serialized on container serialization", async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
+
+        // Create another not bounded dataStore
+        await createPeerDataStore(defaultDataStore.context.containerRuntime);
+
+        const snapshotTree = JSON.parse(container.serialize());
+
+        assert.strictEqual(Object.keys(snapshotTree.trees).length, 3,
+            "3 trees should be there(protocol, default dataStore, scheduler). Not bounded/Unreferenced " +
+                "data store should not get serialized");
     });
 });

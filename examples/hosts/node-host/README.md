@@ -2,7 +2,7 @@
 
 ## Fluid Loader for Node.js evironment
 
-This example demonstrates loading Fluid objects inside Node.js environment. To understand how Fluid loader works, read the [literate](../literate/README.md) loader example first.
+This example demonstrates loading Fluid objects inside Node.js environment. To understand how Fluid loader works, read the [literate](../hosts-sample/README.md) loader example first.
 
 ## Difference with Literate Loader
 

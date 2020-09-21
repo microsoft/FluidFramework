@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { v4 as uuid } from "uuid";
 import {
     fromBase64ToUtf8,
     fromUtf8ToBase64,
@@ -22,6 +23,7 @@ import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
     IDocumentStorageService,
+    DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import {
     IDocumentStorageGetVersionsResponse,
@@ -48,7 +50,7 @@ import {
     IFileEntry,
     snapshotExpirySummarizerOps,
 } from "./odspCache";
-import { getWithRetryForTokenRefresh, fetchHelper } from "./odspUtils";
+import { getWithRetryForTokenRefresh, fetchHelper, IOdspResponse } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { getQueryString } from "./getQueryString";
@@ -288,7 +290,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall", hasClaims: !!tokenFetchOptions.claims });
                 }
 
-                const hostPolicy: ISnapshotOptions = {
+                const snapshotOptions: ISnapshotOptions = {
                     deltas: 1,
                     channels: 1,
                     blobs: 2,
@@ -297,10 +299,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                 // No limit on size of snapshot, as otherwise we fail all clients to summarize
                 if (this.hostPolicy.summarizerClient) {
-                    hostPolicy.mds = undefined;
+                    snapshotOptions.mds = undefined;
                 }
-
-                const snapshotOptions = getQueryString(hostPolicy);
 
                 let cachedSnapshot: IOdspSnapshot | undefined;
 
@@ -459,34 +459,90 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         });
     }
 
-    private async fetchSnapshot(snapshotOptions: string, tokenFetchOptions: TokenFetchOptions) {
-        const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
+    private async fetchSnapshot(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
+        const usePost = this.hostPolicy.usePostForTreesLatest;
+        // If usePost is false, then make get call for TreesLatest.
+        // If usePost is true, make a post call. In case of failure other than the reason for which getWithRetryForTokenRefresh
+        // will retry, fallback to get call. In case of error for which getWithRetryForTokenRefresh will retry, let it retry
+        // only if it is first failure, otherwise fallback to get call.
+        if (usePost) {
+            try {
+                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, true);
+            } catch (error) {
+                const errorType = error.errorType;
+                if ((errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.incorrectServerResponse) && tokenFetchOptions.refresh === false) {
+                    throw error;
+                }
+                this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
+                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
+            }
+        } else {
+            return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
+        }
+    }
 
-        // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
-        // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-        const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${snapshotOptions}`, storageToken);
+    private async fetchSnapshotCore(
+        snapshotOptions: ISnapshotOptions,
+        tokenFetchOptions: TokenFetchOptions,
+        usePost: boolean,
+    ) {
+        const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
+        let url: string;
+        let headers: {[index: string]: string};
+        let postBody: string;
+        if (usePost) {
+            url = `${this.snapshotUrl}/trees/latest?ump=1`;
+            const formBoundary = uuid();
+            postBody = `--${formBoundary}\r\n`;
+            postBody += `Authorization: Bearer ${storageToken}\r\n`;
+            postBody += `X-HTTP-Method-Override: GET\r\n`;
+            Object.entries(snapshotOptions).forEach(([key, value]) => {
+                postBody += `${key}: ${value}\r\n`;
+            });
+            postBody += `_post: 1\r\n`;
+            postBody += `\r\n--${formBoundary}--`;
+            headers = {
+                "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+            };
+        } else {
+            const queryString = getQueryString(snapshotOptions);
+            const result = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${queryString}`, storageToken);
+            url = result.url;
+            headers = result.headers;
+        }
 
         let isOptionsCall = false;
 
-        if (Object.keys(headers).length) {
+        if (Object.keys(headers).length && !usePost) {
             isOptionsCall = true;
         }
 
         // This event measures only successful cases of getLatest call (no tokens, no retries).
         const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest" }, async (event) => {
             const startTime = performance.now();
-            const response = await fetchHelper<IOdspSnapshot>(url, { headers });
+            let response: IOdspResponse<IOdspSnapshot>;
+            if (usePost) {
+                response = await fetchHelper<IOdspSnapshot>(
+                    url,
+                    {
+                        body: postBody,
+                        headers,
+                        method: "POST",
+                    });
+            } else {
+                response = await fetchHelper<IOdspSnapshot>(url, { headers });
+            }
             const endTime = performance.now();
             const overallTime = endTime - startTime;
             const content = response.content;
-            let dnstime = -1; // domainLookupEnd - domainLookupStart
-            let redirectTime = -1; // redirectEnd -redirectStart
-            let tcpHandshakeTime = -1; // connectEnd  - connectStart
-            let secureConntime = -1; // connectEnd  - secureConnectionStart
-            let responseTime = -1; // responsEnd - responseStart
-            let fetchStToRespEndTime = -1; // responseEnd  - fetchStart
-            let reqStToRespEndTime = -1; // responseEnd - requestStart
-            let networkTime = -1; // responseEnd - startTime
+            let dnstime: number | undefined; // domainLookupEnd - domainLookupStart
+            let redirectTime: number | undefined; // redirectEnd -redirectStart
+            let tcpHandshakeTime: number | undefined; // connectEnd  - connectStart
+            let secureConntime: number | undefined; // connectEnd  - secureConnectionStart
+            let responseTime: number | undefined; // responsEnd - responseStart
+            let fetchStToRespEndTime: number | undefined; // responseEnd  - fetchStart
+            let reqStToRespEndTime: number | undefined; // responseEnd - requestStart
+            let networkTime: number | undefined; // responseEnd - startTime
             const spReqDuration = response.headers.get("sprequestduration");
 
             const resources1 = performance.getEntriesByType("resource");
@@ -511,7 +567,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 }
             }
 
-            const clientTime = overallTime - networkTime;
+            const clientTime = networkTime ? overallTime - networkTime : undefined;
 
             event.end({
                 trees: content.trees?.length ?? 0,
@@ -520,7 +576,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 headers: Object.keys(headers).length !== 0 ? true : undefined,
                 sprequestguid: response.headers.get("sprequestguid"),
                 sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
-                isOptionsCall,
+                isoptionscall: isOptionsCall,
                 redirecttime: redirectTime,
                 dnsLookuptime: dnstime,
                 responsenetworkTime: responseTime,

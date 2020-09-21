@@ -61,5 +61,5 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: server/historian
     containerName: fluidframework/routerlicious/historian
-    test: true
+    test: test
     tagName: historian

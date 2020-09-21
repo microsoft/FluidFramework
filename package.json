@@ -106,5 +106,44 @@
     "rimraf": "^2.6.2",
     "run-script-os": "^1.0.7",
     "typescript": "~3.7.4"
+  },
+  "fluidBuild": {
+    "repoPackages": {
+      "client":  [
+        {
+          "directory": "common"
+        },
+        {
+          "directory": "tools/generator-fluid"
+        }
+      ],
+      "server": {
+        "required": [
+          {
+            "directory": "server/tinylicious"
+          }
+        ],
+        "optional": [
+          {
+            "directory": "server",
+            "ignoredDirs": [
+              "routerlicious"
+            ]
+          }
+        ]
+      }
+    },
+    "serverPath": "server/routerlicious",
+    "releaseOrder": {
+      "preRepo": [
+        ["@fluidframework/eslint-config-fluid", "@fluidframework/build-common"],
+        ["@fluidframework/common-definitions"],
+        ["@fluidframework/common-utils"]
+      ],
+      "postRepo": [
+        ["generator-fluid", "tinylicious"]
+      ]
+    },
+    "generatorName": "generator-fluid"
   }
 }
