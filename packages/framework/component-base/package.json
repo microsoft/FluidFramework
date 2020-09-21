@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/component-base",
-  "version": "0.24.4",
+  "version": "0.24.5",
   "description": "Component base.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -54,14 +54,14 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.21.0",
-    "@fluidframework/component-core-interfaces": "^0.24.4",
-    "@fluidframework/component-runtime": "^0.24.4",
-    "@fluidframework/component-runtime-definitions": "^0.24.4",
-    "@fluidframework/container-definitions": "^0.24.4",
-    "@fluidframework/container-runtime": "^0.24.4",
-    "@fluidframework/request-handler": "^0.24.4",
-    "@fluidframework/runtime-definitions": "^0.24.4",
-    "@fluidframework/shared-object-base": "^0.24.4"
+    "@fluidframework/component-core-interfaces": "^0.24.5",
+    "@fluidframework/component-runtime": "^0.24.5",
+    "@fluidframework/component-runtime-definitions": "^0.24.5",
+    "@fluidframework/container-definitions": "^0.24.5",
+    "@fluidframework/container-runtime": "^0.24.5",
+    "@fluidframework/request-handler": "^0.24.5",
+    "@fluidframework/runtime-definitions": "^0.24.5",
+    "@fluidframework/shared-object-base": "^0.24.5"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",

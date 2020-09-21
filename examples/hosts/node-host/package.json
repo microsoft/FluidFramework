@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/node-host",
-  "version": "0.24.4",
+  "version": "0.24.5",
   "private": true,
   "description": "Fluid container host for Node.js environment",
   "repository": "microsoft/FluidFramework",
@@ -22,14 +22,14 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-example/key-value-cache": "^0.24.4",
-    "@fluidframework/component-core-interfaces": "^0.24.4",
-    "@fluidframework/container-definitions": "^0.24.4",
-    "@fluidframework/container-loader": "^0.24.4",
-    "@fluidframework/driver-definitions": "^0.24.4",
+    "@fluid-example/key-value-cache": "^0.24.5",
+    "@fluidframework/component-core-interfaces": "^0.24.5",
+    "@fluidframework/container-definitions": "^0.24.5",
+    "@fluidframework/container-loader": "^0.24.5",
+    "@fluidframework/driver-definitions": "^0.24.5",
     "@fluidframework/protocol-definitions": "^0.1010.0",
-    "@fluidframework/routerlicious-driver": "^0.24.4",
-    "@fluidframework/routerlicious-host": "^0.24.4",
+    "@fluidframework/routerlicious-driver": "^0.24.5",
+    "@fluidframework/routerlicious-host": "^0.24.5",
     "jsonwebtoken": "^8.4.0",
     "uuid": "^3.3.2"
   },
