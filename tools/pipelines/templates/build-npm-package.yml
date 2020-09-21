@@ -160,6 +160,7 @@ stages:
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            tagName: ${{ parameters.tagName }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:

@@ -7,6 +7,8 @@ parameters:
 - name: buildNumberInPatch
   type: string
   default:
+- name: tagName
+  type: string
 
 # Set version
 steps:
@@ -17,6 +19,7 @@ steps:
     VERSION_RELEASE: $(release)
     VERSION_BUILDNUMBER: $(Build.BuildNumber)
     VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
+    VERSION_TAGNAME: ${{ parameters.tagName }}
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}

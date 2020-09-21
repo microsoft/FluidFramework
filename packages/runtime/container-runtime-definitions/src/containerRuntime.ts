@@ -4,17 +4,13 @@
  */
 
 import {
-    IFluidObject,
-    IFluidRouter,
-} from "@fluidframework/core-interfaces";
-import {
-    IAudience,
-    IBlobManager,
-    IDeltaManager,
-    ContainerWarning,
-    ILoader,
     AttachState,
+    ContainerWarning,
+    IAudience,
+    IDeltaManager,
+    ILoader,
 } from "@fluidframework/container-definitions";
+import { IFluidObject, IFluidRouter } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
@@ -23,11 +19,7 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import {
-    FlushMode,
-    IContainerRuntimeBase,
-    IInboundSignalMessage,
-} from "@fluidframework/runtime-definitions";
+import { FlushMode, IContainerRuntimeBase, IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
 declare module "@fluidframework/core-interfaces" {
@@ -57,7 +49,6 @@ export interface IContainerRuntime extends
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly branch: string;
     readonly loader: ILoader;

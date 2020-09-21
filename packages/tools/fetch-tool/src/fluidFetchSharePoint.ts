@@ -6,6 +6,7 @@
 import {
     getChildrenByDriveItem,
     getDriveItemByServerRelativePath,
+    getDriveItemFromDriveAndItem,
     IClientConfig,
     IOdspDriveItem,
     getOdspRefreshTokenFn,
@@ -129,4 +130,19 @@ export async function getSharepointFiles(server: string, serverRelativePath: str
         }
     }
     return files;
+}
+
+export async function getSingleSharePointFile(
+    server: string,
+    drive: string,
+    item: string,
+) {
+    const clientConfig = getMicrosoftConfiguration();
+
+    return resolveWrapper<IOdspDriveItem>(
+        // eslint-disable-next-line @typescript-eslint/promise-function-async
+        (authRequestInfo) => getDriveItemFromDriveAndItem(server, drive, item, authRequestInfo),
+        server,
+        clientConfig,
+    );
 }

@@ -132,6 +132,10 @@ protected async hasInitialized() {
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
 
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
+
 <!-- Packages -->
 
 [Aqueduct]: {{< relref "/apis/aqueduct.md" >}}
