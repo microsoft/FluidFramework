@@ -1,10 +1,9 @@
-// eslint-disable-next-line spaced-comment, @typescript-eslint/triple-slash-reference
-/// <reference path="./perf_hooks.d.ts" />
-
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { performance } from "perf_hooks";
-export { performance };
+import { performance as nodePerformance } from "perf_hooks";
+import { IsomorphicPerformance } from "./performanceIsomorphic";
+
+export const performance: IsomorphicPerformance = nodePerformance;

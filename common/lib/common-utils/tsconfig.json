@@ -6,7 +6,11 @@
     ],
     "compilerOptions": {
         "rootDir": "./src",
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "baseUrl": ".",
+        "paths": {
+            "perf_hooks": ["typings/perf_hooks.d.ts"]
+        }
     },
     "include": [
         "src/**/*"
