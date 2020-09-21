@@ -44,6 +44,7 @@ trigger:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
 
 pr:
   branches:
@@ -79,7 +80,7 @@ extends:
     preCG:
     - task: UseNode@1
       displayName: Use Node 12.x
-      inputs: 
+      inputs:
         version: 12.x
     - task: Npm@1
       displayName: npm ci

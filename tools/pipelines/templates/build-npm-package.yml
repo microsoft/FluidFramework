@@ -22,7 +22,7 @@ parameters:
 - name: taskTest
   type: string
   default: ci:test
- 
+
 - name: extraAuth
   type: string
   default:
@@ -82,7 +82,8 @@ stages:
     displayName: Build Stage
     jobs:
       # Job - Build
-      - job: Build
+      - job: build
+        displayName: Build
         pool: ${{ parameters.poolBuild }}
         variables:
           testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
@@ -156,6 +157,7 @@ stages:
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            tagName: ${{ parameters.tagName }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -293,7 +295,5 @@ stages:
   - ${{ if eq(variables.publish, true) }}:
     - template: include-publish-npm-package.yml
       parameters:
-        buildDirectory: ${{ parameters.buildDirectory }}
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
-        buildNumberInPatch: ${{ parameters.buildNumberInPatch }}

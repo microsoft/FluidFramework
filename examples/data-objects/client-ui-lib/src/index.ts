@@ -19,5 +19,3 @@ import { CharacterCodes, Paragraph, Table } from "./text";
 export { CharacterCodes, Paragraph, Table };
 
 export { Text };
-
-export * from "./blob";
