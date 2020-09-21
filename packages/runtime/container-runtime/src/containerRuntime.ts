@@ -1299,6 +1299,17 @@ export class ContainerRuntime extends EventEmitter
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>
     {
+        // Allowing this API to be called in attached state exposes it to race conditions:
+        // Too clients can call this APO for same ID, causing container corruption (a bunch of asserts
+        // sprinkled through teh code catching and failing actual concurrent creation with same ID).
+        // Similar to "named data store" concept can be achieved by having a map in root data store and
+        // storing a handle to another data store. Map keys become names in such solution. That said,
+        // it has similar problem of two clients setting a key with same name and overwriting previous value.
+        // Solution space will be improved here, but at the time this comment was added, one would need to
+        // use Consensus Registry Collection to control concurrency.
+        assert(this.attachState === AttachState.Detached,
+            "Root data store can only be created in detached container state!");
+
         const fluidDataStore = await this._createDataStore(pkg, rootDataStoreId);
         fluidDataStore.bindToContext();
         return fluidDataStore;
