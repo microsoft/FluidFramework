@@ -61,5 +61,5 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: server/gitrest
     containerName: fluidframework/routerlicious/gitrest
-    test: true
+    test: test
     tagName: gitrest

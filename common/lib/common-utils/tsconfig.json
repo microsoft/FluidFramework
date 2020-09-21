@@ -9,7 +9,7 @@
         "outDir": "./dist",
         "baseUrl": ".",
         "paths": {
-            "perf_hooks": ["typings/perf_hooks.d.ts"]
+            "perf_hooks": ["types/perf_hooks.d.ts"]
         }
     },
     "include": [
