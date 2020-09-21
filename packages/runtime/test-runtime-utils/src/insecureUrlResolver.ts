@@ -62,8 +62,8 @@ export class InsecureUrlResolver implements IUrlResolver {
         // service using our bearer token.
         if (parsedUrl.host === window.location.host) {
             const documentId = parsedUrl.pathname.substr(1).split("/")[0];
-            const uri = parsedUrl.pathname.replace(`/${documentId}/`,"");
-            return this.resolveHelper(documentId, uri);
+            const documentRelativePath = parsedUrl.pathname.replace(`/${documentId}/`,"");
+            return this.resolveHelper(documentId, documentRelativePath);
         } else {
             const maybeResolvedUrl = this.cache.get(request.url);
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -94,7 +94,7 @@ export class InsecureUrlResolver implements IUrlResolver {
         let documentUrl: string;
         if (uri !== "") {
             const pathArray = uri.split("/");
-            const encodedPathArray = pathArray.map((x) => encodeURIComponent(x));
+            const encodedPathArray = pathArray.map((pathPart) => encodeURIComponent(pathPart));
             const encodedUri = encodedPathArray.join("/");
             documentUrl = `fluid://${new URL(this.ordererUrl).host}/${encodedTenantId}/${encodedDocId}/${encodedUri}`;
         }

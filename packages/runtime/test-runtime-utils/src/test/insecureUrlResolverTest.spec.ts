@@ -46,10 +46,10 @@ describe("Insecure Url Resolver Test", () => {
     it("Test RequestUrl for a data store", async () => {
         const resolvedUrl = await resolver.resolve(request);
         const dataStoreId = "dataStore";
-        const response = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
+        const absoluteUrl = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
 
         const compUrl = `${hostUrl}/${tenantId}/${fileName}/${dataStoreId}`;
-        assert.strictEqual(response, compUrl, "Url should match");
+        assert.strictEqual(absoluteUrl, compUrl, "Url should match");
     });
 
     it("Test RequestUrl for longer url", async () => {
@@ -57,7 +57,7 @@ describe("Insecure Url Resolver Test", () => {
             url: `https://localhost/${fileName}/random/random2`,
             headers: {},
         };
-
+        // Mocking window since the resolver depends on window.location.host
         if (typeof window === "undefined" && typeof global === "object") {
             // eslint-disable-next-line dot-notation
             global["window"] = { location: { host:"localhost" } };
@@ -65,13 +65,13 @@ describe("Insecure Url Resolver Test", () => {
 
         const resolvedUrl = await resolver.resolve(testRequest);
         const dataStoreId = "dataStore";
-        const response = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
+        const absoluteUrl = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
         ensureFluidResolvedUrl(resolvedUrl);
 
         const compResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}/random/random2`;
         const compResponseUrl = `${hostUrl}/${tenantId}/${fileName}/${dataStoreId}`;
 
         assert.strictEqual(resolvedUrl.url, compResolvedUrl, "resolved url is wrong");
-        assert.strictEqual(response, compResponseUrl, "response url is wrong");
+        assert.strictEqual(absoluteUrl, compResponseUrl, "response url is wrong");
     });
 });

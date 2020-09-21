@@ -109,7 +109,7 @@
   },
   "fluidBuild": {
     "repoPackages": {
-      "client": [
+      "client":[
         {
           "directory": "common"
         },
