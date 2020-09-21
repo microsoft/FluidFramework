@@ -13,7 +13,7 @@ import {
     ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
-import { BaseTelemetryNullLogger, performanceNow } from "@fluidframework/common-utils";
+import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 import { debug as registerDebug, IDebugger } from "debug";
 
 export interface ITelemetryPropertyGetters {
@@ -396,7 +396,7 @@ export class DebugLogger extends TelemetryLogger {
 
         let tick = "";
         if (event.category === "performance") {
-            tick = `tick=${TelemetryLogger.formatTick(performanceNow())}`;
+            tick = `tick=${TelemetryLogger.formatTick(performance.now())}`;
         }
 
         // Extract stack to put it last, but also to avoid escaping '\n' in it by JSON.stringify below
@@ -475,7 +475,7 @@ export class PerformanceEvent {
     }
 
     private event?: ITelemetryGenericEvent;
-    private readonly startTime = performanceNow();
+    private readonly startTime = performance.now();
     private startMark?: string;
 
     protected constructor(
@@ -525,7 +525,7 @@ export class PerformanceEvent {
         const event: ITelemetryPerformanceEvent = { ...this.event, ...props };
         event.eventName = `${event.eventName}_${eventNameSuffix}`;
         if (eventNameSuffix !== "start") {
-            event.duration = performanceNow() - this.startTime;
+            event.duration = performance.now() - this.startTime;
         }
 
         this.logger.sendPerformanceEvent(event, error);

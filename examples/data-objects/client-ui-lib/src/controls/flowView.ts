@@ -5,7 +5,7 @@
 
 import * as SearchMenu from "@fluid-example/search-menu";
 import * as api from "@fluid-internal/client-api";
-import { performanceNow } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidHandle,
@@ -5091,7 +5091,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.render(0, true);
         if (clockStart > 0) {
             // eslint-disable-next-line max-len
-            console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.getLength()} - ${performanceNow()}`);
+            console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.getLength()} - ${performance.now()}`);
         }
         this.presenceSignal = new PresenceSignal(this.collabDocument.runtime);
         this.addPresenceSignal(this.presenceSignal);

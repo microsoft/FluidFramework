@@ -30,7 +30,7 @@ import {
     IThrottlingWarning,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { performanceNow } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     EventEmitterWithErrorHandling,
@@ -438,10 +438,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // keep track of last time page was visible for telemetry
         if (typeof document === "object" && document !== null) {
-            this.lastVisible = document.hidden ? performanceNow() : undefined;
+            this.lastVisible = document.hidden ? performance.now() : undefined;
             document.addEventListener("visibilitychange", () => {
                 if (document.hidden) {
-                    this.lastVisible = performanceNow();
+                    this.lastVisible = performance.now();
                 } else {
                     // settimeout so this will hopefully fire after disconnect event if being hidden caused it
                     setTimeout(() => this.lastVisible = undefined, 0);
@@ -904,7 +904,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private recordConnectStartTime() {
         if (this.connectionTransitionTimes[ConnectionState.Disconnected] === undefined) {
-            this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
+            this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
         }
     }
 
@@ -1367,7 +1367,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         reason: string,
         opsBehind?: number) {
         // Log actual event
-        const time = performanceNow();
+        const time = performance.now();
         this.connectionTransitionTimes[value] = time;
         const duration = time - this.connectionTransitionTimes[oldState];
 
@@ -1406,7 +1406,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             autoReconnect,
             opsBehind,
             online: OnlineStatus[isOnline()],
-            lastVisible: this.lastVisible !== undefined ? performanceNow() - this.lastVisible : undefined,
+            lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
         });
 
         if (value === ConnectionState.Connected) {
