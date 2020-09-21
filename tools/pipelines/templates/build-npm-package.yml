@@ -22,7 +22,7 @@ parameters:
 - name: taskTest
   type: string
   default: ci:test
- 
+
 - name: extraAuth
   type: string
   default:
@@ -92,6 +92,7 @@ stages:
           displayName: Parameters
           inputs:
             targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
             script: |
               # Show all task group conditions
 
@@ -121,6 +122,17 @@ stages:
               if [[ "$(release)" == "release" ]]; then
                 if [[ "${{ variables.canRelease }}" == "False" ]]; then
                   echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
+                  exit -1;
+                fi
+
+                if [ -f "lerna.json" ]; then
+                  grep -e fluid.*-0 `find packages -name 'package.json'`
+                else
+                  grep -e fluid.*-0 `find . -name 'package.json'`
+                fi
+
+                if [[ $? == 0 ]]; then
+                  echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
                   exit -1;
                 fi
               fi
