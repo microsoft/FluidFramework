@@ -57,3 +57,9 @@ If present, launch in Test Runner mode with the given runId (to distinguish from
 #### --debug, -d
 
 Launches each test runner with `--inspect-brk` and a unique Node debugging port. (Not compatible with `--runId`)
+
+#### --log, -l
+
+Overrides DEBUG environment variable for telemetry logging to console. If DEBUG env variable is unset and this is not provided, only errors will print. The value passed here should be a filter string for the logger namespace.
+
+>To print all messages, provide `--log '*'` or `--log 'fluid:*'`. For example, to filter to only Container logs, provide something like: `-l 'fluid:telemetry:Container:*'`.

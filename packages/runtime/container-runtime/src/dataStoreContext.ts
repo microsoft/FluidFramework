@@ -10,12 +10,11 @@ import {
     IFluidObject,
     IRequest,
     IResponse,
+    IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IBlobManager,
     IDeltaManager,
-    IGenericBlob,
     ContainerWarning,
     ILoader,
     BindState,
@@ -118,10 +117,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public get clientId(): string | undefined {
         return this._containerRuntime.clientId;
-    }
-
-    public get blobManager(): IBlobManager {
-        return this._containerRuntime.blobManager;
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -377,10 +372,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._containerRuntime.getAudience();
     }
 
-    public async getBlobMetadata(): Promise<IGenericBlob[]> {
-        return this.blobManager.getBlobMetadata();
-    }
-
     /**
      * Notifies the object to take snapshot of a store.
      * @deprecated in 0.22 summarizerNode
@@ -582,6 +573,10 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             { throwOnFailure: true },
         );
     }
+
+    public async uploadBlob(blob: Buffer): Promise<IFluidHandle<string>> {
+        return this.containerRuntime.uploadBlob(blob);
+    }
 }
 
 export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
@@ -687,6 +682,10 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
+        /**
+         * @deprecated 0.16 Issue #1635, #3631
+         */
+        public readonly createProps?: any,
     ) {
         super(
             runtime,
@@ -759,6 +758,10 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
+        /**
+         * @deprecated 0.16 Issue #1635, #3631
+         */
+        createProps?: any,
     ) {
         super(
             id,
@@ -769,7 +772,8 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
             summaryTracker,
             createSummarizerNode,
             bindChannel,
-            snapshotTree);
+            snapshotTree,
+            createProps);
     }
 }
 

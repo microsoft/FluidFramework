@@ -6,7 +6,7 @@
 import { Package, Packages } from "../common/npmPackage";
 import { globFn } from "../common/utils";
 import { FluidPackageCheck } from "./fluidPackageCheck";
-import { FluidRepoBase } from "../common/fluidRepoBase";
+import { FluidRepo } from "../common/fluidRepo";
 import { MonoRepoKind } from "../common/monoRepo";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
@@ -20,7 +20,7 @@ export interface IPackageMatchedOptions {
     server: boolean;
 };
 
-export class FluidRepo extends FluidRepoBase {
+export class FluidRepoBuild extends FluidRepo {
     constructor(resolvedRoot: string, services: boolean) {
         super(resolvedRoot, services);
     }
@@ -32,11 +32,11 @@ export class FluidRepo extends FluidRepoBase {
     public async uninstall() {
         const cleanPackageNodeModules = this.packages.cleanNodeModules();
         const removePromise = Promise.all(
-            [this.clientMonoRepo.uninstall(), this.serverMonoRepo.uninstall()]
+            [this.clientMonoRepo.uninstall(), this.serverMonoRepo?.uninstall()]
         );
 
         const r = await Promise.all([cleanPackageNodeModules, removePromise]);
-        return r[0] && !r[1].some(ret => ret.error);
+        return r[0] && !r[1].some(ret => ret?.error);
     };
 
     public setMatched(options: IPackageMatchedOptions) {
@@ -63,7 +63,7 @@ export class FluidRepo extends FluidRepoBase {
 
     public async checkPackages(fix: boolean) {
         for (const pkg of this.packages.packages) {
-            if (FluidPackageCheck.checkScripts(this, pkg, fix)) {
+            if (FluidPackageCheck.checkScripts(pkg, fix)) {
                 await pkg.savePackageJson();
             }
             await FluidPackageCheck.checkNpmIgnore(pkg, fix);
