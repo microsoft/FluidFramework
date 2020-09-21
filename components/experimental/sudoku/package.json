@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/sudoku",
-  "version": "0.24.4",
+  "version": "0.24.5",
   "description": "Fluid Sudoku",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -38,10 +38,10 @@
     "*.spec.ts"
   ],
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.24.4",
-    "@fluidframework/component-core-interfaces": "^0.24.4",
-    "@fluidframework/map": "^0.24.4",
-    "@fluidframework/view-interfaces": "^0.24.4",
+    "@fluidframework/aqueduct": "^0.24.5",
+    "@fluidframework/component-core-interfaces": "^0.24.5",
+    "@fluidframework/map": "^0.24.5",
+    "@fluidframework/view-interfaces": "^0.24.5",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "sudokus": "^1.0.2"
@@ -49,7 +49,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/webpack-component-loader": "^0.24.4",
+    "@fluidframework/webpack-component-loader": "^0.24.5",
     "@types/node": "^10.17.24",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",

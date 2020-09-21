@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/merge-tree-client-replay",
-  "version": "0.24.4",
+  "version": "0.24.5",
   "private": true,
   "description": "A tool that lets the user to replay ops.",
   "repository": "microsoft/FluidFramework",
@@ -28,12 +28,12 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-runtime": "^0.24.4",
-    "@fluidframework/file-driver": "^0.24.4",
-    "@fluidframework/merge-tree": "^0.24.4",
+    "@fluidframework/container-runtime": "^0.24.5",
+    "@fluidframework/file-driver": "^0.24.5",
+    "@fluidframework/merge-tree": "^0.24.5",
     "@fluidframework/protocol-definitions": "^0.1010.0",
-    "@fluidframework/runtime-definitions": "^0.24.4",
-    "@fluidframework/sequence": "^0.24.4",
+    "@fluidframework/runtime-definitions": "^0.24.5",
+    "@fluidframework/sequence": "^0.24.5",
     "lodash": "^4.17.19"
   },
   "devDependencies": {

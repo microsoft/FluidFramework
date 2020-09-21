@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/tool-utils",
-  "version": "0.24.4",
+  "version": "0.24.5",
   "description": "Common utilities for Fluid tools",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,7 +24,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/odsp-utils": "^0.24.4",
+    "@fluidframework/odsp-utils": "^0.24.5",
     "proper-lockfile": "^4.1.1"
   },
   "devDependencies": {

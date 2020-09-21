@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/cell",
-  "version": "0.24.4",
+  "version": "0.24.5",
   "description": "Distributed map",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -51,17 +51,17 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.21.0",
-    "@fluidframework/component-core-interfaces": "^0.24.4",
-    "@fluidframework/component-runtime-definitions": "^0.24.4",
+    "@fluidframework/component-core-interfaces": "^0.24.5",
+    "@fluidframework/component-runtime-definitions": "^0.24.5",
     "@fluidframework/protocol-definitions": "^0.1010.0",
-    "@fluidframework/runtime-utils": "^0.24.4",
-    "@fluidframework/shared-object-base": "^0.24.4",
+    "@fluidframework/runtime-utils": "^0.24.5",
+    "@fluidframework/shared-object-base": "^0.24.5",
     "debug": "^4.1.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/test-runtime-utils": "^0.24.4",
+    "@fluidframework/test-runtime-utils": "^0.24.5",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/debug": "^4.1.5",
     "@types/mocha": "^5.2.5",

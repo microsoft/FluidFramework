@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/container-loader",
-  "version": "0.24.4",
+  "version": "0.24.5",
   "description": "Fluid container loader",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -53,14 +53,14 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.21.0",
-    "@fluidframework/component-core-interfaces": "^0.24.4",
-    "@fluidframework/container-definitions": "^0.24.4",
-    "@fluidframework/container-utils": "^0.24.4",
-    "@fluidframework/driver-definitions": "^0.24.4",
-    "@fluidframework/driver-utils": "^0.24.4",
+    "@fluidframework/component-core-interfaces": "^0.24.5",
+    "@fluidframework/container-definitions": "^0.24.5",
+    "@fluidframework/container-utils": "^0.24.5",
+    "@fluidframework/driver-definitions": "^0.24.5",
+    "@fluidframework/driver-utils": "^0.24.5",
     "@fluidframework/protocol-base": "^0.1010.0",
     "@fluidframework/protocol-definitions": "^0.1010.0",
-    "@fluidframework/telemetry-utils": "^0.24.4",
+    "@fluidframework/telemetry-utils": "^0.24.5",
     "@types/double-ended-queue": "^2.1.0",
     "debug": "^4.1.1",
     "double-ended-queue": "^2.1.0-0",
@@ -70,7 +70,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@fluid-internal/test-loader-utils": "^0.24.4",
+    "@fluid-internal/test-loader-utils": "^0.24.5",
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@microsoft/api-extractor": "^7.7.2",
