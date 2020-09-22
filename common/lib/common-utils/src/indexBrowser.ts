@@ -5,4 +5,4 @@
 
 export * from "./bufferBrowser";
 export * from "./hashFileBrowser";
-export * from "./performanceNowBrowser";
+export * from "./performanceBrowser";

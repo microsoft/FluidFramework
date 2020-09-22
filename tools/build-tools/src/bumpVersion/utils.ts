@@ -13,7 +13,7 @@ export function fatal(error: string): never {
 
 /**
  * Execute a command. If there is an error, print error message and exit process
- * 
+ *
  * @param cmd Command line to execute
  * @param dir dir the directory to execute on
  * @param error description of command line to print when error happens
@@ -30,7 +30,7 @@ export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: 
 
 /**
  * Execute a command. If there is an error, print error message and exit process
- * 
+ *
  * @param cmd Command line to execute
  * @param dir dir the directory to execute on
  * @param error description of command line to print when error happens
@@ -57,7 +57,7 @@ export class GitRepo {
         const result = await this.exec(`rev-parse HEAD`, `get current sha`);
         return result.split(/\r?\n/)[0];
     }
-    
+
     public async getShaForBranch(branch: string) {
         const result = await this.execNoError(`show-ref refs/heads/${branch}`);
         if (result) {
@@ -79,10 +79,10 @@ export class GitRepo {
         }
         return undefined;
     }
-    
+
     /**
      * Add a tag to the current commit
-     * 
+     *
      * @param tag the tag to add
      */
     public async addTag(tag: string) {
@@ -90,9 +90,9 @@ export class GitRepo {
     }
 
     /**
-     * Delete a tag 
+     * Delete a tag
      * NOTE: this doesn't fail on error
-     * 
+     *
      * @param tag the tag to add
      */
     public async deleteTag(tag: string) {
@@ -101,7 +101,7 @@ export class GitRepo {
 
     /**
      * Push a tag
-     * 
+     *
      */
     public async pushTag(tag: string, remote: string) {
         await this.exec(`push ${remote} ${tag}`, `pushing tag`);
@@ -117,7 +117,7 @@ export class GitRepo {
 
     /**
      * Create a new branch
-     * 
+     *
      * @param branchName name of the new branch
      */
     public async createBranch(branchName: string) {
@@ -126,7 +126,7 @@ export class GitRepo {
 
     /**
      * Push branch
-     * @param branchName 
+     * @param branchName
      */
     public async pushBranch(remote: string, fromBranchName: string, toBranchName: string) {
         await this.exec(`push ${remote} ${fromBranchName}:${toBranchName}`, `push branch ${fromBranchName}->${toBranchName} to ${remote}`);
@@ -135,7 +135,7 @@ export class GitRepo {
     /**
      * Delete a branch
      * NOTE: this doesn't fail on error
-     * 
+     *
      * @param branchName name of the new branch
      */
     public async deleteBranch(branchName: string) {
@@ -144,7 +144,7 @@ export class GitRepo {
 
     /**
      * Switch branch
-     * 
+     *
      * @param branchName name of the new branch
      */
     public async switchBranch(branchName: string) {
@@ -153,7 +153,7 @@ export class GitRepo {
 
     /**
      * Commit changes
-     * 
+     *
      * @param message the commit message
      */
     public async commit(message: string, error: string) {
@@ -161,8 +161,26 @@ export class GitRepo {
     }
 
     /**
+     * Get Tags
+     *
+     * @param pattern pattern of tags to get
+     */
+    public async fetchTags() {
+        return await this.exec(`fetch --tags`, `fetch tags`);
+    }
+
+    /**
+     * Get Tags
+     *
+     * @param pattern pattern of tags to get
+     */
+    public async getTags(pattern: string) {
+        return await this.exec(`tag -l ${pattern}`, `get tags ${pattern}`);
+    }
+
+    /**
      * Execute git command
-     * 
+     *
      * @param command the git command
      * @param error description of command line to print when error happens
      */
@@ -172,7 +190,7 @@ export class GitRepo {
 
     /**
      * Execute git command
-     * 
+     *
      * @param command the git command
      * @param error description of command line to print when error happens
      */
