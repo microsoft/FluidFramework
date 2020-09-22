@@ -63,7 +63,7 @@ export class InsecureUrlResolver implements IUrlResolver {
         // service using our bearer token.
         if (this.isForNodeTest) {
             const documentId = parsedUrl.pathname.substr(1).split("/")[1];
-            return this.resolveHelper(documentId);
+            return this.resolveHelper(documentId, "");
         } else if (parsedUrl.host === window.location.host) {
             const documentId = parsedUrl.pathname.substr(1).split("/")[0];
             const documentRelativePath = parsedUrl.pathname.replace(`/${documentId}/`,"");
