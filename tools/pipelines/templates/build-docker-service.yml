@@ -75,10 +75,17 @@ stages:
       releaseBuildVar: $[variables.releaseBuild]
       containerTagSuffix: $(SetVersion.version)
     steps:
+    # Setup
+    - checkout: self
+      clean: true
+      lfs: false
+      submodules: false
+
     - task: Bash@3
       displayName: Parameters
       inputs:
         targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
         script: |
           # Show all task group conditions
 
@@ -133,12 +140,6 @@ stages:
               exit -1;
             fi
           fi
-
-    # Setup
-    - checkout: self
-      clean: true
-      lfs: false
-      submodules: false
 
     # Component detection
     - ${{ if eq(variables.componentDetection, true) }}:
