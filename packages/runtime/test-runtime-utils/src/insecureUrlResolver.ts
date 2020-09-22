@@ -88,18 +88,12 @@ export class InsecureUrlResolver implements IUrlResolver {
         }
     }
 
-    private resolveHelper(documentId: string, uri: string) {
+    private resolveHelper(documentId: string, documentRelativePath: string) {
         const encodedTenantId = encodeURIComponent(this.tenantId);
         const encodedDocId = encodeURIComponent(documentId);
-        let documentUrl: string;
-        if (uri !== "") {
-            const pathArray = uri.split("/");
-            const encodedPathArray = pathArray.map((pathPart) => encodeURIComponent(pathPart));
-            const encodedUri = encodedPathArray.join("/");
-            documentUrl = `fluid://${new URL(this.ordererUrl).host}/${encodedTenantId}/${encodedDocId}/${encodedUri}`;
-        }
-        else {
-            documentUrl = `fluid://${new URL(this.ordererUrl).host}/${encodedTenantId}/${encodedDocId}`;
+        let documentUrl = `fluid://${new URL(this.ordererUrl).host}/${encodedTenantId}/${encodedDocId}`;
+        if (documentRelativePath  !== "") {
+            documentUrl += `/${documentRelativePath}`;
         }
 
         const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;

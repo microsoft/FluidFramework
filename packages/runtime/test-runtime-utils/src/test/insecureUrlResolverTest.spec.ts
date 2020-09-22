@@ -45,16 +45,21 @@ describe("Insecure Url Resolver Test", () => {
 
     it("Test RequestUrl for a data store", async () => {
         const resolvedUrl = await resolver.resolve(request);
+        ensureFluidResolvedUrl(resolvedUrl);
+
+        const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+
         const dataStoreId = "dataStore";
         const absoluteUrl = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
 
-        const compUrl = `${hostUrl}/${tenantId}/${fileName}/${dataStoreId}`;
-        assert.strictEqual(absoluteUrl, compUrl, "Url should match");
+        const expectedUrl = `${hostUrl}/${tenantId}/${fileName}/${dataStoreId}`;
+        assert.strictEqual(absoluteUrl, expectedUrl, "Url should match");
     });
 
-    it("Test RequestUrl for longer url", async () => {
+    it("Test RequestUrl for url with data store ids", async () => {
         const testRequest: IRequest = {
-            url: `https://localhost/${fileName}/random/random2`,
+            url: `https://localhost/${fileName}/dataStore1/dataStore2`,
             headers: {},
         };
         // Mocking window since the resolver depends on window.location.host
@@ -65,13 +70,14 @@ describe("Insecure Url Resolver Test", () => {
 
         const resolvedUrl = await resolver.resolve(testRequest);
         const dataStoreId = "dataStore";
-        const absoluteUrl = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
         ensureFluidResolvedUrl(resolvedUrl);
 
-        const compResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}/random/random2`;
-        const compResponseUrl = `${hostUrl}/${tenantId}/${fileName}/${dataStoreId}`;
+        const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}/dataStore1/dataStore2`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
 
-        assert.strictEqual(resolvedUrl.url, compResolvedUrl, "resolved url is wrong");
-        assert.strictEqual(absoluteUrl, compResponseUrl, "response url is wrong");
+        const absoluteUrl = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
+
+        const expectedResponseUrl = `${hostUrl}/${tenantId}/${fileName}/${dataStoreId}`;
+        assert.strictEqual(absoluteUrl, expectedResponseUrl, "response url is wrong");
     });
 });
