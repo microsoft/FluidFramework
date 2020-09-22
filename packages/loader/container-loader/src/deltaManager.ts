@@ -891,6 +891,8 @@ export class DeltaManager
      * @param connection - The newly established connection
      */
     private setupNewSuccessfulConnection(connection: DeltaConnection, requestedMode: ConnectionMode) {
+        // Old connection should have been cleaned up before establishing a new one
+         assert(this.connection === undefined, "old connection exists on new connection setup");
         this.connection = connection;
 
         // Does information in scopes & mode matches?

@@ -1391,6 +1391,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._connectionState = value;
 
         if (value === ConnectionState.Connected) {
+            // Mark our old client inactive in the quorum if it's still there
+            if (this._clientId !== undefined) {
+                const client = this._protocolHandler?.quorum.getMember(this._clientId);
+                if (client !== undefined) {
+                    client.isActive = false;
+                }
+            }
             this._clientId = this.pendingClientId;
             this._deltaManager.updateQuorumJoin();
         } else if (value === ConnectionState.Disconnected) {
@@ -1452,6 +1459,25 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
         const local = this._clientId === message.clientId;
+
+         // Report if we're getting messages from a clientId that is not in the quorum
+         // or we previously marked inactive
+         if (!local) {
+            const client = this._protocolHandler?.quorum.getMember(message.clientId);
+            const missingFromQuorum = client === undefined;
+            const inactiveClient = client?.isActive === false;
+            if (missingFromQuorum || inactiveClient) {
+                this.logger.sendErrorEvent({
+                    eventName: "messageFromUnexpectedClient",
+                    clientId: this._clientId,
+                    messageClientId: message.clientId,
+                    sequenceNumber: message.sequenceNumber,
+                    clientSequenceNumber: message.clientSequenceNumber,
+                    missingFromQuorum,
+                    inactiveClient,
+                });
+            }
+        }
 
         // Forward non system messages to the loaded runtime for processing
         if (!isSystemMessage(message)) {

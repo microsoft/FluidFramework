@@ -26,10 +26,9 @@ export interface IClient {
 }
 
 export interface ISequencedClient {
-
     client: IClient;
-
     sequenceNumber: number;
+    isActive: boolean;
 }
 
 export interface ISignalClient {
