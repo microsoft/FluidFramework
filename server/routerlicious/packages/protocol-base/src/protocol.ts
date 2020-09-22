@@ -84,7 +84,6 @@ export class ProtocolOpHandler {
                 const member: ISequencedClient = {
                     client: join.detail,
                     sequenceNumber: systemJoinMessage.sequenceNumber,
-                    isActive: true,
                 };
                 this.quorum.addMember(join.clientId, member);
 

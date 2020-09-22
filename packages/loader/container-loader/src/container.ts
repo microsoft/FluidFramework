@@ -98,6 +98,10 @@ import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
+interface IActiveSequencedClient extends ISequencedClient {
+    isActive?: boolean;
+}
+
 export interface IContainerConfig {
     resolvedUrl?: IResolvedUrl;
     canReconnect?: boolean;
@@ -1393,7 +1397,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (value === ConnectionState.Connected) {
             // Mark our old client inactive in the quorum if it's still there
             if (this._clientId !== undefined) {
-                const client = this._protocolHandler?.quorum.getMember(this._clientId);
+                const client: IActiveSequencedClient | undefined =
+                    this._protocolHandler?.quorum.getMember(this._clientId);
                 if (client !== undefined) {
                     client.isActive = false;
                 }
@@ -1463,7 +1468,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
          // Report if we're getting messages from a clientId that is not in the quorum
          // or we previously marked inactive
          if (!local) {
-            const client = this._protocolHandler?.quorum.getMember(message.clientId);
+            const client: IActiveSequencedClient | undefined =
+                this._protocolHandler?.quorum.getMember(message.clientId);
             const missingFromQuorum = client === undefined;
             const inactiveClient = client?.isActive === false;
             if (missingFromQuorum || inactiveClient) {
