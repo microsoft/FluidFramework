@@ -75,10 +75,17 @@ stages:
       releaseBuildVar: $[variables.releaseBuild]
       containerTagSuffix: $(SetVersion.version)
     steps:
+    # Setup
+    - checkout: self
+      clean: true
+      lfs: false
+      submodules: false
+
     - task: Bash@3
       displayName: Parameters
       inputs:
         targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
         script: |
           # Show all task group conditions
 
@@ -109,6 +116,17 @@ stages:
               echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
               exit -1;
             fi
+
+            if [ -f "lerna.json" ]; then
+              grep -e fluid.*-0 `find packages -name 'package.json'`
+            else
+              grep -e fluid.*-0 `find . -name 'package.json'`
+            fi
+
+            if [[ $? == 0 ]]; then
+              echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
+              exit -1;
+            fi
           fi
 
           if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
@@ -116,18 +134,12 @@ stages:
               echo "##vso[task.logissue type=error]'$(release)' is set but image is not pushed. Either the branch doesn't default to push image or it is skipped."
               exit -1;
             fi
-            
+
             if [[ "${{ variables.releaseImage }}" != "True" ]]; then
               echo "##vso[task.logissue type=error]'$(release)' is set but pipeline isn't declared to allow release image."
               exit -1;
             fi
           fi
-
-    # Setup
-    - checkout: self
-      clean: true
-      lfs: false
-      submodules: false
 
     # Component detection
     - ${{ if eq(variables.componentDetection, true) }}:
@@ -182,7 +194,7 @@ stages:
         inputs:
           action: 'Run a Docker command'
           customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(containerTag) npm run test'
-        
+
       - task: PublishTestResults@2
         displayName: Publish Test Results
         inputs:
