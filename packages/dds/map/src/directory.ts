@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import path from "path";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
@@ -40,12 +39,11 @@ import {
 } from "./localValues";
 import { pkgVersion } from "./packageVersion";
 
-// path-browserify only supports posix functionality but doesn't have a path.posix to enforce it.  But we need to
-// enforce posix when using the normal node module on Windows (otherwise it will use path.win32).  Also including an
-// assert here to help protect in case path-browserify changes in the future, because we only want posix path
-// functionality.
-const posix = path.posix || path;
-assert(posix.sep === "/");
+// We use path-browserify since this code can run safely on the server or the browser.
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+const path: typeof import("path") = require("path-browserify");
+const posix = path.posix;
+
 const snapshotFileName = "header";
 
 /**
