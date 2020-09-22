@@ -59,10 +59,10 @@
     "@fluidframework/driver-definitions": "^0.28.0",
     "@fluidframework/local-driver": "^0.28.0",
     "@fluidframework/map": "^0.28.0",
-    "@fluidframework/protocol-definitions": "^0.1013.0-0",
+    "@fluidframework/protocol-definitions": "^0.1014.0-0",
     "@fluidframework/request-handler": "^0.28.0",
     "@fluidframework/runtime-definitions": "^0.28.0",
-    "@fluidframework/server-local-server": "^0.1013.0-0"
+    "@fluidframework/server-local-server": "^0.1014.0-0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
