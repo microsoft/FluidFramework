@@ -1,7 +1,7 @@
 version: '3.4'
 services:
     gateway:
-        image: prague.azurecr.io/gateway:test
+        image: fluidcr.azurecr.io/build/gateway:latest
         ports:
             - "3000:3000"
         command: node dist/www.js

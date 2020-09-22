@@ -13,17 +13,14 @@ services:
             - login__accounts
         restart: always
     gitrest:
-        image: prague.azurecr.io/gitrest:1038
-        restart: always
-    cobalt:
-        image: prague.azurecr.io/cobalt:1544
+        image: mcr.microsoft.com/fluidframework/routerlicious/gitrest:latest
         restart: always
     redis:
         image: redis:alpine
     mongodb:
         image: mongo:3.4.3
     riddler:
-        image: prague.azurecr.io/prague:2302
+        image: mcr.microsoft.com/fluidframework/routerlicious/server:latest
         command: node dist/riddler/www.js
         environment:
             - DEBUG=routerlicious:*

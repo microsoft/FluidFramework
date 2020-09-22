@@ -17,7 +17,7 @@
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:less npm:build:webpack",
     "build:compile:min": "concurrently npm:build:compile npm:build:webpack:min",
-    "build:docker": "docker build . --tag prague.azurecr.io/gateway:test",
+    "build:docker": "docker build . --tag fluidcr.azurecr.io/build/gateway:test",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
