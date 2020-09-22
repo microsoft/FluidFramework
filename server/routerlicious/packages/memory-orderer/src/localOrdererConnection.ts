@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performanceNow } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import {
     IClient,
     IClientJoin,
@@ -120,7 +120,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
                     {
                         action: "start",
                         service: "alfred",
-                        timestamp: performanceNow(),
+                        timestamp: performance.now(),
                     });
             }
         });
