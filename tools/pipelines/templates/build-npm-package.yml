@@ -91,10 +91,17 @@ stages:
           testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
           releaseBuildVar: $[variables.releaseBuild]
         steps:
+        # Setup
+        - checkout: self
+          clean: true
+          lfs: ${{ parameters.checkoutSubmodules }}
+          submodules: ${{ parameters.checkoutSubmodules }}
+
         - task: Bash@3
           displayName: Parameters
           inputs:
             targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
             script: |
               # Show all task group conditions
 
@@ -122,9 +129,21 @@ stages:
 
                 release=$(release)"
 
+              # Error checking
               if [[ "$(release)" == "release" ]]; then
                 if [[ "${{ variables.canRelease }}" == "False" ]]; then
                   echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
+                  exit -1;
+                fi
+
+                if [ -f "lerna.json" ]; then
+                  grep -e fluid.*-0 `find packages -name 'package.json'`
+                else
+                  grep -e fluid.*-0 `find . -name 'package.json'`
+              fi
+
+                if [[ $? == 0 ]]; then
+                  echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
                   exit -1;
                 fi
               fi
@@ -135,12 +154,6 @@ stages:
                   exit -1;
                 fi
               fi
-
-        # Setup
-        - checkout: self
-          clean: true
-          lfs: ${{ parameters.checkoutSubmodules }}
-          submodules: ${{ parameters.checkoutSubmodules }}
 
         # Install
         - task: UseNode@1
