@@ -20,7 +20,7 @@ import {
     LoaderHeader,
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { Deferred, performanceNow } from "@fluidframework/common-utils";
+import { Deferred, performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -166,7 +166,7 @@ export class Loader extends EventEmitter implements ILoader {
     public get IFluidRouter(): IFluidRouter { return this; }
 
     public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
-        debug(`Container creating in detached state: ${performanceNow()} `);
+        debug(`Container creating in detached state: ${performance.now()} `);
 
         return Container.create(
             this.codeLoader,
@@ -183,7 +183,7 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     public async rehydrateDetachedContainerFromSnapshot(snapshot: ISnapshotTree): Promise<Container> {
-        debug(`Container creating in detached state: ${performanceNow()} `);
+        debug(`Container creating in detached state: ${performance.now()} `);
 
         return Container.create(
             this.codeLoader,
