@@ -1465,22 +1465,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
         const local = this._clientId === message.clientId;
 
-         // Report if we're getting messages from a clientId that is not in the quorum
-         // or we previously marked inactive
+         // Report if we're getting messages from a clientId that we previously marked inactive
          if (!local) {
             const client: IActiveSequencedClient | undefined =
                 this._protocolHandler?.quorum.getMember(message.clientId);
-            const missingFromQuorum = client === undefined;
-            const inactiveClient = client?.isActive === false;
-            if (missingFromQuorum || inactiveClient) {
+            if (client?.isActive === false) {
                 this.logger.sendErrorEvent({
-                    eventName: "messageFromUnexpectedClient",
+                    eventName: "messageFromInactiveClient",
                     clientId: this._clientId,
                     messageClientId: message.clientId,
                     sequenceNumber: message.sequenceNumber,
                     clientSequenceNumber: message.clientSequenceNumber,
-                    missingFromQuorum,
-                    inactiveClient,
                 });
             }
         }
