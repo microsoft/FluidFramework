@@ -17,9 +17,9 @@ async function isFluidRootLerna(dir: string) {
         return false;
     }
     const rootPackageManifest = await getPackageManifest(dir);
-    if (rootPackageManifest.serverPath !== undefined
-        && !existsSync(path.join(dir, rootPackageManifest.serverPath, "lerna.json"))) {
-        logVerbose(`InferRoot: ${dir}/${rootPackageManifest.serverPath}/lerna.json not found`);
+    if (rootPackageManifest.repoPackages.server !== undefined
+        && !existsSync(path.join(dir, rootPackageManifest.repoPackages.server as string, "lerna.json"))) {
+        logVerbose(`InferRoot: ${dir}/${rootPackageManifest.repoPackages.server as string}/lerna.json not found`);
         return false;
     }
 

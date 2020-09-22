@@ -335,7 +335,7 @@ class ReferenceVersionBag extends VersionBag {
 
     public static checkPrivate(pkg: Package, dep: Package, dev: boolean) {
         if (dep.packageJson.private) {
-            if (!pkg.packageJson.private && !dev)  {
+            if (!pkg.packageJson.private && !dev) {
                 fatal(`Private package not a dev dependency\n   ${pkg.name}@${pkg.version}\n  ${dep.name}@${dep.version}`)
             }
             if (!MonoRepo.isSame(pkg.monoRepo, dep.monoRepo)) {
@@ -464,11 +464,11 @@ class BumpVersion {
         this.packageManifest = getPackageManifest(this.repo.resolvedRoot);
 
         // TODO: Is there a way to generate this automatically?
-        if (!this.packageManifest.generatorName) { fatal(`Unable to find generator package name in package.json`)}
+        if (!this.packageManifest.generatorName) { fatal(`Unable to find generator package name in package.json`) }
         const generatorPackage = this.fullPackageMap.get(this.packageManifest.generatorName);
         if (!generatorPackage) { fatal(`Unable to find ${this.packageManifest.generatorName} package`) };
         this.generatorPackage = generatorPackage;
-        this.templatePackage = new Package(path.join(generatorPackage.directory, "app", "templates", "package.json"));
+        this.templatePackage = new Package(path.join(generatorPackage.directory, "app", "templates", "package.json"), "tools");
     }
 
     /**
@@ -783,7 +783,7 @@ class BumpVersion {
         const releaseNewVersion = newVersions.get(releaseName);
         const currentBranchName = await this.gitRepo.getCurrentBranchName();
         console.log(`  Committing ${releaseName} version bump to ${releaseNewVersion} into ${currentBranchName}`);
-        await this.gitRepo.commit(`Bump development version for ${releaseName} to ${releaseNewVersion}\n${repoState}`, "create bumped version commit");
+        await this.gitRepo.commit(`[bump] package version to ${releaseNewVersion} for development after ${releaseName.toLowerCase()} release\n${repoState}`, "create bumped version commit");
         return `Repo Versions in branch ${currentBranchName}:${repoState}`;
     }
 
@@ -793,25 +793,6 @@ class BumpVersion {
         }
         await this.gitRepo.createBranch(branchName);
         this.newBranches.push(branchName);
-    }
-
-    private async addTag(tag: string) {
-        console.log(`    Tagging release ${tag}`);
-        await this.gitRepo.addTag(tag);
-        this.newTags.push(tag);
-    }
-
-    private async pushTag(tag: string) {
-        if (paramPush) {
-            while (!await this.prompt(`>>> Push tag ${tag} to remote?`)) {
-                if (await this.prompt('>>> Abort?')) {
-                    fatal("Operation stopped");
-                }
-            }
-            return this.gitRepo.pushTag(tag, this.remote);
-        } else {
-            console.log(`    SKIPPED: pushing tag ${tag}`);
-        }
     }
 
     /**
@@ -927,90 +908,6 @@ class BumpVersion {
     }
 
     /**
-     * Release a set of packages if needed
-     *
-     * @param packageNeedBump all the package that needs to be release in this session
-     * @param packages the package that to be released now if needed
-     */
-    private async releasePackage(depVersions: ReferenceVersionBag, packages: string[]) {
-        // Filter out the packages that need to be released
-        const packageToBump: Package[] = [];
-        const packageNeedBumpName = new Map<string, string | undefined>();
-        for (const [name] of depVersions) {
-            if (!depVersions.needRelease(name)) {
-                continue;
-            }
-            if (packages.includes(name)) {
-                packageToBump.push(this.fullPackageMap.get(name)!);
-                packageNeedBumpName.set(name, undefined);
-            }
-        }
-
-        if (packageToBump.length === 0) {
-            return;
-        }
-
-        console.log(`  Releasing ${packageToBump.map(pkg => pkg.name).join(" ")}`);
-
-        // Tagging release
-        for (const pkg of packageToBump) {
-            if (!await this.checkPublished(pkg)) {
-                let name = pkg.name.split("/").pop()!;
-                if (name.startsWith("fluid-")) {
-                    name = name.substring("fluid-".length);
-                }
-                const tagName = `${name}_v${pkg.version}`;
-                await this.addTag(tagName);
-                await this.pushTag(tagName);
-            } else {
-                // Resumed
-                if (!await this.prompt(`>>> Package ${pkg.name}@${pkg.version} already published. Skip publish and bump version after?`)) {
-                    fatal("Operation stopped.");
-                }
-            }
-        }
-
-        // Wait for packages
-        await this.ensureAllPublished(packageToBump);
-
-        // Fix the pre-release dependency and update package lock
-        console.log("    Fix pre-release dependencies");
-        const fixPrereleaseCommitMessage = `Remove pre-release dependencies for ${packageToBump.map(pkg => pkg.name).join(" ")}`;
-        return this.bumpDependencies(fixPrereleaseCommitMessage, packageNeedBumpName, paramPublishCheck, true, true);
-    }
-
-    private async releaseMonoRepo(depVersions: ReferenceVersionBag, monoRepo: MonoRepo) {
-        if (!depVersions.needRelease(MonoRepoKind[monoRepo.kind])) {
-            return;
-        }
-        const oldVersions = depVersions.repoVersions;
-        const kind = MonoRepoKind[monoRepo.kind];
-        console.log(`  Releasing ${kind.toLowerCase()}`);
-
-        if (!await this.checkPublished(monoRepo.packages[0])) {
-            // Tagging release
-            const oldVersion = oldVersions.get(kind);
-            const tagName = `${kind.toLowerCase()}_v${oldVersion}`;
-            await this.addTag(tagName);
-            await this.pushTag(tagName);
-        } else {
-            // Resumed
-            if (!await this.prompt(`>>> ${kind} already published. Skip publish and bump version after?`)) {
-                fatal("Operation stopped.");
-            }
-        }
-
-        await this.ensureAllPublished(monoRepo.packages);
-
-        // Fix the pre-release dependency and update package lock
-        console.log("    Fix pre-release dependencies");
-        const fixPrereleaseCommitMessage = `Remove pre-release dependencies for ${kind.toLowerCase()}`;
-        const bumpDep = new Map<string, string | undefined>();
-        bumpDep.set(kind, undefined);
-        return this.bumpDependencies(fixPrereleaseCommitMessage, bumpDep, paramPublishCheck, true, true);
-    }
-
-    /**
      * Create release branch based on the repo state, bump minor version immediately
      * and push it to `main` and the new release branch to remote
      */
@@ -1027,17 +924,15 @@ class BumpVersion {
         // creating the release branch and bump the version
         const releaseBranchVersion = `${semver.major(releaseVersion)}.${semver.minor(releaseVersion)}`;
         const releaseBranch = `release/${releaseBranchVersion}.x`;
-        console.log(`Creating release development branch ${releaseBranch}`);
         const commit = await this.gitRepo.getShaForBranch(releaseBranch);
         if (commit) {
             fatal(`${releaseBranch} already exists`);
         }
-        await this.createBranch(releaseBranch);
-        const originalCommit = await this.gitRepo.getShaForBranch(this.originalBranchName);
-        if (!originalCommit) {
-            fatal(`Unable to get commit for branch ${this.originalBranchName}`);
-        }
-        await this.gitRepo.switchBranch(originalCommit);
+
+        const bumpBranch = `minor_bump_${releaseBranchVersion}`;
+        console.log(`Creating branch ${bumpBranch}`);
+
+        await this.createBranch(bumpBranch);
 
         // Make sure everything is installed (so that we can do build:genver)
         if (!await this.repo.install()) {
@@ -1048,11 +943,90 @@ class BumpVersion {
         console.log(`Bumping minor version for development`)
         console.log(await this.bumpCurrentBranch("minor", releaseName, depVersions));
 
-        // Push to main remote
-        await this.gitRepo.pushBranch(this.remote, "HEAD", "main");
+        console.log("======================================================================================================");
+        console.log(`Please create PR with branch ${bumpBranch}`);
+        console.log(`After PR is merged, create branch ${releaseBranch} one commit before the merged PR and push to the repo.`);
+        console.log(`Then --release can be use to start the release.`);
+    }
 
-        // Push the release branch to remote
-        await this.gitRepo.pushBranch(this.remote, releaseBranch, releaseBranch);
+    private async postRelease(tagNames: string, packageNames: string, bumpDep: Map<string, string | undefined>) {
+        console.log(`Tag ${tagNames} exists.`);
+        console.log(`Bump version and update dependency for ${packageNames}`);
+        // TODO: Ensure all published
+
+        // Create branch
+        const bumpBranch = `patch_bump_${Date.now()}`;
+        await this.createBranch(bumpBranch);
+
+        // Fix the pre-release dependency and update package lock
+        const fixPrereleaseCommitMessage = `Remove pre-release dependencies for ${packageNames}`;
+        await this.bumpDependencies(fixPrereleaseCommitMessage, bumpDep, paramPublishCheck, true, true);
+
+        // Bump the released version
+        for (const name of bumpDep.keys()) {
+            await this.bumpVersion(name, "patch", true);
+        }
+
+        console.log("======================================================================================================");
+        console.log(`Please create PR with branch ${bumpBranch}`);
+        console.log(`After PR is merged run --release list the next release`);
+    }
+
+    /**
+     * Release a set of packages
+     */
+    private async releasePackages(packages: Package[]) {
+        await this.gitRepo.fetchTags();
+        const packageShortName: string[] = [];
+        const packageTags: string[] = [];
+        const packageNeedBump = new Map<string, string | undefined>();
+        const packageToRelease: Package[] = [];
+
+        for (const pkg of packages) {
+            let name = pkg.name.split("/").pop()!;
+            if (name.startsWith("fluid-")) {
+                name = name.substring("fluid-".length);
+            }
+
+            const tagName = `${name}_v${pkg.version}`;
+            packageShortName.push(name);
+            packageTags.push(tagName);
+            if ((await this.gitRepo.getTags(tagName)).trim() !== tagName) {
+                packageToRelease.push(pkg);
+            } else {
+                packageNeedBump.set(pkg.name, undefined);
+            }
+        }
+
+        if (packageToRelease.length !== 0) {
+            console.log("======================================================================================================");
+            console.log(`Please manually queue a release build for the following packages in ADO`);
+            for (const pkg of packageToRelease) {
+                console.log(`  ${pkg.name}`);
+            }
+            console.log(`After the build is done successfully run --release again to bump version and update dependency`);
+            return;
+        }
+
+        const pkgBumpString = packageShortName.join(" ");
+        return this.postRelease(packageTags.join(" "), pkgBumpString, packageNeedBump)
+    }
+
+    private async releaseMonoRepo(monoRepo: MonoRepo) {
+        const kind = MonoRepoKind[monoRepo.kind];
+        const kindLowerCase = MonoRepoKind[monoRepo.kind].toLowerCase();
+        const tagName = `${kindLowerCase}_${monoRepo.version}`;
+        await this.gitRepo.fetchTags();
+        if ((await this.gitRepo.getTags(tagName)).trim() !== tagName) {
+            console.log("======================================================================================================");
+            console.log(`Please manually queue a release build for the following packages in ADO`);
+            console.log(`  ${kindLowerCase}`);
+            console.log(`After the build is done successfully run --release again to bump version and update dependency`);
+            return;
+        }
+        const bumpDep = new Map<string, string | undefined>();
+        bumpDep.set(kind, undefined);
+        return this.postRelease(tagName, kindLowerCase, bumpDep);
     }
 
     /**
@@ -1063,119 +1037,50 @@ class BumpVersion {
      */
     public async releaseVersion(releaseName: string) {
         const versionBump = await this.getVersionBumpKind();
-        if (versionBump !== "patch" && releaseName !== MonoRepoKind[MonoRepoKind.Client]) {
+        if (versionBump !== "patch") {
             fatal(`Can't do ${versionBump} release on '${releaseName.toLowerCase()}' packages, only patch release is allowed`);
         }
 
-        console.log(`Bumping ${versionBump} version of ${releaseName.toLowerCase()}`);
-
         const depVersions = await this.collectBumpInfo(releaseName);
 
-        // Make sure everything is installed
-        if (!await this.repo.install()) {
-            fatal("Install failed");
-        }
-
-        // -----------------------------------------------------------------------------------------------------
-        // Create the release development branch if it is it not a patch upgrade
-        // -----------------------------------------------------------------------------------------------------
-        const releaseVersion = depVersions.repoVersions.get(releaseName);
-        if (!releaseVersion) {
-            fatal(`Missing ${releaseName} packages`);
-        }
-        let releaseBranch: string;
-        if (versionBump !== "patch") {
-            // This is main, we need to creating the release branch and bump the version
-            const releaseBranchVersion = `${semver.major(releaseVersion)}.${semver.minor(releaseVersion)}`;
-            releaseBranch = `release/${releaseBranchVersion}.x`;
-            console.log(`Creating release development branch ${releaseBranch}`);
-            const commit = await this.gitRepo.getShaForBranch(releaseBranch);
-            if (commit) {
-                const current = await this.gitRepo.getCurrentSha();
-                if (current !== commit) {
-                    fatal(`${releaseBranch} already exists`);
+        let releaseGroup: string | undefined;
+        let releasePackages: Package[] = [];
+        let releaseMonoRepo: MonoRepo | undefined;
+        // Assumes that the packages are in dependency order already.
+        for (const [name] of depVersions.repoVersions) {
+            if (depVersions.needRelease(name)) {
+                if (releaseGroup) {
+                    const pkg = this.fullPackageMap.get(name);
+                    if (pkg && pkg.name === releaseGroup) {
+                        releasePackages.push(pkg);
+                    }
+                } else {
+                    if (name === MonoRepoKind[MonoRepoKind.Client]) {
+                        releaseMonoRepo = this.repo.clientMonoRepo;
+                        break;
+                    }
+                    if (name === MonoRepoKind[MonoRepoKind.Server]) {
+                        releaseMonoRepo = this.repo.serverMonoRepo;
+                        break;
+                    }
+                    const pkg = this.fullPackageMap.get(name);
+                    if (!pkg) {
+                        fatal(`Unable find package ${name}`);
+                    }
+                    releaseGroup = pkg.group;
+                    releasePackages.push(pkg);
                 }
-                // Reuse the existing branch at the same commit
-            } else {
-                await this.createBranch(releaseBranch);
             }
-        } else {
-            releaseBranch = this.originalBranchName;
         }
 
-        // ------------------------------------------------------------------------------------------------------------------
-        // Create the release in a temporary merge/<release version>, fix pre-release dependency (if needed) and create tag.
-        // ------------------------------------------------------------------------------------------------------------------
-        console.log(`Creating ${releaseName} release ${releaseVersion}`);
-
-        const pendingReleaseBranch = `merge/${releaseName}_v${releaseVersion}`;
-        console.log(`  Creating temporary release branch ${pendingReleaseBranch}`);
-        const commit = await this.gitRepo.getShaForBranch(pendingReleaseBranch);
-        if (commit) {
-            if (!await this.prompt(`>>> Branch ${pendingReleaseBranch} exist, resume progress?`)) {
-                fatal("Operation aborted");
-            }
-            await this.switchBranchAndReloadPackageJson(pendingReleaseBranch);
-        } else {
-            await this.createBranch(pendingReleaseBranch);
+        if (!releaseMonoRepo && releasePackages.length === 0) {
+            fatal("Nothing to release");
         }
 
-        const preRepoPromises: Promise<void>[] = [];
-        if (this.packageManifest.releaseOrder?.preRepo !== undefined) {
-            this.packageManifest.releaseOrder.preRepo.forEach(async packages =>
-                preRepoPromises.push(this.releasePackage(depVersions, packages))
-            );
+        if (releaseMonoRepo) {
+            return this.releaseMonoRepo(releaseMonoRepo);
         }
-        await Promise.all(preRepoPromises);
-
-        if (this.repo.serverMonoRepo) {
-            await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo);
-        }
-
-        await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
-
-        const postRepoPromises: Promise<void>[] = [];
-        if (this.packageManifest.releaseOrder?.postRepo !== undefined) {
-            this.packageManifest.releaseOrder.postRepo.forEach(async packages =>
-                postRepoPromises.push(this.releasePackage(depVersions, packages))
-            );
-        }
-        await Promise.all(postRepoPromises);
-
-        // ------------------------------------------------------------------------------------------------------------------
-        // Create the minor version bump for development in a temporary merge/<original branch> on top of the release commit
-        // ------------------------------------------------------------------------------------------------------------------
-        let unreleased_branch: string | undefined;
-        let allRepoState: string = "";
-        if (versionBump !== "patch") {
-            unreleased_branch = `merge/${this.originalBranchName}`
-            console.log(`Bumping ${versionBump} version for development in branch ${unreleased_branch}`)
-
-            await this.createBranch(unreleased_branch);
-            const minorRepoState = await this.bumpCurrentBranch(versionBump, releaseName, depVersions);
-            allRepoState += `\n${minorRepoState}`;
-
-            // switch package to pendingReleaseBranch
-            await this.switchBranchAndReloadPackageJson(pendingReleaseBranch);
-
-        }
-
-        // ------------------------------------------------------------------------------------------------------------------
-        // Create the patch version bump for development in a temporary merge/<release version> on top fo the release commit
-        // ------------------------------------------------------------------------------------------------------------------
-        console.log(`Bumping patch version for development in branch ${pendingReleaseBranch}`)
-        // Do the patch version bump
-        const patchRepoState = await this.bumpCurrentBranch("patch", releaseName, depVersions);
-        allRepoState += `\n${patchRepoState}`;
-
-        console.log("======================================================================================================");
-        console.log(`Please merge ${pendingReleaseBranch} to ${releaseBranch}`);
-        if (unreleased_branch) {
-            console.log(`and merge ${unreleased_branch} to ${this.originalBranchName}`);
-        }
-
-        console.log(`Current repo state:`);
-        console.log(allRepoState);
+        return this.releasePackages(releasePackages);
     }
 
     public async bumpVersion(name: string, version: VersionChangeType, commit: boolean) {
