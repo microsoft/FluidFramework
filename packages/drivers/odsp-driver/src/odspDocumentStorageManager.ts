@@ -12,6 +12,7 @@ import {
     hashFile,
     IsoBuffer,
     Uint8ArrayToString,
+    performance,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -545,25 +546,26 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             let networkTime: number | undefined; // responseEnd - startTime
             const spReqDuration = response.headers.get("sprequestduration");
 
-            const resources1 = performance.getEntriesByType("resource");
+            // getEntriesByType is only available in browser performance object
+            const resources1 = performance.getEntriesByType?.("resource") ?? [];
             // Usually the latest fetch call is to the end of resources, so we start from the end.
             for (let i = resources1.length - 1; i > 0; i--) {
                 const indResTime = resources1[i] as PerformanceResourceTiming;
                 const resource_name = indResTime.name;
                 const resource_initiatortype = indResTime.initiatorType;
                 if ((resource_initiatortype.localeCompare("fetch") === 0) && (resource_name.localeCompare(url) === 0)) {
-                        redirectTime = indResTime.redirectEnd - indResTime.redirectStart;
-                        dnstime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
-                        tcpHandshakeTime = indResTime.connectEnd - indResTime.connectStart;
-                        secureConntime = (indResTime.secureConnectionStart > 0) ? (indResTime.connectEnd - indResTime.secureConnectionStart) : 0;
-                        responseTime = indResTime.responseEnd - indResTime.responseStart;
-                        fetchStToRespEndTime = (indResTime.fetchStart > 0) ? (indResTime.responseEnd - indResTime.fetchStart) : 0;
-                        reqStToRespEndTime = (indResTime.requestStart > 0) ? (indResTime.responseEnd - indResTime.requestStart) : 0;
-                        networkTime = (indResTime.startTime > 0) ? (indResTime.responseEnd - indResTime.startTime) : 0;
-                        if (spReqDuration) {
-                            networkTime = networkTime - parseInt(spReqDuration, 10);
-                        }
-                        break;
+                    redirectTime = indResTime.redirectEnd - indResTime.redirectStart;
+                    dnstime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
+                    tcpHandshakeTime = indResTime.connectEnd - indResTime.connectStart;
+                    secureConntime = (indResTime.secureConnectionStart > 0) ? (indResTime.connectEnd - indResTime.secureConnectionStart) : 0;
+                    responseTime = indResTime.responseEnd - indResTime.responseStart;
+                    fetchStToRespEndTime = (indResTime.fetchStart > 0) ? (indResTime.responseEnd - indResTime.fetchStart) : 0;
+                    reqStToRespEndTime = (indResTime.requestStart > 0) ? (indResTime.responseEnd - indResTime.requestStart) : 0;
+                    networkTime = (indResTime.startTime > 0) ? (indResTime.responseEnd - indResTime.startTime) : 0;
+                    if (spReqDuration) {
+                        networkTime = networkTime - parseInt(spReqDuration, 10);
+                    }
+                    break;
                 }
             }
 

@@ -55,7 +55,7 @@
     "@fluidframework/core-interfaces": "^0.28.0",
     "@fluidframework/datastore-definitions": "^0.28.0",
     "@fluidframework/driver-definitions": "^0.28.0",
-    "@fluidframework/protocol-definitions": "^0.1013.0-0",
+    "@fluidframework/protocol-definitions": "^0.1014.0-0",
     "@fluidframework/runtime-definitions": "^0.28.0",
     "@fluidframework/runtime-utils": "^0.28.0",
     "@fluidframework/telemetry-utils": "^0.28.0",
