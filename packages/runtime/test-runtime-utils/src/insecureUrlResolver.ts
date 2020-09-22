@@ -44,6 +44,7 @@ export class InsecureUrlResolver implements IUrlResolver {
         private readonly tenantKey: string,
         private readonly user: IUser,
         private readonly bearer: string,
+        private readonly isForNodeTest: boolean = false,
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
@@ -60,7 +61,10 @@ export class InsecureUrlResolver implements IUrlResolver {
         const parsedUrl = new URL(request.url);
         // If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
         // service using our bearer token.
-        if (parsedUrl.host === window.location.host) {
+        if (this.isForNodeTest) {
+            const documentId = parsedUrl.pathname.substr(1).split("/")[1];
+            return this.resolveHelper(documentId);
+        } else if (parsedUrl.host === window.location.host) {
             const documentId = parsedUrl.pathname.substr(1).split("/")[0];
             const documentRelativePath = parsedUrl.pathname.replace(`/${documentId}/`,"");
             return this.resolveHelper(documentId, documentRelativePath);

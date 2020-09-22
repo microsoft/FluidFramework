@@ -41,13 +41,6 @@ COPY packages/services-utils/package*.json packages/services-utils/
 COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/protocol-base/package*.json packages/protocol-base/
 
-# Give node user access to nyc in order to run and store coverage tests. Do this in all packages directory
-# as well as the root
-RUN for d in ./*/*/ ; do (cd "$d" && mkdir nyc && chown node: nyc); done
-RUN mkdir nyc && chown node: nyc
-
-# Expose the port the app runs under
-EXPOSE 3000
 
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
@@ -59,14 +52,13 @@ COPY . .
 
 # Switch to the server folder and build
 WORKDIR /usr/src/server
-
-# Set the version number
-ARG VERSION=0
-RUN if [ "$VERSION" != "0" ]; then npx lerna version $VERSION --no-git-tag-version --no-push --yes; fi
 RUN npm run ci:build
 
 # Build that alfred uses
 FROM base AS runner
+
+# Expose the port the app runs under
+EXPOSE 3000
 
 # Don't run as root user
 USER node

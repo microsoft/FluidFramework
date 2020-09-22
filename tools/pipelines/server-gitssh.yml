@@ -56,6 +56,5 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: server/gitssh
     containerName: fluidframework/routerlicious/gitssh
-    test: false
     setVersion: false
     tagName: gitssh
