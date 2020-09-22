@@ -47,6 +47,10 @@ export function create(
         }, (error) => response.status(400).end(error.toString()));
     }
 
+    router.get("/ping", async (request, response) => {
+        response.sendStatus(200);
+    });
+
     router.patch("/:tenantId/:id/root", async (request, response) => {
         const validP = verifyRequest(request, tenantManager, storage);
         returnResponse(validP, request, response, mapSetBuilder);
