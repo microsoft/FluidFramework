@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/odsp-urlresolver",
-  "version": "0.24.5",
+  "version": "0.24.6",
   "description": "Url Resolver for odsp urls.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -28,9 +28,9 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.24.5",
-    "@fluidframework/driver-definitions": "^0.24.5",
-    "@fluidframework/odsp-driver": "^0.24.5"
+    "@fluidframework/component-core-interfaces": "^0.24.6",
+    "@fluidframework/driver-definitions": "^0.24.6",
+    "@fluidframework/odsp-driver": "^0.24.6"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
