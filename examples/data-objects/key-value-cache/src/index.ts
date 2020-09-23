@@ -27,7 +27,7 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import {
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
@@ -139,7 +139,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
             new Map([[ComponentName, Promise.resolve(this)]]),
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(ComponentName),
-                deprecated_innerRequestHandler,
+                innerRequestHandler,
             ),
         );
 
