@@ -569,16 +569,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                 const response = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger);
                 const odspSnapshot: IOdspSnapshot = response.content;
-                // OdspSnapshot contain "trees" when the request is made for latest or the root of the tree, for all other cases it will contain "tree" which is the fetched tree with the id
+                let treeId: string | undefined;
                 if (odspSnapshot) {
                     if (odspSnapshot.trees) {
                         this.initTreesCache(odspSnapshot.trees);
+                        if (odspSnapshot.trees.length > 0) {
+                            treeId = odspSnapshot.trees[0].id;
+                        }
                     }
                     if (odspSnapshot.blobs) {
                         this.initBlobsCache(odspSnapshot.blobs);
                     }
                 }
-                return this.treesCache.get(id);
+                return treeId !== undefined ? this.treesCache.get(treeId) : undefined;
             });
         }
 
