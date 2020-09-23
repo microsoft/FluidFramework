@@ -725,9 +725,9 @@ class BumpVersion {
                     const dep = dev ? pkg.packageJson.devDependencies : pkg.packageJson.dependencies;
 
                     if (typeof versionBump === "string") {
-                        dep[name] = `npm:${packageName}@^${depPackage.version}`;
+                        dep[name] = `npm:${packageName}@^${semver.major(depPackage.version)}.${semver.minor(depPackage.version) - 1}.0`;
                     } else {
-                        dep[name] = `npm:${packageName}@^${versionBump.major}.${versionBump.minor - 1}.0}`;
+                        dep[name] = `npm:${packageName}@^${versionBump.major}.${versionBump.minor - 2}.0}`;
                     }
 
                 }
@@ -923,13 +923,13 @@ class BumpVersion {
 
         // creating the release branch and bump the version
         const releaseBranchVersion = `${semver.major(releaseVersion)}.${semver.minor(releaseVersion)}`;
-        const releaseBranch = `release/${releaseBranchVersion}.x`;
+        const releaseBranch = `release/${releaseBranchVersion}`;
         const commit = await this.gitRepo.getShaForBranch(releaseBranch);
         if (commit) {
             fatal(`${releaseBranch} already exists`);
         }
 
-        const bumpBranch = `minor_bump_${releaseBranchVersion}`;
+        const bumpBranch = `minor_bump_${releaseBranchVersion}_${Date.now()}`;
         console.log(`Creating branch ${bumpBranch}`);
 
         await this.createBranch(bumpBranch);
@@ -944,7 +944,7 @@ class BumpVersion {
         console.log(await this.bumpCurrentBranch("minor", releaseName, depVersions));
 
         console.log("======================================================================================================");
-        console.log(`Please create PR with branch ${bumpBranch}`);
+        console.log(`Please create PR for branch ${bumpBranch} targeting ${this.originalBranchName}`);
         console.log(`After PR is merged, create branch ${releaseBranch} one commit before the merged PR and push to the repo.`);
         console.log(`Then --release can be use to start the release.`);
     }
@@ -965,7 +965,7 @@ class BumpVersion {
             `\n\n${fixPrereleaseCommitMessage}\n${message}`: "");
 
         console.log("======================================================================================================");
-        console.log(`Please create PR with branch ${bumpBranch}`);
+        console.log(`Please create PR for branch ${bumpBranch} targeting ${this.originalBranchName}`);
         console.log(`After PR is merged run --release list the next release`);
     }
 
@@ -1001,7 +1001,7 @@ class BumpVersion {
 
         if (packageToRelease.length !== 0) {
             console.log("======================================================================================================");
-            console.log(`Please manually queue a release build for the following packages in ADO`);
+            console.log(`Please manually queue a release build for the following packages in ADO for branch ${this.originalBranchName}`);
             for (const pkg of packageToRelease) {
                 console.log(`  ${pkg.name}`);
             }
@@ -1020,7 +1020,7 @@ class BumpVersion {
         await this.gitRepo.fetchTags();
         if ((await this.gitRepo.getTags(tagName)).trim() !== tagName) {
             console.log("======================================================================================================");
-            console.log(`Please manually queue a release build for the following packages in ADO`);
+            console.log(`Please manually queue a release build for the following packages in ADO for branch ${this.originalBranchName}`);
             console.log(`  ${kindLowerCase}`);
             console.log(`After the build is done successfully run --release again to bump version and update dependency`);
             return;
