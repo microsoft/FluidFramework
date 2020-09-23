@@ -26,7 +26,7 @@
   "dependencies": {
     "@azure/event-hubs": "^1.0.8",
     "@azure/event-processor-host": "^1.0.6",
-    "@fluidframework/common-utils": "^0.24.0-0",
+    "@fluidframework/common-utils": "^0.24.0",
     "@fluidframework/protocol-definitions": "^0.1013.0",
     "@fluidframework/server-services-client": "^0.1013.0",
     "@fluidframework/server-services-core": "^0.1013.0",
