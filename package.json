@@ -98,7 +98,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.3049",
+    "@fluidframework/build-tools": "^0.2.5638",
     "@fluidframework/test-tools": "^0.2.3074",
     "@mattetti/custom-api-documenter": "^0.2.1",
     "@microsoft/api-extractor": "^7.7.2",
@@ -109,5 +109,25 @@
     "rimraf": "^2.6.2",
     "run-script-os": "^1.0.7",
     "typescript": "~3.7.4"
+  },
+  "fluidBuild": {
+    "repoPackages": {
+      "build": "common/build",
+      "common-def": "common/lib/common-definitions",
+      "common-utils": "common/lib/common-utils",
+      "server": "server/routerlicious",
+      "client": "",
+      "tools": [
+        "tools/generator-fluid",
+        "server/tinylicious"
+      ],
+      "services": {
+        "directory": "server",
+        "ignoredDirs": [
+          "routerlicious"
+        ]
+      }
+    },
+    "generatorName": "generator-fluid"
   }
 }
