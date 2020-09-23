@@ -5,7 +5,7 @@
 
 import * as services from "@fluidframework/server-services";
 import { getOrCreateRepository } from "@fluidframework/server-services-client";
-import { MongoManager } from "@fluidframework/server-services-core";
+import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -21,6 +21,7 @@ export class RiddlerResources implements utils.IResources {
         public readonly baseOrdererUrl: string,
         public readonly defaultHistorianUrl: string,
         public readonly defaultInternalHistorianUrl: string,
+        public readonly secretManager: ISecretManager,
     ) {
     }
 
@@ -36,12 +37,14 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
         const mongoManager = new MongoManager(mongoFactory);
         const tenantsCollectionName = config.get("mongo:collectionNames:tenants");
+        const secretManager = new services.SecretManager();
 
         // Load configs for default tenants
         const db = await mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(tenantsCollectionName);
         const tenants = config.get("tenantConfig") as any[];
         const upsertP = tenants.map(async (tenant) => {
+            tenant.key = secretManager.encryptSecret(tenant.key);
             await collection.upsert({ _id: tenant._id }, tenant, null);
 
             // Skip creating anything with credentials - we assume this is external to us and something we can't
@@ -70,7 +73,8 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
             loggerFormat,
             serverUrl,
             defaultHistorianUrl,
-            defaultInternalHistorianUrl);
+            defaultInternalHistorianUrl,
+            secretManager);
     }
 }
 
@@ -83,6 +87,7 @@ export class RiddlerRunnerFactory implements utils.IRunnerFactory<RiddlerResourc
             resources.loggerFormat,
             resources.baseOrdererUrl,
             resources.defaultHistorianUrl,
-            resources.defaultInternalHistorianUrl);
+            resources.defaultInternalHistorianUrl,
+            resources.secretManager);
     }
 }
