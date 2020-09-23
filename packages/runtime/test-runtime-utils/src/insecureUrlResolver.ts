@@ -65,8 +65,12 @@ export class InsecureUrlResolver implements IUrlResolver {
             const documentId = parsedUrl.pathname.substr(1).split("/")[1];
             return this.resolveHelper(documentId, "");
         } else if (parsedUrl.host === window.location.host) {
-            const documentId = parsedUrl.pathname.substr(1).split("/")[0];
-            const documentRelativePath = parsedUrl.pathname.replace(`/${documentId}/`,"");
+            const fullPath = parsedUrl.pathname.substr(1);
+            const documentId = fullPath.split("/")[0];
+            let documentRelativePath = "";
+            if (fullPath !== documentId) {
+                documentRelativePath = fullPath.replace(`${documentId}/`,"");
+            }
             return this.resolveHelper(documentId, documentRelativePath);
         } else {
             const maybeResolvedUrl = this.cache.get(request.url);
