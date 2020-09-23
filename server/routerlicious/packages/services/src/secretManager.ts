@@ -6,16 +6,15 @@
 import * as core from "@fluidframework/server-services-core";
 
 /**
- * Manages encryption of secrets.
+ * This is a dummy implementation that returns the secret as is after encryption/decryption.
+ * Users requiring encryption of secrets are expected to have their own implementation of ISecretManager.
  */
 export class SecretManager  implements core.ISecretManager {
     public decryptSecret(encryptedSecret: string): string {
-        /** Add your custom implementation here. */
         return encryptedSecret;
     }
 
     public encryptSecret(secret: string): string {
-        /** Add your custom implementation here. */
         return secret;
     }
 }
