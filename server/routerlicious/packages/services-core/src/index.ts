@@ -20,6 +20,7 @@ export * from "./mongoDatabaseManager";
 export * from "./orderer";
 export * from "./publisher";
 export * from "./queue";
+export * from "./secretManager";
 export * from "./taskMessages";
 export * from "./tenant";
 export * from "./zookeeper";
