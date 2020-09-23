@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/get-session-storage-container",
-  "version": "0.25.3",
+  "version": "0.25.4",
   "description": "Tool for getting a Ram-a-licious configured container for testing app scenarios",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,9 +24,9 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.25.3",
-    "@fluidframework/container-loader": "^0.25.3",
-    "@fluidframework/local-driver": "^0.25.3",
+    "@fluidframework/container-definitions": "^0.25.4",
+    "@fluidframework/container-loader": "^0.25.4",
+    "@fluidframework/local-driver": "^0.25.4",
     "@fluidframework/server-local-server": "^0.1011.1"
   },
   "devDependencies": {

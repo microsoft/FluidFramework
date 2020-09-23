@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/odsp-urlresolver",
-  "version": "0.25.3",
+  "version": "0.25.4",
   "description": "Url Resolver for odsp urls.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -29,14 +29,14 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.25.3",
-    "@fluidframework/driver-definitions": "^0.25.3",
-    "@fluidframework/odsp-driver": "^0.25.3"
+    "@fluidframework/core-interfaces": "^0.25.4",
+    "@fluidframework/driver-definitions": "^0.25.4",
+    "@fluidframework/odsp-driver": "^0.25.4"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/mocha-test-setup": "^0.25.3",
+    "@fluidframework/mocha-test-setup": "^0.25.4",
     "@types/mocha": "^5.2.5",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
