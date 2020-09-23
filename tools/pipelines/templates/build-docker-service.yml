@@ -113,10 +113,17 @@ stages:
       releaseBuildVar: $[variables.releaseBuild]
       containerTagSuffix: $(SetVersion.version)
     steps:
+    # Setup
+    - checkout: self
+      clean: true
+      lfs: false
+      submodules: false
+
     - task: Bash@3
       displayName: Parameters
       inputs:
         targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
         script: |
           # Show all task group conditions
 
@@ -147,6 +154,17 @@ stages:
               echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
               exit -1;
             fi
+
+            if [ -f "lerna.json" ]; then
+              grep -e fluid.*-0 `find packages -name 'package.json'`
+            else
+              grep -e fluid.*-0 `find . -name 'package.json'`
+          fi
+
+            if [[ $? == 0 ]]; then
+              echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
+              exit -1;
+            fi
           fi
 
           if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
@@ -160,12 +178,6 @@ stages:
               exit -1;
             fi
           fi
-
-    # Setup
-    - checkout: self
-      clean: true
-      lfs: false
-      submodules: false
 
     # for npm ci in component detection and set version
     - task: UseNode@1
