@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager } from "@fluidframework/server-services-core";
+import { ITenantConfig, MongoManager } from "@fluidframework/server-services-core";
 import { Response, Router } from "express";
 import { getParam } from "../utils";
 import { TenantManager } from "./tenantManager";
@@ -41,8 +41,14 @@ export function create(
     /**
      * Retrieves details for the given tenant
      */
-    router.get("/tenants/:id", (request, response) => {
-        const tenantP = manager.getTenant(getParam(request.params, "id"));
+    router.get("/tenants/:id?", (request, response) => {
+        const tenantId = getParam(request.params, "id");
+        let tenantP: Promise<ITenantConfig | ITenantConfig[]>;
+        if (tenantId) {
+            tenantP = manager.getTenant(tenantId);
+        } else {
+            tenantP = manager.getAllTenants();
+        }
         returnResponse(tenantP, response);
     });
 
@@ -71,11 +77,36 @@ export function create(
     });
 
     /**
+     * Updates the details for the given tenant based on instructions in the request body
+     */
+    router.patch("/tenants/:id", (request, response) => {
+        const tenantId = getParam(request.params, "id");
+        const { customData, refreshKey } = request.body;
+        const updatePs: Promise<any>[] = [];
+        if (customData) {
+            updatePs.push(manager.updateCustomData(tenantId, customData));
+        }
+        if (refreshKey) {
+            updatePs.push(manager.refreshTenantKey(tenantId));
+        }
+        returnResponse(Promise.all(updatePs), response);
+    });
+
+    /**
      * Creates a new tenant
      */
     router.post("/tenants/:id?", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const tenantP = manager.createTenant(tenantId);
+        const tenantP = manager.createTenant(tenantId, request.body.customData);
+        returnResponse(tenantP, response);
+    });
+
+    /**
+     * Deletes a tenant by adding a disabled flag
+     */
+    router.delete("/tenants/:id", (request, response) => {
+        const tenantId = getParam(request.params, "id");
+        const tenantP = manager.disableTenant(tenantId);
         returnResponse(tenantP, response);
     });
 

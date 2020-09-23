@@ -11,6 +11,8 @@ export interface ITenantConfig {
     storage: ITenantStorage;
 
     orderer: ITenantOrderer;
+
+    customData: ITenantCustomData;
 }
 
 export interface ITenantStorage {
@@ -45,6 +47,10 @@ export interface ITenantOrderer {
 
     // The type of ordering service
     type: string;
+}
+
+export interface ITenantCustomData {
+    [key: string]: any;
 }
 
 export interface ITenant {

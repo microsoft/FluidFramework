@@ -6,6 +6,7 @@
 import * as crypto from "crypto";
 import {
     ITenantConfig,
+    ITenantCustomData,
     ITenantOrderer,
     ITenantStorage,
     MongoManager,
@@ -30,6 +31,12 @@ export interface ITenantDocument {
 
     // Orderer details
     orderer: ITenantOrderer;
+
+    // Custom data for tenant extensibility
+    customData: ITenantCustomData;
+
+    // Whether the tenant is disabled
+    disabled: boolean;
 }
 
 export class TenantManager {
@@ -69,22 +76,46 @@ export class TenantManager {
             id: tenant._id,
             orderer: tenant.orderer,
             storage: tenant.storage,
+            customData: tenant.customData,
         };
+    }
+
+    /**
+     * Retrieves the details for all tenants
+     */
+    public async getAllTenants(): Promise<ITenantConfig[]> {
+        const tenants = await this.getAllTenantDocuments();
+
+        return tenants.map((tenant) => ({
+            id: tenant._id,
+            orderer: tenant.orderer,
+            storage: tenant.storage,
+            customData: tenant.customData,
+        }));
+    }
+
+    private generateTenantKey(): string {
+        return crypto.randomBytes(16).toString("hex");
     }
 
     /**
      * Creates a new tenant
      */
-    public async createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }> {
+    public async createTenant(
+        tenantId?: string,
+        customData?: ITenantCustomData,
+    ): Promise<ITenantConfig & { key: string }> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
-        const key = crypto.randomBytes(16).toString("hex");
+        const key = this.generateTenantKey();
         const id = await collection.insertOne({
             _id: tenantId || getRandomName("-"),
             key,
             orderer: null,
             storage: null,
+            customData: customData || {},
+            disabled: false,
         });
 
         const tenant = await this.getTenant(id);
@@ -103,11 +134,31 @@ export class TenantManager {
         return (await this.getTenantDocument(tenantId)).storage;
     }
 
+    /**
+     * Updates the tenant configured orderer
+     */
     public async updateOrderer(tenantId: string, orderer: ITenantOrderer): Promise<ITenantOrderer> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
         await collection.update({ _id: tenantId }, { orderer }, null);
+
+        return (await this.getTenantDocument(tenantId)).orderer;
+    }
+
+    /**
+     * Updates the tenant custom data fields
+     */
+    public async updateCustomData(tenantId: string, customData: ITenantCustomData): Promise<ITenantCustomData> {
+        const db = await this.mongoManager.getDatabase();
+        const collection = db.collection<ITenantDocument>(this.collectionName);
+
+        const customDataUpdateDoc = {};
+        Object.entries(customData).forEach(([key, value]) => {
+            customDataUpdateDoc[`customData.${key}`] = value;
+        });
+
+        await collection.update({ _id: tenantId }, customDataUpdateDoc, null);
 
         return (await this.getTenantDocument(tenantId)).orderer;
     }
@@ -120,18 +171,27 @@ export class TenantManager {
     }
 
     /**
-     * Retrieves the raw databasse tenant document
+     * Generates a new key for a tenant
      */
-    private async getTenantDocument(tenantId: string): Promise<ITenantDocument> {
+    public async refreshTenantKey(tenantId: string): Promise<string> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
-        const found = await collection.findOne({ _id: tenantId });
+        const key = this.generateTenantKey();
 
+        await collection.update({ _id: tenantId }, { key }, null);
+
+        return (await this.getTenantDocument(tenantId)).key;
+    }
+
+    /**
+     * Attaches fields to older tenants to provide backwards compatibility
+     */
+    private attachOrdererAndStorageToTenantDocument(tenantDocument: ITenantDocument): void {
         // Ordering information was historically not included with the tenant. In the case where it is empty
         // we default it to the kafka orderer at the base server URL.
-        if (!found.orderer) {
-            found.orderer = {
+        if (!tenantDocument.orderer) {
+            tenantDocument.orderer = {
                 type: "kafka",
                 url: this.baseOrdererUrl,
             };
@@ -139,11 +199,58 @@ export class TenantManager {
 
         // Older tenants did not include the historian endpoint in their storage configuration since this
         // was always assumed to be a static value.
-        if (found.storage && !found.storage.historianUrl) {
-            found.storage.historianUrl = this.defaultHistorianUrl;
-            found.storage.internalHistorianUrl = this.defaultInternalHistorianUrl;
+        if (tenantDocument.storage && !tenantDocument.storage.historianUrl) {
+            tenantDocument.storage.historianUrl = this.defaultHistorianUrl;
+            tenantDocument.storage.internalHistorianUrl = this.defaultInternalHistorianUrl;
         }
 
+        // Older tenants do not include the custom data object. Setting it as an empty object
+        // avoids errors down the line.
+        if (!tenantDocument.customData) {
+            tenantDocument.customData = {};
+        }
+    }
+
+    /**
+     * Retrieves the raw database tenant document
+     */
+    private async getTenantDocument(tenantId: string): Promise<ITenantDocument> {
+        const db = await this.mongoManager.getDatabase();
+        const collection = db.collection<ITenantDocument>(this.collectionName);
+
+        const found = await collection.findOne({ _id: tenantId });
+        if (found.disabled) {
+            throw new Error("Tenant is disabled");
+        }
+
+        this.attachOrdererAndStorageToTenantDocument(found);
+
         return found;
+    }
+
+    /**
+     * Retrieves all the raw database tenant documents
+     */
+    public async getAllTenantDocuments(): Promise<ITenantDocument[]> {
+        const db = await this.mongoManager.getDatabase();
+        const collection = db.collection<ITenantDocument>(this.collectionName);
+
+        const allFound = await collection.findAll();
+
+        allFound.forEach((found) => {
+            this.attachOrdererAndStorageToTenantDocument(found);
+        });
+
+        return allFound.filter((found) => !found.disabled);
+    }
+
+    /**
+     * Flags the given tenant as disabled
+     */
+    public async disableTenant(tenantId: string): Promise<void> {
+        const db = await this.mongoManager.getDatabase();
+        const collection = db.collection<ITenantDocument>(this.collectionName);
+
+        await collection.update({ _id: tenantId }, { disabled: true }, null);
     }
 }
