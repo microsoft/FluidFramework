@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/react-inputs",
-  "version": "0.24.5",
+  "version": "0.24.6",
   "description": "React support for the Aqueduct framework.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,8 +26,8 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/cell": "^0.24.5",
-    "@fluidframework/sequence": "^0.24.5",
+    "@fluidframework/cell": "^0.24.6",
+    "@fluidframework/sequence": "^0.24.6",
     "react": "^16.10.2"
   },
   "devDependencies": {

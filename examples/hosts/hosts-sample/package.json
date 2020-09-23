@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/hosts-sample",
-  "version": "0.24.5",
+  "version": "0.24.6",
   "private": true,
   "description": "Sample Fluid container host",
   "repository": "microsoft/FluidFramework",
@@ -25,14 +25,14 @@
     "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.24.5",
-    "@fluidframework/container-definitions": "^0.24.5",
-    "@fluidframework/container-loader": "^0.24.5",
+    "@fluidframework/component-core-interfaces": "^0.24.6",
+    "@fluidframework/container-definitions": "^0.24.6",
+    "@fluidframework/container-loader": "^0.24.6",
     "@fluidframework/protocol-definitions": "^0.1010.0",
-    "@fluidframework/routerlicious-driver": "^0.24.5",
-    "@fluidframework/test-runtime-utils": "^0.24.5",
-    "@fluidframework/view-interfaces": "^0.24.5",
-    "@fluidframework/web-code-loader": "^0.24.5",
+    "@fluidframework/routerlicious-driver": "^0.24.6",
+    "@fluidframework/test-runtime-utils": "^0.24.6",
+    "@fluidframework/view-interfaces": "^0.24.6",
+    "@fluidframework/web-code-loader": "^0.24.6",
     "@types/jsonwebtoken": "^8.3.2",
     "jsonwebtoken": "^8.4.0"
   },
