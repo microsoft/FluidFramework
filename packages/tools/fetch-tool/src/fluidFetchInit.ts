@@ -64,6 +64,8 @@ async function initializeODSPCore(
             },
             server,
             clientConfig,
+            undefined,
+            true,
         );
     };
     // eslint-disable-next-line @typescript-eslint/promise-function-async
