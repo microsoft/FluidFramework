@@ -37,40 +37,36 @@ export class TinyliciousRunner implements utils.IRunner {
         private readonly contentCollection: ICollection<any>,
     ) {}
 
-    public start(): Promise<void> {
+    public async start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
 
-        this.ensurePortIsFree()
-            .then(() => {
-                const alfred = app.create(
-                    this.config,
-                    this.storage,
-                    this.mongoManager,
-                );
-                alfred.set("port", this.port);
+        try {
+            await this.ensurePortIsFree();
+        } catch (error) {
+            this.runningDeferred.reject(error);
+        }
 
-                this.server = this.serverFactory.create(alfred);
-                const httpServer = this.server.httpServer;
+        const alfred = app.create(this.config, this.storage, this.mongoManager);
+        alfred.set("port", this.port);
 
-                configureWebSocketServices(
-                    this.server.webSocketServer,
-                    this.orderManager,
-                    this.tenantManager,
-                    this.storage,
-                    this.contentCollection,
-                    new TestClientManager(),
-                    new DefaultMetricClient(),
-                    winston,
-                );
+        this.server = this.serverFactory.create(alfred);
+        const httpServer = this.server.httpServer;
 
-                // Listen on provided port, on all network interfaces.
-                httpServer.listen(this.port);
-                httpServer.on("error", (error) => this.onError(error));
-                httpServer.on("listening", () => this.onListening());
-            })
-            .catch((reason) => {
-                this.runningDeferred.reject(reason);
-            });
+        configureWebSocketServices(
+            this.server.webSocketServer,
+            this.orderManager,
+            this.tenantManager,
+            this.storage,
+            this.contentCollection,
+            new TestClientManager(),
+            new DefaultMetricClient(),
+            winston,
+        );
+
+        // Listen on provided port, on all network interfaces.
+        httpServer.listen(this.port);
+        httpServer.on("error", (error) => this.onError(error));
+        httpServer.on("listening", () => this.onListening());
 
         return this.runningDeferred.promise;
     }
@@ -89,30 +85,21 @@ export class TinyliciousRunner implements utils.IRunner {
         return this.runningDeferred.promise;
     }
 
-    private ensurePortIsFree(): Promise<void> {
-        const detectDeferred = new Deferred<void>();
-
-        // If this.port is a named pipe resolve immediately
+    /**
+     * Ensure configured port is free
+     */
+    private async ensurePortIsFree(): Promise<void> {
+        // If port is a named pipe resolve immediately
         if (typeof this.port === "string") {
-            detectDeferred.resolve();
-            return detectDeferred.promise;
+            return;
         }
 
-        detect(this.port)
-            .then((port) => {
-                if (this.port !== port) {
-                    detectDeferred.reject(
-                        `Port: ${this.port} is occupied, Try port: ${port}`,
-                    );
-                }
+        const freePort = await detect(this.port);
+        if (this.port === freePort) {
+            return;
+        }
 
-                detectDeferred.resolve();
-            })
-            .catch((reason) => {
-                detectDeferred.reject(reason);
-            });
-
-        return detectDeferred.promise;
+        throw new Error(`Port: ${this.port} is occupied. Try port: ${freePort}`);
     }
 
     /**
