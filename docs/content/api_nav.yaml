@@ -6835,8 +6835,8 @@ api_nav:
         url: /api/request-handler.buildruntimerequesthandler
       - title: createComponentResponse
         url: /api/request-handler.createcomponentresponse
-      - title: deprecated_innerRequestHandler
-        url: /api/request-handler.deprecated_innerrequesthandler
+      - title: innerRequestHandler
+        url: /api/request-handler.innerRequestHandler
       - title: RuntimeRequestHandler
         url: /api/request-handler.runtimerequesthandler
       - title: RuntimeRequestHandlerBuilder

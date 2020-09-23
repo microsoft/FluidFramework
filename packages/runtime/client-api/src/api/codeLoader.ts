@@ -24,7 +24,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import {
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
@@ -117,7 +117,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
             ],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(rootStoreId),
-                deprecated_innerRequestHandler,
+                innerRequestHandler,
             ),
             this.runtimeOptions);
 
