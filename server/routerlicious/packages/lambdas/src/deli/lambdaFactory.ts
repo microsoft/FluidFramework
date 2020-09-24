@@ -116,11 +116,11 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             }
         }
 
-        // back-compat for older documents.
+        // For cases such as offline creation where the document was generated outside the scope of deli
+        // and checkpoint was written manually.
         if (lastCheckpoint.epoch === undefined) {
             lastCheckpoint.epoch = leaderEpoch;
             lastCheckpoint.term = 1;
-            lastCheckpoint.durableSequenceNumber = lastCheckpoint.sequenceNumber;
         }
 
         const newCheckpoint = FlipTerm ?
