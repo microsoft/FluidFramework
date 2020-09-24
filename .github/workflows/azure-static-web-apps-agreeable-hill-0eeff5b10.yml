@@ -19,6 +19,7 @@ jobs:
       - uses: actions/setup-node@v2-beta
         with:
           node-version: "12"
+
       - name: Download JSON by SHA
         id: download-sha-json
         continue-on-error: true
