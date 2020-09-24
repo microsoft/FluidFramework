@@ -53,6 +53,41 @@ export interface IFork {
     lastForwardedSequenceNumber: number;
 }
 
+export interface IClientSequenceNumber {
+    // Whether or not the client can expire
+    canEvict: boolean;
+    clientId: string;
+    lastUpdate: number;
+    nack: boolean;
+    referenceSequenceNumber: number;
+    clientSequenceNumber: number;
+    scopes: string[];
+}
+
+export interface IDeliState {
+    // Branch related mapping
+    branchMap: IRangeTrackerSnapshot;
+
+    // List of connected clients
+    clients: IClientSequenceNumber[];
+
+    // Durable sequence number at logOffset
+    durableSequenceNumber: number;
+
+    // Kafka checkpoint that maps to the below stored data
+    logOffset: number;
+
+    // Sequence number at logOffset
+    sequenceNumber: number;
+
+    // Epoch of stream provider
+    epoch: number;
+
+    // Term at logOffset
+    term: number;
+}
+
+// TODO: We should probably rename this to IScribeState
 export interface IScribe {
     // Kafka checkpoint that maps to the below stored data
     logOffset: number;

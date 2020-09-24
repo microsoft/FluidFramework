@@ -3,7 +3,7 @@ title: Architecture
 menuPosition: 1
 ---
 
-Fluid Framework can be broken into three broad parts: The _Fluid loader_, _Fluid containers_, and the _Fluid service_.
+The Fluid Framework can be broken into three broad parts: The _Fluid loader_, _Fluid containers_, and the _Fluid service_.
 While each of these is covered in more detail elsewhere, we'll use this space to explain the areas at a high level,
 identify the important lower level concepts, and discuss some of our key design decisions.
 
@@ -16,7 +16,7 @@ The Fluid loader connects to the Fluid service and loads a Fluid container.
 If you want to load a Fluid container on your app or website, you'll load the container with the Fluid loader. If you
 want to create a new collaborative experience using the Fluid Framework, you'll create a Fluid container.
 
-A Fluid container includes state and app logic. It's a serverless app model with data persistance. It has at least one
+A Fluid container includes state and app logic. It's a serverless app model with data persistence. It has at least one
 _Fluid object_, which encapsulates app logic. Fluid objects can have state, which is managed by _distributed data
 structures_ (DDSes).
 
@@ -40,7 +40,7 @@ performed on the client.
 
 All clients must load the same merge logic and app logic so that clients can compute an eventually consistent state.
 
-### Mimic (and embrace) the Web
+### Mimic (and embrace) the web
 
 The Fluid Framework creates a distributed app model by distributing state and logic to the client. Because the web is
 already a system for accessing app logic and app state, we mimicked existing web protocols when possible in our model.
@@ -55,7 +55,7 @@ codebase is focused on building Containers.
 
 ### Fluid containers
 
-The Fluid container defines the application logic while containing persistent data. If Fluid Framework is a serverless
+The Fluid container defines the application logic while containing persistent data. If the Fluid Framework is a serverless
 application model with persistent data, the container is the serverless application and data.
 
 The Fluid container is the result of the principle "Move Logic to the Client." The container includes the merge logic
@@ -72,7 +72,7 @@ resolver,** connects to the Fluid service using the **Fluid service driver**, an
 
 ![A diagram of the Fluid loading sequence](/docs/concepts/images/load-flow.png)
 
-**Container lookup & resolver** identifies, by a URL, which service a container is bound to and where in that service it
+The **container lookup & resolver** identifies, by a URL, which service a container is bound to and where in that service it
 is located. The Fluid service driver consumes this information.
 
 The **Fluid service driver** connects to the Fluid service, requests space on the server for new Fluid containers, and
@@ -85,7 +85,7 @@ to fetch container code. The Loader executes this code to create Fluid container
 
 ### Fluid service
 
-The Fluid service is primarily a total order broadcast: it takes in changes (called "operations" or "ops") from each
+The Fluid service is primarily a total-order broadcast: it takes in changes (called "operations" or "ops") from each
 client, gives the op a sequential order number, and sends the ordered op back to each client. Distributed data
 structures use these ops to reconstruct state on each client. The Fluid service doesn't parse any of these ops; in fact,
 the service knows nothing about the contents of any Fluid container.

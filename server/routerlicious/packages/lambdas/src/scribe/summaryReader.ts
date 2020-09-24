@@ -6,7 +6,7 @@
 import { toUtf8 } from "@fluidframework/common-utils";
 import { IDocumentAttributes, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
-import { IDeliCheckpoint } from "../deli";
+import { IDeliState } from "@fluidframework/server-services-core";
 import { ILatestSummaryState, ISummaryReader } from "./interfaces";
 
 /**
@@ -35,7 +35,7 @@ export class SummaryReader implements ISummaryReader {
             const attributes = JSON.parse(
                 toUtf8(attributesContent.content, attributesContent.encoding)) as IDocumentAttributes;
             const scribe = toUtf8(scribeContent.content, scribeContent.encoding);
-            const deli = JSON.parse(toUtf8(deliContent.content, deliContent.encoding)) as IDeliCheckpoint;
+            const deli = JSON.parse(toUtf8(deliContent.content, deliContent.encoding)) as IDeliState;
             const term = deli.term;
             const messages = JSON.parse(
                 toUtf8(opsContent.content, opsContent.encoding)) as ISequencedDocumentMessage[];

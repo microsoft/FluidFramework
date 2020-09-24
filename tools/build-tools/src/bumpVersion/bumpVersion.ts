@@ -1016,7 +1016,7 @@ class BumpVersion {
     private async releaseMonoRepo(monoRepo: MonoRepo) {
         const kind = MonoRepoKind[monoRepo.kind];
         const kindLowerCase = MonoRepoKind[monoRepo.kind].toLowerCase();
-        const tagName = `${kindLowerCase}_${monoRepo.version}`;
+        const tagName = `${kindLowerCase}_v${monoRepo.version}`;
         await this.gitRepo.fetchTags();
         if ((await this.gitRepo.getTags(tagName)).trim() !== tagName) {
             console.log("======================================================================================================");
