@@ -20,6 +20,7 @@ import {
 import { IGitCache, IGitManager } from "@fluidframework/server-services-client";
 import {
     ICollection,
+    IDeliState,
     IDatabaseManager,
     IDocumentDetails,
     IDocumentStorage,
@@ -119,6 +120,16 @@ export class DocumentStorage implements IDocumentStorage {
 
         winston.info(`commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
 
+        const deli: IDeliState = {
+            branchMap: undefined,
+            clients: undefined,
+            durableSequenceNumber: sequenceNumber,
+            logOffset: -1,
+            sequenceNumber,
+            epoch: undefined,
+            term: 1,
+        };
+
         const scribe: IScribe = {
             logOffset: -1,
             minimumSequenceNumber: sequenceNumber,
@@ -143,7 +154,7 @@ export class DocumentStorage implements IDocumentStorage {
                 branchMap: undefined,
                 clients: undefined,
                 createTime: Date.now(),
-                deli: undefined,
+                deli: JSON.stringify(deli),
                 documentId,
                 forks: [],
                 logOffset: 0,
