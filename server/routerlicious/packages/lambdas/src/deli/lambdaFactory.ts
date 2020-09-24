@@ -116,7 +116,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             }
         }
 
-        // For cases such as offline creation where the document was generated outside the scope of deli
+        // For cases such as detached container where the document was generated outside the scope of deli
         // and checkpoint was written manually.
         if (lastCheckpoint.epoch === undefined) {
             lastCheckpoint.epoch = leaderEpoch;
