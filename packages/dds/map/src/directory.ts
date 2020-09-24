@@ -19,6 +19,7 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import * as path from "path-browserify";
 import { debug } from "./debug";
 import {
     IDirectory,
@@ -40,9 +41,8 @@ import {
 import { pkgVersion } from "./packageVersion";
 
 // We use path-browserify since this code can run safely on the server or the browser.
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const path: typeof import("path") = require("path-browserify");
-const posix = path.posix;
+// We standardize on using posix slashes everywhere.
+const posix: typeof import("path").posix = path.posix;
 
 const snapshotFileName = "header";
 
