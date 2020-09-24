@@ -11,6 +11,7 @@ export * from "./combinedLambda";
 export * from "./combinedProducer";
 export * from "./database";
 export * from "./document";
+export * from "./emptyTaskMessageSender";
 export * from "./http";
 export * from "./lambdas";
 export * from "./messages";
