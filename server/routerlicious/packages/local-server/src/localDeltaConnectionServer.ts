@@ -16,6 +16,7 @@ import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import { IPubSub, PubSub } from "@fluidframework/server-memory-orderer";
 import {
     DefaultMetricClient,
+    EmptyTaskMessageSender,
     IDatabaseManager,
     IDocumentStorage,
     ILogger,
@@ -31,7 +32,6 @@ import {
     TestDbFactory,
     TestDocumentStorage,
     TestHistorian,
-    TestTaskMessageSender,
     TestTenantManager,
 } from "@fluidframework/server-test-utils";
 import { LocalWebSocketServer } from "./localWebSocketServer";
@@ -91,7 +91,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             testStorage,
             databaseManager,
             testTenantManager,
-            new TestTaskMessageSender(),
+            new EmptyTaskMessageSender(),
             {},
             16 * 1024,
             async () => new TestHistorian(testDbFactory.testDatabase),

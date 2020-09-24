@@ -22,6 +22,7 @@
     "@types/jszip": "^3.4.1",
     "@types/msgpack-lite": "^0.1.7",
     "@types/node": "^11.9.4",
-    "@types/pako": "^1.0.1"
+    "@types/pako": "^1.0.1",
+    "@types/webpack": "^4.41.22"
   }
 }

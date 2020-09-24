@@ -11,7 +11,7 @@ import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import * as API from "@fluid-internal/client-api";
 import { SharedCell } from "@fluidframework/cell";
-import { performanceNow } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidHandle,
@@ -129,7 +129,7 @@ export class SharedTextRunner
             const insights = this.collabDoc.createMap(insightsMapId);
             this.rootView.set(insightsMapId, insights.handle);
 
-            debug(`Not existing ${this.runtime.id} - ${performanceNow()}`);
+            debug(`Not existing ${this.runtime.id} - ${performance.now()}`);
             this.rootView.set("users", this.collabDoc.createMap().handle);
             const seq = SharedNumberSequence.create(this.collabDoc.runtime);
             this.rootView.set("sequence-test", seq.handle);
@@ -177,16 +177,16 @@ export class SharedTextRunner
             insights.set(newString.id, this.collabDoc.createMap().handle);
         }
 
-        debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
-        debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
+        debug(`collabDoc loaded ${this.runtime.id} - ${performance.now()}`);
+        debug(`Getting root ${this.runtime.id} - ${performance.now()}`);
 
         await this.rootView.wait("flowContainerMap");
 
         this.sharedString = await this.rootView.get<IFluidHandle<SharedString>>("text").get();
         this.insightsMap = await this.rootView.get<IFluidHandle<ISharedMap>>("insights").get();
-        debug(`Shared string ready - ${performanceNow()}`);
+        debug(`Shared string ready - ${performance.now()}`);
         debug(`id is ${this.runtime.id}`);
-        debug(`Partial load fired: ${performanceNow()}`);
+        debug(`Partial load fired: ${performance.now()}`);
 
         this.taskManager = await this.context.containerRuntime.getTaskManager();
 
@@ -261,15 +261,15 @@ export class SharedTextRunner
         if (this.sharedString.getLength() > 0) {
             theFlow.render(0, true);
         }
-        theFlow.timeToEdit = theFlow.timeToImpression = performanceNow();
+        theFlow.timeToEdit = theFlow.timeToImpression = performance.now();
 
         theFlow.setEdit(this.rootView);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.sharedString.loaded.then(() => {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            theFlow.loadFinished(performanceNow());
-            debug(`${this.runtime.id} fully loaded: ${performanceNow()} `);
+            theFlow.loadFinished(performance.now());
+            debug(`${this.runtime.id} fully loaded: ${performance.now()} `);
         });
     }
 }

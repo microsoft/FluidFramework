@@ -9,10 +9,12 @@ import {
     ITenantOrderer,
     ITenantStorage,
     MongoManager,
+    ISecretManager,
 } from "@fluidframework/server-services-core";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import { getRandomName } from "@fluidframework/server-services-client";
+import * as winston from "winston";
 
 /**
  * Tenant details stored to the document database
@@ -39,6 +41,7 @@ export class TenantManager {
         private readonly baseOrdererUrl: string,
         private readonly defaultHistorianUrl: string,
         private readonly defaultInternalHistorianUrl: string,
+        private readonly secretManager: ISecretManager,
     ) {
     }
 
@@ -46,10 +49,16 @@ export class TenantManager {
      * Validates a tenant's API token
      */
     public async validateToken(tenantId: string, token: string): Promise<void> {
-        const key = await this.getTenantKey(tenantId);
+        const encryptedTenantKey = await this.getTenantKey(tenantId);
+        const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
+        if (tenantKey == null) {
+            winston.error("Tenant key decryption failed.");
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            Promise.reject("Tenant key decryption failed.");
+        }
 
         return new Promise<void>((resolve, reject) => {
-            jwt.verify(token, key, (error) => {
+            jwt.verify(token, tenantKey, (error) => {
                 if (error) {
                     reject(error);
                 } else {
@@ -79,16 +88,22 @@ export class TenantManager {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
-        const key = crypto.randomBytes(16).toString("hex");
+        const tenantKey = crypto.randomBytes(16).toString("hex");
+        const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
+        if (encryptedTenantKey == null) {
+            winston.error(`Tenant key encryption failed.`);
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            Promise.reject("Tenant key encryption failed.");
+        }
         const id = await collection.insertOne({
             _id: tenantId || getRandomName("-"),
-            key,
+            key: encryptedTenantKey,
             orderer: null,
             storage: null,
         });
 
         const tenant = await this.getTenant(id);
-        return _.extend(tenant, { key });
+        return _.extend(tenant, { key: tenantKey });
     }
 
     /**
