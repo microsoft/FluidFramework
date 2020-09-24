@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager } from "@fluidframework/server-services-core";
+import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
 import * as bodyParser from "body-parser";
 import express from "express";
 import morgan from "morgan";
@@ -30,6 +30,7 @@ export function create(
     baseOrdererUrl: string,
     defaultHistorianUrl: string,
     defaultInternalHistorianUrl: string,
+    secretManager: ISecretManager,
 ) {
     // Express app configuration
     const app: express.Express = express();
@@ -50,9 +51,9 @@ export function create(
                 tenantId: getTenantIdFromRequest(req.params),
                 serviceName: "riddler",
                 eventName: "http_requests",
-             };
-             winston.info("request log generated", { messageMetaData });
-             return undefined;
+            };
+            winston.info("request log generated", { messageMetaData });
+            return undefined;
         }));
     } else {
         app.use(morgan(loggerFormat, { stream }));
@@ -61,7 +62,13 @@ export function create(
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(
         "/api",
-        api.create(collectionName, mongoManager, baseOrdererUrl, defaultHistorianUrl, defaultInternalHistorianUrl));
+        api.create(
+            collectionName,
+            mongoManager,
+            baseOrdererUrl,
+            defaultHistorianUrl,
+            defaultInternalHistorianUrl,
+            secretManager));
 
     // Catch 404 and forward to error handler
     app.use((req, res, next) => {

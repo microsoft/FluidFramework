@@ -5,7 +5,7 @@
 
 import * as http from "http";
 import { Deferred } from "@fluidframework/common-utils";
-import { MongoManager } from "@fluidframework/server-services-core";
+import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import * as winston from "winston";
 import * as app from "./app";
@@ -22,6 +22,7 @@ export class RiddlerRunner implements utils.IRunner {
         private readonly baseOrdererUrl: string,
         private readonly defaultHistorianUrl: string,
         private readonly defaultInternalHistorianUrl: string,
+        private readonly secretManager: ISecretManager,
     ) {
     }
 
@@ -36,7 +37,8 @@ export class RiddlerRunner implements utils.IRunner {
             this.loggerFormat,
             this.baseOrdererUrl,
             this.defaultHistorianUrl,
-            this.defaultInternalHistorianUrl);
+            this.defaultInternalHistorianUrl,
+            this.secretManager);
         riddler.set("port", this.port);
 
         this.server = http.createServer(riddler);
