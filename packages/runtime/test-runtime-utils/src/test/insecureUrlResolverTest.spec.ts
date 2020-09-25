@@ -97,4 +97,55 @@ describe("Insecure Url Resolver Test", () => {
         const expectedResponseUrl = `${hostUrl}/${tenantId}/${fileName}/${dataStoreId}`;
         assert.strictEqual(absoluteUrl, expectedResponseUrl, "response url is wrong");
     });
+
+    it("Test RequestUrl for url with a slash at the end", async () => {
+        const testRequest: IRequest = {
+            url: `https://localhost/${fileName}/`,
+            headers: {},
+        };
+        // Mocking window since the resolver depends on window.location.host
+        if (typeof window === "undefined" && typeof global === "object") {
+            // eslint-disable-next-line dot-notation
+            global["window"] = { location: { host:"localhost" } };
+        }
+        const resolvedUrl = await resolver.resolve(testRequest);
+        ensureFluidResolvedUrl(resolvedUrl);
+
+        const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}/`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+    });
+
+    it("Test RequestUrl for url with 2 slashes at the end", async () => {
+        const testRequest: IRequest = {
+            url: `https://localhost/${fileName}//`,
+            headers: {},
+        };
+        // Mocking window since the resolver depends on window.location.host
+        if (typeof window === "undefined" && typeof global === "object") {
+            // eslint-disable-next-line dot-notation
+            global["window"] = { location: { host:"localhost" } };
+        }
+        const resolvedUrl = await resolver.resolve(testRequest);
+        ensureFluidResolvedUrl(resolvedUrl);
+
+        const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}//`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+    });
+
+    it("Test RequestUrl for url with special characters", async () => {
+        const testRequest: IRequest = {
+            url: `https://localhost/${fileName}/!@$%^&*()123/dataStore!@$%^&*()`,
+            headers: {},
+        };
+        // Mocking window since the resolver depends on window.location.host
+        if (typeof window === "undefined" && typeof global === "object") {
+            // eslint-disable-next-line dot-notation
+            global["window"] = { location: { host:"localhost" } };
+        }
+        const resolvedUrl = await resolver.resolve(testRequest);
+        ensureFluidResolvedUrl(resolvedUrl);
+
+        const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}/!@$%^&*()123/dataStore!@$%^&*()`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+    });
 });

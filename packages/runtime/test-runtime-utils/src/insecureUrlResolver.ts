@@ -67,10 +67,7 @@ export class InsecureUrlResolver implements IUrlResolver {
         } else if (parsedUrl.host === window.location.host) {
             const fullPath = parsedUrl.pathname.substr(1);
             const documentId = fullPath.split("/")[0];
-            let documentRelativePath = "";
-            if (fullPath !== documentId) {
-                documentRelativePath = fullPath.replace(`${documentId}/`,"");
-            }
+            const documentRelativePath = fullPath.slice(documentId.length);
             return this.resolveHelper(documentId, documentRelativePath);
         } else {
             const maybeResolvedUrl = this.cache.get(request.url);
@@ -99,10 +96,8 @@ export class InsecureUrlResolver implements IUrlResolver {
     private resolveHelper(documentId: string, documentRelativePath: string) {
         const encodedTenantId = encodeURIComponent(this.tenantId);
         const encodedDocId = encodeURIComponent(documentId);
-        let documentUrl = `fluid://${new URL(this.ordererUrl).host}/${encodedTenantId}/${encodedDocId}`;
-        if (documentRelativePath  !== "") {
-            documentUrl += `/${documentRelativePath}`;
-        }
+        const host = new URL(this.ordererUrl).host;
+        const documentUrl = `fluid://${host}/${encodedTenantId}/${encodedDocId}${documentRelativePath}`;
 
         const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
         const storageUrl = `${this.storageUrl}/repos/${encodedTenantId}`;
