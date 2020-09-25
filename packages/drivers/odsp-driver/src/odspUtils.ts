@@ -4,7 +4,7 @@
  */
 
 import {
-    OnlineStatus,
+    OnlineStatus, isOnline,
 } from "@fluidframework/driver-utils";
 import {
     DriverErrorType,
@@ -23,6 +23,7 @@ import {
     fetchIncorrectResponse,
     throwOdspNetworkError,
 } from "./odspError";
+import { TokenFetchOptions } from "./tokenFetch";
 
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
@@ -39,17 +40,18 @@ export function getHashedDocumentId(driveId: string, itemId: string): string {
 /**
  * This API should be used with pretty much all network calls (fetch, webSocket connection) in order
  * to correctly handle expired tokens. It relies on callback fetching token, and be able to refetch
- * token on failure. Only specific cases get retry call with refresh = true, all other / unknonw errors
+ * token on failure. Only specific cases get retry call with refresh = true, all other / unknown errors
  * simply propagate to caller
  */
-export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
-    return get(false).catch(async (e) => {
+export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOptions) => Promise<T>) {
+    return get({ refresh: false }).catch(async (e) => {
         switch (e.errorType) {
             // If the error is 401 or 403 refresh the token and try once more.
-            // fetchIncorrectResponse indicates some error on the wire, retry once.
             case DriverErrorType.authorizationError:
+                return get({ refresh: true, claims: e.claims });
+            // fetchIncorrectResponse indicates some error on the wire, retry once.
             case DriverErrorType.incorrectServerResponse:
-                return get(true);
+                return get({ refresh: true });
             default:
                 // All code paths (deltas, blobs, trees) already throw exceptions.
                 // Throwing is better than returning null as most code paths do not return nullable-objects,
@@ -63,9 +65,8 @@ export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => 
 
 /**
  * A utility function to do fetch with support for retries
- * @param url - fetch requestInfo, can be a string
+ * @param requestInfo - fetch requestInfo, can be a string
  * @param requestInit - fetch requestInit
- * @param retryPolicy - how to do retries
  */
 export async function fetchHelper<T>(
     requestInfo: RequestInfo,
@@ -107,8 +108,8 @@ export async function fetchHelper<T>(
         // While we do not know for sure whether computer is offline, this error is not actionable and
         // is pretty good indicator we are offline. Treating it as offline scenario will make it
         // easier to see other errors in telemetry.
-        let online = OnlineStatus.Unknown;
-        if (error && typeof error === "object" && error.message === "TypeError: Failed to fetch") {
+        let online = isOnline();
+        if (`${error}` === "TypeError: Failed to fetch") {
             online = OnlineStatus.Offline;
         }
         throwOdspNetworkError(

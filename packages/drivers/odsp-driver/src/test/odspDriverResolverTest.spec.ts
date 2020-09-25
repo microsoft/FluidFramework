@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { CreateNewHeader } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";

@@ -1,0 +1,46 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:
+- name: buildDirectory
+  type: string
+- name: buildNumberInPatch
+  type: string
+  default:
+- name: tagName
+  type: string
+
+# Set version
+steps:
+- task: Bash@3
+  name: SetVersion
+  displayName: Set Package Version
+  env:
+    VERSION_RELEASE: $(release)
+    VERSION_BUILDNUMBER: $(Build.BuildNumber)
+    VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
+    VERSION_TAGNAME: ${{ parameters.tagName }}
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      # expect lerna.json and package.json be in the current working directory
+
+      echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
+      echo VERSION_RELEASE=$VERSION_RELEASE
+      echo VERSION_PATCH=$VERSION_PATCH
+
+      version=`node $(Build.SourcesDirectory)/tools/pipelines/scripts/build-version.js`
+      echo COMPUTED_VERSION=$version
+
+      if [ "$version" = "" ]; then
+        exit -1
+      fi
+
+      echo "##vso[task.setvariable variable=version;isOutput=true]$version"
+
+      if [ -f "lerna.json" ]; then
+        npx lerna version $version --no-git-tag-version --no-push --yes
+      else
+        npm version $version --no-git-tag-version -f --allow-same-version
+      fi

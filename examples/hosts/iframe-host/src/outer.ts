@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import {
-    DefaultErrorTracking,
     RouterliciousDocumentServiceFactory,
 } from "@fluidframework/routerlicious-driver";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
@@ -28,20 +27,12 @@ const getTinyliciousResolver =
         { id: "userid0" },
         "bearer");
 
-const getTinyliciousDocumentServiceFactory =
-    () => new RouterliciousDocumentServiceFactory(
-        false,
-        new DefaultErrorTracking(),
-        false,
-        true,
-        undefined);
-
 export async function loadFrame(iframeId: string, logId: string) {
     const iframe = document.getElementById(iframeId) as HTMLIFrameElement;
 
     const urlResolver = getTinyliciousResolver();
 
-    const documentServiceFactory = getTinyliciousDocumentServiceFactory();
+    const documentServiceFactory = new RouterliciousDocumentServiceFactory();
 
     const host = new IFrameOuterHost({
         urlResolver,
@@ -66,13 +57,13 @@ export async function loadFrame(iframeId: string, logId: string) {
     log(proxyContainer, "Container", "error", "connected", "disconnected");
 }
 
-async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    const component = await baseHost.requestFluidObject(url);
-    if (component === undefined) {
+async function getFluidObjectAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
+    const fluidObject = await baseHost.requestFluidObject(url);
+    if (fluidObject === undefined) {
         return;
     }
-    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
-    const view = new HTMLViewAdapter(component);
+    // Render the Fluid object with an HTMLViewAdapter to abstract the UI framework used by the Fluid object
+    const view = new HTMLViewAdapter(fluidObject);
     view.render(div, { display: "block" });
 }
 
@@ -81,7 +72,7 @@ export async function loadDiv(divId: string) {
 
     const urlResolver = getTinyliciousResolver();
 
-    const documentServiceFactory = getTinyliciousDocumentServiceFactory();
+    const documentServiceFactory = new RouterliciousDocumentServiceFactory();
 
     const pkg: IFluidCodeDetails = {
         package: "@fluid-example/todo@^0.15.0",
@@ -103,7 +94,7 @@ export async function loadDiv(divId: string) {
 
     // Handle the code upgrade scenario (which fires contextChanged)
     container.on("contextChanged", (value) => {
-        getComponentAndRender(baseHost, url, div).catch(() => { });
+        getFluidObjectAndRender(baseHost, url, div).catch(() => { });
     });
 }
 

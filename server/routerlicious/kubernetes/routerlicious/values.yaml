@@ -29,8 +29,8 @@ scribe:
   name: scribe
   replicas: 8
 
-routemaster:
-  name: routemaster
+routemanager:
+  name: routemanager
   replicas: 8
 
 foreman:
@@ -54,7 +54,7 @@ mongodb:
   url: mongodb_url
 
 rabbitmq:
-  connectionString: "connection_string"
+  connectionString: ""
 
 redis:
   url: redis_url

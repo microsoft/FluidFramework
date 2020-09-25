@@ -7,6 +7,7 @@ import * as resources from "@fluidframework/gitresources";
 // eslint-disable-next-line import/no-unassigned-import
 import "gitgraph.js";
 import $ from "jquery";
+import { debug } from "./debug";
 
 const templateConfig = {
     arrow: {
@@ -67,14 +68,14 @@ function generateGraph(
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const path = pathPostfix ? `${fullId}/${pathPostfix}` : fullId;
 
-    const master = graph.branch("master");
+    const main = graph.branch("main");
     for (const version of versions) {
         const commitTag = version.commit.message.split(";");
-        master.commit({
+        main.commit({
             dotSize: 20,
             message: commitTag.length >= 1 ? commitTag[0] : "",
             onClick: (commit: any) => {
-                console.log(commit);
+                debug(commit);
                 const url = `${document.location.origin}/${encodeURIComponent(type)}\
                     /${path}?version=${encodeURIComponent(commit.sha1)}`;
                 window.open(url, "_blank");
@@ -92,7 +93,7 @@ export async function load(
     tenantId: string,
     id: string,
     versions: resources.ICommitDetails[]) {
-    console.log(JSON.stringify(versions));
+    debug(JSON.stringify(versions));
     // tslint:disable-next-line:no-jquery-raw-elements
     $("#commitsView").append($(`<h2>Document ${id} commit graph</h2>`));
     generateGraph(type, pathPostfix, tenantId, id, versions);

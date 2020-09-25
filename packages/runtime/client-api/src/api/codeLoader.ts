@@ -41,7 +41,7 @@ export class Chaincode implements IFluidDataStoreFactory {
 
     public constructor(private readonly closeFn: () => void) { }
 
-    public instantiateDataStore(context: IFluidDataStoreContext): void {
+    public async instantiateDataStore(context: IFluidDataStoreContext) {
         // Create channel factories
         const mapFactory = map.SharedMap.getFactory();
         const sharedStringFactory = sequence.SharedString.getFactory();
@@ -95,6 +95,8 @@ export class Chaincode implements IFluidDataStoreFactory {
                 value: document,
             };
         });
+
+        return runtime;
     }
 }
 
@@ -121,7 +123,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
             ),
             this.runtimeOptions);
 
-        // On first boot create the base component
+        // On first boot create the base data store
         if (!runtime.existing) {
             await runtime.createRootDataStore("@fluid-internal/client-api", rootStoreId);
         }

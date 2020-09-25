@@ -4,7 +4,7 @@
  */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
@@ -12,7 +12,7 @@ import {
     BaseContainerService,
     generateContainerServicesRequestHandler,
     serviceRoutePathRoot,
-} from "../containerServices";
+} from "../container-services";
 
 class ContainerServiceMock extends BaseContainerService {
     public route: string = "";

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import path from "path";
+import { strict as assert } from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
@@ -20,6 +19,7 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import * as path from "path-browserify";
 import { debug } from "./debug";
 import {
     IDirectory,
@@ -40,12 +40,10 @@ import {
 } from "./localValues";
 import { pkgVersion } from "./packageVersion";
 
-// path-browserify only supports posix functionality but doesn't have a path.posix to enforce it.  But we need to
-// enforce posix when using the normal node module on Windows (otherwise it will use path.win32).  Also including an
-// assert here to help protect in case path-browserify changes in the future, because we only want posix path
-// functionality.
-const posix = path.posix || path;
-assert(posix.sep === "/");
+// We use path-browserify since this code can run safely on the server or the browser.
+// We standardize on using posix slashes everywhere.
+const posix: typeof import("path").posix = path.posix;
+
 const snapshotFileName = "header";
 
 /**
@@ -301,12 +299,12 @@ function serializeDirectory(root: SubDirectory): ITree {
  */
 export class DirectoryFactory {
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
      */
     public static readonly Type = "https://graph.microsoft.com/types/directory";
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
      */
     public static readonly Attributes: IChannelAttributes = {
         type: DirectoryFactory.Type,
@@ -315,21 +313,21 @@ export class DirectoryFactory {
     };
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
      */
     public get type() {
         return DirectoryFactory.Type;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
      */
     public get attributes() {
         return DirectoryFactory.Attributes;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
      */
     public async load(
         runtime: IFluidDataStoreRuntime,
@@ -344,7 +342,7 @@ export class DirectoryFactory {
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
      */
     public create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory {
         const directory = new SharedDirectory(id, runtime, DirectoryFactory.Attributes);
@@ -653,7 +651,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
         const data = JSON.parse(fromBase64ToUtf8(header));

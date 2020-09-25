@@ -11,11 +11,7 @@ of code.
 
 ## Build steps
 
-The first (and hardest) step to get up and running is to authenticate against the Fluid private npm feed. To do so
-navigate to <https://offnet.visualstudio.com/officenet/_packaging?feed=fluid&_a=feed>, click the "Connect to feed" link,
-choose "npm" and then follow the instructions.
-
-Once you've done that getting up and running is simple.
+Getting up and running is simple.
 
 ```bash
 npm install
@@ -78,7 +74,7 @@ from this URL to a Fluid based url of the form:
 And also provided the required access tokens with this. In the above the protocol part of the URL defines which Fluid
 driver to use to to talk to the server. The domain gives the location of the service. Document ID is the identifier for
 the Fluid document. And finally the path is a string handed down to the document itself and allows it to select which
-component to render and parameters for it.
+Fluid object to render and parameters for it.
 
 Deferring to the host for this resolution allows it to perform access control checks on the user's identity and only
 return the resolved Fluid URL with access tokens if these pass.
@@ -96,11 +92,12 @@ The `IUrlResolver` interface is defined as
 ```typescript
 export interface IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl>;
+    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
 }
 ```
 
-This simple interface defines a single method, `resolve`, which takes in an `IRequest` object and resolves it to an
-`IResolvedUrl`. An `IRequest` is simply the URL for the document. And the `IResolvedUrl` is the fluid based URL
+This simple interface defines a method, `resolve`, which takes in an `IRequest` object and resolves it to an
+`IResolvedUrl`. An `IRequest` is simply the URL for the document. And the `IResolvedUrl` is the Fluid based URL
 along with associated access tokens.
 
 In our example the URL format is of the form `http://localhost:8080/<documentId>/<path>`. To implement the resolve
@@ -143,6 +140,8 @@ const response: IFluidResolvedUrl = {
 
 return response;
 ```
+It also defines an api, `getAbsoluteUrl` which takes 2 arguments, `resolvedUrl` and `relativeUrl`. It creates a url for
+the created container with any data store path given in the relative url.
 
 #### Drivers
 
@@ -200,9 +199,26 @@ export interface IChaincodeFactory {
 
 Once the `IChaincodeFactory` is returned the loader then invokes the instantiateRuntime call to load the code package.
 
-### Loading a Fluid document
+### Creating a Fluid document
 
-Once the loader has been created then actually loading a Fluid document is a one line call
+Once the loader has been created then actually creating a Fluid document is very simple
+
+```typescript
+const container = await loader.createDetachedContainer(codeDetails);
+await container.attach(request);
+```
+In first line, we actually create an in-memory container without creating it on the actual storage. `codeDetails`
+is the code package to run for the container. It provides benefits like freaky fast container creation so that the
+user can start editing the container immediately and we don't have to propose code through the quorum.
+
+In the second line, we call attach on the container to actually create it on the storage. This is async and can
+be done in the background while the user is editing the container. It takes in a `request` which is a `createNewRequest`
+which can be resolved by the resolver. This resolved url might not contain the endpoints because the container is not yet
+created. The resolver can also provide this api on its instance to create the `createNewRequest`.
+
+### Loading a Fluid Document
+
+Loading a Fluid document is a one line call
 
 ```typescript
 const response = await loader.request({ url });
@@ -223,18 +239,18 @@ if (response.status !== 200) {
 ```
 
 A mime type is also provided with the request to distinguish the type of object.  The most common thing you'll receive
-is a Fluid component. Components implement the attach interface which allow them to participate in the web component
+is a Fluid object. Fluid objects implement the attach interface which allow them to participate in the web
 model. But a document could also return different mime types like static images, videos, etc...
 
-The host can then switch on the mime type and act accordingly. In the case of the component, we check if is a viewable
+The host can then switch on the mime type and act accordingly. In the case of the Fluid object, we check if is a viewable
 and provide it a div for it to render.
 
 ```typescript
 switch (response.mimeType) {
-    case "fluid/component":
-        // Check if the component is a view
-        const component = response.value as IComponent;
-        const view = component.IComponentHTMLView;
+    case "fluid/object":
+        // Check if the object is a view
+        const fluidObject = response.value as IFluidObject;
+        const view = fluidObject.IFluidHTMLView;
         if (!view) {
             return;
         }
@@ -244,71 +260,24 @@ switch (response.mimeType) {
 }
 ```
 
-#### IComponent interface
+#### IFluidObject interface
 
-The Fluid component model supports a delegation and feature detection mechanism. As is typical in JavaScript,
-a feature detection pattern can be used to determine what capabilities are exposed by a component. The `IComponent`
+The Fluid object model supports a delegation and feature detection mechanism. As is typical in JavaScript,
+a feature detection pattern can be used to determine what capabilities are exposed by an object. The `IFluidObject`
 interface serves as a Fluid-specific form of “any” that clients can cast objects to in order to probe for implemented
-component interfaces. For example, if you need to determine the capabilities that a component exposes, you first
-cast the object as an `IComponent`, and then access the property on the `IComponent` that matches the interface you
-are testing for.  The above checks if the component implements `IComponentHTMLView`, and uses it to get the instance
+object interfaces. For example, if you need to determine the capabilities that an object exposes, you first
+cast the object as an `IFluidObject`, and then access the property on the `IFluidObject` that matches the interface you
+are testing for.  The above checks if the object implements `IFluidHTMLView`, and uses it to get the instance
 that implements the rendering capability.
-
-### Quoruming on a code package
-
-In many cases your host will only be loading existing documents and so can skip these steps. But if you'd like to be
-able to create a new document and then establish the code package to run on it then these are the steps to follow.
-
-The first step is to resolve the document. This is a separate call from the request method shown earlier in that
-it doesn't fetch a URL from the document. But instead just resolves to the document represented by the given URL. If
-you've ever dug into the HTTP protocol this model will feel familiar. On a HTTP GET the first step is to take the
-domain name for the URL and resolve that to a server using DNS. Once that resolution has happened then you connect
-to the service and issue a GET request to it with the path contained in the URL. We follow a similar model. Internally
-when the loader receives a URL it first resolves it to a document - using the `resolve` function. And then issues
-a `request` against the resolved document. In general the only time you need to perform a `resolve` is when you want
-access to the low-level document to perform a task like changing the code quorum directly. Otherwise you should just
-be making use of `request` calls.
-
-```typescript
-const document = await loader.resolve({ url });
-```
-
-Once the document has been received we can ask for its quorum. The quorum contains the list of clients currently
-connected to the document. And also allows you to make proposals that are agreed upon by the members in the quorum. We
-use this mechanism to establish the code package to run for the document.
-
-```typescript
-const quorum = document.getQuorum();
-```
-
-Once we have the quorum we wait to become connected to the document. Proposals can only be made when you are part
-of the quorum and this occurs once you become connected.
-
-```typescript
-// Wait for connection so that proposals can be sent
-if (!document.connected) {
-    await new Promise<void>((resolve) => document.on("connected", () => resolve()));
-}
-```
-
-And then finally if no code has been proposed we go and make the proposal.
-
-```typescript
-// And then make the proposal if a code proposal has not yet been made
-if (!quorum.has("code")) {
-    await quorum.propose("code", pkg);
-}
-```
 
 ## Next Steps
 
 And that's all that's needed to create or load Fluid documents. It's intended to be light weight and simple to get
 setup as a host. And once done you gain full access to the power of the Fluid platform.
 
-Once you have a host setup the next best step to try is using our Fluid generator to create a new component.
-Insructions for that are at https://github.com/Microsoft/FluidFramework/blob/master/tools/generator-fluid/README.md.
+Instructions for that are at https://github.com/Microsoft/FluidFramework/blob/main/tools/generator-fluid/README.md.
 You can then publish this package to Verdaccio and load it inside of your new loader!
 
-When creating your new component also note that the API provides it access to the underlying loader. You can use this
-to follow similar attach steps as above to load components within your component. In this way your component can
+When creating your new Fluid object also note that the API provides it access to the underlying loader. You can use this
+to follow similar attach steps as above to load objects within your objects. In this way your Fluid object can
 also serve as a host for other Fluid content.

@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { performanceNow } from "./performanceNowNode";
+import { performance } from "./indexNode";
 
 /**
  * Helper class for tracing performance of events
+ * Time measurements are in milliseconds as a floating point with a decimal
  */
 export class Trace {
     public static start(): Trace {
-        const startTick = performanceNow();
+        const startTick = performance.now();
         return new Trace(startTick);
     }
 
@@ -20,7 +21,7 @@ export class Trace {
     }
 
     public trace(): ITraceEvent {
-        const tick = performanceNow();
+        const tick = performance.now();
         const event = {
             totalTimeElapsed: tick - this.startTick,
             duration: tick - this.lastTick,
@@ -37,10 +38,12 @@ export class Trace {
 export interface ITraceEvent {
     /**
      * Total time elapsed since the start of the Trace.
+     * Measured in milliseconds as a floating point with a decimal
      */
     readonly totalTimeElapsed: number;
     /**
      * Time elapsed since the last trace event.
+     * Measured in milliseconds as a floating point with a decimal
      */
     readonly duration: number;
     /**

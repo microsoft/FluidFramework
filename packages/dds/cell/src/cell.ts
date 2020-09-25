@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { ISerializedHandle } from "@fluidframework/core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
@@ -180,7 +180,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: JSON.stringify(content),
                         encoding: "utf-8",
@@ -202,7 +202,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
      * @returns - promise that resolved when the load is completed
      */
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService): Promise<void> {
         const rawContent = await storage.read(snapshotFileName);
 

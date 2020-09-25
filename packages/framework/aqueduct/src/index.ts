@@ -4,18 +4,23 @@
  */
 
 /**
- * The `aqueduct` package contains implementations of the Fluid Framework interfaces that help developers to quickly
- * get started.
+ * The `aqueduct` package is a library for building Fluid objects and Fluid
+ * containers within the Fluid Framework. Its goal is to provide a thin base
+ * layer over the existing Fluid Framework interfaces that allows developers to
+ * get started quickly.
  *
  * @remarks
- * About the package name: An Aqueduct is a way to transport water from a source to another location.
+ * About the package name: An Aqueduct is a way to transport water from a source
+ * to another location. The package name was chosen because its purpose is to
+ * facilitate using lower level constructs and therefore handle 'fluid' items
+ * same as an aqueduct.
  *
  * @packageDocumentation
  */
 
-export * from "./componentFactories";
-export * from "./components";
-export * from "./containerRuntimeFactories";
-export * from "./containerServices";
-export * from "./requestHandlers";
+export * from "./data-object-factories";
+export * from "./data-objects";
+export * from "./container-runtime-factories";
+export * from "./container-services";
+export * from "./request-handlers";
 export * from "./utils";

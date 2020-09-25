@@ -6,20 +6,38 @@
 /* eslint-disable import/no-extraneous-dependencies */
 export {
     ContainerRuntimeFactoryWithDefaultDataStore,
-    defaultDataStoreRuntimeRequestHandler,
     DataObject,
     DataObjectFactory,
 } from "old-aqueduct";
-export { IChannelFactory } from "old-component-runtime-definitions";
-export { IContainerContext, IFluidModule, IRuntimeFactory } from "old-container-definitions";
-export { Container } from "old-container-loader";
+export { IChannelFactory } from "old-datastore-definitions";
+export {
+    IContainer,
+    IContainerContext,
+    IFluidModule,
+    ILoader,
+    IRuntimeFactory,
+    IProxyLoaderFactory,
+} from "old-container-definitions";
+export { Container, Loader } from "old-container-loader";
 export { ContainerRuntime, IContainerRuntimeOptions } from "old-container-runtime";
 export {
-    componentRuntimeRequestHandler as dataStoreRuntimeRequestHandler,
     RuntimeRequestHandlerBuilder,
 } from "old-request-handler";
 export { IFluidDataStoreFactory } from "old-runtime-definitions";
-export { createLocalLoader, initializeLocalContainer, TestFluidComponentFactory } from "old-test-utils";
-export { SharedMap } from "old-map";
-export { SharedString } from "old-sequence";
+export {
+    createLocalLoader,
+    createAndAttachContainer,
+    TestFluidObjectFactory,
+    TestContainerRuntimeFactory,
+    LocalCodeLoader,
+} from "old-test-utils";
+export { SharedDirectory, SharedMap } from "old-map";
+export { SharedString, SparseMatrix } from "old-sequence";
+export { LocalDocumentServiceFactory, LocalResolver } from "old-local-driver";
+export { ConsensusRegisterCollection } from "old-register-collection";
+export { SharedCell } from "old-cell";
+export { Ink } from "old-ink";
+export { SharedMatrix } from "old-matrix";
+export { ConsensusQueue } from "old-ordered-collection";
+
 /* eslint-enable import/no-extraneous-dependencies */

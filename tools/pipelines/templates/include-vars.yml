@@ -1,0 +1,85 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# common variables
+
+parameters:
+- name: publishOverride
+  type: string
+  default: default
+
+- name: releaseBuildOverride
+  type: string
+  default: none
+
+- name: releaseImage
+  type: boolean
+  default: false
+
+- name: buildNumberInPatch
+  type: string
+
+variables:
+- name: skipComponentGovernanceDetection
+  value: true
+- name: shouldPublish
+  value: ${{
+    and(
+      and(
+        ne(variables['Build.Reason'], 'PullRequest'),
+        ne(variables['System.TeamProject'], 'public')
+      ),
+      or(
+        and(
+          ne(parameters.buildNumberInPatch, true),
+          startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
+        ),
+        eq(variables['Build.SourceBranch'], 'refs/heads/main')
+      )
+    )}}
+- name: canRelease
+  value: ${{
+    or(
+      eq(parameters.publishOverride, 'force'),
+      or(
+        and(
+          eq(parameters.buildNumberInPatch, true),
+          eq(variables['Build.SourceBranch'], 'refs/heads/main')
+        ),
+        and(
+          ne(parameters.buildNumberInPatch, true),
+          startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
+        )
+      )
+    )}}
+- name: publish
+  value: ${{
+    or(
+      eq(parameters.publishOverride, 'force'),
+      and(
+        ne(parameters.publishOverride, 'skip'),
+        eq(variables.shouldPublish, true)
+      )
+    )}}
+- name: componentDetection
+  value: ${{ variables.publish }}
+- name: pushImage
+  value: ${{ variables.publish }}
+- name: releaseImage
+  value: ${{
+    and(
+      eq(variables.pushImage, true),
+      eq(parameters.releaseImage, true)
+    )}}
+
+# compute the release variable
+- ${{ if eq(parameters.releaseBuildOverride, 'none') }}:
+  - ${{ if eq(variables.shouldPublish, true) }}:
+    - name: release
+      value: $[variables.releaseBuild]
+  - ${{ if ne(variables.shouldPublish, true) }}:
+    - name: release
+      value: none
+- ${{ if ne(parameters.releaseBuildOverride, 'none') }}:
+  - name: release
+    value: ${{ parameters.releaseBuildOverride }}

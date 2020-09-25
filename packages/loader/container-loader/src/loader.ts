@@ -10,6 +10,7 @@ import {
     IFluidObject,
     IRequest,
     IResponse,
+    IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import {
     ICodeLoader,
@@ -19,7 +20,7 @@ import {
     LoaderHeader,
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { Deferred, performanceNow } from "@fluidframework/common-utils";
+import { Deferred, performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -27,7 +28,7 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     ensureFluidResolvedUrl,
     MultiUrlResolver,
@@ -65,6 +66,8 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         super();
     }
 
+    public get IFluidRouter(): IFluidRouter { return this; }
+
     public async resolve(request: IRequest): Promise<IContainer> {
         if (request.url.startsWith("/")) {
             // If no headers are set that require a reload make use of the same object
@@ -101,6 +104,10 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
         throw new Error("Relative loader should not create a detached container");
+    }
+
+    public async rehydrateDetachedContainerFromSnapshot(source: ISnapshotTree): Promise<Container> {
+        throw new Error("Relative loader should not create a detached container from snapshot");
     }
 
     public resolveContainer(container: Container) {
@@ -144,7 +151,7 @@ export class Loader extends EventEmitter implements ILoader {
         documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
-        private readonly scope: IFluidObject & IFluidObject,
+        private readonly scope: IFluidObject,
         private readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
         logger?: ITelemetryBaseLogger,
     ) {
@@ -156,15 +163,37 @@ export class Loader extends EventEmitter implements ILoader {
         this.documentServiceFactory = MultiDocumentServiceFactory.create(documentServiceFactory);
     }
 
-    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        debug(`Container creating in detached state: ${performanceNow()} `);
+    public get IFluidRouter(): IFluidRouter { return this; }
+
+    public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
+        debug(`Container creating in detached state: ${performance.now()} `);
 
         return Container.create(
             this.codeLoader,
             this.options,
             this.scope,
             this,
-            source,
+            {
+                codeDetails,
+                create: true,
+            },
+            this.documentServiceFactory,
+            this.resolver,
+            this.subLogger);
+    }
+
+    public async rehydrateDetachedContainerFromSnapshot(snapshot: ISnapshotTree): Promise<Container> {
+        debug(`Container creating in detached state: ${performance.now()} `);
+
+        return Container.create(
+            this.codeLoader,
+            this.options,
+            this.scope,
+            this,
+            {
+                snapshot,
+                create: false,
+            },
             this.documentServiceFactory,
             this.resolver,
             this.subLogger);
@@ -219,7 +248,7 @@ export class Loader extends EventEmitter implements ILoader {
         const resolvedAsFluid = await this.resolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
 
-        // Parse URL into components
+        // Parse URL into data stores
         const parsed = parseUrl(resolvedAsFluid.url);
         if (parsed === undefined) {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);

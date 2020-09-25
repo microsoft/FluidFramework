@@ -5,34 +5,62 @@
 
 name: $(Build.BuildId)
 
+parameters:
+- name: releaseBuildOverride
+  displayName: Release Build (default = not released)
+  type: string
+  default: none
+  values:
+    - none
+    - prerelease
+    - release
+- name: publishOverride
+  displayName: Publish Override (default = based on branch)
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+    - force
+
 trigger:
   branches:
     include:
-    - master
+    - main
     - release/*
-    - refs/tags/eslint-config-fluid_v*
   paths:
     include:
     - common/build/eslint-config-fluid
     - tools/pipelines/build-eslint-config-fluid.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
-    - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
 
 pr:
   branches:
     include:
-    - master
+    - main
     - release/*
   paths:
     include:
     - common/build/eslint-config-fluid
     - tools/pipelines/build-eslint-config-fluid.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
 
 extends:
   template: templates/build-npm-package.yml
   parameters:
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: common/build/eslint-config-fluid
+    tagName: eslint-config-fluid
     taskBuild: false
     taskBuildDocs: false
     taskLint: false

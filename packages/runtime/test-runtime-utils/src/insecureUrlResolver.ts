@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { parse } from "url";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
@@ -30,7 +30,7 @@ import jwt from "jsonwebtoken";
  * fluid://orderingUrl/<tenantId>/<documentId>/<path>.
  *
  * The tenantId/documentId pair defines the 'full' document ID the service makes use of. The path is then an optional
- * part of the URL that the document interprets and maps to a component. It's exactly similar to how a web service
+ * part of the URL that the document interprets and maps to a data store. It's exactly similar to how a web service
  * works or a router inside of a single page app framework.
  */
 export class InsecureUrlResolver implements IUrlResolver {
@@ -44,6 +44,7 @@ export class InsecureUrlResolver implements IUrlResolver {
         private readonly tenantKey: string,
         private readonly user: IUser,
         private readonly bearer: string,
+        private readonly isForNodeTest: boolean = false,
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
@@ -61,7 +62,10 @@ export class InsecureUrlResolver implements IUrlResolver {
 
         // If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
         // service using our bearer token.
-        if (parsedUrl.host === window.location.host) {
+        if (this.isForNodeTest) {
+            const documentId = parsedUrl.pathname.substr(1).split("/")[1];
+            return this.resolveHelper(documentId);
+        } else if (parsedUrl.host === window.location.host) {
             const documentId = parsedUrl.pathname.substr(1).split("/")[0];
             return this.resolveHelper(documentId);
         } else {

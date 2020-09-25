@@ -7,6 +7,8 @@ import { IPartitionLambdaFactory, IPlugin } from "@fluidframework/server-service
 import { Provider } from "nconf";
 import { DocumentLambdaFactory } from "./lambdaFactory";
 
+export * from "./lambdaFactory";
+
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
     const pluginConfig = config.get("documentLambda") as string | object;
     // eslint-disable-next-line @typescript-eslint/no-require-imports

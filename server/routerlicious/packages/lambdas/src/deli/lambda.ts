@@ -5,7 +5,7 @@
 
 /* eslint-disable no-null/no-null */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { RangeTracker } from "@fluidframework/common-utils";
 import { isSystemType } from "@fluidframework/protocol-base";
 import {
@@ -24,9 +24,11 @@ import { canSummarize } from "@fluidframework/server-services-client";
 import {
     ControlMessageType,
     extractBoxcar,
+    IClientSequenceNumber,
     ICollection,
     IContext,
     IControlMessage,
+    IDeliState,
     IDocument,
     IMessage,
     INackMessage,
@@ -40,7 +42,7 @@ import {
     SequencedOperationType,
     IQueuedMessage,
 } from "@fluidframework/server-services-core";
-import { CheckpointContext, ICheckpointParams, IClientSequenceNumber, IDeliCheckpoint } from "./checkpointContext";
+import { CheckpointContext, ICheckpointParams } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 
 enum IncomingMessageOrder {
@@ -111,7 +113,7 @@ export class DeliLambda implements IPartitionLambda {
         private readonly context: IContext,
         private readonly tenantId: string,
         private readonly documentId: string,
-        readonly lastCheckpoint: IDeliCheckpoint,
+        readonly lastCheckpoint: IDeliState,
         dbObject: IDocument,
         collection: ICollection<IDocument>,
         private readonly forwardProducer: IProducer,
@@ -749,7 +751,7 @@ export class DeliLambda implements IPartitionLambda {
         return checkpoint;
     }
 
-    private generateDeliCheckpoint(): IDeliCheckpoint {
+    private generateDeliCheckpoint(): IDeliState {
         return {
             branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
             clients: this.clientSeqManager.cloneValues(),

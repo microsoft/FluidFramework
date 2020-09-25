@@ -89,7 +89,7 @@ export class Package {
 
     private _packageJson: IPackage;
 
-    constructor(private readonly packageJsonFileName: string, public readonly monoRepo?: MonoRepo) {
+    constructor(private readonly packageJsonFileName: string, public readonly group: string, public readonly monoRepo?: MonoRepo) {
         this._packageJson = readJsonSync(packageJsonFileName);
         logVerbose(`Package Loaded: ${this.nameColored}`);
     }
@@ -248,10 +248,10 @@ export class Packages {
     public constructor(public readonly packages: Package[]) {
     }
 
-    public static loadDir(dir: string, monoRepo?: MonoRepo, ignoreDirs?: string[]) {
+    public static loadDir(dir: string, group: string, monoRepo?: MonoRepo, ignoreDirs?: string[]) {
         const packageJsonFileName = path.join(dir, "package.json");
         if (existsSync(packageJsonFileName)) {
-            return [new Package(packageJsonFileName, monoRepo)];
+            return [new Package(packageJsonFileName, group, monoRepo)];
         }
 
         const packages: Package[] = [];
@@ -259,7 +259,7 @@ export class Packages {
         files.map((dirent) => {
             if (dirent.isDirectory() && dirent.name !== "node_modules"
                 && (ignoreDirs === undefined || !ignoreDirs.includes(dirent.name))) {
-                packages.push(...Packages.loadDir(path.join(dir, dirent.name), monoRepo));
+                packages.push(...Packages.loadDir(path.join(dir, dirent.name), group, monoRepo));
             }
         });
         return packages;

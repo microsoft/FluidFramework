@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
 import {
     FileMode,
@@ -195,7 +195,7 @@ export class ConsensusRegisterCollection<T>
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: this.stringify(dataObj),
                         encoding: "utf-8",
@@ -210,7 +210,7 @@ export class ConsensusRegisterCollection<T>
     }
 
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService,
     ): Promise<void> {
         const header = await storage.read(snapshotFileName);

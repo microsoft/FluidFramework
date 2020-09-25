@@ -9,18 +9,21 @@ import { IClient, IServiceConfiguration } from "@fluidframework/protocol-definit
 import {
     ActivityCheckingTimeout,
     BroadcasterLambda,
+    CheckpointManager,
     ClientSequenceTimeout,
     DefaultServiceConfiguration,
     DeliLambda,
     ForemanLambda,
-    IDeliCheckpoint,
     NoopConsolidationTimeout,
     ScribeLambda,
     ScriptoriumLambda,
+    SummaryReader,
+    SummaryWriter,
 } from "@fluidframework/server-lambdas";
 import { IGitManager } from "@fluidframework/server-services-client";
 import {
     IContext,
+    IDeliState,
     IDatabaseManager,
     IDocument,
     IDocumentDetails,
@@ -51,7 +54,7 @@ const DefaultScribe: IScribe = {
     sequenceNumber: -1,
 };
 
-const DefaultDeli: IDeliCheckpoint = {
+const DefaultDeli: IDeliState = {
     branchMap: undefined,
     clients: undefined,
     durableSequenceNumber: 0,
@@ -223,7 +226,7 @@ export class LocalOrderer implements IOrderer {
     }
 
     private setupKafkas() {
-        const deliState: IDeliCheckpoint = JSON.parse(this.dbObject.deli);
+        const deliState: IDeliState = JSON.parse(this.dbObject.deli);
         this.rawDeltasKafka = new LocalKafka(deliState.logOffset + 1);
         this.deltasKafka = new LocalKafka();
     }
@@ -317,14 +320,25 @@ export class LocalOrderer implements IOrderer {
             () => -1,
             () => { return; });
 
-        return new ScribeLambda(
-            context,
-            documentCollection,
-            scribeMessagesCollection,
+        const summaryWriter = new SummaryWriter(
             this.tenantId,
             this.documentId,
-            scribe,
             this.gitManager,
+            scribeMessagesCollection);
+        const summaryReader = new SummaryReader(this.documentId, this.gitManager);
+        const checkpointManager = new CheckpointManager(
+            this.tenantId,
+            this.documentId,
+            documentCollection,
+            scribeMessagesCollection);
+        return new ScribeLambda(
+            context,
+            this.tenantId,
+            this.documentId,
+            summaryWriter,
+            summaryReader,
+            checkpointManager,
+            scribe,
             this.rawDeltasKafka,
             protocolHandler,
             1, // TODO (Change when local orderer also ticks epoch)

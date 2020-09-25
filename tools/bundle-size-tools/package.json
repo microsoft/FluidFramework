@@ -1,0 +1,28 @@
+{
+  "name": "@fluidframework/bundle-size-tools",
+  "version": "0.0.0",
+  "description": "Utility for analyzing bundle size regressions",
+  "homepage": "https://fluidframework.com",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "assert": "^2.0.0",
+    "azure-devops-node-api": "^10.1.0",
+    "jszip": "^3.2.2",
+    "msgpack-lite": "^0.1.26",
+    "pako": "^1.0.10",
+    "typescript": "^3.7.4"
+  },
+  "devDependencies": {
+    "@types/jszip": "^3.4.1",
+    "@types/msgpack-lite": "^0.1.7",
+    "@types/node": "^11.9.4",
+    "@types/pako": "^1.0.1",
+    "@types/webpack": "^4.41.22"
+  }
+}

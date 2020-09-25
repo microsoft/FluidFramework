@@ -7,7 +7,7 @@ import { URL } from "url";
 import child_process from "child_process";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";
-import { FluidAppOdspUrlResolver } from "@fluidframework/fluidapp-odsp-urlresolver";
+import { FluidAppOdspUrlResolver } from "@fluid-internal/fluidapp-odsp-urlresolver";
 import * as odsp from "@fluidframework/odsp-driver";
 import { OdspUrlResolver } from "@fluidframework/odsp-urlresolver";
 import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-utils";
@@ -54,7 +54,7 @@ async function initializeODSPCore(
   item:   ${itemId}
   docId:  ${docId}`);
 
-    const getStorageTokenStub = async (siteUrl: string, refresh: boolean) => {
+    const getStorageTokenStub = async (siteUrl: string, refresh: boolean, _claims?: string) => {
         return resolveWrapper(
             async (authRequestInfo: IOdspAuthRequestInfo) => {
                 if ((refresh || !authRequestInfo.accessToken) && authRequestInfo.refreshTokenFn) {
@@ -64,10 +64,12 @@ async function initializeODSPCore(
             },
             server,
             clientConfig,
+            undefined,
+            true,
         );
     };
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    const getWebsocketTokenStub = () => Promise.resolve("");
+    const getWebsocketTokenStub = (_refresh: boolean, _claims?: string) => Promise.resolve("");
     const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory(
         getStorageTokenStub,
         getWebsocketTokenStub);

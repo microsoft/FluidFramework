@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     IFluidDataStoreAttributes,
     LocalFluidDataStoreContext,
@@ -49,13 +49,14 @@ describe("Data Store Context Tests", () => {
     describe("LocalFluidDataStoreContext Initialization", () => {
         let localDataStoreContext: LocalFluidDataStoreContext;
         let storage: IDocumentStorageService;
-        let scope: IFluidObject & IFluidObject;
+        let scope: IFluidObject;
         const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             const factory: IFluidDataStoreFactory = {
+                type: "store-type",
                 get IFluidDataStoreFactory() { return factory; },
-                instantiateDataStore: (context: IFluidDataStoreContext) => { },
+                instantiateDataStore: async (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime(),
             };
             const registry: IFluidDataStoreRegistry = {
                 get IFluidDataStoreRegistry() { return registry; },
@@ -69,7 +70,7 @@ describe("Data Store Context Tests", () => {
             } as ContainerRuntime;
         });
 
-        it("Check LocalDataStore Attributes", () => {
+        it("Check LocalDataStore Attributes", async () => {
             localDataStoreContext = new LocalFluidDataStoreContext(
                 dataStoreId,
                 ["TestDataStore1"],
@@ -78,11 +79,10 @@ describe("Data Store Context Tests", () => {
                 scope,
                 summaryTracker,
                 createSummarizerNodeFn,
-                attachCb);
+                attachCb,
+                undefined);
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            localDataStoreContext.realize();
-            localDataStoreContext.bindRuntime(new MockFluidDataStoreRuntime());
+            await localDataStoreContext.realize();
             const attachMessage = localDataStoreContext.generateAttachMessage();
 
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
@@ -111,7 +111,8 @@ describe("Data Store Context Tests", () => {
                 scope,
                 summaryTracker,
                 createSummarizerNodeFn,
-                attachCb);
+                attachCb,
+                undefined);
 
             await localDataStoreContext.realize()
                 .catch((error) => {
@@ -125,7 +126,8 @@ describe("Data Store Context Tests", () => {
             registryWithSubRegistries.IFluidDataStoreFactory = registryWithSubRegistries;
             registryWithSubRegistries.IFluidDataStoreRegistry = registryWithSubRegistries;
             registryWithSubRegistries.get = async (pkg) => Promise.resolve(registryWithSubRegistries);
-            registryWithSubRegistries.instantiateDataStore = (context: IFluidDataStoreContext) => { };
+            registryWithSubRegistries.instantiateDataStore =
+                async (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
@@ -141,11 +143,10 @@ describe("Data Store Context Tests", () => {
                 scope,
                 summaryTracker,
                 createSummarizerNodeFn,
-                attachCb);
+                attachCb,
+                undefined);
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            localDataStoreContext.realize();
-            localDataStoreContext.bindRuntime(new MockFluidDataStoreRuntime());
+            await localDataStoreContext.realize();
 
             const attachMessage = localDataStoreContext.generateAttachMessage();
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
@@ -168,13 +169,13 @@ describe("Data Store Context Tests", () => {
         let remotedDataStoreContext: RemotedFluidDataStoreContext;
         let dataStoreAttributes: IFluidDataStoreAttributes;
         const storage: Partial<IDocumentStorageService> = {};
-        let scope: IFluidObject & IFluidObject;
+        let scope: IFluidObject;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             const factory: { [key: string]: any } = {};
             factory.IFluidDataStoreFactory = factory;
             factory.instantiateDataStore =
-                (context: IFluidDataStoreContext) => { context.bindRuntime(new MockFluidDataStoreRuntime()); };
+                (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime();
             const registry: { [key: string]: any } = {};
             registry.IFluidDataStoreRegistry = registry;
             registry.get = async (pkg) => Promise.resolve(factory);
@@ -192,7 +193,7 @@ describe("Data Store Context Tests", () => {
                 pkg: JSON.stringify(["TestDataStore1"]),
                 snapshotFormatVersion: "0.1",
             };
-            const buffer = Buffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
+            const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
             const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
             const snapshotTree: ISnapshotTree = {
                 id: "dummy",
@@ -225,7 +226,7 @@ describe("Data Store Context Tests", () => {
             dataStoreAttributes = {
                 pkg: "TestDataStore1",
             };
-            const buffer = Buffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
+            const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
             const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
             const snapshotTree: ISnapshotTree = {
                 id: "dummy",

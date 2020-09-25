@@ -1,0 +1,85 @@
+baseURL: "https://fluidframework.com/"
+languageCode: "en-us"
+refLinksErrorLevel: "WARNING"
+theme: "thxvscode"
+title: "Fluid Framework"
+titleCaseStyle: "Chicago"
+
+permalinks:
+  page: "/:slug"
+  post: "/:year/:month/:day/:title"
+
+params:
+  appInsightKey: "8baf6e9c-253e-4207-82e5-94778984c28e"
+  customCSS: ["css/fluid.css", "css/tango.css"]
+  dateform: "Jan 2, 2006"
+  dateformNum: "2006-01-02"
+  dateformNumTime: "2006-01-02 15:04 -0700"
+  dateformShort: "Jan 2"
+  githubRepo: "microsoft/FluidFramework"
+  twitterHandle: "fluidframework"
+
+menu:
+  main:
+  - name: "Docs"
+    url: "/docs/"
+    weight: -90
+  - name: "API"
+    url: "/apis/"
+    weight: -80
+  - name: "Community"
+    url: "/community/"
+    weight: -40
+  - name: "Playground"
+    url: "/playground/"
+    weight: -40
+
+  docs:
+  - identifier: "get-started"
+    name: "Get Started"
+    weight: -500
+  - identifier: "concepts"
+    name: "Learn"
+    weight: -300
+  - identifier: "advanced"
+    name: "Advanced concepts"
+    weight: -200
+  - identifier: "faq"
+    name: "FAQ"
+    url: "/docs/faq/"
+    weight: -100
+  - identifier: "glossary"
+    name: "Glossary"
+    url: "/docs/Glossary/"
+    weight: -90
+
+markup:
+  goldmark:
+    renderer:
+      autoHeadingIDType: "github"
+      # mark unsafe html as true since api-documenter uses html snipets.
+      unsafe: true
+      extensions:
+        definitionList: true
+        footnote: true
+        linkify: true
+        strikethrough: true
+        table: true
+        taskList: true
+        typographer: true
+
+  highlight:
+    codeFences: true
+    guessSyntax: true
+    hl_Lines: ""
+    lineNoStart: 1
+    # if you need to turn on line nos, use the highlight shortcode
+    lineNos: false
+    lineNumbersInTable: false
+    noClasses: false
+    tabWidth: 2
+
+  tableOfContents:
+    endLevel: 4
+    ordered: false
+    startLevel: 2

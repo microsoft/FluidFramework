@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IGenericBlob,
     ContainerWarning,
     ILoader,
     AttachState,
@@ -458,15 +457,11 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
-    public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
+    public async uploadBlob(file: Buffer): Promise<any> {
         return null;
     }
 
-    public async getBlob(blobId: string): Promise<IGenericBlob> {
-        return null;
-    }
-
-    public async getBlobMetadata(): Promise<IGenericBlob[]> {
+    public async getBlob(blobId: string): Promise<any> {
         return null;
     }
 
@@ -492,6 +487,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public setConnectionState(connected: boolean, clientId?: string) {
         return;
+    }
+
+    public async resolveHandle(request: IRequest): Promise<IResponse> {
+        return this.request(request);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -526,7 +525,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
-    public async requestComponent(request: IRequest): Promise<IResponse> {
+    public async requestDataStore(request: IRequest): Promise<IResponse> {
         return null;
     }
 
@@ -586,7 +585,7 @@ export class MockSharedObjectServices implements IChannelServices {
     public static createFromTree(tree: ITree) {
         const contents: { [key: string]: string } = {};
         for (const entry of tree.entries) {
-            assert(entry.type === TreeEntry[TreeEntry.Blob]);
+            assert(entry.type === TreeEntry.Blob);
             contents[entry.path] = (entry.value as IBlob).contents;
         }
         return new MockSharedObjectServices(contents);

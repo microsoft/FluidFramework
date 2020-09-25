@@ -5,9 +5,10 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, max-len, no-bitwise, no-shadow */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
+import { Trace } from "@fluidframework/common-utils";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -63,25 +64,16 @@ export function simpleTest() {
     printStringProperty(beast.get("Chameleon"));
 }
 
-const clock = () => process.hrtime();
+const clock = () => Trace.start();
 
-function took(desc: string, start: [number, number]) {
-    // let end: number[] = process.hrtime(start);
-    const duration = elapsedMilliseconds(start);
+function took(desc: string, trace: Trace) {
+    const duration = trace.trace().duration;
     log(`${desc} took ${duration} ms`);
     return duration;
 }
 
-function elapsedMilliseconds(start: [number, number]) {
-    const end: number[] = process.hrtime(start);
-    const duration = Math.round((end[0] * 1000) + (end[1] / 1000000));
-    return duration;
-}
-
-function elapsedMicroseconds(start: [number, number]) {
-    const end: number[] = process.hrtime(start);
-    const duration = Math.round((end[0] * 1000000) + (end[1] / 1000));
-    return duration;
+function elapsedMicroseconds(trace: Trace) {
+    return trace.trace().duration * 1000;
 }
 
 export function integerTest1() {
@@ -1353,7 +1345,7 @@ function tst() {
             ntree.put(entry, 1);
         }
     }
-    log(`size: ${ntree.size()}; random insert takes ${elapsedMilliseconds(clockStart)}ms`);
+    log(`size: ${ntree.size()}; random insert takes ${clockStart.trace().duration}ms`);
     for (const entry of a) {
         if (!ntree.get(entry)) {
             log(`biff ${entry}`);

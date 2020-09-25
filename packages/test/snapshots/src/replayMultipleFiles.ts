@@ -3,12 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import fs from "fs";
+import nodePath from "path";
 import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
 import { Deferred } from "@fluidframework/common-utils";
 
-const fileLocation: string = "content/snapshotTestContent";
+// Determine relative file locations
+function getFileLocations(): [string, string] {
+    // Correct if executing from working directory of package root
+    const origTestCollateralPath = "content/snapshotTestContent";
+    let testCollateralPath = origTestCollateralPath;
+    let workerPath = "./dist/replayWorker.js";
+    if (fs.existsSync(testCollateralPath)) {
+        assert(fs.existsSync(workerPath), `Cannot find worker js file: ${workerPath}`);
+        return [testCollateralPath, workerPath];
+    }
+    // Relative to this generated js file being executed
+    testCollateralPath = nodePath.join(__dirname, "..", testCollateralPath);
+    workerPath = nodePath.join(__dirname, "..", workerPath);
+    assert(fs.existsSync(testCollateralPath), `Cannot find test collateral path: ${origTestCollateralPath}`);
+    assert(fs.existsSync(workerPath), `Cannot find worker js file: ${workerPath}`);
+    return [testCollateralPath, workerPath];
+}
+const [fileLocation, workerLocation] = getFileLocations();
 
 const numberOfThreads = 4;
 
@@ -144,7 +162,7 @@ export async function processContent(mode: Mode, concurrently = true) {
         }
 
         await (async (workerData: IWorkerArgs) => limiter.addWork(async () => new Promise((resolve, reject) => {
-            const worker = new threads.Worker("./dist/replayWorker.js", { workerData });
+            const worker = new threads.Worker(workerLocation, { workerData });
 
             worker.on("message", (error: string) => {
                 if (mode === Mode.Compare) {

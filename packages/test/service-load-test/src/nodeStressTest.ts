@@ -10,7 +10,6 @@ import { IProxyLoaderFactory, IFluidCodeDetails } from "@fluidframework/containe
 import { Loader } from "@fluidframework/container-loader";
 import { OdspDocumentServiceFactory, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
-
 import {
     OdspTokenManager,
     odspTokensCache,
@@ -19,18 +18,19 @@ import {
 } from "@fluidframework/tool-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
+
 const packageName = `${pkgName}@${pkgVersion}`;
 
 interface ITestConfigs {
-    full: ITestConfig,
-    mini: ITestConfig,
+    full: ITestConfig;
+    mini: ITestConfig;
 }
 
 interface IConfig {
-    server: string,
-    driveId: string,
-    username: string,
-    profiles: ITestConfigs,
+    server: string;
+    driveId: string;
+    username: string;
+    profiles: ITestConfigs;
 }
 
 const codeDetails: IFluidCodeDetails = {
@@ -53,7 +53,7 @@ function createLoader(config: IConfig, password: string) {
     const loader = new Loader(
         urlResolver,
         new OdspDocumentServiceFactory(
-            async (siteUrl: string, refresh) => {
+            async (_siteUrl: string, refresh: boolean, _claims?: string) => {
                 const tokens = await odspTokenManager.getOdspTokens(
                     config.server,
                     getMicrosoftConfiguration(),
@@ -62,7 +62,7 @@ function createLoader(config: IConfig, password: string) {
                 );
                 return tokens.accessToken;
             },
-            async (refresh: boolean) => {
+            async (refresh: boolean, _claims?: string) => {
                 const tokens = await odspTokenManager.getPushTokens(
                     config.server,
                     getMicrosoftConfiguration(),
@@ -121,6 +121,7 @@ async function main() {
         .option("-u, --url <url>", "Load an existing data store rather than creating new")
         .option("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
         .option("-d, --debug", "Debug child processes via --inspect-brk")
+        .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .parse(process.argv);
 
     const password: string = commander.password;
@@ -128,6 +129,11 @@ async function main() {
     let url: string | undefined = commander.url;
     const runId: number | undefined = commander.runId === undefined ? undefined : parseInt(commander.runId, 10);
     const debug: true | undefined = commander.debug;
+    const log: string | undefined = commander.log;
+
+    if (log !== undefined) {
+        process.env.DEBUG = log;
+    }
 
     if (config.profiles[profile] === undefined) {
         console.error("Invalid --profile argument not found in testConfig.json profiles");

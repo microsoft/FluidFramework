@@ -136,7 +136,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: JSON.stringify(this.inkData.getSerializable()),
                         encoding: "utf-8",
@@ -154,7 +154,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService,
     ): Promise<void> {
         const header = await storage.read(snapshotFileName);

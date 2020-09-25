@@ -21,3 +21,8 @@ bundleAnalysis
 
 # Misc pipeline artifacts
 artifacts
+
+# Windows ADS files in docs.
+docs/**/*:Zone.Identifier
+
+docs/static/playground/

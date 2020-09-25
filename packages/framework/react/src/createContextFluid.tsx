@@ -5,16 +5,16 @@
 
 import * as React from "react";
 import {
-    IFluidFunctionalComponentViewState,
+    IViewState,
     IFluidContextProps,
     FluidContext,
-    IFluidFunctionalComponentFluidState,
+    IFluidState,
 } from "./interface";
 import { useStateFluid } from "./useStateFluid";
 
 export function createContextFluid<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C
 >(props: IFluidContextProps<SV, SF, C>, initialViewState: SV): FluidContext<SV, C> {
     const [state, setState] = useStateFluid(props, initialViewState);

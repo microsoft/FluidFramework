@@ -7,21 +7,16 @@ import {
     IFluidObject,
     IFluidHandle,
     IFluidHandleContext,
-    IFluidRouter,
-    IRequest,
-    IResponse,
 } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
-export class FluidOjectHandle<T extends IFluidObject = IFluidObject> implements IFluidHandle {
+export class FluidObjectHandle<T extends IFluidObject = IFluidObject> implements IFluidHandle {
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
     private graphAttachState: AttachState = AttachState.Detached;
     private bound: Set<IFluidHandle> | undefined;
     public readonly absolutePath: string;
 
-    public get IFluidRouter(): IFluidRouter { return this; }
-    public get IFluidHandleContext(): IFluidHandleContext { return this; }
     public get IFluidHandle(): IFluidHandle { return this; }
 
     public get isAttached(): boolean {
@@ -29,7 +24,7 @@ export class FluidOjectHandle<T extends IFluidObject = IFluidObject> implements 
     }
 
     /**
-     * Creates a new FluidOjectHandle.
+     * Creates a new FluidObjectHandle.
      * @param value - The IFluidObject object this handle is for.
      * @param path - The path to this handle relative to the routeContext.
      * @param routeContext - The parent IFluidHandleContext that has a route to this handle.
@@ -75,13 +70,5 @@ export class FluidOjectHandle<T extends IFluidObject = IFluidObject> implements 
         }
 
         this.bound.add(handle);
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        if (this.value.IFluidRouter !== undefined) {
-            return this.value.IFluidRouter.request(request);
-        } else {
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-        }
     }
 }

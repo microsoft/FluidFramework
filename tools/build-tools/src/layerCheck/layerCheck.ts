@@ -7,8 +7,8 @@ import { LayerGraph } from "./layerGraph";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { writeFileAsync, appendFileAsync } from "../common/utils";
-import { FluidRepoBase } from "../common/fluidRepoBase";
+import { writeFileAsync } from "../common/utils";
+import { FluidRepo } from "../common/fluidRepo";
 import path from "path";
 
 function printUsage() {
@@ -17,6 +17,7 @@ function printUsage() {
 Usage: fluid-layer-check <options>
 Options:
      --dot <path>     Generate *.dot for GraphViz
+     --info <path>    Path to the layer graph json file
      --md             Generate PACKAGES.md file for human consumption
 ${commonOptionString}
 `);
@@ -26,6 +27,7 @@ const packagesMdFileName: string = "PACKAGES.md";
 
 let dotGraphFilePath: string | undefined;
 let writePackagesMd: boolean = false;
+let layerInfoPath: string | undefined;
 
 function parseOptions(argv: string[]) {
     let error = false;
@@ -62,6 +64,16 @@ function parseOptions(argv: string[]) {
             continue;
         }
 
+        if (arg === "--info") {
+            if (i !== process.argv.length - 1) {
+                layerInfoPath = path.resolve(process.argv[++i]);
+                continue;
+            }
+            console.error("ERROR: Missing argument for --info");
+            error = true;
+            break;
+        }
+
         console.error(`ERROR: Invalid arguments ${arg}`);
         error = true;
         break;
@@ -81,11 +93,11 @@ async function main() {
     const resolvedRoot = await getResolvedFluidRoot();
 
     // Load the package
-    const packages = new FluidRepoBase(resolvedRoot, false).packages;
+    const packages = new FluidRepo(resolvedRoot, false).packages;
     timer.time("Package scan completed");
 
     try {
-        const layerGraph = LayerGraph.load(resolvedRoot, packages);
+        const layerGraph = LayerGraph.load(resolvedRoot, packages, layerInfoPath);
 
         // Write human-readable package list organized by layer
         if (writePackagesMd) {

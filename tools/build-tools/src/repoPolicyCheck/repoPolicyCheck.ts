@@ -13,6 +13,8 @@ import { Handler } from "./common";
 import { handlers as copyrightFileHeaderHandlers } from "./handlers/copyrightFileHeader";
 import { handlers as npmPackageContentsHandlers } from "./handlers/npmPackages";
 import { handler as dockerfilePackageHandler } from "./handlers/dockerfilePackages";
+import { handler as fluidCaseHandler } from "./handlers/fluidCase";
+import { handler as lockfilesHandler } from "./handlers/lockfiles";
 
 const exclusions: RegExp[] = require('../../data/exclusions.json').map((e: string) => new RegExp(e, "i"));
 
@@ -55,19 +57,21 @@ const handlers: Handler[] = [
     ...copyrightFileHeaderHandlers,
     ...npmPackageContentsHandlers,
     dockerfilePackageHandler,
+    fluidCaseHandler,
+    lockfilesHandler,
 ];
 
 // route files to their handlers by regex testing their full paths
 // synchronize output, exit code, and resolve decision for all handlers
 function routeToHandlers(file: string) {
     handlers.filter(handler => handler.match.test(file) && handlerRegex.test(handler.name)).map(handler => {
-        const result = handler.handler(file);
+        const result = handler.handler(file, pathToGitRoot);
         if (result) {
             let output = newline + 'file failed policy check: ' + file + newline + result;
 
             if (program.resolve && handler.resolver) {
                 output += newline + 'attempting to resolve: ' + file;
-                const resolveResult = handler.resolver(file);
+                const resolveResult = handler.resolver(file, pathToGitRoot);
 
                 if (resolveResult.message) {
                     output += newline + resolveResult.message;

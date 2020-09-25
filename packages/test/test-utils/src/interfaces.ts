@@ -10,14 +10,14 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideTestFluidComponent>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideTestFluidObject>> { }
 }
 
-export interface IProvideTestFluidComponent {
-    readonly ITestFluidComponent: ITestFluidComponent;
+export interface IProvideTestFluidObject {
+    readonly ITestFluidObject: ITestFluidObject;
 }
 
-export interface ITestFluidComponent extends IProvideTestFluidComponent, IFluidLoadable {
+export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadable {
     root: ISharedMap;
     readonly runtime: IFluidDataStoreRuntime;
     readonly channel: IFluidDataStoreChannel;

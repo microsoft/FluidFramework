@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { parse } from "url";
 import {
     IDocumentService,
@@ -35,7 +35,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         private readonly errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
         private readonly disableCache: boolean = false,
         private readonly historianApi: boolean = true,
-        private readonly gitCache: IGitCache | null = null,
+        private readonly gitCache: IGitCache | undefined = undefined,
         private readonly credentials?: ICredentials,
     ) {
     }

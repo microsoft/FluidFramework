@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { ITelemetryLogger, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IConnectionDetails,
@@ -15,8 +15,8 @@ import {
     IThrottlingWarning,
     ContainerErrorType,
 } from "@fluidframework/container-definitions";
-import { performanceNow, TypedEventEmitter } from "@fluidframework/common-utils";
-import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { performance, TypedEventEmitter } from "@fluidframework/common-utils";
+import { PerformanceEvent, TelemetryLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -141,7 +141,7 @@ export class DeltaManager
 
     private inQuorum = false;
 
-    private updateSequenceNumberTimer: number | undefined;
+    private updateSequenceNumberTimer: ReturnType<typeof setTimeout> | undefined;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
@@ -219,13 +219,16 @@ export class DeltaManager
     }
 
     public get maxMessageSize(): number {
-        return this.connection!.details.serviceConfiguration?.maxMessageSize
-            ?? this.connection!.details.maxMessageSize
+        return this.connection?.details.serviceConfiguration?.maxMessageSize
+            ?? this.connection?.details.maxMessageSize
             ?? DefaultChunkSize;
     }
 
     public get version(): string {
-        return this.connection!.details.version;
+        if (this.connection === undefined) {
+            throw new Error("Cannot check version without a connection");
+        }
+        return this.connection.details.version;
     }
 
     public get serviceConfiguration(): IServiceConfiguration | undefined {
@@ -261,8 +264,8 @@ export class DeltaManager
 
     /**
      * Tells if container is in read-only mode.
-     * Components should listen for "readonly" notifications and disallow user
-     * making changes to components.
+     * Data stores should listen for "readonly" notifications and disallow user
+     * making changes to data stores.
      * Readonly state can be because of no storage write permission,
      * or due to host forcing readonly mode for container.
      * It is undefined if we have not yet established websocket connection
@@ -304,20 +307,20 @@ export class DeltaManager
     }
 
     /**
-     * Sends signal to runtime (and components) to be read-only.
-     * Hosts may have read only views, indicating to components that no edits are allowed.
+     * Sends signal to runtime (and data stores) to be read-only.
+     * Hosts may have read only views, indicating to data stores that no edits are allowed.
      * This is independent from this._readonlyPermissions (permissions) and this.connectionMode
      * (server can return "write" mode even when asked for "read")
-     * Leveraging same "readonly" event as runtime & components should behave the same in such case
+     * Leveraging same "readonly" event as runtime & data stores should behave the same in such case
      * as in read-only permissions.
-     * But this.active can be used by some DDSs to figure out if ops can be sent
+     * But this.active can be used by some DDSes to figure out if ops can be sent
      * (for example, read-only view still participates in code proposals / upgrades decisions)
      */
     public forceReadonly(readonly: boolean) {
         const oldValue = this.readonly;
         this._forceReadonly = readonly;
         if (oldValue !== this.readonly) {
-            this.emit("readonly", this.readonly);
+            safeRaiseEvent(this, this.logger, "readonly", this.readonly);
         }
     }
 
@@ -325,7 +328,7 @@ export class DeltaManager
         const oldValue = this.readonly;
         this._readonlyPermissions = readonly;
         if (oldValue !== this.readonly) {
-            this.emit("readonly", this.readonly);
+            safeRaiseEvent(this, this.logger, "readonly", this.readonly);
         }
     }
 
@@ -354,7 +357,10 @@ export class DeltaManager
         // within an array *must* fit within the maxMessageSize and are guaranteed to be ordered sequentially.
         this._outbound = new DeltaQueue<IDocumentMessage[]>(
             (messages) => {
-                this.connection!.submit(messages);
+                if (this.connection === undefined) {
+                    throw new Error("Attempted to submit an outbound message without connection");
+                }
+                this.connection.submit(messages);
             });
 
         this._outbound.on("error", (error) => {
@@ -363,7 +369,10 @@ export class DeltaManager
 
         // Inbound signal queue
         this._inboundSignal = new DeltaQueue<ISignalMessage>((message) => {
-            this.handler!.processSignal({
+            if (this.handler === undefined) {
+                throw new Error("Attempted to process an inbound signal without a handler attached");
+            }
+            this.handler.processSignal({
                 clientId: message.clientId,
                 content: JSON.parse(message.content as string),
             });
@@ -447,8 +456,8 @@ export class DeltaManager
         // if we have any non-acked ops from last connection, reconnect as "write".
         // without that we would connect in view-only mode, which will result in immediate
         // firing of "connected" event from Container and switch of current clientId (as tracked
-        // by all DDSs). This will make it impossible to figure out if ops actually made it through,
-        // so DDSs will immediately resubmit all pending ops, and some of them will be duplicates, corrupting document
+        // by all DDSes). This will make it impossible to figure out if ops actually made it through,
+        // so DDSes will immediately resubmit all pending ops, and some of them will be duplicates, corrupting document
         if (this.clientSequenceNumberObserved !== this.clientSequenceNumber) {
             requestedMode = "write";
         }
@@ -479,7 +488,7 @@ export class DeltaManager
             let connection: DeltaConnection | undefined;
             let delay = InitialReconnectDelaySeconds;
             let connectRepeatCount = 0;
-            const connectStartTime = performanceNow();
+            const connectStartTime = performance.now();
 
             // This loop will keep trying to connect until successful, with a delay between each iteration.
             while (connection === undefined) {
@@ -526,7 +535,7 @@ export class DeltaManager
             if (connectRepeatCount > 1) {
                 this.logger.sendTelemetryEvent({
                     attempts: connectRepeatCount,
-                    duration: TelemetryLogger.formatTick(performanceNow() - connectStartTime),
+                    duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
                     eventName: "MultipleDeltaConnectionFailures",
                 });
             }
@@ -820,12 +829,12 @@ export class DeltaManager
         this.pending = [];
 
         // Notify everyone we are in read-only state.
-        // Useful for components in case we hit some critical error,
+        // Useful for data stores in case we hit some critical error,
         // to switch to a mode where user edits are not accepted
         this.set_readonlyPermissions(true);
 
         // This needs to be the last thing we do (before removing listeners), as it causes
-        // Container to dispose context and break ability of components / runtime to "hear"
+        // Container to dispose context and break ability of data stores / runtime to "hear"
         // from delta manager, including notification (above) about readonly state.
         this.emit("closed", error);
 
@@ -902,7 +911,7 @@ export class DeltaManager
             return;
         }
 
-        // We cancel all ops on lost of connectivity, and rely on DDSs to resubmit them.
+        // We cancel all ops on lost of connectivity, and rely on DDSes to resubmit them.
         // Semantics are not well defined for batches (and they are broken right now on disconnects anyway),
         // but it's safe to assume (until better design is put into place) that batches should not exist
         // across multiple connections. Right now we assume runtime will not submit any ops in disconnected
@@ -1038,7 +1047,7 @@ export class DeltaManager
             return;
         }
 
-        // We cancel all ops on lost of connectivity, and rely on DDSs to resubmit them.
+        // We cancel all ops on lost of connectivity, and rely on DDSes to resubmit them.
         // Semantics are not well defined for batches (and they are broken right now on disconnects anyway),
         // but it's safe to assume (until better design is put into place) that batches should not exist
         // across multiple connections. Right now we assume runtime will not submit any ops in disconnected
@@ -1243,7 +1252,10 @@ export class DeltaManager
 
         this.emit("beforeOpProcessing", message);
 
-        const result = this.handler!.process(message);
+        if (this.handler === undefined) {
+            throw new Error("Attempted to process an inbound message without a handler attached");
+        }
+        const result = this.handler.process(message);
         this.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
 
         const endTime = Date.now();

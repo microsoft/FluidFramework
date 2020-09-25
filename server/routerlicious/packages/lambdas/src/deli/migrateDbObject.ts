@@ -7,9 +7,9 @@
 
 import {
     ICollection,
+    IDeliState,
     IDocument,
 } from "@fluidframework/server-services-core";
-import { IDeliCheckpoint } from "./checkpointContext";
 
 // One time migration script per document for updating to latest schema.
 // Eventually we can remove it along with legacy fields.
@@ -21,7 +21,7 @@ export async function migrateSchema(
     if (object.version !== undefined) {
         return object;
     } else {
-        const deliState: IDeliCheckpoint = {
+        const deliState: IDeliState = {
             branchMap: object.branchMap,
             clients: object.clients,
             durableSequenceNumber: object.sequenceNumber,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { DocumentContext } from "../../document-router/documentContext";
 import { TestKafka } from "@fluidframework/server-test-utils";
 

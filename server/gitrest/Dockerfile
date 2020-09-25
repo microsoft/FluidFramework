@@ -1,10 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:10.16.0-slim
-
-# To auth against private VSTS
-ARG NPM_TOKEN
+FROM node:12.18-stretch AS base
 
 # Add Tini
 ENV TINI_VERSION v0.18.0
@@ -15,15 +12,14 @@ RUN apt-get update && apt-get install -y build-essential libssl-dev python libcu
 
 # Copy over and build the server
 WORKDIR /home/node/server
-COPY .npmrc .
 COPY package.json .
 COPY package-lock.json .
 RUN BUILD_ONLY=true npm install
 COPY . .
 RUN npm run build
 
-# Remove the npmrc following the build
-RUN rm -f .npmrc
+# Build that actually runs
+FROM base AS runner
 
 # Expose the port the app runs under
 EXPOSE 3000

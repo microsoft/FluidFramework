@@ -151,7 +151,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: this.intervalMapKernel.serialize(),
                         encoding: "utf-8",
@@ -174,7 +174,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     }
 
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 

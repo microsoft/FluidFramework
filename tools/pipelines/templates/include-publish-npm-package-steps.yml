@@ -1,0 +1,116 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# publish-npm-package template to publish NPM packages/projects
+
+parameters:
+- name: pool
+  type: object
+  default: Lite
+
+- name: namespace
+  type: boolean
+
+- name: environment
+  type: string
+
+- name: feedName
+  type: string
+
+- name: official
+  type: string
+
+- name: publishFlags
+  type: string
+  default:
+
+- name: customEndPoint
+  type: string
+  default:
+
+- name: tagName
+  type: string
+  default:
+
+jobs:
+- deployment: publish_${{ replace(parameters.environment, '-', '_') }}
+  displayName: Publish ${{ parameters.environment }}
+  pool: ${{ parameters.pool }}
+  environment: ${{ parameters.environment }}
+  workspace:
+    clean: all
+  variables:
+    version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
+  strategy:
+    runOnce:
+        deploy:
+            steps:
+            - download: current
+              artifact: pack
+            - task: UseNode@1
+              displayName: Use Node 12.x
+              inputs:
+                version: 12.x
+            - task: Bash@3
+              displayName: Generate .npmrc
+              inputs:
+                targetType: 'inline'
+                workingDirectory: $(Pipeline.Workspace)/pack
+                ${{ if eq(parameters.namespace, true) }}:
+                  ${{ if eq(parameters.official, false) }}:
+                    script: |
+                      echo Generating .npmrc for ${{ parameters.feedName }}
+                      echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
+                      echo "@fluid-example:registry=${{ parameters.feedName }}" >> ./.npmrc
+                      echo "@fluid-internal:registry=${{ parameters.feedName }}" >> ./.npmrc
+                      echo "always-auth=true" >> ./.npmrc
+                      cat .npmrc
+                  ${{ if eq(parameters.official, true) }}:
+                    script: |
+                      echo Generating .npmrc for ${{ parameters.feedName }}
+                      echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
+                      echo "always-auth=true" >> ./.npmrc
+                      cat .npmrc
+
+                      echo Deleteing @fluid-internal packages
+                      rm -f fluid-internal-*
+                      echo Deleteing @fluid-example packages
+                      rm -f fluid-example-*
+                ${{ if eq(parameters.namespace, false) }}:
+                  script: |
+                    echo Generating .npmrc for ${{ parameters.feedName }}
+                    echo "registry=${{ parameters.feedName }}" >> ./.npmrc
+                    echo "always-auth=true" >> ./.npmrc
+                    cat .npmrc
+            - task: npmAuthenticate@0
+              displayName: npm Authenticate
+              inputs:
+                workingFile: $(Pipeline.Workspace)/pack/.npmrc
+                customEndPoint: ${{ parameters.customEndPoint }}
+            - task: Bash@3
+              displayName: Publish Packages
+              inputs:
+                targetType: 'inline'
+                workingDirectory: $(Pipeline.Workspace)/pack
+                script: |
+                  tag="--tag canary"
+                  if [[ "$(Build.SourceBranch)" = refs/heads/main ]]; then
+                    tag="--tag next"
+                  elif [[ "$(release)" == "release" ]]; then
+                    tag="--tag latest"
+                  fi
+                  echo Tag: $tag
+                  cp .npmrc ~/.npmrc
+                  t1=0
+                  for f in *.tgz
+                  do
+                      if ! npm publish $f $tag ${{ parameters.publishFlags }}
+                      then
+                          let t1+=1
+                      fi
+                  done
+                  rm ~/.npmrc
+                  exit $t1
+            - template: include-git-tag-steps.yml
+              parameters:
+                tagName: ${{ parameters.tagName }}

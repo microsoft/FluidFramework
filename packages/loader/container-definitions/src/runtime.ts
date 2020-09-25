@@ -22,12 +22,12 @@ import {
     MessageType,
     ISummaryTree,
     IVersion,
+    IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
-import { IBlobManager } from "./blobs";
+import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { ICodeLoader, ILoader } from "./loader";
-import { IMessageScheduler } from "./messageScheduler";
 
 // Represents the attachment state of the entity.
 export enum AttachState {
@@ -43,13 +43,17 @@ export enum BindState {
     Bound = "Bound",
 }
 
+/**
+ * Represents the data that will be preserved from the previous IRuntime during a context reload.
+ */
 export interface IRuntimeState {
     snapshot?: ITree,
     state?: unknown,
 }
 
 /**
- * The IRuntime represents an instantiation of a code package within a container.
+ * The IRuntime represents an instantiation of a code package within a Container.
+ * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
  */
 export interface IRuntime extends IDisposable {
 
@@ -68,7 +72,9 @@ export interface IRuntime extends IDisposable {
      */
     setConnectionState(connected: boolean, clientId?: string);
 
-    // Back-compat: supporting <= 0.16 components
+    /**
+     * Deprecated: Back-compat, supporting 0.16 data stores and earlier
+     */
     changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
@@ -81,7 +87,7 @@ export interface IRuntime extends IDisposable {
     stop(): Promise<IRuntimeState>;
 
     /**
-     * Processes the given message
+     * Processes the given op (message)
      */
     process(message: ISequencedDocumentMessage, local: boolean, context: any);
 
@@ -97,9 +103,20 @@ export interface IRuntime extends IDisposable {
      * @param attachState - State of the container.
      */
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+
+    // 0.24 back-compat attachingBeforeSummary
+    readonly runtimeVersion?: string;
 }
 
-export interface IContainerContext extends IMessageScheduler, IDisposable {
+/**
+ * The ContainerContext is a proxy standing between the Container and the Container's IRuntime.
+ * This allows the Container to terminate the connection to the IRuntime.
+ *
+ * Specifically, there is an event on Container, onContextChanged, which mean a new code proposal has been loaded,
+ * so the old IRuntime is no longer valid, as its ContainerContext has been revoked,
+ * and the Container has created a new ContainerContext.
+ */
+export interface IContainerContext extends IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
@@ -107,15 +124,15 @@ export interface IContainerContext extends IMessageScheduler, IDisposable {
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string | null;
-    readonly blobManager: IBlobManager | undefined;
     readonly storage: IDocumentStorageService | undefined | null;
     readonly connected: boolean;
     readonly branch: string;
-    readonly baseSnapshot: ISnapshotTree | null;
+    readonly baseSnapshot: ISnapshotTree | undefined;
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: (error?: ICriticalContainerError) => void;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
@@ -128,7 +145,7 @@ export interface IContainerContext extends IMessageScheduler, IDisposable {
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IFluidObject & IFluidObject;
+    readonly scope: IFluidObject;
 
     raiseContainerWarning(warning: ContainerWarning): void;
     requestSnapshot(tagMessage: string): Promise<void>;
@@ -157,12 +174,17 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 export interface IProvideRuntimeFactory {
     readonly IRuntimeFactory: IRuntimeFactory;
 }
+
 /**
  * Exported module definition
+ *
+ * Provides the entry point for the ContainerContext to load the proper IRuntime
+ * to start up the running instance of the Container.
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
     /**
-     * Instantiates a new chaincode container
+     * Instantiates a new IRuntime for the given IContainerContext to proxy to
+     * This is the main entry point to the Container's business logic
      */
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }

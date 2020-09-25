@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import {
     IRequest,
     DriverHeader,
@@ -16,6 +16,7 @@ import {
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
+import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
     const siteOrigin = new URL(siteUrl).origin;
@@ -109,15 +110,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
     }
 
     public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {
-        const createNewRequest: IRequest = {
-            url: `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(filePath)}`,
-            headers: {
-                [CreateNewHeader.createNew]: {
-                    fileName,
-                },
-            },
-        };
-        return createNewRequest;
+        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     }
 
     private decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId: string; path: string } {

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import assert from "assert";
+import { strict as assert } from "assert";
 import {
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
@@ -38,7 +38,7 @@ describe("Data Store Creation Tests", () => {
          */
 
         let storage: IDocumentStorageService;
-        let scope: IFluidObject & IFluidObject;
+        let scope: IFluidObject;
         const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
@@ -55,10 +55,9 @@ describe("Data Store Creation Tests", () => {
         ): FluidDataStoreRegistryEntry {
             const registryEntries = new Map(entries);
             const factory: IFluidDataStoreFactory = {
+                type: "store-type",
                 get IFluidDataStoreFactory() { return factory; },
-                instantiateDataStore: (context: IFluidDataStoreContext) => {
-                    context.bindRuntime(new MockFluidDataStoreRuntime());
-                },
+                instantiateDataStore: async (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime(),
             };
             const registry: IFluidDataStoreRegistry = {
                 get IFluidDataStoreRegistry() { return registry; },
@@ -101,7 +100,7 @@ describe("Data Store Creation Tests", () => {
             summaryTracker = new SummaryTracker("", 0, 0);
             const summarizerNode = SummarizerNode.createRoot(
                 new TelemetryNullLogger(),
-                (() => {}) as unknown as SummarizeInternalFn,
+                (() => { }) as unknown as SummarizeInternalFn,
                 0,
                 0,
                 true);
@@ -124,7 +123,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await context.realize();
@@ -147,7 +147,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await context.realize();
@@ -170,7 +171,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextA.realize();
@@ -193,7 +195,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextB.realize();
@@ -216,7 +219,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreBId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextB.realize();
@@ -236,7 +240,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreCId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextC.realize();
@@ -259,7 +264,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextFake.realize();
@@ -282,7 +288,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextFake.realize();
@@ -305,7 +312,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextC.realize();

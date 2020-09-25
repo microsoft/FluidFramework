@@ -24,6 +24,7 @@ import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { HandleTable, Handle, isHandleValid } from "./handletable";
 import { serializeBlob, deserializeBlob } from "./serialization";
 import { HandleCache } from "./handlecache";
+import { VectorUndoProvider } from "./undoprovider";
 
 const enum SnapshotPath {
     segments = "segments",
@@ -55,6 +56,16 @@ export class PermutationSegment extends BaseSegment {
         assert(isHandleValid(value));
 
         this._start = value;
+    }
+
+    /**
+     * Transfers ownership of the associated row/col handles to the given 'destination' segment.
+     * The original segment's handle allocation is reset.  Used by 'undoRow/ColRemove' when
+     * copying cells to restore row/col segments.)
+     */
+    public transferHandlesTo(destination: PermutationSegment) {
+        destination._start = this._start;
+        this.reset();
     }
 
     public reset() {
@@ -113,6 +124,7 @@ export class PermutationSegment extends BaseSegment {
 export class PermutationVector extends Client {
     private handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
     public readonly handleCache = new HandleCache(this);
+    public undo: VectorUndoProvider | undefined;
 
     constructor(
         path: string,
@@ -183,7 +195,7 @@ export class PermutationVector extends Client {
         return this.getPosition(segment) + offset;
     }
 
-    public getPositionForResubmit(handle: Handle, localSeq: number) {
+    public handleToPosition(handle: Handle, localSeq = this.mergeTree.collabWindow.localSeq) {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq,
             "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op.");
 
@@ -247,7 +259,7 @@ export class PermutationVector extends Client {
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.segments,
-                    type: TreeEntry[TreeEntry.Tree],
+                    type: TreeEntry.Tree,
                     value: super.snapshot(runtime, handle, /* catchUpMsgs: */[]),
                 },
                 serializeBlob(runtime, handle, SnapshotPath.handleTable, this.handleTable.snapshot()),
@@ -275,6 +287,11 @@ export class PermutationVector extends Client {
                 position: this.getPosition(segment),
             }))
             .sort((left, right) => left.position - right.position);
+
+        // Notify the undo provider, if any is attached.
+        if (this.undo !== undefined) {
+            this.undo.record(operation, ranges);
+        }
 
         switch (operation) {
             case MergeTreeDeltaType.INSERT:

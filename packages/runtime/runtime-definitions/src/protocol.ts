@@ -62,3 +62,12 @@ export interface IAttachMessage {
      */
     snapshot: ITree;
 }
+
+/**
+ * This type should be used when reading an incoming attach op,
+ * but it should not be used when creating a new attach op.
+ * Older versions of attach messages could have null snapshots,
+ * so this gives correct typings for writing back-compat code.
+ */
+export type InboundAttachMessage = Omit<IAttachMessage, "snapshot">
+    & { snapshot: IAttachMessage["snapshot"] | null };

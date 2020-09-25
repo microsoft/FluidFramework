@@ -3,68 +3,73 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
+import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
-import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    createAndAttachContainer,
     createLocalLoader,
+    ITestFluidObject,
     OpProcessingController,
-    ITestFluidComponent,
-    initializeLocalContainer,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 describe("SharedCounter", () => {
-    const id = "fluid-test://localhost/counterTest";
+    const documentId = "counterTest";
+    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const counterId = "counterKey";
     const codeDetails: IFluidCodeDetails = {
         package: "sharedCounterTestPackage",
         config: {},
     };
+    const factory = new TestFluidObjectFactory([[counterId, SharedCounter.getFactory()]]);
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
+    let urlResolver: IUrlResolver;
     let opProcessingController: OpProcessingController;
-    let component1: ITestFluidComponent;
+    let dataStore1: ITestFluidObject;
     let sharedCounter1: ISharedCounter;
     let sharedCounter2: ISharedCounter;
     let sharedCounter3: ISharedCounter;
 
-    async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[counterId, SharedCounter.getFactory()]]);
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-        return initializeLocalContainer(id, loader, codeDetails);
+    async function createContainer(): Promise<IContainer> {
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
     }
 
-    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
-        }
-        return response.value as ITestFluidComponent;
+    async function loadContainer(): Promise<IContainer> {
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        return loader.resolve({ url: documentLoadUrl });
     }
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
+        urlResolver = new LocalResolver();
 
+        // Create a Container for the first client.
         const container1 = await createContainer();
-        component1 = await requestFluidObject("default", container1);
-        sharedCounter1 = await component1.getSharedObject<SharedCounter>(counterId);
+        dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        sharedCounter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
 
-        const container2 = await createContainer();
-        const component2 = await requestFluidObject("default", container2);
-        sharedCounter2 = await component2.getSharedObject<SharedCounter>(counterId);
+        // Load the Container that was created by the first client.
+        const container2 = await loadContainer();
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        sharedCounter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 
-        const container3 = await createContainer();
-        const component3 = await requestFluidObject("default", container3);
-        sharedCounter3 = await component3.getSharedObject<SharedCounter>(counterId);
+        // Load the Container that was created by the first client.
+        const container3 = await loadContainer();
+        const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        sharedCounter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
         opProcessingController.addDeltaManagers(
-            component1.runtime.deltaManager,
-            component2.runtime.deltaManager,
-            component3.runtime.deltaManager);
+            dataStore1.runtime.deltaManager,
+            dataStore2.runtime.deltaManager,
+            dataStore3.runtime.deltaManager);
 
         await opProcessingController.process();
     });

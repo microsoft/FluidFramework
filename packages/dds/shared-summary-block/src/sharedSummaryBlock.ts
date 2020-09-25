@@ -109,7 +109,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: JSON.stringify(contentsBlob),
                         encoding: "utf-8",
@@ -127,7 +127,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService): Promise<void> {
         const rawContent = await storage.read(snapshotFileName);
         const contents = JSON.parse(fromBase64ToUtf8(rawContent)) as ISharedSummaryBlockDataSerializable;

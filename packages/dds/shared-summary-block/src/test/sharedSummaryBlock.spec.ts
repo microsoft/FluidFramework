@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IBlob } from "@fluidframework/protocol-definitions";
 import { MockFluidDataStoreRuntime, MockSharedObjectServices } from "@fluidframework/test-runtime-utils";
 import { ISharedSummaryBlock } from "../interfaces";

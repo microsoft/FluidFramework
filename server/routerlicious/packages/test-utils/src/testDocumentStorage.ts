@@ -27,11 +27,11 @@ import {
     getGitMode,
     getGitType,
 } from "@fluidframework/protocol-base";
-import { gitHashFile } from "@fluidframework/common-utils";
+import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 
 const StartingSequenceNumber = 0;
 
-// Forked from DocumentStorage to remove to server dependencies and enable testing of other components.
+// Forked from DocumentStorage to remove to server dependencies and enable testing of other data stores.
 export class TestDocumentStorage implements IDocumentStorage {
     constructor(
         private readonly databaseManager: IDatabaseManager,
@@ -311,16 +311,16 @@ function getIdFromPathCore(
 }
 
 async function writeSummaryBlob(
-    content: string | Buffer,
+    content: string | Uint8Array,
     blobsShaCache: Set<string>,
     manager: IGitManager,
 ): Promise<string> {
     const { parsedContent, encoding } = typeof content === "string"
         ? { parsedContent: content, encoding: "utf-8" }
-        : { parsedContent: content.toString("base64"), encoding: "base64" };
+        : { parsedContent: Uint8ArrayToString(content, "base64"), encoding: "base64" };
 
     // The gitHashFile would return the same hash as returned by the server as blob.sha
-    const hash = gitHashFile(Buffer.from(parsedContent, encoding));
+    const hash = await gitHashFile(IsoBuffer.from(parsedContent, encoding));
     if (!blobsShaCache.has(hash)) {
         const blob = await manager.createBlob(parsedContent, encoding);
         blobsShaCache.add(blob.sha);

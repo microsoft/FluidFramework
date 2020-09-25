@@ -2,6 +2,7 @@
   "name": "root",
   "version": "0.14.0",
   "private": true,
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -13,9 +14,10 @@
     "build:fast": "fluid-build --root .",
     "build:full": "npm run build:genver && npm run build:full:compile && npm run lint && npm run build:docs",
     "build:full:compile": "lerna run build:full:compile --stream",
-    "build:gendocs": "copyfiles server/routerlicious/_api-extractor-temp/** ./_api-extractor-temp/doc-models/ -f -V && api-documenter markdown -i _api-extractor-temp/doc-models -o docs/api",
+    "build:gendocs": "copyfiles server/routerlicious/_api-extractor-temp/** ./_api-extractor-temp/doc-models/ -f -V && cd docs && npm run build",
     "build:genver": "lerna run build:genver --stream --parallel",
     "bump-version": "fluid-bump-version --root .",
+    "bundle-analysis": "npm run webpack:profile && fluid-collect-bundle-analyses",
     "ci:build": "npm run build:genver && lerna run build:compile --stream",
     "ci:test": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
     "ci:test:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
@@ -24,7 +26,7 @@
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && npm run clean",
     "postinstall": "npm run postinstall:lerna",
-    "layer-check": "fluid-layer-check",
+    "layer-check": "fluid-layer-check --info tools/build-tools/data/layerInfo.json",
     "lint": "lerna run lint --no-sort --stream",
     "lint:fix": "lerna run lint:fix --no-sort --stream",
     "policy-check": "fluid-repo-policy-check",
@@ -42,12 +44,9 @@
     "stop:docker:full": "docker-compose -f server/docker-compose.yml down && docker volume prune --force",
     "test": "npm run test:mocha && npm run test:jest && npm run test:types",
     "test:bail": "npm run test:mocha:bail && npm run test:jest:bail",
-    "test:ci": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
-    "test:ci:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
     "test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
     "test:coverage": "nyc npm run test:report",
     "test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
-    "test:full": "npm run test:ci:coverage",
     "test:jest": "assign-test-ports && lerna run test:jest --concurrency 4 --stream --no-bail --no-sort",
     "test:jest:bail": "assign-test-ports && lerna run test:jest --concurrency 4 --stream",
     "test:jest:report": "assign-test-ports && lerna run test:jest --concurrency 4 --stream --no-bail --no-sort -- -- --ci --reporters=default --reporters=jest-junit",
@@ -64,7 +63,8 @@
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
-    "webpack": "lerna run --no-sort webpack --stream"
+    "webpack": "lerna run --no-sort webpack --stream",
+    "webpack:profile": "lerna run --no-sort webpack:profile --stream"
   },
   "nyc": {
     "all": true,
@@ -73,9 +73,7 @@
       "**/*.d.ts",
       "packages/**/src/test/**/*.ts",
       "packages/**/dist/test/**/*.js",
-      "**/*.bundle.js",
-      "packages/components/**",
-      "packages/server/gateway/public/**"
+      "**/*.bundle.js"
     ],
     "exclude-after-remap": false,
     "extension": [
@@ -96,11 +94,10 @@
     ],
     "temp-directory": "nyc/.nyc_output"
   },
-  "dependencies": {},
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.1.35057",
-    "@fluidframework/test-tools": "^0.1.0",
-    "@microsoft/api-documenter": "^7.4.6",
+    "@fluidframework/build-tools": "^0.2.5638",
+    "@fluidframework/test-tools": "^0.2.3074",
+    "@mattetti/custom-api-documenter": "^0.2.1",
     "@microsoft/api-extractor": "^7.7.2",
     "concurrently": "^5.2.0",
     "copyfiles": "^2.1.0",
@@ -109,5 +106,25 @@
     "rimraf": "^2.6.2",
     "run-script-os": "^1.0.7",
     "typescript": "~3.7.4"
+  },
+  "fluidBuild": {
+    "repoPackages": {
+      "build": "common/build",
+      "common-def": "common/lib/common-definitions",
+      "common-utils": "common/lib/common-utils",
+      "server": "server/routerlicious",
+      "client": "",
+      "tools": [
+        "tools/generator-fluid",
+        "server/tinylicious"
+      ],
+      "services": {
+        "directory": "server",
+        "ignoredDirs": [
+          "routerlicious"
+        ]
+      }
+    },
+    "generatorName": "generator-fluid"
   }
 }
