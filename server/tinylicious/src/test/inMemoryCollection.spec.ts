@@ -4,12 +4,21 @@
  */
 
 import { strict as assert } from "assert";
+import { Collection } from "../services/inMemorycollection";
 
 describe("Tinylicious", () => {
     describe("Services", () => {
         describe("inMemoryCollection", () => {
-            it("Black Triangle", async () => {
-                assert(true);
+            it("findAll - empty", async () => {
+                const c = new Collection();
+                assert.deepStrictEqual(await c.findAll(), []);
+            });
+
+            it("findAll - nonempty", async () => {
+                const c = new Collection();
+                const obj = { _id: 1, foo: "FOO" };
+                await c.insertOne(obj);
+                assert.deepStrictEqual(await c.findAll(), [ obj ]);
             });
         });
     });
