@@ -134,7 +134,7 @@ describe("Insecure Url Resolver Test", () => {
 
     it("Test RequestUrl for url with special characters", async () => {
         const testRequest: IRequest = {
-            url: `https://localhost/${fileName}/!@$%^&*()123/dataStore!@$%^&*()`,
+            url: `https://localhost/${fileName}/!@$%^&*()123/dataStore!@$%^`,
             headers: {},
         };
         // Mocking window since the resolver depends on window.location.host
@@ -145,7 +145,7 @@ describe("Insecure Url Resolver Test", () => {
         const resolvedUrl = await resolver.resolve(testRequest);
         ensureFluidResolvedUrl(resolvedUrl);
 
-        const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}/!@$%^&*()123/dataStore!@$%^&*()`;
+        const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}/!@$123/dataStore!@$`;
         assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
     });
 });
