@@ -53,8 +53,7 @@ export class TenantManager {
         const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
         if (tenantKey == null) {
             winston.error("Tenant key decryption failed.");
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.reject("Tenant key decryption failed.");
+            return Promise.reject("Tenant key decryption failed.");
         }
 
         return new Promise<void>((resolve, reject) => {
@@ -92,8 +91,7 @@ export class TenantManager {
         const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
         if (encryptedTenantKey == null) {
             winston.error(`Tenant key encryption failed.`);
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.reject("Tenant key encryption failed.");
+            return Promise.reject("Tenant key encryption failed.");
         }
         const id = await collection.insertOne({
             _id: tenantId || getRandomName("-"),
@@ -135,8 +133,7 @@ export class TenantManager {
         const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
         if (tenantKey == null) {
             winston.error("Tenant key decryption failed.");
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.reject("Tenant key decryption failed.");
+            return Promise.reject("Tenant key decryption failed.");
         }
 
         return tenantKey;
