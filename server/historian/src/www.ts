@@ -69,7 +69,10 @@ if (redisConfig.tls) {
     };
 }
 
-const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
+const redisClient = redis.createClient(
+    redisConfig.port,
+    redisConfig.host,
+    redisOptions);
 const gitCache = new services.RedisCache(redisClient);
 const tenantCache = new services.RedisTenantCache(redisClient);
 

@@ -5,7 +5,7 @@
 
 import * as path from "path";
 import { Package } from "../common/npmPackage";
-import { logVerbose, logStatus } from "../common/logging";
+import { logVerbose } from "../common/logging";
 import {
     existsSync,
     mkdirAsync,
@@ -16,7 +16,7 @@ import {
     lstatAsync,
     realpathAsync,
 } from "../common/utils";
-import { FluidRepo } from "./fluidRepo";
+import { FluidRepoBuild } from "./fluidRepoBuild";
 import * as semver from "semver";
 import * as fs from "fs";
 import { MonoRepo } from "../common/monoRepo";
@@ -124,7 +124,7 @@ export interface ISymlinkOptions {
     fullSymlink: boolean | undefined;
 };
 
-export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackages: Map<string, Package>, options: ISymlinkOptions) {
+export async function symlinkPackage(repo: FluidRepoBuild, pkg: Package, buildPackages: Map<string, Package>, options: ISymlinkOptions) {
     let count = 0;
     const monoRepoNodeModulePath = pkg.monoRepo?.getNodeModulePath();
 

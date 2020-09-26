@@ -10,12 +10,11 @@ import {
     IFluidObject,
     IRequest,
     IResponse,
+    IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IBlobManager,
     IDeltaManager,
-    IGenericBlob,
     ContainerWarning,
     ILoader,
     BindState,
@@ -55,7 +54,7 @@ import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidfr
 import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in store attributes.
-const currentSnapshotFormatVersion = "0.1";
+export const currentSnapshotFormatVersion = "0.1";
 
 const attributesBlobKey = ".component";
 
@@ -120,10 +119,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._containerRuntime.clientId;
     }
 
-    public get blobManager(): IBlobManager {
-        return this._containerRuntime.blobManager;
-    }
-
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this._containerRuntime.deltaManager;
     }
@@ -155,6 +150,10 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public get containerRuntime(): IContainerRuntime {
         return this._containerRuntime;
+    }
+
+    public get isLoaded(): boolean {
+        return this.loaded;
     }
 
     /**
@@ -201,12 +200,14 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         public readonly summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
+        public readonly isLocalDataStore: boolean,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
-        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
+        this._attachState = this.containerRuntime.attachState !== AttachState.Detached && existing ?
+            this.containerRuntime.attachState : AttachState.Detached;
 
         this.bindToContext = (channel: IFluidDataStoreChannel) => {
             assert(this.bindState === BindState.NotBound);
@@ -369,10 +370,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public getAudience(): IAudience {
         return this._containerRuntime.getAudience();
-    }
-
-    public async getBlobMetadata(): Promise<IGenericBlob[]> {
-        return this.blobManager.getBlobMetadata();
     }
 
     /**
@@ -576,6 +573,10 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             { throwOnFailure: true },
         );
     }
+
+    public async uploadBlob(blob: Buffer): Promise<IFluidHandle<string>> {
+        return this.containerRuntime.uploadBlob(blob);
+    }
 }
 
 export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
@@ -600,6 +601,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             summaryTracker,
             createSummarizerNode,
             BindState.Bound,
+            false,
             () => {
                 throw new Error("Already attached");
             },
@@ -679,16 +681,22 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        private readonly snapshotTree: ISnapshotTree | undefined,
+        /**
+         * @deprecated 0.16 Issue #1635, #3631
+         */
+        public readonly createProps?: any,
     ) {
         super(
             runtime,
             id,
-            false,
+            snapshotTree !== undefined ? true : false,
             storage,
             scope,
             summaryTracker,
             createSummarizerNode,
-            BindState.NotBound,
+            snapshotTree ? BindState.Bound : BindState.NotBound,
+            true,
             bindChannel,
             pkg);
         this.attachListeners();
@@ -728,7 +736,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         assert(this.pkg !== undefined);
         return {
             pkg: this.pkg,
-            snapshot: undefined,
+            snapshot: this.snapshotTree,
         };
     }
 }
@@ -749,6 +757,11 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        snapshotTree: ISnapshotTree | undefined,
+        /**
+         * @deprecated 0.16 Issue #1635, #3631
+         */
+        createProps?: any,
     ) {
         super(
             id,
@@ -758,7 +771,9 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
             scope,
             summaryTracker,
             createSummarizerNode,
-            bindChannel);
+            bindChannel,
+            snapshotTree,
+            createProps);
     }
 }
 
@@ -780,6 +795,7 @@ export class LocalDetachedFluidDataStoreContext
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        snapshotTree: ISnapshotTree | undefined,
     ) {
         super(
             id,
@@ -789,7 +805,8 @@ export class LocalDetachedFluidDataStoreContext
             scope,
             summaryTracker,
             createSummarizerNode,
-            bindChannel);
+            bindChannel,
+            snapshotTree);
         assert(this.pkg === undefined);
         this.detachedRuntimeCreation = true;
     }

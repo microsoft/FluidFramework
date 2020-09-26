@@ -313,8 +313,9 @@
 }
 
 #small-nav > select {
-  margin-left: 12px;
-}
+    margin-left: 12px;
+    max-width: calc(100% - 12px);
+  }
 
 #small-nav #small-nav-dropdown {
   margin-right: 15px;

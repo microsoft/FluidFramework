@@ -40,7 +40,6 @@ import {
     ISummaryTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";
 
@@ -50,9 +49,8 @@ export class ContainerContext implements IContainerContext {
         scope: IFluidObject,
         codeLoader: ICodeLoader,
         runtimeFactory: IRuntimeFactory,
-        baseSnapshot: ISnapshotTree | null,
+        baseSnapshot: ISnapshotTree | undefined,
         attributes: IDocumentAttributes,
-        blobManager: BlobManager | undefined,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
@@ -71,7 +69,6 @@ export class ContainerContext implements IContainerContext {
             runtimeFactory,
             baseSnapshot,
             attributes,
-            blobManager,
             deltaManager,
             quorum,
             loader,
@@ -176,9 +173,8 @@ export class ContainerContext implements IContainerContext {
         public readonly scope: IFluidObject,
         public readonly codeLoader: ICodeLoader,
         public readonly runtimeFactory: IRuntimeFactory,
-        private readonly _baseSnapshot: ISnapshotTree | null,
+        private readonly _baseSnapshot: ISnapshotTree | undefined,
         private readonly attributes: IDocumentAttributes,
-        public readonly blobManager: BlobManager | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
         public readonly loader: ILoader,

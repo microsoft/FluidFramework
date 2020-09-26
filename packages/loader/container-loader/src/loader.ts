@@ -20,7 +20,7 @@ import {
     LoaderHeader,
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { Deferred, performanceNow } from "@fluidframework/common-utils";
+import { Deferred, performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -28,7 +28,7 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     ensureFluidResolvedUrl,
     MultiUrlResolver,
@@ -106,6 +106,10 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         throw new Error("Relative loader should not create a detached container");
     }
 
+    public async rehydrateDetachedContainerFromSnapshot(source: ISnapshotTree): Promise<Container> {
+        throw new Error("Relative loader should not create a detached container from snapshot");
+    }
+
     public resolveContainer(container: Container) {
         this.containerDeferred.resolve(container);
     }
@@ -161,15 +165,35 @@ export class Loader extends EventEmitter implements ILoader {
 
     public get IFluidRouter(): IFluidRouter { return this; }
 
-    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        debug(`Container creating in detached state: ${performanceNow()} `);
+    public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
+        debug(`Container creating in detached state: ${performance.now()} `);
 
         return Container.create(
             this.codeLoader,
             this.options,
             this.scope,
             this,
-            source,
+            {
+                codeDetails,
+                create: true,
+            },
+            this.documentServiceFactory,
+            this.resolver,
+            this.subLogger);
+    }
+
+    public async rehydrateDetachedContainerFromSnapshot(snapshot: ISnapshotTree): Promise<Container> {
+        debug(`Container creating in detached state: ${performance.now()} `);
+
+        return Container.create(
+            this.codeLoader,
+            this.options,
+            this.scope,
+            this,
+            {
+                snapshot,
+                create: false,
+            },
             this.documentServiceFactory,
             this.resolver,
             this.subLogger);

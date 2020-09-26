@@ -106,12 +106,13 @@ npm run test:coverage
 
 ### Mimic the official CI build
 
-_Note: The official build uses npm run test:full, which doesn’t work on Windows._
+Our CI pipelines run on Linux machines, and the npm scripts all have the `ci` prefix.
+To replicate the test steps from the CI pipeline locally, run the following commands for the packages or Lerna monorepos:
 
-```shell
-npm run test:coverage
-npm run test:copyresults
-```
+Run      | Non-Windows                | Windows                                               |
+---------|----------------------------|-------------------------------------------------------|
+PR       | `npm run ci:test`          | `npm run test:report && npm run test:copyresults`     |
+Official | `npm run ci:test:coverage` | `npm run test:coverage && npm run test:copyresults`   |
 
 ### Run tests from within VS Code
 

@@ -12,7 +12,6 @@ parameters:
   default: none
   values:
     - none
-    - prerelease
     - release
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
@@ -35,6 +34,7 @@ trigger:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-publish-docker-service.yml
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
 
 pr:
   branches:
@@ -56,5 +56,5 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: server/gitssh
     containerName: fluidframework/routerlicious/gitssh
-    test: false
     setVersion: false
+    tagName: gitssh

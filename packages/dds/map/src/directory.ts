@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import path from "path";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
@@ -20,6 +19,7 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import * as path from "path-browserify";
 import { debug } from "./debug";
 import {
     IDirectory,
@@ -40,12 +40,10 @@ import {
 } from "./localValues";
 import { pkgVersion } from "./packageVersion";
 
-// path-browserify only supports posix functionality but doesn't have a path.posix to enforce it.  But we need to
-// enforce posix when using the normal node module on Windows (otherwise it will use path.win32).  Also including an
-// assert here to help protect in case path-browserify changes in the future, because we only want posix path
-// functionality.
-const posix = path.posix || path;
-assert(posix.sep === "/");
+// We use path-browserify since this code can run safely on the server or the browser.
+// We standardize on using posix slashes everywhere.
+const posix: typeof import("path").posix = path.posix;
+
 const snapshotFileName = "header";
 
 /**
@@ -653,7 +651,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
         const data = JSON.parse(fromBase64ToUtf8(header));

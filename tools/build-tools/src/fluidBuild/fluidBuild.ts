@@ -4,7 +4,7 @@
  */
 
 import { commonOptions } from "../common/commonOptions";
-import { FluidRepo } from "./fluidRepo";
+import { FluidRepoBuild } from "./fluidRepoBuild";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { logStatus } from "../common/logging";
 import { Timer } from "../common/timer";
@@ -32,7 +32,7 @@ async function main() {
     }
 
     // Load the package
-    const repo = new FluidRepo(resolvedRoot, options.services);
+    const repo = new FluidRepoBuild(resolvedRoot, options.services);
     timer.time("Package scan completed");
 
     // Set matched package based on options filter
@@ -92,7 +92,7 @@ async function main() {
         await repo.checkPackages(options.fix);
         timer.time("Check scripts completed");
 
-        
+
         if (options.clean || options.build !== false) {
             logStatus(`Symlink in ${options.fullSymlink ? "full" : options.fullSymlink === false ? "isolated" : "non-dependent"} mode`);
 
