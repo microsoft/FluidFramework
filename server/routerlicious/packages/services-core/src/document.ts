@@ -132,33 +132,6 @@ export interface IDocument {
         minimumSequenceNumber: number;
     };
 
-    // This field will be deprecated when all documents are updated to latest schema.
-    clients: [{
-        // Whether deli is allowed to evict the client from the MSN queue (i.e. due to timeouts, etc...)
-        canEvict: boolean,
-
-        clientId: string,
-
-        clientSequenceNumber: number,
-
-        referenceSequenceNumber: number,
-
-        lastUpdate: number,
-
-        nack: boolean,
-
-        scopes: string[],
-    }];
-
-    // This field will be deprecated when all documents are updated to latest schema.
-    branchMap: IRangeTrackerSnapshot;
-
-    // This field will be deprecated when all documents are updated to latest schema.
-    sequenceNumber: number;
-
-    // This field will be deprecated when all documents are updated to latest schema.
-    logOffset: number;
-
     // Scribe state
     scribe: string;
 
