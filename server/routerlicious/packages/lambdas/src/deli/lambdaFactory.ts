@@ -24,7 +24,6 @@ import { IGitManager } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { DeliLambda } from "./lambda";
-import { migrateSchema } from "./migrateDbObject";
 
 // We expire clients after 5 minutes of no activity
 export const ClientSequenceTimeout = 5 * 60 * 1000;
@@ -71,14 +70,11 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
         // Lookup the last sequence number stored
         // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-        let dbObject = await this.collection.findOne({ documentId, tenantId });
+        const dbObject = await this.collection.findOne({ documentId, tenantId });
         if (!dbObject) {
             // Temporary guard against failure until we figure out what causing this to trigger.
             return new NoOpLambda(context);
         }
-
-        // Migrate the db object to new schema if applicable.
-        dbObject = await migrateSchema(dbObject, this.collection, leaderEpoch, 1);
 
         let lastCheckpoint: IDeliState;
 
