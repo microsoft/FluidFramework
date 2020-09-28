@@ -13,16 +13,16 @@ This package contains utility for analyzing bundle sizes to help catch code size
 
 ## Limitations
 
-- Bundle buddy currently only has APIs for working with Azure DevOps, additional work will have to be done to support other source control providers like GitHub.
-- Bundle buddy was designed to work with webpack, other bundlers are not supported at this time
+- Bundle-size-tools currently only has APIs for working with Azure DevOps.  Additional work will have to be done to support other source control providers like GitHub.  Other tools can be used in conjunction with bundle-size-tools to support hybrid environments.
+- Bundle-size-tools was designed to work with webpack; other bundlers are not supported.
 
-# How Bundle buddy works
+# How Bundle-size-tools works
 
-This section is meant to highlight some of the assumptions that bundle buddy makes and defines some of the pieces you'd have to set up for onboarding a new repository.
+This section highlights some of the assumptions that bundle-size-tools makes and defines the pieces required to onboard a new repository.
 
 ## Webpack stats files
 
-Bundle buddy uses [webpack stats files](https://webpack.js.org/configuration/stats/) as the foundation for bundle comparisons. To use Bundle buddy, your build pipeline is expected to produce webpack stats files. Since webpack stats files tend to be very large, we recommend using the [@mixer/webpack-bundle-compare](https://github.com/mixer/webpack-bundle-compare) webpack plugin to generate the plugins in gzipped mspack format to reduce the size of the stats files on disk.
+Bundle-size-tools uses [webpack stats files](https://webpack.js.org/configuration/stats/) as the foundation for bundle comparisons. To use bundle-size-tools, your build pipeline is expected to produce webpack stats files. Since webpack stats files tend to be very large, we recommend using the [@mixer/webpack-bundle-compare](https://github.com/mixer/webpack-bundle-compare) webpack plugin to generate the plugins in gzipped mspack format to reduce the size of the stats files on disk.
 
 Our recommended approach is to add this to the plugin section of your webpack configs that produce application bundles:
 
@@ -35,11 +35,11 @@ new BundleComparisonPlugin({
 
 ## Baseline builds
 
-In order to provide accurate metrics for bundle size regressions, Bundle buddy must have a baseline to compare against. For example, when submitting a pull request, Bundle buddy should only report changes to bundle sizes that are directly related to the current pull request. If the pull request was targeting the main branch of the repository, we would consider the baseline to be the main commit the PR branch was based off. To use Bundle buddy, you'll need a mechanism to get the webpack stats files for the baseline builds, such as generating webpack stats file for every commit to main using an automated build.
+In order to provide accurate metrics for bundle size regressions, Bundle-size-tools must have a baseline to compare against. For example, when submitting a pull request, bundle-size-tools should only report changes to bundle sizes that are directly related to the current pull request. If the pull request was targeting the main branch of the repository, we would consider the baseline to be the main commit the PR branch was based off. To use bundle-size-tools, you'll need a mechanism to get the webpack stats files for the baseline builds, such as generating webpack stats file for every commit to main using an automated build or providing a way to find a matching stats file from a different commit.
 
 ## Bundle Comparisons
 
-Bundle buddy's comparisons are implemented using `WebpackStatsProcessors`, which are functions with the following signature:
+Bundle-size-tool's comparisons are implemented using `WebpackStatsProcessors`, which are functions with the following signature:
 
 ```typescript
 export type WebpackStatsProcessor = (
@@ -58,13 +58,13 @@ export interface BundleMetric {
 }
 ```
 
-It is expected that consumers of Bundle buddy will configure one or more `WebpackStatsProcessors` for their projects. It is also possible to write your own custom `WebpackStatsProcessors`.
+Consumers of bundle-size-tools must configure one or more `WebpackStatsProcessors` for their projects. It is also possible to write and use custom `WebpackStatsProcessors`.
 
-Bundle buddy runs the same set of `WebpackStatsProcessors` on both the baseline commit and pull request commit. Bundle buddy then compares the metrics produces by the baseline commit and pull request commit and reports these differences in a comment in the pull request.
+Bundle-size-tools runs the same set of `WebpackStatsProcessors` on both the baseline commit and pull request commit. It then compares the metrics produces by the baseline commit and pull request commit and reports these differences in a comment in the pull request.
 
 ### Default Stats Processors
 
-Bundle buddy provides a basic set of `WebpackStatsProcessors`. They include:
+Bundle-size-tools provides the following basic set of `WebpackStatsProcessors`:
 
 - `entryStatsProcessor` - reports the size of the chunks generated for each of the webpack [entry points](https://webpack.js.org/concepts/entry-points/) specified in the webpack config
 - `totalSizeProcessor` - reports the total size of all chunks in the webpack bundle.
@@ -76,9 +76,9 @@ This is the workflow the `fluidframework` repository uses for Bundle buddy.
 
 Assumptions
 
-- Monorepo that produces many packages, but the same workflow would work for a repository that only generates a single package.
-- Packages in the repository only produce one bundle that is going to be analyzed by Bundle buddy.
-- This is a git repository hosted on Azure Dev Ops.
+- Monorepo that produces one or more packages.
+- Packages in the repository only produce one bundle that is going to be analyzed by bundle-size-tools.
+- CI builds run and store artifacts in Azure DevOps.
 
 ## Bundles all generate compressed stats files
 
@@ -101,7 +101,7 @@ The build process then runs a script that copies all the bundle stats files in t
 - `/bundleAnalysis/package2/bundleStats.msp.gz`
 - `/bundleAnalysis/package3/bundleStats.msp.gz`
 
-The build process then uploads this folder as an Azure Devops build artifact names `bundle-analysis-reports`.
+The build process then uploads this folder as an Azure DevOps build artifact names `bundle-analysis-reports`.
 
 ## Pull Request Buddy Builds generate comparison stats files
 
@@ -109,11 +109,11 @@ The buddy build that runs for every pull request runs the same process as the ma
 
 The buddy build will then determine the main commit that this PR was branched off of, using that commit as the "baseline" commit. If the main CI build has already created the `bundle-analysis-reports` artifact, the pull request buddy build will run bundle buddy and report the result as a comment in the pull request.
 
-If the artifacts are not available for the baseline commit, the buddy build adds an Azure Devops build tag with the format `bundle-buddy-pending-<commitHash>` so that a later process can add the bundle analysis comment to this PR when the baseline artifacts are ready.
+If the artifacts are not available for the baseline commit, the buddy build adds an Azure Devops build tag with the format `bundle-size-tools-pending-<commitHash>` so that a later process can add the bundle analysis comment to this PR when the baseline artifacts are ready.
 
 ## Build runs main CI completes to update pull requests pending baseline stats
 
-There is a separate build pipeline that runs after each successful main build and looks for all buddy builds with the `bundle-buddy-pending-<commitHash>` corresponding to the `<commitHash>` of the main build. This build process will then run Bundle buddy on all these PRs and post a comment.
+There is a separate build pipeline that runs after each successful main build and looks for all buddy builds with the `bundle-size-tools-pending-<commitHash>` corresponding to the `<commitHash>` of the main build. This build process will then run bundle-size-tools on all these PRs and post a comment.
 
 ## Bundle metrics considered
 
