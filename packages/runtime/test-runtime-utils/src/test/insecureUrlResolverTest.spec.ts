@@ -134,7 +134,7 @@ describe("Insecure Url Resolver Test", () => {
 
     it("Test RequestUrl for url with special characters", async () => {
         const testRequest: IRequest = {
-            url: `https://localhost/${fileName}/!@$%^&*()123/dataStore!@$%^`,
+            url: `https://localhost/${fileName}/!@$123/dataStore!@$`,
             headers: {},
         };
         // Mocking window since the resolver depends on window.location.host
