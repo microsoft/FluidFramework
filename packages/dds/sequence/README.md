@@ -170,3 +170,9 @@ Just like any other sequence, the Sparse Matrix is made of segments. The segment
     },
 ]
 ```
+
+# SharedObjectSequence and SharedNumberSequence
+
+Shared object sequence and share number sequence are very similar distrusted data structures. The only difference is their supported content. Shared number sequence only supports numbers as content, where shared object sequence supports any json serializable object. Both support inserting, removing, and annotating content. Each piece of content, number or object will occupy a single position in the sequence, and the length of the sequence represents to count of content items in the sequence.
+
+ An important note is that unlike an array position are not guaranteed remain constant as the positions will increase or decrease as content is added or removed from the sequence. To track or pass a reference to specifice piece of content within the sequence you should find it's segment via `segment = s.getContainingSegment(position)` and then use `pos = s.getPosition(segment)` to get it's current position in the tree.
