@@ -1,0 +1,174 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { getLocatorFromOdspUrl, storeLocatorInOdspUrl, encodeOdspFluidDataStoreLocator } from "./odspFluidFileLink";
+import { resolveDataStore } from "./resolveDataStore";
+import { IOdspResolvedUrl, OdspDocumentInfo, OdspFluidDataStoreLocator } from "./contracts";
+import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
+import { createOdspUrl } from "./createOdspUrl";
+import { resolveRequest } from "./odspDriverUrlResolver";
+import { getShareLink } from "./graph";
+import { IdentityType, SharingLinkTokenFetcher } from "./tokenFetch";
+
+export class OdspDriverUrlResolver2 implements IUrlResolver {
+    private readonly shareLinkMap = new Map<string, Promise<string>>();
+
+    public constructor(
+        private readonly getSharingLinkToken: SharingLinkTokenFetcher,
+        private readonly identityType: IdentityType = "Enterprise",
+        private readonly logger?: ITelemetryLogger,
+        private readonly appName?: string,
+    ) { }
+
+    public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string) {
+        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
+    }
+
+    private getKey(resolvedUrl: IOdspResolvedUrl): string {
+        return `${resolvedUrl.siteUrl},${resolvedUrl.driveId},${resolvedUrl.itemId}`;
+    }
+
+    /**
+     * Takes an already generated data store url (from requestUrl) and appends a path to the
+     * existing data store information
+     * @param requestUrl
+     * @param pathToAppend
+     */
+    public appendDataStorePath(requestUrl: URL, pathToAppend: string): string | undefined {
+        const fluidInfo = getLocatorFromOdspUrl(requestUrl);
+
+        if (!fluidInfo) {
+            return undefined;
+        }
+
+        fluidInfo.dataStorePath = `${fluidInfo.dataStorePath}/${pathToAppend}`;
+        storeLocatorInOdspUrl(requestUrl, fluidInfo);
+
+        return requestUrl.href;
+    }
+
+    /**
+     * Resolves request URL into driver details
+     */
+    public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
+        const requestToBeResolved = { headers: request.headers, url: request.url };
+        try {
+            const url = new URL(request.url);
+            const odspFluidInfo = getLocatorFromOdspUrl(url);
+            if (odspFluidInfo) {
+                requestToBeResolved.url = createOdspUrl(
+                    odspFluidInfo.siteUrl,
+                    odspFluidInfo.driveId,
+                    odspFluidInfo.fileId,
+                    "/",
+                );
+            }
+        } catch {
+            // If the locator throws some error, then try to resolve the request as it is.
+        }
+
+        const odspResolvedUrl = await resolveRequest(requestToBeResolved);
+
+        const sharingLink = await this.getShareLinkPromise(odspResolvedUrl).catch(() => { });
+        if (sharingLink) {
+            odspResolvedUrl.sharingLink = sharingLink;
+        }
+        return odspResolvedUrl;
+    }
+
+    private async getShareLinkPromise(resolvedUrl: IOdspResolvedUrl): Promise<string> {
+        if (!(resolvedUrl.siteUrl && resolvedUrl.driveId && resolvedUrl.itemId)) {
+            throw new Error("Failed to get share link because necessary information is missing " +
+                "(e.g. siteUrl, driveId or itemId)");
+        }
+        const key = this.getKey(resolvedUrl);
+        const cachedLinkPromise = this.shareLinkMap.get(key);
+        if (cachedLinkPromise) {
+            return cachedLinkPromise;
+        }
+        const newLinkPromise = getShareLink(
+            this.getSharingLinkToken,
+            resolvedUrl.siteUrl,
+            resolvedUrl.driveId,
+            resolvedUrl.itemId,
+            this.identityType,
+            this.logger,
+            "existingAccess",
+        ).then((shareLink) => {
+                if (!shareLink) {
+                    throw new Error("Failed to get share link");
+                }
+                return shareLink;
+        }).catch((error) => {
+            if (this.logger) {
+                this.logger.sendErrorEvent({ eventName: "FluidFileUrlError" }, error);
+            }
+            if (this.shareLinkMap.has(key)) {
+                this.shareLinkMap.delete(key);
+            }
+            throw error;
+        });
+
+        this.shareLinkMap.set(key, newLinkPromise);
+        return newLinkPromise;
+    }
+
+    /**
+     * Requests a driver + data store storage URL
+     * @param resolvedUrl The driver resolved URL
+     * @param request The relative data store path URL. For requesting a driver URL, this value should always be '/'
+     */
+    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+        const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
+
+        const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
+
+        const shareLinkUrl = new URL(shareLink);
+
+        storeLocatorInOdspUrl(shareLinkUrl, {
+            siteUrl: odspResolvedUrl.siteUrl,
+            driveId: odspResolvedUrl.driveId,
+            fileId: odspResolvedUrl.itemId,
+            dataStorePath: relativeUrl,
+            appName: this.appName,
+        });
+
+        return shareLinkUrl.href;
+    }
+
+    /**
+     * Retrieves data store path information from a storage URL. Returns undefined if the resolver
+     * does not handle this URL
+     */
+    public static resolveDataStore(url: URL): string | undefined {
+        return resolveDataStore(url);
+    }
+
+    /**
+     * Crafts a supported document/driver URL
+     */
+    public static createDocumentUrl(baseUrl: string, driverInfo: OdspDocumentInfo) {
+        const url = new URL(baseUrl);
+
+        storeLocatorInOdspUrl(url, {
+            siteUrl: driverInfo.siteUrl,
+            driveId: driverInfo.driveId,
+            fileId: driverInfo.fileId,
+            dataStorePath: "/", // Driver does not use this value
+        });
+
+        return url.href;
+    }
+
+    /**
+     * Crafts a supported data store nav param
+     */
+    public static createNavParam(locator: OdspFluidDataStoreLocator) {
+        return encodeOdspFluidDataStoreLocator(locator);
+    }
+}

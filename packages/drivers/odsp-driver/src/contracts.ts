@@ -31,6 +31,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
     fileName: string;
 
     summarizer: boolean;
+
+    sharingLink?: string;
 }
 
 /**
@@ -229,4 +231,18 @@ export interface ICreateFileResponse {
     itemId: string;
     itemUrl: string;
     sequenceNumber: number;
+}
+
+export interface OdspDocumentInfo {
+    siteUrl: string;
+    driveId: string;
+    fileId: string;
+}
+
+export interface OdspFluidDataStoreLocator {
+    siteUrl: string;
+    driveId: string;
+    fileId: string;
+    dataStorePath: string;
+    appName?: string;
 }

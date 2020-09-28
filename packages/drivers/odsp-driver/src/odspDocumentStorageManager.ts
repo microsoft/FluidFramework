@@ -109,6 +109,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private readonly documentId: string;
     private readonly snapshotUrl: string | undefined;
+    private readonly sharingLink: string | undefined;
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
         assert(this._ops === undefined);
@@ -134,6 +135,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     ) {
         this.documentId = odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
+        this.sharingLink = odspResolvedUrl.sharingLink;
 
         this.fileEntry = {
             resolvedUrl: odspResolvedUrl,
@@ -500,6 +502,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             Object.entries(snapshotOptions).forEach(([key, value]) => {
                 postBody += `${key}: ${value}\r\n`;
             });
+            if (this.sharingLink) {
+                postBody += `sl: ${this.sharingLink}\r\n`;
+            }
             postBody += `_post: 1\r\n`;
             postBody += `\r\n--${formBoundary}--`;
             headers = {

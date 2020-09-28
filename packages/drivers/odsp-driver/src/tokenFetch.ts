@@ -51,14 +51,26 @@ export type StorageTokenFetcher = (siteUrl: string, refresh: boolean, claims?: s
 export type PushTokenFetcher = (refresh: boolean, claims?: string) => Promise<string | TokenResponse | null>;
 
 /**
+ * Method signature for callback method used to fetch Sharing link token
+ * @param forFileDefaultUrl boolean to determine the scope of the token to fetch the share link.
+ * @param options - options that need to be passed to fetch the token like claims or option to bypass
+ * the cache and refresh the token.
+ * @returns If successful, TokenResponse object representing token value along with flag indicating
+ * whether token came from cache. Legacy implementation may return a string for token value;
+ * in this case it should be assumes that fromCache signal is undefined. Null is returned in case of failure.
+ */
+export type SharingLinkTokenFetcher = (forFileDefaultUrl: boolean, options: TokenFetchOptions) =>
+    Promise<string | TokenResponse | null>;
+
+/**
  * Helper method which transforms return value for StorageTokenFetcher and PushTokenFetcher to token string
  * @param tokenResponse - return value for StorageTokenFetcher and PushTokenFetcher methods
  * @returns Token value
  */
-export function tokenFromResponse(tokenResponse: string | TokenResponse | null): string | null {
+export function tokenFromResponse(tokenResponse: string | TokenResponse | null | undefined): string | null {
     return tokenResponse === null || typeof tokenResponse === "string"
         ? tokenResponse
-        : tokenResponse.token;
+        : tokenResponse === undefined ? null : tokenResponse.token;
 }
 
 /**
@@ -72,3 +84,5 @@ export function isTokenFromCache(tokenResponse: string | TokenResponse | null): 
         ? undefined
         : tokenResponse.fromCache;
 }
+
+export type IdentityType = "Consumer" | "Enterprise";
