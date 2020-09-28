@@ -49,13 +49,7 @@ export class TenantManager {
      * Validates a tenant's API token
      */
     public async validateToken(tenantId: string, token: string): Promise<void> {
-        const encryptedTenantKey = await this.getTenantKey(tenantId);
-        const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
-        if (tenantKey == null) {
-            winston.error("Tenant key decryption failed.");
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.reject("Tenant key decryption failed.");
-        }
+        const tenantKey = await this.getTenantKey(tenantId);
 
         return new Promise<void>((resolve, reject) => {
             jwt.verify(token, tenantKey, (error) => {
@@ -91,9 +85,8 @@ export class TenantManager {
         const tenantKey = crypto.randomBytes(16).toString("hex");
         const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
         if (encryptedTenantKey == null) {
-            winston.error(`Tenant key encryption failed.`);
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.reject("Tenant key encryption failed.");
+            winston.error("Tenant key encryption failed.");
+            return Promise.reject("Tenant key encryption failed.");
         }
         const id = await collection.insertOne({
             _id: tenantId || getRandomName("-"),
@@ -135,8 +128,7 @@ export class TenantManager {
         const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
         if (tenantKey == null) {
             winston.error("Tenant key decryption failed.");
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.reject("Tenant key decryption failed.");
+            return Promise.reject("Tenant key decryption failed.");
         }
 
         return tenantKey;
