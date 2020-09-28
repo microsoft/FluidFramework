@@ -128,12 +128,7 @@ module.exports = {
         "@typescript-eslint/no-require-imports": "error",
         "@typescript-eslint/no-this-alias": "error",
         "@typescript-eslint/no-unused-expressions": "error",
-        "@typescript-eslint/no-unused-vars": [
-            "error",
-            {
-                "args": "none"
-            }
-        ],
+        "@typescript-eslint/no-unused-vars": "off",
         "@typescript-eslint/no-unnecessary-qualifier": "error",
         "@typescript-eslint/no-unnecessary-type-arguments": "error",
         "@typescript-eslint/no-unnecessary-type-assertion": "error",
@@ -153,6 +148,7 @@ module.exports = {
             }
         ],
         "@typescript-eslint/restrict-plus-operands": "error",
+        "@typescript-eslint/restrict-template-expressions": "off",
         "@typescript-eslint/require-await": "off",
         "@typescript-eslint/semi": [
             "error",
