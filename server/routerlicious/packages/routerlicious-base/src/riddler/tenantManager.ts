@@ -182,7 +182,15 @@ export class TenantManager {
      * Retrieves the secret for the given tenant
      */
     public async getTenantKey(tenantId: string): Promise<string> {
-        return (await this.getTenantDocument(tenantId)).key;
+        const encryptedTenantKey = (await this.getTenantDocument(tenantId)).key;
+        const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
+        if (tenantKey == null) {
+            winston.error("Tenant key decryption failed.");
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            Promise.reject("Tenant key decryption failed.");
+        }
+
+        return tenantKey;
     }
 
     /**
