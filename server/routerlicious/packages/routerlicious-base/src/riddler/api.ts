@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager } from "@fluidframework/server-services-core";
+import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
 import { Response, Router } from "express";
 import { getParam } from "../utils";
 import { TenantManager } from "./tenantManager";
@@ -14,6 +14,7 @@ export function create(
     baseOrderUrl: string,
     defaultHistorianUrl: string,
     defaultInternalHistorianUrl: string,
+    secretManager: ISecretManager,
 ): Router {
     const router: Router = Router();
     const manager = new TenantManager(
@@ -21,7 +22,8 @@ export function create(
         collectionName,
         baseOrderUrl,
         defaultHistorianUrl,
-        defaultInternalHistorianUrl);
+        defaultInternalHistorianUrl,
+        secretManager);
 
     function returnResponse<T>(resultP: Promise<T>, response: Response) {
         resultP.then(

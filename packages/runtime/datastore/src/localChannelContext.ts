@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { cloneDeep } from "lodash";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ISequencedDocumentMessage,
@@ -31,7 +32,6 @@ import { ChannelStorageService } from "./channelStorageService";
  */
 export class LocalChannelContext implements IChannelContext {
     public channel: IChannel | undefined;
-    private _isLoaded = false;
     private attached = false;
     private readonly pending: ISequencedDocumentMessage[] = [];
     private readonly services: Lazy<{
@@ -52,19 +52,20 @@ export class LocalChannelContext implements IChannelContext {
         dirtyFn: (address: string) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
     ) {
+        let blobMap: Map<string, string> | undefined;
+        const clonedSnapshotTree = cloneDeep(this.snapshotTree);
+        if (clonedSnapshotTree !== undefined) {
+            blobMap = new Map<string, string>();
+            this.collectExtraBlobsAndSanitizeSnapshot(clonedSnapshotTree, blobMap);
+        }
         this.services = new Lazy(() => {
-            let blobMap: Map<string, string> | undefined;
-            if (this.snapshotTree !== undefined) {
-                blobMap = new Map<string, string>();
-                this.collectExtraBlobsAndSanitizeSnapshot(this.snapshotTree, blobMap);
-            }
             return createServiceEndpoints(
                 this.id,
                 this.dataStoreContext.connected,
                 this.submitFn,
                 this.dirtyFn,
                 this.storageService,
-                this.snapshotTree !== undefined ? Promise.resolve(this.snapshotTree) : undefined,
+                clonedSnapshotTree !== undefined ? Promise.resolve(clonedSnapshotTree) : undefined,
                 blobMap !== undefined ?
                     Promise.resolve(blobMap) : undefined,
             );
@@ -75,7 +76,6 @@ export class LocalChannelContext implements IChannelContext {
         }
         if (snapshotTree === undefined) {
             this.channel = this.factory.create(runtime, id);
-            this._isLoaded = true;
         }
         this.dirtyFn = () => { dirtyFn(id); };
     }
@@ -88,15 +88,14 @@ export class LocalChannelContext implements IChannelContext {
     }
 
     public get isLoaded(): boolean {
-        return this._isLoaded;
+        return this.channel !== undefined;
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
-        // Connection events are ignored if the data store is not yet attached
-        if (!this.attached) {
-            return;
+        // Connection events are ignored if the data store is not yet attached or loaded
+        if (this.attached && this.isLoaded) {
+            this.services.value.deltaConnection.setConnectionState(connected);
         }
-        this.services.value.deltaConnection.setConnectionState(connected);
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
@@ -145,6 +144,7 @@ export class LocalChannelContext implements IChannelContext {
             ".attributes");
 
         assert(this.factory, "Factory should be there for local channel");
+        // Services will be assigned during this load.
         const channel = await this.factory.load(
             this.runtime,
             this.id,
@@ -154,11 +154,6 @@ export class LocalChannelContext implements IChannelContext {
 
         // Commit changes.
         this.channel = channel;
-        this._isLoaded = true;
-
-        if (this.attached) {
-            this.channel.connect(this.services.value);
-        }
 
         // Send all pending messages to the channel
         for (const message of this.pending) {
@@ -174,7 +169,7 @@ export class LocalChannelContext implements IChannelContext {
         return this.channel;
     }
 
-    public attach(): void {
+    public markAttached(): void {
         if (this.attached) {
             throw new Error("Channel is already attached");
         }
