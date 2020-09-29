@@ -81,6 +81,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     private readonly localProposals = new Map<number, Deferred<void>>();
 
     constructor(
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly
         private minimumSequenceNumber: number | undefined,
         members: [string, ISequencedClient][],
         proposals: [number, ISequencedProposal, string[]][],
@@ -140,6 +141,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     public get(key: string): any {
         const keyMap = this.values.get(key);
         if (keyMap !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return keyMap.value;
         }
     }
@@ -214,6 +216,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         assert(!this.proposals.has(sequenceNumber), `!this.proposals.has(${sequenceNumber})`);
         assert(
             !local || this.localProposals.has(clientSequenceNumber),
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
             `!${local} || this.localProposals.has(${clientSequenceNumber})`);
 
         const proposal = new PendingProposal(
@@ -300,6 +303,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 approved
                     ? proposal.deferred.resolve()
+                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                     : proposal.deferred.reject(`Rejected by ${Array.from(proposal.rejections)}`);
             }
 

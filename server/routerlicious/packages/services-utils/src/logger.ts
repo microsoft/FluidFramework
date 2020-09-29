@@ -58,6 +58,7 @@ export function configureLogging(config: IWinstonConfig) {
     // eslint-disable-next-line space-before-function-paren
     (debug as any).formatArgs = function (args) {
         const name = this.namespace;
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         args[0] = `${name} ${args[0]}`;
     };
 }

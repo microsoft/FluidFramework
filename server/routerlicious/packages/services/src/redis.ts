@@ -20,6 +20,7 @@ export class RedisCache implements ICache {
     }
 
     public async get(key: string): Promise<string> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.getAsync(this.getKey(key));
     }
 

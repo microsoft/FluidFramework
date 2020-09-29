@@ -39,10 +39,12 @@ export class EventHubResourcesFactory implements IResourcesFactory<EventHubResou
 
         // Receive topic and group - for now we will assume an entry in config mapping
         // to the given name. Later though the lambda config will likely be split from the stream config
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         const streamConfig = config.get(`lambdas:${this.name}`);
         const groupId = streamConfig.group;
         const receiveTopic = streamConfig.topic;
 
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         console.log(`${groupId} ${receiveTopic}`);
 
         const clientId = moniker.choose();

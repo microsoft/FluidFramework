@@ -26,6 +26,7 @@ export class MongoManager {
 
     constructor(
         private readonly factory: IDbFactory,
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly
         private shouldReconnect = true,
         private readonly reconnectDelayMs = 1000) {
         this.databaseP = this.connect();

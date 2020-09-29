@@ -42,7 +42,7 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
                 this._state = "started";
             }
             this.emit("started", this.lambda);
-            // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             if (this._state === "closed") {
                 // Close was probably called while starting
@@ -53,7 +53,6 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
             this.context.error(ex, true);
 
             this.startTimer = setTimeout(() => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.start();
             }, 5000);
         }

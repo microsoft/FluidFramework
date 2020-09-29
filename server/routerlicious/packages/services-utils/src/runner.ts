@@ -74,7 +74,6 @@ export async function run<T extends IResources>(
     // Start the runner and then listen for the message to stop it
     const runningP = runner.start();
     process.on("SIGTERM", () => {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         runner.stop();
     });
 

@@ -159,6 +159,7 @@ export class TestCollection implements ICollection<any> {
 export class TestDb implements IDb {
     private readonly emitter = new EventEmitter();
 
+    // eslint-disable-next-line @typescript-eslint/prefer-readonly
     constructor(private collections: { [key: string]: any[] }) {
     }
 

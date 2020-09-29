@@ -132,7 +132,6 @@ export class LocalOrdererConnection implements IOrdererConnection {
         };
 
         // Submits the message.
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.producer.send([boxcar], this.tenantId, this.documentId);
     }
 }
