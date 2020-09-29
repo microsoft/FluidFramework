@@ -17,11 +17,11 @@ import { fetchFluidObject, initializeChaincode } from "./utils";
 import { AzureBlobStorage } from "./storageAccount";
 
 // Base service configuration.
-const ordererEndpoint = "https://alfred.frs.office-int.com";;
-const storageEndpoint = "https://historian.frs.office-int.com";
-const tenantId = "aquamarinedolphin-hiss";
-const tenantKey = "b1d16a5deff49b8806936a3778377a70";
-const bearerSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
+const ordererEndpoint = "";;
+const storageEndpoint = "";
+const tenantId = "";
+const tenantKey = "";
+const bearerSecret = "";
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 // Code package details.
@@ -114,8 +114,9 @@ export async function start(): Promise<void> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-export async function storageAccount() {
-    const azureStorage = new AzureBlobStorage("DefaultEndpointsProtocol=https;AccountName=prosemirror;AccountKey=5LkbRyZcII5Tq6r2sjCB95vNbFOswTlJ8ZvmN5HJtEmPusAG4e8SfpWit0npF25/bT9SLZKrKT1Xq/DC/GSRRg==;EndpointSuffix=core.windows.net")
+// connection string : DefaultEndpointsProtocol=https;AccountName=prosemirror;AccountKey=5LkbRyZcII5Tq6r2sjCB95vNbFOswTlJ8ZvmN5HJtEmPusAG4e8SfpWit0npF25/bT9SLZKrKT1Xq/DC/GSRRg==;EndpointSuffix=core.windows.net"
+export async function storageAccount(connectionstring) {
+    const azureStorage = new AzureBlobStorage(connectionstring)
     const data = await azureStorage.getBlockBlob("samples", "sampletext.txt");
     console.log(data);
 }
