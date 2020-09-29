@@ -12,6 +12,7 @@ import {
     hashFile,
     IsoBuffer,
     Uint8ArrayToString,
+    performance,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -586,25 +587,26 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             let networkTime: number | undefined; // responseEnd - startTime
             const spReqDuration = response.headers.get("sprequestduration");
 
-            const resources1 = performance.getEntriesByType("resource");
+            // getEntriesByType is only available in browser performance object
+            const resources1 = performance.getEntriesByType?.("resource") ?? [];
             // Usually the latest fetch call is to the end of resources, so we start from the end.
             for (let i = resources1.length - 1; i > 0; i--) {
                 const indResTime = resources1[i] as PerformanceResourceTiming;
                 const resource_name = indResTime.name;
                 const resource_initiatortype = indResTime.initiatorType;
                 if ((resource_initiatortype.localeCompare("fetch") === 0) && (resource_name.localeCompare(url) === 0)) {
-                        redirectTime = indResTime.redirectEnd - indResTime.redirectStart;
-                        dnstime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
-                        tcpHandshakeTime = indResTime.connectEnd - indResTime.connectStart;
-                        secureConntime = (indResTime.secureConnectionStart > 0) ? (indResTime.connectEnd - indResTime.secureConnectionStart) : 0;
-                        responseTime = indResTime.responseEnd - indResTime.responseStart;
-                        fetchStToRespEndTime = (indResTime.fetchStart > 0) ? (indResTime.responseEnd - indResTime.fetchStart) : 0;
-                        reqStToRespEndTime = (indResTime.requestStart > 0) ? (indResTime.responseEnd - indResTime.requestStart) : 0;
-                        networkTime = (indResTime.startTime > 0) ? (indResTime.responseEnd - indResTime.startTime) : 0;
-                        if (spReqDuration) {
-                            networkTime = networkTime - parseInt(spReqDuration, 10);
-                        }
-                        break;
+                    redirectTime = indResTime.redirectEnd - indResTime.redirectStart;
+                    dnstime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
+                    tcpHandshakeTime = indResTime.connectEnd - indResTime.connectStart;
+                    secureConntime = (indResTime.secureConnectionStart > 0) ? (indResTime.connectEnd - indResTime.secureConnectionStart) : 0;
+                    responseTime = indResTime.responseEnd - indResTime.responseStart;
+                    fetchStToRespEndTime = (indResTime.fetchStart > 0) ? (indResTime.responseEnd - indResTime.fetchStart) : 0;
+                    reqStToRespEndTime = (indResTime.requestStart > 0) ? (indResTime.responseEnd - indResTime.requestStart) : 0;
+                    networkTime = (indResTime.startTime > 0) ? (indResTime.responseEnd - indResTime.startTime) : 0;
+                    if (spReqDuration) {
+                        networkTime = networkTime - parseInt(spReqDuration, 10);
+                    }
+                    break;
                 }
             }
 
@@ -837,7 +839,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         await Promise.all(this.blobsCachePendingHashes.values());
         // This cache is associated with mapping sha to path for currently generated summary.
         const blobsShaToPathCacheLatest: Map<string, string> = new Map();
-        const snapshotTree = await this.convertSummaryToSnapshotTree(parentHandle, tree, blobsShaToPathCacheLatest);
+        const { snapshotTree, reusedBlobs, blobs } = await this.convertSummaryToSnapshotTree(parentHandle, tree, blobsShaToPathCacheLatest);
 
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
@@ -860,6 +862,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     attempt: options.refresh ? 2 : 1,
                     hasClaims: !!options.claims,
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    blobs,
+                    reusedBlobs,
+                    size: postBody.length,
                 },
                 async () => {
                     const response = await fetchAndParseHelper<ISnapshotResponse>(
@@ -883,10 +888,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         blobsShaToPathCacheLatest: Map<string, string>,
         depth: number = 0,
         path: string = "",
-    ): Promise<ISnapshotTree> {
+    ) {
         const snapshotTree: ISnapshotTree = {
             entries: [],
         }!;
+
+        let reusedBlobs = 0;
+        let blobs = 0;
 
         const keys = Object.keys(tree.tree);
         for (const key of keys) {
@@ -897,12 +905,15 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             switch (summaryObject.type) {
                 case api.SummaryType.Tree: {
-                    value = await this.convertSummaryToSnapshotTree(
+                    const result = await this.convertSummaryToSnapshotTree(
                         parentHandle,
                         summaryObject,
                         blobsShaToPathCacheLatest,
                         depth + 1,
                         `${path}/${key}`);
+                    value = result.snapshotTree;
+                    reusedBlobs += result.reusedBlobs;
+                    blobs += result.blobs;
                     break;
                 }
                 case api.SummaryType.Blob: {
@@ -917,6 +928,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // to generate complete path for the given blob.
                     if (!completePath || !this.lastSummaryHandle) {
+                        blobs++;
                         value = {
                             content,
                             encoding,
@@ -924,6 +936,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         completePath = `/.app${path}/${key}`;
                         blobsShaToPathCacheLatest.set(hash, completePath);
                     } else {
+                        reusedBlobs++;
                         id = `${this.lastSummaryHandle}${completePath}`;
                     }
                     break;
@@ -977,7 +990,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             snapshotTree.entries!.push(entry);
         }
 
-        return snapshotTree;
+        return { snapshotTree, blobs, reusedBlobs };
     }
 }
 

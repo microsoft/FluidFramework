@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:12.18-stretch
+FROM node:12.18-stretch AS base
 
 # Add Tini
 ENV TINI_VERSION v0.18.0
@@ -17,6 +17,9 @@ COPY package-lock.json .
 RUN BUILD_ONLY=true npm install
 COPY . .
 RUN npm run build
+
+# Build that actually runs
+FROM base AS runner
 
 # Expose the port the app runs under
 EXPOSE 3000

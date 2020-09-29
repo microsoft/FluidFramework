@@ -2,6 +2,12 @@
 title: Glossary
 ---
 
+## Aqueduct
+
+The `@fluidframework/aqueduct` package is a library for building Fluid objects and Fluid containers within the Fluid
+Framework. Its goal is to provide a thin base layer over the existing Fluid Framework interfaces that allows developers
+to get started quickly. [Learn more.](https://fluidframework.com/apis/aqueduct/)
+
 ## Code loader
 
 If your app is bundled separately from your container code, Fluid can use a code loader to download
@@ -9,7 +15,7 @@ and load the container code bundle dynamically.
 
 ## Container
 
-The container is your application's entry point to Fluid Framework. It runs your container code and is
+The container is your application's entry point to the Fluid Framework. It runs your container code and is
 the object through which you'll retrieve your data objects.
 
 ## Container code
@@ -46,9 +52,3 @@ Client code responsible for connecting to the Fluid service.
 
 Fluid's API surface makes use of URLs, for example in the `Loader`'s `resolve()` method and `Container`'s `request()`
 method.  The URL resolver is used to interpret these URLs for use with the Fluid service.
-
-## Aqueduct
-
-The `@fluidframework/aqueduct` package is a library for building Fluid objects and Fluid containers within the Fluid
-Framework. Its goal is to provide a thin base layer over the existing Fluid Framework interfaces that allows developers
-to get started quickly. [Learn more.](https://fluidframework.com/apis/aqueduct/)

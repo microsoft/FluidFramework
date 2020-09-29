@@ -18,6 +18,7 @@
  */
 
 const fs = require("fs");
+const child_process = require("child_process");
 function getFileVersion() {
     if (fs.existsSync("./lerna.json")) {
         return JSON.parse(fs.readFileSync("./lerna.json", { encoding: "utf8" })).version;
@@ -89,6 +90,7 @@ function main() {
     let arg_patch = false;
     let arg_release = false;
     let file_version;
+    let arg_tag;
     for (let i = 2; i < process.argv.length; i++) {
         if (process.argv[i] === "--build") {
             arg_build_num = process.argv[++i];
@@ -106,7 +108,10 @@ function main() {
             file_version = process.argv[++i];
             continue;
         }
-
+        if (process.argv[i] === "--tag") {
+            arg_tag = process.argv[++i];
+            continue;
+        }
         console.log(`ERROR: Invalid argument ${process.argv[i]}`);
         process.exit(1);
     }
@@ -118,6 +123,7 @@ function main() {
             process.exit(3);
         }
     }
+
     if (!arg_patch) {
         arg_patch = (process.env["VERSION_PATCH"] === "true");
     }
@@ -126,11 +132,27 @@ function main() {
         arg_release = (process.env["VERSION_RELEASE"] === "release");
     }
 
+    if (!arg_tag) {
+        arg_tag = process.env["VERSION_TAGNAME"];
+    }
+
     if (!file_version) {
         file_version = getFileVersion();
         if (!file_version) {
             console.error("ERROR: Missing version in lerna.json/package.json");
             process.exit(6);
+        }
+    }
+
+    if (!arg_patch && arg_tag) {
+        const tagName = `${arg_tag}_v${file_version}`;
+        const out = child_process.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
+        if (out.trim() === tagName) {
+            if (arg_release) {
+                console.error(`ERROR: Tag ${tagName} already exist`);
+                process.exit(7);
+            }
+            console.warn(`WARNING: Tag ${tagName} already exist`);
         }
     }
 

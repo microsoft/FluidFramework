@@ -5,33 +5,11 @@
 
 /* eslint-disable no-null/no-null */
 
-import { IRangeTrackerSnapshot } from "@fluidframework/common-utils";
-import { ICollection, IContext, IDocument, IQueuedMessage } from "@fluidframework/server-services-core";
+import { ICollection, IContext, IDeliState, IDocument, IQueuedMessage } from "@fluidframework/server-services-core";
 
-export interface IClientSequenceNumber {
-    // Whether or not the object can expire
-    canEvict: boolean;
-    clientId: string;
-    lastUpdate: number;
-    nack: boolean;
-    referenceSequenceNumber: number;
-    clientSequenceNumber: number;
-    scopes: string[];
-}
-
-export interface ICheckpointParams extends IDeliCheckpoint {
+export interface ICheckpointParams extends IDeliState {
     queuedMessage: IQueuedMessage;
     clear?: boolean;
-}
-
-export interface IDeliCheckpoint {
-    branchMap: IRangeTrackerSnapshot;
-    clients: IClientSequenceNumber[];
-    durableSequenceNumber: number;
-    logOffset: number;
-    sequenceNumber: number;
-    epoch: number;
-    term: number;
 }
 
 export class CheckpointContext {
@@ -92,7 +70,7 @@ export class CheckpointContext {
     private checkpointCore(checkpoint: ICheckpointParams) {
         let deli = "";
         if (!checkpoint.clear) {
-            const deliCheckpoint: IDeliCheckpoint = {
+            const deliCheckpoint: IDeliState = {
                 branchMap: checkpoint.branchMap,
                 clients: checkpoint.clients,
                 durableSequenceNumber: checkpoint.durableSequenceNumber,

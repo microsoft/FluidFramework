@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performanceNow } from "./performanceNowNode";
+import { performance } from "./indexNode";
 
 /**
  * Helper class for tracing performance of events
@@ -11,7 +11,7 @@ import { performanceNow } from "./performanceNowNode";
  */
 export class Trace {
     public static start(): Trace {
-        const startTick = performanceNow();
+        const startTick = performance.now();
         return new Trace(startTick);
     }
 
@@ -21,7 +21,7 @@ export class Trace {
     }
 
     public trace(): ITraceEvent {
-        const tick = performanceNow();
+        const tick = performance.now();
         const event = {
             totalTimeElapsed: tick - this.startTick,
             duration: tick - this.lastTick,

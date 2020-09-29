@@ -1,7 +1,7 @@
 name: "Auto Assign Pull Request"
 on:
   pull_request_target:
-    types: [opened, reopened]
+    types: [opened, synchronize, reopened]
     branches:
     - main
     - release/*

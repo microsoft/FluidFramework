@@ -95,7 +95,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.4847",
+    "@fluidframework/build-tools": "^0.2.5638",
     "@fluidframework/test-tools": "^0.2.3074",
     "@mattetti/custom-api-documenter": "^0.2.1",
     "@microsoft/api-extractor": "^7.7.2",
@@ -109,40 +109,21 @@
   },
   "fluidBuild": {
     "repoPackages": {
-      "client":  [
-        {
-          "directory": "common"
-        },
-        {
-          "directory": "tools/generator-fluid"
-        }
+      "build": "common/build",
+      "common-def": "common/lib/common-definitions",
+      "common-utils": "common/lib/common-utils",
+      "server": "server/routerlicious",
+      "client": "",
+      "tools": [
+        "tools/generator-fluid",
+        "server/tinylicious"
       ],
-      "server": {
-        "required": [
-          {
-            "directory": "server/tinylicious"
-          }
-        ],
-        "optional": [
-          {
-            "directory": "server",
-            "ignoredDirs": [
-              "routerlicious"
-            ]
-          }
+      "services": {
+        "directory": "server",
+        "ignoredDirs": [
+          "routerlicious"
         ]
       }
-    },
-    "serverPath": "server/routerlicious",
-    "releaseOrder": {
-      "preRepo": [
-        ["@fluidframework/eslint-config-fluid", "@fluidframework/build-common"],
-        ["@fluidframework/common-definitions"],
-        ["@fluidframework/common-utils"]
-      ],
-      "postRepo": [
-        ["generator-fluid", "tinylicious"]
-      ]
     },
     "generatorName": "generator-fluid"
   }
