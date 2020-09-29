@@ -52,7 +52,7 @@ export type PushTokenFetcher = (refresh: boolean, claims?: string) => Promise<st
 
 /**
  * Method signature for callback method used to fetch Sharing link token
- * @param forFileDefaultUrl boolean to determine the scope of the token to fetch the share link.
+ * @param forFileDefaultUrl - boolean to determine the scope of the token to fetch the share link.
  * @param options - options that need to be passed to fetch the token like claims or option to bypass
  * the cache and refresh the token.
  * @returns If successful, TokenResponse object representing token value along with flag indicating

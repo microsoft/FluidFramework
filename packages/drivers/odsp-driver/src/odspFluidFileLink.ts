@@ -16,7 +16,7 @@ const fluidAppNameParamName = "a";
 
 /**
  * Transforms given Fluid data store locator into string that can be embedded into url
- * @param locator describes Fluid data store locator info to be encoded
+ * @param locator - describes Fluid data store locator info to be encoded
  * @returns string representing encoded Fluid data store locator info
  */
 export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocator): string {
@@ -38,9 +38,9 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
 
 /**
  * Decodes given encoded value representing Fluid data store locator extracted from ODSP Fluid file link
- * @param encodedLocatorValue encoded Fluid data store locator value which was produced by
+ * @param encodedLocatorValue - encoded Fluid data store locator value which was produced by
  *  encodeOdspFluidDataStoreLocator method
- * @param siteOriginUrl site origin that will be appended to encoded relative path to form absolute file url
+ * @param siteOriginUrl - site origin that will be appended to encoded relative path to form absolute file url
  * @returns object representing Fluid data store location in ODSP terms
  */
 function decodeOdspFluidDataStoreLocator(
@@ -89,8 +89,8 @@ const locatorQueryParamName = "nav";
 
 /**
  * Embeds Fluid data store locator data into given ODSP url
- * @param url file url in ODSP format (can be either canonical or share link)
- * @param locator object representing Fluid data store location in ODSP terms
+ * @param url - file url in ODSP format (can be either canonical or share link)
+ * @param locator - object representing Fluid data store location in ODSP terms
  */
 export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocator) {
     const encodedLocatorValue = encodeOdspFluidDataStoreLocator(locator);
@@ -101,7 +101,7 @@ export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocat
 
 /**
  * Extract ODSP Fluid data store locator object from given ODSP url
- * @param url ODSP url representing Fluid file link
+ * @param url - ODSP url representing Fluid file link
  * @returns object representing Fluid data store location in ODSP terms
  */
 export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | undefined {

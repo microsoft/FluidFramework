@@ -8,7 +8,6 @@ import { fetchFailureStatusCode, offlineFetchFailureStatusCode } from "./odspErr
 
 /**
  * returns a promise that resolves after timeMs
- * @param timeMs
  */
 export async function delay(timeMs: number): Promise<void> {
     return new Promise((resolve) => setTimeout(() => resolve(), timeMs));
@@ -22,8 +21,8 @@ export interface CachedResult<T> {
 /**
  * A utility function to execute async callback and cache result for given amount of time.
  * If the same function is executed within cache expiry period then cached result is returned.
- * @param asyncCallback function returning result as a promise
- * @param cacheExpiryTimeMs time in milliseconds for cached result to be valid
+ * @param asyncCallback - function returning result as a promise
+ * @param cacheExpiryTimeMs - time in milliseconds for cached result to be valid
  */
 export function asyncWithCache<T>(
     asyncCallback: () => Promise<T | undefined>,
@@ -107,9 +106,9 @@ export interface TimeoutPolicy<T> {
 
 /**
  * A utility function to execute async callback with support for retries and timeout
- * @param asyncCallback function returning result as a promise
- * @param retryPolicy how to do retries
- * @param timeoutPolicy how to treat timeout
+ * @param asyncCallback - function returning result as a promise
+ * @param retryPolicy - how to do retries
+ * @param timeoutPolicy - how to treat timeout
  */
 export async function asyncWithRetry<T>(
     asyncCallback: (retryAttempt: number) => Promise<T>,
@@ -159,7 +158,7 @@ export type FetchWithRetryResponse = AsyncWithRetryResult<FetchResponse>;
 
 /**
  * Creates a filter that will allow retries for the whitelisted status codes
- * @param retriableCodes Cannot be null/undefined
+ * @param retriableCodes - Cannot be null/undefined
  */
 export function whitelist(retriableCodes: number[]): RetryFilter<Response> {
     return (response: Response) => response && retriableCodes.includes(response.status);
@@ -167,7 +166,7 @@ export function whitelist(retriableCodes: number[]): RetryFilter<Response> {
 
 /**
  * Creates a filter that will allow retries for everything except codes on the blacklist
- * @param nonRetriableCodes Cannot be null/undefined
+ * @param nonRetriableCodes - Cannot be null/undefined
  */
 export function blacklist(nonRetriableCodes: number[]): RetryFilter<Response> {
     return (response: Response) => response && !nonRetriableCodes.includes(response.status);
@@ -177,13 +176,13 @@ export function blacklist(nonRetriableCodes: number[]): RetryFilter<Response> {
  * A utility function to do fetch with support for retries. Note that this function does not
  * reject the returned promise if fetch fails. Clients are expected to inspect the status in
  * the response to determine if the fetch succeeded or not.
- * @param requestInfo fetch requestInfo, can be a string
- * @param requestInit fetch requestInit
- * @param name name of the request to use for logging
- * @param logger used to log results of operation, including any error
- * @param retryPolicy how to do retries
- * @param timeoutMs time in milliseconds to treat fetch as timed out
- * @param getAdditionalProps optional callback used to get additional properties that get logged about the request
+ * @param requestInfo - fetch requestInfo, can be a string
+ * @param requestInit - fetch requestInit
+ * @param name - name of the request to use for logging
+ * @param logger - used to log results of operation, including any error
+ * @param retryPolicy - how to do retries
+ * @param timeoutMs - time in milliseconds to treat fetch as timed out
+ * @param getAdditionalProps - optional callback used to get additional properties that get logged about the request
  */
 export async function fetchWithRetry(
     requestInfo: RequestInfo,

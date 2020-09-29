@@ -53,8 +53,6 @@ export class OdspDocumentService implements IDocumentService {
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
      * referred to as the "Push" token in SPO.
      * @param logger - a logger that can capture performance and diagnostic information
-     * @param storageFetchWrapper - if not provided FetchWrapper will be used
-     * @param deltasFetchWrapper - if not provided FetchWrapper will be used
      * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
      * @param cache - This caches response for joinSession.
      */
@@ -66,7 +64,6 @@ export class OdspDocumentService implements IDocumentService {
         socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
-        getSharingLinkToken?: SharingLinkTokenFetcher,
     ): Promise<IDocumentService> {
         return new OdspDocumentService(
             resolvedUrl as IOdspResolvedUrl,
@@ -101,9 +98,8 @@ export class OdspDocumentService implements IDocumentService {
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also referred
      * to as the "Push" token in SPO.
      * @param logger - a logger that can capture performance and diagnostic information
-     * @param storageFetchWrapper - if not provided FetchWrapper will be used
-     * @param deltasFetchWrapper - if not provided FetchWrapper will be used
      * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
+     * @param cache - This caches response for joinSession.
      */
     constructor(
         public readonly odspResolvedUrl: IOdspResolvedUrl,

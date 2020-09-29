@@ -81,7 +81,7 @@ export interface  AuthorizedFetchProps {
  * with request. This function supports long lived tokens and handles token refresh in case of authorization
  * failure due to insufficient claims. Note that this function does not reject the returned promise if fetch fails.
  * Clients are expected to inspect the status in the response to determine if the fetch succeeded or not.
- * @param props set of properties describing fetch behavior
+ * @param props - set of properties describing fetch behavior
  * @returns promise to fetch response
  */
 export async function authorizedFetchWithRetry(props: AuthorizedFetchProps): Promise<FetchWithRetryResponse> {

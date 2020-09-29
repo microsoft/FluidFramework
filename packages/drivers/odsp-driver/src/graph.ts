@@ -21,15 +21,15 @@ export interface GraphItemLite {
 /**
  * Returns share link with requested scope and type for a file with given drive and item ids.
  * Scope needed: files.readwrite.all
- * @param getShareLinkToken used to fetch access token needed to execute operation
- * @param siteUrl url of the site that contains the file
- * @param driveId drive where file is stored
- * @param itemId file id
- * @param identityType type of client account
- * @param logger used to log results of operation, including any error
- * @param scope access scope that will be granted via generated link. 'default' scope tells
+ * @param getShareLinkToken - used to fetch access token needed to execute operation
+ * @param siteUrl - url of the site that contains the file
+ * @param driveId - drive where file is stored
+ * @param itemId - file id
+ * @param identityType - type of client account
+ * @param logger - used to log results of operation, including any error
+ * @param scope - access scope that will be granted via generated link. 'default' scope tells
  * server to use default access which is determined based on tenant settings
- * @param type access type. This value is ignored when scope is set to either 'default' or 'existingAccess'
+ * @param type - access type. This value is ignored when scope is set to either 'default' or 'existingAccess'
  * @returns Promise which resolves to share link url when successful; otherwise, undefined.
  */
 export async function getShareLink(
@@ -68,14 +68,14 @@ export async function getShareLink(
 
 /**
  * Issues a graph fetch request
- * @param getShareLinkToken Token provider than can supply Graph tokens
- * @param graphUrl Url to fetch. Can either be a full URL (e.g. https://graph.microsoft.com/v1.0/me/people)
+ * @param getShareLinkToken - Token provider than can supply Graph tokens
+ * @param graphUrl - Url to fetch. Can either be a full URL (e.g. https://graph.microsoft.com/v1.0/me/people)
  *  or a partial url (e.g. me/people)
- * @param nameForLogging Name used for logging
- * @param logger used to log results of operation, including any error
- * @param requestInit Optional. Request Init to be passed to fetch
- * @param retryPolicy Optional. Retry policy to be passed to fetchWithRetry
- * @param timeoutMs Optional. Timeout value to be passed to fetchWithRetry
+ * @param nameForLogging - Name used for logging
+ * @param logger - used to log results of operation, including any error
+ * @param requestInit - Request Init to be passed to fetch
+ * @param retryPolicy - Retry policy to be passed to fetchWithRetry
+ * @param timeoutMs - Timeout value to be passed to fetchWithRetry
  */
 export async function graphFetch(
     getShareLinkToken: SharingLinkTokenFetcher,
@@ -134,12 +134,12 @@ const getSPOAndGraphRequestIdsFromResponse = async (response: Response) => {
 /**
  * Returns default link for a file with given drive and item ids.
  * Scopes needed: files.read.all and {siteOrigin}/files.readwrite.all
- * @param getShareLinkToken used to fetch access token needed to execute operation
- * @param siteUrl SiteUrl of the site that contains the file
- * @param driveId driveId that contains the file
- * @param itemId ItemId of the file
- * @param identityType type of client account
- * @param logger Instance of the logger
+ * @param getShareLinkToken - used to fetch access token needed to execute operation
+ * @param siteUrl - SiteUrl of the site that contains the file
+ * @param driveId - driveId that contains the file
+ * @param itemId - ItemId of the file
+ * @param identityType - type of client account
+ * @param logger - Instance of the logger
  * @returns Promise which resolves to file url when successful; otherwise, undefined.
  */
 async function getFileDefaultUrl(
@@ -193,10 +193,10 @@ const graphItemLiteCache = new PromiseCache<string, GraphItemLite | undefined>()
 /**
  * This API gets only few properties representing the GraphItem - hence 'Lite'.
  * Scope needed: files.read.all
- * @param getShareLinkToken used to fetch access token needed to execute operation
- * @param driveId ID for the drive that contains the file
- * @param itemId ID of the file
- * @param logger used to log results of operation, including any error
+ * @param getShareLinkToken - used to fetch access token needed to execute operation
+ * @param driveId - ID for the drive that contains the file
+ * @param itemId - ID of the file
+ * @param logger - used to log results of operation, including any error
  * @returns Object containing name, webUrl and webDavUrl properties.
  * - name represents file name
  * - webUrl represents file url, this is url that can be used for direct loading of file on web. Primarily used

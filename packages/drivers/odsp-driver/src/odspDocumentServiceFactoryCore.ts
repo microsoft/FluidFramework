@@ -81,7 +81,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     newFileParams,
                     logger2,
                     createNewSummary,
-                    this.getSharingLinkToken);
+                    this.getSharingLinkToken ?
+                        this.toInstrumentedSharingLinkTokenFetcher(logger2, this.getSharingLinkToken) : undefined,);
                 const docService = this.createDocumentService(odspResolvedUrl, logger);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
@@ -98,6 +99,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
    * @param persistedCache - PersistedCache provided by host for use in this session.
+   * @param getSharingLinkToken - function that can provide token used to fetch share link for a container.
    */
     constructor(
         private readonly getStorageToken: StorageTokenFetcher,
@@ -127,8 +129,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.getSocketIOClient,
             cache,
             this.hostPolicy,
-            this.getSharingLinkToken ?
-                this.toInstrumentedSharingLinkTokenFetcher(odspLogger, this.getSharingLinkToken) : undefined,
         );
     }
 

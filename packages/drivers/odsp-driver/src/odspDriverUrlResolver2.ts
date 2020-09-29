@@ -35,9 +35,7 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
 
     /**
      * Takes an already generated data store url (from requestUrl) and appends a path to the
-     * existing data store information
-     * @param requestUrl
-     * @param pathToAppend
+     * existing data store information.
      */
     public appendDataStorePath(requestUrl: URL, pathToAppend: string): string | undefined {
         const fluidInfo = getLocatorFromOdspUrl(requestUrl);
@@ -120,8 +118,8 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
 
     /**
      * Requests a driver + data store storage URL
-     * @param resolvedUrl The driver resolved URL
-     * @param request The relative data store path URL. For requesting a driver URL, this value should always be '/'
+     * @param resolvedUrl - The driver resolved URL
+     * @param request - The relative data store path URL. For requesting a driver URL, this value should always be '/'
      */
     public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
