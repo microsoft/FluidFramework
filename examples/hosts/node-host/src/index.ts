@@ -14,17 +14,19 @@ import * as jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import { NodeCodeLoader } from "./nodeCodeloader";
 import { fetchFluidObject, initializeChaincode } from "./utils";
+import { AzureBlobStorage } from "./storageAccount";
 
 // Base service configuration.
-const ordererEndpoint = "";
-const storageEndpoint = "";
-const tenantId = "";
-const tenantKey = "";
-const bearerSecret = "";
+const ordererEndpoint = "https://alfred.frs.office-int.com";;
+const storageEndpoint = "https://historian.frs.office-int.com";
+const tenantId = "aquamarinedolphin-hiss";
+const tenantKey = "b1d16a5deff49b8806936a3778377a70";
+const bearerSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 // Code package details.
-const defaultPackage = "@fluid-example/key-value-cache@0.19.0-28557";
-const installPath = "/tmp/fluid-objects";
+const defaultPackage = "@fluid-example/key-value-cache@0.28.0";
+const installPath = "tmp/fluid-objects";
 const timeoutMS = 60000;
 
 // Document id (randomly chosen if not specified)
@@ -33,8 +35,7 @@ const docId = "";
 // User information.
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const user = {
-    id: "node-user",         // Required value
-    name: "Node User",       // Optional value that we included
+    id: "16d97a2b-b1e7-4ddf-a203-0d0ccf040b84",
 } as IUser;
 
 export async function start(): Promise<void> {
@@ -113,4 +114,10 @@ export async function start(): Promise<void> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
+export async function storageAccount() {
+    const azureStorage = new AzureBlobStorage("DefaultEndpointsProtocol=https;AccountName=prosemirror;AccountKey=5LkbRyZcII5Tq6r2sjCB95vNbFOswTlJ8ZvmN5HJtEmPusAG4e8SfpWit0npF25/bT9SLZKrKT1Xq/DC/GSRRg==;EndpointSuffix=core.windows.net")
+    const data = await azureStorage.getBlockBlob("samples", "sampletext.txt");
+    console.log(data);
+}
+// storageAccount();
 start();
