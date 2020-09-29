@@ -7,6 +7,7 @@
     "compilerOptions": {
         "outDir": "dist",
         "strict": false,
+        "strictNullChecks": true,
         "types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer", "react", "react-dom"],
     },
     "include": [

@@ -111,6 +111,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 
     public get options(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this._containerRuntime.options;
     }
 

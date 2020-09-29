@@ -80,6 +80,7 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
     }
 
     public get(key: string): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.root.get(key);
     }
 
