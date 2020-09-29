@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/intelligence-runner-agent",
-  "version": "0.26.2",
+  "version": "0.26.3",
   "description": "An example intelligence agent that generates insights on distributed data structures",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -24,10 +24,10 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.26.2",
-    "@fluidframework/map": "^0.26.2",
+    "@fluidframework/core-interfaces": "^0.26.3",
+    "@fluidframework/map": "^0.26.3",
     "@fluidframework/protocol-definitions": "^0.1012.0",
-    "@fluidframework/sequence": "^0.26.2",
+    "@fluidframework/sequence": "^0.26.3",
     "request": "^2.88.0"
   },
   "devDependencies": {
