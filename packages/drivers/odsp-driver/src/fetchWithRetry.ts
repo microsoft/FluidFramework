@@ -268,6 +268,6 @@ async function logFetchResponse(
     }
 }
 
-interface FetchResponse extends Response {
+export interface FetchResponse extends Response {
     durationMs: number;
 }
