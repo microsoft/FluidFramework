@@ -56,14 +56,11 @@ export async function resolveWrapper<T>(
         }
         return result;
     } catch (e) {
-        if (e.requestResultError) {
-            const parsedBody = JSON.parse(e.requestResult.data);
-            if (parsedBody.error === "invalid_grant"
-                && parsedBody.suberror === "consent_required"
-                && !forceTokenReauth
-            ) {
+        if (e.requestResult) {
+            const parsedBody = e.requestResult.data;
+            if (parsedBody !== undefined && parsedBody.error === "invalid_grant" && !forceTokenReauth) {
                 // Re-auth
-                return resolveWrapper<T>(callback, server, clientConfig, true);
+                return resolveWrapper<T>(callback, server, clientConfig, true, forToken);
             }
             const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
             return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${responseMsg}`);
