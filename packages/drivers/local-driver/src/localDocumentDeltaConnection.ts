@@ -40,7 +40,7 @@ export class LocalDocumentDeltaConnection
      * @param id - document Id
      * @param token - authorization token for storage service
      * @param client - information about the client
-     * @param webSocketServer - optional telemetry logger
+     * @param webSocketServer - web socket server to create connection
      */
     public static async create(
         tenantId: string,
@@ -59,7 +59,6 @@ export class LocalDocumentDeltaConnection
             versions: testProtocolVersions,
         };
 
-        console.log("id is :" ,id);
         const connection = await new Promise<IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
