@@ -457,7 +457,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
-    public async uploadBlob(file: Buffer): Promise<any> {
+    public async uploadBlob(file): Promise<any> {
         return null;
     }
 
