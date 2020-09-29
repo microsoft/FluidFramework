@@ -73,7 +73,7 @@ export interface ITenantManager {
     getTenant(tenantId: string): Promise<ITenant>;
 
     /**
-     * Verifies that the given auth token is valid. A rejected promise indicaets an invalid token.
+     * Verifies that the given auth token is valid. A rejected promise indicates an invalid token.
      */
     verifyToken(tenantId: string, token: string): Promise<void>;
 

@@ -99,7 +99,9 @@ export function create(
      */
     router.post("/tenants/:id?", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const tenantP = manager.createTenant(tenantId, request.body.customData);
+        const tenantP = manager.createTenant(
+            tenantId,
+            request.body.customData);
         returnResponse(tenantP, response);
     });
 

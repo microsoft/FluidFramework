@@ -60,8 +60,7 @@ export class TenantManager {
         const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
         if (tenantKey == null) {
             winston.error("Tenant key decryption failed.");
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.reject("Tenant key decryption failed.");
+            return Promise.reject("Tenant key decryption failed.");
         }
 
         return new Promise<void>((resolve, reject) => {
@@ -80,6 +79,10 @@ export class TenantManager {
      */
     public async getTenant(tenantId: string): Promise<ITenantConfig> {
         const tenant = await this.getTenantDocument(tenantId);
+        if (!tenant) {
+            winston.error("Tenant is disabled or does not exist.");
+            return Promise.reject("Tenant is disabled or does not exist.");
+        }
 
         return {
             id: tenant._id,
@@ -103,6 +106,9 @@ export class TenantManager {
         }));
     }
 
+    /**
+     * Generates a random tenant key
+     */
     private generateTenantKey(): string {
         return crypto.randomBytes(16).toString("hex");
     }
@@ -117,13 +123,13 @@ export class TenantManager {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
-        const tenantKey = crypto.randomBytes(16).toString("hex");
+        const tenantKey = this.generateTenantKey();
         const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
         if (encryptedTenantKey == null) {
             winston.error(`Tenant key encryption failed.`);
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.reject("Tenant key encryption failed.");
+            return Promise.reject("Tenant key encryption failed.");
         }
+
         const id = await collection.insertOne({
             _id: tenantId || getRandomName("-"),
             key: encryptedTenantKey,
@@ -186,8 +192,7 @@ export class TenantManager {
         const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
         if (tenantKey == null) {
             winston.error("Tenant key decryption failed.");
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.reject("Tenant key decryption failed.");
+            return Promise.reject("Tenant key decryption failed.");
         }
 
         return tenantKey;
@@ -200,17 +205,22 @@ export class TenantManager {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
-        const key = this.generateTenantKey();
+        const tenantKey = this.generateTenantKey();
+        const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
+        if (encryptedTenantKey == null) {
+            winston.error(`Tenant key encryption failed.`);
+            return Promise.reject("Tenant key encryption failed.");
+        }
 
-        await collection.update({ _id: tenantId }, { key }, null);
+        await collection.update({ _id: tenantId }, { encryptedTenantKey }, null);
 
-        return (await this.getTenantDocument(tenantId)).key;
+        return tenantKey;
     }
 
     /**
      * Attaches fields to older tenants to provide backwards compatibility
      */
-    private attachOrdererAndStorageToTenantDocument(tenantDocument: ITenantDocument): void {
+    private attachDefaultsToTenantDocument(tenantDocument: ITenantDocument): void {
         // Ordering information was historically not included with the tenant. In the case where it is empty
         // we default it to the kafka orderer at the base server URL.
         if (!tenantDocument.orderer) {
@@ -243,10 +253,10 @@ export class TenantManager {
 
         const found = await collection.findOne({ _id: tenantId });
         if (found.disabled) {
-            throw new Error("Tenant is disabled");
+            return null;
         }
 
-        this.attachOrdererAndStorageToTenantDocument(found);
+        this.attachDefaultsToTenantDocument(found);
 
         return found;
     }
@@ -254,14 +264,14 @@ export class TenantManager {
     /**
      * Retrieves all the raw database tenant documents
      */
-    public async getAllTenantDocuments(): Promise<ITenantDocument[]> {
+    private async getAllTenantDocuments(): Promise<ITenantDocument[]> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
         const allFound = await collection.findAll();
 
         allFound.forEach((found) => {
-            this.attachOrdererAndStorageToTenantDocument(found);
+            this.attachDefaultsToTenantDocument(found);
         });
 
         return allFound.filter((found) => !found.disabled);
