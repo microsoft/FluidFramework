@@ -11,6 +11,7 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
+import { performanceNow } from "@fluidframework/common-utils";
 import { IFluidObject, IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -29,15 +30,7 @@ import {
     IThrottlingWarning,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { performanceNow } from "@fluidframework/common-utils";
-import {
-    ChildLogger,
-    CustomErrorWithProps,
-    EventEmitterWithErrorHandling,
-    PerformanceEvent,
-    raiseConnectedEvent,
-    TelemetryLogger,
-} from "@fluidframework/telemetry-utils";
+import { CreateContainerError, GenericError } from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -57,7 +50,6 @@ import {
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
 } from "@fluidframework/driver-utils";
-import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     isSystemMessage,
     ProtocolOpHandler,
@@ -86,6 +78,13 @@ import {
     TreeEntry,
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
+import {
+    ChildLogger,
+    EventEmitterWithErrorHandling,
+    PerformanceEvent,
+    raiseConnectedEvent,
+    TelemetryLogger,
+} from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
@@ -1477,7 +1476,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             errorMsg = "messageClientIdShouldHaveLeft";
         }
         if (errorMsg !== undefined) {
-            this.close(CreateContainerError(new CustomErrorWithProps(
+            const error = new GenericError(
                 errorMsg,
                 {
                     clientId: this._clientId,
@@ -1485,7 +1484,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     sequenceNumber: message.sequenceNumber,
                     clientSequenceNumber: message.clientSequenceNumber,
                 },
-            )));
+            );
+            this.close(CreateContainerError(error));
         }
 
         // Forward non system messages to the loaded runtime for processing
