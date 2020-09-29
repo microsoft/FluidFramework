@@ -32,6 +32,7 @@ import {
 import { performanceNow } from "@fluidframework/common-utils";
 import {
     ChildLogger,
+    CustomErrorWithProps,
     EventEmitterWithErrorHandling,
     PerformanceEvent,
     raiseConnectedEvent,
@@ -98,8 +99,8 @@ import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
-interface IActiveSequencedClient extends ISequencedClient {
-    isActive?: boolean;
+interface ILocalSequencedClient extends ISequencedClient {
+    shouldHaveLeft?: boolean;
 }
 
 export interface IContainerConfig {
@@ -1395,12 +1396,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._connectionState = value;
 
         if (value === ConnectionState.Connected) {
-            // Mark our old client inactive in the quorum if it's still there
+            // Mark our old client should have left in the quorum if it's still there
             if (this._clientId !== undefined) {
-                const client: IActiveSequencedClient | undefined =
+                const client: ILocalSequencedClient | undefined =
                     this._protocolHandler?.quorum.getMember(this._clientId);
                 if (client !== undefined) {
-                    client.isActive = false;
+                    client.shouldHaveLeft = true;
                 }
             }
             this._clientId = this.pendingClientId;
@@ -1465,19 +1466,26 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
         const local = this._clientId === message.clientId;
 
-         // Report if we're getting messages from a clientId that we previously marked inactive
-         if (!local) {
-            const client: IActiveSequencedClient | undefined =
-                this._protocolHandler?.quorum.getMember(message.clientId);
-            if (client?.isActive === false) {
-                this.logger.sendErrorEvent({
-                    eventName: "messageFromInactiveClient",
+        // Report if we're getting messages from a clientId that we previously flagged as
+        // shouldHaveLeft, or from a client that's not in the quorum but should be
+        let errorMsg: string | undefined;
+        const client: ILocalSequencedClient | undefined =
+            this._protocolHandler?.quorum.getMember(message.clientId);
+        if (client === undefined && message.type !== MessageType.ClientJoin) {
+            errorMsg = "messageClientIdMissingFromQuorum";
+        } else if (client?.shouldHaveLeft === true) {
+            errorMsg = "messageClientIdShouldHaveLeft";
+        }
+        if (errorMsg !== undefined) {
+            this.close(CreateContainerError(new CustomErrorWithProps(
+                errorMsg,
+                {
                     clientId: this._clientId,
                     messageClientId: message.clientId,
                     sequenceNumber: message.sequenceNumber,
                     clientSequenceNumber: message.clientSequenceNumber,
-                });
-            }
+                },
+            )));
         }
 
         // Forward non system messages to the loaded runtime for processing
