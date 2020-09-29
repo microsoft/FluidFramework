@@ -16,6 +16,7 @@ export class DbFactory implements IDbFactory {
     }
 
     public async connect(): Promise<IDb> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.db;
     }
 }
