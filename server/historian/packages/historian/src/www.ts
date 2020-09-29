@@ -9,8 +9,8 @@ import * as debug from "debug";
 import * as nconf from "nconf";
 import * as redis from "redis";
 import * as winston from "winston";
-import * as app from "./app";
-import * as services from "./services";
+import * as app from "@fluidframework/historian-base/app";
+import * as services from "@fluidframework/historian-base/services";
 
 /**
  * Normalize a port into a number, string, or false.

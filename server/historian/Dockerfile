@@ -11,8 +11,7 @@ RUN chmod +x /tini
 # Copy over and build the server
 WORKDIR /home/node/server
 
-COPY package.json .
-COPY package-lock.json .
+COPY packages/historian-base/package*.json packages/historian-base/
 RUN npm install
 COPY . .
 RUN npm run build
