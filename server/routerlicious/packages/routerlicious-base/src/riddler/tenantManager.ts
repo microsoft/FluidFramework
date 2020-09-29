@@ -163,20 +163,15 @@ export class TenantManager {
     }
 
     /**
-     * Updates the tenant custom data fields
+     * Updates the tenant custom data object
      */
     public async updateCustomData(tenantId: string, customData: ITenantCustomData): Promise<ITenantCustomData> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
-        const customDataUpdateDoc = {};
-        Object.entries(customData).forEach(([key, value]) => {
-            customDataUpdateDoc[`customData.${key}`] = value;
-        });
+        await collection.update({ _id: tenantId }, customData, null);
 
-        await collection.update({ _id: tenantId }, customDataUpdateDoc, null);
-
-        return (await this.getTenantDocument(tenantId)).orderer;
+        return (await this.getTenantDocument(tenantId)).customData;
     }
 
     /**
@@ -207,13 +202,14 @@ export class TenantManager {
             return Promise.reject("Tenant key encryption failed.");
         }
 
-        await collection.update({ _id: tenantId }, { encryptedTenantKey }, null);
+        await collection.update({ _id: tenantId }, { key: encryptedTenantKey }, null);
 
         return tenantKey;
     }
 
     /**
-     * Attaches fields to older tenants to provide backwards compatibility
+     * Attaches fields to older tenants to provide backwards compatibility.
+     * Will be removed at some point.
      */
     private attachDefaultsToTenantDocument(tenantDocument: ITenantDocument): void {
         // Ordering information was historically not included with the tenant. In the case where it is empty

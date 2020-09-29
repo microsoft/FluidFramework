@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITenantConfig, MongoManager, ISecretManager } from "@fluidframework/server-services-core";
+import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
 import { Response, Router } from "express";
 import { getParam } from "../utils";
 import { TenantManager } from "./tenantManager";
@@ -43,14 +43,17 @@ export function create(
     /**
      * Retrieves details for the given tenant
      */
-    router.get("/tenants/:id?", (request, response) => {
+    router.get("/tenants/:id", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        let tenantP: Promise<ITenantConfig | ITenantConfig[]>;
-        if (tenantId) {
-            tenantP = manager.getTenant(tenantId);
-        } else {
-            tenantP = manager.getAllTenants();
-        }
+        const tenantP = manager.getTenant(tenantId);
+        returnResponse(tenantP, response);
+    });
+
+    /**
+     * Retrieves list of all tenants
+     */
+    router.get("/tenants", (request, response) => {
+        const tenantP = manager.getAllTenants();
         returnResponse(tenantP, response);
     });
 
@@ -79,19 +82,21 @@ export function create(
     });
 
     /**
-     * Updates the details for the given tenant based on instructions in the request body
+     * Updates the customData for the given tenant
      */
-    router.patch("/tenants/:id", (request, response) => {
+    router.put("/tenants/:id/customData", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const { customData, refreshKey } = request.body;
-        const updatePs: Promise<any>[] = [];
-        if (customData) {
-            updatePs.push(manager.updateCustomData(tenantId, customData));
-        }
-        if (refreshKey) {
-            updatePs.push(manager.refreshTenantKey(tenantId));
-        }
-        returnResponse(Promise.all(updatePs), response);
+        const customDataP = manager.updateCustomData(tenantId, request.body);
+        returnResponse(customDataP, response);
+    });
+
+    /**
+     * Refreshes the key for the given tenant
+     */
+    router.put("/tenants/:id/key", (request, response) => {
+        const tenantId = getParam(request.params, "id");
+        const refreshKeyP = manager.refreshTenantKey(tenantId);
+        return returnResponse(refreshKeyP, response);
     });
 
     /**
