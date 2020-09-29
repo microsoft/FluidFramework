@@ -8,7 +8,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { DependencyContainerRegistry } from "@fluidframework/synthesize";
 import {
     RuntimeRequestHandler,
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "../request-handlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
@@ -36,7 +36,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
             [
                 ...requestHandlers,
                 defaultRouteRequestHandler(defaultDataStoreId),
-                deprecated_innerRequestHandler,
+                innerRequestHandler,
             ],
         );
     }
