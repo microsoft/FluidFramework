@@ -82,7 +82,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     logger2,
                     createNewSummary,
                     this.getSharingLinkToken ?
-                        this.toInstrumentedSharingLinkTokenFetcher(logger2, this.getSharingLinkToken) : undefined,);
+                        this.toInstrumentedSharingLinkTokenFetcher(logger2, this.getSharingLinkToken) : undefined);
                 const docService = this.createDocumentService(odspResolvedUrl, logger);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
