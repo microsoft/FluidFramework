@@ -14,7 +14,6 @@ import {
     DefaultServiceConfiguration,
     DeliLambda,
     ForemanLambda,
-    IDeliCheckpoint,
     NoopConsolidationTimeout,
     ScribeLambda,
     ScriptoriumLambda,
@@ -24,6 +23,7 @@ import {
 import { IGitManager } from "@fluidframework/server-services-client";
 import {
     IContext,
+    IDeliState,
     IDatabaseManager,
     IDocument,
     IDocumentDetails,
@@ -54,7 +54,7 @@ const DefaultScribe: IScribe = {
     sequenceNumber: -1,
 };
 
-const DefaultDeli: IDeliCheckpoint = {
+const DefaultDeli: IDeliState = {
     branchMap: undefined,
     clients: undefined,
     durableSequenceNumber: 0,
@@ -226,7 +226,7 @@ export class LocalOrderer implements IOrderer {
     }
 
     private setupKafkas() {
-        const deliState: IDeliCheckpoint = JSON.parse(this.dbObject.deli);
+        const deliState: IDeliState = JSON.parse(this.dbObject.deli);
         this.rawDeltasKafka = new LocalKafka(deliState.logOffset + 1);
         this.deltasKafka = new LocalKafka();
     }

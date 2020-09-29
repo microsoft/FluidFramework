@@ -24,7 +24,7 @@ server-side logic to manage the collaborative experience. The Fluid Framework is
 in reducing the complexity of creating collaborative applications.
 
 What if you didn't have to invest in server code at all? Imagine if you could use a general purpose server
-which was designed to be light-weight and low cost. Imagine if all your development was focused on the client
+which was designed to be lightweight and low cost. Imagine if all your development was focused on the client
 experience and data sync was handled for you. That is the promise of Fluid.
 
 ## Focused on the client developer

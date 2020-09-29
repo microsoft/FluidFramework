@@ -23,6 +23,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
 
     endpoints: {
         snapshotStorageUrl: string;
+        attachmentPOSTStorageUrl: string;
+        attachmentGETStorageUrl: string;
     };
 
     // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.

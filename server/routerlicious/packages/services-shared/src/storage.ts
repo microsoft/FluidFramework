@@ -20,6 +20,7 @@ import {
 import { IGitCache, IGitManager } from "@fluidframework/server-services-client";
 import {
     ICollection,
+    IDeliState,
     IDatabaseManager,
     IDocumentDetails,
     IDocumentStorage,
@@ -119,6 +120,16 @@ export class DocumentStorage implements IDocumentStorage {
 
         winston.info(`commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
 
+        const deli: IDeliState = {
+            branchMap: undefined,
+            clients: undefined,
+            durableSequenceNumber: sequenceNumber,
+            logOffset: -1,
+            sequenceNumber,
+            epoch: undefined,
+            term: 1,
+        };
+
         const scribe: IScribe = {
             logOffset: -1,
             minimumSequenceNumber: sequenceNumber,
@@ -140,16 +151,12 @@ export class DocumentStorage implements IDocumentStorage {
                 tenantId,
             },
             {
-                branchMap: undefined,
-                clients: undefined,
                 createTime: Date.now(),
-                deli: undefined,
+                deli: JSON.stringify(deli),
                 documentId,
                 forks: [],
-                logOffset: 0,
                 parent: null,
                 scribe: JSON.stringify(scribe),
-                sequenceNumber,
                 tenantId,
                 version: "0.1",
             });
@@ -271,13 +278,10 @@ export class DocumentStorage implements IDocumentStorage {
         // Insert the fork entry and update the parent to prep storage for both objects
         const insertFork = collection.insertOne(
             {
-                branchMap: undefined,
-                clients: undefined,
                 createTime: Date.now(),
                 deli: undefined,
                 documentId: name,
                 forks: [],
-                logOffset: 0,
                 parent: {
                     documentId: id,
                     minimumSequenceNumber,
@@ -285,7 +289,6 @@ export class DocumentStorage implements IDocumentStorage {
                     tenantId,
                 },
                 scribe: undefined,
-                sequenceNumber,
                 tenantId,
                 version: "0.1",
             });
@@ -319,16 +322,12 @@ export class DocumentStorage implements IDocumentStorage {
         deli?: string,
         scribe?: string): Promise<IDocument> {
         const value: IDocument = {
-            branchMap: undefined,
-            clients: undefined,
             createTime: Date.now(),
             deli,
             documentId,
             forks: [],
-            logOffset: 0,
             parent: null,
             scribe,
-            sequenceNumber: StartingSequenceNumber,
             tenantId,
             version: "0.1",
         };

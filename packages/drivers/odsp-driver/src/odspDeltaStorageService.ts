@@ -8,7 +8,7 @@ import * as api from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { fetchHelper, getWithRetryForTokenRefresh } from "./odspUtils";
+import { fetchAndParseHelper, getWithRetryForTokenRefresh } from "./odspUtils";
 import { TokenFetchOptions } from "./tokenFetch";
 
 /**
@@ -43,7 +43,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
 
             const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, storageToken);
 
-            const response = await fetchHelper<IDeltaStorageGetResponse>(url, { headers });
+            const response = await fetchAndParseHelper<IDeltaStorageGetResponse>(url, { headers });
             const deltaStorageResponse = response.content;
             if (this.logger) {
                 this.logger.sendTelemetryEvent({

@@ -32,6 +32,7 @@ import {
 import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
+    IsoBuffer,
     Trace,
     unreachableCase,
 } from "@fluidframework/common-utils";
@@ -1814,7 +1815,7 @@ export class ContainerRuntime extends EventEmitter
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
     }
 
-    public async uploadBlob(blob: Buffer): Promise<IFluidHandle<string>> {
+    public async uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>> {
         return this.blobManager.createBlob(blob);
     }
 

@@ -7,20 +7,10 @@ import * as path from "path";
 import { Package, Packages } from "./npmPackage";
 import { MonoRepo, MonoRepoKind } from "./monoRepo";
 import { getPackageManifest } from "./fluidUtils";
-import { assert } from "console";
 
 export interface IPackageManifest {
     repoPackages: {
-        client:  IFluidRepoPackage[],
-        server: {
-            required: IFluidRepoPackage[],
-            optional?: IFluidRepoPackage[],
-        }
-    },
-    serverPath?: string,
-    releaseOrder?: {
-        preRepo?: string[][],
-        postRepo?: string[][]
+        [name: string]: string | IFluidRepoPackage | (string | IFluidRepoPackage)[]
     },
     generatorName?: string
 }
@@ -37,44 +27,39 @@ export class FluidRepo {
     public readonly packages: Packages;
     constructor(public readonly resolvedRoot: string, services: boolean) {
         const packageManifest = getPackageManifest(resolvedRoot);
-        this.clientMonoRepo = new MonoRepo(MonoRepoKind.Client, this.resolvedRoot);
-        if (packageManifest.serverPath) {
-            this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server, path.join(this.resolvedRoot, packageManifest.serverPath));
+
+        const loadOneEntry = (item: string | IFluidRepoPackage, group: string) => {
+            if (typeof item === "string") {
+                return Packages.loadDir(path.join(resolvedRoot, item), group);
+            }
+            return Packages.loadDir(path.join(resolvedRoot, item.directory), group, undefined, item.ignoredDirs);
+        }
+        const loadedPackages: Package[] = [];
+        let clientMonoRepo: MonoRepo | undefined;
+        for (const group in packageManifest.repoPackages) {
+            const item = packageManifest.repoPackages[group];
+            if (group === "client") {
+                clientMonoRepo = new MonoRepo(MonoRepoKind.Client, path.join(this.resolvedRoot, item as string));
+                loadedPackages.push(...clientMonoRepo.packages);
+            } else if (group === "server") {
+                this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server, path.join(this.resolvedRoot, item as string));
+                loadedPackages.push(...this.serverMonoRepo.packages);
+            } else if (group !== "services" || services) {
+                if (Array.isArray(item)) {
+                    for (const i of item) {
+                        loadedPackages.push(...loadOneEntry(i, group));
+                    }
+                } else {
+                    loadedPackages.push(...loadOneEntry(item, group));
+                }
+            }
         }
 
-        let additionalPackages: Package[] = [];
-
-        packageManifest.repoPackages.client.forEach((fluidPackage: IFluidRepoPackage) => {
-            additionalPackages = [
-                ...additionalPackages,
-                ...Packages.loadDir(path.join(resolvedRoot, fluidPackage.directory), undefined, fluidPackage.ignoredDirs)
-            ]
-        });
-
-        if (services) {
-            assert(packageManifest.repoPackages.server.optional, "Requested optional server packages without passing parameters in package.json");
-            packageManifest.repoPackages.server.optional!.forEach((fluidPackage: IFluidRepoPackage) => {
-                additionalPackages = [
-                    ...additionalPackages,
-                    ...Packages.loadDir(path.join(resolvedRoot, fluidPackage.directory), undefined, fluidPackage.ignoredDirs)
-                ]
-            });
-        } else {
-            packageManifest.repoPackages.server.required.forEach((fluidPackage: IFluidRepoPackage) => {
-                additionalPackages = [
-                    ...additionalPackages,
-                    ...Packages.loadDir(path.join(resolvedRoot, fluidPackage.directory), undefined, fluidPackage.ignoredDirs)
-                ]
-            });
+        if (!clientMonoRepo) {
+            throw new Error("client entry not exist in package.json")
         }
-
-        this.packages = new Packages(
-            [
-                ...this.clientMonoRepo.packages,
-                ...(this.serverMonoRepo?.packages || []),
-                ...additionalPackages,
-            ]
-        );
+        this.clientMonoRepo = clientMonoRepo;
+        this.packages = new Packages(loadedPackages);
     }
 
     public createPackageMap() {

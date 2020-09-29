@@ -10,7 +10,7 @@ packages/agents/**:
 - tanviraumi
 - anthony-murphy
 packages/dds/**:
-- vladsud 
+- vladsud
 - anthony-murphy
 
 packages/dds/(cell|counter|ink|map)/**:
@@ -45,7 +45,7 @@ packages/loader/**:
 - vladsud
 - anthony-murphy
 packages/runtime/**:
-- vladsud 
+- vladsud
 - arinwt
 - curtisman
 packages/hosts/**:
@@ -64,7 +64,7 @@ packages/utils/odsp-utils/**:
 - markfields
 - curtisman
 packages/utils/telemtry-utils/**:
-- markfields 
+- markfields
 - vladsud
 - wes-carlson
 packages/utils/tools-utils/**:
@@ -83,6 +83,8 @@ examples/**:
 
 # docs
 docs/**:
+- tylerbutler
+"**/*.md":
 - tylerbutler
 
 # tools

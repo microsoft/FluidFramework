@@ -15,7 +15,7 @@ import {
     IThrottlingWarning,
     ContainerErrorType,
 } from "@fluidframework/container-definitions";
-import { performanceNow, TypedEventEmitter } from "@fluidframework/common-utils";
+import { performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import { PerformanceEvent, TelemetryLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -488,7 +488,7 @@ export class DeltaManager
             let connection: DeltaConnection | undefined;
             let delay = InitialReconnectDelaySeconds;
             let connectRepeatCount = 0;
-            const connectStartTime = performanceNow();
+            const connectStartTime = performance.now();
 
             // This loop will keep trying to connect until successful, with a delay between each iteration.
             while (connection === undefined) {
@@ -535,7 +535,7 @@ export class DeltaManager
             if (connectRepeatCount > 1) {
                 this.logger.sendTelemetryEvent({
                     attempts: connectRepeatCount,
-                    duration: TelemetryLogger.formatTick(performanceNow() - connectStartTime),
+                    duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
                     eventName: "MultipleDeltaConnectionFailures",
                 });
             }
