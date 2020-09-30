@@ -20,7 +20,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { nodeTypeKey } from "./fluidBridge";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
-import {ProseMirrorView} from "./prosemirrorView";
+import { ProseMirrorView } from "./prosemirrorView";
 
 function createTreeMarkerOps(
     treeRangeLabel: string,
@@ -106,7 +106,7 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
     }
 }
 
-export const ProseMirrorFactory = new DataObjectFactory (
+export const ProseMirrorFactory = new DataObjectFactory(
     ProseMirror.Name,
     ProseMirror,
     [SharedString.getFactory()],
@@ -115,4 +115,4 @@ export const ProseMirrorFactory = new DataObjectFactory (
 
 const isWebClient = () => {
     return typeof window !== "undefined" && typeof window.document !== "undefined";
-}
+};

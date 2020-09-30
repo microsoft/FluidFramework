@@ -4,6 +4,7 @@
  */
 
 module.exports = {
+    "ignorePatterns": ["src/prosemirror.ts", "src/index.ts"],
     "extends": [
         "@fluidframework/eslint-config-fluid"
     ],

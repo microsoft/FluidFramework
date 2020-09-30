@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 
 import { BlobServiceClient, BlobClient } from "@azure/storage-blob"
 // import { v4 as uuid } from "uuid";

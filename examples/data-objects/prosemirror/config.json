@@ -1,0 +1,11 @@
+{
+    "fluid": {
+        "webpack": {
+            "fluidHost": "https://www.frs.office-int.com",
+            "tenantId": "aquamarinedolphin-hiss",
+            "tenantSecret": "b1d16a5deff49b8806936a3778377a70",
+            "bearerSecret": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
+            "npm": "npm.com"
+        }
+    }
+  }
