@@ -40,11 +40,8 @@ export class TinyliciousRunner implements utils.IRunner {
     public async start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
 
-        try {
-            await this.ensurePortIsFree();
-        } catch (error) {
-            this.runningDeferred.reject(error);
-        }
+        // Make sure provided port is unoccupied
+        await this.ensurePortIsFree();
 
         const alfred = app.create(this.config, this.storage, this.mongoManager);
         alfred.set("port", this.port);
@@ -86,7 +83,7 @@ export class TinyliciousRunner implements utils.IRunner {
     }
 
     /**
-     * Ensure configured port is free
+     * Ensure provided port is free
      */
     private async ensurePortIsFree(): Promise<void> {
         // If port is a named pipe resolve immediately
