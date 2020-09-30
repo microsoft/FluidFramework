@@ -7,7 +7,7 @@
 import cloneDeep from "lodash/cloneDeep";
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performanceNow, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { performance, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaConnection,
@@ -332,7 +332,7 @@ export class OdspDocumentService implements IDocumentService {
         // Use AFD URL if in cache
         if (afdCacheValid && hasUrl2) {
             debug("Connecting to AFD URL directly due to valid cache.");
-            const startAfd = performanceNow();
+            const startAfd = performance.now();
 
             return OdspDocumentDeltaConnection.create(
                 tenantId,
@@ -351,7 +351,7 @@ export class OdspDocumentService implements IDocumentService {
 
                 return connection;
             }).catch(async (connectionError) => {
-                const endAfd = performanceNow();
+                const endAfd = performance.now();
                 localStorage.removeItem(lastAfdConnectionTimeMsKey);
                 // Retry on non-AFD URL
                 if (this.canRetryOnError(connectionError)) {
@@ -390,7 +390,7 @@ export class OdspDocumentService implements IDocumentService {
             });
         }
 
-        const startNonAfd = performanceNow();
+        const startNonAfd = performance.now();
         return OdspDocumentDeltaConnection.create(
             tenantId,
             documentId,
@@ -404,7 +404,7 @@ export class OdspDocumentService implements IDocumentService {
             logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
             return connection;
         }).catch(async (connectionError) => {
-            const endNonAfd = performanceNow();
+            const endNonAfd = performance.now();
             if (hasUrl2 && this.canRetryOnError(connectionError)) {
                 // eslint-disable-next-line max-len
                 debug(`Socket connection error on non-AFD URL. Error was [${connectionError}]. Retry on AFD URL: ${url2}`);

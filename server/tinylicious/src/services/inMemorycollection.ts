@@ -23,6 +23,7 @@ export class Collection<T> implements ICollection<T> {
     }
 
     public findOne(query: any): Promise<T> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return Promise.resolve(this.findOneInternal(query));
     }
 
@@ -48,6 +49,7 @@ export class Collection<T> implements ICollection<T> {
             return Promise.resolve("existing object");
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.insertOneInternal(value);
     }
 
@@ -80,6 +82,7 @@ export class Collection<T> implements ICollection<T> {
 
     private insertOneInternal(value: any): any {
         this.collection.push(value);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value;
     }
 
@@ -91,6 +94,7 @@ export class Collection<T> implements ICollection<T> {
             const found = this.findInternal(query);
             returnValue = found[0];
         }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return returnValue === undefined ? null : returnValue;
     }
 
@@ -101,6 +105,7 @@ export class Collection<T> implements ICollection<T> {
             keys.forEach((splitKey) => {
                 value = value[splitKey];
             });
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return value;
         }
 

@@ -1,0 +1,6 @@
+{
+  "routes": [],
+  "defaultHeaders": {
+    "cache-control": "must-revalidate, max-age=3600"
+  }
+}

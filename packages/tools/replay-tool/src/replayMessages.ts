@@ -125,11 +125,11 @@ class Logger implements ITelemetryBaseLogger {
             // Stack is not output properly (with newlines), if done as part of event
             const stack: string | undefined = event.stack as string | undefined;
             delete event.stack;
-            console.error(`An error has been logged from ${this.containerDescription}!`);
-            console.error(event);
-            if (stack) {
-                console.error(stack);
-            }
+            const error = new Error(`An error has been logged from ${this.containerDescription}!\n
+                        ${JSON.stringify(event)}`);
+            error.stack = stack;
+            // throw instead of printing an error to fail tests
+            throw error;
         }
     }
 }
