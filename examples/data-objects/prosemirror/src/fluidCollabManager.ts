@@ -46,7 +46,11 @@ export interface IProvideRichTextEditor {
 export interface IRichTextEditor extends IProvideRichTextEditor {
     getValue(): string;
 
-    initializeValue(value: string): void;
+    initializeValue(value: any): void;
+
+    getSchema(): any;
+
+    getCurrentState(): any;
 }
 
 export class FluidCollabManager extends EventEmitter implements IRichTextEditor {
@@ -70,6 +74,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
             },
         });
 
+
         const fluidSchema = new Schema({
             nodes: addListNodes(schema.spec.nodes as OrderedMap<NodeSpec>, "paragraph block*", "block"),
             marks: schema.spec.marks,
@@ -82,7 +87,6 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 
         this.text.walkSegments((segment) => {
             const top = nodeStack[nodeStack.length - 1];
-
             if (TextSegment.is(segment)) {
                 const nodeJson: IProseMirrorNode = {
                     type: "text",
@@ -246,6 +250,10 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
             });
     }
 
+    public getSchema() {
+        return this.schema;
+    }
+
     public getValue(): string {
         const currentState = this.getCurrentState();
 
@@ -257,20 +265,22 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
         return wrapper.innerHTML;
     }
 
-    public initializeValue(value: string): void {
+    public initializeValue(value: any): void {
         const state = this.getCurrentState();
         const tr = state.tr;
-        const node = this.schema.nodeFromJSON(
-            {
-                type: "paragraph",
-                content: [
-                    {
-                        type: "text",
-                        text: value,
-                    },
-                ],
-            });
+        // const node = this.schema.nodeFromJSON(
+        //     {
+        //         type: "paragraph",
+        //         content: [
+        //             {
+        //                 type: "text",
+        //                 text: value,
+        //             },
+        //         ],
+        //     });
 
+        const node = value;
+        
         tr.replaceRange(0, state.doc.content.size, new Slice(node.content, 0, 0));
 
         this.apply(tr);
@@ -304,7 +314,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
         return editorView;
     }
 
-    private getCurrentState() {
+    public getCurrentState() {
         return this.editorView ? this.editorView.state : this.state;
     }
 
