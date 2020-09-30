@@ -111,9 +111,9 @@ export function create(
      */
     router.post("/tenants/:id?", (request, response) => {
         const tenantId = getParam(request.params, "id") || getRandomName("-");
-        const tenantStorage: ITenantStorage = request.body.storage || null;
-        const tenantOrderer: ITenantOrderer = request.body.orderer || null;
-        const tenantCustomData: ITenantCustomData = request.body.customData || null;
+        const tenantStorage: ITenantStorage = request.body.storage ? request.body.storage : null;
+        const tenantOrderer: ITenantOrderer = request.body.orderer ? request.body.orderer : null;
+        const tenantCustomData: ITenantCustomData = request.body.customData ? request.body.customData : {};
         const tenantP = manager.createTenant(
             tenantId,
             tenantStorage,
