@@ -358,5 +358,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             // If it's not critical error, we want to raise event on this object only.
             this.emit("disconnect", reason);
         }
+
+        // We set the closed flag as a part of the contract for overriding the disconnect method.  This is used by
+        // DocumentDeltaConnection to determine if emitting on the socket is allowed, which is important since
+        // OdspDocumentDeltaConnection reuses the socket rather than truly disconnecting it.
+        this.closed = true;
     }
 }
