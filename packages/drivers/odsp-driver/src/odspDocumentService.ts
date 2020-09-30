@@ -252,6 +252,7 @@ export class OdspDocumentService implements IDocumentService {
                 "POST",
                 this.logger,
                 this.getStorageToken,
+                this.fetcher,
             );
 
         // Note: The sessionCache is configured with a sliding expiry of 1 hour,
