@@ -27,7 +27,9 @@ export class OdspUrlResolver implements IUrlResolver {
 
         const url = new URL(request.url);
 
-        const documentId = url.pathname.substr(1).split("/")[0];
+        const fullPath = url.pathname.substr(1);
+        const documentId = fullPath.split("/")[0];
+        const documentRelativePath = fullPath.slice(documentId.length + 1);
         const filePath = this.formFilePath(documentId);
 
         const { drive, item } = await getDriveItemByRootFileName(
@@ -41,7 +43,7 @@ export class OdspUrlResolver implements IUrlResolver {
             `https://${this.server}`,
             drive,
             item,
-            "");
+            documentRelativePath);
 
         return this.driverUrlResolver.resolve({ url: odspUrl, headers: request.headers });
     }
