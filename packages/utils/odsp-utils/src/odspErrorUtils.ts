@@ -3,16 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-    AuthorizationError,
-    createGenericNetworkError,
-    GenericNetworkError,
-    isOnline,
-    NetworkErrorBasic,
-    NonRetryableError,
-    OnlineStatus,
-} from "@fluidframework/driver-utils";
-import { DriverError, DriverErrorType } from "@fluidframework/driver-definitions";
 import { AxiosResponse } from "axios";
 
 export const offlineFetchFailureStatusCode: number = 709;
@@ -24,26 +14,9 @@ export const fetchIncorrectResponse = 712;
 
 export enum OdspErrorType {
     /**
-     * Storage is out of space
-     */
-    outOfStorageError = "outOfStorageError",
-
-    /**
      * Invalid file name (at creation of the file)
      */
     invalidFileNameError = "invalidFileNameError",
-
-    /**
-     * Snapshot is too big. Host application specified limit for snapshot size, and snapshot was bigger
-     * that that limit, thus request failed. Hosting application is expected to have fall-back behavior for
-     * such case.
-     */
-    snapshotTooBig = "snapshotTooBig",
-
-    /*
-        * SPO admin toggle: fluid service is not enabled.
-        */
-    fluidNotEnabled = "fluidNotEnabled",
 }
 
 /**
@@ -53,7 +26,6 @@ export interface IOdspError {
     readonly errorType: OdspErrorType;
     readonly message: string;
     canRetry: boolean;
-    online?: string;
 }
 
 export type OdspError =
@@ -79,24 +51,12 @@ export function createOdspNetworkError(
         case 404:
             error = new NetworkErrorBasic(errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, false);
             break;
-        case 406:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.unsupportedClientProtocolVersion, false);
-            break;
-        case 413:
-            error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig);
-            break;
         case 414:
         case invalidFileNameStatusCode:
             error = new NonRetryableError(errorMessage, OdspErrorType.invalidFileNameError);
             break;
         case 500:
             error = new GenericNetworkError(errorMessage, true);
-            break;
-        case 501:
-            error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled);
-            break;
-        case 507:
-            error = new NonRetryableError(errorMessage, OdspErrorType.outOfStorageError);
             break;
         case offlineFetchFailureStatusCode:
             error = new NetworkErrorBasic(errorMessage, DriverErrorType.offlineError, true);
@@ -111,9 +71,149 @@ export function createOdspNetworkError(
             error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, statusCode);
     }
 
-    error.online = OnlineStatus[isOnline()];
-
     return error;
+}
+
+/**
+ * Driver Error types
+ * Lists types that are likely to be used by all drivers
+ */
+export enum DriverErrorType {
+    /**
+     * Some error, most likely an exception caught by runtime and propagated to container as critical error
+     */
+    genericError = "genericError",
+
+    /**
+     * Some non-categorized (below) networking error
+     * Include errors like  fatal server error (usually 500).
+     */
+    genericNetworkError = "genericNetworkError",
+
+    /**
+     * Access denied - user does not have enough privileges to open a file, or continue to operate on a file
+     */
+    authorizationError = "authorizationError",
+
+    /**
+     * File not found, or file deleted during session
+     */
+    fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
+
+    /**
+     * We can not reach server due to computer being offline.
+     */
+    offlineError = "offlineError",
+
+    /**
+     * User does not have write permissions to a file, but is changing content of a file.
+     * That might be indication of some data store error - data stores should not generate ops in readonly mode.
+     */
+    writeError = "writeError",
+
+    /**
+     * Generic fetch failure.
+     * Most of such failures are due to client being offline, or DNS is not reachable, such errors map to
+     * DriverErrorType.offlineError. Anything else that can't be diagnose as likely offline maps to this error.
+     * This can also indicate no response from server.
+     */
+    fetchFailure = "fetchFailure",
+
+    /**
+     * Unexpected response from server. Either JSON is malformed, or some required properties are missing
+     */
+    incorrectServerResponse = "incorrectServerResponse",
+}
+
+/**
+ * Base interface for all errors and warnings
+ */
+export interface IDriverErrorBase {
+    readonly errorType: DriverErrorType;
+    readonly message: string;
+    canRetry: boolean;
+}
+
+export interface IGenericNetworkError extends IDriverErrorBase {
+    readonly errorType: DriverErrorType.genericNetworkError;
+    readonly statusCode?: number;
+}
+
+export interface IAuthorizationError extends IDriverErrorBase {
+    readonly errorType: DriverErrorType.authorizationError;
+    readonly claims?: string;
+}
+
+/**
+ * Having this uber interface without types that have their own interfaces
+ * allows compiler to differentiate interfaces based on error type
+ */
+export interface IDriverBasicError extends IDriverErrorBase {
+    readonly errorType:
+    DriverErrorType.genericError
+    | DriverErrorType.authorizationError
+    | DriverErrorType.fileNotFoundOrAccessDeniedError
+    | DriverErrorType.offlineError
+    | DriverErrorType.writeError
+    | DriverErrorType.fetchFailure
+    | DriverErrorType.incorrectServerResponse;
+    readonly statusCode?: number;
+}
+
+export type DriverError =
+    | IGenericNetworkError
+    | IAuthorizationError
+    | IDriverBasicError;
+
+/**
+ * Generic network error class.
+ */
+export class GenericNetworkError  implements IDriverErrorBase {
+    readonly errorType = DriverErrorType.genericNetworkError;
+
+    constructor(
+        readonly message: string,
+        readonly canRetry: boolean,
+        readonly statusCode?: number,
+    ) {}
+}
+
+export class AuthorizationError implements IAuthorizationError {
+    readonly errorType = DriverErrorType.authorizationError;
+    readonly canRetry = false;
+
+    constructor(
+        readonly message: string,
+        readonly claims?: string,
+    ) {}
+}
+
+export class NetworkErrorBasic<T> {
+    constructor(
+        readonly message: string,
+        readonly errorType: T,
+        readonly canRetry: boolean,
+    ) {}
+}
+
+export class NonRetryableError<T> extends NetworkErrorBasic<T> {
+    constructor(
+        errorMessage: string,
+        readonly errorType: T,
+    ) {
+        super(errorMessage, errorType, false);
+    }
+}
+
+export const createWriteError = (errorMessage: string) =>
+    new NonRetryableError(errorMessage, DriverErrorType.writeError);
+
+export function createGenericNetworkError(
+    errorMessage: string,
+    canRetry: boolean,
+    retryAfterSeconds?: number,
+    statusCode?: number) {
+    return new GenericNetworkError(errorMessage, canRetry, statusCode);
 }
 
 /**
