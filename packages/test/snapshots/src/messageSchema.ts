@@ -144,7 +144,8 @@ export const attachContentsSchema = {
     additionalProperties: false,
 };
 
-const chunkedOpContentsSchema = {
+// can exist at the root level or within an op
+export const chunkedOpContentsSchema = {
     type: "object",
     properties: {
         chunkId: { type: "number" },

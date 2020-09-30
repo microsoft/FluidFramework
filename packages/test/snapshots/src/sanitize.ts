@@ -23,6 +23,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     attachContentsSchema,
+    chunkedOpContentsSchema,
     joinContentsSchema,
     joinDataSchema,
     opContentsMapSchema,
@@ -66,37 +67,58 @@ const falseResult = {
  * size to the original message.
  */
 class ChunkedOpProcessor {
+    /**
+     * Message references so we can replace their contents in-place
+     */
     private messages = new Array<any>();
+    /**
+     * The messages' parsed contents for processing.  Should parallel the
+     * messages member
+     */
+    private parsedMessageContents = new Array<any>();
     private writtenBack = false;
+    /**
+     * keep track of the total starting length to make sure we don't somehow end
+     * up with more content than we started with (meaning we may not be able to
+     * write it back)
+     */
+    private concatenatedLength = 0;
+
+    constructor(
+        readonly validateSchemaFn: (object: any, schema: any) => boolean,
+    ) { }
 
     addMessage(message: any): void {
         this.messages.push(message);
+
+        let parsed;
+        try {
+            parsed = JSON.parse(message.contents);
+        } catch (e) {
+            console.error(e);
+        }
+        this.validateSchemaFn(parsed, chunkedOpContentsSchema);
+        this.parsedMessageContents.push(parsed);
     }
 
     hasAllMessages(): boolean {
-        // besides concating all the contents to see if they form a valid
-        // json, only the last message has any indication of the total
-        // number of chunks
-        const lastMsgContents = this.messages[this.messages.length - 1].contents as string;
-        assert(typeof lastMsgContents === "string");
-
-        const lastChunkRegex = /"totalChunks":\d+}$/g;
-        const matches = lastMsgContents.match(lastChunkRegex);
-        console.log(matches);
-        return matches.length === 1;
+        const lastMsgContents = this.parsedMessageContents[this.parsedMessageContents.length - 1];
+        return lastMsgContents.chunkId !== undefined && lastMsgContents.chunkId === lastMsgContents.totalChunks;
     }
 
     /**
      * @returns The concatenated contents of all the messages parsed as json
      */
     getConcatenatedContents(): any {
-        const contentsString = this.messages.reduce((previousValue: string, currentValue: any) => {
+        const contentsString = this.parsedMessageContents.reduce((previousValue: string, currentValue: any) => {
             return previousValue + (currentValue.contents as string);
         }, "");
 
+        this.concatenatedLength = contentsString.length;
         try {
             return JSON.parse(contentsString);
         } catch (e) {
+            console.error(contentsString);
             console.error(e);
             return undefined;
         }
@@ -109,11 +131,32 @@ class ChunkedOpProcessor {
      * @param contents - Sanitized contents to write back
      */
     writeSanitizedContents(contents: any): void {
+        let stringified: string;
         try {
-            // const stringified = JSON.stringify(contents);
-            console.error(contents.totalChunks);
+            stringified = JSON.stringify(contents);
+            assert(stringified.length <= this.concatenatedLength);
         } catch (e) {
             console.error(e);
+        }
+
+        for (let i = 0; i < this.messages.length; i++) {
+            // use 15K chunks (default chunk size is 16K)
+            const substring = stringified.substring(i * 15360, (i + 1) * 15360);
+            console.error(substring);
+
+            const parsedContents = this.parsedMessageContents[i];
+            parsedContents.contents = substring;
+
+            let stringifiedParsedContents;
+            try {
+                stringifiedParsedContents = JSON.stringify(parsedContents);
+                console.error(stringifiedParsedContents);
+            } catch (e) {
+                console.error(e);
+            }
+
+            const message = this.messages[i];
+            message.contents = stringifiedParsedContents;
         }
 
         this.writtenBack = true;
@@ -122,34 +165,26 @@ class ChunkedOpProcessor {
     reset(): void {
         assert(this.writtenBack, "resetting ChunkedOpProcessor that never wrote back its contents");
         this.messages = new Array<any>();
+        this.parsedMessageContents = new Array<any>();
         this.writtenBack = false;
+        this.concatenatedLength = 0;
     }
 
     isPendingProcessing(): boolean {
-        return this.messages.length === 0;
+        return this.messages.length !== 0;
     }
 }
 
 class Sanitizer {
     readonly validator = new Validator.Validator();
-    readonly chunkProcessor = new ChunkedOpProcessor();
     // Represents the keys used to store fluid object identifiers
     readonly defaultExcludedKeys = new Set<string>();
     // Represents the keys used by merge-tree ops their "seg" property, where other
     // keys represent user information
-    // readonly segExcludedKeys = new Set<string>();
+    readonly mergeTreeExcludedKeys = new Set<string>();
+    // Map of user information to what it was replaced with.  Used to ensure the same
+    // data have the same replacements
     readonly replacementMap = new Map<string, string>();
-
-    constructor(
-        readonly messages: ISequencedDocumentMessage[],
-        readonly fullScrub: boolean,
-        readonly noBail: boolean,
-    ) {
-        this.defaultExcludedKeys.add("type");
-        this.defaultExcludedKeys.add("id");
-        this.defaultExcludedKeys.add("pkg");
-        // this.segExcludedKeys.add("props");
-    }
 
     /**
      * Validate that the provided message matches the provided schema.
@@ -157,7 +192,7 @@ class Sanitizer {
      * fields for ops), otherwise throw an error because we cannot be sure user
      * information is being sufficiently sanitized.
      */
-    objectMatchesSchema(object: any, schema: any): boolean {
+    objectMatchesSchema = (object: any, schema: any): boolean => {
         const result =  schema === false ? falseResult : this.validator.validate(object, schema);
         if (!result.valid) {
             const errorMsg = `Bad msg fmt:\n${result.toString()}\n${JSON.stringify(object, undefined, 2)}`;
@@ -169,6 +204,19 @@ class Sanitizer {
             }
         }
         return result.valid;
+    };
+
+    readonly chunkProcessor = new ChunkedOpProcessor(this.objectMatchesSchema);
+
+    constructor(
+        readonly messages: ISequencedDocumentMessage[],
+        readonly fullScrub: boolean,
+        readonly noBail: boolean,
+    ) {
+        this.defaultExcludedKeys.add("type");
+        this.defaultExcludedKeys.add("id");
+        this.defaultExcludedKeys.add("pkg");
+        this.mergeTreeExcludedKeys.add("nodeType");
     }
 
     isFluidObjectKey(key: string): boolean {
@@ -255,7 +303,7 @@ class Sanitizer {
                 } else if (Array.isArray(value)) {
                     input[key] = this.replaceArray(value);
                 } else if (typeof value === "object") {
-                    input[key] = this.replaceObject(value);
+                    input[key] = this.replaceObject(value, excludedKeys);
                 }
             }
         });
@@ -403,7 +451,7 @@ class Sanitizer {
         if (typeof deltaOp.seg === "string") {
             deltaOp.seg = this.replaceText(deltaOp.seg);
         } else {
-            deltaOp.seg = this.replaceObject(deltaOp.seg);
+            deltaOp.seg = this.replaceObject(deltaOp.seg, this.mergeTreeExcludedKeys);
         }
     }
 
@@ -535,6 +583,7 @@ class Sanitizer {
         }
 
         const contents = this.chunkProcessor.getConcatenatedContents();
+        this.fixOpContentsObject(contents);
 
         this.chunkProcessor.writeSanitizedContents(contents);
         this.chunkProcessor.reset();
