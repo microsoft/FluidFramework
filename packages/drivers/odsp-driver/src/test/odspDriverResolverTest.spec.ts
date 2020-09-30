@@ -77,6 +77,31 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(searchParams.get("driveId"), driveId, "Drive id should match");
     });
 
+    it("Non-Empty string filePath is resolvable", async () => {
+        // Arrange
+        filePath = "data1";
+        const testRequest: IRequest = {
+            url: `https://localhost?driveId=${driveId}&path=${filePath}&itemId=item1`,
+            headers: { createNew:{ fileName:`${fileName}` } },
+        };
+
+        // Act
+        const resolvedUrl = await resolver.resolve(testRequest);
+
+        // Assert
+        assert.strictEqual(resolvedUrl.fileName, fileName, "FileName should be equal");
+        assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
+        assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
+        assert.strictEqual(resolvedUrl.itemId, "", "Item id should be absent");
+        assert.strictEqual(resolvedUrl.hashedDocumentId, "", "No doc id should be present");
+        assert.strictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be empty");
+
+        const [, queryString] = testRequest.url.split("?");
+        const searchParams = new URLSearchParams(queryString);
+        assert.strictEqual(searchParams.get("path"), filePath, "filePath should match");
+        assert.strictEqual(searchParams.get("driveId"), driveId, "Drive id should match");
+    });
+
     it("FilePath with 3 data object ids is resolvable", async () => {
         // Arrange
         filePath = "data1/data2/data3";
