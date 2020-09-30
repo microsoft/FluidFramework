@@ -15,7 +15,10 @@ export class StorageUtil implements IStorageUtil{
 
     constructor(){
         sessionStorage.setItem(this.storageKey, this.initialVal);
-        sessionStorage.setItem(this.markdownStorageKey, "# Hello World!");
+        
+        if(localStorage.getItem(this.markdownStorageKey) === null){
+            localStorage.setItem(this.markdownStorageKey, "# Hello World!");
+        }
     }
 
     /**
@@ -41,7 +44,7 @@ export class StorageUtil implements IStorageUtil{
         //Gets the mardown and then convert into node data
 
         //replace the data here
-        let data = await sessionStorage.getItem(this.markdownStorageKey);
+        let data = await localStorage.getItem(this.markdownStorageKey);
         console.log(data);
 
 
@@ -78,8 +81,9 @@ export class StorageUtil implements IStorageUtil{
 
     public storeEditorStateAsMarkdown = async (schema: any, data: any) => {
         //get the editor state and convert into markdown
-        let _t = defaultMarkdownSerializer.serialize(data.doc);
-        sessionStorage.setItem(this.markdownStorageKey, _t);
+        let _t = defaultMarkdownSerializer.serialize(data);
+        localStorage.setItem(this.markdownStorageKey, _t);
+        console.log("///////// Markdown Data writing //////////////");
         console.log(_t);
     }
 }

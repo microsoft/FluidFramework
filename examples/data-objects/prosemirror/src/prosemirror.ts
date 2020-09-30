@@ -91,7 +91,7 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
 
         this.text = await this.root.get<IFluidHandle<SharedString>>("text").get();
 
-        this.collabManager = new FluidCollabManager(this.text, this.runtime.loader, this.StorageUtilModule);
+        this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
         
         let schema = await this.collabManager.getSchema();
 
@@ -105,6 +105,8 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
     public hasValueChanged() {
         this.collabManager?.on("valueChanged", (changed) => {
             // Here we can set data to original file
+            this.StorageUtilModule.storeData(this.collabManager.getCurrentState().toJSON());
+            this.StorageUtilModule.storeEditorStateAsMarkdown(this.collabManager.getSchema(),this.collabManager.getCurrentState()?.doc);
             console.log("something changed ", changed);
         });
     }

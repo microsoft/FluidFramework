@@ -29,8 +29,6 @@ import { FootnoteView } from "./footnoteView";
 import { openPrompt, TextField } from "./prompt";
 import { create as createSelection } from "./selection";
 
-import {IStorageUtil} from './storage';
-
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import OrderedMap = require("orderedmap");
 
@@ -51,6 +49,8 @@ export interface IRichTextEditor extends IProvideRichTextEditor {
     initializeValue(value: any): void;
 
     getSchema(): any;
+
+    getCurrentState(): any;
 }
 
 export class FluidCollabManager extends EventEmitter implements IRichTextEditor {
@@ -61,7 +61,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
     private state: EditorState;
     private editorView: EditorView;
 
-    constructor(private readonly text: SharedString, private readonly loader: ILoader, private StorageUtilModule: IStorageUtil) {
+    constructor(private readonly text: SharedString, private readonly loader: ILoader) {
         super();
 
         this.plugin = new Plugin({
@@ -73,6 +73,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                 },
             },
         });
+
 
         const fluidSchema = new Schema({
             nodes: addListNodes(schema.spec.nodes as OrderedMap<NodeSpec>, "paragraph block*", "block"),
@@ -86,7 +87,6 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 
         this.text.walkSegments((segment) => {
             const top = nodeStack[nodeStack.length - 1];
-
             if (TextSegment.is(segment)) {
                 const nodeJson: IProseMirrorNode = {
                     type: "text",
@@ -314,13 +314,11 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
         return editorView;
     }
 
-    private getCurrentState() {
+    public getCurrentState() {
         return this.editorView ? this.editorView.state : this.state;
     }
 
     private apply(tr: Transaction) {
-        this.StorageUtilModule.storeData(this.getCurrentState().toJSON());
-        this.StorageUtilModule.storeEditorStateAsMarkdown(this.schema,this.getCurrentState());
         if (this.editorView) {
             this.editorView.dispatch(tr);
         } else {
