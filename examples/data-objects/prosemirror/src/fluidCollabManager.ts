@@ -29,6 +29,8 @@ import { FootnoteView } from "./footnoteView";
 import { openPrompt, TextField } from "./prompt";
 import { create as createSelection } from "./selection";
 
+import {IStorageUtil} from './storage';
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import OrderedMap = require("orderedmap");
 
@@ -46,7 +48,9 @@ export interface IProvideRichTextEditor {
 export interface IRichTextEditor extends IProvideRichTextEditor {
     getValue(): string;
 
-    initializeValue(value: string): void;
+    initializeValue(value: any): void;
+
+    getSchema(): any;
 }
 
 export class FluidCollabManager extends EventEmitter implements IRichTextEditor {
@@ -57,7 +61,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
     private state: EditorState;
     private editorView: EditorView;
 
-    constructor(private readonly text: SharedString, private readonly loader: ILoader) {
+    constructor(private readonly text: SharedString, private readonly loader: ILoader, private StorageUtilModule: IStorageUtil) {
         super();
 
         this.plugin = new Plugin({
@@ -246,6 +250,10 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
             });
     }
 
+    public getSchema() {
+        return this.schema;
+    }
+
     public getValue(): string {
         const currentState = this.getCurrentState();
 
@@ -257,20 +265,22 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
         return wrapper.innerHTML;
     }
 
-    public initializeValue(value: string): void {
+    public initializeValue(value: any): void {
         const state = this.getCurrentState();
         const tr = state.tr;
-        const node = this.schema.nodeFromJSON(
-            {
-                type: "paragraph",
-                content: [
-                    {
-                        type: "text",
-                        text: value,
-                    },
-                ],
-            });
+        // const node = this.schema.nodeFromJSON(
+        //     {
+        //         type: "paragraph",
+        //         content: [
+        //             {
+        //                 type: "text",
+        //                 text: value,
+        //             },
+        //         ],
+        //     });
 
+        const node = value;
+        
         tr.replaceRange(0, state.doc.content.size, new Slice(node.content, 0, 0));
 
         this.apply(tr);
@@ -309,6 +319,8 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
     }
 
     private apply(tr: Transaction) {
+        this.StorageUtilModule.storeData(this.getCurrentState().toJSON());
+        this.StorageUtilModule.storeEditorStateAsMarkdown(this.schema,this.getCurrentState());
         if (this.editorView) {
             this.editorView.dispatch(tr);
         } else {

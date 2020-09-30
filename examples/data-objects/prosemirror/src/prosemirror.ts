@@ -21,6 +21,8 @@ import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { nodeTypeKey } from "./fluidBridge";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
 import {ProseMirrorView} from "./prosemirrorView";
+import { IStorageUtil, StorageUtil } from './storage';
+
 
 function createTreeMarkerOps(
     treeRangeLabel: string,
@@ -61,6 +63,8 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
     public text: SharedString;
     private collabManager: FluidCollabManager;
     private view: ProseMirrorView;
+    private StorageUtilModule: IStorageUtil;
+
 
     public static get Name() { return "@fluid-example/prosemirror"; }
 
@@ -83,9 +87,18 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
     }
 
     protected async hasInitialized() {
+        this.StorageUtilModule = new StorageUtil();
+
         this.text = await this.root.get<IFluidHandle<SharedString>>("text").get();
 
-        this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
+        this.collabManager = new FluidCollabManager(this.text, this.runtime.loader, this.StorageUtilModule);
+        
+        let schema = await this.collabManager.getSchema();
+
+        let initialVal = await this.StorageUtilModule.getMardownDataAndConvertIntoNode(schema);
+
+        await this.collabManager.initializeValue(initialVal);
+
         this.hasValueChanged();
     }
 
