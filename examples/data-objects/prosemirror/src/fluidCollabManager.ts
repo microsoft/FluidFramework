@@ -235,7 +235,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
         this.text.on(
             "op",
             (op, local) => {
-                this.emit("valueChanged");
+                this.emit("valueChanged", op);
 
                 if (local) {
                     return;
