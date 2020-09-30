@@ -47,6 +47,6 @@ export async function fetchSnapshot(
             eventName: "fetchSnapshot",
             headers: Object.keys(headers).length !== 0 ? true : undefined,
         },
-        async () => fetcher.fetch<IOdspSnapshot>(url, { headers }),
+        async () => fetcher.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers }),
     );
 }

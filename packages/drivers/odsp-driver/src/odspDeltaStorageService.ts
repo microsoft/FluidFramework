@@ -45,7 +45,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
 
             const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, storageToken);
 
-            const response = await this.fetcher.fetch<IDeltaStorageGetResponse>(url, { headers });
+            const response = await this.fetcher.fetchAndParseAsJSON<IDeltaStorageGetResponse>(url, { headers });
             const deltaStorageResponse = response.content;
             if (this.logger) {
                 this.logger.sendTelemetryEvent({

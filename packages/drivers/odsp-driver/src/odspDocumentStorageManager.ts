@@ -51,7 +51,7 @@ import {
     IFileEntry,
     snapshotExpirySummarizerOps,
 } from "./odspCache";
-import { fetchHelper, getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
+import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { getQueryString } from "./getQueryString";
@@ -165,7 +165,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     eventName: "createBlob",
                     size: file.length,
                 },
-                async () => this.fetcher.fetch<api.ICreateBlobResponse>(
+                async () => this.fetcher.fetchAndParseAsJSON<api.ICreateBlobResponse>(
                     url,
                     {
                         body: file,
@@ -194,7 +194,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
                 async (event) => {
-                    const res = await fetchHelper(url, { headers });
+                    const res = await this.fetcher.fetchAndParseAsBuffer(url, { headers });
                     event.end({ size: res.content.length });
                     return res;
                 },
@@ -220,7 +220,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         eventName: "readBlob",
                         headers: Object.keys(headers).length !== 0 ? true : undefined,
                     },
-                    async () => this.fetcher.fetch<IBlob>(url, { headers }),
+                    async () => this.fetcher.fetchAndParseAsJSON<IBlob>(url, { headers }),
                 );
             });
             blob = response.content;
@@ -475,7 +475,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     eventName: "getVersions",
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
-                async () => this.fetcher.fetch<IDocumentStorageGetVersionsResponse>(url, { headers }),
+                async () => this.fetcher.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }),
             );
             const versionsResponse = response.content;
             if (!versionsResponse) {
@@ -566,7 +566,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const startTime = performance.now();
             let response: IOdspResponse<IOdspSnapshot>;
             if (usePost) {
-                response = await this.fetcher.fetch<IOdspSnapshot>(
+                response = await this.fetcher.fetchAndParseAsJSON<IOdspSnapshot>(
                     url,
                     {
                         body: postBody,
@@ -574,7 +574,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         method: "POST",
                     });
             } else {
-                response = await this.fetcher.fetch<IOdspSnapshot>(url, { headers });
+                response = await this.fetcher.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers });
             }
             const endTime = performance.now();
             const overallTime = endTime - startTime;
@@ -869,7 +869,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     size: postBody.length,
                 },
                 async () => {
-                    const response = await this.fetcher.fetch<ISnapshotResponse>(
+                    const response = await this.fetcher.fetchAndParseAsJSON<ISnapshotResponse>(
                         url,
                         {
                             body: postBody,

@@ -102,7 +102,7 @@ async function fetchHelperCore(
  * @param requestInfo - fetch requestInfo, can be a string
  * @param requestInit - fetch requestInit
  */
-export async function fetchHelper(
+export async function fetchAndParseAsBufferHelper(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<IsoBuffer>> {
@@ -118,7 +118,7 @@ export async function fetchHelper(
  * @param requestInfo - fetch requestInfo, can be a string
  * @param requestInit - fetch requestInit
  */
-export async function fetchAndParseHelper<T>(
+export async function fetchAndParseAsJSONHelper<T>(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {

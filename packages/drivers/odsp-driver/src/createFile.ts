@@ -75,7 +75,7 @@ export async function createNewFluidFile(
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
 
-                const fetchResponse = await fetcher.fetch<ICreateFileResponse>(
+                const fetchResponse = await fetcher.fetchAndParseAsJSON<ICreateFileResponse>(
                     url,
                     {
                         body: JSON.stringify(containerSnapshot),

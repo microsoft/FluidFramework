@@ -7,7 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import {
-    fetchAndParseHelper,
+    fetchAndParseAsJSONHelper,
     getWithRetryForTokenRefresh,
     getOrigin,
 } from "./odspUtils";
@@ -54,7 +54,7 @@ export async function fetchJoinSession(
                 headers = { Authorization: `Bearer ${token}` };
             }
 
-            const response = await fetchAndParseHelper<ISocketStorageDiscovery>(
+            const response = await fetchAndParseAsJSONHelper<ISocketStorageDiscovery>(
                 `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
                 { method, headers },
             );
