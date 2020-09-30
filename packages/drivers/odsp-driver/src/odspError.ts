@@ -48,6 +48,13 @@ export enum OdspErrorType {
         * SPO admin toggle: fluid service is not enabled.
         */
     fluidNotEnabled = "fluidNotEnabled",
+
+    /**
+     * Epoch version mismatch failures.
+     * This occurs when the file is modified externally. So the version at the client receiving this error
+     * does not match the one at the server.
+     */
+    epochVersionMismatch = "epochVersionMismatch",
 }
 
 /**
@@ -85,6 +92,9 @@ export function createOdspNetworkError(
             break;
         case 406:
             error = new NetworkErrorBasic(errorMessage, DriverErrorType.unsupportedClientProtocolVersion, false);
+            break;
+        case 409:
+            error = new NonRetryableError(errorMessage, OdspErrorType.epochVersionMismatch);
             break;
         case 413:
             error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig);

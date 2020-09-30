@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { Fetcher } from "../fetcher";
 import { OdspDeltaStorageService } from "../odspDeltaStorageService";
 import { mockFetch } from "./mockFetch";
 
@@ -18,7 +19,7 @@ describe("DeltaStorageService", () => {
 
     it("Should build the correct sharepoint delta url with auth", async () => {
         const deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
-            undefined, async (_refresh) => "?access_token=123");
+            undefined, async (_refresh) => "?access_token=123", new Fetcher(undefined));
         const actualDeltaUrl = await deltaStorageService.buildUrl(2, 8);
         // eslint-disable-next-line max-len
         const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
@@ -64,7 +65,7 @@ describe("DeltaStorageService", () => {
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
             deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
-                undefined, async (_refresh) => "");
+                undefined, async (_refresh) => "", new Fetcher(undefined));
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
@@ -114,7 +115,7 @@ describe("DeltaStorageService", () => {
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
             deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
-                undefined, async (_refresh) => "");
+                undefined, async (_refresh) => "", new Fetcher(undefined));
         });
 
         it("Should deserialize the delta feed response correctly", async () => {

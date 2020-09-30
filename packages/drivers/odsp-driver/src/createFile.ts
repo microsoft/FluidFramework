@@ -22,7 +22,6 @@ import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import {
     getWithRetryForTokenRefresh,
-    fetchHelper,
     INewFileInfo,
     getOrigin,
 } from "./odspUtils";
@@ -34,6 +33,7 @@ import {
     fetchIncorrectResponse,
 } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
+import { Fetcher } from "./fetcher";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -49,6 +49,7 @@ export async function createNewFluidFile(
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,
+    fetcher: Fetcher,
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
@@ -74,7 +75,7 @@ export async function createNewFluidFile(
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
 
-                const fetchResponse = await fetchHelper<ICreateFileResponse>(
+                const fetchResponse = await fetcher.fetch<ICreateFileResponse>(
                     url,
                     {
                         body: JSON.stringify(containerSnapshot),

@@ -6,9 +6,10 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IOdspSnapshot, ISnapshotOptions } from "./contracts";
+import { Fetcher } from "./fetcher";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { fetchHelper, IOdspResponse } from "./odspUtils";
+import { IOdspResponse } from "./odspUtils";
 
 /**
  * Fetches a snapshot from the server with a given version id.
@@ -25,6 +26,7 @@ export async function fetchSnapshot(
     versionId: string,
     fetchFullSnapshot: boolean,
     logger: ITelemetryLogger,
+    fetcher: Fetcher,
 ): Promise<IOdspResponse<IOdspSnapshot>> {
     const path = `/trees/${versionId}`;
     let queryParams: ISnapshotOptions = {};
@@ -45,6 +47,6 @@ export async function fetchSnapshot(
             eventName: "fetchSnapshot",
             headers: Object.keys(headers).length !== 0 ? true : undefined,
         },
-        async () => fetchHelper<IOdspSnapshot>(url, { headers }),
+        async () => fetcher.fetch<IOdspSnapshot>(url, { headers }),
     );
 }
