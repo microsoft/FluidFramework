@@ -19,6 +19,7 @@ import {
     OdspTokenConfig,
     IOdspCacheKey,
 } from "@fluidframework/tool-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { fluidFetchWebNavigator } from "./fluidFetchInit";
 import { getForceTokenReauth } from "./fluidFetchArgs";
 
@@ -56,16 +57,11 @@ export async function resolveWrapper<T>(
         }
         return result;
     } catch (e) {
-        if (e.requestResult) {
-            const parsedBody = e.requestResult.data;
-            if (parsedBody !== undefined && parsedBody.error === "invalid_grant" && !forceTokenReauth) {
-                // Re-auth
-                return resolveWrapper<T>(callback, server, clientConfig, true, forToken);
-            }
-            const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
-            return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${responseMsg}`);
+        if (e.errorType === DriverErrorType.authorizationError && !forceTokenReauth) {
+            // Re-auth
+            return resolveWrapper<T>(callback, server, clientConfig, true, forToken);
         }
-        throw e;
+        return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${e}`);
     }
 }
 
