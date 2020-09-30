@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
+import { getRandomName } from "@fluidframework/server-services-client";
+import {
+    MongoManager,
+    ISecretManager,
+    ITenantStorage,
+    ITenantOrderer,
+    ITenantCustomData,
+} from "@fluidframework/server-services-core";
 import { Response, Router } from "express";
 import { getParam } from "../utils";
 import { TenantManager } from "./tenantManager";
@@ -103,10 +110,16 @@ export function create(
      * Creates a new tenant
      */
     router.post("/tenants/:id?", (request, response) => {
-        const tenantId = getParam(request.params, "id");
+        const tenantId = getParam(request.params, "id") || getRandomName("-");
+        const tenantStorage: ITenantStorage = request.body.storage || null;
+        const tenantOrderer: ITenantOrderer = request.body.orderer || null;
+        const tenantCustomData: ITenantCustomData = request.body.customData || null;
         const tenantP = manager.createTenant(
             tenantId,
-            request.body.customData);
+            tenantStorage,
+            tenantOrderer,
+            tenantCustomData,
+        );
         returnResponse(tenantP, response);
     });
 

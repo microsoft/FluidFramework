@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/server-services-core";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
-import { getRandomName } from "@fluidframework/server-services-client";
 import * as winston from "winston";
 
 /**
@@ -112,8 +111,10 @@ export class TenantManager {
      * Creates a new tenant
      */
     public async createTenant(
-        tenantId?: string,
-        customData?: ITenantCustomData,
+        tenantId: string,
+        storage: ITenantStorage,
+        orderer: ITenantOrderer,
+        customData: ITenantCustomData,
     ): Promise<ITenantConfig & { key: string }> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
@@ -126,11 +127,11 @@ export class TenantManager {
         }
 
         const id = await collection.insertOne({
-            _id: tenantId || getRandomName("-"),
+            _id: tenantId,
             key: encryptedTenantKey,
-            orderer: null,
-            storage: null,
-            customData: customData || {},
+            orderer,
+            storage,
+            customData,
             disabled: false,
         });
 
