@@ -3,19 +3,19 @@ title: Tutorial
 menuPosition: 3
 ---
 
-In this walkthrough, we'll learn about using Fluid Framework by building a simple
+In this walkthrough, we'll learn about using the Fluid Framework by building a simple
 [DiceRoller](https://github.com/microsoft/FluidHelloWorld) application together. To get started, and follow along, go
-through our [Quick Start](./quick-start.md) guide.
+through our [Quick Start]({{< relref "./quick-start.md" >}}) guide.
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
-bundleName="dice-roller.9af6bdd702e6cd4ad6cf.js" >}}
+    bundleName="dice-roller.9af6bdd702e6cd4ad6cf.js" >}}
 
 In our DiceRoller app we'll show users a die with a button to roll it.  When the die is rolled, we'll use Fluid
 Framework to sync the data across clients so everyone sees the same result.  We'll do this using the following steps.
 
 1. Write the view.
 1. Define the interface our model will expose.
-1. Write the model using Fluid Framework.
+1. Write the model using the Fluid Framework.
 1. Include our model in our container.
 1. Connect our container to the service for collaboration.
 1. Connect our model instance to our view for rendering.
@@ -76,9 +76,9 @@ observe that other clients have rolled the die remotely, so they know to update 
 ## Implementing the model
 
 Up to this point, we've just been using TypeScript.  Now that we're implementing the model for our collaborative
-DiceRoller, we'll start to use features from Fluid Framework.
+DiceRoller, we'll start to use features from the Fluid Framework.
 
-Fluid Framework provides a class called **[DataObject][]** which we can extend to build our model.  We'll use a few
+The Fluid Framework provides a class called **[DataObject][]** which we can extend to build our model.  We'll use a few
 features from DataObject, but let's take a look at the code first.
 
 ```ts
@@ -122,7 +122,7 @@ This `root` DDS is a [SharedDirectory][] which stores key/value pairs and works 
 `set()` and `get()`.  However, it also fires a `"valueChanged"` event so we can observe changes to the data coming in
 from other users.
 
-To instantiate the DataObject, Fluid Framework needs a corresponding factory. Since we're using the DataObject class,
+To instantiate the DataObject, the Fluid Framework needs a corresponding factory. Since we're using the DataObject class,
 we'll also use the [DataObjectFactory][] which pairs with it. In this case we just need to provide it with a unique name
 ("dice-roller" in this case) and the class constructor. The third and fourth parameters provide additional options that
 we will not be using in this example.
@@ -145,7 +145,7 @@ In our app, we only need a single instance of this single model for our single d
 we might have multiple model types with many model instances.  The code you'll write to specify the type and number of
 data objects your application uses is the **container code**.
 
-Since we only need a single die, Fluid Framework provides a class called
+Since we only need a single die, the Fluid Framework provides a class called
 [ContainerRuntimeFactoryWithDefaultDataStore][] that we can use as our container code.  We'll give it two arguments:
 the type of the model factory that we want a single instance of, and the list of model types that our container code
 needs (in this case, just the single model type).  This list is called the **container registry**.
@@ -165,9 +165,9 @@ Now we've defined all the pieces and it's just time to put them all together!
 ## Connect container to service for collaboration
 
 To orchestrate the collaboration, we need to connect to a service to send and receive the updates to the data.  The way
-we do this is to connect a Fluid [Container][] object to the service and load our container code into it.
+we do this is to connect a [Fluid container][] object to the service and load our container code into it.
 
-For now, we'll just run on a local test service called [Tinylicious][], and to make it easier to connect to this service
+For now, we'll just run on a local test service called Tinylicious, and to make it easier to connect to this service
 we've provided a helper function `getTinyliciousContainer()`.  The helper function takes a unique ID to identify our
 **document** (the collection of data used by our app), the container code, and a flag to indicate whether we want to
 create a new document or load an existing one.  You can use any app logic you'd like to generate the ID and determine
@@ -176,7 +176,8 @@ repository](https://github.com/microsoft/FluidHelloWorld/blob/main/src/app.ts) w
 one way of doing it.
 
 ```ts
-const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
+const container =
+    await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
 ```
 
 This will look a little different when moving to a production service, but you'll still ultimately be getting a
@@ -234,6 +235,10 @@ to see the changes reflected between clients.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
 
 <!-- Packages -->
 

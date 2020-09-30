@@ -4,6 +4,7 @@
  */
 
 import * as moniker from "moniker";
+import { v4 as uuid } from "uuid";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { Deferred } from "@fluidframework/common-utils";
 import {
@@ -223,7 +224,7 @@ export async function start(
     }
 
     let leftDiv: HTMLDivElement = div;
-    let rightDiv: HTMLDivElement;
+    let rightDiv: HTMLDivElement | undefined;
 
     // For side by side mode, create two divs.
     if (options.mode === "local" && !options.single) {
@@ -245,7 +246,17 @@ export async function start(
 
     // We have rendered the Fluid object. If the container is detached, attach it now.
     if (container1.attachState === AttachState.Detached) {
-        await attachContainer(container1, urlResolver, documentId, url, rightDiv, manualAttach);
+        container1 = await attachContainer(
+            loader1,
+            container1,
+            fluidObjectUrl,
+            urlResolver,
+            documentId,
+            url,
+            leftDiv,
+            rightDiv,
+            manualAttach,
+        );
     }
 
     // For side by side mode, we need to create a second container and Fluid object.
@@ -308,11 +319,14 @@ async function getFluidObjectAndRender(container: Container, url: string, div: H
  * is clicked. Otherwise, it attaches the conatiner right away.
  */
 async function attachContainer(
+    loader: Loader,
     container: Container,
+    fluidObjectUrl: string,
     urlResolver: MultiUrlResolver,
     documentId: string,
     url: string,
-    div: HTMLDivElement | undefined,
+    leftDiv: HTMLDivElement,
+    rightDiv: HTMLDivElement | undefined,
     manualAttach: boolean,
 ) {
     // This is called once loading is complete to replace the url in the address bar with the new `url`.
@@ -321,6 +335,8 @@ async function attachContainer(
         document.title = documentId;
     };
 
+    let currentContainer = container;
+    let currentLeftDiv = leftDiv;
     const attached = new Deferred();
     const attachUrl = await urlResolver.createRequestForCreateNew(documentId);
 
@@ -329,17 +345,57 @@ async function attachContainer(
         const attachDiv = document.createElement("div");
         const attachButton = document.createElement("button");
         attachButton.innerText = "Attach Container";
+        const serializeButton = document.createElement("button");
+        serializeButton.innerText = "Serialize";
+        const rehydrateButton = document.createElement("button");
+        rehydrateButton.innerText = "Rehydrate Container";
+        rehydrateButton.hidden = true;
+        const summaryList = document.createElement("select");
+        summaryList.hidden = true;
         attachDiv.append(attachButton);
+        attachDiv.append(serializeButton);
+        attachDiv.append(summaryList);
         document.body.prepend(attachDiv);
 
+        let summaryNum = 1;
+        serializeButton.onclick = () => {
+            summaryList.hidden = false;
+            rehydrateButton.hidden = false;
+            attachDiv.append(rehydrateButton);
+            const summary = currentContainer.serialize();
+            const listItem = document.createElement("option");
+            listItem.innerText = `Summary_${summaryNum}`;
+            summaryNum += 1;
+            listItem.value = summary;
+            summaryList.appendChild(listItem);
+            rehydrateButton.onclick = async () => {
+                const snapshot = summaryList.value;
+                currentContainer = await loader.rehydrateDetachedContainerFromSnapshot(JSON.parse(snapshot));
+                let newLeftDiv: HTMLDivElement;
+                if (rightDiv !== undefined) {
+                    newLeftDiv = makeSideBySideDiv(uuid());
+                } else {
+                    newLeftDiv = document.createElement("div");
+                }
+                currentLeftDiv.replaceWith(newLeftDiv);
+                currentLeftDiv = newLeftDiv;
+                // Load and render the component.
+                await getFluidObjectAndRender(currentContainer, fluidObjectUrl, newLeftDiv);
+                // Handle the code upgrade scenario (which fires contextChanged)
+                currentContainer.on("contextChanged", () => {
+                    getFluidObjectAndRender(currentContainer, fluidObjectUrl, newLeftDiv).catch(() => { });
+                });
+            };
+        };
+
         attachButton.onclick = () => {
-            container.attach(attachUrl)
+            currentContainer.attach(attachUrl)
                 .then(() => {
                     attachDiv.remove();
                     replaceUrl();
 
-                    if (div) {
-                        div.innerText = "";
+                    if (rightDiv) {
+                        rightDiv.innerText = "";
                     }
 
                     attached.resolve();
@@ -349,14 +405,14 @@ async function attachContainer(
         };
 
         // If we are in side-by-side mode, we need to display the following message in the right div passed here.
-        if (div) {
-            div.innerText = "Waiting for container attach";
+        if (rightDiv) {
+            rightDiv.innerText = "Waiting for container attach";
         }
     } else {
-        await container.attach(attachUrl);
+        await currentContainer.attach(attachUrl);
         replaceUrl();
         attached.resolve();
     }
-
-    return attached.promise;
+    await attached.promise;
+    return currentContainer;
 }

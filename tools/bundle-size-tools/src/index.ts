@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from './ADO';
 export * from './BundleBuddyTypes';
 export * from './BundleBuddyConfigWebpackPlugin';
 export * from './compareBundles';

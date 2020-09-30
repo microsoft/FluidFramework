@@ -29,7 +29,7 @@ import {
     IThrottlingWarning,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { performanceNow } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     EventEmitterWithErrorHandling,
@@ -435,10 +435,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // keep track of last time page was visible for telemetry
         if (typeof document === "object" && document !== null) {
-            this.lastVisible = document.hidden ? performanceNow() : undefined;
+            this.lastVisible = document.hidden ? performance.now() : undefined;
             document.addEventListener("visibilitychange", () => {
                 if (document.hidden) {
-                    this.lastVisible = performanceNow();
+                    this.lastVisible = performance.now();
                 } else {
                     // settimeout so this will hopefully fire after disconnect event if being hidden caused it
                     setTimeout(() => this.lastVisible = undefined, 0);
@@ -635,8 +635,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public setAutoReconnect(reconnect: boolean) {
-        assert(this.resumedOpProcessingAfterLoad);
-
         if (reconnect && this.closed) {
             throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
         }
@@ -649,7 +647,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             connectionState: ConnectionState[this.connectionState],
         });
 
-        if (reconnect) {
+        // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
+        // manual reconnection flag to true as we haven't made the initial connection yet.
+        if (reconnect && this._attachState === AttachState.Attached && this.resumedOpProcessingAfterLoad) {
             if (this._connectionState === ConnectionState.Disconnected) {
                 // Only track this as a manual reconnection if we are truly the ones kicking it off.
                 this.manualReconnectInProgress = true;
@@ -883,7 +883,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private recordConnectStartTime() {
         if (this.connectionTransitionTimes[ConnectionState.Disconnected] === undefined) {
-            this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
+            this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
         }
     }
 
@@ -1329,7 +1329,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         reason: string,
         opsBehind?: number) {
         // Log actual event
-        const time = performanceNow();
+        const time = performance.now();
         this.connectionTransitionTimes[value] = time;
         const duration = time - this.connectionTransitionTimes[oldState];
 
@@ -1368,7 +1368,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             autoReconnect,
             opsBehind,
             online: OnlineStatus[isOnline()],
-            lastVisible: this.lastVisible !== undefined ? performanceNow() - this.lastVisible : undefined,
+            lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
         });
 
         if (value === ConnectionState.Connected) {

@@ -49,12 +49,56 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
         });
     }
 
-    public render(div: HTMLElement) {
-        const rerender = () => {
+    public async render(div: HTMLElement) {
+        const rerender = async () => {
+            div.ondrop = async (event) => {
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                if (!event || !event.dataTransfer) {
+                    return;
+                }
+                event.dataTransfer.dropEffect = "copy";
+                event.preventDefault();
+
+                const dt = event.dataTransfer;
+                const files = dt.files;
+                const arrayBufferReader = new FileReader();
+                const buffer = await new Promise<Buffer>((resolve, reject) => {
+                    arrayBufferReader.onerror = (error) => {
+                        arrayBufferReader.abort();
+                        reject(`error: ${JSON.stringify(error)}`);
+                    };
+
+                    arrayBufferReader.onloadend = () => {
+                        const blobData = Buffer.from(arrayBufferReader.result as ArrayBuffer);
+                        resolve(blobData);
+                    };
+                    arrayBufferReader.readAsArrayBuffer(files[0]);
+                });
+
+                const blob = await this.runtime.uploadBlob(buffer);
+                this.root.set("blob", blob);
+            };
+
+            div.ondragover = (event) => {
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                if (!event || !event.dataTransfer) {
+                    return;
+                }
+                event.dataTransfer.dropEffect = "copy";
+                event.preventDefault();
+            };
+
             const title = this.root.get("title");
+            const blobHandle = this.root.get("blob");
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+            const imgSrc = blobHandle
+                ? `data:image/png;base64,${(await blobHandle.get()).toString("base64")}`
+                : "https://media.giphy.com/media/13V60VgE2ED7oc/giphy.gif";
 
             ReactDOM.render(
                 <div>
+                    <img src={imgSrc}></img>
+                    <br/>
                     old title:
           <p className="title">{title}</p>
                     <input className="titleInput" type={"text"}
@@ -65,12 +109,15 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
                     <div>
                         package:
             <input type="text" value={this.upgradeToPkg}
+                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
                             onChange={(e) => { this.upgradeToPkg = e.currentTarget.value; rerender(); }} />@
             <input type="text" value={this.upgradeToVersion}
+                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
                             onChange={(e) => { this.upgradeToVersion = e.currentTarget.value; rerender(); }} />
                         <br />
                         cdn:
             <input className="cdn" type="text" value={this.cdn}
+                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
                             onChange={(e) => { this.cdn = e.currentTarget.value; rerender(); }} />
                     </div>
                     <button className="upgrade" onClick={() => this.quorumProposeCode()}>Upgrade Version</button>
@@ -85,7 +132,9 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
             );
         };
 
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         rerender();
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         this.root.on("valueChanged", rerender);
 
         return div;

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { FluidRepo } from "./fluidRepo";
 import { MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import * as path from "path";
@@ -39,7 +38,7 @@ export class FluidPackageCheck {
         return fix;
     }
 
-    public static checkScripts(repo: FluidRepo, pkg: Package, fix: boolean) {
+    public static checkScripts(pkg: Package, fix: boolean) {
         const fixed = [
             FluidPackageCheck.checkSort(pkg, fix),
             FluidPackageCheck.checkBuildScripts(pkg, fix),
@@ -57,7 +56,7 @@ export class FluidPackageCheck {
     }
 
     /**
-     * Verify that all packages with 'test' scripts require the 'mocha-test-setup' package 
+     * Verify that all packages with 'test' scripts require the 'mocha-test-setup' package
      * and have --unhandled-rejections=strict flag so to failed test with unhandled rejection
      */
     private static checkTestScripts(pkg: Package, fix: boolean) {
