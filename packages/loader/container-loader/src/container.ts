@@ -1463,30 +1463,32 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
-        const local = this._clientId === message.clientId;
+        // Check and report if we're getting messages from a clientId that we previously
+        // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
+        if (message.clientId != null) {
+            let errorMsg: string | undefined;
+            const client: ILocalSequencedClient | undefined =
+                this._protocolHandler?.quorum.getMember(message.clientId);
+            if (client === undefined && message.type !== MessageType.ClientJoin) {
+                errorMsg = "messageClientIdMissingFromQuorum";
+            } else if (client?.shouldHaveLeft === true) {
+                errorMsg = "messageClientIdShouldHaveLeft";
+            }
+            if (errorMsg !== undefined) {
+                const error = new GenericError(
+                    errorMsg,
+                    {
+                        clientId: this._clientId,
+                        messageClientId: message.clientId,
+                        sequenceNumber: message.sequenceNumber,
+                        clientSequenceNumber: message.clientSequenceNumber,
+                    },
+                );
+                this.close(CreateContainerError(error));
+            }
+        }
 
-        // Report if we're getting messages from a clientId that we previously flagged as
-        // shouldHaveLeft, or from a client that's not in the quorum but should be
-        let errorMsg: string | undefined;
-        const client: ILocalSequencedClient | undefined =
-            this._protocolHandler?.quorum.getMember(message.clientId);
-        if (client === undefined && message.type !== MessageType.ClientJoin) {
-            errorMsg = "messageClientIdMissingFromQuorum";
-        } else if (client?.shouldHaveLeft === true) {
-            errorMsg = "messageClientIdShouldHaveLeft";
-        }
-        if (errorMsg !== undefined) {
-            const error = new GenericError(
-                errorMsg,
-                {
-                    clientId: this._clientId,
-                    messageClientId: message.clientId,
-                    sequenceNumber: message.sequenceNumber,
-                    clientSequenceNumber: message.clientSequenceNumber,
-                },
-            );
-            this.close(CreateContainerError(error));
-        }
+        const local = this._clientId === message.clientId;
 
         // Forward non system messages to the loaded runtime for processing
         if (!isSystemMessage(message)) {
