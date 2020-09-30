@@ -68,7 +68,9 @@ const falseResult = {
  */
 class ChunkedOpProcessor {
     /**
-     * Message references so we can replace their contents in-place
+     * Message references so we can replace their contents in-place.  These can
+     * be top-level chunkedOp messages, or top-level op messages with a chunkedOp
+     * within the contents
      */
     private messages = new Array<any>();
     /**
@@ -94,8 +96,14 @@ class ChunkedOpProcessor {
         let parsed;
         try {
             parsed = JSON.parse(message.contents);
+            if (message.type === "op") {
+                // nested within a regular op
+                // need to go deeper to get the desired contents
+                parsed = parsed.contents;
+            }
         } catch (e) {
             console.error(e);
+            console.error(message.contents);
         }
         this.validateSchemaFn(parsed, chunkedOpContentsSchema);
         this.parsedMessageContents.push(parsed);
@@ -142,20 +150,28 @@ class ChunkedOpProcessor {
         for (let i = 0; i < this.messages.length; i++) {
             // use 15K chunks (default chunk size is 16K)
             const substring = stringified.substring(i * 15360, (i + 1) * 15360);
-            console.error(substring);
 
             const parsedContents = this.parsedMessageContents[i];
             parsedContents.contents = substring;
+            const message = this.messages[i];
 
             let stringifiedParsedContents;
             try {
-                stringifiedParsedContents = JSON.stringify(parsedContents);
-                console.error(stringifiedParsedContents);
+                // for nested chunkedOps, we need to recreate the extra nesting layer
+                // we removed earlier when adding the message
+                if (message.type === "op") {
+                    const nestingLayer = {
+                        type: "chunkedOp",
+                        contents: parsedContents,
+                    };
+                    stringifiedParsedContents = JSON.stringify(nestingLayer);
+                } else {
+                    stringifiedParsedContents = JSON.stringify(parsedContents);
+                }
             } catch (e) {
                 console.error(e);
             }
 
-            const message = this.messages[i];
             message.contents = stringifiedParsedContents;
         }
 
@@ -456,7 +472,9 @@ class Sanitizer {
     }
 
     /**
-     * Fix the contents object for an op message.  Does not do extra type handling.
+     * Fix the contents object for an op message.  Does not do extra type handling.  Does
+     * not handle special container message types like "attach", "component", and
+     * "chunkedOp" (these should be handled by the caller)
      * @param contents - The contents object for an op message.  If it was a string in the
      * message, it must have been converted to an object first
      */
@@ -465,51 +483,25 @@ class Sanitizer {
         if (!this.objectMatchesSchema(contents, opContentsSchema)) {
             this.replaceAny(contents);
         } else {
-            // handle container message types
-            let contentsObj;
-            if (contents.type === "attach") {
-                // this one is like a regular attach op, except its contents aren't nested as deep
-                // run fixAttach directly and return
-                return this.fixAttach(contents);
-            } else if (contents.type === "component") {
-                // this one functionally nests its contents one layer deeper
-                // bring up the contents object and continue as usual
-                contentsObj = contents.contents;
-            } else if (contents.type === "chunkedOp") {
-                // this is a (regular?) op split into multiple parts due to size, e.g. because it
-                // has an attached image. the contents of the chunks need to be concatenated to form
-                // the complete stringified json object
-
-                // TODO: handle this properly
-                console.error("TODO: chunkedOp ops are skipped/unhandled");
-                return;
-            } else if (contents.type === "blobAttach") {
-                // TODO: handle this properly once blob api is used
-                console.error("TODO: blobAttach ops are skipped/unhandled");
-                return;
-            } else {
-                contentsObj = contents;
-            }
-
             if (this.fullScrub) {
-                contentsObj.address = this.replaceText(contentsObj.address, TextType.FluidObject);
+                contents.address = this.replaceText(contents.address, TextType.FluidObject);
             }
 
-            const innerContent = contentsObj.contents.content;
+            const innerContent = contents.contents.content;
             assert(innerContent !== undefined);
-            if (contentsObj.contents.type === "attach") {
+            if (contents.contents.type === "attach") {
                 // attach op
                 // handle case where inner content is stringified json
-                if (typeof contentsObj.contents.content === "string") {
+                if (typeof contents.contents.content === "string") {
                     try {
-                        const data = JSON.parse(contentsObj.contents.content);
+                        const data = JSON.parse(contents.contents.content);
                         this.fixAttachContents(data);
-                        contentsObj.contents.content = JSON.stringify(data);
+                        contents.contents.content = JSON.stringify(data);
                     } catch (e) {
                         console.error(e);
                     }
                 } else {
-                    this.fixAttachContents(contentsObj.contents.content);
+                    this.fixAttachContents(contents.contents.content);
                 }
             } else if (this.validator.validate(innerContent, opContentsMapSchema).valid) {
                 // map op
@@ -552,30 +544,59 @@ class Sanitizer {
 
     fixOp(message: any) {
         // handle case where contents is stringified json
+        let msgContents;
         if (typeof message.contents === "string") {
-            let msgContents;
             try {
                 msgContents = JSON.parse(message.contents);
             } catch (e) {
                 console.error(e);
                 return;
             }
+        } else {
+            msgContents = message.contents;
+        }
 
-            // don't do this in the try/catch so we don't
-            // accidentally swallow a format error
+        // handle container message types
+        if (msgContents.type === "attach") {
+            // this one is like a regular attach op, except its contents aren't nested as deep
+            // run fixAttach directly and return
+            this.fixAttach(msgContents);
+        } else if (msgContents.type === "component") {
+            // this one functionally nests its contents one layer deeper
+            // bring up the contents object and continue as usual
+            this.fixOpContentsObject(msgContents.contents);
+        } else if (msgContents.type === "chunkedOp") {
+            // this is a (regular?) op split into multiple parts due to size, e.g. because it
+            // has an attached image, and where the chunkedOp is within the top-level op's contents
+            // (as opposed to being at the top-level).  The contents of the chunks need to be
+            // concatenated to form the complete stringified json object
+            // Early return here to skip re-stringify because no changes are made until the last
+            // chunk, and the ChunkedOpProcessor will handle everything at that point
+            return this.fixChunkedOp(message);
+        } else if (msgContents.type === "blobAttach") {
+            // TODO: handle this properly once blob api is used
+            console.error("TODO: blobAttach ops are skipped/unhandled");
+            return;
+        } else {
+            // A regular op
             this.fixOpContentsObject(msgContents);
+        }
 
+        // re-stringify the json if needed
+        if (typeof message.contents === "string") {
             try {
                 message.contents = JSON.stringify(msgContents);
             } catch (e) {
                 console.error(e);
                 return;
             }
-        } else {
-            this.fixOpContentsObject(message.contents);
         }
     }
 
+    /**
+     * @param message - The top-level chunkedOp message or a top-level op message
+     * with a chunkedOp inside its contents
+     */
     fixChunkedOp(message: any) {
         this.chunkProcessor.addMessage(message);
         if (!this.chunkProcessor.hasAllMessages()) {
