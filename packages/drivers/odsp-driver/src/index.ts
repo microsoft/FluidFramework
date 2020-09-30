@@ -23,3 +23,4 @@ export * from "./odspError";
 export * from "./createOdspCreateContainerRequest";
 export * from "./tokenFetch";
 export * from "./parseAuthErrorClaims";
+export * from "./fetcher";
