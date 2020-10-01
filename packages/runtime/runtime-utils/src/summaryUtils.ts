@@ -13,6 +13,7 @@ import {
     IBlob,
     ISummaryBlob,
     TreeEntry,
+    IAttachment,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats, ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
@@ -128,6 +129,10 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
         this.summaryStats = mergeStats(this.summaryStats, summarizeResult.stats);
     }
 
+    public addAttachment(key: string, id: string) {
+        this.summaryTree[key] = { id, type: SummaryType.Attachment };
+    }
+
     public getSummaryTree(): ISummaryTreeWithStats {
         return { summary: this.summary, stats: this.stats };
     }
@@ -175,6 +180,13 @@ export function convertToSummaryTree(
                         entry.value as ITree,
                         fullTree);
                     builder.addWithStats(entry.path, subtree);
+
+                    break;
+                }
+
+                case TreeEntry.Attachment: {
+                    const id = (entry.value as IAttachment).id;
+                    builder.addAttachment(id, id);
 
                     break;
                 }

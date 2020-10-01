@@ -126,6 +126,7 @@ import { BlobManager } from "./blobManager";
 import { convertSnapshotToSummaryTree } from "./utils";
 
 const chunksBlobName = ".chunks";
+const blobsBlobName = ".blobs";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -497,10 +498,17 @@ export class ContainerRuntime extends EventEmitter
             await readAndParse<[string, string[]][]>(context.storage, chunkId) :
             readAndParseFromBlobs<[string, string[]][]>(context.baseSnapshot.blobs, chunkId) : [];
 
+        const blobId = context.baseSnapshot?.blobs[blobsBlobName];
+        const blobsBlob = blobId
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            ? await context.storage!.read(blobId)
+            : undefined;
+
         const runtime = new ContainerRuntime(
             context,
             registry,
             chunks,
+            blobsBlob,
             runtimeOptions,
             containerScope,
             requestHandler);
@@ -676,6 +684,7 @@ export class ContainerRuntime extends EventEmitter
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
         chunks: [string, string[]][],
+        blobsBlob: string | undefined,
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
             enableWorker: false,
@@ -811,8 +820,9 @@ export class ContainerRuntime extends EventEmitter
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
             () => this.storage,
-            (blobId) => this.submit(ContainerMessageType.BlobAttach, { blobId }),
+            (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, { blobId }),
         );
+        this.blobManager.load(blobsBlob);
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
@@ -1045,6 +1055,8 @@ export class ContainerRuntime extends EventEmitter
             const content = JSON.stringify([...this.chunkMap]);
             summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
+        const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
+        summaryTreeBuilder.addWithStats(".blobs", blobsTree);
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
@@ -1163,6 +1175,10 @@ export class ContainerRuntime extends EventEmitter
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
                     this.processFluidDataStoreOp(message, local, localMessageMetadata);
+                    break;
+                case ContainerMessageType.BlobAttach:
+                    assert(message?.metadata?.blobId);
+                    this.blobManager.addBlobId(message.metadata.blobId);
                     break;
                 default:
             }
@@ -1850,12 +1866,12 @@ export class ContainerRuntime extends EventEmitter
             // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
             // there will be a lot of escape characters that can make it up to 2x bigger!
             // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
-            if (serializedContent.length <= maxOpSize) {
+            if (!serializedContent || serializedContent.length <= maxOpSize) {
                 clientSequenceNumber = this.submitRuntimeMessage(
                     type,
                     content,
                     this._flushMode === FlushMode.Manual,
-                    batchBegin ? { batch: true } : undefined);
+                    batchBegin ? { batch: true } : localOpMetadata);
             } else {
                 clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             }

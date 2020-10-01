@@ -960,6 +960,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                     break;
                 }
+                case api.SummaryType.Attachment: {
+                    value = { id: summaryObject.id };
+                    break;
+                }
                 default: {
                     throw new Error(`Unknown tree type ${summaryObject.type}`);
                 }

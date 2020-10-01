@@ -22,25 +22,31 @@ class TestComponent extends DataObject {
 }
 
 describe("blobs", () => {
-    const docId = "localLoaderTest";
+    const docId = "blobTest";
+    const documentLoadUrl = `fluid-test://localhost/${docId}`;
     const codeDetails: IFluidCodeDetails = {
-        package: "localLoaderTestPackage",
+        package: "blobTestPackage",
         config: {},
+    };
+    const fluidModule = {
+        fluidExport: new TestContainerRuntimeFactory(
+            TestComponent.type,
+            new DataObjectFactory(TestComponent.type, TestComponent, [], {}),
+            { initialSummarizerDelayMs: 100 },
+        ),
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let urlResolver: IUrlResolver;
 
     async function createContainer(): Promise<IContainer> {
-        const fluidModule = {
-            fluidExport: new TestContainerRuntimeFactory(
-                TestComponent.type,
-                new DataObjectFactory(TestComponent.type, TestComponent, [], {}),
-                { initialSummarizerDelayMs: 100 },
-            ),
-        };
         const loader = createLocalLoader([[codeDetails, fluidModule]], deltaConnectionServer, urlResolver);
         return createAndAttachContainer(docId, codeDetails, loader, urlResolver);
+    }
+
+    async function loadContainer(): Promise<IContainer> {
+        const loader = createLocalLoader([[codeDetails, fluidModule]], deltaConnectionServer, urlResolver);
+        return loader.resolve({ url: documentLoadUrl });
     }
 
     beforeEach(async () => {
@@ -59,9 +65,11 @@ describe("blobs", () => {
     it("attach sends an op", async function() {
         const container = await createContainer();
 
-        const blobOpP = new Promise((res) => container.on("op", (op) => {
+        const blobOpP = new Promise((res, rej) => container.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
-                res();
+                // eslint-disable-next-line max-len
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unused-expressions
+                op.metadata?.blobId ? res() : rej("no op metadata");
             }
         }));
 
@@ -83,7 +91,7 @@ describe("blobs", () => {
         const blob = await component1._runtime.uploadBlob(IsoBuffer.from(testString, "utf-8"));
         component1._root.set(testKey, blob);
 
-        const container2 = await createContainer();
+        const container2 = await loadContainer();
         const component2 = await requestFluidObject<TestComponent>(container2, "default");
 
         const blobHandle = await component2._root.wait(testKey);
