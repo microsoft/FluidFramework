@@ -8,7 +8,6 @@ import { ProseMirrorFactory, ProseMirror } from "./prosemirror";
 
 export { ProseMirrorFactory, ProseMirror } from "./prosemirror";
 
-
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     ProseMirror.Name,
     new Map([

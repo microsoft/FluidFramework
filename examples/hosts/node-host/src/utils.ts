@@ -52,6 +52,7 @@ async function fetchCore(loader: Loader, url: string) {
  * quorumed on.
  */
 export async function fetchFluidObject(loader: Loader, container: Container, url: string) {
+    console.log("fetchfluid");
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     fetchCore(loader, url);
     container.on("contextChanged", () => {
