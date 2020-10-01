@@ -60,7 +60,11 @@
     "prosemirror-schema-list": "^1.0.3",
     "prosemirror-state": "^1.2.4",
     "prosemirror-transform": "^1.2.3",
-    "prosemirror-view": "^1.10.3"
+    "prosemirror-view": "^1.10.3",
+    "@azure/storage-blob": "^12.0.0",
+    "@types/dotenv": "^4.0.3",
+    "dotenv": "^6.0.0",
+    "prosemirror-markdown": "^1.5.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",

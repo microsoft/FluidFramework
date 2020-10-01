@@ -21,6 +21,8 @@ import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { nodeTypeKey } from "./fluidBridge";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
 import { ProseMirrorView } from "./prosemirrorView";
+import { IStorageUtil, StorageUtil } from './storage';
+
 
 function createTreeMarkerOps(
     treeRangeLabel: string,
@@ -61,6 +63,8 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
     public text: SharedString;
     private collabManager: FluidCollabManager;
     private view: ProseMirrorView;
+    private StorageUtilModule: IStorageUtil;
+
 
     public static get Name() { return "@fluid-example/prosemirror"; }
 
@@ -74,7 +78,6 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
 
     protected async initializingFirstTime() {
         const text = SharedString.create(this.runtime);
-
         const ops = createTreeMarkerOps("prosemirror", 0, 1, "paragraph");
         text.groupOperation({ ops, type: MergeTreeDeltaType.GROUP });
         text.insertText(1, "Hello, world!");
@@ -83,15 +86,32 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
     }
 
     protected async hasInitialized() {
+
+
         this.text = await this.root.get<IFluidHandle<SharedString>>("text").get();
 
         this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
+
+        let schema = await this.collabManager.getSchema();
+        if (!isWebClient()) {
+            this.StorageUtilModule = new StorageUtil();
+            let initialVal = await this.StorageUtilModule.getMardownDataAndConvertIntoNode(schema);
+            await this.collabManager.initializeValue(initialVal);
+        }
+
+
+
         this.hasValueChanged();
     }
 
     public hasValueChanged() {
         this.collabManager?.on("valueChanged", (changed) => {
+            this.emit("valueChanged")
             // Here we can set data to original file
+            // this.StorageUtilModule.storeData(this.collabManager.getCurrentState().toJSON());
+            if (!isWebClient()) {
+                this.StorageUtilModule.storeEditorStateAsMarkdown(this.collabManager.getSchema(), this.collabManager.getCurrentState()?.doc);
+            }
             console.log("something changed ", changed);
         });
     }
