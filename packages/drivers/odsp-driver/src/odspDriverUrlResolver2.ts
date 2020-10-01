@@ -13,13 +13,14 @@ import { createOdspCreateContainerRequest } from "./createOdspCreateContainerReq
 import { createOdspUrl } from "./createOdspUrl";
 import { resolveRequest } from "./odspDriverUrlResolver";
 import { getShareLink } from "./graph";
-import { IdentityType, SharingLinkTokenFetcher } from "./tokenFetch";
+import { IdentityType, TokenFetchOptions } from "./tokenFetch";
 
 export class OdspDriverUrlResolver2 implements IUrlResolver {
     private readonly shareLinkMap = new Map<string, Promise<string>>();
 
     public constructor(
-        private readonly getSharingLinkToken: SharingLinkTokenFetcher,
+        private readonly getSharingLinkToken:
+            (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => Promise<string | null>,
         private readonly identityType: IdentityType = "Enterprise",
         private readonly logger?: ITelemetryLogger,
         private readonly appName?: string,

@@ -174,12 +174,13 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     private toInstrumentedSharingLinkTokenFetcher(
         logger: ITelemetryLogger,
         tokenFetcher: SharingLinkTokenFetcher,
-    ): SharingLinkTokenFetcher {
-        return async (isForFileDefaultUrl: boolean, options: TokenFetchOptions) => {
+    ): (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => Promise<string | null> {
+        return async (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => {
             return PerformanceEvent.timedExecAsync(
                 logger,
                 { eventName: "GetSharingLinkToken" },
-                async (event) => tokenFetcher(isForFileDefaultUrl, options).then((tokenResponse) => {
+                async (event) => tokenFetcher(isForFileDefaultUrl, options.refresh, options.claims)
+                .then((tokenResponse) => {
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
                     return tokenFromResponse(tokenResponse);
                 }));

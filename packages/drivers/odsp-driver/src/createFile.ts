@@ -33,7 +33,7 @@ import {
     invalidFileNameStatusCode,
     fetchIncorrectResponse,
 } from "./odspError";
-import { SharingLinkTokenFetcher, TokenFetchOptions } from "./tokenFetch";
+import { TokenFetchOptions } from "./tokenFetch";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 
 const isInvalidFileName = (fileName: string): boolean => {
@@ -50,7 +50,7 @@ export async function createNewFluidFile(
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,
-    getSharingLinkToken?: SharingLinkTokenFetcher,
+    getSharingLinkToken?: (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => Promise<string | null>,
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {

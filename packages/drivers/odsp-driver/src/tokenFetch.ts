@@ -53,13 +53,13 @@ export type PushTokenFetcher = (refresh: boolean, claims?: string) => Promise<st
 /**
  * Method signature for callback method used to fetch Sharing link token
  * @param forFileDefaultUrl - boolean to determine the scope of the token to fetch the share link.
- * @param options - options that need to be passed to fetch the token like claims or option to bypass
- * the cache and refresh the token.
+ * @param refresh - Flag indicating whether token fetch must bypass local cache
+ * @param claims - Optional string indicating claims that will be passed to token authority
  * @returns If successful, TokenResponse object representing token value along with flag indicating
  * whether token came from cache. Legacy implementation may return a string for token value;
  * in this case it should be assumes that fromCache signal is undefined. Null is returned in case of failure.
  */
-export type SharingLinkTokenFetcher = (forFileDefaultUrl: boolean, options: TokenFetchOptions) =>
+export type SharingLinkTokenFetcher = (forFileDefaultUrl: boolean, refresh: boolean, claims?: string) =>
     Promise<string | TokenResponse | null>;
 
 /**

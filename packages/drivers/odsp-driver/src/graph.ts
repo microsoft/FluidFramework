@@ -7,7 +7,7 @@ import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-d
 import { PromiseCache } from "@fluidframework/common-utils";
 import { authorizedFetchWithRetry } from "./authorizedFetchWithRetry";
 import { RetryPolicy } from "./fetchWithRetry";
-import { IdentityType, SharingLinkTokenFetcher, TokenFetchOptions } from "./tokenFetch";
+import { IdentityType, TokenFetchOptions } from "./tokenFetch";
 
 /**
  * This represents a lite version of GraphItem containing only the name, webUrl and webDavUrl properties
@@ -33,7 +33,7 @@ export interface GraphItemLite {
  * @returns Promise which resolves to share link url when successful; otherwise, undefined.
  */
 export async function getShareLink(
-    getShareLinkToken: SharingLinkTokenFetcher,
+    getShareLinkToken: (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => Promise<string | null>,
     siteUrl: string,
     driveId: string,
     itemId: string,
@@ -78,7 +78,7 @@ export async function getShareLink(
  * @param timeoutMs - Timeout value to be passed to fetchWithRetry
  */
 export async function graphFetch(
-    getShareLinkToken: SharingLinkTokenFetcher,
+    getShareLinkToken: (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => Promise<string | null>,
     graphUrl: string,
     nameForLogging: string,
     logger?: ITelemetryLogger,
@@ -88,8 +88,8 @@ export async function graphFetch(
 ): Promise<Response> {
     const getToken = async (options: TokenFetchOptions) =>
         getShareLinkToken(
-            false,
             options,
+            false,
         );
     const url = graphUrl.startsWith("http") ? graphUrl : `https://graph.microsoft.com/v1.0/${graphUrl}`;
     return (
@@ -143,7 +143,7 @@ const getSPOAndGraphRequestIdsFromResponse = async (response: Response) => {
  * @returns Promise which resolves to file url when successful; otherwise, undefined.
  */
 async function getFileDefaultUrl(
-    getShareLinkToken: SharingLinkTokenFetcher,
+    getShareLinkToken: (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => Promise<string | null>,
     siteUrl: string,
     driveId: string,
     itemId: string,
@@ -163,7 +163,7 @@ async function getFileDefaultUrl(
     // ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
     const fetchResponse = await authorizedFetchWithRetry({
         getToken: async (options) =>
-            getShareLinkToken(true, options),
+            getShareLinkToken(options, true),
         url: `${siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${encodeURIComponent(
             `'${graphItem.webDavUrl}'`,
         )}`,
@@ -205,7 +205,7 @@ const graphItemLiteCache = new PromiseCache<string, GraphItemLite | undefined>()
  * powering MRU and Share functionality.
  */
 export async function getGraphItemLite(
-    getShareLinkToken: SharingLinkTokenFetcher,
+    getShareLinkToken: (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => Promise<string | null>,
     driveId: string,
     itemId: string,
     logger?: ITelemetryLogger,
