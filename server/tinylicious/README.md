@@ -27,4 +27,4 @@ The config.json file can be used to configure the Tinylicious service.
 | `db.path`        | If `db.inMemory` is false the folder on disk to store the ops    | "/var/tmp/db"                    |
 | `storage`        | Storage path for snapshots                                       | "/var/tmp/tinylicious"           |
 
-See config.json for more settings/defaults
+See config.json for more settings and their defaults.
