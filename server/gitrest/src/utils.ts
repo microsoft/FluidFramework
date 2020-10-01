@@ -60,7 +60,6 @@ export async function commitToICommit(commit: git.Commit): Promise<resources.ICo
         author: authorToIAuthor(commit.author(), commit.date()),
         committer: committerToICommitter(commit.committer(), commit.date()),
         message: commit.message(),
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         parents: commit.parents() && commit.parents().length > 0 ?
             // eslint-disable-next-line no-null/no-null
             commit.parents().map((parent) => oidToCommitHash(parent)) : null,

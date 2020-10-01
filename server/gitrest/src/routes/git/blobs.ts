@@ -36,8 +36,7 @@ export async function createBlob(
     owner: string,
     repo: string,
     blob: ICreateBlobParams): Promise<ICreateBlobResponse> {
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    if (!blob || !validateBlob(blob.content) || !validateEncoding(blob.encoding)) {
+        if (!blob || !validateBlob(blob.content) || !validateEncoding(blob.encoding)) {
         return Promise.reject("Invalid blob");
     }
 
