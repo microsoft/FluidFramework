@@ -20,6 +20,7 @@ export class Fetcher {
         fetchOptions: {[index: string]: any},
         addInBody: boolean = false,
     ): Promise<IOdspResponse<T>> {
+        // Add epoch either in header or in body.
         this.addEpochInRequest(fetchOptions, addInBody);
         let response: IOdspResponse<T>;
         try {
@@ -37,6 +38,7 @@ export class Fetcher {
         fetchOptions: {[index: string]: any},
         addInBody: boolean = false,
     ): Promise<IOdspResponse<IsoBuffer>> {
+        // Add epoch either in header or in body.
         this.addEpochInRequest(fetchOptions, addInBody);
         let response: IOdspResponse<IsoBuffer>;
         try {
@@ -52,6 +54,8 @@ export class Fetcher {
     private addEpochInRequest(fetchOptions: {[index: string]: any}, addInBody: boolean) {
         if (this.fluidEpoch !== undefined) {
             if (addInBody) {
+                // We use multi part form request for post body where we want to use this.
+                // So extract the form boundary to mark the end of form.
                 let body: string = fetchOptions.body;
                 const formBoundary = body.split("\r\n")[0].substring(2);
                 body += `\r\nepoch=${this.fluidEpoch}\r\n`;
@@ -59,6 +63,7 @@ export class Fetcher {
                 fetchOptions.body = body;
                 return;
             }
+            // Else add in headers.
             fetchOptions.headers = {
                 ...fetchOptions.headers,
                 "x-fluid-epoch": this.fluidEpoch,
@@ -68,7 +73,10 @@ export class Fetcher {
 
     private extractEpochFromResponse(headers: Map<string, string>) {
         const epochFromResponse = headers.get("x-fluid-epoch");
-        assert(this.fluidEpoch === undefined || this.fluidEpoch === null
+        // If epoch is undefined, then don't compare it because initially for createNew or TreesLatest
+        // initializes this value. Sometimes response does not contain epoch as it is still in
+        // implementation phase at server side. In that case also, don't compare it with our epoch value.
+        assert(this.fluidEpoch === undefined
             || epochFromResponse === undefined || epochFromResponse === null
             || (this.fluidEpoch === epochFromResponse), "Fluid Epoch should match");
         if (epochFromResponse !== undefined && epochFromResponse !== null) {
