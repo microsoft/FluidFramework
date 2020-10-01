@@ -93,6 +93,8 @@ export class PuppetMaster extends EventEmitter {
         // Overriding this to use a setTimeout based version.
         await this.page.evaluate(() => {
             (window as any).setImmediate = (callback: any) => {
+                // TODO: possible bug?
+                // eslint-disable-next-line @typescript-eslint/no-implied-eval
                 window.setTimeout(callback, 0);
             };
         });
@@ -107,6 +109,7 @@ export class PuppetMaster extends EventEmitter {
             <div id="content" style="flex: 1 1 auto; position: relative"></div>
             `;
 
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return (window as any).loader.startLoading(resolvedUrlInternal);
         }, JSON.stringify(resolvedUrl));
 
@@ -147,7 +150,6 @@ export class PuppetMaster extends EventEmitter {
     private async upsertPageCache() {
         await this.page.exposeFunction("cachePage", async (pageHTML: string) => {
             winston.info(`Caching page for ${this.tenantId}/${this.documentId}/${this.agentType}`);
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (this.cache) {
                 this.cache.set(`${this.tenantId}-${this.documentId}`, pageHTML).then(() => {
                     winston.info(`Updated page cache for ${this.tenantId}/${this.documentId}`);
