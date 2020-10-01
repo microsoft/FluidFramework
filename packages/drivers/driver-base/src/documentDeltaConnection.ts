@@ -124,6 +124,12 @@ export class DocumentDeltaConnection
         return !!this._details;
     }
 
+    /**
+     * Flag to indicate whether the DocumentDeltaConnection is expected to still be capable of sending messages.
+     * After disconnection, we flip this to prevent any stale messages from being emitted.
+     */
+    protected closed: boolean = false;
+
     private get details(): IConnected {
         if (!this._details) {
             throw new Error("Internal error: calling method before _details is initialized!");
@@ -143,7 +149,12 @@ export class DocumentDeltaConnection
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
             (submitType, work) => {
-                this.socket.emit(submitType, this.clientId, work);
+                // Although the implementation here disconnects the socket and does not reuse it, other subclasses
+                // (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
+                // on the still-live socket.
+                if (!this.closed) {
+                    this.socket.emit(submitType, this.clientId, work);
+                }
             });
 
         this.on("newListener", (event, listener) => {
@@ -340,13 +351,15 @@ export class DocumentDeltaConnection
     }
 
     /**
-     * Disconnect from the websocket
+     * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.  Subclasses which
+     * override this method must set the "closed" flag after disconnecting.
      * @param socketProtocolError - true if error happened on socket / socket.io protocol level
      *  (not on Fluid protocol level)
      */
     public disconnect(socketProtocolError: boolean = false) {
         this.removeTrackedListeners(false);
         this.socket.disconnect();
+        this.closed = true;
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
