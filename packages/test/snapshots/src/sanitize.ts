@@ -193,7 +193,7 @@ class ChunkedOpProcessor {
 
 class Sanitizer {
     readonly validator = new Validator.Validator();
-    // Represents the keys used to store fluid object identifiers
+    // Represents the keys used to store Fluid object identifiers
     readonly defaultExcludedKeys = new Set<string>();
     // Represents the keys used by merge-tree ops their "seg" property, where other
     // keys represent user information
