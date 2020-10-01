@@ -126,7 +126,7 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
             summarizer: false,
         };
     }
-    const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
+    const { siteUrl, driveId, itemId, path } = decodeOdspUrl(request.url);
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);
     assert.ok(!hashedDocumentId.includes("/"), "Docid should not contain slashes!!");
 
