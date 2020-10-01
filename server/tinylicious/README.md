@@ -19,7 +19,7 @@ npm run start
 
 ## Configuration
 
-The config.json file can be used to configure the Tinylicious service
+The config.json file can be used to configure the Tinylicious service.
 
 | Parameter        | Description                                                      | Default                          |
 |:-----------------|:-----------------------------------------------------------------|:---------------------------------|
