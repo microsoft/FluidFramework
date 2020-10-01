@@ -17,12 +17,13 @@ export class Fetcher {
 
     public async fetchAndParseAsJSON<T>(
         url: string,
-        fetchHeaders: {[index: string]: any},
+        fetchOptions: {[index: string]: any},
+        addInBody: boolean = false,
     ): Promise<IOdspResponse<T>> {
-        this.addEpochHeader(fetchHeaders);
+        this.addEpochInRequest(fetchOptions, addInBody);
         let response: IOdspResponse<T>;
         try {
-            response = await fetchAndParseAsJSONHelper<T>(url, fetchHeaders);
+            response = await fetchAndParseAsJSONHelper<T>(url, fetchOptions);
             this.extractEpochFromResponse(response.headers);
         } catch (error) {
             this.checkForEpochError(error);
@@ -33,12 +34,13 @@ export class Fetcher {
 
     public async fetchAndParseAsBuffer<T>(
         url: string,
-        fetchHeaders: {[index: string]: any},
+        fetchOptions: {[index: string]: any},
+        addInBody: boolean = false,
     ): Promise<IOdspResponse<IsoBuffer>> {
-        this.addEpochHeader(fetchHeaders);
+        this.addEpochInRequest(fetchOptions, addInBody);
         let response: IOdspResponse<IsoBuffer>;
         try {
-            response = await fetchAndParseAsBufferHelper(url, fetchHeaders);
+            response = await fetchAndParseAsBufferHelper(url, fetchOptions);
             this.extractEpochFromResponse(response.headers);
         } catch (error) {
             this.checkForEpochError(error);
@@ -47,10 +49,18 @@ export class Fetcher {
         return response;
     }
 
-    private addEpochHeader(fetchHeaders: {[index: string]: any}) {
+    private addEpochInRequest(fetchOptions: {[index: string]: any}, addInBody: boolean) {
         if (this.fluidEpoch !== undefined) {
-            fetchHeaders.headers = {
-                ...fetchHeaders.headers,
+            if (addInBody) {
+                let body: string = fetchOptions.body;
+                const formBoundary = body.split("\r\n")[0].substring(2);
+                body += `\r\nepoch=${this.fluidEpoch}\r\n`;
+                body += `\r\n--${formBoundary}--`;
+                fetchOptions.body = body;
+                return;
+            }
+            fetchOptions.headers = {
+                ...fetchOptions.headers,
                 "x-fluid-epoch": this.fluidEpoch,
             };
         }

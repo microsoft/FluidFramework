@@ -572,7 +572,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         body: postBody,
                         headers,
                         method: "POST",
-                    });
+                    },
+                    true);
             } else {
                 response = await this.fetcher.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers });
             }
