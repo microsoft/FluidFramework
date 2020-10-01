@@ -22,7 +22,7 @@ import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { OdspDriverUrlResolver2 } from "./odspDriverUrlResolver2";
 import {
     getWithRetryForTokenRefresh,
-    fetchHelper,
+    fetchAndParseHelper,
     INewFileInfo,
     getOrigin,
 } from "./odspUtils";
@@ -76,7 +76,7 @@ export async function createNewFluidFile(
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
 
-                const fetchResponse = await fetchHelper<ICreateFileResponse>(
+                const fetchResponse = await fetchAndParseHelper<ICreateFileResponse>(
                     url,
                     {
                         body: JSON.stringify(containerSnapshot),

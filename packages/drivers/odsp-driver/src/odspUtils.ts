@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     OnlineStatus, isOnline,
 } from "@fluidframework/driver-utils";
@@ -63,15 +64,10 @@ export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOp
     });
 }
 
-/**
- * A utility function to do fetch with support for retries
- * @param requestInfo - fetch requestInfo, can be a string
- * @param requestInit - fetch requestInit
- */
-export async function fetchHelper<T>(
+async function fetchHelperCore(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
-): Promise<IOdspResponse<T>> {
+): Promise<Response> {
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
     return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
@@ -84,26 +80,7 @@ export async function fetchHelper<T>(
             throwOdspNetworkError(
                 `Error ${response.status} from the server`, response.status, response);
         }
-
-        // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
-        // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
-        // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
-        // succeeds on retry.
-        try {
-            const text = await response.text();
-
-            const newHeaders = new FetchHeaders({ "body-size": text.length.toString() });
-            for (const [key, value] of response.headers.entries()) {
-                newHeaders.set(key, value);
-            }
-            const res = {
-                headers: newHeaders,
-                content: JSON.parse(text),
-            };
-            return res;
-        } catch (e) {
-            throwOdspNetworkError(`Error while parsing fetch response: ${e}`, fetchIncorrectResponse, response);
-        }
+        return response;
     }, (error) => {
         // While we do not know for sure whether computer is offline, this error is not actionable and
         // is pretty good indicator we are offline. Treating it as offline scenario will make it
@@ -118,6 +95,53 @@ export async function fetchHelper<T>(
             undefined, // response
         );
     });
+}
+
+/**
+ * A utility function to fetch with support for retries
+ * @param requestInfo - fetch requestInfo, can be a string
+ * @param requestInit - fetch requestInit
+ */
+export async function fetchHelper(
+    requestInfo: RequestInfo,
+    requestInit: RequestInit | undefined,
+): Promise<IOdspResponse<IsoBuffer>> {
+    const response = await fetchHelperCore(requestInfo, requestInit);
+    return {
+        headers: new Map(response.headers),
+        content: IsoBuffer.from(await response.arrayBuffer()),
+    };
+}
+
+/**
+ * A utility function to fetch and parse as JSON with support for retries
+ * @param requestInfo - fetch requestInfo, can be a string
+ * @param requestInit - fetch requestInit
+ */
+export async function fetchAndParseHelper<T>(
+    requestInfo: RequestInfo,
+    requestInit: RequestInit | undefined,
+): Promise<IOdspResponse<T>> {
+    const response = await fetchHelperCore(requestInfo, requestInit);
+    // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
+    // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
+    // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
+    // succeeds on retry.
+    try {
+        const text = await response.text();
+
+        const newHeaders = new FetchHeaders({ "body-size": text.length.toString() });
+        for (const [key, value] of response.headers.entries()) {
+            newHeaders.set(key, value);
+        }
+        const res = {
+            headers: newHeaders,
+            content: JSON.parse(text),
+        };
+        return res;
+    } catch (e) {
+        throwOdspNetworkError(`Error while parsing fetch response: ${e}`, fetchIncorrectResponse, response);
+    }
 }
 
 /**

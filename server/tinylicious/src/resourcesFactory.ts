@@ -31,7 +31,7 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
         const collectionNames = config.get("mongo:collectionNames");
 
         const tenantManager = new TenantManager(`http://localhost:${port}`);
-        const dbFactory = new DbFactory();
+        const dbFactory = new DbFactory(config);
         const taskMessageSender = new TaskMessageSender();
         const mongoManager = new MongoManager(dbFactory);
         const databaseManager = new MongoDatabaseManager(

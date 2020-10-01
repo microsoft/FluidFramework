@@ -51,6 +51,10 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.internalStorageService.createBlob(file);
     }
 
+    public async readBlob(blobId: string) {
+        return this.internalStorageService.readBlob(blobId);
+    }
+
     public getRawUrl(blobId: string): string {
         return this.internalStorageService.getRawUrl(blobId);
     }

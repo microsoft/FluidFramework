@@ -23,6 +23,16 @@ function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
     return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/opStream/snapshots`;
 }
 
+function getAttachmentPOSTUrl(siteUrl: string, driveId: string, itemId: string) {
+    const siteOrigin = new URL(siteUrl).origin;
+    return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/opStream/attachment`;
+}
+
+function getAttachmentGETUrl(siteUrl: string, driveId: string, itemId: string) {
+    const siteOrigin = new URL(siteUrl).origin;
+    return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/opStream/attachments`;
+}
+
 /**
  * Utility that enables us to handle paths provided with a beginning slash.
  * For example if a value of '/id1/id2' is provided, id1/id2 is returned.
@@ -102,6 +112,8 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
         return {
             endpoints: {
                 snapshotStorageUrl: "",
+                attachmentGETStorageUrl: "",
+                attachmentPOSTStorageUrl: "",
             },
             tokens: {},
             type: "fluid",
@@ -114,7 +126,7 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
             summarizer: false,
         };
     }
-    const { siteUrl, driveId, itemId, path } = decodeOdspUrl(request.url);
+    const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);
     assert.ok(!hashedDocumentId.includes("/"), "Docid should not contain slashes!!");
 
@@ -135,6 +147,8 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
         type: "fluid",
         endpoints: {
             snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId),
+            attachmentPOSTStorageUrl: getAttachmentPOSTUrl(siteUrl, driveId, itemId),
+            attachmentGETStorageUrl: getAttachmentGETUrl(siteUrl, driveId, itemId),
         },
         tokens: {},
         url: documentUrl,

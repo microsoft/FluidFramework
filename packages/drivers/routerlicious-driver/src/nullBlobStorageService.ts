@@ -42,6 +42,9 @@ export class NullBlobStorageService implements IDocumentStorageService {
     public async createBlob(file: Uint8Array): Promise<api.ICreateBlobResponse> {
         return Promise.reject("Null blob storage can not create blob");
     }
+    public async readBlob(blobId: string) {
+        return Promise.reject("Null blob storage can not read blob");
+    }
 
     public getRawUrl(blobId: string): string {
         throw new Error("Invalid operation");

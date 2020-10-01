@@ -82,6 +82,8 @@ export interface IDocumentStorageService {
      */
     createBlob(file: Uint8Array): Promise<ICreateBlobResponse>;
 
+    readBlob(id: string): Promise<Uint8Array>;
+
     /**
      * Fetch blob Data url
      */

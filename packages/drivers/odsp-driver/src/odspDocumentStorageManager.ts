@@ -51,7 +51,7 @@ import {
     IFileEntry,
     snapshotExpirySummarizerOps,
 } from "./odspCache";
-import { getWithRetryForTokenRefresh, fetchHelper, IOdspResponse } from "./odspUtils";
+import { getWithRetryForTokenRefresh, fetchAndParseHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { getQueryString } from "./getQueryString";
@@ -110,6 +110,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly documentId: string;
     private readonly snapshotUrl: string | undefined;
     private readonly sharingLink: string | undefined;
+    private readonly attachmentPOSTUrl: string | undefined;
+    private readonly attachmentGETUrl: string | undefined;
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
         assert(this._ops === undefined);
@@ -136,6 +138,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         this.documentId = odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
         this.sharingLink = odspResolvedUrl.sharingLink;
+        this.attachmentPOSTUrl = odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
+        this.attachmentGETUrl = odspResolvedUrl.endpoints.attachmentGETStorageUrl;
 
         this.fileEntry = {
             resolvedUrl: odspResolvedUrl,
@@ -148,19 +152,56 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     public async createBlob(file: Uint8Array): Promise<api.ICreateBlobResponse> {
-        this.checkSnapshotUrl();
+        this.checkAttachmentPOSTUrl();
 
-        return PerformanceEvent.timedExecAsync(
-            this.logger,
-            {
-                eventName: "createBlob",
-                size: file.length,
-            },
-            async () => {
-                // Future implementation goes here
-                // Need to wrap implementation with getWithRetryForTokenRefresh()
-                throw new Error("StandardDocumentStorageManager.createBlob() not implemented");
-            });
+        const response = await getWithRetryForTokenRefresh(async (options) => {
+            const storageToken = await this.getStorageToken(options, "CreateBlob");
+            const { url, headers } = getUrlAndHeadersWithAuth(`${this.attachmentPOSTUrl}/content`, storageToken);
+            headers["Content-Type"] = "application/octet-stream";
+
+            return PerformanceEvent.timedExecAsync(
+                this.logger,
+                {
+                    eventName: "createBlob",
+                    size: file.length,
+                },
+                async () => fetchAndParseHelper<api.ICreateBlobResponse>(
+                    url,
+                    {
+                        body: file,
+                        headers,
+                        method: "POST",
+                    },
+                ),
+            );
+        });
+
+        return response.content;
+    }
+
+    public async readBlob(blobid: string): Promise<IsoBuffer> {
+        this.checkAttachmentGETUrl();
+
+        const response = await getWithRetryForTokenRefresh(async (options) => {
+            const storageToken = await this.getStorageToken(options, "ReadDataBlob");
+            const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobid)}/content`;
+            const { url, headers } = getUrlAndHeadersWithAuth(unAuthedUrl, storageToken);
+
+            return PerformanceEvent.timedExecAsync(
+                this.logger,
+                {
+                    eventName: "readDataBlob",
+                    headers: Object.keys(headers).length !== 0 ? true : undefined,
+                },
+                async (event) => {
+                    const res = await fetchHelper(url, { headers });
+                    event.end({ size: res.content.length });
+                    return res;
+                },
+            );
+        });
+
+        return response.content;
     }
 
     public async read(blobid: string): Promise<string> {
@@ -179,7 +220,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         eventName: "readBlob",
                         headers: Object.keys(headers).length !== 0 ? true : undefined,
                     },
-                    async () => fetchHelper<IBlob>(url, { headers }),
+                    async () => fetchAndParseHelper<IBlob>(url, { headers }),
                 );
             });
             blob = response.content;
@@ -434,7 +475,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     eventName: "getVersions",
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
-                async () => fetchHelper<IDocumentStorageGetVersionsResponse>(url, { headers }),
+                async () => fetchAndParseHelper<IDocumentStorageGetVersionsResponse>(url, { headers }),
             );
             const versionsResponse = response.content;
             if (!versionsResponse) {
@@ -528,7 +569,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const startTime = performance.now();
             let response: IOdspResponse<IOdspSnapshot>;
             if (usePost) {
-                response = await fetchHelper<IOdspSnapshot>(
+                response = await fetchAndParseHelper<IOdspSnapshot>(
                     url,
                     {
                         body: postBody,
@@ -536,7 +577,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         method: "POST",
                     });
             } else {
-                response = await fetchHelper<IOdspSnapshot>(url, { headers });
+                response = await fetchAndParseHelper<IOdspSnapshot>(url, { headers });
             }
             const endTime = performance.now();
             const overallTime = endTime - startTime;
@@ -674,6 +715,18 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private checkSnapshotUrl() {
         if (!this.snapshotUrl) {
             throwOdspNetworkError("Method not supported because no snapshotUrl was provided", 400);
+        }
+    }
+
+    private checkAttachmentPOSTUrl() {
+        if (!this.attachmentPOSTUrl) {
+            throwOdspNetworkError("Method not supported because no attachmentPOSTUrl was provided", 400);
+        }
+    }
+
+    private checkAttachmentGETUrl() {
+        if (!this.attachmentGETUrl) {
+            throwOdspNetworkError("Method not supported because no attachmentGETUrl was provided", 400);
         }
     }
 
@@ -819,7 +872,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     size: postBody.length,
                 },
                 async () => {
-                    const response = await fetchHelper<ISnapshotResponse>(
+                    const response = await fetchAndParseHelper<ISnapshotResponse>(
                         url,
                         {
                             body: postBody,
