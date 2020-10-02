@@ -56,7 +56,6 @@ export function create(
         const chaincode: string = queryParamAsString(request.query.chaincode);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         getUrlWithVersion(chaincode).then((version: string) => {
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (version) {
                 const redirectUrl = `${request.originalUrl}@${version}`;
                 winston.info(`Redirecting to ${redirectUrl}`);
@@ -83,7 +82,6 @@ export function create(
                     config.get("error:track"));
 
                 const pkgP = fullTreeP.then((fullTree) => {
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (fullTree && fullTree.code) {
                         return codeResolver.resolveCodeDetails(fullTree.code);
                     }
@@ -169,7 +167,6 @@ export function create(
                         response.render(
                             "loader",
                             {
-                                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                                 cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
                                 chaincode: JSON.stringify(pkg),
                                 clientId: config.get("login:microsoft").clientId,

@@ -27,7 +27,6 @@ export function create(
      * Creates a new tenant
      */
     router.post("/tenants", ensureLoggedIn(), (request, response) => {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const oid = request.user ? request.user.oid : "local";
         const tenantInput = request.body as ITenantInput;
         const tenantP = tenantManager.addTenant(oid, tenantInput);
