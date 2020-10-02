@@ -249,10 +249,8 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
             message.type = ContainerMessageType.FluidDataStoreOp;
         } else {
             // new format
-            let innerContents = message.contents as ContainerRuntimeMessage;
-            if (typeof innerContents === "string") {
-                innerContents = JSON.parse(innerContents);
-            }
+            const innerContents: ContainerRuntimeMessage = typeof message.contents === "string" ?
+                JSON.parse(message.contents) : message.contents;
             assert(innerContents.type !== undefined);
             message.type = innerContents.type;
             message.contents = innerContents.contents;
