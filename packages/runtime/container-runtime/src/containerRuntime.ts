@@ -54,7 +54,6 @@ import {
     TreeTreeEntry,
 } from "@fluidframework/protocol-base";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
@@ -1067,13 +1066,6 @@ export class ContainerRuntime extends EventEmitter
         return { snapshot, state };
     }
 
-    // Back-compat: <= 0.17
-    public changeConnectionState(state: ConnectionState, clientId?: string) {
-        if (state !== ConnectionState.Connecting) {
-            this.setConnectionState(state === ConnectionState.Connected, clientId);
-        }
-    }
-
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
@@ -1097,7 +1089,7 @@ export class ContainerRuntime extends EventEmitter
                 context.setConnectionState(connected, clientId);
             } catch (error) {
                 this._logger.sendErrorEvent({
-                    eventName: "ChangeConnectionStateError",
+                    eventName: "SetConnectionStateError",
                     clientId,
                     fluidDataStore,
                 }, error);
