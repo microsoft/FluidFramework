@@ -73,7 +73,7 @@ export interface IDebuggerController {
     /**
      * UI Layer notifies about selection of version to continue.
      * On successful load, versionSelected() is called.
-     * @param version - Version of snapshot to start from.
+     * @param version - Snapshot version to start from.
      */
     onVersionSelection(version: IVersion): void;
 
@@ -92,9 +92,8 @@ export interface IDebuggerController {
 
     /**
      * "Download ops" option is clicked in the UI. Returns JSON of the full opStream when available.
-     * @param version - Version to start replay at while the op download occurs in parallel.
      */
-    onDownloadOps(version: IVersion): Promise<string>;
+    onDownloadOps(): Promise<string>;
 }
 
 const debuggerWindowHtml =
@@ -214,11 +213,9 @@ export class DebuggerUI {
 
     private attachDownloadOpsListener(element: HTMLElement) {
         element.addEventListener("click", () => {
-            if (this.versions.length > 0) {
-                this.controller.onDownloadOps(this.versions[0]).then((opJson) => {
-                    this.download("opStream.json", opJson);
-                }).catch((error) => {console.log(`Error downloading ops: ${error}`);});
-            }
+            this.controller.onDownloadOps().then((opJson) => {
+                this.download("opStream.json", opJson);
+            }).catch((error) => {console.log(`Error downloading ops: ${error}`);});
         });
     }
 

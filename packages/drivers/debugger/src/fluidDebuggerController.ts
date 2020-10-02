@@ -76,10 +76,6 @@ export class DebugReplayController extends ReplayController implements IDebugger
     // returns if this controller should be used or function as a passthrough
     private shouldUseController: boolean | undefined;
 
-    private constructor() {
-        super();
-    }
-
     public connectToUi(ui: IDebuggerUI): void {
         this.ui = ui;
     }
@@ -149,11 +145,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         reader.readAsText(file, "utf-8");
     }
 
-    public onViewStats() {
-        // TODO
-    }
-
-    public async onDownloadOps(version: IVersion): Promise<string> {
+    public async onDownloadOps(): Promise<string> {
         if (this.documentDeltaStorageService !== undefined) {
             const messages = await this.fetchOpsFromDeltaStorage(this.documentDeltaStorageService);
             return JSON.stringify(messages, undefined, 2);
