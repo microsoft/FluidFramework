@@ -32,25 +32,31 @@ export interface IDatabaseManager {
     getScribeDeltaCollection(tenantId: string, documentId: string): Promise<ICollection<ISequencedOperationMessage>>;
 }
 
+/**
+ * Interface for a database of values that have type T.
+ * In some implementations,T should have a member "_id" which is a string used
+ * when adding or finding value in the database.
+ */
 export interface ICollection<T> {
     /**
-     * Finds queries in the database and returns sorted result.
+     * Finds queries in the database
      *
      * @param query - data we want to find
-     * @param sort - the value used to sort data.
-     *
+     * @param sort - object with property we use to sort on, whose value is 0 for descending order and 1 for ascending
+     * @returns - sorted results of query
      */
     find(query: any, sort: any): Promise<T[]>;
 
     /**
-     * Finds one query in the database, returns its value
+     * Finds one query in the database
      *
-     *  @param query - data we want to find
+     * @param query - data we want to find
+     * @returns - value of the query in the database
      */
     findOne(query: any): Promise<T>;
 
     /**
-     * Returns all values in the database
+     * @returns - all values in the database
      */
     findAll(): Promise<T[]>;
 
@@ -65,12 +71,13 @@ export interface ICollection<T> {
 
     /**
      *
-     * Finds the query in the db. If it exists, update the value to set.
+     * Finds the query in the database. If it exists, update the value to set.
      * Throws if query cannot be found.
      *
      *  @param filter - data we want to find
      *  @param set - new values to change to
-     *  @param addToSet
+     *  @param addToSet - an operator that adds a value to the database unless the value already exists;
+     *   only used in mongodb.ts
      */
     update(filter: any, set: any, addToSet: any): Promise<void>;
 
@@ -81,7 +88,8 @@ export interface ICollection<T> {
      *
      *  @param filter - data we want to find
      *  @param set - new values to change to
-     *  @param addToSet - unused
+     *  @param addToSet - an operator that adds a value to the database unless the value already exists;
+     *   only used in mongodb.ts
      */
     upsert(filter: any, set: any, addToSet: any): Promise<void>;
 
