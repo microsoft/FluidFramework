@@ -17,6 +17,7 @@ export async function addKeyValue(url: string, keyValueToAdd: IKeyValue): Promis
             },
             json: true,
         });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return newKeyValue;
 }
 

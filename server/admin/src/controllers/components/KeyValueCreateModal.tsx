@@ -32,6 +32,7 @@ export class CreateKeyValueModal extends React.Component<IKeyValueCreateProps> {
 
     public render() {
         const { confirmLoading, visible, onCancel, onCreate, form } = this.props;
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         const { getFieldDecorator } = form;
         return (
             <Modal
