@@ -50,11 +50,12 @@ export function getConfig(
  * Helper function to return a relative range (if local) or the specific chaincode package version
  */
 export function getVersion() {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
     const version = require("../package.json").version as string;
     return `${version.endsWith(".0") ? "^" : ""}${version}`;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 const getUser = (request: Request) => request.user ?? request.session?.guest;
 
 export function getJWTClaims(request: Request): IJWTClaims {
