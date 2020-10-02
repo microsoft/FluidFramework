@@ -323,6 +323,10 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
         );
 
         const instanceP = this.instantiateInstance(runtime, newContext, initialState);
+        // if it's a newly created object, we need to wait for it to finish initialization
+        // as that results in creation of DDSs, before it gets attached, providing atomic
+        // guarantee of creation.
+        await instanceP;
 
         runtime.registerRequestHandler(async (request: IRequest) => {
             const instance = await instanceP;
