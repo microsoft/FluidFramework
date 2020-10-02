@@ -37,11 +37,11 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
     /**
      * A resolved version of the Fluid package. All Fluid browser file entries should be absolute urls.
      */
-    resolvedPackage: IFluidPackage;
+    readonly resolvedPackage: Readonly<IFluidPackage>;
     /**
      * If not undefined, this id will be used to cache the entry point for the code package
      */
-    resolvedPackageCacheId: string | undefined;
+    readonly cacheId: string | undefined;
 }
 
 /**

@@ -4,15 +4,15 @@
  */
 
 import {
-    IFluidCodeDetails, IFluidCodeResolver, IResolvedFluidCodeDetails, isFluidPackage,
+    IFluidCodeDetails, IFluidCodeResolver, IResolvedFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import fetch from "isomorphic-fetch";
-import { extractPackageIdentifierDetails } from "./utils";
+import { extractPackageIdentifierDetails, isFluidBrowserPackage, resolveFluidPackageEnvironment } from "./utils";
 
 class FluidPackage {
     private resolveP: Promise<IResolvedFluidCodeDetails> | undefined;
 
-    constructor(private readonly codeDetails: IFluidCodeDetails, private readonly packageUrl: string) { }
+    constructor(private readonly codeProposal: IFluidCodeDetails, private readonly packageUrl: string) { }
 
     public async resolve(): Promise<IResolvedFluidCodeDetails> {
         if (this.resolveP === undefined) {
@@ -24,28 +24,28 @@ class FluidPackage {
 
     private async resolveCore(): Promise<IResolvedFluidCodeDetails> {
         let maybePkg: any;
-        if (typeof this.codeDetails.package === "string") {
+        if (typeof this.codeProposal.package === "string") {
             const response = await fetch(`${this.packageUrl}/package.json`);
             maybePkg = await response.json();
         } else {
-            maybePkg = this.codeDetails.package;
+            maybePkg = this.codeProposal.package;
         }
 
-        if (!isFluidPackage(maybePkg)) {
-            throw new Error(`Package ${maybePkg.name} not a Fluid module.`);
+        if (!isFluidBrowserPackage(maybePkg)) {
+            throw new Error(`Package ${maybePkg?.name} not a Fluid module.`);
         }
-        const files = maybePkg.fluid.browser.umd.files;
-        for (let i = 0; i < maybePkg.fluid.browser.umd.files.length; i++) {
-            if (!files[i].startsWith("http")) {
-                files[i] = `${this.packageUrl}/${files[i]}`;
-            }
-        }
+        const browser = resolveFluidPackageEnvironment(
+            maybePkg.fluid.browser, this.packageUrl);
 
         return {
-            config: this.codeDetails.config,
-            package: this.codeDetails.package,
-            resolvedPackage: maybePkg,
-            resolvedPackageCacheId: this.packageUrl,
+            ... this.codeProposal,
+            resolvedPackage: {
+                ... maybePkg,
+                fluid:{
+                    browser,
+                },
+            },
+            cacheId: this.packageUrl,
         };
     }
 }
@@ -65,17 +65,17 @@ export class SemVerCdnCodeResolver implements IFluidCodeResolver {
     // Cache goes CDN -> package -> entrypoint
     private readonly fluidPackageCache = new Map<string, FluidPackage>();
 
-    public async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
-        const parsed = extractPackageIdentifierDetails(details.package);
+    public async resolveCodeDetails(proposal: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
+        const parsed = extractPackageIdentifierDetails(proposal.package);
 
-        const cdn = details.config[`@${parsed.scope}:cdn`] ?? details.config.cdn;
+        const cdn = proposal.config[`@${parsed.scope}:cdn`] ?? proposal.config.cdn;
         const scopePath = parsed.scope !== undefined && parsed.scope.length > 0 ? `@${encodeURI(parsed.scope)}/` : "";
         const packageUrl = parsed.version !== undefined
             ? `${cdn}/${scopePath}${encodeURI(`${parsed.name}@${parsed.version}`)}`
             : `${cdn}/${scopePath}${encodeURI(`${parsed.name}`)}`;
 
         if (!this.fluidPackageCache.has(packageUrl)) {
-            const resolved = new FluidPackage(details, packageUrl);
+            const resolved = new FluidPackage(proposal, packageUrl);
             this.fluidPackageCache.set(packageUrl, resolved);
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

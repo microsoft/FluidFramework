@@ -11,6 +11,7 @@ import {
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
 } from "@fluidframework/container-definitions";
+import { isFluidBrowserPackage } from "./utils";
 import { ScriptManager } from "./scriptManager";
 
 export class WebCodeLoader implements ICodeLoader {
@@ -26,21 +27,21 @@ export class WebCodeLoader implements ICodeLoader {
         maybeFluidModule?: Promise<IFluidModule> | IFluidModule,
     ): Promise<void> {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
-        if (resolved.resolvedPackageCacheId !== undefined
-            && this.loadedModules.has(resolved.resolvedPackageCacheId)) {
+        if (resolved.cacheId !== undefined
+            && this.loadedModules.has(resolved.cacheId)) {
             return;
         }
         const fluidModule = maybeFluidModule ?? this.load(source);
-        if (resolved.resolvedPackageCacheId !== undefined) {
-            this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModule);
+        if (resolved.cacheId !== undefined) {
+            this.loadedModules.set(resolved.cacheId, fluidModule);
         }
     }
 
     public async preCache(source: IFluidCodeDetails, tryPreload: boolean) {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
-        if (resolved?.resolvedPackage?.fluid?.browser?.umd?.files !== undefined) {
+        if (resolved?.resolvedPackage?.fluid?.environment?.umd?.files !== undefined) {
             return this.scriptManager.preCacheFiles(
-                resolved.resolvedPackage.fluid.browser.umd.files, tryPreload);
+                resolved.resolvedPackage.fluid.environment.umd.files, tryPreload);
         }
     }
 
@@ -51,16 +52,16 @@ export class WebCodeLoader implements ICodeLoader {
         source: IFluidCodeDetails,
     ): Promise<IFluidModule> {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
-        if (resolved.resolvedPackageCacheId !== undefined) {
-            const maybePkg = this.loadedModules.get(resolved.resolvedPackageCacheId);
+        if (resolved.cacheId !== undefined) {
+            const maybePkg = this.loadedModules.get(resolved.cacheId);
             if (maybePkg !== undefined) {
                 return maybePkg;
             }
         }
 
         const fluidModuleP = this.loadModuleFromResolvedCodeDetails(resolved);
-        if (resolved.resolvedPackageCacheId !== undefined) {
-            this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModuleP);
+        if (resolved.cacheId !== undefined) {
+            this.loadedModules.set(resolved.cacheId, fluidModuleP);
         }
         return fluidModuleP;
     }
@@ -69,10 +70,12 @@ export class WebCodeLoader implements ICodeLoader {
         if (this.allowList !== undefined && !(await this.allowList.testSource(resolved))) {
             throw new Error("Attempted to load invalid code package url");
         }
+        if (!isFluidBrowserPackage(resolved.resolvedPackage)) {
+            throw new Error(`Package ${resolved.resolvedPackage.name} not a Fluid module.`);
+        }
 
         const loadedScripts = await this.scriptManager.loadLibrary(
-            resolved.resolvedPackage.fluid.browser.umd,
-        );
+            resolved.resolvedPackage.fluid.browser.umd);
         let fluidModule: IFluidModule | undefined;
         for (const script of loadedScripts) {
             const maybeFluidModule = script.entryPoint as IFluidModule;

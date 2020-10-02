@@ -66,7 +66,7 @@ export class ScriptManager {
         return this.loadCache.get(scriptUrl);
     }
 
-    public async preCacheFiles(files: string[], tryPreload: boolean): Promise<void> {
+    public async preCacheFiles(files: readonly string[], tryPreload: boolean): Promise<void> {
         await Promise.all(
             files.map(async (url) => {
                 const cacheLink = document.createElement("link");
@@ -94,7 +94,7 @@ export class ScriptManager {
     }
 
     public async loadLibrary(
-        libraryDetails: { files: string[]; library: string },
+        libraryDetails: { files: readonly string[]; readonly library: string },
     ): Promise<{ file: string, entryPoint: unknown }[]> {
         return ScriptManager.protectEntrypoint(libraryDetails.library, async () => {
             return Promise.all(
