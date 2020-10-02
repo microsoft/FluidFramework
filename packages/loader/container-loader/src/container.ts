@@ -674,17 +674,57 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.resumeInternal();
     }
 
+    /**
+     * Waits until container connects to delta storage and gets up-to-date
+     * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
+     * up to date. Host may chose to wait in such case and retry resolving URI.
+     * @returns true: container is up to date, it processed all the ops that were know at the time of first connection
+     *          false: storage does not provide indication of how far the client is.
+     */
+    public async waitCatchingUp() {
+        return new Promise<boolean>((accept) => {
+            let connectionOpSeqNumber: number | undefined;
+            const callback = (_, opsBehind) => {
+                if (connectionOpSeqNumber !== undefined) {
+                    return;
+                }
+                // We might be already up-today (opsBehind <= 0). If so, report it right away.
+                // Storage may not provide any indication on how far client is behind.
+                if (opsBehind === undefined || opsBehind <= 0) {
+                    accept(opsBehind !== undefined);
+                    this.deltaManager.off("connect", callback);
+                    return;
+                }
+
+                connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
+                const callbackOps = (message) => {
+                    if (message.sequenceNumber === connectionOpSeqNumber) {
+                        accept(true);
+                        this.deltaManager.off("connect", callback);
+                        this.deltaManager.off("beforeOpProcessing", callbackOps);
+                    }
+                };
+                this.deltaManager.on("beforeOpProcessing", callbackOps);
+            };
+
+            this.deltaManager.on("connect", callback);
+
+            this.resume();
+        });
+    }
+
     protected resumeInternal(args: IConnectionArgs = {}) {
         if (this.closed) {
             throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
         }
 
         // Resume processing ops
-        assert(!this.resumedOpProcessingAfterLoad);
-        this.resumedOpProcessingAfterLoad = true;
-        this._deltaManager.inbound.resume();
-        this._deltaManager.outbound.resume();
-        this._deltaManager.inboundSignal.resume();
+        if (!this.resumedOpProcessingAfterLoad) {
+            this.resumedOpProcessingAfterLoad = true;
+            this._deltaManager.inbound.resume();
+            this._deltaManager.outbound.resume();
+            this._deltaManager.inboundSignal.resume();
+        }
 
         // Ensure connection to web socket
         // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
