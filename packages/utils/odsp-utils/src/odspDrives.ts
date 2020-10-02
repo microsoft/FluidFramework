@@ -99,6 +99,16 @@ export async function getDriveItemByServerRelativePath(
     return getDriveItem(getDriveItemUrl, authRequestInfo, create);
 }
 
+export async function getDriveItemFromDriveAndItem(
+    server: string,
+    drive: string,
+    item: string,
+    authRequestInfo: IOdspAuthRequestInfo,
+): Promise<IOdspDriveItem> {
+    const url = `https://${server}/_api/v2.1/drives/${drive}/items/${item}`;
+    return getDriveItem(url, authRequestInfo, false);
+}
+
 export async function getChildrenByDriveItem(
     driveItem: IOdspDriveItem,
     server: string,

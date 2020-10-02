@@ -14,10 +14,10 @@ import {
     IFluidSerializer,
     IRequest,
     IResponse,
+    IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IBlobManager,
     IFluidTokenProvider,
     IContainerContext,
     IDeltaManager,
@@ -32,6 +32,7 @@ import {
 import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
+    IsoBuffer,
     Trace,
     unreachableCase,
 } from "@fluidframework/common-utils";
@@ -121,6 +122,7 @@ import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
+import { BlobManager } from "./blobManager";
 import { convertSnapshotToSummaryTree } from "./utils";
 
 const chunksBlobName = ".chunks";
@@ -134,6 +136,8 @@ export enum ContainerMessageType {
 
     // Chunked operation.
     ChunkedOp = "chunkedOp",
+
+    BlobAttach = "blobAttach",
 }
 
 export interface IChunkedOp {
@@ -230,6 +234,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.FluidDataStoreOp:
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
+        case ContainerMessageType.BlobAttach:
         case MessageType.Operation:
             return true;
         default:
@@ -536,11 +541,6 @@ export class ContainerRuntime extends EventEmitter
         return this.context.clientDetails;
     }
 
-    public get blobManager(): IBlobManager {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.context.blobManager!;
-    }
-
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this.context.deltaManager;
     }
@@ -660,6 +660,7 @@ export class ContainerRuntime extends EventEmitter
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
+    private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
 
     // Local copy of incomplete received chunks.
@@ -807,6 +808,12 @@ export class ContainerRuntime extends EventEmitter
             this.setNewContext(key, dataStoreContext);
         }
 
+        this.blobManager = new BlobManager(
+            this.IFluidHandleContext,
+            () => this.storage,
+            (blobId) => this.submit(ContainerMessageType.BlobAttach, { blobId }),
+        );
+
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
             this,
@@ -953,7 +960,23 @@ export class ContainerRuntime extends EventEmitter
     public async resolveHandle(request: IRequest): Promise<IResponse> {
         const requestParser = new RequestParser(request);
 
-        if (requestParser.pathParts.length > 0) {
+        if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === this.blobManager.basePath) {
+            assert(requestParser.pathParts.length === 2 && !requestParser.query);
+            const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
+            if (handle) {
+                return {
+                    status: 200,
+                    mimeType: "fluid/object",
+                    value: handle.get(),
+                };
+            } else {
+                return {
+                    status: 404,
+                    mimeType: "text/plain",
+                    value: "blob not found",
+                };
+            }
+        } else if (requestParser.pathParts.length > 0) {
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
@@ -1298,6 +1321,11 @@ export class ContainerRuntime extends EventEmitter
         return context;
     }
 
+    public async _createDataStoreWithProps(pkg: string | string[], props?: any, id = uuid()):
+        Promise<IFluidDataStoreChannel> {
+        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props).realize();
+    }
+
     private async _createDataStore(pkg: string | string[], id = uuid()): Promise<IFluidDataStoreChannel>
     {
         return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id).realize();
@@ -1307,7 +1335,7 @@ export class ContainerRuntime extends EventEmitter
         return this.connected && !this.deltaManager.readonly;
     }
 
-    private _createFluidDataStoreContext(pkg: string[], id) {
+    private _createFluidDataStoreContext(pkg: string[], id: string, props?: any) {
         const context = new LocalFluidDataStoreContext(
             id,
             pkg,
@@ -1318,6 +1346,7 @@ export class ContainerRuntime extends EventEmitter
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
+            props,
         );
         this.setupNewContext(context);
         return context;
@@ -1786,6 +1815,10 @@ export class ContainerRuntime extends EventEmitter
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
     }
 
+    public async uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>> {
+        return this.blobManager.createBlob(blob);
+    }
+
     private submit(
         type: ContainerMessageType,
         content: any,
@@ -1917,6 +1950,9 @@ export class ContainerRuntime extends EventEmitter
                 break;
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
+            case ContainerMessageType.BlobAttach:
+                this.submit(type, content, localOpMetadata);
+                break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }

@@ -27,7 +27,6 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "test:ci": "echo No test for this package",
     "tsc": "tsc",
     "tsc:watch": "tsc --watch",
     "tsfmt": "tsfmt --verify",

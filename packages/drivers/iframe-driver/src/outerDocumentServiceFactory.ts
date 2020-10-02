@@ -170,6 +170,9 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             createBlob: async (file) => {
                 return storage.createBlob(file);
             },
+            readBlob: async (blobId) => {
+                return storage.readBlob(blobId);
+            },
             getRawUrl: (blobId) => {
                 return storage.getRawUrl(blobId);
             },

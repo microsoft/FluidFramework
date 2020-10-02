@@ -23,6 +23,10 @@ parameters:
 - name: containerName
   type: string
 
+- name: tagName
+  type: string
+  default:
+
 jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
@@ -31,8 +35,8 @@ jobs:
   workspace:
     clean: all
   variables:
-  - name: containerTagSuffix
-    value: $[ stageDependencies.build.build.outputs['SetVersion.version']]
+    version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
+    containerTagSuffix: $(version)
   strategy:
     runOnce:
         deploy:
@@ -71,3 +75,7 @@ jobs:
                 tags: |
                   $(containerTagSuffix)
                   latest
+
+            - template: include-git-tag-steps.yml
+              parameters:
+                tagName: ${{ parameters.tagName }}

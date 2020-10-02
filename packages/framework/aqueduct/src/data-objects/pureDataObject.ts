@@ -140,7 +140,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
             assert(props === undefined);
             await this.initializingFromExisting();
         } else {
-            await this.initializingFirstTime(props);
+            await this.initializingFirstTime(this.context.createProps as S ?? props);
         }
         await this.hasInitialized();
     }

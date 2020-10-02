@@ -3,9 +3,9 @@ title: The Fluid service
 menuPosition: 6
 ---
 
-Fluid Framework contains a service component. A reference implementation of a Fluid service called _Routerlicious_ is
+The Fluid Framework contains a service component. A reference implementation of a Fluid service called _Routerlicious_ is
 included in the FluidFramework repo. Note that Routerlicious is one of many Fluid services that could be implemented.
-Fluid Framework uses a loose-coupling architecture for integrating with services, so Fluid is not limited to a single
+The Fluid Framework uses a loose-coupling architecture for integrating with services, so Fluid is not limited to a single
 implementation.
 
 
@@ -37,7 +37,7 @@ topic](../advanced/summarizer.md).
 
 ## Drivers
 
-Fluid Framework uses a loose-coupling architecture for integrating with Fluid services. Drivers are used to abstract the
+The Fluid Framework uses a loose-coupling architecture for integrating with Fluid services. Drivers are used to abstract the
 service-specific behavior. This enables an implementer to use any ordering and storage architecture or technology to
 implement the Fluid service.
 

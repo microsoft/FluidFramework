@@ -32,12 +32,12 @@ pr:
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
-  
+
 extends:
   template: templates/build-docker-service.yml
   parameters:
     buildDirectory: server/gateway
     containerName: gateway
-    test: true
+    test: test
     lint: true
     containerBaseDir: /usr/src/server

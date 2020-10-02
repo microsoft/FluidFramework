@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:12.16.3-slim
+FROM node:12.16.3-slim AS base
 
 # Add Tini
 ENV TINI_VERSION v0.18.0
@@ -17,12 +17,13 @@ RUN npm install
 COPY . .
 RUN npm run build
 
+# Build that actually runs
+FROM base AS runner
+
 # Expose the port the app runs under
 EXPOSE 3000
 
-# Give node user access to nyc in order to run unit tests
-RUN mkdir nyc
-RUN chown node: nyc
+# Don't run as root user
 USER node
 
 # Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than

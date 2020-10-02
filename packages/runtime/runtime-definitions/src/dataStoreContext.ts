@@ -5,15 +5,16 @@
 
 import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
+import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidRouter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
+    IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IBlobManager,
     IDeltaManager,
     ContainerWarning,
     ILoader,
@@ -90,6 +91,12 @@ export interface IContainerRuntimeBase extends
     on(event: "leader" | "notleader", listener: () => void): this;
 
     /**
+     * @deprecated 0.16 Issue #1537, #3631
+     * @internal
+     */
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IFluidDataStoreChannel>;
+
+    /**
      * Creates data store. Returns router of data store. Data store is not bound to container,
      * store in such state is not persisted to storage (file). Storing a handle to this store
      * (or any of its parts, like DDS) into already attached DDS (or non-attached DDS that will eventually
@@ -112,6 +119,8 @@ export interface IContainerRuntimeBase extends
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
     getTaskManager(): Promise<ITaskManager>;
+
+    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
 }
 
 /**
@@ -230,6 +239,13 @@ export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalF
 export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFluidDataStoreRegistry> {
     readonly documentId: string;
     readonly id: string;
+    // A data store created by a client, is a local data store for that client. Also, when a detached container loads
+    // from a snapshot, all the data stores are treated as local data stores because at that stage the container
+    // still doesn't exists in storage and so the data store couldn't have been created by any other client.
+    // Value of this never changes even after the data store is attached.
+    // As implementer of data store runtime, you can use this property to check that this data store belongs to this
+    // client and hence implement any scenario based on that.
+    readonly isLocalDataStore: boolean;
     /**
      * The package path of the data store as per the package factory.
      */
@@ -244,7 +260,6 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
@@ -261,6 +276,11 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
      */
     readonly hostRuntime: IContainerRuntimeBase;
     readonly snapshotFn: (message: string) => Promise<void>;
+
+    /**
+     * @deprecated 0.16 Issue #1635, #3631
+     */
+    readonly createProps?: any;
 
     /**
      * Ambient services provided with the context
@@ -333,6 +353,8 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
          */
         createParam: CreateChildSummarizerNodeParam,
     ): CreateChildSummarizerNodeFn;
+
+    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
@@ -344,9 +366,4 @@ export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
         factory: IProvideFluidDataStoreFactory,
         dataStoreRuntime: IFluidDataStoreChannel,
     ): Promise<void>;
-}
-
-export interface IFluidDataStoreContextType extends IFluidDataStoreContext {
-    // True if the data store is LocalDataStoreContext.
-    readonly isLocalDataStore: boolean;
 }

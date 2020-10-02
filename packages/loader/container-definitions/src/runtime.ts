@@ -25,7 +25,6 @@ import {
     IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
-import { IBlobManager } from "./blobs";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { ICodeLoader, ILoader } from "./loader";
@@ -125,7 +124,6 @@ export interface IContainerContext extends IDisposable {
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string | null;
-    readonly blobManager: IBlobManager | undefined;
     readonly storage: IDocumentStorageService | undefined | null;
     readonly connected: boolean;
     readonly branch: string;

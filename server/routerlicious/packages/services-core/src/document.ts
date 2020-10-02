@@ -53,6 +53,41 @@ export interface IFork {
     lastForwardedSequenceNumber: number;
 }
 
+export interface IClientSequenceNumber {
+    // Whether or not the client can expire
+    canEvict: boolean;
+    clientId: string;
+    lastUpdate: number;
+    nack: boolean;
+    referenceSequenceNumber: number;
+    clientSequenceNumber: number;
+    scopes: string[];
+}
+
+export interface IDeliState {
+    // Branch related mapping
+    branchMap: IRangeTrackerSnapshot;
+
+    // List of connected clients
+    clients: IClientSequenceNumber[];
+
+    // Durable sequence number at logOffset
+    durableSequenceNumber: number;
+
+    // Kafka checkpoint that maps to the below stored data
+    logOffset: number;
+
+    // Sequence number at logOffset
+    sequenceNumber: number;
+
+    // Epoch of stream provider
+    epoch: number;
+
+    // Term at logOffset
+    term: number;
+}
+
+// TODO: We should probably rename this to IScribeState
 export interface IScribe {
     // Kafka checkpoint that maps to the below stored data
     logOffset: number;
@@ -96,33 +131,6 @@ export interface IDocument {
 
         minimumSequenceNumber: number;
     };
-
-    // This field will be deprecated when all documents are updated to latest schema.
-    clients: [{
-        // Whether deli is allowed to evict the client from the MSN queue (i.e. due to timeouts, etc...)
-        canEvict: boolean,
-
-        clientId: string,
-
-        clientSequenceNumber: number,
-
-        referenceSequenceNumber: number,
-
-        lastUpdate: number,
-
-        nack: boolean,
-
-        scopes: string[],
-    }];
-
-    // This field will be deprecated when all documents are updated to latest schema.
-    branchMap: IRangeTrackerSnapshot;
-
-    // This field will be deprecated when all documents are updated to latest schema.
-    sequenceNumber: number;
-
-    // This field will be deprecated when all documents are updated to latest schema.
-    logOffset: number;
 
     // Scribe state
     scribe: string;
