@@ -22,7 +22,6 @@ export interface IFluidPackage {
     version: string;
     // https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
     fluid: {
-        browser: IFluidPackageEnvironment;
         [environment: string]: IFluidPackageEnvironment;
     };
     // General access for extended fields

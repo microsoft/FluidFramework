@@ -12,7 +12,6 @@ import {
 import {
     IContainer,
     IFluidCodeDetails,
-    IFluidPackage,
     ILoader,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
@@ -79,10 +78,10 @@ class OldTestDataStoreV2 extends OldTestDataStore {
 describe("context reload", function() {
     const documentId = "contextReloadTest";
     const documentLoadUrl = `fluid-test://localhost/${documentId}`;
-    const codeDetails = (version: string): IFluidCodeDetails => {
+    const codeDetails = (version: string): old.IFluidCodeDetails => {
         return {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            package: { name: TestDataStore.type, version } as IFluidPackage,
+            package: { name: TestDataStore.type, version } as old.IFluidPackage,
             config: {},
         };
     };
