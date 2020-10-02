@@ -26,7 +26,6 @@ import {
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentAttributes,
     IDocumentMessage,
@@ -107,11 +106,6 @@ export class ContainerContext implements IContainerContext {
 
     public get parentBranch(): string | null {
         return this.container.parentBranch;
-    }
-
-    // Back-compat: supporting <= 0.16 data stores
-    public get connectionState(): ConnectionState {
-        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
     public get runtimeVersion(): string | undefined {
@@ -238,14 +232,7 @@ export class ContainerContext implements IContainerContext {
 
         assert.strictEqual(connected, this.connected, "Mismatch in connection state while setting");
 
-        // Back-compat: supporting <= 0.16 data stores
-        if (runtime.setConnectionState !== undefined) {
-            runtime.setConnectionState(connected, clientId);
-        } else if (runtime.changeConnectionState !== undefined) {
-            runtime.changeConnectionState(this.connectionState, clientId);
-        } else {
-            assert.fail("Runtime missing both setConnectionState and changeConnectionState");
-        }
+        runtime.setConnectionState(connected, clientId);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
