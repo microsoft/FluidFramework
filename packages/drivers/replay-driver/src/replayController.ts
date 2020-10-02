@@ -52,12 +52,12 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
     /**
      * Initialize reply controller
      * @param storage - real document storage
+     * @param storage - real document delta storage
      * @returns - Boolean, indicating if controller should be used.
      * If false is returned, caller should fallback to original storage.
      */
-    public abstract initStorage(storage: IDocumentStorageService): Promise<boolean>;
-
-    public abstract initDeltaStorage(storage: IDocumentDeltaStorageService): Promise<void>;
+    public abstract initStorage(
+        storage: IDocumentStorageService, deltaStorage: IDocumentDeltaStorageService): Promise<boolean>;
 
     /**
      * Returns sequence number to start processing ops

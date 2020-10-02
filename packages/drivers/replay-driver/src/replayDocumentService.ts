@@ -18,18 +18,16 @@ export class ReplayDocumentService implements api.IDocumentService {
     public static async create(
         documentService: api.IDocumentService,
         controller: ReplayController): Promise<api.IDocumentService> {
-        const storage = await documentService.connectToStorage();
+        const [storage, deltaStorage] = await Promise.all(
+            [documentService.connectToStorage(), documentService.connectToDeltaStorage()]);
 
-        const useController = await controller.initStorage(storage);
+        const useController = await controller.initStorage(storage, deltaStorage);
         if (!useController) {
             return documentService;
         }
 
-        const deltaStorageConnection = await documentService.connectToDeltaStorage();
-        await controller.initDeltaStorage(deltaStorageConnection);
-
         const deltaConnection = ReplayDocumentDeltaConnection.create(
-            deltaStorageConnection,
+            deltaStorage,
             controller);
         return new ReplayDocumentService(controller, deltaConnection);
     }

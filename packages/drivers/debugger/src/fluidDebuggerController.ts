@@ -64,7 +64,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     protected retryFetchOpsOnEndOfFile = false;
 
     protected documentStorageService?: IDocumentStorageService;
-    private readonly documentDeltaStorageServiceDeferred = new Deferred<IDocumentDeltaStorageService>();
+    private documentDeltaStorageService?: IDocumentDeltaStorageService;
     protected versions: IVersion[] = [];
     protected stepsToPlay: number = 0;
     protected lastOpReached = false;
@@ -154,12 +154,11 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async onDownloadOps(version: IVersion): Promise<string> {
-        // Select a version to trigger initialization of the deltaStorageManager in ReplayService.
-        // This also begins the fluid debugging experience.
-        await this.onVersionSelection(version);
-        const deltaStorageService = await this.documentDeltaStorageServiceDeferred.promise;
-        const messages = await this.fetchOpsFromDeltaStorage(deltaStorageService);
-        return JSON.stringify(messages, undefined, 2);
+        if (this.documentDeltaStorageService !== undefined) {
+            const messages = await this.fetchOpsFromDeltaStorage(this.documentDeltaStorageService);
+            return JSON.stringify(messages, undefined, 2);
+        }
+        return "N/A";
     }
 
     private async fetchOpsFromDeltaStorage(documentDeltaStorageService): Promise<ISequencedDocumentMessage[]> {
@@ -201,7 +200,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
         }
     }
 
-    public async initStorage(documentStorageService: IDocumentStorageService): Promise<boolean> {
+    public async initStorage(
+        documentStorageService: IDocumentStorageService,
+        documentDeltaStorageService: IDocumentDeltaStorageService): Promise<boolean> {
         if (this.shouldUseController !== undefined) {
             return this.shouldUseController;
         }
@@ -209,6 +210,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         assert(documentStorageService);
         assert(!this.documentStorageService);
         this.documentStorageService = documentStorageService;
+        this.documentDeltaStorageService = documentDeltaStorageService;
 
         // User can chose "file" at any moment in time!
         if (!this.isSelectionMade()) {
@@ -244,10 +246,6 @@ export class DebugReplayController extends ReplayController implements IDebugger
 
         assert(this.isSelectionMade() === this.shouldUseController);
         return this.shouldUseController;
-    }
-
-    public async initDeltaStorage(storage: IDocumentDeltaStorageService): Promise<void> {
-        this.documentDeltaStorageServiceDeferred.resolve(storage);
     }
 
     public async read(blobId: string): Promise<string> {

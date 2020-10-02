@@ -120,7 +120,7 @@ const debuggerWindowHtml2 =
 <div id='versionText'></div>
 <div id='lastOp'></div>
 <br/>
-Step to move: <input type='number' id='steps' value='1' style='width:50px'/>
+Step to move: <input type='number' id='steps' value='1' min='1' style='width:50px'/>
 &nbsp; &nbsp; &nbsp;<button id='buttonOps' style='width:60px'>Go</button>
 <br/><br/>
 <div id='text1'></div><div id='text2'></div><div id='text3'></div>
@@ -188,16 +188,14 @@ export class DebuggerUI {
         }, false);
 
         this.selector = doc.getElementById("selector") as HTMLSelectElement;
-        const buttonVers = doc.getElementById("buttonVers") as HTMLDivElement;
-        const fileSnapshot = doc.getElementById("file") as HTMLInputElement;
-        this.versionText = doc.getElementById("versionText") as HTMLDivElement;
-        const opDownloadButton = doc.getElementById("downloadOps") as HTMLElement;
 
+        const buttonVers = doc.getElementById("buttonVers") as HTMLDivElement;
         buttonVers.onclick = () => {
             const index = this.selector!.selectedIndex;
             controller.onVersionSelection(this.versions[index]);
         };
 
+        const fileSnapshot = doc.getElementById("file") as HTMLInputElement;
         fileSnapshot.addEventListener("change", () => {
             const files = fileSnapshot.files;
             if (files) {
@@ -205,17 +203,23 @@ export class DebuggerUI {
             }
         }, false);
 
+        this.versionText = doc.getElementById("versionText") as HTMLDivElement;
         this.versionText.textContent = "Fetching snapshots, please wait...";
 
-        opDownloadButton.addEventListener("click", () => {
+        const opDownloadButton = doc.getElementById("downloadOps") as HTMLElement;
+        this.attachDownloadOpsListener(opDownloadButton);
+
+        controller.connectToUi(this);
+    }
+
+    private attachDownloadOpsListener(element: HTMLElement) {
+        element.addEventListener("click", () => {
             if (this.versions.length > 0) {
-                controller.onDownloadOps(this.versions[0]).then((opJson) => {
+                this.controller.onDownloadOps(this.versions[0]).then((opJson) => {
                     this.download("opStream.json", opJson);
                 }).catch((error) => {console.log(`Error downloading ops: ${error}`);});
             }
         });
-
-        controller.connectToUi(this);
     }
 
     public addVersions(versions: IVersion[]) {
@@ -257,20 +261,23 @@ export class DebuggerUI {
         doc.write(debuggerWindowHtml2);
         doc.close();
 
-        this.versionText = doc.getElementById("versionText") as HTMLDivElement;
         this.lastOpText = doc.getElementById("lastOp") as HTMLDivElement;
-        const steps = doc.getElementById("steps") as HTMLInputElement;
         this.text1 = doc.getElementById("text1") as HTMLDivElement;
         this.text2 = doc.getElementById("text2") as HTMLDivElement;
         this.text3 = doc.getElementById("text3") as HTMLDivElement;
 
+        const steps = doc.getElementById("steps") as HTMLInputElement;
         this.buttonOps = doc.getElementById("buttonOps") as HTMLButtonElement;
         this.buttonOps.disabled = true;
         this.buttonOps.onclick = () => {
             this.controller.onOpButtonClick(Number(steps.value));
         };
 
+        this.versionText = doc.getElementById("versionText") as HTMLDivElement;
         this.versionText.textContent = text;
+
+        const opDownloadButton = doc.getElementById("downloadOps") as HTMLElement;
+        this.attachDownloadOpsListener(opDownloadButton);
     }
 
     public disableNextOpButton(disable: boolean) {
