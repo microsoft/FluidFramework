@@ -136,6 +136,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * responsible for ensuring this is only invoked once.
      */
     public async initializeInternal(props?: S): Promise<void> {
+        await this.preInitialize();
         if (this.runtime.existing) {
             assert(props === undefined);
             await this.initializingFromExisting();
@@ -189,6 +190,12 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
     protected async getService<T extends IFluidObject>(id: string): Promise<T> {
         return handleFromLegacyUri<T>(`/${serviceRoutePathRoot}/${id}`, this.context.containerRuntime).get();
     }
+
+    /**
+     * Called every time the data store is initialized, before initializingFirstTime or
+     * initializingFromExisting is called.
+     */
+    protected async preInitialize(): Promise<void> { }
 
     /**
      * Called the first time the data store is initialized (new creations with a new

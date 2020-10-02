@@ -163,7 +163,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
      *
      * @param context - data store context used to load a data store runtime
      */
-    protected instantiateDataStoreCore(context: IFluidDataStoreContext, props?: S) {
+    protected async instantiateDataStoreCore(context: IFluidDataStoreContext, props?: S) {
         // Create a new runtime for our data store
         // The runtime is what Fluid uses to create DDS' and route to your data store
         const runtime = FluidDataStoreRuntime.load(
@@ -171,23 +171,51 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
             this.sharedObjectRegistry,
         );
 
-        let instanceP: Promise<TObj>;
+        let instanceP: Promise<TObj> | undefined;
         // For new runtime, we need to force the data store instance to be create
         // run the initialization.
         if (!this.onDemandInstantiation || !runtime.existing) {
             // Create a new instance of our component up front
             instanceP = this.instantiateInstance(runtime, context, props);
+            // if it's a newly created object, we need to wait for it to finish initialization
+            // as that results in creation of DDSs, before it gets attached, providing atomic
+            // guarantee of creation.
+            // WARNING: we can't do the same (yet) for already existing PureDataObject!
+            // This will result in deadlock, as it tries to resolve internal handles, but any
+            // handle resolution goes through root (container runtime), which can't route it back
+            // to this data store, as it's still not initialized and not known to container runtime yet.
+            // In the future, we should address it by using relative paths for handles and be able to resolve
+            // local DDSs while data store is not fully initialized.
+            if (!runtime.existing) {
+                await instanceP;
+            }
         }
 
         runtime.registerRequestHandler(async (request: IRequest) => {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            if (!instanceP) {
+            if (instanceP === undefined) {
                 // Create a new instance of our data store on demand
                 instanceP = this.instantiateInstance(runtime, context, props);
             }
             const instance = await instanceP;
             return instance.request(request);
         });
+
+        // If factory needs to instantiate PureDataObject, then it means it needs to finish
+        // initialization before anything can be done with runtime. For example, DataObject needs
+        // to provide additional blobs to summary that are not part of DDS.
+        // Please note that ideal solution is for code above to await instanceP, but given that we can't
+        // do it yet for existing data store, we have to do it only when summary is called, i.e. after
+        // data store runtime is fully initialized (from POV of container runtime)
+        if (!this.onDemandInstantiation) {
+            // TODO: replace it with some hook.
+            const summarize = runtime.summarize.bind(runtime);
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            runtime.summarize = async (...args) => {
+                await instanceP;
+                return summarize(...args);
+            };
+        }
 
         return runtime;
     }
