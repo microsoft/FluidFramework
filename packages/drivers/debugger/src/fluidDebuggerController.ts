@@ -64,7 +64,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     protected retryFetchOpsOnEndOfFile = false;
 
     protected documentStorageService?: IDocumentStorageService;
-    private documentDeltaStorageService?: IDocumentDeltaStorageService;
+    private readonly documentDeltaStorageServiceDeferred = new Deferred<IDocumentDeltaStorageService>();
     protected versions: IVersion[] = [];
     protected stepsToPlay: number = 0;
     protected lastOpReached = false;
@@ -153,21 +153,22 @@ export class DebugReplayController extends ReplayController implements IDebugger
         // TODO
     }
 
-    public onDownloadOps() {
-        this.fetchAllOps().then((result) => alert(`fetch complete. Result: ${result}`)).catch(() => {});
+    public async onDownloadOps(version: IVersion): Promise<string> {
+        // Select a version to trigger initialization of the deltaStorageManager in ReplayService.
+        // This also begins the fluid debugging experience.
+        await this.onVersionSelection(version);
+        const deltaStorageService = await this.documentDeltaStorageServiceDeferred.promise;
+        const messages = await this.fetchOpsFromDeltaStorage(deltaStorageService);
+        return JSON.stringify(messages, undefined, 2);
     }
 
-    private async fetchAllOps(): Promise<string> {
-        if (this.documentDeltaStorageService !== undefined) {
-            const deltaGenerator = generateSequencedMessagesFromDeltaStorage(this.documentDeltaStorageService);
-            const messages: ISequencedDocumentMessage[] = [];
-            for await (const message of deltaGenerator) {
-                messages.concat(message);
-            }
-
-            return JSON.stringify(messages, undefined, 2);
+    private async fetchOpsFromDeltaStorage(documentDeltaStorageService): Promise<ISequencedDocumentMessage[]> {
+        const deltaGenerator = generateSequencedMessagesFromDeltaStorage(documentDeltaStorageService);
+        let messages: ISequencedDocumentMessage[] = [];
+        for await (const message of deltaGenerator) {
+            messages = messages.concat(message);
         }
-        return "N/A";
+        return messages;
     }
 
     public fetchTo(currentOp: number): number {
@@ -238,13 +239,15 @@ export class DebugReplayController extends ReplayController implements IDebugger
             this.ui.updateVersionText(0);
         });
 
+        // This hangs until the user makes a selection or closes the window.
         this.shouldUseController = await this.startSeqDeferred.promise !== DebugReplayController.WindowClosedSeq;
+
         assert(this.isSelectionMade() === this.shouldUseController);
         return this.shouldUseController;
     }
 
     public async initDeltaStorage(storage: IDocumentDeltaStorageService): Promise<void> {
-        this.documentDeltaStorageService = storage;
+        this.documentDeltaStorageServiceDeferred.resolve(storage);
     }
 
     public async read(blobId: string): Promise<string> {

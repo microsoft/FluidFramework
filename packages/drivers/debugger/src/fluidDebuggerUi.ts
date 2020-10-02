@@ -73,7 +73,7 @@ export interface IDebuggerController {
     /**
      * UI Layer notifies about selection of version to continue.
      * On successful load, versionSelected() is called.
-     * @param version - Version, undefined (playing ops)
+     * @param version - Version of snapshot to start from.
      */
     onVersionSelection(version: IVersion): void;
 
@@ -85,10 +85,16 @@ export interface IDebuggerController {
     onSnapshotFileSelection(file: File): void;
 
     /**
-     * "next op" button is clicked in UI
+     * "next op" button is clicked in the UI
      * @param steps - number of ops to play.
      */
     onOpButtonClick(steps: number): void;
+
+    /**
+     * "Download ops" option is clicked in the UI. Returns JSON of the full opStream when available.
+     * @param version - Version to start replay at while the op download occurs in parallel.
+     */
+    onDownloadOps(version: IVersion): Promise<string>;
 }
 
 const debuggerWindowHtml =
@@ -104,8 +110,7 @@ Close debugger window to proceed to live document<br/><br/>
 <input id='file' type='file' value='Load from file'/>
 <br/><br/><div id='versionText'></div>
 <br/><br/>
-<a href='#' id='viewStats'>View Op Stats</a> |
-<a href='#' id='downloadOps'>Download Ops</a>
+<a href='#' id='downloadOps'>Download ops as json</a>
 </body>`;
 
 const debuggerWindowHtml2 =
@@ -119,6 +124,8 @@ Step to move: <input type='number' id='steps' value='1' style='width:50px'/>
 &nbsp; &nbsp; &nbsp;<button id='buttonOps' style='width:60px'>Go</button>
 <br/><br/>
 <div id='text1'></div><div id='text2'></div><div id='text3'></div>
+<br/><br/>
+<a href='#' id='downloadOps'>Download ops as json</a>
 </body>`;
 
 export class DebuggerUI {
@@ -184,14 +191,14 @@ export class DebuggerUI {
         const buttonVers = doc.getElementById("buttonVers") as HTMLDivElement;
         const fileSnapshot = doc.getElementById("file") as HTMLInputElement;
         this.versionText = doc.getElementById("versionText") as HTMLDivElement;
+        const opDownloadButton = doc.getElementById("downloadOps") as HTMLElement;
 
         buttonVers.onclick = () => {
             const index = this.selector!.selectedIndex;
             controller.onVersionSelection(this.versions[index]);
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        fileSnapshot.addEventListener("change", async () => {
+        fileSnapshot.addEventListener("change", () => {
             const files = fileSnapshot.files;
             if (files) {
                 controller.onSnapshotFileSelection(files[0]);
@@ -199,6 +206,14 @@ export class DebuggerUI {
         }, false);
 
         this.versionText.textContent = "Fetching snapshots, please wait...";
+
+        opDownloadButton.addEventListener("click", () => {
+            if (this.versions.length > 0) {
+                controller.onDownloadOps(this.versions[0]).then((opJson) => {
+                    this.download("opStream.json", opJson);
+                }).catch((error) => {console.log(`Error downloading ops: ${error}`);});
+            }
+        });
 
         controller.connectToUi(this);
     }
@@ -296,5 +311,18 @@ export class DebuggerUI {
             text = `Document's last op seq#: ${lastKnownOp}`;
         }
         this.lastOpText!.textContent = text;
+    }
+
+    private download(filename: string, data: string): void {
+        const element = document.createElement("a");
+        element.setAttribute("href", `data:text/plain;charset=utf-8,${  encodeURIComponent(data)}`);
+        element.setAttribute("download", filename);
+
+        element.style.display = "none";
+        document.body.appendChild(element);
+
+        element.click();
+
+        document.body.removeChild(element);
     }
 }
