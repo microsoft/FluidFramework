@@ -93,7 +93,6 @@ export class PuppetMaster extends EventEmitter {
         // Overriding this to use a setTimeout based version.
         await this.page.evaluate(() => {
             (window as any).setImmediate = (callback: any) => {
-                // TODO: possible bug?
                 // eslint-disable-next-line @typescript-eslint/no-implied-eval
                 window.setTimeout(callback, 0);
             };
