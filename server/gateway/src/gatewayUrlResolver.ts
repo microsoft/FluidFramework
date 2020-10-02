@@ -14,8 +14,11 @@ import { chooseCelaName } from "@fluidframework/server-services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
+import dotenv from "dotenv";
 import { IAlfred } from "./interfaces";
 import { isSpoTenant, spoGetResolvedUrl } from "./odspUtils";
+
+dotenv.config();
 
 interface FullTree {
     cache: IGitCache,
@@ -30,17 +33,23 @@ export function resolveUrl(
     documentId: string,
     scopes: ScopeType[],
     request: Request,
+    driveId?: string,
 ): [Promise<IFluidResolvedUrl>, Promise<undefined | FullTree>] {
     if (isSpoTenant(tenantId)) {
-        const microsoftConfiguration = config.get("login:microsoft");
-        const clientConfig: IClientConfig = {
-            clientId: microsoftConfiguration.clientId,
-            clientSecret: microsoftConfiguration.secret,
-        };
-        const resolvedP = spoGetResolvedUrl(tenantId, documentId,
-            request.session?.tokens, clientConfig);
-        const fullTreeP = Promise.resolve(undefined);
-        return [resolvedP, fullTreeP];
+        const clientId = process.env.MICROSOFT_CONFIGURATION_CLIENT_ID;
+        const clientSecret = process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET;
+        if (clientId !== undefined && clientSecret !== undefined) {
+            const clientConfig: IClientConfig = {
+                clientId,
+                clientSecret,
+            };
+            const resolvedP = spoGetResolvedUrl(tenantId, documentId,
+                request.session?.tokens, clientConfig, driveId);
+            const fullTreeP = Promise.resolve(undefined);
+            return [resolvedP, fullTreeP];
+        } else {
+            throw new Error("Failed to find MICROSOFT_CONFIGURATION values in .env");
+        }
     } else {
         let user: IAlfredUser | undefined;
         if ("cela" in request.query) {

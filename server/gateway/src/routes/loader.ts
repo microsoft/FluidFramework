@@ -14,11 +14,14 @@ import jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { v4 } from "uuid";
 import winston from "winston";
+import dotenv from "dotenv";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
 import { getConfig, getJWTClaims, getUserDetails, queryParamAsString } from "../utils";
 import { defaultPartials } from "./partials";
+
+dotenv.config();
 
 export function create(
     config: Provider,
@@ -54,6 +57,7 @@ export function create(
     router.get("/:tenantId/*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response) => {
         const start = Date.now();
         const chaincode: string = queryParamAsString(request.query.chaincode);
+        const driveId: string | undefined = queryParamAsString(request.query.driveId);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         getUrlWithVersion(chaincode).then((version: string) => {
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -65,6 +69,7 @@ export function create(
                 const claims = getJWTClaims(request);
                 const jwtToken = jwt.sign(claims, jwtKey);
 
+                // TODO: Why does RegEx parsing for params not work on the URL?
                 const rawPath = request.params[0];
                 const slash = rawPath.indexOf("/");
                 const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
@@ -75,7 +80,7 @@ export function create(
                 const search = parse(request.url).search;
                 const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
                 const [resolvedP, fullTreeP] =
-                    resolveUrl(config, alfred, appTenants, tenantId, documentId, scopes, request);
+                    resolveUrl(config, alfred, appTenants, tenantId, documentId, scopes, request, driveId);
 
                 const workerConfig = getConfig(
                     config.get("worker"),
@@ -172,7 +177,7 @@ export function create(
                                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                                 cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
                                 chaincode: JSON.stringify(pkg),
-                                clientId: config.get("login:microsoft").clientId,
+                                clientId: process.env.MICROSOFT_CONFIGURATION_CLIENT_ID,
                                 config: workerConfig,
                                 jwt: jwtToken,
                                 partials: defaultPartials,

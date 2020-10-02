@@ -14,11 +14,14 @@ import jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { v4 } from "uuid";
 import winston from "winston";
+import dotenv from "dotenv";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
 import { getConfig, getJWTClaims, getUserDetails, queryParamAsString } from "../utils";
 import { defaultPartials } from "./partials";
+
+dotenv.config();
 
 export function create(
     config: Provider,
@@ -154,7 +157,7 @@ export function create(
                         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                         cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
                         chaincode: JSON.stringify(pkg),
-                        clientId: config.get("login:microsoft").clientId,
+                        clientId: process.env.MICROSOFT_CONFIGURATION_CLIENT_ID,
                         config: workerConfig,
                         jwt: jwtToken,
                         partials: defaultPartials,
