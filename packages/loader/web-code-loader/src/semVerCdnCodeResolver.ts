@@ -4,7 +4,7 @@
  */
 
 import {
-    IFluidCodeDetails, IFluidCodeResolver, IPackage, IResolvedFluidCodeDetails, isFluidPackage,
+    IFluidCodeDetails, IFluidCodeResolver, IResolvedFluidCodeDetails, isFluidPackage,
 } from "@fluidframework/container-definitions";
 import fetch from "isomorphic-fetch";
 import { extractPackageIdentifierDetails } from "./utils";
@@ -23,19 +23,19 @@ class FluidPackage {
     }
 
     private async resolveCore(): Promise<IResolvedFluidCodeDetails> {
-        let packageJson: IPackage;
+        let maybePkg: any;
         if (typeof this.codeDetails.package === "string") {
             const response = await fetch(`${this.packageUrl}/package.json`);
-            packageJson = await response.json() as IPackage;
+            maybePkg = await response.json();
         } else {
-            packageJson = this.codeDetails.package;
+            maybePkg = this.codeDetails.package;
         }
 
-        if (!isFluidPackage(packageJson)) {
-            throw new Error(`Package ${packageJson.name} not a Fluid module.`);
+        if (!isFluidPackage(maybePkg)) {
+            throw new Error(`Package ${maybePkg.name} not a Fluid module.`);
         }
-        const files = packageJson.fluid.browser.umd.files;
-        for (let i = 0; i < packageJson.fluid.browser.umd.files.length; i++) {
+        const files = maybePkg.fluid.browser.umd.files;
+        for (let i = 0; i < maybePkg.fluid.browser.umd.files.length; i++) {
             if (!files[i].startsWith("http")) {
                 files[i] = `${this.packageUrl}/${files[i]}`;
             }
@@ -44,14 +44,14 @@ class FluidPackage {
         return {
             config: this.codeDetails.config,
             package: this.codeDetails.package,
-            resolvedPackage: packageJson,
+            resolvedPackage: maybePkg,
             resolvedPackageCacheId: this.packageUrl,
         };
     }
 }
 
 /**
- * This code resolver works against cdns that support semantic verioning in the url path of the format:
+ * This code resolver works against cdns that support semantic versioning in the url path of the format:
  * `cdn_base/@package_scope?/package_name@package_version`
  *
  * The `@package_scope?` is optional, and only needed it the package has a scope.
