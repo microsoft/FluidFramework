@@ -37,7 +37,7 @@ export async function createBlob(
     repo: string,
     blob: ICreateBlobParams): Promise<ICreateBlobResponse> {
         if (!blob || !validateBlob(blob.content) || !validateEncoding(blob.encoding)) {
-        return Promise.reject("Invalid blob");
+            return Promise.reject("Invalid blob");
     }
 
     const repository = await repoManager.open(owner, repo);
