@@ -17,15 +17,14 @@ import { ScriptoriumLambda } from "./lambda";
 export class ScriptoriumLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private readonly mongoManager: MongoManager,
-        private readonly opCollection: ICollection<any>,
-        private readonly contentCollection: ICollection<any>) {
+        private readonly opCollection: ICollection<any>) {
         super();
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         // Takes in the io as well as the collection. I can probably keep the same lambda but only ever give it stuff
         // from a single document
-        return new ScriptoriumLambda(this.opCollection, this.contentCollection, context);
+        return new ScriptoriumLambda(this.opCollection, context);
     }
 
     public async dispose(): Promise<void> {
