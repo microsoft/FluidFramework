@@ -10,7 +10,7 @@ import { configurableUrlResolver } from "@fluidframework/driver-utils";
 import { FluidAppOdspUrlResolver } from "@fluid-internal/fluidapp-odsp-urlresolver";
 import * as odsp from "@fluidframework/odsp-driver";
 import { OdspUrlResolver } from "@fluidframework/odsp-urlresolver";
-import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-utils";
+import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils";
 import * as r11s from "@fluidframework/routerlicious-driver";
 import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
 import { getMicrosoftConfiguration } from "@fluidframework/tool-utils";

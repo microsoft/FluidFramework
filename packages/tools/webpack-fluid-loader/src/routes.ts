@@ -8,7 +8,7 @@ import path from "path";
 import express from "express";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
-import { IOdspTokens, getServer } from "@fluidframework/odsp-utils";
+import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils";
 import {
     getMicrosoftConfiguration,
     OdspTokenManager,

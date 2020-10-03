@@ -13,7 +13,7 @@ import {
     pushScope,
     getLoginPageUrl,
     TokenRequestCredentials,
-} from "@fluidframework/odsp-utils";
+} from "@fluidframework/odsp-doclib-utils";
 import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
 import { serverListenAndHandle, endResponse } from "./httpHelpers";
 

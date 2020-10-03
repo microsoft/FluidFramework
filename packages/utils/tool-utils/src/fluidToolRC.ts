@@ -10,7 +10,7 @@ import os from "os";
 import path from "path";
 import util from "util";
 import { lock } from "proper-lockfile";
-import { IOdspTokens } from "@fluidframework/odsp-utils";
+import { IOdspTokens } from "@fluidframework/odsp-doclib-utils";
 
 export interface IAsyncCache<TKey, TValue> {
     get(key: TKey): Promise<TValue | undefined>;

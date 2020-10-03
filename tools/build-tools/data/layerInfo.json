@@ -79,7 +79,11 @@
             "Other-Utils": {
                 "dot": false,
                 "packages": [
-                    "@fluidframework/odsp-utils"
+                    "@fluidframework/odsp-doclib-utils"
+                ],
+                "deps": [
+                    "Driver-Definitions",
+                    "Driver-Utils"
                 ]
             },
             "Tool-Utils": {
