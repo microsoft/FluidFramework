@@ -42,7 +42,7 @@ export function isSpoServer(server: string) {
 }
 
 // TODO: These functions are taken from @fluidframework/odsp-utils package and should be removed
-// once the public exports of those packages are available on the feeds Gateway consumes
+// once the updated getDriveItemByRootFileName function in PR #3826 is available on public feeds
 function toIODSPDriveItem(parsedDriveItemBody: any): IOdspDriveItem {
     const path = parsedDriveItemBody.parentReference.path !== undefined ?
         parsedDriveItemBody.parentReference.path.split("root:")[1] : "/";
