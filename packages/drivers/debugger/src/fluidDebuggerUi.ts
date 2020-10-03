@@ -107,9 +107,8 @@ Close debugger window to proceed to live document<br/><br/>
 &nbsp; &nbsp; &nbsp;
 <button id='buttonVers' style='width:60px'>Go</button><br/>
 <input id='file' type='file' value='Load from file'/>
+<br/><br/><a href='#' id='downloadOps'>Download ops as json</a>
 <br/><br/><div id='versionText'></div>
-<br/><br/>
-<a href='#' id='downloadOps'>Download ops as json</a>
 </body>`;
 
 const debuggerWindowHtml2 =
@@ -123,7 +122,7 @@ Step to move: <input type='number' id='steps' value='1' min='1' style='width:50p
 &nbsp; &nbsp; &nbsp;<button id='buttonOps' style='width:60px'>Go</button>
 <br/><br/>
 <div id='text1'></div><div id='text2'></div><div id='text3'></div>
-<br/><br/>
+<br/>
 <a href='#' id='downloadOps'>Download ops as json</a>
 </body>`;
 
@@ -202,11 +201,11 @@ export class DebuggerUI {
             }
         }, false);
 
-        this.versionText = doc.getElementById("versionText") as HTMLDivElement;
-        this.versionText.textContent = "Fetching snapshots, please wait...";
-
         const opDownloadButton = doc.getElementById("downloadOps") as HTMLElement;
         this.attachDownloadOpsListener(opDownloadButton);
+
+        this.versionText = doc.getElementById("versionText") as HTMLDivElement;
+        this.versionText.textContent = "Fetching snapshots, please wait...";
 
         controller.connectToUi(this);
     }

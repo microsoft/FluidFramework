@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaStorageService, IDocumentStorageService, ISummaryContext }
+import { IDocumentService, IDocumentStorageService, ISummaryContext }
     from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 
@@ -51,13 +51,11 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
 export abstract class ReplayController extends ReadDocumentStorageServiceBase {
     /**
      * Initialize reply controller
-     * @param storage - real document storage
-     * @param storage - real document delta storage
+     * @param documentService - the real document service
      * @returns - Boolean, indicating if controller should be used.
      * If false is returned, caller should fallback to original storage.
      */
-    public abstract initStorage(
-        storage: IDocumentStorageService, deltaStorage: IDocumentDeltaStorageService): Promise<boolean>;
+    public abstract initStorage(documentService: IDocumentService): Promise<boolean>;
 
     /**
      * Returns sequence number to start processing ops

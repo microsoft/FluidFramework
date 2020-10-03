@@ -5,7 +5,11 @@
 
 import { strict as assert } from "assert";
 import { Deferred } from "@fluidframework/common-utils";
-import { IDocumentStorageService, IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
+import {
+    IDocumentService,
+    IDocumentStorageService,
+    IDocumentDeltaStorageService,
+} from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     IDocumentAttributes,
@@ -63,8 +67,8 @@ export class DebugReplayController extends ReplayController implements IDebugger
     // True will cause us ping server indefinitely waiting for new ops
     protected retryFetchOpsOnEndOfFile = false;
 
+    protected documentService?: IDocumentService;
     protected documentStorageService?: IDocumentStorageService;
-    private documentDeltaStorageService?: IDocumentDeltaStorageService;
     protected versions: IVersion[] = [];
     protected stepsToPlay: number = 0;
     protected lastOpReached = false;
@@ -146,8 +150,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async onDownloadOps(): Promise<string> {
-        if (this.documentDeltaStorageService !== undefined) {
-            const messages = await this.fetchOpsFromDeltaStorage(this.documentDeltaStorageService);
+        if (this.documentService !== undefined) {
+            const documentDeltaStorageService = await this.documentService.connectToDeltaStorage();
+            const messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
             return JSON.stringify(messages, undefined, 2);
         }
         return "N/A";
@@ -192,21 +197,20 @@ export class DebugReplayController extends ReplayController implements IDebugger
         }
     }
 
-    public async initStorage(
-        documentStorageService: IDocumentStorageService,
-        documentDeltaStorageService: IDocumentDeltaStorageService): Promise<boolean> {
+    public async initStorage(documentService: IDocumentService): Promise<boolean> {
         if (this.shouldUseController !== undefined) {
             return this.shouldUseController;
         }
 
-        assert(documentStorageService);
+        assert(documentService);
+        assert(!this.documentService);
         assert(!this.documentStorageService);
-        this.documentStorageService = documentStorageService;
-        this.documentDeltaStorageService = documentDeltaStorageService;
+        this.documentService = documentService;
+        this.documentStorageService = await documentService.connectToStorage();
 
         // User can chose "file" at any moment in time!
         if (!this.isSelectionMade()) {
-            this.versions = await documentStorageService.getVersions("", 50);
+            this.versions = await this.documentStorageService.getVersions("", 50);
             if (!this.isSelectionMade()) {
                 this.ui.addVersions(this.versions);
                 this.ui.updateVersionText(this.versionCount);
@@ -222,7 +226,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
             let prevRequest = Promise.resolve();
             for (let index = i; index < this.versions.length; index += buckets) {
                 const version = this.versions[index];
-                prevRequest = this.downloadVersionInfo(documentStorageService, prevRequest, index, version);
+                prevRequest = this.downloadVersionInfo(this.documentStorageService, prevRequest, index, version);
             }
             work.push(prevRequest);
         }
