@@ -60,7 +60,7 @@ packages/tools/**:
 - vladsud
 - anthony-murphy
 
-packages/utils/odsp-utils/**:
+packages/utils/odsp-doclib-utils/**:
 - markfields
 - curtisman
 packages/utils/telemtry-utils/**:
