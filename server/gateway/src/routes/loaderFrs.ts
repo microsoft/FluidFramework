@@ -65,7 +65,6 @@ export function create(
             config.get("error:track"));
 
         const pkgP = fullTreeP.then((fullTree) => {
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (fullTree && fullTree.code) {
                 return codeResolver.resolveCodeDetails(fullTree.code);
             }
@@ -151,7 +150,6 @@ export function create(
                 response.render(
                     "loader",
                     {
-                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                         cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
                         chaincode: JSON.stringify(pkg),
                         clientId: config.get("login:microsoft").clientId,

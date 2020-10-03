@@ -12,7 +12,6 @@ import {
 import {
     ConnectionMode,
     IConnected,
-    IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -264,10 +263,6 @@ export class ReplayDocumentDeltaConnection
         return this.details.version;
     }
 
-    public get initialContents(): IContentMessage[] {
-        return this.details.initialContents;
-    }
-
     public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
     }
@@ -294,10 +289,6 @@ export class ReplayDocumentDeltaConnection
 
     public submit(documentMessage: IDocumentMessage[]): void {
         debug("dropping the outbound message");
-    }
-
-    public async submitAsync(documentMessage: IDocumentMessage[]): Promise<void> {
-        debug("dropping the outbound message and wait for response");
     }
 
     public async submitSignal(message: any) {
