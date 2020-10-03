@@ -8,7 +8,7 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IOdspSnapshot, ISnapshotOptions } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { fetchHelper, IOdspResponse } from "./odspUtils";
+import { fetchAndParseHelper, IOdspResponse } from "./odspUtils";
 
 /**
  * Fetches a snapshot from the server with a given version id.
@@ -45,6 +45,6 @@ export async function fetchSnapshot(
             eventName: "fetchSnapshot",
             headers: Object.keys(headers).length !== 0 ? true : undefined,
         },
-        async () => fetchHelper<IOdspSnapshot>(url, { headers }),
+        async () => fetchAndParseHelper<IOdspSnapshot>(url, { headers }),
     );
 }

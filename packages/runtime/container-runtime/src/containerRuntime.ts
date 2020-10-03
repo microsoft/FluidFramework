@@ -32,6 +32,7 @@ import {
 import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
+    IsoBuffer,
     Trace,
     unreachableCase,
 } from "@fluidframework/common-utils";
@@ -53,7 +54,6 @@ import {
     TreeTreeEntry,
 } from "@fluidframework/protocol-base";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
@@ -1066,13 +1066,6 @@ export class ContainerRuntime extends EventEmitter
         return { snapshot, state };
     }
 
-    // Back-compat: <= 0.17
-    public changeConnectionState(state: ConnectionState, clientId?: string) {
-        if (state !== ConnectionState.Connecting) {
-            this.setConnectionState(state === ConnectionState.Connected, clientId);
-        }
-    }
-
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
@@ -1096,7 +1089,7 @@ export class ContainerRuntime extends EventEmitter
                 context.setConnectionState(connected, clientId);
             } catch (error) {
                 this._logger.sendErrorEvent({
-                    eventName: "ChangeConnectionStateError",
+                    eventName: "SetConnectionStateError",
                     clientId,
                     fluidDataStore,
                 }, error);
@@ -1814,7 +1807,7 @@ export class ContainerRuntime extends EventEmitter
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
     }
 
-    public async uploadBlob(blob: Buffer): Promise<IFluidHandle<string>> {
+    public async uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>> {
         return this.blobManager.createBlob(blob);
     }
 

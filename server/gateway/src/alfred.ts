@@ -119,7 +119,6 @@ export class Alfred implements IAlfred {
 
     private getGitManager(id: string): GitManager {
         const result = this.tenants.get(id);
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!result) {
             throw new Error(`Unknown tenant: ${id}`);
         }
