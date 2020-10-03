@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidPackage, IFluidPackageEnvironment, isFluidPackage } from "@fluidframework/container-definitions";
+import { IFluidPackage, IFluidPackageEnvironment } from "@fluidframework/container-definitions";
 
 export interface IPackageIdentifierDetails {
     readonly fullId: string;
@@ -15,11 +15,11 @@ export interface IPackageIdentifierDetails {
 
 export function extractPackageIdentifierDetails(
     codeDetailsPackage: string | IFluidPackage): IPackageIdentifierDetails {
-    const packageString = typeof codeDetailsPackage === "string"
+        const packageString = typeof codeDetailsPackage === "string"
         ? codeDetailsPackage // Just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
-        : codeDetailsPackage.target === undefined // If it doesn't exist, let's make it from the package details
+        : typeof codeDetailsPackage.version === "string" // If it doesn't exist, let's make it from the package details
             ? `${codeDetailsPackage.name}` // E.g. @fluid-example/clicker
-            : `${codeDetailsPackage.name}@${codeDetailsPackage.target}`; // Rebuild e.g. @fluid-example/clicker@0.1.1
+            : `${codeDetailsPackage.name}@${codeDetailsPackage.version}`; // Rebuild e.g. @fluid-example/clicker@0.1.1
 
     let fullId: string;
     let scope: string;
@@ -79,27 +79,3 @@ export function resolveFluidPackageEnvironment(
     }
     return resolvedEnvironment;
 }
-
-export interface IFluidBrowserPackage extends IFluidPackage {
-    fluid: {
-        browser: IFluidPackageEnvironment & {
-            umd: {
-                // for the umd target, these would be the bundled js files
-                files: string[];
-
-                // For umd library is the global name that the script entry points will be exposed
-                library: string;
-            },
-            css?: {
-                // for the css target, these would be the css files
-                files: string[];
-            }
-        }
-        [environment: string]: IFluidPackageEnvironment;
-    }
-}
-
-export const isFluidBrowserPackage = (pkg: any): pkg is Readonly<IFluidBrowserPackage> =>
-    isFluidPackage(pkg)
-    && typeof pkg?.fluid?.browser?.umd?.library === "string"
-    && Array.isArray(pkg?.fluid?.browser?.umd?.files);

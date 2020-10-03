@@ -4,13 +4,13 @@
  */
 
 export interface IFluidPackageEnvironment {
-    [target: string]: {
+    [target: string]: undefined | {
         // List of files. The file type in determined by library target
         files: string[];
 
         // If libraryTarget is umd then library is the global name that the script entry points will be exposed
         // under. Other target formats may choose to reinterpret this value.
-        library: string;
+        library?: string;
     }
 }
 
@@ -19,13 +19,12 @@ export interface IFluidPackageEnvironment {
  */
 export interface IFluidPackage {
     name: string;
-    version: string;
     // https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
     fluid: {
         [environment: string]: IFluidPackageEnvironment;
     };
     // General access for extended fields
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /**
@@ -35,7 +34,6 @@ export interface IFluidPackage {
 export const isFluidPackage = (pkg: any): pkg is Readonly<IFluidPackage> =>
     typeof pkg === "object"
     && typeof pkg?.name === "string"
-    && typeof pkg?.version === "string"
     && typeof pkg?.fluid === "object";
 
 /**

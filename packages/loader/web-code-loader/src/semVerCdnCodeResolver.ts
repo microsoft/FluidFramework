@@ -7,7 +7,11 @@ import {
     IFluidCodeDetails, IFluidCodeResolver, IResolvedFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import fetch from "isomorphic-fetch";
-import { extractPackageIdentifierDetails, isFluidBrowserPackage, resolveFluidPackageEnvironment } from "./utils";
+import { isFluidBrowserPackage } from "./browserPackage";
+import {
+    extractPackageIdentifierDetails,
+    resolveFluidPackageEnvironment,
+ } from "./utils";
 
 class FluidPackage {
     private resolveP: Promise<IResolvedFluidCodeDetails> | undefined;

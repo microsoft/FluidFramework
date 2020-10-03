@@ -11,7 +11,7 @@ import {
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { isFluidBrowserPackage } from "./utils";
+import { isFluidBrowserPackage } from "./browserPackage";
 import { ScriptManager } from "./scriptManager";
 
 export class WebCodeLoader implements ICodeLoader {
@@ -76,6 +76,7 @@ export class WebCodeLoader implements ICodeLoader {
 
         const loadedScripts = await this.scriptManager.loadLibrary(
             resolved.resolvedPackage.fluid.browser.umd);
+
         let fluidModule: IFluidModule | undefined;
         for (const script of loadedScripts) {
             const maybeFluidModule = script.entryPoint as IFluidModule;
