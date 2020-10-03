@@ -266,11 +266,11 @@ stages:
         # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.runBundleAnalysis, true) }}:
           - task: Npm@1
-            displayName: npm run bundle-analysis
+            displayName: npm run bundle-analysis:collect
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'run bundle-analysis'
+              customCommand: 'run bundle-analysis:collect'
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts - bundle-analysis
@@ -280,17 +280,16 @@ stages:
               Artifactname: 'bundleAnalysis'
               publishLocation: 'Container'
 
-          - task: Bash@3
+          - task: Npm@1
             displayName: run bundle size comparison
             condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
             inputs:
-              targetType: 'inline'
+              command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
-              script: |
-                npx danger ci -d ${{ parameters.buildDirectory }}/node_modules/@fluidframework/build-tools/src/bundleSizeAnalysis/dangerfile.ts
+              customCommand: 'run bundle-analysis:run'
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
