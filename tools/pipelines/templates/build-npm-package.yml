@@ -280,16 +280,17 @@ stages:
               Artifactname: 'bundleAnalysis'
               publishLocation: 'Container'
 
-          - task: Npm@1
+          - task: Bash@3
             displayName: run bundle size comparison
             condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
             inputs:
-              command: 'custom'
+              targetType: 'inline'
               workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'run bundle-analysis:run'
+              script: |
+                node ${{ parameters.buildDirectory }}/node_modules/@fluidframework/build-tools/dist/bundleSizeAnalysis/runBundleAnalyses.js
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
