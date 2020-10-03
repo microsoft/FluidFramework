@@ -27,21 +27,21 @@ export class WebCodeLoader implements ICodeLoader {
         maybeFluidModule?: Promise<IFluidModule> | IFluidModule,
     ): Promise<void> {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
-        if (resolved.cacheId !== undefined
-            && this.loadedModules.has(resolved.cacheId)) {
+        if (resolved.resolvedPackageCacheId !== undefined
+            && this.loadedModules.has(resolved.resolvedPackageCacheId)) {
             return;
         }
         const fluidModule = maybeFluidModule ?? this.load(source);
-        if (resolved.cacheId !== undefined) {
-            this.loadedModules.set(resolved.cacheId, fluidModule);
+        if (resolved.resolvedPackageCacheId !== undefined) {
+            this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModule);
         }
     }
 
     public async preCache(source: IFluidCodeDetails, tryPreload: boolean) {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
-        if (resolved?.resolvedPackage?.fluid?.environment?.umd?.files !== undefined) {
+        if (isFluidBrowserPackage(resolved.resolvedPackage)) {
             return this.scriptManager.preCacheFiles(
-                resolved.resolvedPackage.fluid.environment.umd.files, tryPreload);
+                resolved.resolvedPackage.fluid.browser.umd.files, tryPreload);
         }
     }
 
@@ -52,16 +52,16 @@ export class WebCodeLoader implements ICodeLoader {
         source: IFluidCodeDetails,
     ): Promise<IFluidModule> {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
-        if (resolved.cacheId !== undefined) {
-            const maybePkg = this.loadedModules.get(resolved.cacheId);
+        if (resolved.resolvedPackageCacheId !== undefined) {
+            const maybePkg = this.loadedModules.get(resolved.resolvedPackageCacheId);
             if (maybePkg !== undefined) {
                 return maybePkg;
             }
         }
 
         const fluidModuleP = this.loadModuleFromResolvedCodeDetails(resolved);
-        if (resolved.cacheId !== undefined) {
-            this.loadedModules.set(resolved.cacheId, fluidModuleP);
+        if (resolved.resolvedPackageCacheId !== undefined) {
+            this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModuleP);
         }
         return fluidModuleP;
     }

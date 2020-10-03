@@ -16,7 +16,7 @@ import {
 class FluidPackage {
     private resolveP: Promise<IResolvedFluidCodeDetails> | undefined;
 
-    constructor(private readonly codeProposal: IFluidCodeDetails, private readonly packageUrl: string) { }
+    constructor(private readonly codeDetails: IFluidCodeDetails, private readonly packageUrl: string) { }
 
     public async resolve(): Promise<IResolvedFluidCodeDetails> {
         if (this.resolveP === undefined) {
@@ -28,11 +28,11 @@ class FluidPackage {
 
     private async resolveCore(): Promise<IResolvedFluidCodeDetails> {
         let maybePkg: any;
-        if (typeof this.codeProposal.package === "string") {
+        if (typeof this.codeDetails.package === "string") {
             const response = await fetch(`${this.packageUrl}/package.json`);
             maybePkg = await response.json();
         } else {
-            maybePkg = this.codeProposal.package;
+            maybePkg = this.codeDetails.package;
         }
 
         if (!isFluidBrowserPackage(maybePkg)) {
@@ -42,14 +42,14 @@ class FluidPackage {
             maybePkg.fluid.browser, this.packageUrl);
 
         return {
-            ... this.codeProposal,
+            ... this.codeDetails,
             resolvedPackage: {
                 ... maybePkg,
                 fluid:{
                     browser,
                 },
             },
-            cacheId: this.packageUrl,
+            resolvedPackageCacheId: this.packageUrl,
         };
     }
 }
@@ -69,17 +69,17 @@ export class SemVerCdnCodeResolver implements IFluidCodeResolver {
     // Cache goes CDN -> package -> entrypoint
     private readonly fluidPackageCache = new Map<string, FluidPackage>();
 
-    public async resolveCodeDetails(proposal: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
-        const parsed = extractPackageIdentifierDetails(proposal.package);
+    public async resolveCodeDetails(codeDetails: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
+        const parsed = extractPackageIdentifierDetails(codeDetails.package);
 
-        const cdn = proposal.config[`@${parsed.scope}:cdn`] ?? proposal.config.cdn;
+        const cdn = codeDetails.config[`@${parsed.scope}:cdn`] ?? codeDetails.config.cdn;
         const scopePath = parsed.scope !== undefined && parsed.scope.length > 0 ? `@${encodeURI(parsed.scope)}/` : "";
         const packageUrl = parsed.version !== undefined
             ? `${cdn}/${scopePath}${encodeURI(`${parsed.name}@${parsed.version}`)}`
             : `${cdn}/${scopePath}${encodeURI(`${parsed.name}`)}`;
 
         if (!this.fluidPackageCache.has(packageUrl)) {
-            const resolved = new FluidPackage(proposal, packageUrl);
+            const resolved = new FluidPackage(codeDetails, packageUrl);
             this.fluidPackageCache.set(packageUrl, resolved);
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

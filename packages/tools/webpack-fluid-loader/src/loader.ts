@@ -128,7 +128,7 @@ class WebpackCodeResolver implements IFluidCodeResolver {
         }
         const browser =
             resolveFluidPackageEnvironment(pkg.fluid.browser, baseUrl);
-        const parse = extractPackageIdentifierDetails(details.package);
+        const parse = extractPackageIdentifierDetails(pkg);
         return {
             ... details,
             resolvedPackage: {
@@ -138,7 +138,7 @@ class WebpackCodeResolver implements IFluidCodeResolver {
                     browser,
                 },
             },
-            cacheId: parse.fullId,
+            resolvedPackageCacheId: parse.fullId,
         };
     }
 }
