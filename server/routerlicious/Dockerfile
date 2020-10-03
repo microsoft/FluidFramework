@@ -3,9 +3,6 @@
 
 FROM node:12.16.3-slim AS base
 
-# To auth against private VSTS
-ARG NPM_TOKEN
-
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
         python \
@@ -26,7 +23,6 @@ WORKDIR /usr/src/server
 COPY package*.json ./
 COPY lerna.json .
 COPY lerna-package-lock.json .
-COPY .npmrc .
 
 COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/protocol-definitions/package*.json packages/protocol-definitions/
@@ -36,6 +32,7 @@ COPY packages/lambdas/package*.json packages/lambdas/
 COPY packages/local-server/package*.json packages/local-server/
 COPY packages/memory-orderer/package*.json packages/memory-orderer/
 COPY packages/routerlicious/package*.json packages/routerlicious/
+COPY packages/routerlicious-base/package*.json packages/routerlicious-base/
 COPY packages/services/package*.json packages/services/
 COPY packages/services-client/package*.json packages/services-client/
 COPY packages/services-core/package*.json packages/services-core/
@@ -44,13 +41,6 @@ COPY packages/services-utils/package*.json packages/services-utils/
 COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/protocol-base/package*.json packages/protocol-base/
 
-# Give node user access to nyc in order to run and store coverage tests. Do this in all packages directory
-# as well as the root
-RUN for d in ./*/*/ ; do (cd "$d" && mkdir nyc && chown node: nyc); done
-RUN mkdir nyc && chown node: nyc
-
-# Expose the port the app runs under
-EXPOSE 3000
 
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
@@ -62,14 +52,13 @@ COPY . .
 
 # Switch to the server folder and build
 WORKDIR /usr/src/server
-
-# Set the version number
-ARG VERSION=0
-RUN if [ "$VERSION" != "0" ]; then npx lerna version $VERSION --no-git-tag-version --no-push --yes; fi
-RUN npm run build:ci
+RUN npm run ci:build
 
 # Build that alfred uses
 FROM base AS runner
+
+# Expose the port the app runs under
+EXPOSE 3000
 
 # Don't run as root user
 USER node

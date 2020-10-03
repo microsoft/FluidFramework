@@ -9,12 +9,11 @@ import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     IDeltaManager,
     IFluidCodeDetails,
-    IGenericBlob,
     IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred, IsoBuffer } from "@fluidframework/common-utils";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import * as ink from "@fluidframework/ink";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
@@ -192,17 +191,8 @@ export class Document extends EventEmitter {
         return this.closeFn();
     }
 
-    public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
+    public async uploadBlob(file: IsoBuffer): Promise<any> {
         return this.runtime.uploadBlob(file);
-    }
-
-    public async getBlob(blobId: string): Promise<IGenericBlob> {
-        return this.runtime.getBlob(blobId);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getBlobMetadata(): Promise<IGenericBlob[]> {
-        return this.runtime.getBlobMetadata();
     }
 }
 

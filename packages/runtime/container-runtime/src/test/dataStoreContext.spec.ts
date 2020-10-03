@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
@@ -79,7 +79,8 @@ describe("Data Store Context Tests", () => {
                 scope,
                 summaryTracker,
                 createSummarizerNodeFn,
-                attachCb);
+                attachCb,
+                undefined);
 
             await localDataStoreContext.realize();
             const attachMessage = localDataStoreContext.generateAttachMessage();
@@ -110,7 +111,8 @@ describe("Data Store Context Tests", () => {
                 scope,
                 summaryTracker,
                 createSummarizerNodeFn,
-                attachCb);
+                attachCb,
+                undefined);
 
             await localDataStoreContext.realize()
                 .catch((error) => {
@@ -141,7 +143,8 @@ describe("Data Store Context Tests", () => {
                 scope,
                 summaryTracker,
                 createSummarizerNodeFn,
-                attachCb);
+                attachCb,
+                undefined);
 
             await localDataStoreContext.realize();
 

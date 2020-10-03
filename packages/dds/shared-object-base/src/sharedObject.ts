@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
@@ -128,14 +128,18 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param services - Services used by the shared object
      */
     public async load(
-        branchId: string,
-        services: IChannelServices): Promise<void> {
-        this.services = services;
-
+        branchId: string | undefined,
+        services: IChannelServices,
+    ): Promise<void> {
+        if (this.runtime.attachState !== AttachState.Detached) {
+            this.services = services;
+        }
         await this.loadCore(
             branchId,
             services.objectStorage);
-        this.attachDeltaHandler();
+        if (this.runtime.attachState !== AttachState.Detached) {
+            this.attachDeltaHandler();
+        }
     }
 
     /**
@@ -198,7 +202,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param services - Storage used by the shared object
      */
     protected abstract loadCore(
-        branchId: string,
+        branchId: string | undefined,
         services: IChannelStorageService): Promise<void>;
 
     /**

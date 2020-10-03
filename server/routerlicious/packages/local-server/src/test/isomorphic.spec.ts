@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import webpack from "webpack";
 import config from "../../webpack.config.js";
 
@@ -15,6 +15,7 @@ describe("Local server", () => {
                 if (err) {
                     assert.fail(err);
                     reject();
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 } else if (stats.hasErrors()) {
                     assert.fail(stats.compilation.errors.map((value) => value.stack).join("\n"));
                     reject();

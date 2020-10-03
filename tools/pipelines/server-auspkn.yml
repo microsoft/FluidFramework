@@ -18,11 +18,12 @@ trigger:
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
-  
+
 pr:
   branches:
     include:
     - main
+    - release/*
   paths:
     include:
     - server/auspkn
@@ -37,5 +38,4 @@ extends:
   parameters:
     buildDirectory: server/auspkn
     containerName: auspkn
-    test: true
-    authnpmrc: false
+    test: test

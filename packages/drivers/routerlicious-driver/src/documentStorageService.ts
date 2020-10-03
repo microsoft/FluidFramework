@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
@@ -90,6 +90,10 @@ export class DocumentStorageService implements IDocumentStorageService {
     public async createBlob(file: Uint8Array): Promise<ICreateBlobResponse> {
         const response = this.manager.createBlob(Uint8ArrayToString(file, "base64"), "base64");
         return response.then((r) => ({ id: r.sha, url: r.url }));
+    }
+
+    public async readBlob(blobId: string) {
+        return IsoBuffer.from(await this.read(blobId), "base64");
     }
 
     public getRawUrl(blobId: string): string {

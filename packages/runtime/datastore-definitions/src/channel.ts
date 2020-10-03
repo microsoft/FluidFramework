@@ -8,18 +8,7 @@ import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-defin
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface IFluidObject extends Readonly<Partial<IProvideChannel>> { }
-}
-
-export const IChannel: keyof IProvideChannel = "IChannel";
-
-export interface IProvideChannel {
-    readonly IChannel: IChannel;
-}
-
-export interface IChannel extends IProvideChannel, IFluidLoadable {
+export interface IChannel extends IFluidLoadable {
     /**
      * A readonly identifier for the channel
      */
@@ -165,7 +154,7 @@ export interface IChannelFactory {
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
+        branchId: string | undefined,
         channelAttributes: Readonly<IChannelAttributes>,
     ): Promise<IChannel>;
 

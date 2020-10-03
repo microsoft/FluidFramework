@@ -11,6 +11,8 @@ export interface ITenantConfig {
     storage: ITenantStorage;
 
     orderer: ITenantOrderer;
+
+    customData: ITenantCustomData;
 }
 
 export interface ITenantStorage {
@@ -47,6 +49,10 @@ export interface ITenantOrderer {
     type: string;
 }
 
+export interface ITenantCustomData {
+    [key: string]: any;
+}
+
 export interface ITenant {
     gitManager: IGitManager;
 
@@ -57,12 +63,17 @@ export interface ITenant {
 
 export interface ITenantManager {
     /**
+     * Creates a new tenant with the given id, or a randomly generated id when none is provided.
+     */
+    createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }>;
+
+    /**
      * Retrieves details for the given tenant
      */
     getTenant(tenantId: string): Promise<ITenant>;
 
     /**
-     * Verifies that the given auth token is valid. A rejected promise indicaets an invalid token.
+     * Verifies that the given auth token is valid. A rejected promise indicates an invalid token.
      */
     verifyToken(tenantId: string, token: string): Promise<void>;
 

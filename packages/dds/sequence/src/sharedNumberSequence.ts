@@ -7,6 +7,12 @@ import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/data
 import { SharedNumberSequenceFactory } from "./sequenceFactory";
 import { SharedSequence } from "./sharedSequence";
 
+/**
+ * The SharedNumberSequence holds a sequence of numbers. Each number will be stored
+ * at a position within the sequence. See the
+ * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/sequence/README.md | sequence readme}
+ * for details on working with sequences.
+ */
 export class SharedNumberSequence extends SharedSequence<number> {
     /**
      * Create a new shared number sequence

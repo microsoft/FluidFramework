@@ -5,4 +5,4 @@
 
 export * from "./bufferNode";
 export * from "./hashFileNode";
-export * from "./performanceNowNode";
+export * from "./performanceNode";

@@ -5,7 +5,7 @@
 
 import { IPartitionLambda } from "@fluidframework/server-services-core";
 import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext } from "@fluidframework/server-test-utils";
-import assert from "assert";
+import { strict as assert } from "assert";
 import { ScriptoriumLambda } from "../../scriptorium/lambda";
 
 describe("Routerlicious", () => {
@@ -27,7 +27,7 @@ describe("Routerlicious", () => {
 
                 testCollection = new TestCollection([]);
                 testContext = new TestContext();
-                lambda = new ScriptoriumLambda(testCollection, undefined, testContext);
+                lambda = new ScriptoriumLambda(testCollection, testContext);
 
             });
 

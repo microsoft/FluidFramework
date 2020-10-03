@@ -5,6 +5,23 @@
 
 name: $(Build.BuildId)
 
+parameters:
+- name: releaseBuildOverride
+  displayName: Release Build (default = not released)
+  type: string
+  default: none
+  values:
+    - none
+    - release
+- name: publishOverride
+  displayName: Publish Override (default = based on branch)
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+    - force
+
 trigger:
   branches:
     include:
@@ -17,12 +34,16 @@ trigger:
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-publish-docker-service.yml
+    - tools/pipelines/templates/include-publish-docker-service-steps.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
-  
+    - tools/pipelines/templates/include-git-tag-steps.yml
+
 pr:
   branches:
     include:
     - main
+    - release/*
   paths:
     include:
     - server/gitrest
@@ -35,7 +56,10 @@ pr:
 extends:
   template: templates/build-docker-service.yml
   parameters:
+    releaseImage: true
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: server/gitrest
-    containerName: gitrest
-    test: true
-
+    containerName: fluidframework/routerlicious/gitrest
+    test: test
+    tagName: gitrest

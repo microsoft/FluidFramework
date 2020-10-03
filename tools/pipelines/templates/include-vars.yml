@@ -12,29 +12,66 @@ parameters:
   type: string
   default: none
 
+- name: releaseImage
+  type: boolean
+  default: false
+
+- name: buildNumberInPatch
+  type: string
+
 variables:
 - name: skipComponentGovernanceDetection
   value: true
 - name: shouldPublish
   value: ${{
     and(
-      ne(variables['Build.Reason'], 'PullRequest'),
-      ne(variables['System.TeamProject'], 'public')
+      and(
+        ne(variables['Build.Reason'], 'PullRequest'),
+        ne(variables['System.TeamProject'], 'public')
+      ),
+      or(
+        and(
+          ne(parameters.buildNumberInPatch, true),
+          startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
+        ),
+        eq(variables['Build.SourceBranch'], 'refs/heads/main')
+      )
+    )}}
+- name: canRelease
+  value: ${{
+    or(
+      eq(parameters.publishOverride, 'force'),
+      or(
+        and(
+          eq(parameters.buildNumberInPatch, true),
+          eq(variables['Build.SourceBranch'], 'refs/heads/main')
+        ),
+        and(
+          ne(parameters.buildNumberInPatch, true),
+          startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
+        )
+      )
     )}}
 - name: publish
   value: ${{
-    and(
-      ne(parameters.publishOverride, 'skip'),
-      eq(variables.shouldPublish, true)
+    or(
+      eq(parameters.publishOverride, 'force'),
+      and(
+        ne(parameters.publishOverride, 'skip'),
+        eq(variables.shouldPublish, true)
+      )
     )}}
 - name: componentDetection
   value: ${{ variables.publish }}
 - name: pushImage
+  value: ${{ variables.publish }}
+- name: releaseImage
   value: ${{
     and(
-      variables.publish,
-      eq(variables['Build.SourceBranch'], 'refs/heads/main')
+      eq(variables.pushImage, true),
+      eq(parameters.releaseImage, true)
     )}}
+
 # compute the release variable
 - ${{ if eq(parameters.releaseBuildOverride, 'none') }}:
   - ${{ if eq(variables.shouldPublish, true) }}:

@@ -7,6 +7,9 @@ distributed-data-structures:
 - "@fluidframework/ordered-collection"
 - "@fluidframework/register-collection"
 - "@fluidframework/sequence"
+- custom:
+    title: "SharedString"
+    url: "/apis/sequence/sharedstring/"
 - "@fluidframework/shared-object-base"
 - "@fluidframework/synthesize"
 - "@fluidframework/shared-summary-block"

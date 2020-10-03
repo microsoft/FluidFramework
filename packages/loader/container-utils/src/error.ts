@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { ContainerErrorType, IGenericError, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
 
@@ -17,7 +17,7 @@ function messageFromError(error: any) {
 /**
  * Generic error
  */
-class GenericError extends CustomErrorWithProps implements IGenericError {
+export class GenericError extends CustomErrorWithProps implements IGenericError {
     readonly errorType = ContainerErrorType.genericError;
 
     constructor(

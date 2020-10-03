@@ -6,21 +6,30 @@
 name: $(Build.BuildId)
 
 parameters:
-- name: publishOverride
-  displayName: Publish Override
-  type: string
-  default: default
-  values:
-    - default
-    - skip
 - name: releaseBuildOverride
-  displayName: Release Build Override
+  displayName: Release Build (default = not released)
   type: string
   default: none
   values:
     - none
     - prerelease
     - release
+- name: releaseKind
+  displayName: Release Kind
+  type: string
+  default: both
+  values:
+    - both
+    - npm
+    - docker
+- name: publishOverride
+  displayName: Publish Override (default = based on branch)
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+    - force
 
 trigger:
   branches:
@@ -32,14 +41,18 @@ trigger:
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml
     - tools/pipelines/scripts/build-version.js
+    - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
+    - tools/pipelines/templates/include-publish-docker-service.yml
+    - tools/pipelines/templates/include-publish-docker-service-steps.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
-  
+
 pr:
   branches:
     include:
@@ -50,222 +63,26 @@ pr:
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml
     - tools/pipelines/scripts/build-version.js
+    - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
-variables:
-- template: templates/include-vars.yml
+extends:
+  template: templates/build-docker-service.yml
   parameters:
+    releaseImage: true
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-- group: container-registry-info
-- name: containerName
-  value: fluid-server
-- name: baseContainerName
-  value: $(containerName)-base
-- name: baseContainerTag
-  value: $(baseContainerName):$(Build.BuildNumber)
-- name: fullRunnerContainerTag
-  value: $(containerRegistryUrl)/$(containerName):$(Build.BuildNumber)
-- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-  - name: testConfig
-    value: :full
-- ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-  - name: testConfig
-    value: :ci
-
-stages:
-- stage: build
-  displayName: Build Stage
-  jobs:
-    - job: build
-      displayName: Build - Server
-      pool: Main
-      steps:
-        # Checkout
-        - checkout: self
-          clean: true
-          lfs: false
-          submodules: false
-
-        # for npm ci in component detection and set version
-        - task: UseNode@1
-          displayName: Use Node 12.x
-          inputs: 
-            version: 12.x
-
-        # Component detection (not pull request)
-        - ${{ if eq(variables.componentDetection, true) }}:
-          - task: npmAuthenticate@0
-            displayName: 'npm Authenticate root .npmrc'
-            inputs:
-              workingFile: .npmrc
-              customEndpoint: Offnet Packages
-          - task: Npm@1
-            displayName: npm ci
-            inputs:
-              command: 'custom'
-              customCommand: 'ci --ignore-scripts'
-              customRegistry: 'useNpmrc'
-          - bash: |
-              # Generate the package/package lock for the lerna project so we would scan it.
-              node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
-              cp server/routerlicious/repo-package.json server/routerlicious/packages/package.json
-              cp server/routerlicious/repo-package-lock.json server/routerlicious/packages/package-lock.json
-            displayName: 'Generate Mono repo package json'
-          - template: templates/include-generate-notice-steps.yml
-            parameters:
-              buildDirectory: server/routerlicious
-          - bash: |
-              rm server/routerlicious/packages/package.json
-              rm server/routerlicious/packages/package-lock.json
-            displayName: 'Cleanup mono repo package json'
-
-        # Setup
-        - task: Bash@3
-          displayName: Strip npmrc auth token preamble
-          inputs:
-            targetType: 'inline'
-            script: |
-              # In order to simplify the build and use the npm authenticate task we strip the auth token preamble from the npmrc
-              sed -i '/^; begin auth token/,/^\; end auth token/d;' server/routerlicious/.npmrc
-        - task: npmAuthenticate@0
-          displayName: npm Authenticate
-          inputs:
-            workingFile: server/routerlicious/.npmrc
-            customEndpoint: Offnet Packages
-
-        # Set version
-        - template: templates/include-set-package-version.yml
-          parameters:
-            buildDirectory: server/routerlicious
-
-        # Build
-        - task: Docker@2
-          displayName: Docker Build - Base
-          inputs:
-            repository: $(baseContainerName)
-            command: build
-            dockerFile: server/routerlicious/Dockerfile
-            buildContext: server/routerlicious
-            arguments: --target base
-            tags: |
-              $(Build.BuildNumber)
-
-        # Pack
-        - task: Docker@0
-          displayName: Pack
-          inputs:
-            action: 'Run a Docker command'
-            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack:/usr/src/pack -t $(baseContainerTag) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
-
-        - task: PublishBuildArtifacts@1
-          displayName: Publish Artifact - pack
-          inputs:
-            PathtoPublish: '$(System.DefaultWorkingDirectory)/pack'
-            ArtifactName: pack
-            publishLocation: 'Container'
-
-        # Lint
-        - task: Docker@0
-          displayName: npm lint
-          inputs:
-            action: 'Run a Docker command'
-            customCommand: 'run -t $(baseContainerTag) npm run lint'
-
-        # Test
-        - task: Docker@0
-          displayName: npm run test$(testConfig)
-          inputs:
-            action: 'Run a Docker command'
-            customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/server/routerlicious/nyc:/usr/src/server/nyc -t $(baseContainerTag) npm run test$(testConfig)'
-          
-        - task: PublishTestResults@2
-          displayName: Publish Test Results
-          inputs:
-            testResultsFormat: 'JUnit'
-            testResultsFiles: '**/*junit-report.xml'
-            searchFolder: $(System.DefaultWorkingDirectory)/server/routerlicious/nyc
-            mergeTestResults: true
-          condition: succeededOrFailed()
-
-        - task: PublishCodeCoverageResults@1
-          displayName: Publish Code Coverage
-          inputs:
-            codeCoverageTool: Cobertura
-            summaryFileLocation: '$(System.DefaultWorkingDirectory)/server/routerlicious/nyc/**/report/cobertura-coverage.xml'
-            reportDirectory: '$(System.DefaultWorkingDirectory)/server/routerlicious/nyc/**/report'
-
-        # Docs
-        - task: Docker@0
-          displayName: npm run build:docs
-          inputs:
-            action: 'Run a Docker command'
-            customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run build:docs'
-
-        - task: PublishBuildArtifacts@1
-          displayName: 'Docs: Publish Artifact'
-          inputs:
-            PathtoPublish: '$(System.DefaultWorkingDirectory)/_api-extractor-temp'
-            ArtifactName: _api-extractor-temp
-            publishLocation: 'Container'
-
-        # Build - Runner
-        - ${{ if eq(variables.pushImage, true) }}:
-          - task: Docker@2
-            displayName: 'Docker Build - Runner'
-            inputs:
-              containerRegistry: $(containerRegistryConnection)
-              repository: $(containerName)
-              command: build
-              dockerFile: server/routerlicious/Dockerfile
-              buildContext: server/routerlicious
-              arguments: --target runner
-              tags: |
-                $(Build.BuildNumber)
-          
-          - task: Docker@2
-            displayName: 'Docker Push - Runner'
-            inputs:
-              containerRegistry: $(containerRegistryConnection)
-              repository: $(containerName)
-              command: push
-              tags: |
-                $(Build.BuildNumber)
-
-        # Cleanup
-        - task: Docker@0
-          displayName: 'Cleanup: Container prune'
-          inputs:
-            action: 'Run a Docker command'
-            customCommand: 'container prune -f'
-          continueOnError: true
-          condition: succeededOrFailed()
-
-        - ${{ if eq(variables.pushImage, true) }}:
-          - task: Docker@0
-            displayName: 'Cleanup: Runner'
-            inputs:
-              action: 'Run a Docker command'
-              customCommand: 'rmi $(fullRunnerContainerTag)'
-            continueOnError: true
-            condition: succeededOrFailed()
-
-        - task: Docker@0
-          displayName: 'Cleanup: Base'
-          inputs:
-            action: 'Run a Docker command'
-            customCommand: 'rmi $(baseContainerTag)'
-          continueOnError: true
-          condition: succeededOrFailed()
-
-# Publish stage
-- ${{ if eq(variables.publish, true) }}:
-  - template: templates/include-publish-npm-package.yml
-    parameters:
-      buildDirectory: server/routerlicious
-      namespace: true
-      tagName: server
-      buildNumberInPatch: false
+    releaseKind: ${{ parameters.releaseKind }}
+    buildDirectory: server/routerlicious
+    containerName: fluidframework/routerlicious/server
+    buildNumberInPatch: false
+    tagName: server
+    pool: Main
+    pack: true
+    lint: true
+    test: ci:test
+    docs: true
+    containerBaseDir: /usr/src/server

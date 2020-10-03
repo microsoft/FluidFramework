@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITaskMessage, ITaskMessageSender } from "@fluidframework/server-services-core";
+import { EmptyTaskMessageSender, ITaskMessage, ITaskMessageSender } from "@fluidframework/server-services-core";
 import * as amqp from "amqplib";
 import * as winston from "winston";
 
@@ -53,7 +53,12 @@ class RabbitmqTaskSender implements ITaskMessageSender {
     }
 }
 
-// Factory to switch between different message sender.
+// Factory to switch between specific message sender implementations. Returns a dummy implementation
+// if rabbitmq configs are not provided.
 export function createMessageSender(rabbitmqConfig: any, config: any): ITaskMessageSender {
-    return new RabbitmqTaskSender(rabbitmqConfig, config);
+    if (rabbitmqConfig && rabbitmqConfig.connectionString) {
+        return new RabbitmqTaskSender(rabbitmqConfig, config);
+    } else {
+        return new EmptyTaskMessageSender();
+    }
 }

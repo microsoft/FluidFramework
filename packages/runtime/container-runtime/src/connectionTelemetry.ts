@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
@@ -11,7 +11,7 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { performanceNow } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 
 class OpPerfTelemetry {
     private pongCount: number = 0;
@@ -26,7 +26,7 @@ class OpPerfTelemetry {
 
     private firstConnection = true;
     private connectionOpSeqNumber: number | undefined;
-    private readonly bootTime = performanceNow();
+    private readonly bootTime = performance.now();
     private connectionStartTime = 0;
     private gap = 0;
 
@@ -47,7 +47,7 @@ class OpPerfTelemetry {
             if (opsBehind !== undefined) {
                 this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
                 this.gap = opsBehind;
-                this.connectionStartTime = performanceNow();
+                this.connectionStartTime = performance.now();
 
                 // We might be already up-today. If so, report it right away.
                 if (this.gap <= 0) {
@@ -70,7 +70,7 @@ class OpPerfTelemetry {
         this.connectionOpSeqNumber = undefined;
         this.logger.sendPerformanceEvent({
             eventName: "ConnectionSpeed",
-            duration: performanceNow() - this.connectionStartTime,
+            duration: performance.now() - this.connectionStartTime,
             ops: this.gap,
             // track time to connect only for first connection.
             timeToConnect: this.firstConnection ?

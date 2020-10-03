@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
@@ -341,6 +341,13 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * Disconnect from the websocket
      */
     public disconnect(socketProtocolError: boolean = false) {
+        // We set the closed flag as a part of the contract for overriding the disconnect method.  This is used by
+        // DocumentDeltaConnection to determine if emitting on the socket is allowed, which is important since
+        // OdspDocumentDeltaConnection reuses the socket rather than truly disconnecting it.  Note that below we may
+        // still send disconnect_document which is allowed; this is only intended to prevent normal messages from
+        // being emitted.
+        this.closed = true;
+
         if (this.socketReferenceKey !== undefined) {
             const key = this.socketReferenceKey;
             this.socketReferenceKey = undefined;

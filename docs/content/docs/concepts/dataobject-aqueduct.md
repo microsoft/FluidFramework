@@ -100,16 +100,16 @@ SharedDirectory.
 
 {{% callout important "See also" %}}
 
-- [Creating and storing distributed data structures](./dds.md#creating-and-storing-distributed-data-structures)
+- [Creating and storing distributed data structures](../dds/#creating-and-storing-distributed-data-structures)
 
 {{% /callout %}}
 
 #### initializingFromExisting
 
-The `initializingFromExisting` method is called each time the DataObject is loaded _except_ the first time it
-is created. Note that you _do not_ need to implement this method in order to load data in your distributed data
-structures. Data already stored within DDSes is automatically loaded into the local client's DDS during initialization; there is no separate
-load event handler that needs to be implemented by your code.
+The `initializingFromExisting` method is called each time the DataObject is loaded _except_ the first time it is
+created. Note that you _do not_ need to implement this method in order to load data in your distributed data structures.
+Data already stored within DDSes is automatically loaded into the local client's DDS during initialization; there is no
+separate load event handler that needs to be implemented by your code.
 
 In simple scenarios, you probably won't need to implement this method, since data is automatically loaded, and you'll use
 `initializingFirstTime` to create your data model initially. However, as your data model changes, this method provides
@@ -119,8 +119,8 @@ an entry point for you to run upgrade or schema migration code as needed.
 
 The `hasInitialized` method is called _each time_ the DataObject is loaded. One common use of this method is to stash
 local references to distributed data structures so that they're available for use in synchronous code. Recall that
-retrieving a value from a DDS is _always_ an asynchronous operation, so they can only be retrieved in an asynchronous function.
-`hasInitialized` serves that purpose in the example below.
+retrieving a value from a DDS is _always_ an asynchronous operation, so they can only be retrieved in an asynchronous
+function. `hasInitialized` serves that purpose in the example below.
 
 ```ts
 protected async hasInitialized() {
@@ -161,31 +161,39 @@ export const BadgeInstantiationFactory = new DataObjectFactory(
 ## Learn more
 
 The Aqueduct library contains more than just DataObject and DataObjectFactory. To dive deeper into the details, see the
-[Aqueduct package README](https://github.com/microsoft/FluidFramework/blob/master/packages/framework/aqueduct/README.md)
+[Aqueduct package README](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/README.md)
 
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+<!-- Concepts -->
 
-[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
 
-[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
+<!-- Packages -->
 
-[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
-[shareddirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
-
-[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
-[sharedobjectsequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
-
-[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
-[sharedmap]: {{< relref "/apis/map/sharedmap.md" >}}
-
+[Aqueduct]: {{< relref "/apis/aqueduct.md" >}}
 [undo-redo]: {{< relref "/apis/undo-redo.md" >}}
 
+<!-- Classes and interfaces -->
 
-<!-- Sequences -->
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
+[Ink]: {{< relref "/apis/ink/ink.md" >}}
+[SharedCell]: {{< relref "/apis/cell/sharedcell.md" >}}
+[SharedCounter]: {{< relref "SharedCounter" >}}
+[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
+[SharedMatrix]: {{< relref "SharedMatrix" >}}
+[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
+[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[SharedSequence]: {{< relref "SharedSequence" >}}
+[SharedString]: {{< relref "SharedString" >}}
+[Quorum]: {{< relref "/apis/protocol-base/quorum.md" >}}
+
+<!-- Sequence methods -->
 
 [sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
 [sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}

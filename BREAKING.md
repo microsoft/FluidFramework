@@ -1,10 +1,16 @@
 # Breaking changes
 
-## 0.26 Breaking Changes
+## 0.28 Breaking Changes
 - [IFluidLodable.url is removed](#IFluidLodable.url-is-removed)
 
 ### IFluidLodable.url is removed
 `url` property is removed. As a temporary solution, you can use IFluidLoadable.handle.absolutePath instead. That said, internal routing and URIs will be hidden in future versions. If you rely on it, you need to rethink managing (external) URIs, as only handles can be used inside container - any external URI resolution should go through redirection of URI -> handle. `url` property is left on core objects but it will be cleared in next version. 
+
+## 0.27 Breaking Changes
+- [Local Web Host Removed](#Local-Web-Host-Removed)
+
+### Local Web Host Removed
+Local Web host is removed. Users who are using the local web host can use examples/utils/get-session-storage-container which provides the same functionality with the detached container flow.
 
 ## 0.25 Breaking Changes
 - [External Component Loader and IComponentDefaultFactoryName removed](#External-Component-Loader-and-IComponentDefaultFactoryName-removed)
@@ -13,7 +19,7 @@
 - [Container runtime event changes](#Container-runtime-event-changes)
 - [Component is removed from telemetry event names](#Component-is-removed-from-telemetry-event-names)
 - [IComponentContextLegacy is removed](#IComponentContextLegacy-is-removed)
-- [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
+- [~~IContainerRuntimeBase._createDataStoreWithProps() is removed~~](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
 - [createDataStoreWithRealizationFn() APIs are removed](#createDataStoreWithRealizationFn()-APIs-are-removed)
 - [getDataStore() APIs is removed](#getDataStore()-APIs-is-removed)
@@ -47,6 +53,8 @@ SignalComponentNotFound -> SignalFluidDataStoreNotFound
 Deprecated in 0.18, removed.
 
 ### IContainerRuntimeBase._createDataStoreWithProps is removed
+**Note: This change has been reverted for 0.25 and will be pushed to a later release.**
+
 `IContainerRuntimeBase._createDataStoreWithProps()` has been removed. Please use `IContainerRuntimeBase.createDataStore()` (returns IFluidRouter).
 If you need to pass props to data store, either use request() route to pass initial props directly, or to query Fluid object to interact with it (pass props / call methods to configure object).
 

@@ -1,56 +1,94 @@
 ---
 title: Introducing distributed data structures
-MenuPosition: 2
+menuPosition: 2
 ---
 
-Fluid Framework provides developers with distributed data structures (DDSes) that automatically ensure that each client has access to the same state.
-data structures_ (DDSes). We call them this because they are similar to data structures used commonly when programming, like
-strings, maps/dictionaries, and sequences/lists. The APIs provided by distributed data structures are designed to be
-familiar to programmers who've used these types of data structures before. For example, the `SharedMap` DDS is used to
-store key/value pairs, like a typical map or dictionary data structure, and provides `get` and `set` methods to store
-and retrieve data in the map.
+The Fluid Framework provides developers with _distributed data structures_ (DDSes) that automatically ensure that each
+client has access to the same state. We call them _distributed data structures_ because they are similar to data
+structures used commonly when programming, like strings, maps/dictionaries, and sequences/lists. The APIs provided by
+DDSes are designed to be familiar to programmers who've used these types of data structures before. For example, the
+[SharedMap][] DDS is used to store key/value pairs, like a typical map or dictionary data structure, and provides `get`
+and `set` methods to store and retrieve data in the map.
 
 When using a DDS, you can largely treat it as a local object. You can add data to it, remove data, update it, etc.
 However, a DDS is not _just_ a local object. A DDS can also be changed by other users that are editing.
 
 {{% callout tip %}}
 
-The names of distributed data structures are prefixed with `Shared` by convention. SharedMap, SharedInk, SharedString,
+Most distributed data structures are prefixed with "Shared" by convention. _SharedMap_, _SharedMatrix_, _SharedString_,
 etc. This prefix indicates that the object is shared between multiple clients.
 
 {{% /callout %}}
 
-When a DDS is changed by another client, it raises an [event](#events) locally. Your code can listen to these events so that you
-know when data is changed by a remote client and can react appropriately. For example, you may need to recalculate a
-derived value when some data in a DDS changes.
-
-All Fluid distributed data structures are _eventually consistent_. This means that, assuming no new changes to the data
-structures, all of the distributed copies of the DDS will reach an identical state in a finite amount of time.
-
-The quality of eventual consistency can improve performance in many cases because local changes can be made
-optimistically, knowing that the runtime will merge the change in the appropriate way eventually. This is a guarantee
-made by the Fluid runtime.
-
-Clients must always assume their local DDS state is stale since there are potentially changes from remote clients
-that they have not yet received. For scenarios where modification of the data can only be done safely with an up-to-date
-view of the data, Fluid provides consensus-based data structures. These data structures build in protections to prevent
-modification of the data if the unsafe conditions are met, and clients wait to get confirmation from the server before
-assuming their modifications were accepted.
-
-For example, to pop a distributed stack, clients need an up-to-date view of the state of the stack. Otherwise, two
-clients may believe they've popped the same item.
+When a DDS is changed by any client, it raises an [event](#events) locally. Your code can listen to these events so that
+you know when data is changed and can react appropriately. For example, you may need to recalculate a derived value when
+some data in a DDS changes.
 
 ## Merge behavior
 
-In a distributed system like Fluid, it is critical to understand how to merge changes from multiple clients because it
-enables you to "preserve user intent" when users are collaborating on data. This means that the merge behavior should
-match what users intend or expect as they are editing data.
+In a distributed system like Fluid, it is critical to understand how changes from multiple clients are merged.
+Understanding the merge logic enables you to "preserve user intent" when users are collaborating on data. This means
+that the merge behavior should match what users intend or expect as they are editing data.
 
 In Fluid, the merge behavior is defined by the DDS. The simplest merge strategy, employed by key-value distributed data
-structures like SharedMap, is "Last Writer Wins" (LWW). With this merge strategy, when multiple clients write different
-values to the same key, the value that was written last will overwrite the others. Refer to the sections below for more
-details about the merge strategy used by each DDS.
+structures like SharedMap, is _last writer wins_ (LWW). With this merge strategy, when multiple clients write different
+values to the same key, the value that was written last will overwrite the others. Refer to the
+[API documentation]({{< relref "/apis" >}}) for each DDS for more details about the merge strategy it uses.
 
+## Performance characteristics
+
+Fluid DDSes exhibit different performance characteristics based on how they interact with the Fluid service. The DDSes
+generally fall into two broad categories: _optimistic_ and _consensus-based_.
+
+{{% callout tip "See also" %}}
+
+* [Fluid Framework architecture]({{< relref "architecture" >}})
+* [Fluid service]({{< relref "service" >}})
+
+{{% /callout %}}
+
+### Optimistic data structures
+
+Optimistic DDSes are capable of applying Fluid operations before they are sequenced by the Fluid service. The local
+changes are said to be applied _optimistically_, hence the name _optimistic DDSes_. The DDSes also apply remote
+operations as they are made in a consistent way.
+
+Many of the most commonly used DDSes are optimistic, including [SharedMap][], [SharedSequence][], [SharedMatrix][], and
+[SharedString][].
+
+### Consensus-based data structures
+
+Consensus-based DDSes are different from optimistic DDSes because they wait for confirmation from the Fluid service
+before applying operations -- even local operations. These data structures offer additional behavior guarantees and can
+be used when you need atomicity or synchronous behavior.
+
+These behavioral guarantees cannot be implemented in an optimistic way. The cost is performance; optimistic DDSes are
+part of what makes Fluid so fast, so using optimistic DDSes is almost always preferred, but you can trade performance
+for behavioral guarantees.
+
+#### Why consensus-based DDSes are useful
+
+{{% callout note "Not required reading" %}}
+
+You don't need to read this section if you're just getting started with Fluid. Feel free to skip it and return later.
+
+{{% /callout %}}
+
+To understand why consensus-based DDSes are useful, consider implementing a stack DDS. It's not possible (as far as we
+know!) to implement a stack DDS as an optimistic one. In the ops-based Fluid architecture, one would define an operation
+like `pop`, and when a client sees that operation in the op stream, it pops a value from its local stack object.
+
+Imagine that client A pops, and client B also pops shortly after that, but _before_ it sees client A's remote pop
+operation. With an optimistic DDS, the client will apply the local operation before the server even sees it. It doesn't
+wait. Thus, client A pops a value off the local stack, and client B pops the same value -- even though it was _supposed_
+to pop the second value. This represents divergent behavior; we expect a _distributed_ stack to ensure that `pop`
+operations -- and any other operation for that matter -- are applied such that the clients reach a consistent state
+eventually. The optimstic implementation we just described violates that expectation
+
+A consensus-based DDS does not optimistically apply local ops. Instead, these DDSes wait for the server to apply a
+sequence number to the operation before applying it locally. With this approach, when two clients pop, neither makes any
+local changes until they get back a sequenced op from the server. Once they do, they apply the ops in order, which
+results in consistent behavior across all remote clients.
 
 ## Creating and storing distributed data structures
 
@@ -63,13 +101,13 @@ const myMap = SharedMap.create(this.runtime);
 You must pass in an `IFluidDataStoreRuntime` that the DDS will be managed by. We'll cover the runtime in more detail in
 the [Encapsulating data with DataObject](./dataobject-aqueduct.md) section.
 
-
 ### Storing a DDS within another DDS
 
-Distributed data structures can store primitive values like numbers and strings, serializable objects, Fluid objects, and other
-distributed data structures. Primitive values and objects can be stored directly, but when you store a DDS, or a Fluid object, you must
-store its _handle_, not the object itself.
-For example, consider this code:
+Distributed data structures can store primitive values like numbers and strings and _JSON serializable_ objects. For
+objects that are not JSON-serializable, like DDSes, Fluid provides a mechanism called _handles_, which _are_
+serializable.
+
+When storing a DDS within another DDS, you must store its handle, not the DDS itself. For example, consider this code:
 
 ```ts
 // Create a new map for our Fluid data
@@ -82,9 +120,8 @@ const myCounter = SharedCounter.create(this.runtime);
 myMap.set("counter", myCounter.handle);
 ```
 
-Handles are used in Fluid to enable the runtime to implement features like garbage collection. You can learn more about
-handles in the [handles section](../advanced/handles.md).
-
+That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles,
+see [Fluid handles](../advanced/handles.md) in the Advanced section.
 
 ## Events
 
@@ -94,12 +131,11 @@ recalculate a derived value when some data in a DDS changes.
 
 ```ts
 myMap.on("valueChanged", () => {
-    recalculate();
+  recalculate();
 });
 ```
 
 Refer to the sections below for more details about the events raised by each DDS.
-
 
 ## Picking the right data structure
 
@@ -116,70 +152,106 @@ length, width, etc.
 When users edit this data, what pieces of the data can be edited simultaneously? This is an important question to answer
 because it influences how you structure the data in your DDSes.
 
-Let's assume for a moment that all of the data about a shape is stored as a single JSON object in a `SharedMap`. Recall that
-the SharedMap uses a last writer wins merge strategy. This means that if two users are editing the data at the same
-time, then the one who made the most recent change will overwrite the changes made by the other user.
+Let's assume for a moment that all of the data about a shape is stored as a single object that looks like this:
 
-This may be perfectly fine for your needs. However, if your scenario requires users to edit individual properties of the
-shape, then the SharedMap LWW merge strategy probably won't give you the behavior you want.
+```json
+{
+  "x": 0,
+  "y": 0,
+  "height": 60,
+  "width": 40
+}
+```
+
+If we want to make this data collaborative using Fluid, the most direct -- _but ultimately flawed_ -- approach is to
+store our shape object in a SharedMap. Our SharedMap would look something like this:
+
+```json
+{
+  "aShape": {
+    "x": 0,
+    "y": 0,
+    "height": 60,
+    "width": 40
+  }
+}
+```
+
+Recall that the [SharedMap uses a last writer wins merge strategy](#merge-behavior). This means that if two users are
+editing the data at the same time, then the one who made the most recent change will overwrite the changes made by the
+other user.
+
+Imagine that you are collaborating with a colleague, and you change the shape's width while your colleague changes the
+shape's height. This will generate two operations: a `set` operation for you, and another `set` operation for your
+colleague. Both operations will be sequenced by the Fluid service, but only one will 'win,' because the SharedMap's
+merge behavior is LWW. Since we're storing the shape as an object, both `set` operations _set the whole object_.
+
+This results in someone's changes being "lost" from a user's perspective. This may be perfectly fine for your needs.
+However, if your scenario requires users to edit individual properties of the shape, then the SharedMap LWW merge
+strategy probably won't give you the behavior you want.
 
 However, you could address this problem by storing individual shape properties in SharedMap keys. Instead of storing a
-JSON object with all the data, you can break it apart and store the length in one SharedMap key, the color in another,
+JSON object with all the data, you can break it apart and store the length in one SharedMap key, the width in another,
 etc. With this data model, users can change individual properties of the shape without overwriting other users' changes.
 
 You likely have more than one shape in your data model, so you could create a SharedMap to store all your shapes, then
-store that SharedMap in the root SharedDirectory.
+store the SharedMaps representing each shape within that SharedMap.
 
+To learn more about how you use DDSes to create more complex Fluid objects, see the [Encapsulating data with
+DataObject](./dataobject-aqueduct.md) section.
 
-## Key-value data
+### Key-value data
 
-### SharedMap
+These DDSes are used for storing key-value data. They are all optimistic and use a last-writer-wins merge policy.
 
-### SharedDirectory
+- [SharedMap][] -- a basic key-value distributed data structure.
+- [SharedDirectory][] -- a SharedMap with an API more suited to hierarchical data.
+- [SharedCell][] -- a "single-object SharedMap"; useful for wrapping objects.
 
-### SharedCell
+### Sequences
 
-## Sequences
+These DDSes are used for storing sequential data. They are all optimistic.
 
-{{% include file="_includes/sequences-usage.md" %}}
+- [SharedNumberSequence][] -- a distributed sequence of numbers.
+- [SharedObjectSequence][] -- a distributed sequence of objects.
+- [SharedMatrix][] -- a distributed data structure to efficiently use two-dimensional tabular data.
 
-### SharedNumberSequence
+### Specialized data structures
 
-### SharedObjectSequence
-
-### SharedString
-
-## Specialized data structures
-
-### SharedMatrix
-
-### Quorum
-
-## Consensus-based data structures
-
+- [SharedCounter][] -- a distributed counter.
+- [SharedString][] -- specialized data structure for handling collaborative text.
+- [Ink][] -- specialized data structure for ink data.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+<!-- Concepts -->
 
-[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
 
-[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
+<!-- Packages -->
 
-[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
-[shareddirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
-
-[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
-[sharedobjectsequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
-
-[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
-[sharedmap]: {{< relref "/apis/map/sharedmap.md" >}}
-
+[Aqueduct]: {{< relref "/apis/aqueduct.md" >}}
 [undo-redo]: {{< relref "/apis/undo-redo.md" >}}
 
+<!-- Classes and interfaces -->
 
-<!-- Sequences -->
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
+[Ink]: {{< relref "/apis/ink/ink.md" >}}
+[SharedCell]: {{< relref "/apis/cell/sharedcell.md" >}}
+[SharedCounter]: {{< relref "SharedCounter" >}}
+[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
+[SharedMatrix]: {{< relref "SharedMatrix" >}}
+[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
+[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[SharedSequence]: {{< relref "SharedSequence" >}}
+[SharedString]: {{< relref "SharedString" >}}
+[Quorum]: {{< relref "/apis/protocol-base/quorum.md" >}}
+
+<!-- Sequence methods -->
 
 [sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
 [sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}

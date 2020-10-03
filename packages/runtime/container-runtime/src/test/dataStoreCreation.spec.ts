@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import assert from "assert";
+import { strict as assert } from "assert";
 import {
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
@@ -123,7 +123,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await context.realize();
@@ -146,7 +147,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await context.realize();
@@ -169,7 +171,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextA.realize();
@@ -192,7 +195,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextB.realize();
@@ -215,7 +219,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreBId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextB.realize();
@@ -235,7 +240,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreCId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextC.realize();
@@ -258,7 +264,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextFake.realize();
@@ -281,7 +288,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextFake.realize();
@@ -304,7 +312,8 @@ describe("Data Store Creation Tests", () => {
                 scope,
                 summaryTracker,
                 getCreateSummarizerNodeFn(dataStoreId),
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextC.realize();

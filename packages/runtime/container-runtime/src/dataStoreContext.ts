@@ -3,25 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IRequest,
     IResponse,
+    IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IBlobManager,
     IDeltaManager,
-    IGenericBlob,
     ContainerWarning,
     ILoader,
     BindState,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred, IsoBuffer } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
@@ -31,7 +30,6 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
-    ConnectionState,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -55,7 +53,7 @@ import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidfr
 import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in store attributes.
-const currentSnapshotFormatVersion = "0.1";
+export const currentSnapshotFormatVersion = "0.1";
 
 const attributesBlobKey = ".component";
 
@@ -120,10 +118,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._containerRuntime.clientId;
     }
 
-    public get blobManager(): IBlobManager {
-        return this._containerRuntime.blobManager;
-    }
-
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this._containerRuntime.deltaManager;
     }
@@ -134,11 +128,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public get leader(): boolean {
         return this._containerRuntime.leader;
-    }
-
-    // Back-compat: supporting <= 0.16 stores
-    public get connectionState(): ConnectionState {
-        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
     public get snapshotFn(): (message: string) => Promise<void> {
@@ -155,6 +144,10 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public get containerRuntime(): IContainerRuntime {
         return this._containerRuntime;
+    }
+
+    public get isLoaded(): boolean {
+        return this.loaded;
     }
 
     /**
@@ -201,12 +194,14 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         public readonly summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
+        public readonly isLocalDataStore: boolean,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
-        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
+        this._attachState = this.containerRuntime.attachState !== AttachState.Detached && existing ?
+            this.containerRuntime.attachState : AttachState.Detached;
 
         this.bindToContext = (channel: IFluidDataStoreChannel) => {
             assert(this.bindState === BindState.NotBound);
@@ -319,16 +314,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         assert(this.connected === connected);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const channel: IFluidDataStoreChannel = this.channel!;
-
-        // Back-compat: supporting <= 0.16 stores
-        if (channel.setConnectionState) {
-            channel.setConnectionState(connected, clientId);
-        } else if (channel.changeConnectionState) {
-            channel.changeConnectionState(this.connectionState, clientId);
-        } else {
-            assert(false);
-        }
+        this.channel!.setConnectionState(connected, clientId);
     }
 
     public process(messageArg: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
@@ -369,10 +355,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public getAudience(): IAudience {
         return this._containerRuntime.getAudience();
-    }
-
-    public async getBlobMetadata(): Promise<IGenericBlob[]> {
-        return this.blobManager.getBlobMetadata();
     }
 
     /**
@@ -576,6 +558,10 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             { throwOnFailure: true },
         );
     }
+
+    public async uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>> {
+        return this.containerRuntime.uploadBlob(blob);
+    }
 }
 
 export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
@@ -600,6 +586,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             summaryTracker,
             createSummarizerNode,
             BindState.Bound,
+            false,
             () => {
                 throw new Error("Already attached");
             },
@@ -679,16 +666,22 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        private readonly snapshotTree: ISnapshotTree | undefined,
+        /**
+         * @deprecated 0.16 Issue #1635, #3631
+         */
+        public readonly createProps?: any,
     ) {
         super(
             runtime,
             id,
-            false,
+            snapshotTree !== undefined ? true : false,
             storage,
             scope,
             summaryTracker,
             createSummarizerNode,
-            BindState.NotBound,
+            snapshotTree ? BindState.Bound : BindState.NotBound,
+            true,
             bindChannel,
             pkg);
         this.attachListeners();
@@ -728,7 +721,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         assert(this.pkg !== undefined);
         return {
             pkg: this.pkg,
-            snapshot: undefined,
+            snapshot: this.snapshotTree,
         };
     }
 }
@@ -749,6 +742,11 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        snapshotTree: ISnapshotTree | undefined,
+        /**
+         * @deprecated 0.16 Issue #1635, #3631
+         */
+        createProps?: any,
     ) {
         super(
             id,
@@ -758,7 +756,9 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
             scope,
             summaryTracker,
             createSummarizerNode,
-            bindChannel);
+            bindChannel,
+            snapshotTree,
+            createProps);
     }
 }
 
@@ -780,6 +780,7 @@ export class LocalDetachedFluidDataStoreContext
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        snapshotTree: ISnapshotTree | undefined,
     ) {
         super(
             id,
@@ -789,7 +790,8 @@ export class LocalDetachedFluidDataStoreContext
             scope,
             summaryTracker,
             createSummarizerNode,
-            bindChannel);
+            bindChannel,
+            snapshotTree);
         assert(this.pkg === undefined);
         this.detachedRuntimeCreation = true;
     }

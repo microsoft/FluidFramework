@@ -10,21 +10,10 @@ import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/data
 import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideSharedString>> { }
-}
-
-export const ISharedString: keyof IProvideSharedString = "ISharedString";
-
-export interface IProvideSharedString {
-    readonly ISharedString: ISharedString;
-}
-
 /**
  * Fluid object interface describing access methods on a SharedString
  */
-export interface ISharedString extends SharedSegmentSequence<SharedStringSegment>, IProvideSharedString {
+export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
     insertText(pos: number, text: string, props?: MergeTree.PropertySet);
 
     insertMarker(pos: number, refType: MergeTree.ReferenceType, props?: MergeTree.PropertySet);
@@ -34,6 +23,16 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 
 export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker | MergeTree.ExternalSegment;
 
+/**
+ * The Shared String is a specialized data structure for handling collaborative
+ *  text. It is based on a more general Sequence data structure but has
+ * additional features that make working with text easier.
+ *
+ * In addition to text, a Shared String can also contain markers. Markers can be
+ * used to store metadata at positions within the text, like the details of an
+ * image or Fluid object that should be rendered with the text.
+ *
+ */
 export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
     /**
      * Create a new shared string

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { Deferred } from "@fluidframework/common-utils";
 import {
     IClientJoin,
@@ -26,6 +26,7 @@ import { generateToken } from "@fluidframework/server-services-client";
 import {
     DefaultMetricClient,
     IClientManager,
+    IDeliState,
     IOrdererManager,
     IScribe,
     MongoDatabaseManager,
@@ -35,13 +36,12 @@ import {
 import {
     MessageFactory,
     TestClientManager,
-    TestCollection,
     TestDbFactory,
     TestKafka,
     TestTenantManager,
     DebugLogger,
 } from "@fluidframework/server-test-utils";
-import { OrdererManager } from "../../alfred/runnerFactory";
+import { OrdererManager } from "@fluidframework/server-routerlicious-base";
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
@@ -57,7 +57,6 @@ describe("Routerlicious", () => {
                 let testOrderer: IOrdererManager;
                 let testTenantManager: TestTenantManager;
                 let testClientManager: IClientManager;
-                let contentCollection: TestCollection;
 
                 beforeEach(() => {
                     const collectionNames = "test";
@@ -87,14 +86,12 @@ describe("Routerlicious", () => {
 
                     const pubsub = new PubSub();
                     webSocketServer = new LocalWebSocketServer(pubsub);
-                    contentCollection = new TestCollection([]);
 
                     configureWebSocketServices(
                         webSocketServer,
                         testOrderer,
                         testTenantManager,
                         testStorage,
-                        contentCollection,
                         testClientManager,
                         new DefaultMetricClient(),
                         DebugLogger.create("fluid-server:TestAlfredIO"));
@@ -169,7 +166,7 @@ describe("Routerlicious", () => {
                         const message = deliKafka.getLastMessage();
                         const systemJoinMessage = message.operation as ISequencedDocumentSystemMessage;
                         assert.equal(message.documentId, testId);
-                        assert.equal(systemJoinMessage.clientId, null);
+                        assert.equal(systemJoinMessage.clientId, undefined);
                         assert.equal(systemJoinMessage.type, MessageType.ClientJoin);
                         const JoinMessage = JSON.parse(systemJoinMessage.data) as IClientJoin;
                         assert.equal(JoinMessage.clientId, connectMessage.clientId);
@@ -203,7 +200,7 @@ describe("Routerlicious", () => {
                         const message = deliKafka.getMessage(1);
                         assert.equal(message.documentId, testId);
                         const systemLeaveMessage = message.operation as ISequencedDocumentSystemMessage;
-                        assert.equal(systemLeaveMessage.clientId, null);
+                        assert.equal(systemLeaveMessage.clientId, undefined);
                         assert.equal(systemLeaveMessage.type, MessageType.ClientLeave);
                         const clientId = JSON.parse(systemLeaveMessage.data) as string;
                         assert.equal(clientId, connectMessage.clientId);
@@ -272,7 +269,8 @@ describe("Routerlicious", () => {
             const docDetails = await testStorage.createDocument(testTenantId, testId, summaryTree, 10, 1, [["code", proposal]]);
             assert.equal(docDetails.existing, false, "Doc should not be existing!!");
             assert.equal(docDetails.value.documentId, testId, "Docid should be the provided one!!");
-            assert.equal(docDetails.value.sequenceNumber, 10, "Seq number should be 10 at which the summary was generated!!");
+            const deli: IDeliState = JSON.parse(docDetails.value.deli);
+            assert.equal(deli.sequenceNumber, 10, "Seq number should be 10 at which the summary was generated!!");
             const scribe: IScribe = JSON.parse(docDetails.value.scribe);
             assert.equal(scribe.protocolState.values[0][1]["value"], "empty", "Code proposal value should be equal!!");
         });

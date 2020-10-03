@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { Uint8ArrayToString } from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
@@ -22,7 +22,7 @@ import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import {
     getWithRetryForTokenRefresh,
-    fetchHelper,
+    fetchAndParseHelper,
     INewFileInfo,
     getOrigin,
 } from "./odspUtils";
@@ -74,7 +74,7 @@ export async function createNewFluidFile(
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
 
-                const fetchResponse = await fetchHelper<ICreateFileResponse>(
+                const fetchResponse = await fetchAndParseHelper<ICreateFileResponse>(
                     url,
                     {
                         body: JSON.stringify(containerSnapshot),

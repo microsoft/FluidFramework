@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import {
     IRequest,
     DriverHeader,
@@ -21,6 +21,16 @@ import { createOdspCreateContainerRequest } from "./createOdspCreateContainerReq
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
     const siteOrigin = new URL(siteUrl).origin;
     return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/opStream/snapshots`;
+}
+
+function getAttachmentPOSTUrl(siteUrl: string, driveId: string, itemId: string) {
+    const siteOrigin = new URL(siteUrl).origin;
+    return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/opStream/attachment`;
+}
+
+function getAttachmentGETUrl(siteUrl: string, driveId: string, itemId: string) {
+    const siteOrigin = new URL(siteUrl).origin;
+    return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/opStream/attachments`;
 }
 
 /**
@@ -52,6 +62,8 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             return {
                 endpoints: {
                     snapshotStorageUrl: "",
+                    attachmentGETStorageUrl: "",
+                    attachmentPOSTStorageUrl: "",
                 },
                 tokens: {},
                 type: "fluid",
@@ -85,6 +97,8 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             type: "fluid",
             endpoints: {
                 snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId),
+                attachmentPOSTStorageUrl: getAttachmentPOSTUrl(siteUrl, driveId, itemId),
+                attachmentGETStorageUrl: getAttachmentGETUrl(siteUrl, driveId, itemId),
             },
             tokens: {},
             url: documentUrl,

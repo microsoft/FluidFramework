@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { PropertySet } from "@fluidframework/merge-tree";
@@ -59,8 +59,8 @@ describe("Table Document with Interception", () => {
                     "Properties should not exist on the cell because there was no interception");
             } else {
                 assert.deepEqual(
-                    table.getCellProperties(cell.row, cell.col),
-                    props,
+                    { ...table.getCellProperties(cell.row, cell.col) },
+                    { ...props },
                     "The properties set via the interception callback should exist");
             }
         }

@@ -10,6 +10,7 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import Comlink from "comlink";
 
@@ -73,5 +74,9 @@ export class WebWorkerLoader implements ILoader, IFluidRunnable, IFluidRouter {
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer> {
         return this.proxy.createDetachedContainer(source);
+    }
+
+    public async rehydrateDetachedContainerFromSnapshot(source: ISnapshotTree): Promise<IContainer> {
+        return this.proxy.rehydrateDetachedContainerFromSnapshot(source);
     }
 }

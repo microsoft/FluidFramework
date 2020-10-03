@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
@@ -12,7 +12,6 @@ import {
     IClient,
     IConnect,
     IConnected,
-    IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -111,7 +110,6 @@ export class DocumentDeltaConnection
 
     // Listen for ops sent before we receive a response to connect_document
     protected readonly queuedMessages: ISequencedDocumentMessage[] = [];
-    private readonly queuedContents: IContentMessage[] = [];
     protected readonly queuedSignals: ISignalMessage[] = [];
 
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
@@ -123,6 +121,12 @@ export class DocumentDeltaConnection
     protected get hasDetails(): boolean {
         return !!this._details;
     }
+
+    /**
+     * Flag to indicate whether the DocumentDeltaConnection is expected to still be capable of sending messages.
+     * After disconnection, we flip this to prevent any stale messages from being emitted.
+     */
+    protected closed: boolean = false;
 
     private get details(): IConnected {
         if (!this._details) {
@@ -143,7 +147,12 @@ export class DocumentDeltaConnection
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
             (submitType, work) => {
-                this.socket.emit(submitType, this.clientId, work);
+                // Although the implementation here disconnects the socket and does not reuse it, other subclasses
+                // (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
+                // on the still-live socket.
+                if (!this.closed) {
+                    this.socket.emit(submitType, this.clientId, work);
+                }
             });
 
         this.on("newListener", (event, listener) => {
@@ -251,28 +260,6 @@ export class DocumentDeltaConnection
     }
 
     /**
-     * Get contents sent during the connection
-     *
-     * @returns contents sent during the connection
-     */
-    public get initialContents(): IContentMessage[] {
-        this.removeEarlyContentsHandler();
-
-        assert(this.listeners("op-content").length !== 0, "No op-content handler is setup!");
-
-        if (this.queuedContents.length > 0) {
-            this.details.initialContents.push(...this.queuedContents);
-
-            this.details.initialContents.sort((a, b) =>
-                (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) ||
-                    a.clientSequenceNumber - b.clientSequenceNumber);
-            this.queuedContents.length = 0;
-        }
-
-        return this.details.initialContents;
-    }
-
-    /**
      * Get signals sent during the connection
      *
      * @returns signals sent during the connection
@@ -310,27 +297,6 @@ export class DocumentDeltaConnection
     }
 
     /**
-     * Submits a new message to the server without queueing
-     *
-     * @param message - message to submit
-     */
-    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.socket.emit(
-                "submitContent",
-                this.clientId,
-                messages,
-                (error) => {
-                    if (error) {
-                        reject();
-                    } else {
-                        resolve();
-                    }
-                });
-        });
-    }
-
-    /**
      * Submits a new signal to the server
      *
      * @param message - signal to submit
@@ -340,20 +306,20 @@ export class DocumentDeltaConnection
     }
 
     /**
-     * Disconnect from the websocket
+     * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.  Subclasses which
+     * override this method must set the "closed" flag after disconnecting.
      * @param socketProtocolError - true if error happened on socket / socket.io protocol level
      *  (not on Fluid protocol level)
      */
     public disconnect(socketProtocolError: boolean = false) {
         this.removeTrackedListeners(false);
         this.socket.disconnect();
+        this.closed = true;
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.socket.on("op", this.earlyOpHandler!);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.socket.on("op-content", this.earlyContentHandler!);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.socket.on("signal", this.earlySignalHandler!);
 
@@ -435,11 +401,6 @@ export class DocumentDeltaConnection
         this.queuedMessages.push(...msgs);
     };
 
-    protected earlyContentHandler?= (msg: IContentMessage) => {
-        debug("Queued early contents");
-        this.queuedContents.push(msg);
-    };
-
     protected earlySignalHandler?= (msg: ISignalMessage) => {
         debug("Queued early signals");
         this.queuedSignals.push(msg);
@@ -449,13 +410,6 @@ export class DocumentDeltaConnection
         if (this.earlyOpHandler) {
             this.socket.removeListener("op", this.earlyOpHandler);
             this.earlyOpHandler = undefined;
-        }
-    }
-
-    private removeEarlyContentsHandler() {
-        if (this.earlyContentHandler) {
-            this.socket.removeListener("op-content", this.earlyContentHandler);
-            this.earlyContentHandler = undefined;
         }
     }
 
@@ -489,7 +443,6 @@ export class DocumentDeltaConnection
 
         if (!connectionListenerOnly) {
             this.removeEarlyOpHandler();
-            this.removeEarlyContentsHandler();
             this.removeEarlySignalHandler();
         }
     }

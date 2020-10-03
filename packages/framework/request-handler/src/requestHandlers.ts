@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import {
     IFluidObject,
     IResponse,
@@ -34,7 +34,7 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainer
  * handling of external URI to internal handle is required (in future, we will support weak handle references,
  * that will allow any GC policy to be implemented by container authors.)
  */
-export const deprecated_innerRequestHandler = async (request: IRequest, runtime: IContainerRuntime) =>
+export const deprecated_innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
     runtime.IFluidHandleContext.resolveHandle(request);
 
 export const createFluidObjectResponse = (fluidObject: IFluidObject) => {
@@ -69,7 +69,7 @@ class LegacyUriHandle<T = IFluidObject & IFluidLoadable> implements IFluidHandle
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function handleFromLegacyUri<T = IFluidObject & IFluidLoadable>(
     uri: string,
-    runtime: IContainerRuntimeBase): IFluidHandle<T>
-{
+    runtime: IContainerRuntimeBase,
+): IFluidHandle<T> {
     return new LegacyUriHandle<T>(uri, runtime);
 }

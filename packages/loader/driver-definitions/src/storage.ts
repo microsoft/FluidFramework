@@ -7,7 +7,6 @@ import { IEventProvider, IErrorEvent, ITelemetryBaseLogger } from "@fluidframewo
 import {
     ConnectionMode,
     IClient,
-    IContentMessage,
     ICreateBlobResponse,
     IDocumentMessage,
     IErrorTrackingService,
@@ -82,6 +81,8 @@ export interface IDocumentStorageService {
      */
     createBlob(file: Uint8Array): Promise<ICreateBlobResponse>;
 
+    readBlob(id: string): Promise<Uint8Array>;
+
     /**
      * Fetch blob Data url
      */
@@ -106,7 +107,6 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     (event: "nack", listener: (documentId: string, message: INack[]) => void);
     (event: "disconnect", listener: (reason: any) => void);
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
-    (event: "op-content", listener: (message: IContentMessage) => void);
     (event: "signal", listener: (message: ISignalMessage) => void);
     (event: "pong", listener: (latency: number) => void);
 }
@@ -153,11 +153,6 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     initialMessages: ISequencedDocumentMessage[];
 
     /**
-     * Messages sent during the connection
-     */
-    initialContents: IContentMessage[];
-
-    /**
      * Signals sent during the connection
      */
     initialSignals: ISignalMessage[];
@@ -185,12 +180,6 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
      * Submit a new message to the server
      */
     submit(messages: IDocumentMessage[]): void;
-
-    /**
-     * Async version of the regular submit function.
-     */
-    // TODO why the need for two of these?
-    submitAsync(message: IDocumentMessage[]): Promise<void>;
 
     /**
      * Submit a new signal to the server

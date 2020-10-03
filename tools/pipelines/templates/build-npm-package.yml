@@ -23,14 +23,6 @@ parameters:
   type: string
   default: ci:test
 
-- name: taskAuth
-  type: boolean
-  default: true
- 
-- name: extraAuth
-  type: string
-  default:
-
 - name: poolCG
   type: object
   default: Lite
@@ -40,6 +32,11 @@ parameters:
   default: Lite
 
 - name: preCG
+  type: stepList
+  default: []
+
+# These should output results under an /nyc/ dir (anywhere in the repo) to get included in the published test results
+- name: additionalTests
   type: stepList
   default: []
 
@@ -79,13 +76,16 @@ variables:
     parameters:
       publishOverride: ${{ parameters.publishOverride }}
       releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 
 stages:
+  # Install / Build / Test Stage
   - stage: build
     displayName: Build Stage
     jobs:
       # Job - Build
-      - job: Build
+      - job: build
+        displayName: Build
         pool: ${{ parameters.poolBuild }}
         variables:
           testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
@@ -101,6 +101,7 @@ stages:
           displayName: Parameters
           inputs:
             targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
             script: |
               # Show all task group conditions
 
@@ -113,6 +114,7 @@ stages:
                 releaseBuildOverride=${{ parameters.releaseBuildOverride }}
 
               Tasks Parameters:
+                BuildDir=${{ parameters.buildDirectory }}
                 Build=${{ parameters.taskBuild }}
                 Lint=${{ parameters.taskLint }}
                 Test=${{ parameters.taskTest }}
@@ -122,27 +124,49 @@ stages:
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
                 componentDetection=${{ variables.componentDetection }}
-                pushImage=${{ variables.pushImage }}
                 publish=${{ variables.publish }}
+                canRelease=${{ variables.canRelease }}
+
                 release=$(release)"
+
+              # Error checking
+              if [[ "$(release)" == "release" ]]; then
+                if [[ "${{ variables.canRelease }}" == "False" ]]; then
+                  echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
+                  exit -1;
+                fi
+
+                if [ -f "lerna.json" ]; then
+                  grep -e fluid.*-0 `find packages -name 'package.json'`
+                else
+                  grep -e fluid.*-0 `find . -name 'package.json'`
+                fi
+
+                if [[ $? == 0 ]]; then
+                  echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
+                  exit -1;
+                fi
+              fi
+
+              if [[ "$(release)" == "prerelease" ]]; then
+                if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
+                  echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
+                  exit -1;
+                fi
+              fi
+
+              if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
+                if [[ "${{ variables.publish }}" != "True" ]]; then
+                  echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
+                  exit -1;
+                fi
+              fi
 
         # Install
         - task: UseNode@1
           displayName: Use Node 12.x
           inputs:
             version: 12.x
-        - ${{ if eq(parameters.taskAuth, true) }}:
-          - task: npmAuthenticate@0
-            displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/.npmrc'
-            inputs:
-              workingFile: ${{ parameters.buildDirectory }}/.npmrc
-              customEndpoint: Offnet Packages
-        - ${{ if ne(parameters.extraAuth, '') }}:
-          - task: npmAuthenticate@0
-            displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/${{ parameters.extraAuth }}/.npmrc'
-            inputs:
-              workingFile: ${{ parameters.buildDirectory }}/${{ parameters.extraAuth }}/.npmrc
-              customEndpoint: Offnet Packages
         - task: Npm@1
           displayName: npm ci
           inputs:
@@ -156,6 +180,7 @@ stages:
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            tagName: ${{ parameters.tagName }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -177,6 +202,9 @@ stages:
 
         # Test
         - ${{ if ne(parameters.taskTest, 'false') }}:
+          # Run any additional tests first so their results can be copied to the ~/nyc dir and published below
+          - ${{ parameters.additionalTests }}
+
           # Test - No coverage
           - ${{ if ne(variables['testCoverage'], true) }}:
             - task: Npm@1
@@ -293,8 +321,5 @@ stages:
   - ${{ if eq(variables.publish, true) }}:
     - template: include-publish-npm-package.yml
       parameters:
-        buildDirectory: ${{ parameters.buildDirectory }}
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
-        buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-        

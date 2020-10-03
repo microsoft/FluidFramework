@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { ITree } from "@fluidframework/protocol-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
@@ -95,7 +95,7 @@ describe("SharedString", () => {
 
             for (let i = 0; i < text.length; i++) {
                 assert.deepEqual(
-                    sharedString.getPropertiesAtPosition(i), styleProps, "Could not add props");
+                    { ...sharedString.getPropertiesAtPosition(i) }, { ...styleProps }, "Could not add props");
             }
 
             const colorProps = { color: "green" };
@@ -103,9 +103,32 @@ describe("SharedString", () => {
 
             for (let i = 6; i < text.length; i++) {
                 assert.deepEqual(
-                    sharedString.getPropertiesAtPosition(i),
+                    { ...sharedString.getPropertiesAtPosition(i) },
                     { ...styleProps, ...colorProps },
                     "Could not annotate props");
+            }
+        });
+
+        it("can handle null annotations in text", async () => {
+            const text = "hello world";
+            // eslint-disable-next-line no-null/no-null
+            const startingProps = { style: "bold", color: null };
+            sharedString.insertText(0, text, startingProps);
+
+            for (let i = 0; i < text.length; i++) {
+                assert.strictEqual(
+                    sharedString.getPropertiesAtPosition(i).color, undefined, "Null values allowed in properties");
+            }
+
+            // eslint-disable-next-line no-null/no-null
+            const updatedProps = { style: null };
+            sharedString.annotateRange(6, text.length, updatedProps);
+
+            for (let i = 6; i < text.length; i++) {
+                assert.strictEqual(
+                    sharedString.getPropertiesAtPosition(i).style,
+                    undefined,
+                    "Null values allowed in properties");
             }
         });
 
@@ -361,9 +384,13 @@ describe("SharedString", () => {
             // Verify that both the shared strings have the properties.
             for (let i = 0; i < text.length; i++) {
                 assert.deepEqual(
-                    sharedString.getPropertiesAtPosition(i), styleProps, "Could not add props");
+                    { ...sharedString.getPropertiesAtPosition(i) },
+                    { ...styleProps },
+                    "Could not add props");
                 assert.deepEqual(
-                    sharedString2.getPropertiesAtPosition(i), styleProps, "Could not add props to remote string");
+                    { ...sharedString2.getPropertiesAtPosition(i) },
+                    { ...styleProps },
+                    "Could not add props to remote string");
             }
 
             // Annote the properties.
@@ -376,11 +403,11 @@ describe("SharedString", () => {
             // Verify that both the shared strings have the annotated properties.
             for (let i = 6; i < text.length; i++) {
                 assert.deepEqual(
-                    sharedString.getPropertiesAtPosition(i),
+                    { ...sharedString.getPropertiesAtPosition(i) },
                     { ...styleProps, ...colorProps },
                     "Could not annotate props");
                 assert.deepEqual(
-                    sharedString2.getPropertiesAtPosition(i),
+                    { ...sharedString2.getPropertiesAtPosition(i) },
                     { ...styleProps, ...colorProps },
                     "Could not annotate props in remote string");
             }

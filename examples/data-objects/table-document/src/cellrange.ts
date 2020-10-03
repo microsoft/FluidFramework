@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { LocalReference } from "@fluidframework/merge-tree";
 import { SequenceInterval } from "@fluidframework/sequence";
 
@@ -62,8 +62,8 @@ export class CellRange {
 
     public forEachRowMajor(callback: (row: number, col: number) => boolean) {
         const r = this.getRange();
-        for (let row = r.row, numRows = r.numRows; numRows > 0; row++ , numRows--) {
-            for (let col = r.col, numCols = r.numCols; numCols > 0; col++ , numCols--) {
+        for (let row = r.row, numRows = r.numRows; numRows > 0; row++, numRows--) {
+            for (let col = r.col, numCols = r.numCols; numCols > 0; col++, numCols--) {
                 if (!callback(row, col)) {
                     return;
                 }
@@ -73,8 +73,8 @@ export class CellRange {
 
     public forEachColMajor(callback: (row: number, col: number) => boolean) {
         const r = this.getRange();
-        for (let col = r.col, numCols = r.numCols; numCols > 0; col++ , numCols--) {
-            for (let row = r.row, numRows = r.numRows; numRows > 0; row++ , numRows--) {
+        for (let col = r.col, numCols = r.numCols; numCols > 0; col++, numCols--) {
+            for (let row = r.row, numRows = r.numRows; numRows > 0; row++, numRows--) {
                 if (!callback(row, col)) {
                     return;
                 }

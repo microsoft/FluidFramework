@@ -31,7 +31,7 @@ export class HttpServer implements core.IHttpServer {
     }
 
     public async close(): Promise<void> {
-        // tslint:disable-next-line
+        // eslint-disable-next-line @typescript-eslint/ban-types
         await util.promisify(((callback) => this.server.close(callback)) as Function)();
     }
 

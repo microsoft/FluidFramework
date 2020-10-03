@@ -174,7 +174,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     }
 
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 

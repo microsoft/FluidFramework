@@ -14,9 +14,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IBlobManager,
     IDeltaManager,
-    IGenericBlob,
     ContainerWarning,
     ILoader,
     BindState,
@@ -25,12 +23,13 @@ import {
 import {
     Deferred,
     unreachableCase,
+    IsoBuffer,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { buildSnapshotTree, readAndParseFromBlobs } from "@fluidframework/driver-utils";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
@@ -38,6 +37,7 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
     ITreeEntry,
+    ITree,
 } from "@fluidframework/protocol-definitions";
 import {
     IAttachMessage,
@@ -49,11 +49,17 @@ import {
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
 import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IChannel, IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import {
+    IChannel,
+    IFluidDataStoreRuntime,
+    IChannelFactory,
+    IChannelAttributes,
+} from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
+import { convertSnapshotToITree } from "./utils";
 
 export enum DataStoreMessageType {
     // Creates a new channel
@@ -91,7 +97,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             context.parentBranch,
             context.existing,
             context.options,
-            context.blobManager,
             context.deltaManager,
             context.getQuorum(),
             context.getAudience(),
@@ -174,7 +179,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         public readonly parentBranch: string | null,
         public existing: boolean,
         public readonly options: any,
-        private readonly blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly quorum: IQuorum,
         private readonly audience: IAudience,
@@ -189,25 +193,53 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         // Must always receive the data store type inside of the attributes
         if (tree?.trees !== undefined) {
             Object.keys(tree.trees).forEach((path) => {
-                const channelContext = new RemoteChannelContext(
-                    this,
-                    dataStoreContext,
-                    dataStoreContext.storage,
-                    (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
-                    (address: string) => this.setChannelDirty(address),
-                    path,
-                    tree.trees[path],
-                    this.sharedObjectRegistry,
-                    undefined /* extraBlobs */,
-                    dataStoreContext.branch,
-                    this.dataStoreContext.summaryTracker.createOrGetChild(
+                let channelContext: IChannelContext;
+                // If already exists on storage, then create a remote channel. However, if it is case of rehydrating a
+                // container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
+                // true. In this case create a LocalChannelContext.
+                if (dataStoreContext.isLocalDataStore) {
+                    const channelAttributes = readAndParseFromBlobs<IChannelAttributes>(
+                        tree.trees[path].blobs, tree.trees[path].blobs[".attributes"]);
+                    channelContext = new LocalChannelContext(
                         path,
-                        this.deltaManager.lastSequenceNumber,
-                    ),
-                    this.dataStoreContext.getCreateChildSummarizerNodeFn(
+                        this.sharedObjectRegistry,
+                        channelAttributes.type,
+                        this,
+                        this.dataStoreContext,
+                        this.dataStoreContext.storage,
+                        (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
+                        (address: string) => this.setChannelDirty(address),
+                        tree.trees[path]);
+                    // This is the case of rehydrating a detached container from snapshot. Now due to delay loading of
+                    // data store, if the data store is loaded after the container is attached, then we missed marking
+                    // the channel as attached. So mark it now. Otherwise add it to local channel context queue, so
+                    // that it can be mark attached later with the data store.
+                    if (dataStoreContext.attachState !== AttachState.Detached) {
+                        (channelContext as LocalChannelContext).markAttached();
+                    } else {
+                        this.localChannelContextQueue.set(path, channelContext as LocalChannelContext);
+                    }
+                } else {
+                    channelContext = new RemoteChannelContext(
+                        this,
+                        dataStoreContext,
+                        dataStoreContext.storage,
+                        (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
+                        (address: string) => this.setChannelDirty(address),
                         path,
-                        { type: CreateSummarizerNodeSource.FromSummary },
-                    ));
+                        tree.trees[path],
+                        this.sharedObjectRegistry,
+                        undefined /* extraBlobs */,
+                        dataStoreContext.branch,
+                        this.dataStoreContext.summaryTracker.createOrGetChild(
+                            path,
+                            this.deltaManager.lastSequenceNumber,
+                        ),
+                        this.dataStoreContext.getCreateChildSummarizerNodeFn(
+                            path,
+                            { type: CreateSummarizerNodeSource.FromSummary },
+                        ));
+                }
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
 
@@ -217,8 +249,9 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         }
 
         this.attachListener();
+        // If exists on storage or loaded from a snapshot, it should already be binded.
         this.bindState = existing ? BindState.Bound : BindState.NotBound;
-        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
+        this._attachState = dataStoreContext.attachState;
 
         // If it's existing we know it has been attached.
         if (existing) {
@@ -294,7 +327,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             this.dataStoreContext,
             this.dataStoreContext.storage,
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
-            (address: string) => this.setChannelDirty(address));
+            (address: string) => this.setChannelDirty(address),
+            undefined);
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -306,6 +340,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             this.contextsDeferred.set(id, deferred);
         }
 
+        assert(context.channel, "Channel should be loaded when created!!");
         return context.channel;
     }
 
@@ -347,7 +382,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         this.localChannelContextQueue.forEach((channel) => {
             // When we are attaching the data store we don't need to send attach for the registered services.
             // This is because they will be captured as part of the Attach data store snapshot
-            channel.attach();
+            channel.markAttached();
         });
 
         this.localChannelContextQueue.clear();
@@ -410,25 +445,10 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return this.snapshotFn(message);
     }
 
-    public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
+    public async uploadBlob(file: IsoBuffer): Promise<IFluidHandle<string>> {
         this.verifyNotClosed();
 
-        const blob = await this.blobManager.createBlob(file);
-        file.id = blob.id;
-        file.url = blob.url;
-
-        return file;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getBlob(blobId: string): Promise<IGenericBlob | undefined> {
-        this.verifyNotClosed();
-
-        return this.blobManager.getBlob(blobId);
-    }
-
-    public async getBlobMetadata(): Promise<IGenericBlob[]> {
-        return this.blobManager.getBlobMetadata();
+        return this.dataStoreContext.uploadBlob(file);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
@@ -570,7 +590,16 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             }
 
             if (!this.notBoundedChannelContextSet.has(objectId)) {
-                const snapshot = value.getAttachSnapshot();
+                let snapshot: ITree;
+                if (value.isLoaded) {
+                    snapshot = value.getAttachSnapshot();
+                } else {
+                    // If this channel is not yet loaded, then there should be no changes in the snapshot from which
+                    // it was created as it is detached container. So just use the previous snapshot.
+                    assert(this.dataStoreContext.baseSnapshot,
+                        "BaseSnapshot should be there as detached container loaded from snapshot");
+                    snapshot = convertSnapshotToITree(this.dataStoreContext.baseSnapshot.trees[objectId]);
+                }
 
                 // And then store the tree
                 entries.push(new TreeTreeEntry(objectId, snapshot));
@@ -628,7 +657,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         }
 
         const context = this.contexts.get(channel.id) as LocalChannelContext;
-        context.attach();
+        context.markAttached();
     }
 
     private submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {

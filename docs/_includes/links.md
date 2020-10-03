@@ -1,24 +1,32 @@
 <!-- Links -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+<!-- Concepts -->
 
-[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
 
-[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
+<!-- Packages -->
 
-[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
-[shareddirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
-
-[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
-[sharedobjectsequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
-
-[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
-[sharedmap]: {{< relref "/apis/map/sharedmap.md" >}}
-
+[Aqueduct]: {{< relref "/apis/aqueduct.md" >}}
 [undo-redo]: {{< relref "/apis/undo-redo.md" >}}
 
+<!-- Classes and interfaces -->
 
-<!-- Sequences -->
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
+[Ink]: {{< relref "/apis/ink/ink.md" >}}
+[SharedCell]: {{< relref "/apis/cell/sharedcell.md" >}}
+[SharedCounter]: {{< relref "SharedCounter" >}}
+[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
+[SharedMatrix]: {{< relref "SharedMatrix" >}}
+[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
+[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[SharedSequence]: {{< relref "SharedSequence" >}}
+[SharedString]: {{< relref "SharedString" >}}
+[Quorum]: {{< relref "/apis/protocol-base/quorum.md" >}}
+
+<!-- Sequence methods -->
 
 [sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
 [sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}

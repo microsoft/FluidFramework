@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -26,7 +26,6 @@ import {
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentAttributes,
     IDocumentMessage,
@@ -40,7 +39,6 @@ import {
     ISummaryTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";
 
@@ -50,9 +48,8 @@ export class ContainerContext implements IContainerContext {
         scope: IFluidObject,
         codeLoader: ICodeLoader,
         runtimeFactory: IRuntimeFactory,
-        baseSnapshot: ISnapshotTree | null,
+        baseSnapshot: ISnapshotTree | undefined,
         attributes: IDocumentAttributes,
-        blobManager: BlobManager | undefined,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
@@ -71,7 +68,6 @@ export class ContainerContext implements IContainerContext {
             runtimeFactory,
             baseSnapshot,
             attributes,
-            blobManager,
             deltaManager,
             quorum,
             loader,
@@ -112,11 +108,6 @@ export class ContainerContext implements IContainerContext {
         return this.container.parentBranch;
     }
 
-    // Back-compat: supporting <= 0.16 data stores
-    public get connectionState(): ConnectionState {
-        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
-    }
-
     public get runtimeVersion(): string | undefined {
         return this.runtime?.runtimeVersion;
     }
@@ -149,10 +140,6 @@ export class ContainerContext implements IContainerContext {
         return config as IFluidConfiguration;
     }
 
-    public get IMessageScheduler() {
-        return this;
-    }
-
     public get baseSnapshot() {
         return this._baseSnapshot;
     }
@@ -180,9 +167,8 @@ export class ContainerContext implements IContainerContext {
         public readonly scope: IFluidObject,
         public readonly codeLoader: ICodeLoader,
         public readonly runtimeFactory: IRuntimeFactory,
-        private readonly _baseSnapshot: ISnapshotTree | null,
+        private readonly _baseSnapshot: ISnapshotTree | undefined,
         private readonly attributes: IDocumentAttributes,
-        public readonly blobManager: BlobManager | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
         public readonly loader: ILoader,
@@ -246,14 +232,7 @@ export class ContainerContext implements IContainerContext {
 
         assert.strictEqual(connected, this.connected, "Mismatch in connection state while setting");
 
-        // Back-compat: supporting <= 0.16 data stores
-        if (runtime.setConnectionState !== undefined) {
-            runtime.setConnectionState(connected, clientId);
-        } else if (runtime.changeConnectionState !== undefined) {
-            runtime.changeConnectionState(this.connectionState, clientId);
-        } else {
-            assert.fail("Runtime missing both setConnectionState and changeConnectionState");
-        }
+        runtime.setConnectionState(connected, clientId);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {

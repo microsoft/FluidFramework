@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
-import { IUrlResolver, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    ChannelFactoryRegistry,
     LocalCodeLoader,
     ITestFluidObject,
     TestFluidObjectFactory,
@@ -29,27 +30,38 @@ import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ICompatTestArgs, compatTest } from "./compatUtils";
 
-describe("Detached Container", () => {
-    const documentId = "detachedContainerTest";
-    const pkg: IFluidCodeDetails = {
-        package: "detachedContainerTestPackage",
-        config: {},
-    };
+const documentId = "detachedContainerTest";
+const pkg: IFluidCodeDetails = {
+    package: "detachedContainerTestPackage",
+    config: {},
+};
 
-    const sharedStringId = "ss1Key";
-    const sharedMapId = "sm1Key";
-    const crcId = "crc1Key";
-    const cocId = "coc1Key";
-    const sharedDirectoryId = "sd1Key";
-    const sharedCellId = "scell1Key";
-    const sharedMatrixId = "smatrix1Key";
-    const sharedInkId = "sink1Key";
-    const sparseMatrixId = "sparsematrixKey";
+const sharedStringId = "ss1Key";
+const sharedMapId = "sm1Key";
+const crcId = "crc1Key";
+const cocId = "coc1Key";
+const sharedDirectoryId = "sd1Key";
+const sharedCellId = "scell1Key";
+const sharedMatrixId = "smatrix1Key";
+const sharedInkId = "sink1Key";
+const sparseMatrixId = "sparsematrixKey";
 
+const registry: ChannelFactoryRegistry = [
+    [sharedStringId, SharedString.getFactory()],
+    [sharedMapId, SharedMap.getFactory()],
+    [crcId, ConsensusRegisterCollection.getFactory()],
+    [sharedDirectoryId, SharedDirectory.getFactory()],
+    [sharedCellId, SharedCell.getFactory()],
+    [sharedInkId, Ink.getFactory()],
+    [sharedMatrixId, SharedMatrix.getFactory()],
+    [cocId, ConsensusQueue.getFactory()],
+    [sparseMatrixId, SparseMatrix.getFactory()],
+];
+
+const tests = (args: ICompatTestArgs) => {
     let request: IRequest;
-    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
-    let documentServiceFactory: IDocumentServiceFactory;
     let loader: Loader;
 
     const createFluidObject = (async (
@@ -61,34 +73,10 @@ describe("Detached Container", () => {
             "");
     });
 
-    function createTestLoader(urlResolver: IUrlResolver): Loader {
-        const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
-            [sharedStringId, SharedString.getFactory()],
-            [sharedMapId, SharedMap.getFactory()],
-            [crcId, ConsensusRegisterCollection.getFactory()],
-            [sharedDirectoryId, SharedDirectory.getFactory()],
-            [sharedCellId, SharedCell.getFactory()],
-            [sharedInkId, Ink.getFactory()],
-            [sharedMatrixId, SharedMatrix.getFactory()],
-            [cocId, ConsensusQueue.getFactory()],
-            [sparseMatrixId, SparseMatrix.getFactory()],
-        ]);
-        const codeLoader = new LocalCodeLoader([[pkg, factory]]);
-        documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
-        return new Loader(
-            urlResolver,
-            documentServiceFactory,
-            codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
-    }
-
     beforeEach(async () => {
-        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
         const urlResolver = new LocalResolver();
         request = urlResolver.createCreateNewRequest(documentId);
-        loader = createTestLoader(urlResolver);
+        loader = args.makeTestLoader(registry, pkg, urlResolver) as Loader;
     });
 
     it("Create detached container", async () => {
@@ -173,7 +161,7 @@ describe("Detached Container", () => {
 
         // Now load the container from another loader.
         const urlResolver2 = new LocalResolver();
-        const loader2 = createTestLoader(urlResolver2);
+        const loader2 = args.makeTestLoader(registry, pkg, urlResolver2);
         // Create a new request url from the resolvedUrl of the first container.
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(container.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
@@ -196,17 +184,14 @@ describe("Detached Container", () => {
 
     it("ReAttach detached container on failed attach", async () => {
         const container = await loader.createDetachedContainer(pkg);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        const oldFunc = documentServiceFactory.createContainer;
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        documentServiceFactory.createContainer = (a, b, c) => { throw new Error("Test Error"); };
+        const oldFunc = args.documentServiceFactory.createContainer;
+        args.documentServiceFactory.createContainer = (a, b, c) => { throw new Error("Test Error"); };
         let failedOnce = false;
         try {
             await container.attach(request);
         } catch (e) {
             failedOnce = true;
-            // eslint-disable-next-line @typescript-eslint/unbound-method
-            documentServiceFactory.createContainer = oldFunc;
+            args.documentServiceFactory.createContainer = oldFunc;
         }
         assert.strictEqual(failedOnce, true, "Attach call should fail");
         assert.strictEqual(container.attachState, AttachState.Attaching, "Container should be in attaching state");
@@ -231,7 +216,7 @@ describe("Detached Container", () => {
 
         // Now load the container from another loader.
         const urlResolver2 = new LocalResolver();
-        const loader2 = createTestLoader(urlResolver2);
+        const loader2 = args.makeTestLoader(registry, pkg, urlResolver2);
         // Create a new request url from the resolvedUrl of the first container.
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(container.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
@@ -592,8 +577,39 @@ describe("Detached Container", () => {
         await containerP;
         await defPromise.promise;
     });
+};
+
+describe("Detached Container", () => {
+    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
+    let documentServiceFactory: LocalDocumentServiceFactory;
+
+    function createTestLoader(reg, code, urlResolver: IUrlResolver): Loader {
+        const factory: TestFluidObjectFactory = new TestFluidObjectFactory(reg);
+        const codeLoader = new LocalCodeLoader([[code, factory]]);
+        return new Loader(
+            urlResolver,
+            documentServiceFactory,
+            codeLoader,
+            {},
+            {},
+            new Map<string, IProxyLoaderFactory>());
+    }
+
+    beforeEach(async () => {
+        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
+        documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+    });
+
+    tests({
+        makeTestLoader: createTestLoader,
+        get documentServiceFactory() { return documentServiceFactory; },
+    });
 
     afterEach(async () => {
         await testDeltaConnectionServer.webSocketServer.close();
+    });
+
+    describe("compatibility", () => {
+        compatTest(tests, { testFluidDataObject: true });
     });
 });

@@ -5,8 +5,8 @@
 
 import { EventEmitter } from "events";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
-import * as level from "level";
-import * as sublevel from "level-sublevel";
+import level from "level";
+import sublevel from "level-sublevel";
 import { Collection, ICollectionProperty } from "./levelDbCollection";
 
 const MaxFetchSize = 2000;
@@ -22,6 +22,7 @@ export class LevelDb extends EventEmitter implements IDb {
     }
 
     public async close(): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.db.close();
     }
 
@@ -58,7 +59,7 @@ export class LevelDb extends EventEmitter implements IDb {
                     limit: MaxFetchSize,
                 };
             default:
-                throw new Error("Collection not implemented.");
+                throw new Error(`Collection ${name} not implemented.`);
         }
     }
 }

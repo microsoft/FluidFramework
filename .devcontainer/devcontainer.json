@@ -1,39 +1,31 @@
-// See https://aka.ms/vscode-remote/devcontainer.json for format details.
+// For format details, see https://aka.ms/vscode-remote/devcontainer.json
 {
-	"name": "Node.js 10",
-	// "dockerFile": "Dockerfile",
+	"name": "Fluid",
+	"build": {
+		"dockerfile": "Dockerfile",
 
-	"image": "prague.azurecr.io/devenv",
-
-	"service": "development",
-
-	"settings": { 
-		"terminal.integrated.shell.linux": "/usr/bin/zsh"
+		// Update 'NODE_VERSION' to pick a Node version: 10, 12, 14
+		"args": { "NODE_VERSION": "12" }
 	},
-	
-	// Uncomment the next line if you want to publish any ports.
-	// "appPort": [],
 
-	// Uncomment the next line if you want to add in default container specific settings.json values
-	// "settings":  { "workbench.colorTheme": "Quiet Light" },
+    // Invoke 'nvm' to install our preferred version of node, per the '.nvmrc' file
+    // at the root of the ${workspaceFolder}.
+    "postCreateCommand": ". /usr/local/share/nvm/nvm.sh; nvm install",
 
-	// Uncomment the next line to run commands after the container is created.
-	// "postCreateCommand": "yarn install",
+    // Expose 'docker.sock' to the dev container and proxy access for the 'node' user.
+	"mounts": [ "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind" ],
+	"postStartCommand": "/usr/local/share/docker-init.sh",
 
-	// "runArgs": [
-	// 	"-v",
-	// 	"/var/run/docker.sock:/var/run/docker.sock",
-	// 	"-u",
-	// 	"node"
-	// ],
-	"runArgs": ["-v","//var/run/docker.sock:/var/run/docker.sock"],
+	// Set *default* container specific settings.json values on container create.
+	"settings": { "terminal.integrated.shell.linux": "/usr/bin/zsh" },
 
+	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
-		"dbaeumer.vscode-eslint",
-		"ms-vscode.vscode-typescript-tslint-plugin"
+        "dbaeumer.vscode-eslint",
+        "ms-azuretools.vscode-docker",
+        "editorconfig.editorconfig"
 	],
 
-	"remote.extensionKind": {
-        "ms-azuretools.vscode-docker": "workspace"
-    }
+    // Forward port for Tinylicious
+    "forwardPorts": [ 3000 ]
 }

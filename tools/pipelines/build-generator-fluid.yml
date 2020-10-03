@@ -6,21 +6,21 @@
 name: $(Build.BuildId)
 
 parameters:
+- name: releaseBuildOverride
+  displayName: Release Build (default = not released)
+  type: string
+  default: none
+  values:
+    - none
+    - release
 - name: publishOverride
-  displayName: Publish Override
+  displayName: Publish Override (default = based on branch)
   type: string
   default: default
   values:
     - default
     - skip
-- name: releaseBuildOverride
-  displayName: Release Build Override
-  type: string
-  default: none
-  values:
-    - none
-    - prerelease
-    - release
+    - force
 
 trigger:
   branches:
@@ -37,6 +37,7 @@ trigger:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
 
 pr:
   branches:
@@ -64,5 +65,4 @@ extends:
     taskLint: false
     taskTest: test
     namespace: false
-    extraAuth: app/templates
     buildNumberInPatch: true
