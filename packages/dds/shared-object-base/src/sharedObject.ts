@@ -69,7 +69,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         return this._connected;
     }
 
-    // Back-compat <= 0.25
+    // Back-compat <= 0.28
     public get url(): string {
         return this.id;
     }

@@ -73,7 +73,6 @@ export class SharedTextRunner
 
     public get IFluidHTMLView() { return this; }
 
-    public readonly url = "/text";
     private sharedString: SharedString;
     private insightsMap: ISharedMap;
     private rootView: ISharedMap;
@@ -87,7 +86,7 @@ export class SharedTextRunner
         private readonly context: IFluidDataStoreContext,
     ) {
         super();
-        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "/text", this.runtime.IFluidHandleContext);
     }
 
     public render(element: HTMLElement) {
