@@ -61,11 +61,9 @@ function generateGraph(
     };
     const graph = new GitGraph(config);
 
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const fullId = tenantId
         ? `${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`
         : encodeURIComponent(id);
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const path = pathPostfix ? `${fullId}/${pathPostfix}` : fullId;
 
     const main = graph.branch("main");
