@@ -254,6 +254,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private service: IDocumentService | undefined;
     private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
+    private hasCheckpointSequenceNumber = false;
     private readonly _audience: Audience;
 
     private _context: ContainerContext | undefined;
@@ -681,32 +682,40 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @returns true: container is up to date, it processed all the ops that were know at the time of first connection
      *          false: storage does not provide indication of how far the client is.
      */
-    public async waitCatchingUp() {
+    public async waitCatchUp() {
         return new Promise<boolean>((accept) => {
-            let connectionOpSeqNumber: number | undefined;
-            const callback = (_, opsBehind) => {
-                if (connectionOpSeqNumber !== undefined) {
+            const waitForOps = () => {
+                assert(this._connectionState !== ConnectionState.Disconnected);
+                if (!this.hasCheckpointSequenceNumber) {
+                    accept(false);
                     return;
                 }
-                // We might be already up-today (opsBehind <= 0). If so, report it right away.
-                // Storage may not provide any indication on how far client is behind.
-                if (opsBehind === undefined || opsBehind <= 0) {
-                    accept(opsBehind !== undefined);
-                    this.deltaManager.off("connect", callback);
+                const connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
+                if (this.deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
+                    accept(true);
                     return;
                 }
-
-                connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
                 const callbackOps = (message) => {
-                    if (message.sequenceNumber === connectionOpSeqNumber) {
+                    if (connectionOpSeqNumber <= message.sequenceNumber) {
                         accept(true);
-                        this.deltaManager.off("connect", callback);
                         this.deltaManager.off("beforeOpProcessing", callbackOps);
                     }
                 };
                 this.deltaManager.on("beforeOpProcessing", callbackOps);
             };
 
+            if (this._connectionState !== ConnectionState.Disconnected) {
+                waitForOps();
+                return;
+            }
+
+            // We can't resume ops if we are disconnected and not allowed to reconnect
+            assert(this._deltaManager.reconnectMode === ReconnectMode.Enabled);
+
+            const callback = () => {
+                this.deltaManager.off("connect", callback);
+                waitForOps();
+            };
             this.deltaManager.on("connect", callback);
 
             this.resume();
@@ -1290,6 +1299,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
             const oldState = this._connectionState;
             this._connectionState = ConnectionState.Connecting;
+            this.hasCheckpointSequenceNumber = (opsBehind !== undefined);
 
             // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
             // (have received the join message for the client ID)
