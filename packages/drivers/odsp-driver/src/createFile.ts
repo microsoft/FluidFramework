@@ -10,6 +10,7 @@ import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-util
 import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { fetchIncorrectResponse, invalidFileNameStatusCode } from "@fluidframework/odsp-doclib-utils";
 import {
     IOdspResolvedUrl,
     ISnapshotTree,
@@ -28,11 +29,7 @@ import {
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
-import {
-    throwOdspNetworkError,
-    invalidFileNameStatusCode,
-    fetchIncorrectResponse,
-} from "./odspError";
+import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 
 const isInvalidFileName = (fileName: string): boolean => {

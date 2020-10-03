@@ -6,7 +6,7 @@
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { throwOdspNetworkError } from "./odspErrorUtils";
 import { unauthPostAsync } from "./odspRequest";
-import { getSharepointTenant } from "./odspUtils";
+import { getSharepointTenant } from "./odspDocLibUtils";
 
 export interface IOdspTokens {
     accessToken: string;

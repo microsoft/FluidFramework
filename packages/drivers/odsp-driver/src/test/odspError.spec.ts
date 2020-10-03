@@ -6,18 +6,15 @@
 
 import { strict as assert } from "assert";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { IOdspSocketError } from "../contracts";
-import {
-    getWithRetryForTokenRefresh,
-} from "../odspUtils";
 import {
     createOdspNetworkError,
-    errorObjectFromSocketError,
     fetchIncorrectResponse,
-    throwOdspNetworkError,
     invalidFileNameStatusCode,
     OdspError,
-} from "../odspError";
+} from "@fluidframework/odsp-doclib-utils";
+import { IOdspSocketError } from "../contracts";
+import { getWithRetryForTokenRefresh } from "../odspUtils";
+import { errorObjectFromSocketError, throwOdspNetworkError } from "../odspError";
 
 describe("Odsp Error", () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

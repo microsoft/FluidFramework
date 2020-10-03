@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { fetchIncorrectResponse } from "@fluidframework/odsp-doclib-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import {
     fetchHelper,
@@ -12,10 +13,7 @@ import {
     getOrigin,
 } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
-import {
-    fetchIncorrectResponse,
-    throwOdspNetworkError,
-} from "./odspError";
+import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 
 /**
