@@ -102,7 +102,7 @@ export async function fetchTokens(
     const refreshToken = result.data.refresh_token;
 
     if (accessToken === undefined || refreshToken === undefined) {
-        throw throwOdspNetworkError("Unable to get access token.", result);
+        throwOdspNetworkError("Unable to get access token.", result);
     }
     return { accessToken, refreshToken };
 }
