@@ -16,11 +16,11 @@ import { NodeCodeLoader } from "./nodeCodeloader";
 import { fetchFluidObject, initializeChaincode } from "./utils";
 
 // Base service configuration.
-const ordererEndpoint = "";
-const storageEndpoint = "";
-const tenantId = "";
-const tenantKey = "";
-const bearerSecret = "";
+const ordererEndpoint = "http://localhost:3000";
+const storageEndpoint = "http://localhost:3000/repos/tinylicious";
+const tenantId = "tinylicious";
+const tenantKey = "12345";
+const bearerSecret = "not-used-with-tinylicious";
 
 // Code package details.
 const defaultPackage = "@fluid-example/key-value-cache@0.19.0-28557";
