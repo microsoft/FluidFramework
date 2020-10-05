@@ -547,7 +547,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         );
     }
 
-    // NOTE: Search blob concept
+    // NOTE: Search blob concept!
     public registerExtraSnapshotContract(contract: ISnapshotContract) {
         this.extraSnapshotContract = contract;
     }
@@ -569,7 +569,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                 return new TreeTreeEntry(key, snapshot);
             }));
 
-        // NOTE: Search blob concept (just testing one contract for now):
+        // NOTE: Search blob concept!
+        // If there is an extra contract to be executed, then do so and push the results onto the tree:
         if (this.extraSnapshotContract !== undefined) {
             const extras = await this.extraSnapshotContract();
             entries.push(...extras);

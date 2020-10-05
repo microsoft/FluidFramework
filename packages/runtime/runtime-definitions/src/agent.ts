@@ -13,6 +13,10 @@ import {
 } from "@fluidframework/protocol-definitions";
 /**
  * NOTE: Search blob concept
+ *
+ * A simple type for doing extra work during a runtime snapshot. This type assumes nothing about the kind of work that
+ * will take place, merely that the "contract" is a callback function that will return a suitable array of enries that
+ * can be pushed onto the snapshot tree.
  */
 export type ISnapshotContract = () => Promise<ITreeEntry[]>;
 

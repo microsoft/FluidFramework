@@ -69,6 +69,13 @@ export interface IFluidDataStoreRuntime extends
      */
     readonly attachState: AttachState;
 
+    /**
+     * NOTE: Search blob concept!
+     *
+     * Optional support for performing an extra "contract" (some extra work) during snapshot.
+     */
+    readonly extraSnapshotContract: ISnapshotContract | undefined;
+
     on(
         event: "disconnected" | "dispose" | "leader" | "notleader" | "attaching" | "attached",
         listener: () => void,
@@ -136,9 +143,15 @@ export interface IFluidDataStoreRuntime extends
     raiseContainerWarning(warning: ContainerWarning): void;
 
     /**
-     * NOTE: Search blob/extra concept
+     * NOTE: Search blob concept!
      *
-     * Register extra information to be added to snapshot trees
+     * Registers an additional contract between the runtime and the DataObject that will be executed on snapshot. The
+     * `contract` variable itself makes no assumptions about what the contract (typically defined in a particular
+     * DataObject's code) will do.
+     *
+     * For example, text-heavy DataObjects/applications may want to enable a contract that performs some extra function
+     * during a snapshot. This could be, e.g. storing the current text in an extra blob in the snapshot to be used for
+     * a search engine's indexer later on.
      */
     registerExtraSnapshotContract(contract: ISnapshotContract): void;
 }

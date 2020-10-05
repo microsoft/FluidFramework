@@ -338,7 +338,12 @@ export async function instantiateDataStore(context: IFluidDataStoreContext) {
         return runner.request(request);
     });
 
-    // NOTE: Search blob concept
+    /**
+     * NOTE: Search blob concept!
+     *
+     * A simple contract between shared-text and the runtime that will pipe the current state of the text box into the
+     * contents of a new `TreeEntry` and return it as a singleton array.
+     */
     const runnerP2 = SharedTextRunner.load(runtime, context);
     runtime.registerExtraSnapshotContract(async () => {
         const runner2 = await runnerP2;

@@ -536,7 +536,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
 
     /**
-     * Note: Search blob concept
+     * NOTE: Search blob concept
      */
     public registerExtraSnapshotContract(contract: ISnapshotContract): void {
         return;
