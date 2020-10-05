@@ -86,6 +86,9 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
         }
         if (sharingLink) {
             odspResolvedUrl.sharingLink = sharingLink;
+            // Add to cache.
+            const key = this.getKey(odspResolvedUrl);
+            this.shareLinkMap.set(key, Promise.resolve(sharingLink));
         }
         return odspResolvedUrl;
     }
