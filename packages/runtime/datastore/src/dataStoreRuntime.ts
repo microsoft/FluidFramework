@@ -571,7 +571,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
         // NOTE: Search blob concept (just testing one contract for now):
         if (this.extraSnapshotContract !== undefined) {
-            entries.push(...this.extraSnapshotContract());
+            const extras = await this.extraSnapshotContract();
+            entries.push(...extras);
         }
 
         return entries;

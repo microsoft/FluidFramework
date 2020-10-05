@@ -31,7 +31,7 @@ import {
     IFluidDataStoreContext,
     ITask,
     ITaskManager,
-    ISnapshotContract,
+    // ISnapshotContract,
 } from "@fluidframework/runtime-definitions";
 import {
     IProvideSharedString,
@@ -340,11 +340,11 @@ export async function instantiateDataStore(context: IFluidDataStoreContext) {
 
     // NOTE: Search blob concept
     const runnerP2 = SharedTextRunner.load(runtime, context);
-    const runner2 = await runnerP2;
-    const searchContract: ISnapshotContract = () => {
+    runtime.registerExtraSnapshotContract(async () => {
+        const runner2 = await runnerP2;
         const allText = runner2.ISharedString.getText();
         const searchEntry: ITreeEntry = {
-            path: "",
+            path: "searchblob",
             type: TreeEntry.Blob,
             value: {
                 contents: allText,
@@ -353,8 +353,7 @@ export async function instantiateDataStore(context: IFluidDataStoreContext) {
             mode: FileMode.File,
         };
         return [searchEntry];
-    };
-    runtime.registerExtraSnapshotContract(searchContract);
+    });
 
     return runtime;
 }

@@ -14,7 +14,7 @@ import {
 /**
  * NOTE: Search blob concept
  */
-export type ISnapshotContract = () => ITreeEntry[];
+export type ISnapshotContract = () => Promise<ITreeEntry[]>;
 
 /**
  * Definition of a Task.
