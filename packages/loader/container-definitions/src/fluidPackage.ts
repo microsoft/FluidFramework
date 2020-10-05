@@ -3,9 +3,19 @@
  * Licensed under the MIT License.
  */
 
+ /**
+  * Specifies an environment on fluid property of a IFluidPackage
+  */
 export interface IFluidPackageEnvironment {
+
+    /**
+     * The name of the target. For a browser environment, this could be umd for scripts
+     * or css for styles.
+     */
     [target: string]: undefined | {
-        // List of files. The file type in determined by library target
+        /**
+         * List of files. The file type in determined by library target
+         */
         files: string[];
 
         // If libraryTarget is umd then library is the global name that the script entry points will be exposed
@@ -15,16 +25,32 @@ export interface IFluidPackageEnvironment {
 }
 
 /**
- * Fluid-specific properties expected on a package to be loaded by the Fluid code loader
+ * Fluid-specific properties expected on a package to be loaded by the  code loader.
+ * While compatible with the npm package format it is not necessary that that package is an
+ * npm package:
+ * https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
  */
 export interface IFluidPackage {
+    /**
+     * The name of the package that this code represnets
+     */
     name: string;
-    // https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
+    /**
+     * This object represents the fluid specific properties of the package
+     */
     fluid: {
-        [environment: string]: IFluidPackageEnvironment;
+        /**
+         * The name of the of the environment. This should be something like browser, or node
+         * and contain the necessary targets for loading this code in that environment.
+         */
+        [environment: string]:  undefined | IFluidPackageEnvironment;
     };
-    // General access for extended fields
-    [key: string]: unknown;
+    /**
+     * General access for extended fields as specific usages will
+     * likely have additional infornamation like a definition of
+     * compatible versions, or deployment information like rings or rollouts.
+     */
+    [key: string]: any;
 }
 
 /**

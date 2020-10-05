@@ -5,24 +5,52 @@
 
 import { IFluidPackage, IFluidPackageEnvironment, isFluidPackage } from "@fluidframework/container-definitions";
 
+/**
+ * A specific Fluid package environment for browsers
+ */
 export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment{
+    /**
+     * The umd target specifics the scripts necessary for loading a packages
+     * in a browser environment
+     */
     umd: {
-        // for the umd target, these would be the bundled js files
+        /**
+         * The bundled js files for loading this package
+         */
         files: string[];
 
-        // For umd library is the global name that the script entry points will be exposed
+        /**
+         * The global name that the script entry points will be exposed.
+         * This entry point should be an IFluidModule
+         */
         library: string;
     },
 }
 
+/**
+ * A Fluid package for specification for browser environments
+ */
 export interface IFluidBrowserPackage extends IFluidPackage {
+    /**
+     * @inheritdoc
+     */
     fluid: {
-        browser: IFluidBrowserPackageEnvironment
+        /**
+         * The browser specific package information for this package
+         */
+        browser: IFluidBrowserPackageEnvironment;
+        /**
+         * @inheritdoc
+         */
         [environment: string]: IFluidPackageEnvironment;
     }
 }
 
-export const isFluidBrowserPackage = (pkg: any): pkg is Readonly<IFluidBrowserPackage>  =>
-    isFluidPackage(pkg)
-    && typeof pkg?.fluid?.browser?.umd?.library === "string"
-    && Array.isArray(pkg?.fluid?.browser?.umd?.files);
+/**
+ * Determines if any object is an IFluidBrowserPackage
+ * @param maybePkg - The object to check for compatibility with IFluidBrowserPackage
+ */
+export const isFluidBrowserPackage = (maybePkg: any): maybePkg is Readonly<IFluidBrowserPackage>  =>
+    isFluidPackage(maybePkg)
+    && typeof maybePkg?.fluid?.browser?.umd?.library === "string"
+    && Array.isArray(maybePkg?.fluid?.browser?.umd?.files);
