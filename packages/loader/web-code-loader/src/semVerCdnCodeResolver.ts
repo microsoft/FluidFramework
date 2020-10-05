@@ -44,7 +44,7 @@ class FluidPackage {
             ... this.codeDetails,
             resolvedPackage: {
                 ... maybePkg,
-                fluid:{
+                fluid: {
                     browser,
                 },
             },

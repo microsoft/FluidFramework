@@ -25,6 +25,15 @@ export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironmen
          */
         library: string;
     },
+    /**
+     * The css target optionally specifics the necessary stylesheets for this package
+     */
+    css?: {
+        /**
+         * The css files to include on the page
+         */
+        files: string[];
+    }
 }
 
 /**

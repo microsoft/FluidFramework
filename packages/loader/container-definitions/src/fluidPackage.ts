@@ -18,8 +18,10 @@ export interface IFluidPackageEnvironment {
          */
         files: string[];
 
-        // If libraryTarget is umd then library is the global name that the script entry points will be exposed
-        // under. Other target formats may choose to reinterpret this value.
+        /**
+         * If libraryTarget is umd then library is the global name that the script entry points will be exposed
+         * under. Other target formats may choose to reinterpret this value.
+         */
         library?: string;
     }
 }
