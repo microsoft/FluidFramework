@@ -23,7 +23,7 @@ import {
     createOdspNetworkError,
     invalidFileNameStatusCode,
     OdspErrorType,
-} from "@fluidframework/odsp-driver";
+} from "@fluidframework/odsp-doclib-utils";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
