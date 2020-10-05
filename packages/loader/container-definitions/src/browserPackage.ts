@@ -41,7 +41,7 @@ export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironmen
  */
 export interface IFluidBrowserPackage extends IFluidPackage {
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     fluid: {
         /**
@@ -49,7 +49,7 @@ export interface IFluidBrowserPackage extends IFluidPackage {
          */
         browser: IFluidBrowserPackageEnvironment;
         /**
-         * @inheritdoc
+         * {@inheritdoc}
          */
         [environment: string]: IFluidPackageEnvironment;
     }
