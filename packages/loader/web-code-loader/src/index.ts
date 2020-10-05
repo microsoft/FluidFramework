@@ -6,4 +6,3 @@ export * from "./semVerCdnCodeResolver";
 export * from "./utils";
 export * from "./webLoader";
 export * from "./allowList";
-export * from "./browserPackage";

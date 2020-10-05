@@ -14,6 +14,7 @@ declare module "@fluidframework/core-interfaces" {
 }
 
 export * from "./audience";
+export * from "./browserPackage";
 export * from "./legacy/chaincode";
 export * from "./deltas";
 export * from "./error";

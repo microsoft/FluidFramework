@@ -10,8 +10,8 @@ import {
     IFluidModule,
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
+    isFluidBrowserPackage,
 } from "@fluidframework/container-definitions";
-import { isFluidBrowserPackage } from "./browserPackage";
 import { ScriptManager } from "./scriptManager";
 
 export class WebCodeLoader implements ICodeLoader {

@@ -15,6 +15,7 @@ import {
     IFluidCodeResolver,
     IProxyLoaderFactory,
     IResolvedFluidCodeDetails,
+    isFluidBrowserPackage,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
@@ -23,7 +24,6 @@ import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import {
     extractPackageIdentifierDetails,
-    isFluidBrowserPackage,
     resolveFluidPackageEnvironment,
     WebCodeLoader,
 } from "@fluidframework/web-code-loader";
