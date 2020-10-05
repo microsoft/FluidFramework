@@ -4,7 +4,7 @@
  */
 
  /**
-  * Specifies an environment on fluid property of a IFluidPackage
+  * Specifies an environment on Fluid property of a IFluidPackage
   */
 export interface IFluidPackageEnvironment {
 
@@ -38,7 +38,7 @@ export interface IFluidPackage {
      */
     name: string;
     /**
-     * This object represents the fluid specific properties of the package
+     * This object represents the Fluid specific properties of the package
      */
     fluid: {
         /**
