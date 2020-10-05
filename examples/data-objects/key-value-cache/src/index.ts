@@ -136,7 +136,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime: ContainerRuntime = await ContainerRuntime.load(
+        const runtime: ContainerRuntime = await ContainerRuntime._load(
             context,
             new Map([[ComponentName, Promise.resolve(this)]]),
             buildRuntimeRequestHandler(

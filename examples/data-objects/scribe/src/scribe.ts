@@ -465,7 +465,7 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
 
         const defaultComponentId = "default";
 
-        const runtime = await ContainerRuntime.load(
+        const runtime = await ContainerRuntime._load(
             context,
             registry,
             buildRuntimeRequestHandler(

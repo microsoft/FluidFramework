@@ -27,7 +27,7 @@ export class TestContainerRuntimeFactory implements IRuntimeFactory {
             defaultRouteRequestHandler("default"),
             deprecated_innerRequestHandler);
 
-        const runtime = await ContainerRuntime.load(
+        const runtime = await ContainerRuntime._load(
             context,
             [
                 ["default", Promise.resolve(this.dataStoreFactory)],

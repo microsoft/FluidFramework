@@ -111,7 +111,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const chaincode = new Chaincode(context.closeFn);
 
-        const runtime: ContainerRuntime = await ContainerRuntime.load(
+        const runtime: ContainerRuntime = await ContainerRuntime._load(
             context,
             [
                 [chaincode.type, Promise.resolve(chaincode)],

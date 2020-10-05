@@ -29,7 +29,7 @@ class CodeMirrorFactory implements IRuntimeFactory {
         const defaultComponentId = "default";
         const defaultComponent = "@fluid-example/smde";
 
-        const runtime = await ContainerRuntime.load(
+        const runtime = await ContainerRuntime._load(
             context,
             registry,
             buildRuntimeRequestHandler(

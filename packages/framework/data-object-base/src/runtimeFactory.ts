@@ -40,7 +40,7 @@ export class RuntimeFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await ContainerRuntime.load(
+        const runtime = await ContainerRuntime._load(
             context,
             this.registry,
             buildRuntimeRequestHandler(

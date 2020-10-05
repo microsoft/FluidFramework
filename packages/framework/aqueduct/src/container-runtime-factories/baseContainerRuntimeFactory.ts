@@ -65,7 +65,7 @@ export class BaseContainerRuntimeFactory implements
         const scope: any = context.scope;
         scope.IFluidDependencySynthesizer = dc;
 
-        const runtime = await ContainerRuntime.load(
+        const runtime = await ContainerRuntime._load(
             context,
             this.registryEntries,
             buildRuntimeRequestHandler(
