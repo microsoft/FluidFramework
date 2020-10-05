@@ -93,7 +93,7 @@ export interface IDebuggerController {
     /**
      * "Download ops" option is clicked in the UI. Returns JSON of the full opStream when available.
      */
-    onDownloadOps(): Promise<string>;
+    onDownloadOpsButtonClick(): Promise<string>;
 }
 
 const debuggerWindowHtml =
@@ -212,7 +212,7 @@ export class DebuggerUI {
 
     private attachDownloadOpsListener(element: HTMLElement) {
         element.addEventListener("click", () => {
-            this.controller.onDownloadOps().then((opJson) => {
+            this.controller.onDownloadOpsButtonClick().then((opJson) => {
                 this.download("opStream.json", opJson);
             }).catch((error) => {console.log(`Error downloading ops: ${error}`);});
         });

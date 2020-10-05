@@ -149,13 +149,14 @@ export class DebugReplayController extends ReplayController implements IDebugger
         reader.readAsText(file, "utf-8");
     }
 
-    public async onDownloadOps(): Promise<string> {
-        if (this.documentService !== undefined) {
-            const documentDeltaStorageService = await this.documentService.connectToDeltaStorage();
-            const messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
-            return JSON.stringify(messages, undefined, 2);
+    public async onDownloadOpsButtonClick(): Promise<string> {
+        if (this.documentService === undefined) {
+            throw new Error("DocumentService required");
         }
-        return "N/A";
+
+        const documentDeltaStorageService = await this.documentService.connectToDeltaStorage();
+        const messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
+        return JSON.stringify(messages, undefined, 2);
     }
 
     private async fetchOpsFromDeltaStorage(documentDeltaStorageService): Promise<ISequencedDocumentMessage[]> {
@@ -339,37 +340,25 @@ export class DebugReplayController extends ReplayController implements IDebugger
 }
 
 async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumentDeltaStorageService)  {
-    const timeStart = Date.now();
-    let requests = 0;
-    let opsStorage = 0;
     let lastSeq = 0;
     const batch = 2000;
     while (true) {
-        requests++;
         const messages = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
         if (messages.length === 0) {
             break;
         }
         yield messages;
-        opsStorage += messages.length;
         lastSeq = messages[messages.length - 1].sequenceNumber;
-    }
-
-    if (requests > 0) {
-        // eslint-disable-next-line max-len
-        console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests`);
     }
 }
 
 async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaStorageService) {
-    console.log(`Loading ops at ${from}`);
     for (let iter = 0; iter < 3; iter++) {
         try {
             return await deltaStorage.get(from, to);
         } catch (error) {
-            console.error("Hit error while downloading ops. Retrying");
-            console.error(error);
+            // Retry
         }
     }
-    throw new Error("Giving up after 3 attempts to download chunk.");
+    throw new Error("Giving up after 3 attempts to download chunk of ops.");
 }

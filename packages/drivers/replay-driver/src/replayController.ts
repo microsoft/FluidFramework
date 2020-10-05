@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentStorageService, ISummaryContext }
-    from "@fluidframework/driver-definitions";
+import {
+    IDocumentService,
+    IDocumentStorageService,
+    ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**
