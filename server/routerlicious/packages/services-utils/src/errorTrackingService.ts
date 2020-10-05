@@ -21,7 +21,6 @@ export class NodeErrorTrackingService implements IErrorTrackingService {
     public captureException(error: any): string | undefined {
         if (error.tenantId && error.documentId) {
             Sentry.withScope((scope) => {
-                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                 scope.setTag("document", `${error.tenantId}/${error.documentId}`);
                 Sentry.captureException(error.error);
             });

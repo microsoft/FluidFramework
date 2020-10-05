@@ -127,7 +127,6 @@ export class AlfredRunner implements utils.IRunner {
     private onListening() {
         const addr = this.server.httpServer.address();
         const bind = typeof addr === "string"
-            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
             ? `pipe ${addr}`
             : `port ${addr.port}`;
         winston.info(`Listening on ${bind}`);

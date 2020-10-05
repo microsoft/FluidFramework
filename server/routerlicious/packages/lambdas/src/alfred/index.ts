@@ -243,6 +243,7 @@ export function configureWebSocketServices(
             if (isWriter(messageClient.scopes, details.existing, message.mode)) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 connection.connect();
 
                 connectionsMap.set(clientId, connection);
@@ -300,6 +301,7 @@ export function configureWebSocketServices(
         }
 
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (connectionMessage: IConnect) => {
             connectDocument(connectionMessage).then(
                 (message) => {
@@ -357,6 +359,7 @@ export function configureWebSocketServices(
                             .map((message) => sanitizeMessage(message));
 
                         if (sanitized.length > 0) {
+                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
                             connection.order(sanitized);
                         }
                     });
@@ -388,6 +391,7 @@ export function configureWebSocketServices(
                 }
             });
 
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("disconnect", async () => {
             clearExpirationTimer();
             // Send notification messages for all client IDs in the connection map
@@ -397,6 +401,7 @@ export function configureWebSocketServices(
                     tenantId: connection.tenantId,
                 };
                 logger.info(`Disconnect of ${clientId}`, { messageMetaData });
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 connection.disconnect();
             }
             // Send notification messages for all client IDs in the room map

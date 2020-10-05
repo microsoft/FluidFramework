@@ -356,22 +356,27 @@ export class LocalOrderer implements IOrderer {
 
     private startLambdas() {
         if (this.deliLambda) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.deliLambda.start();
         }
 
         if (this.scriptoriumLambda) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.scriptoriumLambda.start();
         }
 
         if (this.foremanLambda) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.foremanLambda.start();
         }
 
         if (this.scribeLambda) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.scribeLambda.start();
         }
 
         if (this.broadcasterLambda) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.broadcasterLambda.start();
         }
     }

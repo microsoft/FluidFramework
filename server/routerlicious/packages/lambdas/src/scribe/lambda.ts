@@ -68,11 +68,8 @@ export class ScribeLambda extends SequencedLambda {
         private readonly checkpointManager: ICheckpointManager,
         scribe: IScribe,
         private readonly producer: IProducer | undefined,
-        // eslint-disable-next-line @typescript-eslint/prefer-readonly
         private protocolHandler: ProtocolOpHandler,
-        // eslint-disable-next-line @typescript-eslint/prefer-readonly
         private term: number,
-        // eslint-disable-next-line @typescript-eslint/prefer-readonly
         private protocolHead: number,
         messages: ISequencedDocumentMessage[],
         private readonly generateServiceSummary: boolean,

@@ -45,6 +45,7 @@ export class NodeCodeLoader {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return entry;
         } else {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             Promise.reject("Invalid Package");
         }
     }

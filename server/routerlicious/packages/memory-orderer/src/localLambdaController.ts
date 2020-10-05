@@ -53,6 +53,7 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
             this.context.error(ex, true);
 
             this.startTimer = setTimeout(() => {
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.start();
             }, 5000);
         }

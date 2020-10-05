@@ -102,11 +102,13 @@ function sendJoin(tenantId: string, documentId: string, clientId: string, produc
     };
 
     const joinMessage = craftClientJoinMessage(tenantId, documentId, clientDetail);
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     producer.send([joinMessage], tenantId, documentId);
 }
 
 function sendLeave(tenantId: string, documentId: string, clientId: string, producer: core.IProducer) {
     const leaveMessage = craftClientLeaveMessage(tenantId, documentId, clientId);
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     producer.send([leaveMessage], tenantId, documentId);
 }
 
@@ -126,6 +128,7 @@ function sendOp(
             clientId,
             JSON.stringify(content),
             clientSequenceNumber++);
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         producer.send([opMessage], tenantId, documentId);
     }
 }

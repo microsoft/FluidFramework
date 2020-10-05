@@ -156,7 +156,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 
     private constructor(
         private readonly webSocketServerFactory: () => IWebSocketServer,
-        // eslint-disable-next-line @typescript-eslint/prefer-readonly
         private node: INode,
         private readonly storage: IDocumentStorage,
         private readonly databaseManager: IDatabaseManager,
@@ -196,6 +195,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                             moniker.choose(),
                             connectMessage.client);
 
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         connection.connect();
 
                         // Need to subscribe to both channels. Then broadcast subscription across pipe
@@ -219,6 +219,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                     case "disconnect": {
                         const connection = this.connectionMap.get(message.cid);
                         assert(connection);
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         connection.disconnect();
                         this.connectionMap.delete(message.cid);
 
@@ -229,6 +230,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         const orderMessage = message.payload as IDocumentMessage;
                         const connection = this.connectionMap.get(message.cid);
                         assert(connection);
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         connection.order([orderMessage]);
                         break;
                     }
