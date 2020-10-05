@@ -21,7 +21,7 @@ export function paste(doc: FlowDocument, data: DataTransfer, position: number) {
         const root = document.createElement("span");
         root.innerHTML = content;
         pasteChildren(doc, root, position);
-    } else if (content = data.getData(ClipboardFormat.html)) {
+    } else if (content = data.getData(ClipboardFormat.text)) {
         debug("paste('text/plain'): %s", content);
         doc.insertText(position, content);
     } else {
