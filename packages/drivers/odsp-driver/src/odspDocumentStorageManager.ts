@@ -177,12 +177,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return response.content;
     }
 
-    public async readBlob(blobid: string): Promise<IsoBuffer> {
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         this.checkAttachmentGETUrl();
 
         const response = await getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "ReadDataBlob");
-            const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobid)}/content`;
+            const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
             const { url, headers } = getUrlAndHeadersWithAuth(unAuthedUrl, storageToken);
 
             return PerformanceEvent.timedExecAsync(

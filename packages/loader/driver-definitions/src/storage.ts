@@ -79,9 +79,9 @@ export interface IDocumentStorageService {
     /**
      * Creates a blob out of the given buffer
      */
-    createBlob(file: Uint8Array): Promise<ICreateBlobResponse>;
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
 
-    readBlob(id: string): Promise<Uint8Array>;
+    readBlob(id: string): Promise<ArrayBufferLike>;
 
     /**
      * Fetch blob Data url

@@ -87,12 +87,16 @@ export class DocumentStorageService implements IDocumentStorageService {
         throw new Error("NOT IMPLEMENTED!");
     }
 
-    public async createBlob(file: Uint8Array): Promise<ICreateBlobResponse> {
-        const response = this.manager.createBlob(Uint8ArrayToString(file, "base64"), "base64");
+    public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
+        const response = this.manager.createBlob(
+            Uint8ArrayToString(
+                new Uint8Array(file), "base64"),
+            "base64");
+
         return response.then((r) => ({ id: r.sha, url: r.url }));
     }
 
-    public async readBlob(blobId: string) {
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         return IsoBuffer.from(await this.read(blobId), "base64");
     }
 
