@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { SharedLogFactory } from "./factory";
-export { SharedLog } from "./log";
+export { SharedLog, SharedLogFactory } from "../../src";

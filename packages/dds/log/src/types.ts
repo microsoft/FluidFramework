@@ -1,44 +1,24 @@
-/*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License.
- */
+export type Tuple<T, L extends number, TObj = [T, ...T[]]> =
+    Pick<TObj, Exclude<keyof TObj, "splice" | "push" | "pop" | "shift" |  "unshift">>
+    & {
+        readonly length: L
+        [ I: number ]: T
+        [Symbol.iterator]: () => IterableIterator<T>
+    };
 
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { Serializable } from "@fluidframework/datastore-definitions";
+export const blockSize = 256 as const;
 
-export interface ISharedLogEvents<T extends Serializable> extends ISharedObjectEvents {
-    (event: "valueChanged", listener: (value: T) => void);
-    (event: "delete", listener: () => void);
+export interface ILogNode {
+    a: number;
+    i: undefined | string | Promise<string>;
 }
 
-/**
- * Shared cell interface
- */
-
-export interface ISharedLog<T extends Serializable = any> extends ISharedObject<ISharedLogEvents<T>> {
-    /**
-     * Retrieves the cell value.
-     *
-     * @returns - the value of the cell
-     */
-    get(): T | undefined;
-
-    /**
-     * Sets the cell value.
-     *
-     * @param value - a JSON-able or SharedObject value to set the cell to
-     */
-    set(value: T): void;
-
-    /**
-     * Checks whether cell is empty or not.
-     *
-     * @returns - `true` if the value of cell is `undefined`, `false` otherwise
-     */
-    empty(): boolean;
-
-    /**
-     * Delete the value from the cell.
-     */
-    delete(): void;
+export interface IInteriorNode<T = unknown> extends ILogNode {
+    c?: LogNode<T>[];
 }
+
+export interface ILeafNode<T = unknown> extends ILogNode {
+    c?: T[];
+}
+
+export type LogNode<T = unknown> = IInteriorNode<T> | ILeafNode<T>;
