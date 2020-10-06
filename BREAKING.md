@@ -1,5 +1,14 @@
 # Breaking changes
 
+- [IFluidPackage Changes](#IFluidPackage-Changes)
+
+### IFluidPackage Changes
+- Remove npm specific IPackage interface
+- Simplify the IFluidPackage by removing browser and npm specific properties
+- Add new interface IFluidBrowserPackage, and isFluidBrowserPackage which defines browser specific properties
+- Added resolveFluidPackageEnvironment helper for resolving a package environment
+
+## 0.27 Breaking Changes
 - [Local Web Host Removed](#Local-Web-Host-Removed)
 
 ### Local Web Host Removed

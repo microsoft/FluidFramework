@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "@fluidframework/container-definitions": "^0.28.0",
-    "@types/node": "^10.17.24",
     "isomorphic-fetch": "^2.2.1"
   },
   "devDependencies": {

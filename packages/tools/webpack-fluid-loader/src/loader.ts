@@ -15,14 +15,18 @@ import {
     IFluidCodeResolver,
     IProxyLoaderFactory,
     IResolvedFluidCodeDetails,
-    isFluidPackage,
+    isFluidBrowserPackage,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
-import { extractPackageIdentifierDetails, WebCodeLoader } from "@fluidframework/web-code-loader";
+import {
+    extractPackageIdentifierDetails,
+    resolveFluidPackageEnvironment,
+    WebCodeLoader,
+} from "@fluidframework/web-code-loader";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { MultiUrlResolver } from "./multiResolver";
@@ -119,20 +123,21 @@ class WebpackCodeResolver implements IFluidCodeResolver {
             const resp = await fetch(`${baseUrl}/package.json`);
             pkg = await resp.json() as IFluidPackage;
         }
-        if (!isFluidPackage(pkg)) {
+        if (!isFluidBrowserPackage(pkg)) {
             throw new Error("Not a Fluid package");
         }
-        const files = pkg.fluid.browser.umd.files;
-        for (let i = 0; i < pkg.fluid.browser.umd.files.length; i++) {
-            if (!files[i].startsWith("http")) {
-                files[i] = `${baseUrl}/${files[i]}`;
-            }
-        }
-        const parse = extractPackageIdentifierDetails(details.package);
+        const browser =
+            resolveFluidPackageEnvironment(pkg.fluid.browser, baseUrl);
+        const parse = extractPackageIdentifierDetails(pkg);
         return {
-            config: details.config,
-            package: details.package,
-            resolvedPackage: pkg,
+            ...details,
+            resolvedPackage: {
+                ...pkg,
+                fluid: {
+                    ...pkg.fluid,
+                    browser,
+                },
+            },
             resolvedPackageCacheId: parse.fullId,
         };
     }
@@ -316,7 +321,7 @@ async function getFluidObjectAndRender(container: Container, url: string, div: H
 /**
  * Attached a detached container.
  * In case of manual attach (when manualAttach is true), it creates a button and attaches the container when the button
- * is clicked. Otherwise, it attaches the conatiner right away.
+ * is clicked. Otherwise, it attaches the container right away.
  */
 async function attachContainer(
     loader: Loader,

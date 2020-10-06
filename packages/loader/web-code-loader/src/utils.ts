@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidPackage } from "@fluidframework/container-definitions";
+import { IFluidPackage, IFluidPackageEnvironment } from "@fluidframework/container-definitions";
 
 export interface IPackageIdentifierDetails {
     readonly fullId: string;
@@ -13,10 +13,12 @@ export interface IPackageIdentifierDetails {
     readonly scope: string;
 }
 
-export function extractPackageIdentifierDetails(codeDetailsPackage: string | IFluidPackage): IPackageIdentifierDetails {
-    const packageString = typeof codeDetailsPackage === "string"
+export function extractPackageIdentifierDetails(
+    codeDetailsPackage: string | IFluidPackage): IPackageIdentifierDetails {
+        const packageString = typeof codeDetailsPackage === "string"
         ? codeDetailsPackage // Just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
-        : codeDetailsPackage.version === undefined // If it doesn't exist, let's make it from the package details
+        // If it doesn't exist, let's make it from the package details
+        : typeof codeDetailsPackage.version === "string"
             ? `${codeDetailsPackage.name}` // E.g. @fluid-example/clicker
             : `${codeDetailsPackage.name}@${codeDetailsPackage.version}`; // Rebuild e.g. @fluid-example/clicker@0.1.1
 
@@ -52,4 +54,29 @@ export function extractPackageIdentifierDetails(codeDetailsPackage: string | IFl
         scope,
         version,
     };
+}
+
+export function resolveFluidPackageEnvironment(
+    environment: IFluidPackageEnvironment,
+    baseUrl: string,
+    ): Readonly<IFluidPackageEnvironment> {
+    const resolvedEnvironment: IFluidPackageEnvironment = {};
+    for (const targetName of Object.keys(environment)) {
+        const target = environment[targetName];
+        if (target !== undefined) {
+            const files: string[] = [];
+            for (const file of target.files) {
+                if (!file.startsWith("http")) {
+                    files.push(`${baseUrl}/${file}`);
+                } else {
+                    files.push(file);
+                }
+            }
+            resolvedEnvironment[targetName] = {
+                files,
+                library: target.library,
+            };
+        }
+    }
+    return resolvedEnvironment;
 }
