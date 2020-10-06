@@ -27,7 +27,7 @@ export interface IFluidPackageEnvironment {
 }
 
 /**
- * Fluid-specific properties expected on a package to be loaded by the  code loader.
+ * Fluid-specific properties expected on a package to be loaded by the code loader.
  * While compatible with the npm package format it is not necessary that that package is an
  * npm package:
  * https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid

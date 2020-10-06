@@ -130,11 +130,11 @@ class WebpackCodeResolver implements IFluidCodeResolver {
             resolveFluidPackageEnvironment(pkg.fluid.browser, baseUrl);
         const parse = extractPackageIdentifierDetails(pkg);
         return {
-            ... details,
+            ...details,
             resolvedPackage: {
                 ...pkg,
                 fluid: {
-                    ... pkg.fluid,
+                    ...pkg.fluid,
                     browser,
                 },
             },
