@@ -1,0 +1,47 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# bundle size stats pipeline
+# Should be run only as a CI to produce baseline bundle size stats
+
+name: $(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+    - main
+    - release/*
+  paths:
+    include:
+    - packages
+    - components
+    - examples
+    - package.json
+    - package-lock.json
+    - lerna.json
+    - lerna-package-lock.json
+    - tools/pipelines/build-bundle-size-artifacts.yml
+    - tools/pipelines/build-client.yml
+    - tools/pipelines/scripts/build-version.js
+    - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
+
+extends:
+  template: templates/build-npm-package.yml
+  parameters:
+    taskLint: false
+    taskTest: false
+    taskPack: false
+    taskBundleAnalysis: true
+    taskPublishBundleSizeArtifacts: true
+    taskBuildDocs: false
+    buildDirectory: .
+    tagName: bundle-artifacts
+    poolBuild: Main
+    checkoutSubmodules: true
+    releaseBuildOverride: none
+    publishOverride: default
