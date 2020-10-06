@@ -76,7 +76,7 @@ extends:
     poolBuild: Main
     cgSubDirectory: packages
     checkoutSubmodules: true
-    runBundleAnalysis: true
+    taskBundleAnalysis: true
 
     preCG:
     - task: UseNode@1
