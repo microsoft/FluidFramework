@@ -27,25 +27,6 @@ export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironmen
         library: string;
 
     };
-
-    /*
-     * These targets should include required elements only. Optional, elements
-     * should be delay loaded via the script(s) supplied  in the umd target
-     * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link
-     */
-    audio?: { files: string[] }; // <audio> elements
-    document?: { files: string[] }; // <iframe> and <frame> elements
-    embed?: { files: string[] }; // <embed> elements
-    fetch?: { files: string[] }; // fetch, XHR This value also requires <link> to contain the crossorigin attribute.
-    font?: { files: string[] }; // CSS @font-face
-    // eslint-disable-next-line max-len
-    image?: { files: string[] }; // <img> and <picture> elements with src set or image set attributes, SVG <image> elements, CSS *-image rules
-    object?: { files: string[] }; // <object> elements
-    script?: { files: string[] }; // <script> elements, Worker importScripts
-    style?: { files: string[] }; // <link rel=stylesheet> elements, CSS @import
-    track?: { files: string[] }; // <track> elements
-    video?: { files: string[] }; // <video> elements
-    worker?: { files: string[] }; // Worker, SharedWorker
 }
 
 /**
