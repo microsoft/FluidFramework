@@ -43,3 +43,5 @@ extends:
     tagName: bundle-artifacts
     poolBuild: Main
     checkoutSubmodules: true
+    releaseBuildOverride: none
+    publishOverride: default
