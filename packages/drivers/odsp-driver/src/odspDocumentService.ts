@@ -36,7 +36,7 @@ import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtil
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
-import { Fetcher } from "./fetcher";
+import { FetchWithEpochValidation } from "./fetchWithEpochValidation";
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -67,7 +67,7 @@ export class OdspDocumentService implements IDocumentService {
         socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
-        fetcher: FetchWithEpochValidation,
+        fetchWithEpochValidation: FetchWithEpochValidation,
     ): Promise<IDocumentService> {
         return new OdspDocumentService(
             resolvedUrl as IOdspResolvedUrl,
@@ -77,7 +77,7 @@ export class OdspDocumentService implements IDocumentService {
             socketIoClientFactory,
             cache,
             hostPolicy,
-            fetcher,
+            fetchWithEpochValidation,
         );
     }
 
@@ -115,7 +115,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
-        private readonly fetcher: FetchWithEpochValidation,
+        private readonly fetchWithEpochValidation: FetchWithEpochValidation,
     ) {
         fetcher.hashedDocumentId = odspResolvedUrl.hashedDocumentId;
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;

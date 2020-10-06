@@ -7,7 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import * as api from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
-import { Fetcher } from "./fetcher";
+import { FetchWithEpochValidation } from "./fetchWithEpochValidation";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
 import { TokenFetchOptions } from "./tokenFetch";
@@ -20,7 +20,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         private readonly deltaFeedUrlProvider: () => Promise<string>,
         private ops: ISequencedDeltaOpMessage[] | undefined,
         private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
-        private readonly fetcher: Fetcher,
+        private readonly fetchWithEpochValidation: FetchWithEpochValidation,
         private readonly logger?: ITelemetryLogger,
     ) {
     }
@@ -45,7 +45,8 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
 
             const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, storageToken);
 
-            const response = await this.fetcher.fetchAndParseAsJSON<IDeltaStorageGetResponse>(url, { headers });
+            const response = await this.fetchWithEpochValidation
+                .fetchAndParseAsJSON<IDeltaStorageGetResponse>(url, { headers });
             const deltaStorageResponse = response.content;
             if (this.logger) {
                 this.logger.sendTelemetryEvent({
