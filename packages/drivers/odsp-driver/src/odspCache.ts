@@ -101,7 +101,7 @@ export interface IPersistedCache {
      * @param seqNumber - (reference) sequence number of snapshot. Incoming Ops will start with this number
      * (see updateUsage API).
      */
-    put(entry: ICacheEntry, value: any, seqNumber: number): void;
+    put(entry: ICacheEntry, value: IPersistedCacheValue, seqNumber: number): void;
 
     /*
      * Driver will call this API periodically to tell hosts about changes in document.
@@ -118,6 +118,12 @@ export interface IPersistedCache {
      * Host should ignore sequence numbers that are lower than earlier reported for same file.
      */
     updateUsage(entry: ICacheEntry, seqNumber: number): void;
+
+    /**
+     * Removes all the entries from the cache for given docId.
+     * @param docId - DocId for which all entries needs to be deleted from cache.
+     */
+    removeAllEntriesForDocId(docId: string): void;
 }
 
 /**
@@ -170,7 +176,7 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
         });
     }
 
-    put(entry: ICacheEntry, value: any, seqNumber: number) {
+    put(entry: ICacheEntry, value: IPersistedCacheValue, seqNumber: number) {
         try {
             this.cache.put(entry, value, seqNumber);
         } catch (error) {
@@ -187,6 +193,14 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
             return undefined;
         }
     }
+
+    removeAllEntriesForDocId(docId: string): void {
+        try {
+            this.cache.removeAllEntriesForDocId(docId);
+        } catch (error) {
+            this.logger.sendErrorEvent({ eventName: "removeAllEntriesForDocId", docId }, error);
+        }
+    }
 }
 
 /** Describes how many ops behind snapshot can be for summarizer client to still use it */
@@ -198,7 +212,7 @@ export const snapshotExpirySummarizerOps = 1000;
  */
 export class LocalPersistentCache implements IPersistedCache {
     private readonly snapshotExpiryPolicy = 30 * 1000;
-    private readonly cache = new Map<string, any>();
+    private readonly cache = new Map<string, IPersistedCacheValue>();
     private readonly gc = new GarbageCollector<string>((key) => this.cache.delete(key));
 
     async get(entry: ICacheEntry, expiry?: number): Promise<any> {
@@ -206,7 +220,7 @@ export class LocalPersistentCache implements IPersistedCache {
         return this.cache.get(key);
     }
 
-    put(entry: ICacheEntry, value: any, seqNumber: number) {
+    put(entry: ICacheEntry, value: IPersistedCacheValue, seqNumber: number) {
         const key = this.keyFromEntry(entry);
         this.cache.set(key, value);
 
@@ -216,6 +230,16 @@ export class LocalPersistentCache implements IPersistedCache {
     }
 
     updateUsage(entry: ICacheEntry, seqNumber: number): void {
+    }
+
+    removeAllEntriesForDocId(docId: string): void {
+        Array.from(this.cache)
+        .filter(([key]) => {
+            key.startsWith(docId);
+        })
+        .map(([key]) => {
+            this.cache.delete(key);
+        });
     }
 
     private keyFromEntry(entry: ICacheEntry): string {
@@ -269,4 +293,9 @@ export function createOdspCache(
         ...nonpersistentCache,
         persistedCache: new PersistedCacheWithErrorHandling(persistedCache, logger),
     };
+}
+
+export interface IPersistedCacheValue {
+    value: any,
+    fluidEpoch: string | undefined,
 }

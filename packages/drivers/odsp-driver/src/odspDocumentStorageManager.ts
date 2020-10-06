@@ -356,14 +356,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         this.logger,
                         { eventName: "ObtainSnapshot" },
                         async (event: PerformanceEvent) => {
-                            const cachedSnapshotP = this.cache.persistedCache.get(
+                            const cachedSnapshotP = this.fetcher.fetchFromCache<IOdspSnapshot>(
                                 {
                                     file: this.fileEntry,
                                     type: "snapshot",
                                     key: "",
                                 },
                                 this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
-                            ) as Promise<IOdspSnapshot | undefined>;
+                            );
 
                             let method: string;
                             if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
@@ -659,7 +659,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!Number.isInteger(seqNumber) || seqNumberFromOps !== undefined && seqNumberFromOps !== seqNumber) {
             this.logger.sendErrorEvent({ eventName: "fetchSnapshotError", seqNumber, seqNumberFromOps });
         } else if (canCache) {
-            this.cache.persistedCache.put(this._snapshotCacheEntry, snapshot, seqNumber);
+            this.cache.persistedCache.put(
+                this._snapshotCacheEntry,
+                { value: snapshot, fluidEpoch: this.fetcher.fluidEpoch },
+                seqNumber,
+            );
         }
 
         return snapshot;

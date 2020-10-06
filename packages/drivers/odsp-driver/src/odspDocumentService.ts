@@ -67,7 +67,7 @@ export class OdspDocumentService implements IDocumentService {
         socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
-        fetcher: Fetcher | undefined,
+        fetcher: Fetcher,
     ): Promise<IDocumentService> {
         return new OdspDocumentService(
             resolvedUrl as IOdspResolvedUrl,
@@ -77,7 +77,7 @@ export class OdspDocumentService implements IDocumentService {
             socketIoClientFactory,
             cache,
             hostPolicy,
-            fetcher ?? new Fetcher(undefined, logger),
+            fetcher,
         );
     }
 
@@ -117,6 +117,7 @@ export class OdspDocumentService implements IDocumentService {
         hostPolicy: HostStoragePolicy,
         private readonly fetcher: Fetcher,
     ) {
+        fetcher.hashedDocumentId = odspResolvedUrl.hashedDocumentId;
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
         this.logger = ChildLogger.create(logger,

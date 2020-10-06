@@ -25,6 +25,8 @@ export const fetchFailureStatusCode: number = 710;
 export const invalidFileNameStatusCode: number = 711;
 // no response, or can't parse response
 export const fetchIncorrectResponse = 712;
+// Client and server epoch mismatch.
+export const fluidEpochMismatchError = 409;
 
 export enum OdspErrorType {
     /**
@@ -93,7 +95,7 @@ export function createOdspNetworkError(
         case 406:
             error = new NetworkErrorBasic(errorMessage, DriverErrorType.unsupportedClientProtocolVersion, false);
             break;
-        case 409:
+        case fluidEpochMismatchError:
             error = new NonRetryableError(errorMessage, OdspErrorType.epochVersionMismatch);
             break;
         case 413:

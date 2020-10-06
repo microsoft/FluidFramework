@@ -6,13 +6,37 @@
 import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IsoBuffer } from "@fluidframework/common-utils";
-import { OdspErrorType } from "./odspError";
+import { createOdspNetworkError, fluidEpochMismatchError, OdspErrorType } from "./odspError";
 import { fetchAndParseAsBufferHelper, fetchAndParseAsJSONHelper, IOdspResponse } from "./odspUtils";
+import { ICacheEntry, IPersistedCache, IPersistedCacheValue } from "./odspCache";
 
 export class Fetcher {
+    private _fluidEpoch: string | undefined;
+    private _hashedDocumentId: string | undefined;
     constructor(
-        private fluidEpoch: string | undefined,
+        private readonly persistedCache: IPersistedCache,
         private readonly logger?: ITelemetryLogger) {
+    }
+
+    public set hashedDocumentId(docId: string) {
+        this._hashedDocumentId = docId;
+    }
+
+    public get fluidEpoch() {
+        return this._fluidEpoch;
+    }
+
+    public async fetchFromCache<T>(entry: ICacheEntry, maxOpCount: number | undefined): Promise<T | undefined> {
+        const value: IPersistedCacheValue = await this.persistedCache.get(entry, maxOpCount);
+        if (value !== undefined) {
+            try {
+                this.validateEpochFromResponse(value.fluidEpoch);
+            } catch (error) {
+                this.checkForEpochError(createOdspNetworkError("Epoch Mismatch", fluidEpochMismatchError));
+            }
+            return value.value as T;
+        }
+        return undefined;
     }
 
     public async fetchAndParseAsJSON<T>(
@@ -22,15 +46,14 @@ export class Fetcher {
     ): Promise<IOdspResponse<T>> {
         // Add epoch either in header or in body.
         this.addEpochInRequest(fetchOptions, addInBody);
-        let response: IOdspResponse<T>;
         try {
-            response = await fetchAndParseAsJSONHelper<T>(url, fetchOptions);
-            this.extractEpochFromResponse(response.headers);
+            const response = await fetchAndParseAsJSONHelper<T>(url, fetchOptions);
+            this.validateEpochFromResponse(response.headers.get("x-fluid-epoch"));
+            return response;
         } catch (error) {
             this.checkForEpochError(error);
             throw error;
         }
-        return response;
     }
 
     public async fetchAndParseAsBuffer<T>(
@@ -40,15 +63,14 @@ export class Fetcher {
     ): Promise<IOdspResponse<IsoBuffer>> {
         // Add epoch either in header or in body.
         this.addEpochInRequest(fetchOptions, addInBody);
-        let response: IOdspResponse<IsoBuffer>;
         try {
-            response = await fetchAndParseAsBufferHelper(url, fetchOptions);
-            this.extractEpochFromResponse(response.headers);
+            const response = await fetchAndParseAsBufferHelper(url, fetchOptions);
+            this.validateEpochFromResponse(response.headers.get("x-fluid-epoch"));
+            return response;
         } catch (error) {
             this.checkForEpochError(error);
             throw error;
         }
-        return response;
     }
 
     private addEpochInRequest(fetchOptions: {[index: string]: any}, addInBody: boolean) {
@@ -71,8 +93,7 @@ export class Fetcher {
         }
     }
 
-    private extractEpochFromResponse(headers: Map<string, string>) {
-        const epochFromResponse = headers.get("x-fluid-epoch");
+    private validateEpochFromResponse(epochFromResponse: string | undefined | null) {
         // If epoch is undefined, then don't compare it because initially for createNew or TreesLatest
         // initializes this value. Sometimes response does not contain epoch as it is still in
         // implementation phase at server side. In that case also, don't compare it with our epoch value.
@@ -80,13 +101,16 @@ export class Fetcher {
             || epochFromResponse === undefined || epochFromResponse === null
             || (this.fluidEpoch === epochFromResponse), "Fluid Epoch should match");
         if (epochFromResponse !== undefined && epochFromResponse !== null) {
-            this.fluidEpoch = epochFromResponse;
+            this._fluidEpoch = epochFromResponse;
         }
     }
 
     private checkForEpochError(error) {
         if (error.errorType === OdspErrorType.epochVersionMismatch && this.logger !== undefined) {
-            this.logger.sendErrorEvent({ eventName: "EpochVersionMistmatch" }, error);
+            this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, error);
+            // If the epoch mismatches, then clear all entries for such document from cache.
+            assert(this._hashedDocumentId, "DocId should be set to clear the cached entries!!");
+            this.persistedCache.removeAllEntriesForDocId(this._hashedDocumentId);
         }
     }
 }

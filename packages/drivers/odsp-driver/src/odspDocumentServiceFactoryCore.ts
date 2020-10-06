@@ -69,7 +69,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         };
 
         const logger2 = ChildLogger.create(logger, "OdspDriver");
-        const fetcher = new Fetcher(undefined, logger2);
+        const fetcher = new Fetcher(this.persistedCache, logger2);
         return PerformanceEvent.timedExecAsync(
             logger2,
             {
@@ -128,7 +128,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.getSocketIOClient,
             cache,
             this.hostPolicy,
-            fetcher,
+            fetcher ?? new Fetcher(this.persistedCache, odspLogger),
         );
     }
 
