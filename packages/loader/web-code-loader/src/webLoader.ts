@@ -77,12 +77,6 @@ export class WebCodeLoader implements ICodeLoader {
         const loadedScriptsP =  this.scriptManager.loadLibrary(
             resolved.resolvedPackage.fluid.browser.umd);
 
-        // kick off a pre-cache for all required files after starting the load
-        // of the scripts
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.scriptManager.preCacheFiles(
-            resolved.resolvedPackage.fluid.browser);
-
         let fluidModule: IFluidModule | undefined;
         for (const script of await loadedScriptsP) {
             const maybeFluidModule = script.entryPoint as IFluidModule;
