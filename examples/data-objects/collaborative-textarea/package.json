@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/collaborative-textarea",
-  "version": "0.25.5",
+  "version": "0.25.6",
   "description": "A minimal example using the react collaborative-textarea",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -36,11 +36,11 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.25.5",
-    "@fluidframework/core-interfaces": "^0.25.5",
-    "@fluidframework/react-inputs": "^0.25.5",
-    "@fluidframework/sequence": "^0.25.5",
-    "@fluidframework/view-interfaces": "^0.25.5",
+    "@fluidframework/aqueduct": "^0.25.6",
+    "@fluidframework/core-interfaces": "^0.25.6",
+    "@fluidframework/react-inputs": "^0.25.6",
+    "@fluidframework/sequence": "^0.25.6",
+    "@fluidframework/view-interfaces": "^0.25.6",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
@@ -48,7 +48,7 @@
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@fluidframework/test-tools": "^0.1.0",
-    "@fluidframework/webpack-fluid-loader": "^0.25.5",
+    "@fluidframework/webpack-fluid-loader": "^0.25.6",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
