@@ -37,10 +37,9 @@ extends:
     taskTest: false
     taskPack: false
     taskBundleAnalysis: true
+    taskPublishBundleSizeArtifacts: true
     taskBuildDocs: false
     buildDirectory: .
     tagName: bundle-artifacts
     poolBuild: Main
     checkoutSubmodules: true
-    taskBundleAnalysis: true
-    taskPublishBundleSizeArtifacts: true
