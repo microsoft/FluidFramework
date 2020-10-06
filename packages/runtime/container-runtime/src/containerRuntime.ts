@@ -177,6 +177,7 @@ export interface IUploadedSummaryData {
 export interface IUnsubmittedSummaryData extends Partial<IGeneratedSummaryData>, Partial<IUploadedSummaryData> {
     readonly referenceSequenceNumber: number;
     readonly submitted: false;
+    readonly message: "disconnected" | "incorrect lastSequenceNumber";
 }
 
 export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedSummaryData {
@@ -1672,14 +1673,14 @@ export class ContainerRuntime extends EventEmitter
         try {
             await this.scheduleManager.pause();
 
-            const attemptData: IUnsubmittedSummaryData = {
+            const attemptData: Omit<IUnsubmittedSummaryData, "message"> = {
                 referenceSequenceNumber: summaryRefSeqNum,
                 submitted: false,
             };
 
             if (!this.connected) {
                 // If summarizer loses connection it will never reconnect
-                return attemptData;
+                return { ...attemptData, message: "disconnected" };
             }
 
             const trace = Trace.start();
@@ -1691,8 +1692,15 @@ export class ContainerRuntime extends EventEmitter
             };
 
             if (!this.connected) {
-                return { ...attemptData, ...generateData };
+                return { ...attemptData, ...generateData, message: "disconnected" };
             }
+
+            // Ensure that lastSequenceNumber has not changed after pausing
+            const lastSequenceNumber = this.deltaManager.lastSequenceNumber;
+            assert(
+                lastSequenceNumber === summaryRefSeqNum,
+                `lastSequenceNumber changed while paused. ${lastSequenceNumber} !== ${summaryRefSeqNum}`,
+            );
 
             const handle = await this.storage.uploadSummaryWithContext(
                 treeWithStats.summary,
@@ -1723,7 +1731,7 @@ export class ContainerRuntime extends EventEmitter
             };
 
             if (!this.connected) {
-                return { ...attemptData, ...generateData, ...uploadData };
+                return { ...attemptData, ...generateData, ...uploadData, message: "disconnected" };
             }
 
             const clientSequenceNumber =
