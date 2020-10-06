@@ -307,33 +307,11 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
             });
 
         this.editorView = editorView;
-        document.getElementById('input-file').addEventListener('change', e => {this.onFileSelect(e)} , false);
+
         // eslint-disable-next-line dot-notation
         window["easyView"] = editorView;
 
         return editorView;
-    }
-
-    public onFileSelect(event) {
-        const file = event.target.files[0];
-        const reader = new FileReader();
-        const _this = this;
-        reader.onload = (e) => {
-            const textFile = reader.result as string;
-            const node = _this.schema.nodeFromJSON(
-                {
-                    type: "paragraph",
-                    content: [
-                        {
-                            type: "text",
-                            text: textFile,
-                        },
-                    ],
-                });
-            _this.initializeValue(node);
-            console.log(textFile);
-        };
-        reader.readAsText(file);
     }
 
     public getCurrentState() {

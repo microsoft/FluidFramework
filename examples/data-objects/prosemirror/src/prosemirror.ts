@@ -22,6 +22,7 @@ import { nodeTypeKey } from "./fluidBridge";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
 import { ProseMirrorView } from "./prosemirrorView";
 import { IStorageUtil, StorageUtil } from './storage';
+import {getNodeFromMarkdown} from './utils';
 
 
 function createTreeMarkerOps(
@@ -154,7 +155,21 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
                 this.view = new ProseMirrorView(this.collabManager);
             }
             this.view.render(elm);
+            document.getElementById('input-file').addEventListener('change', e => {this.onFileSelect(e)} , false);
         }
+    }
+
+    public onFileSelect(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        const _this = this;
+        reader.onload = async (e) => {
+            const textFile = reader.result as string;
+            const node = await getNodeFromMarkdown(_this.collabManager.getSchema(), textFile);
+            await _this.collabManager.initializeValue(node);
+            console.log(textFile);
+        };
+        reader.readAsText(file);
     }
 }
 
