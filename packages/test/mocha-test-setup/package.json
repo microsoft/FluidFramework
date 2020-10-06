@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/mocha-test-setup",
-  "version": "0.25.5",
+  "version": "0.25.6",
   "description": "Utilities for fluid tests",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
