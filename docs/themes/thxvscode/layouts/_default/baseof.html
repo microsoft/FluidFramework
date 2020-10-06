@@ -3,8 +3,10 @@
 {{- partial "head.html" . -}}
 
 <body>
-    {{- partial "header.html" . -}}
+    <!-- EU Cookie Compliance JS -->
+    <script src="//uhf.microsoft.com/mscc/statics/mscc-0.3.6.min.js"></script>
     <div id="main">
+        {{- partial "header.html" . -}}
         <div role="main" id="main-content" {{ if .IsHome}}class="home" {{ end}}>
             {{- block "main" . }}{{- end }}
         </div>
