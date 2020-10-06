@@ -12,11 +12,11 @@ import {
     IViewState,
     IFluidState,
 } from "../interface";
+import { ISyncedState } from "..";
 import { syncState } from "./syncState";
 import { getByFluidKey } from "./utils";
 import { getViewFromFluid } from "./getViewFromFluid";
 import { getFluidState } from ".";
-import { ISyncedState } from "..";
 
 /**
  * The callback that is added to the "valueChanged" event on the Fluid object this

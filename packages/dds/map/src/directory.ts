@@ -252,6 +252,7 @@ function serializeDirectory(root: SubDirectory): ITree {
             }
             const result: ISerializableValue = {
                 type: value.type,
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 value: value.value && JSON.parse(value.value) as object,
             };
             if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {

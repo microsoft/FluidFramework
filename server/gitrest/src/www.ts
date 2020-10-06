@@ -17,7 +17,8 @@ function normalizePort(val) {
     const normalizedPort = parseInt(val, 10);
 
     if (isNaN(normalizedPort)) {
-    // named pipe
+        // named pipe
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return val;
     }
 
@@ -59,7 +60,6 @@ winston.configure({
 /**
  * Get port from environment and store in Express.
  */
-// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 const port = normalizePort(process.env.PORT || "3000");
 const historian = app.create(provider);
 historian.set("port", port);

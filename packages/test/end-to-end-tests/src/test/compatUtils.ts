@@ -56,7 +56,10 @@ export interface ICompatTestArgs {
      */
     makeTestContainer?: (testFluidDataStoreFactoryRegistry?) => Promise<IContainer | old.IContainer>,
     loadTestContainer?: (testFluidDataObjectFactoryRegistry?) => Promise<IContainer | old.IContainer>,
-    makeTestLoader?: (testFluidDataStoreFactoryRegistry?, codeDetails?: IFluidCodeDetails, urlResolver?: IUrlResolver)
+    makeTestLoader?: (
+        testFluidDataStoreFactoryRegistry?,
+        codeDetails?: IFluidCodeDetails,
+        urlResolver?: IUrlResolver)
         => ILoader | old.ILoader,
     deltaConnectionServer?: ILocalDeltaConnectionServer,
     documentServiceFactory?: LocalDocumentServiceFactory | old.LocalDocumentServiceFactory,
@@ -101,6 +104,7 @@ function convertRegistry(registry: ChannelFactoryRegistry = []): OldChannelFacto
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return oldRegistry;
 }
 
@@ -171,10 +175,11 @@ export function createLoader(
 export function createOldLoader(
     fluidModule: IFluidModule | old.IFluidModule,
     documentServiceFactory: old.LocalDocumentServiceFactory,
-    codeDetails = defaultCodeDetails,
+    codeDetails = defaultCodeDetails ,
     urlResolver: IUrlResolver = new old.LocalResolver(),
 ): old.ILoader {
-    const codeLoader = new old.LocalCodeLoader([[codeDetails, fluidModule as old.IFluidModule]]);
+    const codeLoader =
+        new old.LocalCodeLoader([[codeDetails as old.IFluidCodeDetails, fluidModule as old.IFluidModule]]);
 
     return new old.Loader(
         urlResolver,
@@ -186,20 +191,21 @@ export function createOldLoader(
 }
 
 export const createContainer = async (
-    loader: ILoader | old.ILoader,
+    loader: ILoader,
     urlResolver: IUrlResolver,
 ): Promise<IContainer> => {
-    // Causing build break due to addition of api related to rehydrating container in Loader interface.
-    // Right now we are not using the back compat tests for rehydrating container.
-    // So just typecast for now. Will put a better sol after that.
-    return createAndAttachContainer(documentId, defaultCodeDetails, loader as ILoader, urlResolver);
+    return createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
 };
 
 export const createContainerWithOldLoader = async (
-    loader: ILoader | old.ILoader,
+    loader: old.ILoader,
     urlResolver: IUrlResolver,
 ): Promise<old.IContainer> => {
-    return old.createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
+    return old.createAndAttachContainer(
+        documentId,
+        defaultCodeDetails as old.IFluidCodeDetails,
+        loader,
+        urlResolver);
 };
 
 export async function loadContainer(
@@ -220,7 +226,7 @@ export async function loadContainerWithOldLoader(
     urlResolver: IUrlResolver,
 ): Promise<old.IContainer> {
     const loader = old.createLocalLoader(
-        [[defaultCodeDetails, fluidModule as old.IFluidModule]],
+        [[defaultCodeDetails as old.IFluidCodeDetails, fluidModule as old.IFluidModule]],
         deltaConnectionServer as any,
         urlResolver);
     return loader.resolve({ url: documentLoadUrl });

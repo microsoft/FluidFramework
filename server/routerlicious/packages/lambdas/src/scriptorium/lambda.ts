@@ -20,7 +20,6 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
     constructor(
         private readonly opCollection: ICollection<any>,
-        private readonly contentCollection: ICollection<any>,
         protected context: IContext) {
     }
 
@@ -86,9 +85,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
     }
 
     private async processMongoCore(messages: ISequencedOperationMessage[]): Promise<void> {
-        const insertP = this.insertOp(messages);
-        const updateP = this.updateSequenceNumber(messages);
-        await Promise.all([insertP, updateP]);
+        return this.insertOp(messages);
     }
 
     private async insertOp(messages: ISequencedOperationMessage[]) {
@@ -103,40 +100,5 @@ export class ScriptoriumLambda implements IPartitionLambda {
                     return Promise.reject(error);
                 }
             });
-    }
-
-    private async updateSequenceNumber(messages: ISequencedOperationMessage[]) {
-        // TODO: Temporary to back compat with local orderer.
-        if (this.contentCollection === undefined) {
-            return;
-        }
-
-        const allUpdates = [];
-        for (const message of messages) {
-            if (message.operation.contents === undefined) {
-                const updateP = this.contentCollection.update(
-                    {
-                        "clientId": message.operation.clientId,
-                        "documentId": message.documentId,
-                        "op.clientSequenceNumber": message.operation.clientSequenceNumber,
-                        "tenantId": message.tenantId,
-                    },
-                    {
-                        sequenceNumber: message.operation.sequenceNumber,
-                    },
-                    // eslint-disable-next-line no-null/no-null
-                    null)
-                    // eslint-disable-next-line @typescript-eslint/promise-function-async
-                    .catch((error) => {
-                        // Same reason as insertOp.
-                        if (error.code !== 11000) {
-                            return Promise.reject(error);
-                        }
-                    });
-                allUpdates.push(updateP);
-            }
-        }
-
-        await Promise.all(allUpdates);
     }
 }

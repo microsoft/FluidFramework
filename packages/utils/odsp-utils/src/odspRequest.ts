@@ -49,6 +49,7 @@ async function authRequest(
 ): Promise<IRequestResult> {
     return authRequestWithRetry(
         authRequestInfo,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         async (config) => safeRequestCore(async () => requestCallback(config)),
     );
 }

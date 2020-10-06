@@ -33,6 +33,7 @@ export class NodeCodeLoader {
         }
         const codeEntrypoint = await this.installOrWaitForPackages(packageName);
         const entry = import(codeEntrypoint);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return entry;
     }
 
@@ -77,7 +78,6 @@ export class NodeCodeLoader {
         return new Promise((resolve, reject) => {
             const watcher = fs.watch(targetDirectory, (eventType, newFileName) => {
                 if (eventType === "rename" && newFileName === fileName) {
-                    // eslint-disable-next-line @typescript-eslint/no-use-before-define
                     clearTimeout(waitTimer);
                     watcher.close();
                     resolve();

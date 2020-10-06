@@ -53,6 +53,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
                 executingCallback = false;
             }
         });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return directory;
     };
 
@@ -73,6 +74,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
         const iterator = {
             next(): IteratorResult<[string, IDirectory]> {
                 const nextVal = localDirectoriesIterator.next();
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 if (nextVal.done) {
                     return { value: undefined, done: true };
                 } else {
@@ -97,6 +99,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
         return createSubDirectoryWithInterception(baseDirectory, subSubDirectory, context, setInterceptionCallback);
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return subDirectoryWithInterception;
 }
 

@@ -83,6 +83,7 @@ export function createSharedStringWithInterception(
                 executingCallback = false;
             }
         });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return insertOp;
     };
 

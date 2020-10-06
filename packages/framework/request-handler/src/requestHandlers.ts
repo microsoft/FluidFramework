@@ -56,6 +56,7 @@ class LegacyUriHandle<T = IFluidObject & IFluidLoadable> implements IFluidHandle
     public async get(): Promise<any> {
         const response = await this.runtime.IFluidHandleContext.resolveHandle({ url: this.absolutePath });
         if (response.status === 200 && response.mimeType === "fluid/object") {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return response.value;
         }
         throw new Error(`Failed to resolve container path ${this.absolutePath}`);

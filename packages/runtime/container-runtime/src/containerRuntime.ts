@@ -32,7 +32,6 @@ import {
 import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
-    IsoBuffer,
     Trace,
     unreachableCase,
 } from "@fluidframework/common-utils";
@@ -54,7 +53,6 @@ import {
     TreeTreeEntry,
 } from "@fluidframework/protocol-base";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
@@ -486,6 +484,7 @@ export class ContainerRuntime extends EventEmitter
         // Back-compat: <= 0.18 loader
         if (context.deltaManager.lastSequenceNumber === undefined) {
             Object.defineProperty(context.deltaManager, "lastSequenceNumber", {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 get: () => (context.deltaManager as any).referenceSequenceNumber,
             });
         }
@@ -530,6 +529,7 @@ export class ContainerRuntime extends EventEmitter
     }
 
     public get options(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.context.options;
     }
 
@@ -708,9 +708,8 @@ export class ContainerRuntime extends EventEmitter
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         const isSummarizerClient = this.clientDetails.type === summarizerClientType;
-        // Use runtimeOptions if provided, otherwise check localStorage, defaulting to true/enabled.
-        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode
-            ?? (typeof localStorage === "object" && localStorage?.fluidDisableSummarizerNode ? false : true);
+        // Use runtimeOptions if provided, otherwise default to true/enabled.
+        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode ?? true;
         const summarizerNode = SummarizerNode.createRoot(
             this.logger,
             // Summarize function to call when summarize is called
@@ -1067,13 +1066,6 @@ export class ContainerRuntime extends EventEmitter
         return { snapshot, state };
     }
 
-    // Back-compat: <= 0.17
-    public changeConnectionState(state: ConnectionState, clientId?: string) {
-        if (state !== ConnectionState.Connecting) {
-            this.setConnectionState(state === ConnectionState.Connected, clientId);
-        }
-    }
-
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
@@ -1097,7 +1089,7 @@ export class ContainerRuntime extends EventEmitter
                 context.setConnectionState(connected, clientId);
             } catch (error) {
                 this._logger.sendErrorEvent({
-                    eventName: "ChangeConnectionStateError",
+                    eventName: "SetConnectionStateError",
                     clientId,
                     fluidDataStore,
                 }, error);
@@ -1815,7 +1807,7 @@ export class ContainerRuntime extends EventEmitter
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
     }
 
-    public async uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>> {
+    public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         return this.blobManager.createBlob(blob);
     }
 

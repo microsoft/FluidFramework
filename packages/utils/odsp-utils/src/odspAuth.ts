@@ -150,8 +150,10 @@ export async function authRequestWithRetry(
     if (authRequestInfo.refreshTokenFn && (result.status === 401 || result.status === 403)) {
         // Unauthorized, try to refresh the token
         const refreshedAccessToken = await authRequestInfo.refreshTokenFn();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return requestCallback(createConfig(refreshedAccessToken));
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return result;
 }

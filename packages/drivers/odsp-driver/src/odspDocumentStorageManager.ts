@@ -179,12 +179,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return response.content;
     }
 
-    public async readBlob(blobid: string): Promise<IsoBuffer> {
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         this.checkAttachmentGETUrl();
 
-        const response = await getWithRetryForTokenRefresh(async (options) => {
+        return getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "ReadDataBlob");
-            const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobid)}/content`;
+            const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
             const { url, headers } = getUrlAndHeadersWithAuth(unAuthedUrl, storageToken);
 
             return PerformanceEvent.timedExecAsync(
@@ -194,14 +194,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
                 async (event) => {
-                    const res = await this.fetcher.fetchAndParseAsBuffer(url, { headers });
-                    event.end({ size: res.content.length });
-                    return res;
+                    const res = await fetchHelper(url, { headers });
+                    const content = await res.arrayBuffer();
+                    event.end({ size: content.byteLength });
+                    return content;
                 },
             );
         });
-
-        return response.content;
     }
 
     public async read(blobid: string): Promise<string> {
@@ -451,7 +450,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 this.blobsShaToPathCache.set(hash, path);
                             });
                             this.blobsCachePendingHashes.add(hashP);
-                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
                             hashP.finally(() => {
                                 this.blobsCachePendingHashes.delete(hashP);
                             });

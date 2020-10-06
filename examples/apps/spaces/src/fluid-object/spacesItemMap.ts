@@ -22,7 +22,7 @@ interface ISingleHandleItem {
     handle: IFluidHandle;
 }
 
-// eslint-disable-next-line @typescript-eslint/promise-function-async, prefer-arrow/prefer-arrow-functions
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function createSingleHandleItem(subFactory: IFluidDataStoreFactory) {
     return async (dataObjectFactory: IFluidDataObjectFactory): Promise<ISingleHandleItem> => {
         const object = await dataObjectFactory.createAnonymousChildInstance<IFluidLoadable>(subFactory);
