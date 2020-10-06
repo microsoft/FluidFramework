@@ -6,7 +6,7 @@
 name: $(Build.BuildId)
 
 extends:
-  template: templates/build-client.yml
+  template: ./build-client.yml
   parameters:
     taskLint: false
     taskTest: false
