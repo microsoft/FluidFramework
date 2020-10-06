@@ -5,9 +5,6 @@
 
 {{ define "main" }}
 
-{{ partial "navbarSticky.html" . }}
-
-
 <div class="container body-content docs">
     <div class="row">
         <div class="col-md-2 docs-navbar-container"> {{ partial "apiNav.html" .}} </div>
@@ -59,7 +56,6 @@
 {{/* $script := resources.Get "js/main.js" | minify | fingerprint - */}}
 <!-- <script src="{{/* $script.Permalink | relURL */}}" -->
 <!-- {{/* printf "integrity=%q" $script.Data.Integrity | safeHTMLAttr */}}></script> -->
-{{- partial "analytics.html" . }}
 {{- if templates.Exists "partials/extra-foot.html" -}}
 {{ partial "extra-foot.html" . }}
 {{- end }}
