@@ -9,7 +9,13 @@ import { createOdspNetworkError, fluidEpochMismatchError, OdspErrorType } from "
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, IPersistedCache, IPersistedCacheValue } from "./odspCache";
 
-export class Fetcher {
+/**
+ * This class is a wrapper around fetch calls. It adds fluid epoch to the request made so that the
+ * server can match it with its epoch value in order to match the version.
+ * It also validates the epoch value received in response of fetch calls. If the epoch does not match,
+ * then it also clears all the cached entries for the given container.
+ */
+export class FetchWithEpochValidation {
     private _fluidEpoch: string | undefined;
     private _hashedDocumentId: string | undefined;
     constructor(

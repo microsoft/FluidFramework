@@ -55,7 +55,7 @@ import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { getQueryString } from "./getQueryString";
-import { Fetcher } from "./fetcher";
+import { FetchWithEpochValidation } from "./fetcher";
 
 /* eslint-disable max-len */
 
@@ -134,7 +134,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
         private readonly hostPolicy: HostStoragePolicyInternal,
-        private readonly fetcher: Fetcher,
+        private readonly fetcher: FetchWithEpochValidation,
     ) {
         this.documentId = odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;

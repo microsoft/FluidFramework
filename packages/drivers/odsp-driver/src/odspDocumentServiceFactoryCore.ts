@@ -32,7 +32,7 @@ import {
     isTokenFromCache,
     tokenFromResponse,
 } from "./tokenFetch";
-import { Fetcher } from "./fetcher";
+import { FetchWithEpochValidation } from "./fetcher";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -69,7 +69,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         };
 
         const logger2 = ChildLogger.create(logger, "OdspDriver");
-        const fetcher = new Fetcher(this.persistedCache, logger2);
+        const fetcher = new FetchWithEpochValidation(this.persistedCache, logger2);
         return PerformanceEvent.timedExecAsync(
             logger2,
             {
@@ -112,7 +112,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
-        fetcher?: Fetcher,
+        fetcher?: FetchWithEpochValidation,
     ): Promise<IDocumentService> {
         const odspLogger = ChildLogger.create(logger, "OdspDriver");
         const cache = createOdspCache(
@@ -128,7 +128,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.getSocketIOClient,
             cache,
             this.hostPolicy,
-            fetcher ?? new Fetcher(this.persistedCache, odspLogger),
+            fetcher ?? new FetchWithEpochValidation(this.persistedCache, odspLogger),
         );
     }
 
