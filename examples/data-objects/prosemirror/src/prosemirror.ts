@@ -52,6 +52,32 @@ function createTreeMarkerOps(
     ];
 }
 
+
+function debounceUtil (functionToBeExecuted, debounceInterval){
+    let timeoutForDebouncing;
+
+    return function executorFunction(...args){
+        const executeAfterDebounceInterval = () => {
+            console.log("Debouncing util has executed");
+
+            timeoutForDebouncing = null;
+
+            functionToBeExecuted(...args);
+        };
+
+        /**
+         * If another call comes to the
+         * function within the same
+         * debouncing interval then
+         * clear the existing timeout and restart
+         * the timeout
+         */
+        clearTimeout(timeoutForDebouncing);
+
+        timeoutForDebouncing = setTimeout(() => {executeAfterDebounceInterval()}, debounceInterval);
+    }
+}
+
 /**
  * ProseMirror builds a Fluid collaborative text editor on top of the open source text editor ProseMirror.
  */
@@ -64,6 +90,7 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
     private collabManager: FluidCollabManager;
     private view: ProseMirrorView;
     private StorageUtilModule: IStorageUtil;
+    private readonly debouncingInterval: number = 1000;
 
 
     public static get Name() { return "@fluid-example/prosemirror"; }
@@ -93,6 +120,7 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
         this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
 
         let schema = await this.collabManager.getSchema();
+        // this.StorageUtilModule = new StorageUtil(); //TO Be removed
         if (!isWebClient()) {
             this.StorageUtilModule = new StorageUtil();
             let initialVal = await this.StorageUtilModule.getMardownDataAndConvertIntoNode(schema);
@@ -109,7 +137,11 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
             this.emit("valueChanged")
             // Here we can set data to original file
             // this.StorageUtilModule.storeData(this.collabManager.getCurrentState().toJSON());
+
             if (!isWebClient()) {
+                let debouncedFunction = debounceUtil(() => {this.StorageUtilModule.storeDeltaChangesOfEditor(this.collabManager.getSchema(), this.collabManager.getCurrentState()?.doc)}, this.debouncingInterval);
+                debouncedFunction();
+
                 this.StorageUtilModule.storeEditorStateAsMarkdown(this.collabManager.getSchema(), this.collabManager.getCurrentState()?.doc);
             }
             console.log("something changed ", changed);
