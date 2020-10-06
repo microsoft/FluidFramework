@@ -240,7 +240,7 @@ export class SummarizerNode implements ISummarizerNode {
 
     private readonly children = new Map<string, SummarizerNode>();
     private readonly pendingSummaries = new Map<string, SummaryNode>();
-    private outstandingOps: ISequencedDocumentMessage[] = [];
+    private readonly outstandingOps: ISequencedDocumentMessage[] = [];
     private wipReferenceSequenceNumber: number | undefined;
     private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
     private wipSkipRecursion = false;
@@ -524,36 +524,22 @@ export class SummarizerNode implements ISummarizerNode {
         const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 
         if (outstandingOps.length > 0) {
-            this.prependOutstandingOps(decodedSummary.pathParts, outstandingOps);
+            assert(this.latestSummary, "Should have latest summary defined if any outstanding ops found");
+            this.latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
+
+            // Defensive: tracking number should already exceed this number.
+            // This is probably a little excessive; can remove when stable.
+            const newOpsLatestSeq = outstandingOps[outstandingOps.length - 1].sequenceNumber;
+            assert(
+                newOpsLatestSeq <= this.trackingSequenceNumber,
+                "When loading base summary, expected outstanding ops <= tracking sequence number",
+            );
         }
 
         return {
             baseSummary: decodedSummary.baseSummary,
             outstandingOps,
         };
-    }
-
-    private prependOutstandingOps(pathPartsForChildren: string[], ops: ISequencedDocumentMessage[]): void {
-        assert(this.latestSummary, "Should have latest summary defined to prepend outstanding ops");
-        if (pathPartsForChildren.length > 0) {
-            this.latestSummary.additionalPath = EscapedPath.createAndConcat(pathPartsForChildren);
-        }
-        if (this.disabled) {
-            // Do not track ops when disabled
-            return;
-        }
-        if (ops.length > 0 && this.outstandingOps.length > 0) {
-            const newOpsLatestSeq = ops[ops.length - 1].sequenceNumber;
-            const prevOpsEarliestSeq = this.outstandingOps[0].sequenceNumber;
-            assert(
-                newOpsLatestSeq < prevOpsEarliestSeq,
-                `Out of order prepended outstanding ops: ${newOpsLatestSeq} >= ${prevOpsEarliestSeq}`,
-            );
-            if (newOpsLatestSeq > this.trackingSequenceNumber) {
-                this.trackingSequenceNumber = newOpsLatestSeq;
-            }
-        }
-        this.outstandingOps = ops.concat(this.outstandingOps);
     }
 
     public recordChange(op: ISequencedDocumentMessage): void {
@@ -584,6 +570,7 @@ export class SummarizerNode implements ISummarizerNode {
 
     private readonly canReuseHandle: boolean;
     private readonly throwOnError: boolean;
+    private trackingSequenceNumber: number;
     private constructor(
         private readonly logger: ITelemetryLogger,
         private readonly summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
@@ -593,10 +580,10 @@ export class SummarizerNode implements ISummarizerNode {
         /** Undefined means created without summary */
         private latestSummary?: SummaryNode,
         private readonly initialSummary?: IInitialSummary,
-        private trackingSequenceNumber = _changeSequenceNumber,
     ) {
         this.canReuseHandle = config.canReuseHandle ?? true;
         this.throwOnError = config.throwOnFailure ?? false;
+        this.trackingSequenceNumber = this._changeSequenceNumber;
     }
 
     public static createRoot(
