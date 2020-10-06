@@ -420,7 +420,6 @@ describe("GitRest", () => {
                     const tree = await createTreeInternal(manager, testOwnerName, testRepoName, createTreeParams);
 
                     const parents: string[] = [];
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (lastCommit) {
                         const commits = await getCommits(manager, testOwnerName, testRepoName, lastCommit, 1);
                         const parentCommit = commits[0];
@@ -454,7 +453,6 @@ describe("GitRest", () => {
                         resolve();
                     };
 
-                    // eslint-disable-next-line @typescript-eslint/unbound-method
                     queue.error = (error) => {
                         reject(error);
                     };

@@ -17,7 +17,7 @@ function messageFromError(error: any) {
 /**
  * Generic error
  */
-class GenericError extends CustomErrorWithProps implements IGenericError {
+export class GenericError extends CustomErrorWithProps implements IGenericError {
     readonly errorType = ContainerErrorType.genericError;
 
     constructor(

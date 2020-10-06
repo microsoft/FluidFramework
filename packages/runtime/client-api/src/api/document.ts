@@ -9,7 +9,6 @@ import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     IDeltaManager,
     IFluidCodeDetails,
-    IGenericBlob,
     IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
@@ -26,6 +25,7 @@ import {
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
 
@@ -192,17 +192,8 @@ export class Document extends EventEmitter {
         return this.closeFn();
     }
 
-    public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
-        return this.runtime.uploadBlob(file);
-    }
-
-    public async getBlob(blobId: string): Promise<IGenericBlob> {
-        return this.runtime.getBlob(blobId);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getBlobMetadata(): Promise<IGenericBlob[]> {
-        return this.runtime.getBlobMetadata();
+    public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+        return this.runtime.uploadBlob(blob);
     }
 }
 

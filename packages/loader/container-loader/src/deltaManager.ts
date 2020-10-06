@@ -15,8 +15,8 @@ import {
     IThrottlingWarning,
     ContainerErrorType,
 } from "@fluidframework/container-definitions";
-import { performanceNow, TypedEventEmitter } from "@fluidframework/common-utils";
-import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { performance, TypedEventEmitter } from "@fluidframework/common-utils";
+import { PerformanceEvent, TelemetryLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -26,7 +26,6 @@ import {
     ConnectionMode,
     IClient,
     IClientDetails,
-    IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,
     INack,
@@ -43,7 +42,6 @@ import {
     createGenericNetworkError,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
-import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
@@ -58,8 +56,6 @@ const DefaultChunkSize = 16 * 1024;
 
 // This can be anything other than null
 const ImmediateNoOpResponse = "";
-
-const DefaultContentBufferSize = 10;
 
 // Test if we deal with NetworkError object and if it has enough information to make a call.
 // If in doubt, allow retries.
@@ -176,8 +172,6 @@ export class DeltaManager
 
     private handler: IDeltaHandlerStrategy | undefined;
     private deltaStorageP: Promise<IDocumentDeltaStorageService> | undefined;
-
-    private readonly contentCache = new ContentCache(DefaultContentBufferSize);
 
     private messageBuffer: IDocumentMessage[] = [];
 
@@ -320,7 +314,7 @@ export class DeltaManager
         const oldValue = this.readonly;
         this._forceReadonly = readonly;
         if (oldValue !== this.readonly) {
-            this.emit("readonly", this.readonly);
+            safeRaiseEvent(this, this.logger, "readonly", this.readonly);
         }
     }
 
@@ -328,7 +322,7 @@ export class DeltaManager
         const oldValue = this.readonly;
         this._readonlyPermissions = readonly;
         if (oldValue !== this.readonly) {
-            this.emit("readonly", this.readonly);
+            safeRaiseEvent(this, this.logger, "readonly", this.readonly);
         }
     }
 
@@ -488,7 +482,7 @@ export class DeltaManager
             let connection: DeltaConnection | undefined;
             let delay = InitialReconnectDelaySeconds;
             let connectRepeatCount = 0;
-            const connectStartTime = performanceNow();
+            const connectStartTime = performance.now();
 
             // This loop will keep trying to connect until successful, with a delay between each iteration.
             while (connection === undefined) {
@@ -535,7 +529,7 @@ export class DeltaManager
             if (connectRepeatCount > 1) {
                 this.logger.sendTelemetryEvent({
                     attempts: connectRepeatCount,
-                    duration: TelemetryLogger.formatTick(performanceNow() - connectStartTime),
+                    duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
                     eventName: "MultipleDeltaConnectionFailures",
                 });
             }
@@ -891,6 +885,8 @@ export class DeltaManager
      * @param connection - The newly established connection
      */
     private setupNewSuccessfulConnection(connection: DeltaConnection, requestedMode: ConnectionMode) {
+        // Old connection should have been cleaned up before establishing a new one
+        assert(this.connection === undefined, "old connection exists on new connection setup");
         this.connection = connection;
 
         // Does information in scopes & mode matches?
@@ -926,10 +922,6 @@ export class DeltaManager
             } else {
                 this.enqueueMessages([messages]);
             }
-        });
-
-        connection.on("op-content", (message: IContentMessage) => {
-            this.contentCache.set(message);
         });
 
         connection.on("signal", (message: ISignalMessage) => {
@@ -1022,7 +1014,6 @@ export class DeltaManager
 
         this.processInitialMessages(
             initialMessages,
-            connection.details.initialContents ?? [],
             connection.details.initialSignals ?? [],
             this.connectFirstConnection);
 
@@ -1118,13 +1109,9 @@ export class DeltaManager
 
     private processInitialMessages(
         messages: ISequencedDocumentMessage[],
-        contents: IContentMessage[],
         signals: ISignalMessage[],
         firstConnection: boolean,
     ): void {
-        for (const content of contents) {
-            this.contentCache.set(content);
-        }
         if (messages.length > 0) {
             this.catchUp(messages, firstConnection ? "InitialOps" : "ReconnectOps");
         }

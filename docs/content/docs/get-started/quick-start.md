@@ -16,7 +16,7 @@ bundleName="dice-roller.9af6bdd702e6cd4ad6cf.js" >}}
 To get started you need the following installed.
 
 - [Node.js](https://nodejs.org/en/download) - {{< include file="_includes/node-versions.md" >}}
-- Code Editor - We recommend [Visual Studio Code](https://code.visualstudio.com/)
+- Code Editor - We recommend [Visual Studio Code](https://code.visualstudio.com/).
 
 We also recommend that you install the following:
 

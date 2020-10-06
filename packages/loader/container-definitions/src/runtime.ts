@@ -12,7 +12,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-    ConnectionState,
     IClientDetails,
     IQuorum,
     ISequencedDocumentMessage,
@@ -25,7 +24,6 @@ import {
     IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
-import { IBlobManager } from "./blobs";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { ICodeLoader, ILoader } from "./loader";
@@ -74,11 +72,6 @@ export interface IRuntime extends IDisposable {
     setConnectionState(connected: boolean, clientId?: string);
 
     /**
-     * Deprecated: Back-compat, supporting 0.16 data stores and earlier
-     */
-    changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
-
-    /**
      * @deprecated in 0.14 async stop()
      * Use snapshot to get a snapshot for an IRuntimeState as needed, followed by dispose
      *
@@ -125,7 +118,6 @@ export interface IContainerContext extends IDisposable {
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string | null;
-    readonly blobManager: IBlobManager | undefined;
     readonly storage: IDocumentStorageService | undefined | null;
     readonly connected: boolean;
     readonly branch: string;

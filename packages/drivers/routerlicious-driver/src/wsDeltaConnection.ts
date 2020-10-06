@@ -11,7 +11,6 @@ import {
     IClient,
     IConnect,
     IConnected,
-    IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -100,10 +99,6 @@ export class WSDeltaConnection
         return this.details!.initialMessages;
     }
 
-    public get initialContents(): IContentMessage[] {
-        return this.details!.initialContents;
-    }
-
     public get initialSignals(): ISignalMessage[] {
         return this.details!.initialSignals;
     }
@@ -181,19 +176,6 @@ export class WSDeltaConnection
      */
     public submitSignal(message: any): void {
         this.submitManager.add("submitSignal", message);
-    }
-
-    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.socket.send(JSON.stringify(["submitContent", this.details!.clientId, messages]), (error) => {
-                if (error) {
-                    this.emit("error", error);
-                    reject(error);
-                } else {
-                    resolve();
-                }
-            });
-        });
     }
 
     public disconnect() {

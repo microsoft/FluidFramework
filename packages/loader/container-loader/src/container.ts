@@ -11,6 +11,7 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
+import { performance } from "@fluidframework/common-utils";
 import { IFluidObject, IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -20,7 +21,6 @@ import {
     IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
-    IGenericBlob,
     ILoader,
     IRuntimeFactory,
     LoaderHeader,
@@ -30,14 +30,7 @@ import {
     IThrottlingWarning,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { performanceNow } from "@fluidframework/common-utils";
-import {
-    ChildLogger,
-    EventEmitterWithErrorHandling,
-    PerformanceEvent,
-    raiseConnectedEvent,
-    TelemetryLogger,
-} from "@fluidframework/telemetry-utils";
+import { CreateContainerError, GenericError } from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -57,7 +50,6 @@ import {
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
 } from "@fluidframework/driver-utils";
-import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     isSystemMessage,
     ProtocolOpHandler,
@@ -86,8 +78,14 @@ import {
     TreeEntry,
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
+import {
+    ChildLogger,
+    EventEmitterWithErrorHandling,
+    PerformanceEvent,
+    raiseConnectedEvent,
+    TelemetryLogger,
+} from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
-import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
@@ -99,6 +97,10 @@ import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
+
+interface ILocalSequencedClient extends ISequencedClient {
+    shouldHaveLeft?: boolean;
+}
 
 export interface IContainerConfig {
     resolvedUrl?: IResolvedUrl;
@@ -233,7 +235,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private pendingClientId: string | undefined;
     private loaded = false;
     private _attachState = AttachState.Detached;
-    private blobManager: BlobManager | undefined;
 
     // Active chaincode and associated runtime
     private _storageService: IDocumentStorageService | undefined;
@@ -438,10 +439,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // keep track of last time page was visible for telemetry
         if (typeof document === "object" && document !== null) {
-            this.lastVisible = document.hidden ? performanceNow() : undefined;
+            this.lastVisible = document.hidden ? performance.now() : undefined;
             document.addEventListener("visibilitychange", () => {
                 if (document.hidden) {
-                    this.lastVisible = performanceNow();
+                    this.lastVisible = performance.now();
                 } else {
                     // settimeout so this will hopefully fire after disconnect event if being hidden caused it
                     setTimeout(() => this.lastVisible = undefined, 0);
@@ -584,9 +585,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             // This we can probably just pass the storage service to the blob manager - although ideally
             // there just isn't a blob manager
-            if (this.blobManager === undefined) {
-                this.blobManager = await this.loadBlobManager(this.storageService, undefined);
-            }
             this._attachState = AttachState.Attached;
             this.emit("attached");
             this.cachedAttachSummary = undefined;
@@ -641,8 +639,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public setAutoReconnect(reconnect: boolean) {
-        assert(this.resumedOpProcessingAfterLoad);
-
         if (reconnect && this.closed) {
             throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
         }
@@ -655,7 +651,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             connectionState: ConnectionState[this.connectionState],
         });
 
-        if (reconnect) {
+        // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
+        // manual reconnection flag to true as we haven't made the initial connection yet.
+        if (reconnect && this._attachState === AttachState.Attached && this.resumedOpProcessingAfterLoad) {
             if (this._connectionState === ConnectionState.Disconnected) {
                 // Only track this as a manual reconnection if we are truly the ones kicking it off.
                 this.manualReconnectInProgress = true;
@@ -827,21 +825,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private snapshotBase(): ITree {
         const entries: ITreeEntry[] = [];
 
-        if (this.blobManager === undefined) {
-            throw new Error("Attempted to snapshot without a blobManager");
-        }
-
-        const blobMetaData = this.blobManager.getBlobMetadata();
-        entries.push({
-            mode: FileMode.File,
-            path: ".blobs",
-            type: TreeEntry.Blob,
-            value: {
-                contents: JSON.stringify(blobMetaData),
-                encoding: "utf-8",
-            },
-        });
-
         const quorumSnapshot = this.protocolHandler.quorum.snapshot();
         entries.push({
             mode: FileMode.File,
@@ -904,7 +887,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private recordConnectStartTime() {
         if (this.connectionTransitionTimes[ConnectionState.Disconnected] === undefined) {
-            this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
+            this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
         }
     }
 
@@ -961,8 +944,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const maybeSnapshotTree = specifiedVersion === null ? undefined
             : await this.fetchSnapshotTree(specifiedVersion);
 
-        const blobManagerP = this.loadBlobManager(this.storageService, maybeSnapshotTree);
-
         const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
 
         // Attach op handlers to start processing ops
@@ -992,9 +973,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             });
         }
 
-        // LoadContext directly requires blobManager and protocolHandler to be ready, and eventually calls
+        // LoadContext directly requires protocolHandler to be ready, and eventually calls
         // instantiateRuntime which will want to know existing state.  Wait for these promises to finish.
-        [this.blobManager, this._protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP, loadDetailsP]);
+        [this._protocolHandler] = await Promise.all([protocolHandlerP, loadDetailsP]);
 
         await this.loadContext(attributes, maybeSnapshotTree);
 
@@ -1207,21 +1188,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return protocol;
     }
 
-    private async loadBlobManager(
-        storage: IDocumentStorageService,
-        tree: ISnapshotTree | undefined,
-    ): Promise<BlobManager> {
-        const blobHash = tree?.blobs[".blobs"];
-        const blobs: IGenericBlob[] = blobHash !== undefined
-            ? await readAndParse<IGenericBlob[]>(storage, blobHash)
-            : [];
-
-        const blobManager = new BlobManager(storage);
-        blobManager.loadBlobMetadata(blobs);
-
-        return blobManager;
-    }
-
     private getCodeDetailsFromQuorum(): IFluidCodeDetails | undefined {
         const quorum = this.protocolHandler.quorum;
 
@@ -1367,7 +1333,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         reason: string,
         opsBehind?: number) {
         // Log actual event
-        const time = performanceNow();
+        const time = performance.now();
         this.connectionTransitionTimes[value] = time;
         const duration = time - this.connectionTransitionTimes[oldState];
 
@@ -1406,7 +1372,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             autoReconnect,
             opsBehind,
             online: OnlineStatus[isOnline()],
-            lastVisible: this.lastVisible !== undefined ? performanceNow() - this.lastVisible : undefined,
+            lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
         });
 
         if (value === ConnectionState.Connected) {
@@ -1429,6 +1395,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._connectionState = value;
 
         if (value === ConnectionState.Connected) {
+            // Mark our old client should have left in the quorum if it's still there
+            if (this._clientId !== undefined) {
+                const client: ILocalSequencedClient | undefined =
+                    this._protocolHandler?.quorum.getMember(this._clientId);
+                if (client !== undefined) {
+                    client.shouldHaveLeft = true;
+                }
+            }
             this._clientId = this.pendingClientId;
             this._deltaManager.updateQuorumJoin();
         } else if (value === ConnectionState.Disconnected) {
@@ -1489,6 +1463,31 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
+        // Check and report if we're getting messages from a clientId that we previously
+        // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
+        if (message.clientId != null) {
+            let errorMsg: string | undefined;
+            const client: ILocalSequencedClient | undefined =
+                this._protocolHandler?.quorum.getMember(message.clientId);
+            if (client === undefined && message.type !== MessageType.ClientJoin) {
+                errorMsg = "messageClientIdMissingFromQuorum";
+            } else if (client?.shouldHaveLeft === true) {
+                errorMsg = "messageClientIdShouldHaveLeft";
+            }
+            if (errorMsg !== undefined) {
+                const error = new GenericError(
+                    errorMsg,
+                    {
+                        clientId: this._clientId,
+                        messageClientId: message.clientId,
+                        sequenceNumber: message.sequenceNumber,
+                        clientSequenceNumber: message.clientSequenceNumber,
+                    },
+                );
+                this.close(CreateContainerError(error));
+            }
+        }
+
         const local = this._clientId === message.clientId;
 
         // Forward non system messages to the loaded runtime for processing
@@ -1563,7 +1562,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             chaincode,
             snapshot,
             attributes,
-            this.blobManager,
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler.quorum),
             loader,
@@ -1601,7 +1599,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             runtimeFactory,
             snapshot,
             attributes,
-            this.blobManager,
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler.quorum),
             loader,

@@ -29,6 +29,13 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         return service.getBlob(sha, useCache);
     }
 
+    /**
+     * Historian https ping endpoint for availability monitoring system
+     */
+    router.get("/repos/ping", async (request, response) => {
+        response.sendStatus(200);
+    });
+
     router.post("/repos/:ignored?/:tenantId/git/blobs", (request, response, next) => {
         const blobP = createBlob(request.params.tenantId, request.get("Authorization"), request.body);
         utils.handleResponse(

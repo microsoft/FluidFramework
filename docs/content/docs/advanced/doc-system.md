@@ -55,7 +55,7 @@ Narrative documentation
 : The overall structure of the documentation comes from Markdown files in the `docs/` folder.
 
 Automated API documentation
-: The contents of the [API](../api/) section is built from [TSDoc
+: The contents of the [API]({{< relref "apis" >}}) section is built from [TSDoc
 comments](https://api-extractor.com/pages/tsdoc/doc_comment_syntax/) in the source code.
 
 ## Features

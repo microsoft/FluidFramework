@@ -1,0 +1,44 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { ADOSizeComparator, getAzureDevopsApi } from "@fluidframework/bundle-size-tools";
+
+// Handle weirdness with Danger import.  The current module setup prevents us
+// from using this file directly, and the js transpilation renames the danger
+// import which prevents danger from removing it before evaluation (because it
+// actually puts its exports in the global namespace at that time)
+declare function markdown(message: string, file?: string, line?: number): void;
+
+const adoConstants = {
+    orgUrl: 'https://dev.azure.com/fluidframework',
+    projectName: 'internal',
+    ciBuildDefinitionId: 12,
+    prBuildDefinitionId: undefined,
+    bundleAnalysisArtifactName: 'bundleAnalysis',
+    projectRepoGuid: undefined,
+    buildsToSearch: undefined,
+};
+
+const localReportPath = "./artifacts/bundleAnalysis";
+
+(async function () {
+    if (process.env["ADO_API_TOKEN"] == undefined) {
+        throw new Error("no env ado api token provided");
+    }
+    if (process.env["DANGER_GITHUB_API_TOKEN"] == undefined) {
+        throw new Error("no env github api token provided");
+    }
+
+    const adoConnection = getAzureDevopsApi(process.env["ADO_API_TOKEN"], adoConstants.orgUrl);
+    const sizeComparator = new ADOSizeComparator(
+        adoConstants,
+        adoConnection,
+        localReportPath,
+        undefined,
+        ADOSizeComparator.naiveFallbackCommitGenerator,
+    );
+    const message = await sizeComparator.createSizeComparisonMessage(false);
+    markdown(message);
+})();

@@ -54,7 +54,7 @@ mongodb:
   url: mongodb_url
 
 rabbitmq:
-  connectionString: "connection_string"
+  connectionString: ""
 
 redis:
   url: redis_url

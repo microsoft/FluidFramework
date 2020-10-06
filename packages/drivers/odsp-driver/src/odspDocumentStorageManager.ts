@@ -5,12 +5,14 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { v4 as uuid } from "uuid";
 import {
     fromBase64ToUtf8,
     fromUtf8ToBase64,
     hashFile,
     IsoBuffer,
     Uint8ArrayToString,
+    performance,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -22,6 +24,7 @@ import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
     IDocumentStorageService,
+    DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import {
     IDocumentStorageGetVersionsResponse,
@@ -48,7 +51,7 @@ import {
     IFileEntry,
     snapshotExpirySummarizerOps,
 } from "./odspCache";
-import { getWithRetryForTokenRefresh, fetchHelper } from "./odspUtils";
+import { getWithRetryForTokenRefresh, fetchAndParseHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { getQueryString } from "./getQueryString";
@@ -106,6 +109,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private readonly documentId: string;
     private readonly snapshotUrl: string | undefined;
+    private readonly attachmentPOSTUrl: string | undefined;
+    private readonly attachmentGETUrl: string | undefined;
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
         assert(this._ops === undefined);
@@ -131,6 +136,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     ) {
         this.documentId = odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
+        this.attachmentPOSTUrl = odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
+        this.attachmentGETUrl = odspResolvedUrl.endpoints.attachmentGETStorageUrl;
 
         this.fileEntry = {
             resolvedUrl: odspResolvedUrl,
@@ -143,19 +150,55 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     public async createBlob(file: Uint8Array): Promise<api.ICreateBlobResponse> {
-        this.checkSnapshotUrl();
+        this.checkAttachmentPOSTUrl();
 
-        return PerformanceEvent.timedExecAsync(
-            this.logger,
-            {
-                eventName: "createBlob",
-                size: file.length,
-            },
-            async () => {
-                // Future implementation goes here
-                // Need to wrap implementation with getWithRetryForTokenRefresh()
-                throw new Error("StandardDocumentStorageManager.createBlob() not implemented");
-            });
+        const response = await getWithRetryForTokenRefresh(async (options) => {
+            const storageToken = await this.getStorageToken(options, "CreateBlob");
+            const { url, headers } = getUrlAndHeadersWithAuth(`${this.attachmentPOSTUrl}/content`, storageToken);
+            headers["Content-Type"] = "application/octet-stream";
+
+            return PerformanceEvent.timedExecAsync(
+                this.logger,
+                {
+                    eventName: "createBlob",
+                    size: file.length,
+                },
+                async () => fetchAndParseHelper<api.ICreateBlobResponse>(
+                    url,
+                    {
+                        body: file,
+                        headers,
+                        method: "POST",
+                    },
+                ),
+            );
+        });
+
+        return response.content;
+    }
+
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        this.checkAttachmentGETUrl();
+
+        return getWithRetryForTokenRefresh(async (options) => {
+            const storageToken = await this.getStorageToken(options, "ReadDataBlob");
+            const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
+            const { url, headers } = getUrlAndHeadersWithAuth(unAuthedUrl, storageToken);
+
+            return PerformanceEvent.timedExecAsync(
+                this.logger,
+                {
+                    eventName: "readDataBlob",
+                    headers: Object.keys(headers).length !== 0 ? true : undefined,
+                },
+                async (event) => {
+                    const res = await fetchHelper(url, { headers });
+                    const content = await res.arrayBuffer();
+                    event.end({ size: content.byteLength });
+                    return content;
+                },
+            );
+        });
     }
 
     public async read(blobid: string): Promise<string> {
@@ -174,7 +217,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         eventName: "readBlob",
                         headers: Object.keys(headers).length !== 0 ? true : undefined,
                     },
-                    async () => fetchHelper<IBlob>(url, { headers }),
+                    async () => fetchAndParseHelper<IBlob>(url, { headers }),
                 );
             });
             blob = response.content;
@@ -288,7 +331,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall", hasClaims: !!tokenFetchOptions.claims });
                 }
 
-                const hostPolicy: ISnapshotOptions = {
+                const snapshotOptions: ISnapshotOptions = {
                     deltas: 1,
                     channels: 1,
                     blobs: 2,
@@ -297,10 +340,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                 // No limit on size of snapshot, as otherwise we fail all clients to summarize
                 if (this.hostPolicy.summarizerClient) {
-                    hostPolicy.mds = undefined;
+                    snapshotOptions.mds = undefined;
                 }
-
-                const snapshotOptions = getQueryString(hostPolicy);
 
                 let cachedSnapshot: IOdspSnapshot | undefined;
 
@@ -431,7 +472,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     eventName: "getVersions",
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
-                async () => fetchHelper<IDocumentStorageGetVersionsResponse>(url, { headers }),
+                async () => fetchAndParseHelper<IDocumentStorageGetVersionsResponse>(url, { headers }),
             );
             const versionsResponse = response.content;
             if (!versionsResponse) {
@@ -459,17 +500,117 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         });
     }
 
-    private async fetchSnapshot(snapshotOptions: string, tokenFetchOptions: TokenFetchOptions) {
-        const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
+    private async fetchSnapshot(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
+        const usePost = this.hostPolicy.usePostForTreesLatest;
+        // If usePost is false, then make get call for TreesLatest.
+        // If usePost is true, make a post call. In case of failure other than the reason for which getWithRetryForTokenRefresh
+        // will retry, fallback to get call. In case of error for which getWithRetryForTokenRefresh will retry, let it retry
+        // only if it is first failure, otherwise fallback to get call.
+        if (usePost) {
+            try {
+                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, true);
+            } catch (error) {
+                const errorType = error.errorType;
+                if ((errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.incorrectServerResponse) && tokenFetchOptions.refresh === false) {
+                    throw error;
+                }
+                this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
+                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
+            }
+        } else {
+            return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
+        }
+    }
 
-        // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
-        // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-        const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${snapshotOptions}`, storageToken);
+    private async fetchSnapshotCore(
+        snapshotOptions: ISnapshotOptions,
+        tokenFetchOptions: TokenFetchOptions,
+        usePost: boolean,
+    ) {
+        const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
+        let url: string;
+        let headers: {[index: string]: string};
+        let postBody: string;
+        if (usePost) {
+            url = `${this.snapshotUrl}/trees/latest?ump=1`;
+            const formBoundary = uuid();
+            postBody = `--${formBoundary}\r\n`;
+            postBody += `Authorization: Bearer ${storageToken}\r\n`;
+            postBody += `X-HTTP-Method-Override: GET\r\n`;
+            Object.entries(snapshotOptions).forEach(([key, value]) => {
+                postBody += `${key}: ${value}\r\n`;
+            });
+            postBody += `_post: 1\r\n`;
+            postBody += `\r\n--${formBoundary}--`;
+            headers = {
+                "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+            };
+        } else {
+            const queryString = getQueryString(snapshotOptions);
+            const result = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${queryString}`, storageToken);
+            url = result.url;
+            headers = result.headers;
+        }
+
+        let isOptionsCall = false;
+
+        if (Object.keys(headers).length && !usePost) {
+            isOptionsCall = true;
+        }
 
         // This event measures only successful cases of getLatest call (no tokens, no retries).
         const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest" }, async (event) => {
-            const response = await fetchHelper<IOdspSnapshot>(url, { headers });
+            const startTime = performance.now();
+            let response: IOdspResponse<IOdspSnapshot>;
+            if (usePost) {
+                response = await fetchAndParseHelper<IOdspSnapshot>(
+                    url,
+                    {
+                        body: postBody,
+                        headers,
+                        method: "POST",
+                    });
+            } else {
+                response = await fetchAndParseHelper<IOdspSnapshot>(url, { headers });
+            }
+            const endTime = performance.now();
+            const overallTime = endTime - startTime;
             const content = response.content;
+            let dnstime: number | undefined; // domainLookupEnd - domainLookupStart
+            let redirectTime: number | undefined; // redirectEnd -redirectStart
+            let tcpHandshakeTime: number | undefined; // connectEnd  - connectStart
+            let secureConntime: number | undefined; // connectEnd  - secureConnectionStart
+            let responseTime: number | undefined; // responsEnd - responseStart
+            let fetchStToRespEndTime: number | undefined; // responseEnd  - fetchStart
+            let reqStToRespEndTime: number | undefined; // responseEnd - requestStart
+            let networkTime: number | undefined; // responseEnd - startTime
+            const spReqDuration = response.headers.get("sprequestduration");
+
+            // getEntriesByType is only available in browser performance object
+            const resources1 = performance.getEntriesByType?.("resource") ?? [];
+            // Usually the latest fetch call is to the end of resources, so we start from the end.
+            for (let i = resources1.length - 1; i > 0; i--) {
+                const indResTime = resources1[i] as PerformanceResourceTiming;
+                const resource_name = indResTime.name;
+                const resource_initiatortype = indResTime.initiatorType;
+                if ((resource_initiatortype.localeCompare("fetch") === 0) && (resource_name.localeCompare(url) === 0)) {
+                    redirectTime = indResTime.redirectEnd - indResTime.redirectStart;
+                    dnstime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
+                    tcpHandshakeTime = indResTime.connectEnd - indResTime.connectStart;
+                    secureConntime = (indResTime.secureConnectionStart > 0) ? (indResTime.connectEnd - indResTime.secureConnectionStart) : 0;
+                    responseTime = indResTime.responseEnd - indResTime.responseStart;
+                    fetchStToRespEndTime = (indResTime.fetchStart > 0) ? (indResTime.responseEnd - indResTime.fetchStart) : 0;
+                    reqStToRespEndTime = (indResTime.requestStart > 0) ? (indResTime.responseEnd - indResTime.requestStart) : 0;
+                    networkTime = (indResTime.startTime > 0) ? (indResTime.responseEnd - indResTime.startTime) : 0;
+                    if (spReqDuration) {
+                        networkTime = networkTime - parseInt(spReqDuration, 10);
+                    }
+                    break;
+                }
+            }
+
+            const clientTime = networkTime ? overallTime - networkTime : undefined;
+
             event.end({
                 trees: content.trees?.length ?? 0,
                 blobs: content.blobs?.length ?? 0,
@@ -477,6 +618,17 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 headers: Object.keys(headers).length !== 0 ? true : undefined,
                 sprequestguid: response.headers.get("sprequestguid"),
                 sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
+                isoptionscall: isOptionsCall,
+                redirecttime: redirectTime,
+                dnsLookuptime: dnstime,
+                responsenetworkTime: responseTime,
+                tcphandshakeTime: tcpHandshakeTime,
+                secureconnectiontime: secureConntime,
+                fetchstarttorespendtime: fetchStToRespEndTime,
+                reqstarttorespendtime: reqStToRespEndTime,
+                overalltime: overallTime,
+                networktime: networkTime,
+                clienttime: clientTime,
                 contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
                 bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
             });
@@ -560,6 +712,18 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
     }
 
+    private checkAttachmentPOSTUrl() {
+        if (!this.attachmentPOSTUrl) {
+            throwOdspNetworkError("Method not supported because no attachmentPOSTUrl was provided", 400);
+        }
+    }
+
+    private checkAttachmentGETUrl() {
+        if (!this.attachmentGETUrl) {
+            throwOdspNetworkError("Method not supported because no attachmentGETUrl was provided", 400);
+        }
+    }
+
     private async readTree(id: string): Promise<ITree | null> {
         if (!this.snapshotUrl) {
             return null;
@@ -571,16 +735,21 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                 const response = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger);
                 const odspSnapshot: IOdspSnapshot = response.content;
-                // OdspSnapshot contain "trees" when the request is made for latest or the root of the tree, for all other cases it will contain "tree" which is the fetched tree with the id
+                let treeId = "";
                 if (odspSnapshot) {
                     if (odspSnapshot.trees) {
                         this.initTreesCache(odspSnapshot.trees);
+                        if (odspSnapshot.trees.length > 0) {
+                            treeId = odspSnapshot.trees[0].id;
+                        }
                     }
                     if (odspSnapshot.blobs) {
                         this.initBlobsCache(odspSnapshot.blobs);
                     }
                 }
-                return this.treesCache.get(id);
+                // If the version id doesn't match with the id of the tree, then use the id of first tree which in that case
+                // will be the actual id of tree to be fetched.
+                return this.treesCache.get(id) ?? this.treesCache.get(treeId);
             });
         }
 
@@ -669,7 +838,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         await Promise.all(this.blobsCachePendingHashes.values());
         // This cache is associated with mapping sha to path for currently generated summary.
         const blobsShaToPathCacheLatest: Map<string, string> = new Map();
-        const snapshotTree = await this.convertSummaryToSnapshotTree(parentHandle, tree, blobsShaToPathCacheLatest);
+        const { snapshotTree, reusedBlobs, blobs } = await this.convertSummaryToSnapshotTree(parentHandle, tree, blobsShaToPathCacheLatest);
 
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
@@ -692,9 +861,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     attempt: options.refresh ? 2 : 1,
                     hasClaims: !!options.claims,
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    blobs,
+                    reusedBlobs,
+                    size: postBody.length,
                 },
                 async () => {
-                    const response = await fetchHelper<ISnapshotResponse>(
+                    const response = await fetchAndParseHelper<ISnapshotResponse>(
                         url,
                         {
                             body: postBody,
@@ -715,10 +887,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         blobsShaToPathCacheLatest: Map<string, string>,
         depth: number = 0,
         path: string = "",
-    ): Promise<ISnapshotTree> {
+    ) {
         const snapshotTree: ISnapshotTree = {
             entries: [],
         }!;
+
+        let reusedBlobs = 0;
+        let blobs = 0;
 
         const keys = Object.keys(tree.tree);
         for (const key of keys) {
@@ -729,12 +904,15 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             switch (summaryObject.type) {
                 case api.SummaryType.Tree: {
-                    value = await this.convertSummaryToSnapshotTree(
+                    const result = await this.convertSummaryToSnapshotTree(
                         parentHandle,
                         summaryObject,
                         blobsShaToPathCacheLatest,
                         depth + 1,
                         `${path}/${key}`);
+                    value = result.snapshotTree;
+                    reusedBlobs += result.reusedBlobs;
+                    blobs += result.blobs;
                     break;
                 }
                 case api.SummaryType.Blob: {
@@ -749,6 +927,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // to generate complete path for the given blob.
                     if (!completePath || !this.lastSummaryHandle) {
+                        blobs++;
                         value = {
                             content,
                             encoding,
@@ -756,6 +935,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         completePath = `/.app${path}/${key}`;
                         blobsShaToPathCacheLatest.set(hash, completePath);
                     } else {
+                        reusedBlobs++;
                         id = `${this.lastSummaryHandle}${completePath}`;
                     }
                     break;
@@ -809,7 +989,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             snapshotTree.entries!.push(entry);
         }
 
-        return snapshotTree;
+        return { snapshotTree, blobs, reusedBlobs };
     }
 }
 

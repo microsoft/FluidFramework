@@ -9,6 +9,7 @@ import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresour
 import {
     ICollection,
     IContext,
+    IDeliState,
     IDocument,
     ILogger,
     IPartitionLambda,
@@ -22,9 +23,7 @@ import { FileMode } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
-import { IDeliCheckpoint } from "./checkpointContext";
 import { DeliLambda } from "./lambda";
-import { migrateSchema } from "./migrateDbObject";
 
 // We expire clients after 5 minutes of no activity
 export const ClientSequenceTimeout = 5 * 60 * 1000;
@@ -39,7 +38,7 @@ export const NoopConsolidationTimeout = 250;
 // TODO: Remove when everything is up to date.
 const FlipTerm = false;
 
-const getDefaultCheckpooint = (epoch: number): IDeliCheckpoint => {
+const getDefaultCheckpooint = (epoch: number): IDeliState => {
     return {
         branchMap: undefined,
         clients: undefined,
@@ -71,16 +70,13 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
         // Lookup the last sequence number stored
         // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-        let dbObject = await this.collection.findOne({ documentId, tenantId });
+        const dbObject = await this.collection.findOne({ documentId, tenantId });
         if (!dbObject) {
             // Temporary guard against failure until we figure out what causing this to trigger.
             return new NoOpLambda(context);
         }
 
-        // Migrate the db object to new schema if applicable.
-        dbObject = await migrateSchema(dbObject, this.collection, leaderEpoch, 1);
-
-        let lastCheckpoint: IDeliCheckpoint;
+        let lastCheckpoint: IDeliState;
 
         const messageMetaData = {
             documentId,
@@ -116,11 +112,11 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             }
         }
 
-        // back-compat for older documents.
+        // For cases such as detached container where the document was generated outside the scope of deli
+        // and checkpoint was written manually.
         if (lastCheckpoint.epoch === undefined) {
             lastCheckpoint.epoch = leaderEpoch;
             lastCheckpoint.term = 1;
-            lastCheckpoint.durableSequenceNumber = lastCheckpoint.sequenceNumber;
         }
 
         const newCheckpoint = FlipTerm ?
@@ -163,12 +159,12 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         tenantId: string,
         documentId: string,
         gitManager: IGitManager,
-        logger: ILogger): Promise<IDeliCheckpoint> {
+        logger: ILogger): Promise<IDeliState> {
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         if (existingRef) {
             try {
                 const content = await gitManager.getContent(existingRef.object.sha, ".serviceProtocol/deli");
-                const summaryCheckpoint = JSON.parse(toUtf8(content.content, content.encoding)) as IDeliCheckpoint;
+                const summaryCheckpoint = JSON.parse(toUtf8(content.content, content.encoding)) as IDeliState;
                 return summaryCheckpoint;
             } catch (exception) {
                 const messageMetaData = {
@@ -195,8 +191,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         documentId: string,
         gitManager: IGitManager,
         logger: ILogger,
-        checkpoint: IDeliCheckpoint,
-        leaderEpoch: number): Promise<IDeliCheckpoint> {
+        checkpoint: IDeliState,
+        leaderEpoch: number): Promise<IDeliState> {
         let newCheckpoint = checkpoint;
         if (leaderEpoch !== newCheckpoint.epoch) {
             const lastSummaryState = await this.loadStateFromSummary(tenantId, documentId, gitManager, logger);
@@ -224,7 +220,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
     private async createSummaryWithLatestTerm(
         gitManager: IGitManager,
-        checkpoint: IDeliCheckpoint,
+        checkpoint: IDeliState,
         documentId: string) {
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         const [lastCommit, scribeContent] = await Promise.all([

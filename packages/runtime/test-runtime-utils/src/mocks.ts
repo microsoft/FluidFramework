@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IGenericBlob,
     ContainerWarning,
     ILoader,
     AttachState,
@@ -459,17 +458,11 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
-    public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
-        const blob = { id: uuid(), ...file };
-        this.blobs.set(blob.id, blob);
-        return blob;
+    public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+        return null;
     }
 
-    public async getBlob(blobId: string): Promise<IGenericBlob> {
-        return this.blobs.get(blobId);
-    }
-
-    public async getBlobMetadata(): Promise<IGenericBlob[]> {
+    public async getBlob(blobId: string): Promise<any> {
         return null;
     }
 

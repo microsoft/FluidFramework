@@ -100,7 +100,7 @@ SharedDirectory.
 
 {{% callout important "See also" %}}
 
-- [Creating and storing distributed data structures](./dds.md#creating-and-storing-distributed-data-structures)
+- [Creating and storing distributed data structures](../dds/#creating-and-storing-distributed-data-structures)
 
 {{% /callout %}}
 
@@ -166,6 +166,10 @@ The Aqueduct library contains more than just DataObject and DataObjectFactory. T
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
 
 <!-- Packages -->
 

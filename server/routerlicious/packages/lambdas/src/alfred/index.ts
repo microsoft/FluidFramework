@@ -10,7 +10,6 @@ import {
     IClient,
     IConnect,
     IConnected,
-    IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,
     INack,
@@ -114,7 +113,6 @@ export function configureWebSocketServices(
     orderManager: core.IOrdererManager,
     tenantManager: core.ITenantManager,
     storage: core.IDocumentStorage,
-    contentCollection: core.ICollection<any>,
     clientManager: core.IClientManager,
     metricLogger: core.IMetricClient,
     logger: core.ILogger,
@@ -249,7 +247,6 @@ export function configureWebSocketServices(
                     parentBranch: connection.parentBranch,
                     serviceConfiguration: connection.serviceConfiguration,
                     initialClients: clients,
-                    initialContents: [],
                     initialMessages: [],
                     initialSignals: [],
                     supportedVersions: protocolVersions,
@@ -265,7 +262,6 @@ export function configureWebSocketServices(
                     parentBranch: null, // Does not matter for now.
                     serviceConfiguration: DefaultServiceConfiguration,
                     initialClients: clients,
-                    initialContents: [],
                     initialMessages: [],
                     initialSignals: [],
                     supportedVersions: protocolVersions,
@@ -355,50 +351,6 @@ export function configureWebSocketServices(
                     }
                 }
             });
-
-        // Message sent when a new splitted operation is submitted to the router
-        socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {
-            // Verify the user has an orderer connection.
-            if (!connectionsMap.has(clientId)) {
-                let nackMessage: INack;
-
-                if (hasWriteAccess(scopeMap.get(clientId))) {
-                    nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Readonly client");
-                } else if (roomMap.has(clientId)) {
-                    nackMessage = createNackMessage(403, NackErrorType.InvalidScopeError, "Invalid scope");
-                } else {
-                    nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
-                }
-
-                socket.emit("nack", "", [nackMessage]);
-            } else {
-                const broadCastMessage: IContentMessage = {
-                    clientId,
-                    clientSequenceNumber: message.clientSequenceNumber,
-                    contents: message.contents,
-                };
-
-                const connection = connectionsMap.get(clientId);
-
-                const dbMessage = {
-                    clientId,
-                    documentId: connection.documentId,
-                    op: broadCastMessage,
-                    tenantId: connection.tenantId,
-                };
-
-                contentCollection.insertOne(dbMessage).then(
-                    () => {
-                        socket.broadcastToRoom(getRoomId(roomMap.get(clientId)), "op-content", broadCastMessage);
-                        return response(null);
-                    }, (error) => {
-                        if (error.code !== 11000) {
-                            // Needs to be a full rejection here
-                            return response("Could not write to DB", null);
-                        }
-                    });
-            }
-        });
 
         // Message sent when a new signal is submitted to the router
         socket.on(

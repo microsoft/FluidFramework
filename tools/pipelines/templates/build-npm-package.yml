@@ -22,10 +22,6 @@ parameters:
 - name: taskTest
   type: string
   default: ci:test
- 
-- name: extraAuth
-  type: string
-  default:
 
 - name: poolCG
   type: object
@@ -36,6 +32,11 @@ parameters:
   default: Lite
 
 - name: preCG
+  type: stepList
+  default: []
+
+# These should output results under an /nyc/ dir (anywhere in the repo) to get included in the published test results
+- name: additionalTests
   type: stepList
   default: []
 
@@ -78,20 +79,29 @@ variables:
       buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 
 stages:
+  # Install / Build / Test Stage
   - stage: build
     displayName: Build Stage
     jobs:
       # Job - Build
-      - job: Build
+      - job: build
+        displayName: Build
         pool: ${{ parameters.poolBuild }}
         variables:
           testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
           releaseBuildVar: $[variables.releaseBuild]
         steps:
+        # Setup
+        - checkout: self
+          clean: true
+          lfs: ${{ parameters.checkoutSubmodules }}
+          submodules: ${{ parameters.checkoutSubmodules }}
+
         - task: Bash@3
           displayName: Parameters
           inputs:
             targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
             script: |
               # Show all task group conditions
 
@@ -104,6 +114,7 @@ stages:
                 releaseBuildOverride=${{ parameters.releaseBuildOverride }}
 
               Tasks Parameters:
+                BuildDir=${{ parameters.buildDirectory }}
                 Build=${{ parameters.taskBuild }}
                 Lint=${{ parameters.taskLint }}
                 Test=${{ parameters.taskTest }}
@@ -118,25 +129,38 @@ stages:
 
                 release=$(release)"
 
+              # Error checking
               if [[ "$(release)" == "release" ]]; then
                 if [[ "${{ variables.canRelease }}" == "False" ]]; then
                   echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
                   exit -1;
                 fi
+
+                if [ -f "lerna.json" ]; then
+                  grep -e fluid.*-0 `find packages -name 'package.json'`
+                else
+                  grep -e fluid.*-0 `find . -name 'package.json'`
+                fi
+
+                if [[ $? == 0 ]]; then
+                  echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
+                  exit -1;
+                fi
               fi
 
-              if [[ "$(release)" != "none" ]]; then
+              if [[ "$(release)" == "prerelease" ]]; then
+                if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
+                  echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
+                  exit -1;
+                fi
+              fi
+
+              if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
                 if [[ "${{ variables.publish }}" != "True" ]]; then
                   echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
                   exit -1;
                 fi
               fi
-
-        # Setup
-        - checkout: self
-          clean: true
-          lfs: ${{ parameters.checkoutSubmodules }}
-          submodules: ${{ parameters.checkoutSubmodules }}
 
         # Install
         - task: UseNode@1
@@ -156,6 +180,7 @@ stages:
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            tagName: ${{ parameters.tagName }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -177,6 +202,9 @@ stages:
 
         # Test
         - ${{ if ne(parameters.taskTest, 'false') }}:
+          # Run any additional tests first so their results can be copied to the ~/nyc dir and published below
+          - ${{ parameters.additionalTests }}
+
           # Test - No coverage
           - ${{ if ne(variables['testCoverage'], true) }}:
             - task: Npm@1
@@ -293,7 +321,5 @@ stages:
   - ${{ if eq(variables.publish, true) }}:
     - template: include-publish-npm-package.yml
       parameters:
-        buildDirectory: ${{ parameters.buildDirectory }}
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
-        buildNumberInPatch: ${{ parameters.buildNumberInPatch }}

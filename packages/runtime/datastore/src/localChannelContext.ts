@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { cloneDeep } from "lodash";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ISequencedDocumentMessage,
@@ -20,6 +21,7 @@ import { IFluidDataStoreContext, ISummarizeResult } from "@fluidframework/runtim
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { convertToSummaryTree } from "@fluidframework/runtime-utils";
+import { Lazy } from "@fluidframework/common-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
@@ -30,13 +32,12 @@ import { ChannelStorageService } from "./channelStorageService";
  */
 export class LocalChannelContext implements IChannelContext {
     public channel: IChannel | undefined;
-    private _isLoaded = false;
     private attached = false;
     private readonly pending: ISequencedDocumentMessage[] = [];
-    private _services: {
+    private readonly services: Lazy<{
         readonly deltaConnection: ChannelDeltaConnection,
         readonly objectStorage: ChannelStorageService,
-    } | undefined;
+    }>;
     private readonly dirtyFn: () => void;
     private readonly factory: IChannelFactory | undefined;
 
@@ -51,13 +52,30 @@ export class LocalChannelContext implements IChannelContext {
         dirtyFn: (address: string) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
     ) {
+        let blobMap: Map<string, string> | undefined;
+        const clonedSnapshotTree = cloneDeep(this.snapshotTree);
+        if (clonedSnapshotTree !== undefined) {
+            blobMap = new Map<string, string>();
+            this.collectExtraBlobsAndSanitizeSnapshot(clonedSnapshotTree, blobMap);
+        }
+        this.services = new Lazy(() => {
+            return createServiceEndpoints(
+                this.id,
+                this.dataStoreContext.connected,
+                this.submitFn,
+                this.dirtyFn,
+                this.storageService,
+                clonedSnapshotTree !== undefined ? Promise.resolve(clonedSnapshotTree) : undefined,
+                blobMap !== undefined ?
+                    Promise.resolve(blobMap) : undefined,
+            );
+        });
         this.factory = registry.get(type);
         if (this.factory === undefined) {
             throw new Error(`Channel Factory ${type} not registered`);
         }
         if (snapshotTree === undefined) {
             this.channel = this.factory.create(runtime, id);
-            this._isLoaded = true;
         }
         this.dirtyFn = () => { dirtyFn(id); };
     }
@@ -70,15 +88,14 @@ export class LocalChannelContext implements IChannelContext {
     }
 
     public get isLoaded(): boolean {
-        return this._isLoaded;
+        return this.channel !== undefined;
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
-        // Connection events are ignored if the data store is not yet attached
-        if (!this.attached) {
-            return;
+        // Connection events are ignored if the data store is not yet attached or loaded
+        if (this.attached && this.isLoaded) {
+            this.services.value.deltaConnection.setConnectionState(connected);
         }
-        this.services.deltaConnection.setConnectionState(connected);
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
@@ -88,7 +105,7 @@ export class LocalChannelContext implements IChannelContext {
         // delay loading. So after the container is attached and some other client joins which start generating
         // ops for this channel. So not loaded local channel can still receive ops and we store them to process later.
         if (this.isLoaded) {
-            this.services.deltaConnection.process(message, local, localOpMetadata);
+            this.services.value.deltaConnection.process(message, local, localOpMetadata);
         } else {
             assert.strictEqual(local, false,
                 "Should always be remote because a local dds shouldn't generate ops before loading");
@@ -99,7 +116,7 @@ export class LocalChannelContext implements IChannelContext {
     public reSubmit(content: any, localOpMetadata: unknown) {
         assert(this.isLoaded, "Channel should be loaded to resubmit ops");
         assert(this.attached, "Local channel must be attached when resubmitting op");
-        this.services.deltaConnection.reSubmit(content, localOpMetadata);
+        this.services.value.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
@@ -121,31 +138,27 @@ export class LocalChannelContext implements IChannelContext {
         assert(!this.isLoaded, "Channel must not already be loaded when loading");
         assert(this.snapshotTree, "Snapshot should be provided to load from!!");
 
-        assert(await this.services.objectStorage.contains(".attributes"), ".attributes blob should be present");
+        assert(await this.services.value.objectStorage.contains(".attributes"), ".attributes blob should be present");
         const attributes = await readAndParse<IChannelAttributes>(
-            this.services.objectStorage,
+            this.services.value.objectStorage,
             ".attributes");
 
         assert(this.factory, "Factory should be there for local channel");
+        // Services will be assigned during this load.
         const channel = await this.factory.load(
             this.runtime,
             this.id,
-            this.services,
+            this.services.value,
             undefined,
             attributes);
 
         // Commit changes.
         this.channel = channel;
-        this._isLoaded = true;
-
-        if (this.attached) {
-            this.channel.connect(this.services);
-        }
 
         // Send all pending messages to the channel
         for (const message of this.pending) {
             try {
-                this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
+                this.services.value.deltaConnection.process(message, false, undefined /* localOpMetadata */);
             } catch (err) {
                 // record sequence number for easier debugging
                 const error = CreateContainerError(err);
@@ -156,37 +169,16 @@ export class LocalChannelContext implements IChannelContext {
         return this.channel;
     }
 
-    public attach(): void {
+    public markAttached(): void {
         if (this.attached) {
             throw new Error("Channel is already attached");
         }
 
         if (this.isLoaded) {
             assert(this.channel, "Channel should be there if loaded!!");
-            this.channel.connect(this.services);
+            this.channel.connect(this.services.value);
         }
         this.attached = true;
-    }
-
-    private get services() {
-        if (this._services === undefined) {
-            let blobMap: Map<string, string> | undefined;
-            if (this.snapshotTree !== undefined) {
-                blobMap = new Map<string, string>();
-                this.collectExtraBlobsAndSanitizeSnapshot(this.snapshotTree, blobMap);
-            }
-            this._services = createServiceEndpoints(
-                this.id,
-                this.dataStoreContext.connected,
-                this.submitFn,
-                this.dirtyFn,
-                this.storageService,
-                this.snapshotTree !== undefined ? Promise.resolve(this.snapshotTree) : undefined,
-                blobMap !== undefined ?
-                    Promise.resolve(blobMap) : undefined,
-            );
-        }
-        return this._services;
     }
 
     private collectExtraBlobsAndSanitizeSnapshot(snapshotTree: ISnapshotTree, blobMap: Map<string, string>) {

@@ -44,12 +44,9 @@
     "stop:docker:full": "docker-compose -f server/docker-compose.yml down && docker volume prune --force",
     "test": "npm run test:mocha && npm run test:jest && npm run test:types",
     "test:bail": "npm run test:mocha:bail && npm run test:jest:bail",
-    "test:ci": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
-    "test:ci:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
     "test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
     "test:coverage": "nyc npm run test:report",
     "test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
-    "test:full": "npm run test:ci:coverage",
     "test:jest": "assign-test-ports && lerna run test:jest --concurrency 4 --stream --no-bail --no-sort",
     "test:jest:bail": "assign-test-ports && lerna run test:jest --concurrency 4 --stream",
     "test:jest:report": "assign-test-ports && lerna run test:jest --concurrency 4 --stream --no-bail --no-sort -- -- --ci --reporters=default --reporters=jest-junit",
@@ -98,7 +95,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.3049",
+    "@fluidframework/build-tools": "^0.2.5638",
     "@fluidframework/test-tools": "^0.2.3074",
     "@mattetti/custom-api-documenter": "^0.2.1",
     "@microsoft/api-extractor": "^7.7.2",
@@ -109,5 +106,25 @@
     "rimraf": "^2.6.2",
     "run-script-os": "^1.0.7",
     "typescript": "~3.7.4"
+  },
+  "fluidBuild": {
+    "repoPackages": {
+      "build": "common/build",
+      "common-def": "common/lib/common-definitions",
+      "common-utils": "common/lib/common-utils",
+      "server": "server/routerlicious",
+      "client": "",
+      "tools": [
+        "tools/generator-fluid",
+        "server/tinylicious"
+      ],
+      "services": {
+        "directory": "server",
+        "ignoredDirs": [
+          "routerlicious"
+        ]
+      }
+    },
+    "generatorName": "generator-fluid"
   }
 }

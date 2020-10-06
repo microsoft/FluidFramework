@@ -26,6 +26,7 @@ import { generateToken } from "@fluidframework/server-services-client";
 import {
     DefaultMetricClient,
     IClientManager,
+    IDeliState,
     IOrdererManager,
     IScribe,
     MongoDatabaseManager,
@@ -35,7 +36,6 @@ import {
 import {
     MessageFactory,
     TestClientManager,
-    TestCollection,
     TestDbFactory,
     TestKafka,
     TestTenantManager,
@@ -57,7 +57,6 @@ describe("Routerlicious", () => {
                 let testOrderer: IOrdererManager;
                 let testTenantManager: TestTenantManager;
                 let testClientManager: IClientManager;
-                let contentCollection: TestCollection;
 
                 beforeEach(() => {
                     const collectionNames = "test";
@@ -87,14 +86,12 @@ describe("Routerlicious", () => {
 
                     const pubsub = new PubSub();
                     webSocketServer = new LocalWebSocketServer(pubsub);
-                    contentCollection = new TestCollection([]);
 
                     configureWebSocketServices(
                         webSocketServer,
                         testOrderer,
                         testTenantManager,
                         testStorage,
-                        contentCollection,
                         testClientManager,
                         new DefaultMetricClient(),
                         DebugLogger.create("fluid-server:TestAlfredIO"));
@@ -272,7 +269,8 @@ describe("Routerlicious", () => {
             const docDetails = await testStorage.createDocument(testTenantId, testId, summaryTree, 10, 1, [["code", proposal]]);
             assert.equal(docDetails.existing, false, "Doc should not be existing!!");
             assert.equal(docDetails.value.documentId, testId, "Docid should be the provided one!!");
-            assert.equal(docDetails.value.sequenceNumber, 10, "Seq number should be 10 at which the summary was generated!!");
+            const deli: IDeliState = JSON.parse(docDetails.value.deli);
+            assert.equal(deli.sequenceNumber, 10, "Seq number should be 10 at which the summary was generated!!");
             const scribe: IScribe = JSON.parse(docDetails.value.scribe);
             assert.equal(scribe.protocolState.values[0][1]["value"], "empty", "Code proposal value should be equal!!");
         });
