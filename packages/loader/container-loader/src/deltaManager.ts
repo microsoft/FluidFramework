@@ -1275,7 +1275,7 @@ export class DeltaManager
         this.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
 
         const endTime = Date.now();
-        this.emit("processTime", endTime - startTime);
+        this.emit("op", message, endTime - startTime);
     }
 
     /**

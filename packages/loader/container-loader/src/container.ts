@@ -167,10 +167,10 @@ export async function waitContainerToCatchUp(container: Container) {
             const callbackOps = (message) => {
                 if (connectionOpSeqNumber <= message.sequenceNumber) {
                     accept(hasCheckpointSequenceNumber);
-                    deltaManager.off("beforeOpProcessing", callbackOps);
+                    deltaManager.off("op", callbackOps);
                 }
             };
-            deltaManager.on("beforeOpProcessing", callbackOps);
+            deltaManager.on("op", callbackOps);
         };
 
         if (container.connectionState !== ConnectionState.Disconnected) {
@@ -1349,14 +1349,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         deltaManager.on("throttled", (warning: IThrottlingWarning) => {
             this.raiseContainerWarning(warning);
-        });
-
-        deltaManager.on("pong", (latency) => {
-            this.emit("pong", latency);
-        });
-
-        deltaManager.on("processTime", (time) => {
-            this.emit("processTime", time);
         });
 
         deltaManager.on("readonly", (readonly) => {

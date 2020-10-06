@@ -199,7 +199,7 @@ export const createContainerWithOldLoader = async (
     loader: ILoader | old.ILoader,
     urlResolver: IUrlResolver,
 ): Promise<old.IContainer> => {
-    return old.createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
+    return old.createAndAttachContainer(documentId, defaultCodeDetails, loader as old.ILoader, urlResolver);
 };
 
 export async function loadContainer(
