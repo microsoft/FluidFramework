@@ -278,6 +278,7 @@ export class OdspDocumentService implements IDocumentService {
      */
     private canRetryOnError(error: any) {
         // Always retry unless told otherwise.
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
     }
 

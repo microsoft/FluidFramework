@@ -30,7 +30,7 @@ export function extractPackageIdentifierDetails(
 
     // Two @ symbols === the package has a version. Use alternative RegEx.
     if (packageString.indexOf("@") !== packageString.lastIndexOf("@")) {
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec,unicorn/no-unsafe-regex
         const componentsWithVersion = packageString.match(/(@(.*)\/)?((.*)@(.*))/);
         // eslint-disable-next-line no-null/no-null
         if ((componentsWithVersion === null || componentsWithVersion.length !== 6)) {
@@ -38,7 +38,7 @@ export function extractPackageIdentifierDetails(
         }
         [fullId, , scope, nameAndVersion, name, version] = componentsWithVersion;
     } else {
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec,unicorn/no-unsafe-regex
         const componentsWithoutVersion = packageString.match(/(@(.*)\/)?((.*))/);
         // eslint-disable-next-line no-null/no-null
         if ((componentsWithoutVersion === null || componentsWithoutVersion.length !== 5)) {

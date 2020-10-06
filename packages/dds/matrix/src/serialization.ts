@@ -42,5 +42,6 @@ export async function deserializeBlob(runtime: IFluidDataStoreRuntime, storage: 
         ? serializer.parse(utf8, runtime.IFluidHandleContext)
         : JSON.parse(utf8);
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return data;
 }

@@ -2474,7 +2474,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function makeMathSpan(mathSegpos: number, offsetFromSegpos: number) {
     const span = document.createElement("span") as ISegSpan;
     span.segPos = mathSegpos;

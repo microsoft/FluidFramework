@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     OnlineStatus, isOnline,
 } from "@fluidframework/driver-utils";
@@ -64,11 +63,12 @@ export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOp
     });
 }
 
-async function fetchHelperCore(
+export async function fetchHelper(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
 ): Promise<Response> {
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const response = fetchResponse as any as Response;
@@ -98,22 +98,6 @@ async function fetchHelperCore(
 }
 
 /**
- * A utility function to fetch with support for retries
- * @param requestInfo - fetch requestInfo, can be a string
- * @param requestInit - fetch requestInit
- */
-export async function fetchHelper(
-    requestInfo: RequestInfo,
-    requestInit: RequestInit | undefined,
-): Promise<IOdspResponse<IsoBuffer>> {
-    const response = await fetchHelperCore(requestInfo, requestInit);
-    return {
-        headers: new Map(response.headers),
-        content: IsoBuffer.from(await response.arrayBuffer()),
-    };
-}
-
-/**
  * A utility function to fetch and parse as JSON with support for retries
  * @param requestInfo - fetch requestInfo, can be a string
  * @param requestInit - fetch requestInit
@@ -122,7 +106,7 @@ export async function fetchAndParseHelper<T>(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {
-    const response = await fetchHelperCore(requestInfo, requestInit);
+    const response = await fetchHelper(requestInfo, requestInit);
     // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
     // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
     // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always

@@ -153,6 +153,7 @@ describe("context reload", function() {
             await this.container.getQuorum().propose("code", codeDetails(V2));
 
             // wait for summary ack/nack (non-immediate summary will result in test timeout)
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             await new Promise((resolve, reject) => this.container.on("op", (op) => {
                 if (op.type === "summaryAck") {
                     resolve();

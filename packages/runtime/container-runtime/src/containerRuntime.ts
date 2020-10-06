@@ -32,7 +32,6 @@ import {
 import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
-    IsoBuffer,
     Trace,
     unreachableCase,
 } from "@fluidframework/common-utils";
@@ -485,6 +484,7 @@ export class ContainerRuntime extends EventEmitter
         // Back-compat: <= 0.18 loader
         if (context.deltaManager.lastSequenceNumber === undefined) {
             Object.defineProperty(context.deltaManager, "lastSequenceNumber", {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 get: () => (context.deltaManager as any).referenceSequenceNumber,
             });
         }
@@ -529,6 +529,7 @@ export class ContainerRuntime extends EventEmitter
     }
 
     public get options(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.context.options;
     }
 
@@ -1806,7 +1807,7 @@ export class ContainerRuntime extends EventEmitter
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
     }
 
-    public async uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>> {
+    public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         return this.blobManager.createBlob(blob);
     }
 
