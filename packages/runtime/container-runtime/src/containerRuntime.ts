@@ -707,9 +707,8 @@ export class ContainerRuntime extends EventEmitter
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         const isSummarizerClient = this.clientDetails.type === summarizerClientType;
-        // Use runtimeOptions if provided, otherwise check localStorage, defaulting to true/enabled.
-        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode
-            ?? (typeof localStorage === "object" && localStorage?.fluidDisableSummarizerNode ? false : true);
+        // Use runtimeOptions if provided, otherwise default to true/enabled.
+        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode ?? true;
         const summarizerNode = SummarizerNode.createRoot(
             this.logger,
             // Summarize function to call when summarize is called
