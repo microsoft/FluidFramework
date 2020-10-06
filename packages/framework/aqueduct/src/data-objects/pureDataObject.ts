@@ -24,10 +24,10 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { serviceRoutePathRoot } from "../container-services";
 
-export interface IDataObjectProps<P extends IFluidObject = object> {
+export interface IDataObjectProps<O extends IFluidObject = object> {
     readonly runtime: IFluidDataStoreRuntime,
     readonly context: IFluidDataStoreContext,
-    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<P>, FluidObjectKey<object>>,
+    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>,
 }
 
 /**
@@ -36,11 +36,11 @@ export interface IDataObjectProps<P extends IFluidObject = object> {
  * you are creating another base data store class
  *
  * Generics:
- * P - represents a type that will define optional providers that will be injected
+ * O - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced data store may take during creation
  * E - represents events that will be available in the EventForwarder
  */
-export abstract class PureDataObject<P extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
+export abstract class PureDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
     extends EventForwarder<E>
     implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
     private readonly innerHandle: IFluidHandle<this>;
@@ -63,7 +63,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      *
      * To define providers set IFluidObject interfaces in the generic O type for your data store
      */
-    protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<P>, FluidObjectKey<object>>;
+    protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>;
 
     public get disposed() { return this._disposed; }
 
@@ -77,7 +77,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      */
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
-    public constructor(props: IDataObjectProps<P>) {
+    public constructor(props: IDataObjectProps<O>) {
         super();
         this.runtime = props.runtime;
         this.context = props.context;
