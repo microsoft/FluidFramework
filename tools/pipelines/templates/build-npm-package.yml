@@ -23,6 +23,14 @@ parameters:
   type: string
   default: ci:test
 
+- name: taskBundleAnalysis
+  type: boolean
+  default: false
+
+- name: taskPack
+  type: boolean
+  default: true
+
 - name: poolCG
   type: object
   default: Lite
@@ -51,10 +59,6 @@ parameters:
 - name: namespace
   type: boolean
   default: true
-
-- name: runBundleAnalysis
-  type: boolean
-  default: false
 
 - name: buildNumberInPatch
   type: string
@@ -241,30 +245,31 @@ stages:
             condition: succeededOrFailed()
 
         # Pack
-        - task: Bash@3
-          displayName: npm pack
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
-            script: |
-              mkdir $(Build.ArtifactStagingDirectory)/pack/
-              if [ -f "lerna.json" ]; then
-                npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
-                npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
-              else
-                npm pack --unsafe-perm
-                mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
-              fi
+        - ${{ if ne(parameters.taskPack, 'false') }}:
+          - task: Bash@3
+            displayName: npm pack
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                mkdir $(Build.ArtifactStagingDirectory)/pack/
+                if [ -f "lerna.json" ]; then
+                  npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
+                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+                else
+                  npm pack --unsafe-perm
+                  mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+                fi
 
-        - task: PublishBuildArtifacts@1
-          displayName: Publish Artifact - pack
-          inputs:
-            PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
-            ArtifactName: 'pack'
-            publishLocation: 'Container'
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifact - pack
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
+              ArtifactName: 'pack'
+              publishLocation: 'Container'
 
         # Collect bundle analysis
-        - ${{ if eq(parameters.runBundleAnalysis, true) }}:
+        - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
           - task: Npm@1
             displayName: npm run bundle-analysis
             inputs:

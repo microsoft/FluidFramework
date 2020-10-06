@@ -1,0 +1,15 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# bundle size stats pipeline
+
+name: $(Build.BuildId)
+
+extends:
+  template: templates/build-client.yml
+  parameters:
+    taskLint: false
+    taskTest: false
+    taskPack: false
+    taskBundleAnalysis: true
+    taskBuildDocs: false
