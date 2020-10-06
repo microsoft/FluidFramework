@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
-import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidRouter,
@@ -119,7 +118,7 @@ export interface IContainerRuntimeBase extends
 
     getTaskManager(): Promise<ITaskManager>;
 
-    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 /**
@@ -350,7 +349,7 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
         createParam: CreateChildSummarizerNodeParam,
     ): CreateChildSummarizerNodeFn;
 
-    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

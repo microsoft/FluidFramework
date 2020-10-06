@@ -154,6 +154,7 @@ export class InnerDocumentDeltaConnection
 
     public get lastKnownOpNumber() {
         // TODO: remove once latest server bits are picked up
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return (this.details as any).lastKnownOpNumber;
     }
 

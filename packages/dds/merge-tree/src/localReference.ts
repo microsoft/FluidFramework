@@ -69,10 +69,12 @@ export class LocalReference implements ReferencePosition {
     }
 
     public hasTileLabels() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return refHasTileLabels(this);
     }
 
     public hasRangeLabels() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return refHasRangeLabels(this);
     }
 

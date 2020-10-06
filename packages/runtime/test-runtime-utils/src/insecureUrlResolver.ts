@@ -149,6 +149,7 @@ export class InsecureUrlResolver implements IUrlResolver {
             user: this.user,
         };
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return jwt.sign(claims, this.tenantKey);
     }
 }

@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     IFluidHandleContext,
     IFluidSerializer,
@@ -100,9 +99,9 @@ export interface IFluidDataStoreRuntime extends
     // Blob related calls
     /**
      * Api to upload a blob of data.
-     * @param file - blob to be uploaded.
+     * @param blob - blob to be uploaded.
      */
-    uploadBlob(file: IsoBuffer): Promise<IFluidHandle<string>>;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
     /**
      * Submits the signal to be sent to other clients.

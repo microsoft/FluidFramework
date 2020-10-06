@@ -142,7 +142,6 @@ describe(`r11s End-To-End tests`, () => {
         const ops = { key: "1", type: "set", value: { type: "Plain", value: "b" } };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(codeDetails);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 mapId1, "Address should be shared map");

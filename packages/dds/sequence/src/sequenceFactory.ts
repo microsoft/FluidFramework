@@ -72,8 +72,10 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
     };
 
     public static segmentFromSpec(segSpec: MergeTree.IJSONSegment) {
+        // eslint-disable-next-line @typescript-eslint/ban-types
         const runSegment = segSpec as IJSONRunSegment<object>;
         if (runSegment.items) {
+            // eslint-disable-next-line @typescript-eslint/ban-types
             const seg = new SubSequence<object>(runSegment.items);
             if (runSegment.props) {
                 seg.addProperties(runSegment.props);
@@ -96,6 +98,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
         services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
+        // eslint-disable-next-line @typescript-eslint/ban-types
         const sharedSeq = new SharedObjectSequence<object>(runtime, id, attributes);
         await sharedSeq.load(branchId, services);
         return sharedSeq;
