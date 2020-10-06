@@ -280,7 +280,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
         //     });
 
         const node = value;
-        
+
         tr.replaceRange(0, state.doc.content.size, new Slice(node.content, 0, 0));
 
         this.apply(tr);

@@ -22,6 +22,7 @@ import { nodeTypeKey } from "./fluidBridge";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
 import { ProseMirrorView } from "./prosemirrorView";
 import { IStorageUtil, StorageUtil } from './storage';
+import {getNodeFromMarkdown} from './utils';
 
 
 function createTreeMarkerOps(
@@ -52,6 +53,32 @@ function createTreeMarkerOps(
     ];
 }
 
+
+function debounceUtil (functionToBeExecuted, debounceInterval){
+    let timeoutForDebouncing;
+
+    return function executorFunction(...args){
+        const executeAfterDebounceInterval = () => {
+            console.log("Debouncing util has executed");
+
+            timeoutForDebouncing = null;
+
+            functionToBeExecuted(...args);
+        };
+
+        /**
+         * If another call comes to the
+         * function within the same
+         * debouncing interval then
+         * clear the existing timeout and restart
+         * the timeout
+         */
+        clearTimeout(timeoutForDebouncing);
+
+        timeoutForDebouncing = setTimeout(() => {executeAfterDebounceInterval()}, debounceInterval);
+    }
+}
+
 /**
  * ProseMirror builds a Fluid collaborative text editor on top of the open source text editor ProseMirror.
  */
@@ -64,6 +91,7 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
     private collabManager: FluidCollabManager;
     private view: ProseMirrorView;
     private StorageUtilModule: IStorageUtil;
+    private readonly debouncingInterval: number = 1000;
 
 
     public static get Name() { return "@fluid-example/prosemirror"; }
@@ -93,6 +121,7 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
         this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
 
         let schema = await this.collabManager.getSchema();
+        // this.StorageUtilModule = new StorageUtil(); //TO Be removed
         if (!isWebClient()) {
             this.StorageUtilModule = new StorageUtil();
             let initialVal = await this.StorageUtilModule.getMardownDataAndConvertIntoNode(schema);
@@ -109,7 +138,11 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
             this.emit("valueChanged")
             // Here we can set data to original file
             // this.StorageUtilModule.storeData(this.collabManager.getCurrentState().toJSON());
+
             if (!isWebClient()) {
+                let debouncedFunction = debounceUtil(() => {this.StorageUtilModule.storeDeltaChangesOfEditor(this.collabManager.getSchema(), this.collabManager.getCurrentState()?.doc)}, this.debouncingInterval);
+                debouncedFunction();
+
                 this.StorageUtilModule.storeEditorStateAsMarkdown(this.collabManager.getSchema(), this.collabManager.getCurrentState()?.doc);
             }
             console.log("something changed ", changed);
@@ -122,7 +155,21 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
                 this.view = new ProseMirrorView(this.collabManager);
             }
             this.view.render(elm);
+            document.getElementById('input-file').addEventListener('change', e => {this.onFileSelect(e)} , false);
         }
+    }
+
+    public onFileSelect(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        const _this = this;
+        reader.onload = async (e) => {
+            const textFile = reader.result as string;
+            const node = await getNodeFromMarkdown(_this.collabManager.getSchema(), textFile);
+            await _this.collabManager.initializeValue(node);
+            console.log(textFile);
+        };
+        reader.readAsText(file);
     }
 }
 
