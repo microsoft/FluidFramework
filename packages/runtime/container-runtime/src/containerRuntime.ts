@@ -177,7 +177,7 @@ export interface IUploadedSummaryData {
 export interface IUnsubmittedSummaryData extends Partial<IGeneratedSummaryData>, Partial<IUploadedSummaryData> {
     readonly referenceSequenceNumber: number;
     readonly submitted: false;
-    readonly message: "disconnected" | "incorrect lastSequenceNumber";
+    readonly reason: "disconnected";
 }
 
 export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedSummaryData {
@@ -1673,14 +1673,14 @@ export class ContainerRuntime extends EventEmitter
         try {
             await this.scheduleManager.pause();
 
-            const attemptData: Omit<IUnsubmittedSummaryData, "message"> = {
+            const attemptData: Omit<IUnsubmittedSummaryData, "reason"> = {
                 referenceSequenceNumber: summaryRefSeqNum,
                 submitted: false,
             };
 
             if (!this.connected) {
                 // If summarizer loses connection it will never reconnect
-                return { ...attemptData, message: "disconnected" };
+                return { ...attemptData, reason: "disconnected" };
             }
 
             const trace = Trace.start();
@@ -1692,7 +1692,7 @@ export class ContainerRuntime extends EventEmitter
             };
 
             if (!this.connected) {
-                return { ...attemptData, ...generateData, message: "disconnected" };
+                return { ...attemptData, ...generateData, reason: "disconnected" };
             }
 
             // Ensure that lastSequenceNumber has not changed after pausing
@@ -1731,7 +1731,7 @@ export class ContainerRuntime extends EventEmitter
             };
 
             if (!this.connected) {
-                return { ...attemptData, ...generateData, ...uploadData, message: "disconnected" };
+                return { ...attemptData, ...generateData, ...uploadData, reason: "disconnected" };
             }
 
             const clientSequenceNumber =
