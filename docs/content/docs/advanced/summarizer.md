@@ -19,6 +19,25 @@ graph LR
   A --> C1([DataStore_1])
   A --> C2([DataStore_2])
   A --> CH([.chunks])
+  classDef tree fill:#faa,stroke:#000
+  class A,B,S,C1,C2,D1,D2,ST tree
+{{< /mermaid >}}
+
+<span class="screen-reader-text">
+<ul aria-label="Describes the hierarchical structure of the summary tree from the root to the first layer of leaf nodes.">
+  <li>root</li>
+  <ul>
+    <li>.protocol</li>
+    <li>_scheduler</li>
+    <li>DataStore_1</li>
+    <li>DataStore_2</li>
+    <li>.chunks</li>
+  </ul>
+</ul>
+</span>
+
+{{< mermaid >}}
+graph LR
   DS1 --> .DS([.fluid-object])
   DS1 --> D1([DDS_1])
   DS1 --> D2([DDS_2])
@@ -28,6 +47,22 @@ graph LR
   classDef tree fill:#faa,stroke:#000
   class A,B,S,C1,C2,D1,D2,ST tree
 {{< /mermaid >}}
+
+<span class="screen-reader-text">
+<ul aria-label="Describes the hierarchical structure of the summary tree from the data store nodes.">
+  <li>DataStore_1</li>
+  <ul>
+    <li>.fluid-object</li>
+    <li>DDS_1</li>
+    <ul>
+      <li>.attributes</li>
+      <li>(more blobs)</li>
+      <li>(subtrees)</li>
+    </ul>
+    <li>DDS_2</li>
+  </ul>
+</ul>
+</span>
 
 ### Protocol
 
@@ -50,6 +85,24 @@ graph LR
   classDef tree fill:#faa,stroke:#000
   class A,B,S,C1,C2 tree
 {{< /mermaid >}}
+
+<span class="screen-reader-text">
+<ul aria-label="Describes the hierarchical structure of the summaries.">
+  <li>root</li>
+  <ul>
+    <li>.protocol</li>
+    <ul>
+      <li>quorumMembers</li>
+      <li>quorumProposals</li>
+      <li>quorumValues</li>
+      <li>attributes</li>
+    </ul>
+    <li>_scheduler</li>
+    <li>DataStore_1</li>
+    <li>DataStore_2</li>
+  </ul>
+</ul>
+</span>
 
 ### Fluid Data Stores
 
