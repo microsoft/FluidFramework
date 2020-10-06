@@ -146,6 +146,14 @@ function decodeSummary(snapshot: ISnapshotTree, logger: Pick<ITelemetryLogger, "
                     let outstandingOps: ISequencedDocumentMessage[] = [];
                     for (const opsBlob of opsBlobs) {
                         const newOutstandingOps = await readAndParseBlob<ISequencedDocumentMessage[]>(opsBlob);
+                        if (outstandingOps.length > 0 && newOutstandingOps.length > 0) {
+                            const latestSeq = outstandingOps[outstandingOps.length - 1].sequenceNumber;
+                            const newEarliestSeq = newOutstandingOps[0].sequenceNumber;
+                            assert(
+                                latestSeq < newEarliestSeq,
+                                `latestSeq exceeds newEarliestSeq in decodeSummary: ${latestSeq} >= ${newEarliestSeq}`,
+                            );
+                        }
                         outstandingOps = outstandingOps.concat(newOutstandingOps);
                     }
                     return outstandingOps;
