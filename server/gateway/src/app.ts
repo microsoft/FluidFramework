@@ -5,6 +5,7 @@
 
 import fs from "fs";
 import path from "path";
+import _ from "lodash";
 // tslint:disable-next-line: ordered-imports
 import { getRandomName, IAlfredTenant } from "@fluidframework/server-services-client";
 import { ICache, MongoManager } from "@fluidframework/server-services-core";
@@ -146,14 +147,16 @@ export function create(
 
     // Static cache to help map from full to minified files
     const staticMinCache: { [key: string]: string } = {};
-
+    const microsoftConfiguration = config.get("login:microsoft");
     passport.use(
         new passportOpenIdConnect.Strategy(
             {
                 authorizationURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize",
                 callbackURL: "/auth/callback",
-                clientID: process.env.MICROSOFT_CONFIGURATION_CLIENT_ID,
-                clientSecret: process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET,
+                clientID: _.isEmpty(microsoftConfiguration.clientId)
+                    ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : microsoftConfiguration.clientId,
+                clientSecret: _.isEmpty(microsoftConfiguration.secret)
+                    ? process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET : microsoftConfiguration.secret,
                 issuer: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0",
                 passReqToCallback: true,
                 skipUserProfile: true,
@@ -185,8 +188,10 @@ export function create(
                     // I believe consumers should make sure we pull the right thing
                     authorizationURL: "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize",
                     callbackURL: "/connect/microsoft/callback",
-                    clientID: process.env.MSA_CONFIGURATION_CLIENT_ID,
-                    clientSecret: process.env.MSA_CONFIGURATION_CLIENT_SECRET,
+                    clientID: _.isEmpty(msaConfiguration.clientId)
+                        ? process.env.MSA_CONFIGURATION_CLIENT_ID : msaConfiguration.clientId,
+                    clientSecret: _.isEmpty(msaConfiguration.secret)
+                        ? process.env.MSA_CONFIGURATION_CLIENT_SECRET : msaConfiguration.secret,
                     issuer: "https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0",
                     passReqToCallback: true,
                     skipUserProfile: true,

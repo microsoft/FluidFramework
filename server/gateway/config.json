@@ -50,7 +50,14 @@
     },
     "login": {
         "enabled": false,
-        "accounts": []
+        "microsoft": {
+            "clientId": "",
+            "secret": ""
+        },
+        "linkedAccounts": {
+        },
+        "accounts": [
+        ]
     },
     "redis": {
         "host": "redis",

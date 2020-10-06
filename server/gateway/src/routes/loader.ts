@@ -4,6 +4,7 @@
  */
 
 import { parse } from "url";
+import _ from "lodash";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
@@ -69,7 +70,6 @@ export function create(
                 const claims = getJWTClaims(request);
                 const jwtToken = jwt.sign(claims, jwtKey);
 
-                // TODO: Why does RegEx parsing for params not work on the URL?
                 const rawPath = request.params[0];
                 const slash = rawPath.indexOf("/");
                 const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
@@ -170,14 +170,15 @@ export function create(
                         // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         timings!.push(Date.now() - start);
-
+                        const configClientId = config.get("login:microsoft").clientId;
                         response.render(
                             "loader",
                             {
                                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                                 cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
                                 chaincode: JSON.stringify(pkg),
-                                clientId: process.env.MICROSOFT_CONFIGURATION_CLIENT_ID,
+                                clientId: _.isEmpty(configClientId)
+                                ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : configClientId,
                                 config: workerConfig,
                                 jwt: jwtToken,
                                 partials: defaultPartials,

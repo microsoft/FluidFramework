@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import _ from "lodash";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";
@@ -36,8 +37,11 @@ export function resolveUrl(
     driveId?: string,
 ): [Promise<IFluidResolvedUrl>, Promise<undefined | FullTree>] {
     if (isSpoTenant(tenantId)) {
-        const clientId = process.env.MICROSOFT_CONFIGURATION_CLIENT_ID;
-        const clientSecret = process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET;
+        const microsoftConfiguration = config.get("login:microsoft");
+        const clientId = _.isEmpty(microsoftConfiguration.clientId)
+            ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : microsoftConfiguration.clientId;
+        const clientSecret = _.isEmpty(microsoftConfiguration.clientSecret)
+            ? process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET : microsoftConfiguration.clientSecret;
         if (clientId !== undefined && clientSecret !== undefined) {
             const clientConfig: IClientConfig = {
                 clientId,
@@ -48,7 +52,7 @@ export function resolveUrl(
             const fullTreeP = Promise.resolve(undefined);
             return [resolvedP, fullTreeP];
         } else {
-            throw new Error("Failed to find MICROSOFT_CONFIGURATION values in .env");
+            throw new Error("Failed to find client ID and secret values");
         }
     } else {
         let user: IAlfredUser | undefined;
