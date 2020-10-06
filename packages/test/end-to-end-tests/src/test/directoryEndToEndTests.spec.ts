@@ -94,11 +94,9 @@ describe("Directory", () => {
     }
 
     function expectAllSize(size: number, path?: string) {
-        /* eslint-disable @typescript-eslint/strict-boolean-expressions */
         const dir1 = path ? sharedDirectory1.getWorkingDirectory(path) : sharedDirectory1;
         const dir2 = path ? sharedDirectory2.getWorkingDirectory(path) : sharedDirectory2;
         const dir3 = path ? sharedDirectory3.getWorkingDirectory(path) : sharedDirectory3;
-        /* eslint-enable @typescript-eslint/strict-boolean-expressions */
 
         const keys1 = Array.from(dir1.keys());
         assert.equal(keys1.length, size, "Incorrect number of Keys in container 1");

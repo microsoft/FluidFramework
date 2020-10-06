@@ -183,6 +183,7 @@ function generate(
             waitOn2P.then(
                 (value) => {
                     assert(added, "Wait resolved before value is added");
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     return value;
                 })
                 .catch((reason) => {

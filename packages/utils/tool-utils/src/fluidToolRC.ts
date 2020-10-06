@@ -32,6 +32,7 @@ export async function loadRC(): Promise<IResources> {
     if (await exists(fileName)) {
         const buf = await readFile(fileName);
         try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return JSON.parse(buf.toString("utf8"));
         } catch (e) {
             // Nothing
@@ -48,5 +49,6 @@ export async function saveRC(rc: IResources) {
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export async function lockRC() {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return lock(getRCFileName(), { realpath: false });
 }

@@ -80,7 +80,6 @@ function makeIPGBlock(width: number, text: string, textSegment: MergeTree.TextSe
     return <IPGBlock>{ type: ParagraphItemType.Block, width, text, segment: textSegment };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function makeIPGMathBlock(width: number, text: string) {
     return <IPGMathBlock>{ type: ParagraphItemType.MathBlock, width, text };
 }
@@ -428,6 +427,7 @@ export function getListCacheInfo(
 
 export function getContentPct(pgMarker: IParagraphMarker) {
     if (pgMarker.properties && pgMarker.properties.contentWidth) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return pgMarker.properties.contentWidth;
     } else if (pgMarker.properties && pgMarker.properties.blockquote) {
         return 0.8;

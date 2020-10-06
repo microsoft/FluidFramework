@@ -106,6 +106,7 @@ describe("loader/runtime compatibility", () => {
 
             // set a test value from every data store (besides initial)
             const test2 = [...Array(dataObjects.length).keys()].map((x) => x.toString());
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             dataObjects.map(async (c, i) => (c._root as any).set(test2[i], test2[i]));
 
             // get every test value from every data store (besides initial)

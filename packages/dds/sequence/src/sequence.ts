@@ -507,7 +507,27 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             // catch up ops, and finishing the loading process
             const loadCatchUpOps = catchupOpsP
                 .then((msgs) => {
-                    msgs.forEach((m) => this.processMergeTreeMsg(m));
+                    msgs.forEach((m) => {
+                        const collabWindow = this.client.getCollabWindow();
+                        if (m.minimumSequenceNumber < collabWindow.minSeq
+                            || m.referenceSequenceNumber < collabWindow.minSeq
+                            || m.sequenceNumber <= collabWindow.minSeq
+                            || m.sequenceNumber <= collabWindow.currentSeq) {
+                            assert.fail(`Invalid catchup operations in snapshot: ${
+                                JSON.stringify({
+                                    op:{
+                                        seq: m.sequenceNumber,
+                                        minSeq: m.minimumSequenceNumber,
+                                        refSeq:m.referenceSequenceNumber,
+                                    },
+                                    collabWindow:{
+                                        seq: collabWindow.currentSeq,
+                                        minSeq: collabWindow.minSeq,
+                                    },
+                                })}`);
+                        }
+                        this.processMergeTreeMsg(m);
+                    });
                     this.loadFinished();
                 })
                 .catch((error) => {

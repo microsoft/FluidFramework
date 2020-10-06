@@ -60,6 +60,7 @@ const ImmediateNoOpResponse = "";
 // Test if we deal with NetworkError object and if it has enough information to make a call.
 // If in doubt, allow retries.
 const canRetryOnError = (error: any): boolean => error?.canRetry !== false;
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds;
 
 function getNackReconnectInfo(nackContent: INackContent) {
@@ -73,6 +74,7 @@ function createReconnectError(prefix: string, err: any) {
     const error2 = Object.create(error);
     error2.message = `${prefix}: ${error.message}`;
     error2.canRetry = true;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return error2;
 }
 
@@ -238,6 +240,7 @@ export class DeltaManager
         // user can't have r/w connection when user has only read permissions.
         // That said, connection can be r/w when host called forceReadonly(), as
         // this is view-only change
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         assert(!(this._readonlyPermissions && res));
         return res;
     }
@@ -579,6 +582,7 @@ export class DeltaManager
         // const serializedContent = JSON.stringify(this.messageBuffer);
         // const maxOpSize = this.context.deltaManager.maxMessageSize;
 
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this.readonly) {
             this.close(CreateContainerError("Op is sent in read-only document state"));
             return -1;
@@ -932,6 +936,7 @@ export class DeltaManager
         connection.on("nack", (documentId: string, messages: INack[]) => {
             const message = messages[0];
             // TODO: we should remove this check when service updates?
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (this._readonlyPermissions) {
                 this.close(createWriteError("WriteOnReadOnlyDocument"));
             }
