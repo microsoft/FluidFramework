@@ -304,7 +304,7 @@ stages:
               targetType: 'inline'
               workingDir: ${{ parameters.buildDirectory }}
               script: |
-                node ${{ parameters.buildDirectory }}/node_modules/@fluidframework/build-tools/dist/bundleSizeAnalysis/runBundleAnalyses.js
+                npx danger ci -d ${{ parameters.buildDirectory }}/dangerfile.js
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
