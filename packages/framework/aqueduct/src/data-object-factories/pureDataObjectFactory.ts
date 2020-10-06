@@ -269,21 +269,12 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S>, O, S>
      * @param context - data store context used to load a data store runtime
      */
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        return this.instantiateDataStoreCore(context);
-    }
-
-    /**
-     * Private method for data store instantiation that exposes initial state
-     *
-     * @param context - data store context used to load a data store runtime
-     */
-    protected async instantiateDataStoreCore(context: IFluidDataStoreContext, props?: S) {
         const instanceProxy = await PureDataObjectProxy.create(
             this.ctor,
             context,
             this.sharedObjectRegistry,
             this.optionalProviders,
-            props,
+            undefined, // props
             this.onDemandInstantiation);
 
         return instanceProxy.runtime;

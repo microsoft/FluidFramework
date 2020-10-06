@@ -758,13 +758,13 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function requestFluidDataStoreMixin(
     Base: typeof FluidDataStoreRuntime,
-    requestHandler: (request: IRequest) => Promise<IResponse>)
+    requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>)
 {
     return class RuntimeWithRequestHandler extends Base {
         public async request(request: IRequest) {
             const response  = await super.request(request);
             if (response.status === 404) {
-                return requestHandler(request);
+                return requestHandler(request, this);
             }
             return response;
         }
@@ -781,7 +781,7 @@ export function summaryWaitFluidDataStoreMixin(
     Base: typeof FluidDataStoreRuntime,
     init: () => Promise<void>)
 {
-    return class RuntimeWithRequestHandler extends Base {
+    return class RuntimeWithSummarizerHandler extends Base {
         public async summarize(...args) {
             await init();
             return super.summarize(...args);
