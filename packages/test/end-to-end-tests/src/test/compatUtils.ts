@@ -145,10 +145,7 @@ export const createOldRuntimeFactory = (
     dataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): old.IRuntimeFactory => {
-    // TODO: once 0.26 is released this can use the old version of TestContainerRuntimeFactory:
-    // return new old.TestContainerRuntimeFactory(type, dataStoreFactory as old.IFluidDataStoreFactory, runtimeOptions);
-    const factory = new TestContainerRuntimeFactory(type, dataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
-    return factory as unknown as old.IRuntimeFactory;
+    return new old.TestContainerRuntimeFactory(type, dataStoreFactory as old.IFluidDataStoreFactory, runtimeOptions);
 };
 
 export function createLoader(
@@ -271,7 +268,7 @@ export const compatTest = (
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 { summary: { maxOps: 1 } as ISummaryConfiguration },
             );
-            documentServiceFactory = new old.LocalDocumentServiceFactory(deltaConnectionServer);
+            documentServiceFactory = new old.LocalDocumentServiceFactory(deltaConnectionServer as any);
             defaultResolver = new LocalResolver();
         });
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { execWithErrorAsync, execAsync } from "../common/utils";
+import { execAsync } from "../common/utils";
 
 export function fatal(error: string): never {
     const e = new Error(error);
@@ -19,9 +19,7 @@ export function fatal(error: string): never {
  * @param error description of command line to print when error happens
  */
 export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: string) {
-    // TODO: Remove env once publish to the public feed.
-    const env = process.env["NPM_TOKEN"]? process.env : { ...process.env, "NPM_TOKEN": "" };
-    const result = await execAsync(cmd, { cwd: dir, env }, pipeStdIn);
+    const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
     if (result.error) {
         fatal(`ERROR: Unable to ${error}\nERROR: error during command ${cmd}\nERROR: ${result.error.message}`);
     }
