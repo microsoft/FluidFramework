@@ -100,6 +100,7 @@ export class MockDeltaManager extends EventEmitter
     readonly lastKnownSeqNumber = 0;
 
     public initialSequenceNumber = 0;
+    public hasCheckpointSequenceNumber = false;
 
     public get version(): string {
         return undefined;

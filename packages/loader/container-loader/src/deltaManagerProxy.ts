@@ -113,6 +113,10 @@ export class DeltaManagerProxy
         return this.deltaManager.initialSequenceNumber;
     }
 
+    public get hasCheckpointSequenceNumber() {
+        return this.hasCheckpointSequenceNumber;
+    }
+
     public get clientDetails(): IClientDetails {
         return this.deltaManager.clientDetails;
     }

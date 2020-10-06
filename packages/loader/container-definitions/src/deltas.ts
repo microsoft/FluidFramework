@@ -127,6 +127,12 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     /** The initial sequence number set when attaching the op handler */
     readonly initialSequenceNumber: number;
 
+    /**
+     * Tells if  current connection has checkpoint information.
+     * I.e. we know how far behind the client was at the time of establishing connection
+     */
+    readonly hasCheckpointSequenceNumber: boolean;
+
     /** Details of client */
     readonly clientDetails: IClientDetails;
 
