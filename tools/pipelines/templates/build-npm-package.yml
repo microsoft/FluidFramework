@@ -27,6 +27,10 @@ parameters:
   type: boolean
   default: false
 
+- name: taskPublishBundleSizeArtifacts
+  type: boolean
+  default: false
+
 - name: taskPack
   type: boolean
   default: true
@@ -279,7 +283,12 @@ stages:
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts - bundle-analysis
-            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+            condition:
+              and(
+                succeeded(),
+                ne(variables['Build.Reason'], 'PullRequest'),
+                eq(parameters.taskPublishBundleSizeArtifacts, true)
+              )
             inputs:
               PathtoPublish: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
               Artifactname: 'bundleAnalysis'
