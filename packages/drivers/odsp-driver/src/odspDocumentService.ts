@@ -117,7 +117,7 @@ export class OdspDocumentService implements IDocumentService {
         hostPolicy: HostStoragePolicy,
         private readonly fetchWithEpochValidation: FetchWithEpochValidation,
     ) {
-        fetcher.hashedDocumentId = odspResolvedUrl.hashedDocumentId;
+        fetchWithEpochValidation.hashedDocumentId = odspResolvedUrl.hashedDocumentId;
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
         this.logger = ChildLogger.create(logger,
@@ -153,7 +153,7 @@ export class OdspDocumentService implements IDocumentService {
                 true,
                 this.cache,
                 this.hostPolicy,
-                this.fetcher,
+                this.fetchWithEpochValidation,
             );
         }
 
@@ -175,7 +175,7 @@ export class OdspDocumentService implements IDocumentService {
             urlProvider,
             this.storageManager?.ops,
             this.getStorageToken,
-            this.fetcher,
+            this.fetchWithEpochValidation,
             this.logger,
         );
 
@@ -253,7 +253,7 @@ export class OdspDocumentService implements IDocumentService {
                 "POST",
                 this.logger,
                 this.getStorageToken,
-                this.fetcher,
+                this.fetchWithEpochValidation,
             );
 
         // Note: The sessionCache is configured with a sliding expiry of 1 hour,

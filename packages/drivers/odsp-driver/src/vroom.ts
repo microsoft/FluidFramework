@@ -13,7 +13,7 @@ import {
     throwOdspNetworkError,
 } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
-import { Fetcher } from "./fetcher";
+import { FetchWithEpochValidation } from "./fetchWithEpochValidation";
 
 /**
  * Makes join session call on SPO to get information about the web socket for a document
@@ -33,7 +33,7 @@ export async function fetchJoinSession(
     method: string,
     logger: ITelemetryLogger,
     getVroomToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
-    fetcher: Fetcher,
+    fetchWithEpochValidation: FetchWithEpochValidation,
 ): Promise<ISocketStorageDiscovery> {
     return getWithRetryForTokenRefresh(async (options) => {
         const token = await getVroomToken(options, "JoinSession");
@@ -52,7 +52,7 @@ export async function fetchJoinSession(
                 headers = { Authorization: `Bearer ${token}` };
             }
 
-            const response = await fetcher.fetchAndParseAsJSON<ISocketStorageDiscovery>(
+            const response = await fetchWithEpochValidation.fetchAndParseAsJSON<ISocketStorageDiscovery>(
                 `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
                 { method, headers },
             );

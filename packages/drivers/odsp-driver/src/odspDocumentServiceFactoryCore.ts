@@ -32,7 +32,7 @@ import {
     isTokenFromCache,
     tokenFromResponse,
 } from "./tokenFetch";
-import { FetchWithEpochValidation } from "./fetcher";
+import { FetchWithEpochValidation } from "./fetchWithEpochValidation";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -69,7 +69,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         };
 
         const logger2 = ChildLogger.create(logger, "OdspDriver");
-        const fetcher = new FetchWithEpochValidation(this.persistedCache, logger2);
+        const fetchWithEpochValidation = new FetchWithEpochValidation(this.persistedCache, logger2);
         return PerformanceEvent.timedExecAsync(
             logger2,
             {
@@ -82,8 +82,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     newFileParams,
                     logger2,
                     createNewSummary,
-                    fetcher);
-                const docService = this.createDocumentService(odspResolvedUrl, logger, fetcher);
+                    fetchWithEpochValidation);
+                const docService = this.createDocumentService(odspResolvedUrl, logger, fetchWithEpochValidation);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
                 });
@@ -112,7 +112,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
-        fetcher?: FetchWithEpochValidation,
+        fetchWithEpochValidation?: FetchWithEpochValidation,
     ): Promise<IDocumentService> {
         const odspLogger = ChildLogger.create(logger, "OdspDriver");
         const cache = createOdspCache(
@@ -128,7 +128,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.getSocketIOClient,
             cache,
             this.hostPolicy,
-            fetcher ?? new FetchWithEpochValidation(this.persistedCache, odspLogger),
+            fetchWithEpochValidation ?? new FetchWithEpochValidation(this.persistedCache, odspLogger),
         );
     }
 
