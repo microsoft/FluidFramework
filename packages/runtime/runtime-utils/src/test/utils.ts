@@ -28,6 +28,7 @@ export const handle: IFluidHandle = new RemoteFluidObjectHandle("", mockHandleCo
 export function makeJson(breadth: number, depth: number, createLeaf: () => any) {
     // eslint-disable-next-line no-param-reassign
     if (--depth === 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return createLeaf();
     }
 

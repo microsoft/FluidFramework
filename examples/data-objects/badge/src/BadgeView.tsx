@@ -88,7 +88,6 @@ export const BadgeView: React.FC<IBadgeViewProps> = (props: IBadgeViewProps) => 
 
     // Create the content for the history card
     const historyCardContent = (): JSX.Element => {
-        // eslint-disable-next-line react/prop-types
         const history = historyItems.map((x, i) => {
             return (
                 <ActivityItem

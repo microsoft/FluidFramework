@@ -349,6 +349,7 @@ export class ConsensusRegisterCollection<T>
     }
 
     private parse(content: string): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.runtime.IFluidSerializer.parse(
             content,
             this.runtime.IFluidHandleContext);

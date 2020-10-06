@@ -122,7 +122,6 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 function createCachedResolver(resolver: IUrlResolver) {
     const cacheResolver = Object.create(resolver) as IUrlResolver;
     const resolveCache = new Map<string, Promise<IResolvedUrl | undefined>>();
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     cacheResolver.resolve = async (request: IRequest): Promise<IResolvedUrl | undefined> => {
         if (!canUseCache(request)) {
             return resolver.resolve(request);

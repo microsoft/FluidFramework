@@ -202,6 +202,7 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
      * Gets the listeners for an event
      * @param event - The name of the event
      */
+    // eslint-disable-next-line @typescript-eslint/ban-types
     listeners(event: string): Function[];
 
     /**

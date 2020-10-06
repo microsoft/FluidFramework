@@ -448,7 +448,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 this.blobsShaToPathCache.set(hash, path);
                             });
                             this.blobsCachePendingHashes.add(hashP);
-                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
                             hashP.finally(() => {
                                 this.blobsCachePendingHashes.delete(hashP);
                             });

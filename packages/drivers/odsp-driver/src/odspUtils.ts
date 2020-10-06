@@ -68,6 +68,7 @@ export async function fetchHelper(
     requestInit: RequestInit | undefined,
 ): Promise<Response> {
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const response = fetchResponse as any as Response;

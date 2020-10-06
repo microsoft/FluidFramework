@@ -55,6 +55,7 @@ export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newV
             break;
     }
     /* eslint-enable default-case */
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return currentValue;
 }
 
@@ -164,5 +165,6 @@ export function createMap<T>(): MapLike<T> {
     // eslint-disable-next-line dot-notation, @typescript-eslint/no-dynamic-delete
     delete map["__"];
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return map;
 }

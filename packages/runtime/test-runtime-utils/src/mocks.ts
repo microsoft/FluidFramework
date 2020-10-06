@@ -262,6 +262,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
     }
 
     get(key: string) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.map.get(key);
     }
 
@@ -338,9 +339,11 @@ export class MockQuorum implements IQuorum, EventEmitter {
     getMaxListeners(): number {
         throw new Error("Method not implemented.");
     }
+    // eslint-disable-next-line @typescript-eslint/ban-types
     listeners(event: string | symbol): Function[] {
         throw new Error("Method not implemented.");
     }
+    // eslint-disable-next-line @typescript-eslint/ban-types
     rawListeners(event: string | symbol): Function[] {
         throw new Error("Method not implemented.");
     }

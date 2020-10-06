@@ -49,7 +49,6 @@ export class WSDeltaConnection
 
             const resolveHandler = () => {
                 resolve(connection);
-                // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 connection.removeListener("disconnected", rejectHandler);
             };
 

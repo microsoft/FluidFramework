@@ -484,6 +484,7 @@ export class ContainerRuntime extends EventEmitter
         // Back-compat: <= 0.18 loader
         if (context.deltaManager.lastSequenceNumber === undefined) {
             Object.defineProperty(context.deltaManager, "lastSequenceNumber", {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 get: () => (context.deltaManager as any).referenceSequenceNumber,
             });
         }
@@ -528,6 +529,7 @@ export class ContainerRuntime extends EventEmitter
     }
 
     public get options(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.context.options;
     }
 

@@ -37,6 +37,7 @@ const headerTemplate = new Template({ tag: "th" });
 const cellTemplate = new Template({ tag: "td" });
 const cellInputTemplate = new Template({ tag: "input", props: { className: styles.inputBox } });
 
+// eslint-disable-next-line unicorn/no-unsafe-regex
 const numberExp = /^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$/;
 
 export class GridView {
