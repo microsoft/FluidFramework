@@ -96,7 +96,8 @@ export class StorageUtil implements IStorageUtil {
     public storeEditorStateAsMarkdown = async (schema: any, data: any) => {
         //get the editor state and convert into markdown
         let _t = defaultMarkdownSerializer.serialize(data);
-        this.azureStorage.putBlockBlob("samples", "sampletext.txt", _t)
+        this.azureStorage.putBlockBlob("samples", "sampletext.txt", _t);
+        this.azureStorage.createSnapShotForBlob("samples", "sampletext.txt");
         // localStorage.setItem(this.markdownStorageKey, _t);
         console.log("///////// Markdown Data writing //////////////");
         console.log(_t);

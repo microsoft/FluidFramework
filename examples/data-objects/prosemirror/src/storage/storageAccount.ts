@@ -35,8 +35,7 @@ export class AzureBlobStorage {
         const blockBlobClient = this.getBlockBlobClient(containerName, blobName);
         const uploadBlobResponse = await blockBlobClient.upload(data, data.length);
         console.log("Blob was uploaded successfully. requestId: ", uploadBlobResponse.requestId);
-        return uploadBlobResponse
-
+        return uploadBlobResponse;
     }
 
     public async getBlockBlob(containerName: string, blobName: string) {

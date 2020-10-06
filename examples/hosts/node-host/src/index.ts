@@ -19,8 +19,8 @@ import { AzureBlobStorage } from "./storageAccount";
 // Base service configuration.
 const ordererEndpoint = "https://alfred.frs.office-int.com";;
 const storageEndpoint = "https://historian.frs.office-int.com";
-const tenantId = "aquamarinedolphin-hiss";
-const tenantKey = "b1d16a5deff49b8806936a3778377a70";
+const tenantId = "shadowkicker-watcher";
+const tenantKey = "8a194e2ea505f2cb9bf71d976b27adeb";
 const bearerSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
@@ -30,7 +30,7 @@ const installPath = "/tmp/fluid-objects";
 const timeoutMS = 60000;
 
 // Document id (randomly chosen if not specified)
-const docId = "linenbutterfly_horse";
+const docId = "gravelburn_hand";
 
 // User information.
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -124,5 +124,5 @@ export async function storageAccount() {
     const snapshotdata = await azureStorage.getSnapShotContent("samples", "sampletext.txt", "2020-10-05T10:00:45.1137620Z")
     console.log(snapshotdata);
 }
-storageAccount();
-// start();
+// storageAccount();
+start();
