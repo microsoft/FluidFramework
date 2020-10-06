@@ -249,7 +249,7 @@ stages:
             condition: succeededOrFailed()
 
         # Pack
-        - ${{ if ne(parameters.taskPack, 'false') }}:
+        - ${{ if ne(parameters.taskPack, false) }}:
           - task: Bash@3
             displayName: npm pack
             inputs:
