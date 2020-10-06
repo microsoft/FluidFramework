@@ -5,9 +5,8 @@
 
 import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IsoBuffer } from "@fluidframework/common-utils";
 import { createOdspNetworkError, fluidEpochMismatchError, OdspErrorType } from "./odspError";
-import { fetchAndParseAsBufferHelper, fetchAndParseAsJSONHelper, IOdspResponse } from "./odspUtils";
+import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, IPersistedCache, IPersistedCacheValue } from "./odspCache";
 
 export class Fetcher {
@@ -56,15 +55,15 @@ export class Fetcher {
         }
     }
 
-    public async fetchAndParseAsBuffer<T>(
+    public async fetchResponse(
         url: string,
         fetchOptions: {[index: string]: any},
         addInBody: boolean = false,
-    ): Promise<IOdspResponse<IsoBuffer>> {
+    ): Promise<Response> {
         // Add epoch either in header or in body.
         this.addEpochInRequest(fetchOptions, addInBody);
         try {
-            const response = await fetchAndParseAsBufferHelper(url, fetchOptions);
+            const response = await fetchHelper(url, fetchOptions);
             this.validateEpochFromResponse(response.headers.get("x-fluid-epoch"));
             return response;
         } catch (error) {

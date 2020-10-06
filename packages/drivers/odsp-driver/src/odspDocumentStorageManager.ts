@@ -194,7 +194,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
                 async (event) => {
-                    const res = await fetchHelper(url, { headers });
+                    const res = await this.fetcher.fetchResponse(url, { headers });
                     const content = await res.arrayBuffer();
                     event.end({ size: content.byteLength });
                     return content;
