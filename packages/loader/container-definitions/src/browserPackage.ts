@@ -5,17 +5,22 @@
 
 import { IFluidPackageEnvironment, IFluidPackage, isFluidPackage } from "./fluidPackage";
 
+interface BrowserCacheTarget{
+    files: string[];
+}
+
 /**
  * A specific Fluid package environment for browsers
  */
 export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment{
     /**
-     * The umd target specifics the scripts necessary for loading a packages
-     * in a browser environment
+     * The Universal Module Definition (umd) target specifics the scripts necessary for
+     *  loading a packages in a browser environment and finding its entry point
      */
     umd: {
         /**
-         * The bundled js files for loading this package
+         * The bundled js files for loading this package. These files will be loaded
+         * and executed in order
          */
         files: string[];
 
@@ -24,16 +29,27 @@ export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironmen
          * This entry point should be an IFluidModule
          */
         library: string;
-    },
-    /**
-     * The css target optionally specifics the necessary stylesheets for this package
+
+    };
+
+    /*
+     * These targets should include required elements only. Optional, elements
+     * should be delay loaded via the script(s) supplied  in the umd target
+     * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link
      */
-    css?: {
-        /**
-         * The css files to include on the page
-         */
-        files: string[];
-    }
+    audio?: BrowserCacheTarget;// <audio> elements
+    document?: BrowserCacheTarget;// <iframe> and <frame> elements
+    embed?: BrowserCacheTarget;// <embed> elements
+    fetch?: BrowserCacheTarget;// fetch, XHR This value also requires <link> to contain the crossorigin attribute.
+    font?: BrowserCacheTarget;// CSS @font-face
+    // eslint-disable-next-line max-len
+    image?: BrowserCacheTarget;// <img> and <picture> elements with src set or image set attributes, SVG <image> elements, CSS *-image rules
+    object?: BrowserCacheTarget;// <object> elements
+    script?: BrowserCacheTarget;// <script> elements, Worker importScripts
+    style?: BrowserCacheTarget;// <link rel=stylesheet> elements, CSS @import
+    track?: BrowserCacheTarget;// <track> elements
+    video?: BrowserCacheTarget;// <video> elements
+    worker?: BrowserCacheTarget;// Worker, SharedWorker
 }
 
 /**

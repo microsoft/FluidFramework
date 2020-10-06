@@ -17,7 +17,8 @@ export function extractPackageIdentifierDetails(
     codeDetailsPackage: string | IFluidPackage): IPackageIdentifierDetails {
         const packageString = typeof codeDetailsPackage === "string"
         ? codeDetailsPackage // Just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
-        : typeof codeDetailsPackage.version === "string" // If it doesn't exist, let's make it from the package details
+        // If it doesn't exist, let's make it from the package details
+        : typeof codeDetailsPackage.version === "string"
             ? `${codeDetailsPackage.name}` // E.g. @fluid-example/clicker
             : `${codeDetailsPackage.name}@${codeDetailsPackage.version}`; // Rebuild e.g. @fluid-example/clicker@0.1.1
 

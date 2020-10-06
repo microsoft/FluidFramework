@@ -37,11 +37,11 @@ export class WebCodeLoader implements ICodeLoader {
         }
     }
 
-    public async preCache(source: IFluidCodeDetails, tryPreload: boolean) {
+    public async preCache(source: IFluidCodeDetails) {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
         if (isFluidBrowserPackage(resolved.resolvedPackage)) {
             return this.scriptManager.preCacheFiles(
-                resolved.resolvedPackage.fluid.browser.umd.files, tryPreload);
+                resolved.resolvedPackage.fluid.browser);
         }
     }
 
@@ -74,11 +74,17 @@ export class WebCodeLoader implements ICodeLoader {
             throw new Error(`Package ${resolved.resolvedPackage.name} not a Fluid module.`);
         }
 
-        const loadedScripts = await this.scriptManager.loadLibrary(
+        const loadedScriptsP =  this.scriptManager.loadLibrary(
             resolved.resolvedPackage.fluid.browser.umd);
 
+        // kick off a pre-cache for all required files after starting the load
+        // of the scripts
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.scriptManager.preCacheFiles(
+            resolved.resolvedPackage.fluid.browser);
+
         let fluidModule: IFluidModule | undefined;
-        for (const script of loadedScripts) {
+        for (const script of await loadedScriptsP) {
             const maybeFluidModule = script.entryPoint as IFluidModule;
             if (maybeFluidModule.fluidExport !== undefined) {
                 if (fluidModule !== undefined) {

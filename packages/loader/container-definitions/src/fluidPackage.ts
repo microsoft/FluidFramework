@@ -52,8 +52,7 @@ export interface IFluidPackage {
      * likely have additional infornamation like a definition of
      * compatible versions, or deployment information like rings or rollouts.
      */
-    [key: string]: any;
-}
+    [key: string]: any;}
 
 /**
  * Check if the package.json defines a Fluid module, which requires a `fluid` entry
