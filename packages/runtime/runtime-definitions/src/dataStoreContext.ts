@@ -23,7 +23,6 @@ import {
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
-    ConnectionState,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -182,9 +181,6 @@ export interface IFluidDataStoreChannel extends
      * it's new client ID when we are connecting or connected.
      */
     setConnectionState(connected: boolean, clientId?: string);
-
-    // Back-compat: supporting <= 0.16 data stores
-    changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
      * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.

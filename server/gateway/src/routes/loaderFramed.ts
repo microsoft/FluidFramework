@@ -58,7 +58,6 @@ export function create(
         const chaincode: string = queryParamAsString(request.query.chaincode);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         getUrlWithVersion(chaincode).then((version: string) => {
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (version) {
                 const redirectUrl = `${request.originalUrl}@${version}`;
                 winston.info(`Redirecting to ${redirectUrl}`);
@@ -88,7 +87,6 @@ export function create(
                     config.get("error:track"));
 
                 const pkgP = fullTreeP.then((fullTree) => {
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (fullTree && fullTree.code) {
                         return codeResolver.resolveCodeDetails(fullTree.code);
                     }
@@ -134,12 +132,12 @@ export function create(
                 });
 
                 const scriptsP = pkgP.then((pkg) => {
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (!pkg) {
                         return [];
                     }
 
                     const umd = pkg?.resolvedPackage?.fluid?.browser?.umd;
+                    // TODO: possible bug?
                     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (!umd) {
                         return [];

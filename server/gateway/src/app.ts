@@ -6,7 +6,6 @@
 import fs from "fs";
 import path from "path";
 import _ from "lodash";
-// tslint:disable-next-line: ordered-imports
 import { getRandomName, IAlfredTenant } from "@fluidframework/server-services-client";
 import { ICache, MongoManager } from "@fluidframework/server-services-core";
 import bodyParser from "body-parser";
@@ -83,6 +82,7 @@ async function refreshUser(user: any, accountManager: AccountManager) {
     const accounts = await accountManager.getAccounts(user.sub);
     user.accounts = accounts;
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return user;
 }
 

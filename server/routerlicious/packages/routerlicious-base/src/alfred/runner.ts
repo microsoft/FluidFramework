@@ -6,7 +6,6 @@
 import { Deferred } from "@fluidframework/common-utils";
 import {
     IClientManager,
-    ICollection,
     IDocumentStorage,
     IOrdererManager,
     IProducer,
@@ -38,8 +37,7 @@ export class AlfredRunner implements utils.IRunner {
         private readonly appTenants: IAlfredTenant[],
         private readonly mongoManager: MongoManager,
         private readonly producer: IProducer,
-        private readonly metricClientConfig: any,
-        private readonly contentCollection: ICollection<any>) {
+        private readonly metricClientConfig: any) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -67,7 +65,6 @@ export class AlfredRunner implements utils.IRunner {
             this.orderManager,
             this.tenantManager,
             this.storage,
-            this.contentCollection,
             this.clientManager,
             createMetricClient(this.metricClientConfig),
             winston,

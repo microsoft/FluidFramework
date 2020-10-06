@@ -8,10 +8,10 @@ import { canSummarize } from "@fluidframework/server-services-client";
 import { Router } from "express";
 import safeStringify from "json-stringify-safe";
 import jwt from "jsonwebtoken";
-import { IAlfred } from "../interfaces";
-
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import passport = require("passport");
+import { IAlfred } from "../interfaces";
+
 interface ISummaryTokenRequest {
     actorClientId: string;
     grantType: string;

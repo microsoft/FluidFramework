@@ -36,7 +36,6 @@ import {
 import {
     MessageFactory,
     TestClientManager,
-    TestCollection,
     TestDbFactory,
     TestKafka,
     TestTenantManager,
@@ -58,7 +57,6 @@ describe("Routerlicious", () => {
                 let testOrderer: IOrdererManager;
                 let testTenantManager: TestTenantManager;
                 let testClientManager: IClientManager;
-                let contentCollection: TestCollection;
 
                 beforeEach(() => {
                     const collectionNames = "test";
@@ -88,14 +86,12 @@ describe("Routerlicious", () => {
 
                     const pubsub = new PubSub();
                     webSocketServer = new LocalWebSocketServer(pubsub);
-                    contentCollection = new TestCollection([]);
 
                     configureWebSocketServices(
                         webSocketServer,
                         testOrderer,
                         testTenantManager,
                         testStorage,
-                        contentCollection,
                         testClientManager,
                         new DefaultMetricClient(),
                         DebugLogger.create("fluid-server:TestAlfredIO"));
