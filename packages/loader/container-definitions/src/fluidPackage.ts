@@ -14,15 +14,18 @@ export interface IFluidPackageEnvironment {
      */
     [target: string]: undefined | {
         /**
-         * List of files. The file type in determined by library target
+         * List of files for the target. These can be relative or absolute.
+         * The code loader should resolve relative paths, and validate all
+         * full urls.
          */
         files: string[];
 
         /**
-         * If libraryTarget is umd then library is the global name that the script entry points will be exposed
-         * under. Other target formats may choose to reinterpret this value.
+         * General access for extended fields as specific usages will
+         * likely have additional infornamation like a definition
+         * of Library, the entrypoint for umd packages
          */
-        library?: string;
+        [key: string]: unknown;
     }
 }
 
@@ -52,7 +55,8 @@ export interface IFluidPackage {
      * likely have additional infornamation like a definition of
      * compatible versions, or deployment information like rings or rollouts.
      */
-    [key: string]: any;}
+    [key: string]: unknown;
+}
 
 /**
  * Check if the package.json defines a Fluid module, which requires a `fluid` entry
