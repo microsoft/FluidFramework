@@ -4,22 +4,25 @@
  */
 
 
-import { BlobServiceClient, BlobClient } from "@azure/storage-blob"
+import { BlobServiceClient, BlobClient, BlobItem } from "@azure/storage-blob"
 // import { v4 as uuid } from "uuid";
 
 export class AzureBlobStorage {
 
     private blobServiceClient: BlobServiceClient;
 
-    constructor(AZURE_STORAGE_CONNECTION_STRING: string) {
-        this.blobServiceClient = this.getBlobServiceClient(AZURE_STORAGE_CONNECTION_STRING)
+    constructor(AZURE_STORAGE_CONNECTION_STRING: string, sasUrl?: string) {
+        this.blobServiceClient = this.getBlobServiceClient(AZURE_STORAGE_CONNECTION_STRING, sasUrl)
     }
 
     public getBlobClient(blobUrl: string) {
         return new BlobClient(blobUrl)
     }
 
-    public getBlobServiceClient(AZURE_STORAGE_CONNECTION_STRING: string) {
+    public getBlobServiceClient(AZURE_STORAGE_CONNECTION_STRING: string, sasUrl?: string) {
+        if (sasUrl) {
+            return new BlobServiceClient(sasUrl)
+        }
         return BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
 
     }
@@ -35,8 +38,7 @@ export class AzureBlobStorage {
         const blockBlobClient = this.getBlockBlobClient(containerName, blobName);
         const uploadBlobResponse = await blockBlobClient.upload(data, data.length);
         console.log("Blob was uploaded successfully. requestId: ", uploadBlobResponse.requestId);
-        return uploadBlobResponse
-
+        return uploadBlobResponse;
     }
 
     public async getBlockBlob(containerName: string, blobName: string) {
@@ -46,6 +48,46 @@ export class AzureBlobStorage {
 
     }
 
+    public async getSnapShotListForBlobName(containerName: string, blobName: string) {
+        const containerClient = this.blobServiceClient.getContainerClient(containerName);
+        const snapShotlist: BlobItem[] = []
+        for await (const blobitem of containerClient.listBlobsFlat({ includeSnapshots: true, prefix: blobName })) {
+            if (blobitem.name === blobName && blobitem.snapshot) {
+                snapShotlist.push(blobitem);
+            }
+        }
+        return snapShotlist;
+    }
+
+    public async createSnapShotForBlob(containerName: string, blobName: string) {
+        const blockBlobClient = this.getBlockBlobClient(containerName, blobName);
+        return blockBlobClient.createSnapshot();
+    }
+
+    public async getSnapShotContent(containerName: string, blobName: string, snapshot: string) {
+        const blockBlobClient = this.getBlockBlobClient(containerName, blobName);
+        const blockBlobSnapshot = blockBlobClient.withSnapshot(snapshot)
+        const downloadBlockBlobResponse = await blockBlobSnapshot.download();
+        return await this.streamToString(downloadBlockBlobResponse.readableStreamBody);
+        // const containerClient = this.blobServiceClient.getContainerClient(containerName);
+        // // console.log(containerClient.listBlobsFlat());
+        // const x: ContainerListBlobsOptions = { includeSnapshots: true }
+        // for await (const container of containerClient.listBlobsFlat(x)) {
+        //     console.log(JSON.stringify(container));
+        // }
+        // const blockBlobClient = this.getBlockBlobClient(containerName, blobName);
+        // // const v = await blockBlobClient.stageBlock("SUQ=", "hello", 10);
+        // // await blockBlobClient.stageBlock("SURh", "hello world", 15);
+
+        // // const z = await blockBlobClient.commitBlockList(["SUQ=", "SURh"])
+        // // console.log(v, y, z);
+
+
+        // const downloadBlockBlobResponse = await blockBlobClient.getBlockList("all");
+        // // console.log(downloadBlockBlobResponse);
+        // return downloadBlockBlobResponse;
+
+    }
 
     private streamToString(readableStream) {
         return new Promise((resolve, reject) => {
