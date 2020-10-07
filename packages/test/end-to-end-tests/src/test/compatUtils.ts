@@ -109,7 +109,7 @@ export const createRuntimeFactory = (
     dataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): IRuntimeFactory => {
-    return new TestContainerRuntimeFactory(type, dataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
+    return new TestContainerRuntimeFactory(type, dataStoreFactory, runtimeOptions);
 };
 
 // TODO: once 0.25 is released this can import the old version of TestContainerRuntimeFactory used above
@@ -118,7 +118,7 @@ export const createOldRuntimeFactory = (
     dataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): old.IRuntimeFactory => {
-    return new old.TestContainerRuntimeFactory(type, dataStoreFactory as old.IFluidDataStoreFactory, runtimeOptions);
+    return new old.TestContainerRuntimeFactory(type, dataStoreFactory, runtimeOptions);
 };
 
 export async function createContainer(
@@ -127,7 +127,7 @@ export async function createContainer(
     urlResolver: IUrlResolver,
 ): Promise<IContainer> {
     const loader: ILoader = createLocalLoader(
-        [[codeDetails, fluidModule as IFluidModule]],
+        [[codeDetails, fluidModule]],
         deltaConnectionServer,
         urlResolver);
     return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
@@ -139,7 +139,7 @@ export async function loadContainer(
     urlResolver: IUrlResolver,
 ): Promise<IContainer> {
     const loader: ILoader = createLocalLoader(
-        [[codeDetails, fluidModule as IFluidModule]],
+        [[codeDetails, fluidModule]],
         deltaConnectionServer,
         urlResolver);
     return loader.resolve({ url: documentLoadUrl });
@@ -151,7 +151,7 @@ export async function createContainerWithOldLoader(
     urlResolver: IUrlResolver,
 ): Promise<old.IContainer> {
     const loader = old.createLocalLoader(
-        [[codeDetails, fluidModule as old.IFluidModule]],
+        [[codeDetails, fluidModule]],
         deltaConnectionServer as any,
         urlResolver);
     return old.createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
@@ -163,7 +163,7 @@ export async function loadContainerWithOldLoader(
     urlResolver: IUrlResolver,
 ): Promise<old.IContainer> {
     const loader = old.createLocalLoader(
-        [[codeDetails, fluidModule as old.IFluidModule]],
+        [[codeDetails, fluidModule]],
         deltaConnectionServer as any,
         urlResolver);
     return loader.resolve({ url: documentLoadUrl });
