@@ -28,6 +28,7 @@ import { serviceRoutePathRoot } from "../container-services";
 export interface IDataObjectProps<O extends IFluidObject = object> {
     readonly runtime: IFluidDataStoreRuntime,
     readonly context: IFluidDataStoreContext,
+    // eslint-disable-next-line @typescript-eslint/ban-types
     readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>,
 }
 
