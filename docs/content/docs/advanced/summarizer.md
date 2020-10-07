@@ -28,7 +28,6 @@ graph LR
   Describes the hierarchical structure of the summary tree from the root to the first layer of leaf nodes.
 </label>
 <ul labelledby="root-diagram">
-<ul aria-label="">
   <li>root</li>
   <ul>
     <li>.protocol</li>
