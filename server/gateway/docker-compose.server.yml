@@ -1,7 +1,7 @@
 version: '3'
 services:
     gateway:
-        build: .
+        image: gateway_gateway:latest
         ports:
             - "3000:3000"
             - "5888:5858"
@@ -13,4 +13,4 @@ services:
 networks:
     default:
         external:
-            name: routerlicious_default
+            name: server_default
