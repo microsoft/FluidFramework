@@ -1914,7 +1914,7 @@ export class ContainerRuntime extends EventEmitter
     }
 
     /**
-     * Throw an error if the runtime is closed.        Methods that are expected to potentially
+     * Throw an error if the runtime is closed. Methods that are expected to potentially
      * be called after dispose due to asynchrony should not call this.
      */
     private verifyNotClosed() {
