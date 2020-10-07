@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import sha1 from "sha.js/sha1";
+import { sha1 } from "sha.js";
 import { IsoBuffer } from "./bufferNode";
 
 /**
