@@ -100,8 +100,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 
     public get packagePath(): readonly string[] {
-        // The store must be loaded before the path is accessed.
-        assert(this.loaded);
         assert(this.pkg !== undefined);
         return this.pkg;
     }
