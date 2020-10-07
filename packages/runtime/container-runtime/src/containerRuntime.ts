@@ -502,13 +502,15 @@ export class ContainerRuntime extends EventEmitter
             await readAndParse<[string, string[]][]>(context.storage, chunkId) :
             readAndParseFromBlobs<[string, string[]][]>(context.baseSnapshot.blobs, chunkId) : [];
 
+        const defaultRequestHandler = async () => ({
+            status: 404,
+            mimeType: "text/plain",
+            value: "resource not found",
+        });
+
         const realProps: InternalContainerRuntimeProps = {
             registry: new ContainerRuntimeDataStoreRegistry(props.registryEntries),
-            requestHandler: async () => ({
-                status: 404,
-                mimeType: "text/plain",
-                value: "resource not found",
-            }),
+            requestHandler: props.requestHandler ?? defaultRequestHandler,
             containerScope: props.containerScope ?? context.scope,
             runtimeOptions: props.runtimeOptions ?? {
                 generateSummaries: true,
