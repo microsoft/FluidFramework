@@ -17,7 +17,6 @@ export async function hashFile(file: IsoBuffer): Promise<string> {
     const hash = await crypto.subtle.digest("SHA-1", file);
     const hashArray = new Uint8Array(hash);
     const hashHex = Array.prototype.map.call(hashArray, function(byte) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return byte.toString(16).padStart(2, "0");
     }).join("");
 
