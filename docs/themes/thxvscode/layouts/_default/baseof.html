@@ -7,7 +7,7 @@
     <script src="//uhf.microsoft.com/mscc/statics/mscc-0.3.6.min.js"></script>
     <div id="main">
         {{- partial "header.html" . -}}
-        <div role="main" id="main-content" {{ if .IsHome}}class="home" {{ end}}>
+        <div {{ if .IsHome}}class="home" {{ end}}>
             {{- block "main" . }}{{- end }}
         </div>
     </div>
