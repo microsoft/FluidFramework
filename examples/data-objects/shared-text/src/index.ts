@@ -53,8 +53,10 @@ const DefaultComponentName = "text";
 /* eslint-enable max-len */
 
 const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     ["@fluid-example/math", math.then((m) => m.fluidExport)],
     ["@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)],
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     ["@fluid-example/video-players", videoPlayers.then((m) => m.fluidExport)],
     ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
 ];

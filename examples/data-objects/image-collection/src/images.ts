@@ -97,7 +97,6 @@ export class ImageCollection extends LazyLoadedDataObject<ISharedDirectory> impl
             .substr(1)
             .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
 
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!trimmed) {
             return {
                 mimeType: "fluid/object",

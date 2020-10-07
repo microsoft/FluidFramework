@@ -44,7 +44,7 @@ import * as scribe from "./tools-core";
 // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules, import/no-unassigned-import
 require("bootstrap/dist/css/bootstrap.min.css");
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
 const pkgVersion = require("../package.json").version;
 const version = `${pkgVersion.endsWith(".0") ? "^" : ""}${pkgVersion}`;
 
