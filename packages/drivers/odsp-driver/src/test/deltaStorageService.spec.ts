@@ -26,7 +26,6 @@ describe("DeltaStorageService", () => {
         // eslint-disable-next-line max-len
         const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
         assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
-
     });
 
     describe("Get Returns Response With Op Envelope", () => {
