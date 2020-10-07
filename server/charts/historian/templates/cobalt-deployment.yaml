@@ -35,7 +35,7 @@ spec:
         - name: data
           mountPath: /var/lib/cobalt/
       imagePullSecrets:
-      - name: legacyRegSecret
+      - name: legacyregsecret
       volumes:
         - name: data
           persistentVolumeClaim:
