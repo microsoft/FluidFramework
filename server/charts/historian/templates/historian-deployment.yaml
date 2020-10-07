@@ -42,7 +42,7 @@ spec:
         options:
         - name: single-request-reopen
       imagePullSecrets:
-      - name: regsecret
+      - name: fluidcrregsecret
       volumes:
         - name: config
           configMap:
