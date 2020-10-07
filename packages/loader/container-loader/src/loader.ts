@@ -352,4 +352,5 @@ export class Loader extends EventEmitter implements ILoader {
             this.resolver,
             this.subLogger);
     }
+
 }
