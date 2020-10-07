@@ -109,7 +109,8 @@ export const createRuntimeFactory = (
     dataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): IRuntimeFactory => {
-    return new TestContainerRuntimeFactory(type, dataStoreFactory, runtimeOptions);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    return new TestContainerRuntimeFactory(type, dataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
 };
 
 // TODO: once 0.25 is released this can import the old version of TestContainerRuntimeFactory used above
@@ -118,7 +119,8 @@ export const createOldRuntimeFactory = (
     dataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): old.IRuntimeFactory => {
-    return new old.TestContainerRuntimeFactory(type, dataStoreFactory, runtimeOptions);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    return new old.TestContainerRuntimeFactory(type, dataStoreFactory as old.IFluidDataStoreFactory, runtimeOptions);
 };
 
 export async function createContainer(
@@ -127,7 +129,8 @@ export async function createContainer(
     urlResolver: IUrlResolver,
 ): Promise<IContainer> {
     const loader: ILoader = createLocalLoader(
-        [[codeDetails, fluidModule]],
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        [[codeDetails, fluidModule as IFluidModule]],
         deltaConnectionServer,
         urlResolver);
     return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
@@ -139,7 +142,8 @@ export async function loadContainer(
     urlResolver: IUrlResolver,
 ): Promise<IContainer> {
     const loader: ILoader = createLocalLoader(
-        [[codeDetails, fluidModule]],
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        [[codeDetails, fluidModule as IFluidModule]],
         deltaConnectionServer,
         urlResolver);
     return loader.resolve({ url: documentLoadUrl });
@@ -151,7 +155,8 @@ export async function createContainerWithOldLoader(
     urlResolver: IUrlResolver,
 ): Promise<old.IContainer> {
     const loader = old.createLocalLoader(
-        [[codeDetails, fluidModule]],
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        [[codeDetails, fluidModule as old.IFluidModule]],
         deltaConnectionServer as any,
         urlResolver);
     return old.createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
@@ -163,7 +168,8 @@ export async function loadContainerWithOldLoader(
     urlResolver: IUrlResolver,
 ): Promise<old.IContainer> {
     const loader = old.createLocalLoader(
-        [[codeDetails, fluidModule]],
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        [[codeDetails, fluidModule as old.IFluidModule]],
         deltaConnectionServer as any,
         urlResolver);
     return loader.resolve({ url: documentLoadUrl });
