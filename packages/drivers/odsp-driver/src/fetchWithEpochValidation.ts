@@ -10,7 +10,7 @@ import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUti
 import { ICacheEntry, IPersistedCache, IPersistedCacheValue } from "./odspCache";
 
 /**
- * This class is a wrapper around fetch calls. It adds fluid epoch to the request made so that the
+ * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
  * server can match it with its epoch value in order to match the version.
  * It also validates the epoch value received in response of fetch calls. If the epoch does not match,
  * then it also clears all the cached entries for the given container.
