@@ -36,7 +36,6 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         package: "detachedContainerTestPackage1",
         config: {},
     };
-
     const sharedStringId = "ss1Key";
     const sharedMapId = "sm1Key";
     const crcId = "crc1Key";
