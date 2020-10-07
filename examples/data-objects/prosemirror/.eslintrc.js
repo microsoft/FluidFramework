@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-    "ignorePatterns": ["src/prosemirror.ts", "src/index.ts", "src/fluidCollabManager.ts", "src/prosemirrorView.tsx", "src/storage/storageUtil.ts", "src/storage/storageAccount.ts"],
+    "ignorePatterns": ["src/prosemirror.ts", "src/index.ts", "src/fluidCollabManager.ts", "src/prosemirrorView.tsx", "src/storage/storageUtil.ts", "src/storage/storageAccount.ts", "src/utils/*"],
     "extends": [
         "@fluidframework/eslint-config-fluid"
     ],

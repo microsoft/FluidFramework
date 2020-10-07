@@ -11,15 +11,18 @@ export class AzureBlobStorage {
 
     private blobServiceClient: BlobServiceClient;
 
-    constructor(AZURE_STORAGE_CONNECTION_STRING: string) {
-        this.blobServiceClient = this.getBlobServiceClient(AZURE_STORAGE_CONNECTION_STRING)
+    constructor(AZURE_STORAGE_CONNECTION_STRING: string, sasUrl?: string) {
+        this.blobServiceClient = this.getBlobServiceClient(AZURE_STORAGE_CONNECTION_STRING, sasUrl)
     }
 
     public getBlobClient(blobUrl: string) {
         return new BlobClient(blobUrl)
     }
 
-    public getBlobServiceClient(AZURE_STORAGE_CONNECTION_STRING: string) {
+    public getBlobServiceClient(AZURE_STORAGE_CONNECTION_STRING: string, sasUrl?: string) {
+        if (sasUrl) {
+            return new BlobServiceClient(sasUrl)
+        }
         return BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
 
     }

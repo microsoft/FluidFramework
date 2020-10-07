@@ -30,7 +30,7 @@ const installPath = "/tmp/fluid-objects";
 const timeoutMS = 60000;
 
 // Document id (randomly chosen if not specified)
-const docId = "gravelburn_hand";
+const docId = "sugarcurtain_catcher";
 
 // User information.
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
