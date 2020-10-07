@@ -41,7 +41,6 @@
     "debug": "^4.1.1",
     "isomorphic-ws": "^4.0.1",
     "jwt-decode": "^2.2.0",
-    "socket.io-client": "^2.1.1",
     "ws": "^6.1.2"
   },
   "devDependencies": {

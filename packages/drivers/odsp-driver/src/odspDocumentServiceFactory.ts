@@ -7,7 +7,6 @@ import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { HostStoragePolicy } from "./contracts";
 import { IPersistedCache } from "./odspCache";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
-import { getSocketIo } from "./getSocketIo";
 import { StorageTokenFetcher, PushTokenFetcher } from "./tokenFetch";
 
 /**
@@ -26,7 +25,6 @@ export class OdspDocumentServiceFactory
         super(
             getStorageToken,
             getWebsocketToken,
-            async () => getSocketIo(),
             persistedCache,
             hostPolicy,
         );

@@ -63,7 +63,6 @@ export class OdspDocumentService implements IDocumentService {
         getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
         getWebsocketToken: (options: TokenFetchOptions) => Promise<string | null>,
         logger: ITelemetryLogger,
-        socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
     ): Promise<IDocumentService> {
@@ -72,7 +71,6 @@ export class OdspDocumentService implements IDocumentService {
             getStorageToken,
             getWebsocketToken,
             logger,
-            socketIoClientFactory,
             cache,
             hostPolicy,
         );
@@ -109,7 +107,6 @@ export class OdspDocumentService implements IDocumentService {
         private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
         private readonly getWebsocketToken: (options: TokenFetchOptions) => Promise<string | null>,
         logger: ITelemetryLogger,
-        private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
     ) {
@@ -191,8 +188,8 @@ export class OdspDocumentService implements IDocumentService {
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
             // For ODC, we just use the token from joinsession
             const socketTokenPromise = this.isOdc ? Promise.resolve("") : this.getWebsocketToken(options);
-            const [websocketEndpoint, webSocketToken, io] =
-                await Promise.all([this.joinSession(), socketTokenPromise, this.socketIoClientFactory()]);
+            const [websocketEndpoint, webSocketToken] =
+                await Promise.all([this.joinSession(), socketTokenPromise]);
 
             // This check exists because of a typescript bug.
             // Issue: https://github.com/microsoft/TypeScript/issues/33752
@@ -201,19 +198,11 @@ export class OdspDocumentService implements IDocumentService {
                 throw new Error("websocket endpoint should be defined");
             }
 
-            // This check exists because of a typescript bug.
-            // Issue: https://github.com/microsoft/TypeScript/issues/33752
-            // The TS team has plans to fix this in the 3.8 release
-            if (!io) {
-                throw new Error("websocket endpoint should be defined");
-            }
-
             try {
                 const connection = await this.connectToDeltaStreamWithRetry(
                     websocketEndpoint.tenantId,
                     websocketEndpoint.id,
                     webSocketToken,
-                    io,
                     client,
                     websocketEndpoint.deltaStreamSocketUrl,
                     websocketEndpoint.deltaStreamSocketUrl2);
@@ -289,7 +278,6 @@ export class OdspDocumentService implements IDocumentService {
      * @param tenantId - the ID of the tenant
      * @param documentId - document ID
      * @param token - authorization token for storage service
-     * @param io - websocket library
      * @param client - information about the client
      * @param url - websocket URL
      * @param url2 - alternate websocket URL
@@ -298,7 +286,6 @@ export class OdspDocumentService implements IDocumentService {
         tenantId: string,
         documentId: string,
         token: string | null,
-        io: SocketIOClientStatic,
         client: IClient,
         url: string,
         url2?: string): Promise<IDocumentDeltaConnection> {
@@ -333,7 +320,6 @@ export class OdspDocumentService implements IDocumentService {
                 tenantId,
                 documentId,
                 token,
-                io,
                 client,
                 url2!,
                 20000,
@@ -357,7 +343,6 @@ export class OdspDocumentService implements IDocumentService {
                         tenantId,
                         documentId,
                         token,
-                        io,
                         client,
                         url,
                         20000,
@@ -390,7 +375,6 @@ export class OdspDocumentService implements IDocumentService {
             tenantId,
             documentId,
             token,
-            io,
             client,
             url,
             hasUrl2 ? 15000 : 20000,
@@ -408,7 +392,6 @@ export class OdspDocumentService implements IDocumentService {
                     tenantId,
                     documentId,
                     token,
-                    io,
                     client,
                     url2!,
                     20000,

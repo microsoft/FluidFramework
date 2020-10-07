@@ -58,7 +58,6 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection impleme
         tenantId: string,
         id: string,
         token: string | null,
-        io: SocketIOClientStatic,
         client: IClient,
         url: string): Promise<IDocumentDeltaConnection> {
         try {
@@ -66,7 +65,6 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 tenantId,
                 id,
                 token,
-                io,
                 client,
                 url,
             );

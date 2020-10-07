@@ -15,8 +15,7 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
-// eslint-disable-next-line import/no-internal-modules
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 import { errorObjectFromSocketError, OdspError } from "./odspError";
@@ -55,6 +54,15 @@ class SocketReference {
  * Represents a connection to a stream of delta updates
  */
 export class OdspDocumentDeltaConnection extends DocumentDeltaConnection implements IDocumentDeltaConnection {
+    private static socketIoP: Promise<SocketIOClientStatic> | undefined;
+    private static async getSocketIoP() {
+        if (OdspDocumentDeltaConnection.socketIoP === undefined) {
+            // Lazy import the socket.io dependency
+            OdspDocumentDeltaConnection.socketIoP = import("./getSocketIo").then((m) => m.getSocketIo());
+        }
+        return OdspDocumentDeltaConnection.socketIoP;
+    }
+
     /**
      * Create a OdspDocumentDeltaConnection
      * If url #1 fails to connect, will try url #2 if applicable.
@@ -72,7 +80,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         tenantId: string,
         documentId: string,
         token: string | null,
-        io: SocketIOClientStatic,
         client: IClient,
         url: string,
         timeoutMs: number = 20000,
@@ -84,6 +91,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         // do not include the specific tenant/doc id in the ref key when multiplexing
         // this will allow multiple documents to share the same websocket connection
         const socketReferenceKey = enableMultiplexing ? url : `${url},${tenantId},${documentId}`;
+
+        const io = await OdspDocumentDeltaConnection.getSocketIoP();
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
             io, timeoutMs, socketReferenceKey, url, enableMultiplexing, tenantId, documentId, telemetryLogger);

@@ -8,7 +8,6 @@ import * as api from "@fluidframework/driver-definitions";
 import { IClient, IErrorTrackingService } from "@fluidframework/protocol-definitions";
 import { GitManager, Historian, ICredentials, IGitCache } from "@fluidframework/server-services-client";
 import Axios from "axios";
-import io from "socket.io-client";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
@@ -107,7 +106,6 @@ export class DocumentService implements api.IDocumentService {
             this.tenantId,
             this.documentId,
             this.tokenProvider.token,
-            io,
             client,
             this.ordererUrl);
     }

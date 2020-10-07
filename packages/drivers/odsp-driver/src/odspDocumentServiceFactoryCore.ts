@@ -100,7 +100,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     constructor(
         private readonly getStorageToken: StorageTokenFetcher,
         private readonly getWebsocketToken: PushTokenFetcher,
-        private readonly getSocketIOClient: () => Promise<SocketIOClientStatic>,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
     ) {
@@ -121,7 +120,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.toInstrumentedStorageTokenFetcher(odspLogger, resolvedUrl as IOdspResolvedUrl, this.getStorageToken),
             this.toInstrumentedPushTokenFetcher(odspLogger, this.getWebsocketToken),
             odspLogger,
-            this.getSocketIOClient,
             cache,
             this.hostPolicy,
         );

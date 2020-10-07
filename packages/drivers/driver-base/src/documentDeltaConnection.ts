@@ -19,6 +19,7 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@fluidframework/protocol-definitions";
+import io from "socket.io-client";
 import { debug } from "./debug";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -58,9 +59,7 @@ export class DocumentDeltaConnection
      * @param tenantId - the ID of the tenant
      * @param id - document ID
      * @param token - authorization token for storage service
-     * @param io - websocket library
      * @param client - information about the client
-     * @param mode - connection mode
      * @param url - websocket URL
      * @param timeoutMs - timeout for socket connection attempt in milliseconds (default: 20000)
      */
@@ -68,7 +67,6 @@ export class DocumentDeltaConnection
         tenantId: string,
         id: string,
         token: string | null,
-        io: SocketIOClientStatic,
         client: IClient,
         url: string,
         timeoutMs: number = 20000): Promise<IDocumentDeltaConnection> {
