@@ -10,7 +10,7 @@ import {
     IDeltaManager,
     ILoader,
 } from "@fluidframework/container-definitions";
-import { IFluidObject, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IFluidObject, IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
@@ -19,7 +19,12 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { FlushMode, IContainerRuntimeBase, IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import {
+    FlushMode,
+    IContainerRuntimeBase,
+    IInboundSignalMessage,
+    NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
 declare module "@fluidframework/core-interfaces" {
@@ -124,4 +129,32 @@ export interface IContainerRuntime extends
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+}
+
+/**
+ * Options for container runtime.
+ */
+export interface IContainerRuntimeOptions {
+    // Flag that will generate summaries if connected to a service that supports them.
+    // This defaults to true and must be explicitly set to false to disable.
+    generateSummaries?: boolean;
+
+    // Experimental flag that will execute tasks in web worker if connected to a service that supports them.
+    enableWorker?: boolean;
+
+    // Delay before first attempt to spawn summarizing container
+    initialSummarizerDelayMs?: number;
+
+    // Flag to enable summarizing with new SummarizerNode strategy.
+    // Enabling this feature will allow data stores that fail to summarize to
+    // try to still summarize based on previous successful summary + ops since.
+    // Enabled by default.
+    enableSummarizerNode?: boolean;
+}
+
+export interface IContainerRuntimeProps {
+    readonly registryEntries: NamedFluidDataStoreRegistryEntries;
+    readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+    readonly runtimeOptions?: IContainerRuntimeOptions;
+    readonly containerScope?: IFluidObject;
 }

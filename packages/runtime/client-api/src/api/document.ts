@@ -12,7 +12,6 @@ import {
     IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { Deferred } from "@fluidframework/common-utils";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import * as ink from "@fluidframework/ink";
@@ -26,6 +25,7 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime-definitions";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
 

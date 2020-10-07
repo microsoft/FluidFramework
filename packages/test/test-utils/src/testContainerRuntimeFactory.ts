@@ -5,9 +5,10 @@
 
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { deprecated_innerRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime-definitions";
 
 /**
  * A container runtime factory that allows you to set runtime options

@@ -16,7 +16,7 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime-definitions";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { Ink } from "@fluidframework/ink";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";

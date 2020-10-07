@@ -32,20 +32,21 @@ export class RuntimeFactory implements IRuntimeFactory {
             (storeFactories.includes(defaultStoreFactory)
                 ? storeFactories
                 : storeFactories.concat(defaultStoreFactory)
-            ).map(
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                (factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries;
+            ).map((factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries;
     }
 
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await ContainerRuntime._load(
+        const runtime = await ContainerRuntime.load(
             context,
-            this.registry,
-            buildRuntimeRequestHandler(
-                ...this.requestHandlers,
-                deprecated_innerRequestHandler),
+            {
+                registryEntries: this.registry,
+                requestHandler:
+                    buildRuntimeRequestHandler(
+                        ...this.requestHandlers,
+                        deprecated_innerRequestHandler),
+            },
         );
 
         // Flush mode to manual to batch operations within a turn

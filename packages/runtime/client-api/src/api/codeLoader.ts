@@ -13,7 +13,7 @@ import {
     IRuntimeFactory,
     IFluidModule,
 } from "@fluidframework/container-definitions";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 import * as ink from "@fluidframework/ink";
 import * as map from "@fluidframework/map";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
@@ -28,6 +28,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime-definitions";
 import { Document } from "./document";
 
 const rootMapId = "root";

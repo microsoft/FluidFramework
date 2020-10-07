@@ -29,7 +29,12 @@ import {
     ICriticalContainerError,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
+import {
+    IContainerRuntime,
+    IContainerRuntimeProps,
+    IContainerRuntimeDirtyable,
+    IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
     Trace,
@@ -201,27 +206,6 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     // Wait 10 minutes for summary ack
     maxAckWaitTime: 600000,
 };
-
-/**
- * Options for container runtime.
- */
-export interface IContainerRuntimeOptions {
-    // Flag that will generate summaries if connected to a service that supports them.
-    // This defaults to true and must be explicitly set to false to disable.
-    generateSummaries?: boolean;
-
-    // Experimental flag that will execute tasks in web worker if connected to a service that supports them.
-    enableWorker?: boolean;
-
-    // Delay before first attempt to spawn summarizing container
-    initialSummarizerDelayMs?: number;
-
-    // Flag to enable summarizing with new SummarizerNode strategy.
-    // Enabling this feature will allow data stores that fail to summarize to
-    // try to still summarize based on previous successful summary + ops since.
-    // Enabled by default.
-    enableSummarizerNode?: boolean;
-}
 
 interface IRuntimeMessageMetadata {
     batch?: boolean;
@@ -454,13 +438,6 @@ class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
     }
 }
 
-export interface ContainerRuntimeProps {
-    readonly registryEntries: NamedFluidDataStoreRegistryEntries;
-    readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-    readonly runtimeOptions?: IContainerRuntimeOptions;
-    readonly containerScope?: IFluidObject;
-}
-
 interface InternalContainerRuntimeProps {
     readonly registry: FluidDataStoreRegistry;
     readonly requestHandler: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
@@ -510,7 +487,7 @@ export class ContainerRuntime extends EventEmitter
      */
     public static async load(
         context: IContainerContext,
-        props: ContainerRuntimeProps,
+        props: IContainerRuntimeProps,
     ): Promise<ContainerRuntime> {
         // Back-compat: <= 0.18 loader
         if (context.deltaManager.lastSequenceNumber === undefined) {
