@@ -23,8 +23,12 @@ export class FetchWithEpochValidation {
         private readonly logger?: ITelemetryLogger) {
     }
 
-    public set hashedDocumentId(docId: string) {
+    public set hashedDocumentId(docId: string | undefined) {
         this._hashedDocumentId = docId;
+    }
+
+    public get hashedDocumentId(): string | undefined {
+        return this._hashedDocumentId;
     }
 
     public get fluidEpoch() {
