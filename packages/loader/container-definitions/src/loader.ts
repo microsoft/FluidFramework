@@ -125,7 +125,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     /**
      * Extract the snapshot from the detached container.
      */
-    serialize(): string;
+    serialize(): ISnapshotTree;
 
     /**
      * Get an absolute url for a provided container-relative request url.

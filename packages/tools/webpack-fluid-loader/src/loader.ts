@@ -371,7 +371,7 @@ async function attachContainer(
             const listItem = document.createElement("option");
             listItem.innerText = `Summary_${summaryNum}`;
             summaryNum += 1;
-            listItem.value = summary;
+            listItem.value = JSON.stringify(summary);
             summaryList.appendChild(listItem);
             rehydrateButton.onclick = async () => {
                 const snapshot = summaryList.value;
