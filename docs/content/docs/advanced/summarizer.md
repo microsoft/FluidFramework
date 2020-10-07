@@ -24,7 +24,11 @@ graph LR
 {{< /mermaid >}}
 
 <span class="screen-reader-text">
-<ul aria-label="Describes the hierarchical structure of the summary tree from the root to the first layer of leaf nodes.">
+<label id="root-diagram">
+  Describes the hierarchical structure of the summary tree from the root to the first layer of leaf nodes.
+</label>
+<ul labelledby="root-diagram">
+<ul aria-label="">
   <li>root</li>
   <ul>
     <li>.protocol</li>
@@ -49,7 +53,10 @@ graph LR
 {{< /mermaid >}}
 
 <span class="screen-reader-text">
-<ul aria-label="Describes the hierarchical structure of the summary tree from the data store nodes.">
+<label id="ds-diagram">
+  Describes the hierarchical structure of the summary tree from the data store nodes.
+</label>
+<ul labelledby="ds-diagram">
   <li>DataStore_1</li>
   <ul>
     <li>.fluid-object</li>
@@ -87,7 +94,10 @@ graph LR
 {{< /mermaid >}}
 
 <span class="screen-reader-text">
-<ul aria-label="Describes the hierarchical structure of the summaries.">
+<label id="protocol-diagram">
+  Describes the hierarchical structure of the summaries.
+</label>
+<ul labelledby="protocol-diagram">
   <li>root</li>
   <ul>
     <li>.protocol</li>
