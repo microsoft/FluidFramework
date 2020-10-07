@@ -9,7 +9,11 @@
  * to allow loading through Fluid Preview, or everything can be scrubbed so that only
  * replay-tool can read the result.  Anonymous identifying information such as client
  * IDs are always retained.  Object keys are NOT scrubbed, including those that are
- * nested within values (only leaf values are scrubbed)
+ * nested within values (only leaf values are scrubbed).
+ *
+ * Note: While user content/information is scrubbed, it should not be assumed to be
+ * fully anonymized because certain meta-information (such as word lengths and
+ * consistent replacement) are preserved.
  *
  * Messages must match known structures when scrubbing for Fluid Preview.
  */
@@ -17,7 +21,6 @@
 import fs from "fs";
 import { strict as assert } from "assert";
 import * as Validator from "jsonschema";
-import { v4 as uuid } from "uuid";
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
@@ -139,6 +142,9 @@ class ChunkedOpProcessor {
      * @param contents - Sanitized contents to write back
      */
     writeSanitizedContents(contents: any): void {
+        // Write back a chunk size equal to the original
+        const chunkSize = this.parsedMessageContents[0].contents.length;
+
         let stringified: string;
         try {
             stringified = JSON.stringify(contents);
@@ -148,8 +154,7 @@ class ChunkedOpProcessor {
         }
 
         for (let i = 0; i < this.messages.length; i++) {
-            // use 15K chunks (default chunk size is 16K)
-            const substring = stringified.substring(i * 15360, (i + 1) * 15360);
+            const substring = stringified.substring(i * chunkSize, (i + 1) * chunkSize);
 
             const parsedContents = this.parsedMessageContents[i];
             parsedContents.contents = substring;
@@ -239,45 +244,52 @@ class Sanitizer {
         return key === "type" || key === "id";
     }
 
+    getRandomText(len: number): string {
+        let str = "";
+        while (str.length < len) {
+            str = str + Math.random().toString(36).substring(2);
+        }
+        return str.substr(0, len);
+    }
+
+    readonly wordTokenRegex = /\S+/g;
+
+    readonly replaceRandomTextFn = (match: string): string => {
+        if (this.replacementMap.has(match)) {
+            return this.replacementMap.get(match);
+        }
+
+        const replacement = this.getRandomText(match.length);
+        this.replacementMap.set(match, replacement);
+        return replacement;
+    };
+
     /**
      * Replace text with garbage.  FluidObject types are not replaced when not under
-     * full scrub mode.  Non-Generic type text is replaced consistently.
+     * full scrub mode.  All other text is replaced consistently.
      */
     replaceText(input?: string, type: TextType = TextType.Generic): string {
         if (input === undefined) {
             return undefined;
         }
 
-        if (type === TextType.Generic) {
-            return "xxxxx";
+        if (type === TextType.FluidObject) {
+            if (this.replacementMap.has(input)) {
+                return this.replacementMap.get(input);
+            }
+
+            let replacement;
+            if (this.fullScrub) {
+                replacement = this.getRandomText(input.length);
+            } else {
+                replacement = input;
+            }
+
+            this.replacementMap.set(input, replacement);
+            return replacement;
         }
 
-        if (this.replacementMap.has(input)) {
-            return this.replacementMap.get(input);
-        }
-
-        let replacement;
-        switch (type) {
-            case TextType.Email:
-                // email values have a trailing "}" that is preserved here
-                replacement = `email_${uuid()}}`;
-                break;
-            case TextType.Name:
-                replacement = `name_${uuid()}`;
-                break;
-            case TextType.FluidObject:
-                if (this.fullScrub) {
-                    replacement = `fluidobject_${uuid()}`;
-                } else {
-                    replacement = input;
-                }
-                break;
-            default:
-                return "xxxxx";
-        }
-
-        this.replacementMap.set(input, replacement);
-        return replacement;
+        return input.replace(this.wordTokenRegex, this.replaceRandomTextFn);
     }
 
     replaceArray(input: any[]): any[] {

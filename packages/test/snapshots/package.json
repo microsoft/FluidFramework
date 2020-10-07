@@ -54,8 +54,7 @@
     "@fluidframework/common-utils": "^0.24.0-0",
     "@fluidframework/merge-tree": "^0.28.0",
     "@fluidframework/protocol-definitions": "^0.1014.0-0",
-    "jsonschema": "^1.2.6",
-    "uuid": "^3.3.2"
+    "jsonschema": "^1.2.6"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
