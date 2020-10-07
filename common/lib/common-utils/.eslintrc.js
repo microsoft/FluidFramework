@@ -12,8 +12,6 @@ module.exports = {
     },
     "rules": {
         "@typescript-eslint/no-non-null-assertion": "off",
-        "@typescript-eslint/no-unsafe-return": "off",
-        "@typescript-eslint/no-unused-vars": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "no-bitwise": "off",
         "no-null/no-null": "off",
