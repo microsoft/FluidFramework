@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { Deferred, IsoBuffer } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import * as ink from "@fluidframework/ink";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
@@ -25,10 +25,11 @@ import {
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
 const apiVersion = require("../../package.json").version;
 
 // Registered services to use when loading a document
@@ -77,6 +78,7 @@ export class Document extends EventEmitter {
     }
 
     public get options(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.runtime.options;
     }
 
@@ -191,8 +193,8 @@ export class Document extends EventEmitter {
         return this.closeFn();
     }
 
-    public async uploadBlob(file: IsoBuffer): Promise<any> {
-        return this.runtime.uploadBlob(file);
+    public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+        return this.runtime.uploadBlob(blob);
     }
 }
 
@@ -246,7 +248,6 @@ async function requestDocument(loader: Loader, container: Container, uri: string
         attach(loader, uri, deferred);
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     deferred.promise.finally(() => container.removeListener("error", errorHandler));
     return deferred.promise;
 }

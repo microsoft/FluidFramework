@@ -23,7 +23,6 @@ import {
 import {
     Deferred,
     unreachableCase,
-    IsoBuffer,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -442,10 +441,10 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return this.snapshotFn(message);
     }
 
-    public async uploadBlob(file: IsoBuffer): Promise<IFluidHandle<string>> {
+    public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         this.verifyNotClosed();
 
-        return this.dataStoreContext.uploadBlob(file);
+        return this.dataStoreContext.uploadBlob(blob);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {

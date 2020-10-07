@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+    IDocumentService,
+    IDocumentStorageService,
+    ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**
@@ -22,7 +26,7 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
         return Promise.reject("Invalid operation");
     }
 
-    public async createBlob(file: Uint8Array): Promise<api.ICreateBlobResponse> {
+    public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
         return Promise.reject("Invalid operation");
     }
 
@@ -50,11 +54,11 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
 export abstract class ReplayController extends ReadDocumentStorageServiceBase {
     /**
      * Initialize reply controller
-     * @param storage - real document storage
+     * @param documentService - the real document service
      * @returns - Boolean, indicating if controller should be used.
      * If false is returned, caller should fallback to original storage.
      */
-    public abstract initStorage(storage: IDocumentStorageService): Promise<boolean>;
+    public abstract initStorage(documentService: IDocumentService): Promise<boolean>;
 
     /**
      * Returns sequence number to start processing ops

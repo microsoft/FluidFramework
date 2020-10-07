@@ -24,7 +24,7 @@ export class FluidSerializer implements IFluidSerializer {
     ) {
         // If the given 'input' cannot contain handles, return it immediately.  Otherwise,
         // return the result of 'recursivelyReplaceHandles()'.
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions,@typescript-eslint/no-unsafe-return
         return !!input && typeof input === "object"
             ? this.recursivelyReplaceHandles(input, context, bind)
             : input;
@@ -37,7 +37,8 @@ export class FluidSerializer implements IFluidSerializer {
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             const handle = !!value && value.IFluidHandle;
             // TODO - understand why handle === false in some of our tests
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+            // eslint-disable-next-line max-len
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions,@typescript-eslint/no-unsafe-return
             return handle
                 ? this.serializeHandle(handle, context, bind)
                 : value;
@@ -48,10 +49,12 @@ export class FluidSerializer implements IFluidSerializer {
     public parse(input: string, context: IFluidHandleContext) {
         let root: IFluidHandleContext;
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return JSON.parse(
             input,
             (key, value) => {
                 if (!isSerializedHandle(value)) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     return value;
                 }
 
@@ -89,6 +92,7 @@ export class FluidSerializer implements IFluidSerializer {
             return this.serializeHandle(handle, context, bind);
         }
 
+        // eslint-disable-next-line @typescript-eslint/ban-types
         let clone: object | undefined;
         for (const key of Object.keys(input)) {
             const value = input[key];
@@ -114,6 +118,7 @@ export class FluidSerializer implements IFluidSerializer {
                 }
             }
         }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return clone ?? input;
     }
 

@@ -27,6 +27,7 @@ export function create(
     const ensureLoggedIn = config.get("login:enabled")
         ? ensureAuth.ensureLoggedIn
         : () => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return (req, res, next) => next();
         };
 

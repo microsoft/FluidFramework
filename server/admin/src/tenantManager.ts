@@ -208,7 +208,6 @@ export class TenantManager {
     }
 
     private getProviderForEndpoint(url: string) {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!url) {
             return "Unknown";
         }
@@ -232,6 +231,7 @@ export class TenantManager {
             _id: userId,
             orgIds: [orgId],
         });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return orgId;
     }
 

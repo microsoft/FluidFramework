@@ -67,9 +67,7 @@ class EditableCell extends React.Component<ICellProps<IKeyValue>, ICellState> {
             dataIndex,
             title,
             record,
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             index,
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             handleEdit,
             ...restProps
         } = this.props;
@@ -124,7 +122,6 @@ class EditableCell extends React.Component<ICellProps<IKeyValue>, ICellState> {
     private readonly toggle = (e) => {
         const { record, handleEdit } = this.props;
         this.form.validateFields((error, values) => {
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (error && error[e.currentTarget.id]) {
                 return;
             }
@@ -268,7 +265,6 @@ export class KeyValueManager extends React.Component<ITableProps, ITableState> {
     private readonly handleAdd = () => {
         const form = this.form;
         form.validateFields((err, newKeyValue: IKeyValue) => {
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (err) {
                 return;
             }

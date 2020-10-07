@@ -19,6 +19,7 @@ const serHandle = {
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function printHandle(target: any) {
     return JSON.stringify(target, (key, value) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value?.IFluidHandle !== undefined
             ? "#HANDLE"
             : value;
@@ -34,6 +35,7 @@ simple.push(
     simple.reduce<any>(
         (o, value, index) => {
             o[`f${index}`] = value;
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return o;
         },
         {}));

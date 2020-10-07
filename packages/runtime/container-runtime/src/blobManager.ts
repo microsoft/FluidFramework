@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
@@ -15,7 +14,7 @@ import { generateHandleContextPath } from "@fluidframework/runtime-utils";
  * DataObject.request() recognizes requests in the form of `/blobs/<id>`
  * and loads blob.
  */
-export class BlobHandle implements IFluidHandle {
+export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
     public get IFluidHandle(): IFluidHandle { return this; }
 
     public get isAttached(): boolean {
@@ -47,7 +46,7 @@ export class BlobManager {
         private readonly sendBlobAttachOp: (blobId: string) => void,
     ) { }
 
-    public async getBlob(blobId: string): Promise<BlobHandle> {
+    public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
         return new BlobHandle(
             `${this.basePath}/${blobId}`,
             this.routeContext,
@@ -56,7 +55,7 @@ export class BlobManager {
         );
     }
 
-    public async createBlob(blob: IsoBuffer): Promise<BlobHandle> {
+    public async createBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         const response = await this.getStorage().createBlob(blob);
 
         const handle = new BlobHandle(

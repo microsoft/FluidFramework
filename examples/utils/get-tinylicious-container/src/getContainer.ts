@@ -46,6 +46,7 @@ export async function getContainer(
         container = await loader.resolve(request);
         // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
         // new container here, where we expect this to be loading an existing container.
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!container.existing) {
             throw new Error("Attempted to load a non-existing container");
         }

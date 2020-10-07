@@ -24,6 +24,7 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { serviceRoutePathRoot } from "../container-services";
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export interface IDataObjectProps<O extends IFluidObject = object> {
     readonly runtime: IFluidDataStoreRuntime,
     readonly context: IFluidDataStoreContext,
@@ -40,6 +41,7 @@ export interface IDataObjectProps<O extends IFluidObject = object> {
  * S - the initial state type that the produced data store may take during creation
  * E - represents events that will be available in the EventForwarder
  */
+// eslint-disable-next-line @typescript-eslint/ban-types
 export abstract class PureDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
     extends EventForwarder<E>
     implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
@@ -63,6 +65,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
      *
      * To define providers set IFluidObject interfaces in the generic O type for your data store
      */
+    // eslint-disable-next-line @typescript-eslint/ban-types
     protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>;
 
     public get disposed() { return this._disposed; }

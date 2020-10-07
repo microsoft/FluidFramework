@@ -16,6 +16,7 @@ describe("Routerlicious Host", () => {
         it("resolve should be retryable", async () => {
             axiosMock = {
                 post: async () => {
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (axiosMock.failPost) {
                         throw new Error("Injecting failure to Axios.post");
                     }

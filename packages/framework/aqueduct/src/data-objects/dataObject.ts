@@ -29,6 +29,7 @@ import { PureDataObject } from "./pureDataObject";
  * S - the initial state type that the produced data store may take during creation
  * E - represents events that will be available in the EventForwarder
  */
+// eslint-disable-next-line @typescript-eslint/ban-types
 export abstract class DataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
     extends PureDataObject<O, S, E>
 {
