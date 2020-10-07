@@ -46,6 +46,7 @@ export const BadgeClient: React.FC<IBadgeClientProps> = ({ model }: IBadgeClient
     // Getters
     const getOptions = () => {
         // Spread iterable out into an array
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return [...model.optionsMap.values()];
     };
 

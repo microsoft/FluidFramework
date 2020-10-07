@@ -122,6 +122,7 @@ export async function initializeState<
         local: boolean,
     ) => {
         const handle = storedHandleMap.get<IFluidHandle>(change.key);
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (handle !== undefined && !state.fluidObjectMap?.has(handle.absolutePath)) {
             state.fluidObjectMap?.set(handle.absolutePath, {
                 isListened: false,

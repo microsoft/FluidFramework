@@ -92,6 +92,7 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
         // 3: optional captured drive ID
         // 4: Item ID
         // 5: Drive ID portion of Item ID
+        // eslint-disable-next-line unicorn/no-unsafe-regex
         joinSessionMatch = /(.*)\/v2\.1\/drive(s\/([\dA-Za-z]+))?\/items\/(([\dA-Za-z]+)!\d+)/.exec(pathname);
 
         if (joinSessionMatch === null) {

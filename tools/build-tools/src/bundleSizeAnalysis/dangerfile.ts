@@ -13,8 +13,8 @@ declare function markdown(message: string, file?: string, line?: number): void;
 
 const adoConstants = {
     orgUrl: 'https://dev.azure.com/fluidframework',
-    projectName: 'internal',
-    ciBuildDefinitionId: 12,
+    projectName: 'public',
+    ciBuildDefinitionId: 48,
     prBuildDefinitionId: undefined,
     bundleAnalysisArtifactName: 'bundleAnalysis',
     projectRepoGuid: undefined,

@@ -95,6 +95,7 @@ function getValues(fields, domFields) {
         }
         result[name] = field.clean(value);
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return result;
 }
 
@@ -106,6 +107,7 @@ function reportInvalid(dom, message) {
     msg.style.top = `${dom.offsetTop - 5}px`;
     msg.className = "ProseMirror-invalid";
     msg.textContent = message;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     setTimeout(() => parent.removeChild(msg), 1500);
 }
 
@@ -136,6 +138,7 @@ export class Field {
 
     // :: (dom.Node) → any
     // Read the field's value from its DOM node.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     read(dom) { return dom.value; }
 
     // :: (any) → ?string
@@ -144,10 +147,12 @@ export class Field {
 
     validate(value) {
         if (!value && this.options.required) { return "Required field"; }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.validateType(value) || (this.options.validate && this.options.validate(value));
     }
 
     clean(value) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.options.clean ? this.options.clean(value) : value;
     }
 }
