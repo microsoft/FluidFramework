@@ -36,7 +36,7 @@ import {
 } from "@fluidframework/driver-utils";
 import { Container } from "./container";
 import { debug } from "./debug";
-import { IParsedUrl, parseUrl } from "./utils";
+import { IParsedUrl, parseHeader, parseUrl } from "./utils";
 
 function canUseCache(request: IRequest): boolean {
     if (request.headers === undefined) {
@@ -178,6 +178,7 @@ export class Loader extends EventEmitter implements ILoader {
             },
             this.documentServiceFactory,
             this.resolver,
+            this.containers,
             this.subLogger);
     }
 
@@ -195,6 +196,7 @@ export class Loader extends EventEmitter implements ILoader {
             },
             this.documentServiceFactory,
             this.resolver,
+            this.containers,
             this.subLogger);
     }
 
@@ -230,7 +232,7 @@ export class Loader extends EventEmitter implements ILoader {
                 return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
             }
             const { fromSequenceNumber } =
-                this.parseHeader(parsed, { url: baseUrl, headers: request.headers });
+                parseHeader(parsed, { url: baseUrl, headers: request.headers });
             const proxyLoader = await proxyLoaderFactory.createProxyLoader(
                 parsed.id,
                 this.options,
@@ -254,7 +256,7 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         request.headers = request.headers ?? {};
-        const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
+        const { canCache, fromSequenceNumber } = parseHeader(parsed, request);
 
         debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
 
@@ -297,42 +299,6 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         return { container, parsed };
-    }
-
-    private canUseCache(request: IRequest): boolean {
-        if (request.headers === undefined) {
-            return true;
-        }
-
-        const noCache =
-            request.headers[LoaderHeader.cache] === false ||
-            request.headers[LoaderHeader.reconnect] === false ||
-            request.headers[LoaderHeader.pause] === true;
-
-        return !noCache;
-    }
-
-    private parseHeader(parsed: IParsedUrl, request: IRequest) {
-        let fromSequenceNumber = -1;
-
-        request.headers = request.headers ?? {};
-
-        const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
-        if (headerSeqNum !== undefined) {
-            fromSequenceNumber = headerSeqNum;
-        }
-
-        // If set in both query string and headers, use query string
-        request.headers[LoaderHeader.version] = parsed.version ?? request.headers[LoaderHeader.version];
-
-        // Version === null means not use any snapshot.
-        if (request.headers[LoaderHeader.version] === "null") {
-            request.headers[LoaderHeader.version] = null;
-        }
-        return {
-            canCache: this.canUseCache(request),
-            fromSequenceNumber,
-        };
     }
 
     private async loadContainer(

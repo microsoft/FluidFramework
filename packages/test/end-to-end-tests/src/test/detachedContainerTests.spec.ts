@@ -571,6 +571,8 @@ const tests = (args: ICompatTestArgs) => {
 describe("Detached Container", () => {
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let documentServiceFactory: LocalDocumentServiceFactory;
+    let loader: Loader;
+    let resolver: LocalResolver;
 
     function createTestLoader(reg, code, urlResolver: IUrlResolver): Loader {
         const factory: TestFluidObjectFactory = new TestFluidObjectFactory(reg);
@@ -587,6 +589,8 @@ describe("Detached Container", () => {
     beforeEach(async () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
         documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+        resolver = new LocalResolver();
+        loader = createTestLoader(registry, pkg, resolver);
     });
 
     tests({
@@ -600,5 +604,20 @@ describe("Detached Container", () => {
 
     describe("compatibility", () => {
         compatTest(tests, { testFluidDataObject: true });
+    });
+
+    describe("Non-Compat Tests", () => {
+        it("Load attached container from cache and check if they are same", async () => {
+            const container = await loader.createDetachedContainer(pkg);
+
+            // Now attach the container and get the sub dataStore.
+            await container.attach(resolver.createCreateNewRequest(documentId));
+
+            const urlResolver2 = new LocalResolver();
+            // Create a new request url from the resolvedUrl of the first container.
+            const requestUrl2 = await urlResolver2.getAbsoluteUrl(container.resolvedUrl, "");
+            const container2 = await loader.resolve({ url: requestUrl2 });
+            assert.strictEqual(container, container2, "Both containers should be same");
+        });
     });
 });
