@@ -7,18 +7,30 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
+import * as util from "util";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
+import rimrafCallback from "rimraf";
 import { DbFactory } from "../services";
 
+const rimraf = util.promisify(rimrafCallback);
+
 /**
- * JSON value stored within the database collections used in the test
+ * Test database document
  */
-interface IValue {
-    _id?: number;
-    foo?: string;
-    a?: {
-        b: number;
+interface ITestDocument {
+    documentId: string;
+    tenantId: string;
+}
+
+/**
+ * Test delta
+ */
+interface ITestDelta {
+    documentId: string;
+    tenantId: string;
+    operation: {
+        sequenceNumber: number;
     }
 }
 
@@ -36,7 +48,7 @@ interface ITestConfig {
 
     // dispose method to allow the config to do any cleanup - i.e. delete the temporary
     // directory used by leveldb
-    dispose: () => void;
+    dispose: () => Promise<void>;
 }
 
 /**
@@ -45,6 +57,36 @@ interface ITestConfig {
 interface IConfigFactory {
     name: string;
     create: () => ITestConfig;
+}
+
+/**
+ * Helper function to create a test document to store in the DB
+ */
+function createTestDocument(
+    tenantId: string,
+    documentId: string,
+): ITestDocument {
+    return {
+        documentId,
+        tenantId,
+    };
+}
+
+/**
+ * Helper function to create a test delta to store in the DB
+ */
+function createTestDelta(
+    tenantId: string,
+    documentId: string,
+    sequenceNumber: number,
+): ITestDelta {
+    return {
+        tenantId,
+        documentId,
+        operation: {
+            sequenceNumber,
+        },
+    };
 }
 
 describe("Tinylicious", () => {
@@ -58,7 +100,7 @@ describe("Tinylicious", () => {
                             inMemory: true,
                         },
                     },
-                    dispose: () => { },
+                    dispose: async () => { },
                 }),
             },
             {
@@ -69,12 +111,12 @@ describe("Tinylicious", () => {
                     return {
                         value: {
                             db: {
-                                inMemory: true,
+                                inMemory: false,
                                 path: levelDir,
                             },
                         },
-                        dispose: () => {
-                            fs.rmdirSync(levelDir);
+                        dispose: async () => {
+                            await rimraf(levelDir);
                         },
                     };
                 },
@@ -82,23 +124,30 @@ describe("Tinylicious", () => {
 
         for (const configFactory of configFactories) {
             describe(configFactory.name, () => {
-                describe("find API", () => {
-                    let config: ITestConfig;
-                    let db: IDb;
-                    let c: ICollection<IValue>;
+                const testTenantId = "test";
+                const testDocumentId = "document";
+
+                let config: ITestConfig;
+                let db: IDb;
+
+                beforeEach(async () => {
+                    config = configFactory.create();
+                    const provider = new Provider().defaults(config.value);
+                    const dbFactory = new DbFactory(provider);
+
+                    db = await dbFactory.connect();
+                });
+
+                afterEach(async () => {
+                    await db.close();
+                    await config.dispose();
+                });
+
+                describe("documents", () => {
+                    let c: ICollection<ITestDocument>;
 
                     beforeEach(async () => {
-                        config = configFactory.create();
-                        const provider = new Provider().defaults(config.value);
-                        const dbFactory = new DbFactory(provider);
-
-                        db = await dbFactory.connect();
-                        c = db.collection<IValue>("test");
-                    });
-
-                    afterEach(async () => {
-                        await db.close();
-                        config.dispose();
+                        c = db.collection<ITestDocument>("documents");
                     });
 
                     it("findAll - empty", async () => {
@@ -106,58 +155,95 @@ describe("Tinylicious", () => {
                     });
 
                     it("findAll - nonempty", async () => {
-                        const obj1 = { _id: 1, foo: "FOO" };
-                        const obj2 = { _id: 2, foo: "FOO" };
+                        const obj1 = createTestDocument(testTenantId, "document1");
+                        const obj2 = createTestDocument(testTenantId, "document2");
                         await c.insertOne(obj1);
                         await c.insertOne(obj2);
                         assert.deepStrictEqual(await c.findAll(), [obj1, obj2]);
                     });
 
-                    it("find/findOne - missing", async () => {
-                        const obj = { _id: 1, foo: "FOO" };
+                    it("findOne - missing", async () => {
+                        const obj = createTestDocument(testTenantId, testDocumentId);
                         await c.insertOne(obj);
-                        assert.deepStrictEqual(await c.find({ a: 2 }, {}), []);
-                        assert.deepStrictEqual(await c.findOne({ _id: 2 }), null);
+                        assert.deepStrictEqual(
+                            await c.findOne({ tenantId: testTenantId, documentId: "missing" }),
+                            null);
                     });
 
-                    it("findOne - _id present", async () => {
-                        const obj = { _id: 1, foo: "FOO" };
+                    it("findOne - present", async () => {
+                        const obj = createTestDocument(testTenantId, testDocumentId);
                         await c.insertOne(obj);
-                        assert.deepStrictEqual(await c.findOne({ _id: 1 }), obj);
+                        const found = await c.findOne({ tenantId: testTenantId, documentId: testDocumentId });
+
+                        assert.deepStrictEqual(found, obj);
+                    });
+                });
+
+                describe("deltas", () => {
+                    let c: ICollection<ITestDelta>;
+
+                    beforeEach(async () => {
+                        c = db.collection<ITestDelta>("deltas");
                     });
 
-                    it("find/findOne - using getValueByKey", async () => {
-                        const obj = { a: { b: 5 } };
+                    it("find/findOne - with range query", async () => {
+                        const obj = createTestDelta(testTenantId, testDocumentId, 5);
+
                         await c.insertOne(obj);
-                        assert.deepStrictEqual(await c.find({ "a.b": 5 }, {}), [obj]);
-                        assert.deepStrictEqual(await c.find({ "a.b": { $gt: 4 } }, {}), [obj]);
-                        assert.deepStrictEqual(await c.find({ "a.b": { $lt: 6 } }, {}), [obj]);
-                        assert.deepStrictEqual(await c.findOne({ "a.b": 5 }), obj);
-                        assert.deepStrictEqual(await c.findOne({ "a.b": { $gt: 4 } }), obj);
-                        assert.deepStrictEqual(await c.findOne({ "a.b": { $lt: 6 } }), obj);
+
+                        const queries = [
+                            {
+                                "tenantId": testTenantId,
+                                "documentId": testDocumentId,
+                                "operation.sequenceNumber": 5,
+                            },
+                            {
+                                "tenantId": testTenantId,
+                                "documentId": testDocumentId,
+                                "operation.sequenceNumber": { $gt: 4 },
+                            },
+                            {
+                                "tenantId": testTenantId,
+                                "documentId": testDocumentId,
+                                "operation.sequenceNumber": { $lt: 6 },
+                            },
+                        ];
+
+                        for (const query of queries) {
+                            assert.deepStrictEqual(await c.find(query, {}), [obj]);
+                            assert.deepStrictEqual(await c.findOne(query), obj);
+                        }
                     });
 
-                    it("find/findOne - multiple matches", async () => {
-                        const obj15 = { a: { b: 15 } };
-                        const obj10 = { a: { b: 10 } };
-                        await c.insertOne(obj15);
-                        await c.insertOne(obj10);
-                        assert.deepStrictEqual(await c.find({ "a.b": { $gt: 4 } }, {}), [obj15, obj10]);
-                        assert.deepStrictEqual(await c.findOne({ "a.b": { $gt: 4 } }), obj15);
+                    it("find/findOne - multiple documents", async () => {
+                        const first = createTestDelta(testTenantId, testDocumentId, 1);
+                        const second = createTestDelta(testTenantId, testDocumentId, 2);
+
+                        await c.insertOne(first);
+                        await c.insertOne(second);
+
+                        const query = { tenantId: testTenantId, documentId: testDocumentId };
+
+                        assert.deepStrictEqual(await c.find(query, {}), [first, second]);
+                        assert.deepStrictEqual(await c.findOne(query), first);
                     });
 
                     it("find - with sort", async () => {
-                        const obj15 = { a: { b: 15 } };
-                        const obj10 = { a: { b: 10 } };
-                        await c.insertOne(obj15);
+                        const obj10 = createTestDelta(testTenantId, testDocumentId, 10);
+                        const obj15 = createTestDelta(testTenantId, testDocumentId, 15);
+
                         await c.insertOne(obj10);
+                        await c.insertOne(obj15);
+
+                        const query = {
+                            "tenantId": testTenantId,
+                            "documentId": testDocumentId,
+                            "operation.sequenceNumber": { $gt: 4 },
+                        };
+
                         assert.deepStrictEqual(
-                            await c.find({ "a.b": { $gt: 4 } }, { "a.b": 1 }),
+                            await c.find(query, { "operation.sequenceNumber": 1 }),
                             [obj10, obj15],
-                        );
-                        assert.deepStrictEqual(
-                            await c.find({ "a.b": { $gt: 4 } }, { "a.b": -1 }),
-                            [obj15, obj10],
                         );
                     });
                 });
