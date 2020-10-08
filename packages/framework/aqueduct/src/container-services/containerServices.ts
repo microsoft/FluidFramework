@@ -92,20 +92,20 @@ export const generateContainerServicesRequestHandler =
                 return router.request(subRequest);
             }
 
-            if (request.isLeaf(2)) {
-                // Otherwise we will just return the service
+            if (!request.isLeaf(2)) {
+                // If there is not terminating route but a sub-route was requested then we will fail.
                 return {
-                    status: 200,
-                    mimeType: "fluid/object",
-                    value: service,
+                    status: 400,
+                    mimeType: "text/plain",
+                    value: `request sub-url: [${subRequest}] for service that doesn't support routing`,
                 };
             }
 
-            // If there is not service to route but a sub-route was requested then we will fail.
+            // Otherwise we will just return the service
             return {
-                status: 400,
-                mimeType: "text/plain",
-                value: `request sub-url: [${subRequest}] for service that doesn't support routing`,
+                status: 200,
+                mimeType: "fluid/object",
+                value: service,
             };
         };
     };
