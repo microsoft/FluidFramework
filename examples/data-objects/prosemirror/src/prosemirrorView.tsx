@@ -7,6 +7,7 @@ import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfac
 import { EditorView } from "prosemirror-view";
 import {ProseMirror} from "./prosemirror";
 import {getNodeFromMarkdown} from './utils';
+import { BlobItem } from "@azure/storage-blob";
 
 export class ProseMirrorView implements IFluidHTMLView {
     private content: HTMLDivElement;
@@ -54,15 +55,17 @@ export class ProseMirrorView implements IFluidHTMLView {
         }
     }
 
-    public updateSnapshots(snapshotList: string[]) {
+    public updateSnapshots(snapshotList: BlobItem[]) {
         this.content.innerHTML = `<p>Snapshots</p>`;
         this.snapshots.innerHTML = "";
         for (let idx = 0; idx < snapshotList.length; idx++) {
+            const blobItem = snapshotList[idx];
             let snapshotButton = document.createElement("button");
-            snapshotButton.innerText = snapshotList[idx];
+            snapshotButton.innerText = blobItem.name;
+            snapshotButton.style.margin = "5px";
             snapshotButton.onclick = async () => {
-                //hit get snapshot content api
-                const node = await getNodeFromMarkdown(this.prosemirror.collabManager.getSchema(), snapshotList[idx]);
+                const snapshot = await this.prosemirror.StorageUtilModule.getSnapShotContent(blobItem.snapshot);
+                const node = await getNodeFromMarkdown(this.prosemirror.collabManager.getSchema(), snapshot);
                 await this.prosemirror.collabManager.initializeValue(node);
             };
             this.snapshots.appendChild(snapshotButton);

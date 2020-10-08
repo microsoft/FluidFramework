@@ -23,6 +23,7 @@ import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager
 import { ProseMirrorView } from "./prosemirrorView";
 import { IStorageUtil, StorageUtil } from './storage';
 import { getNodeFromMarkdown } from './utils';
+import { BlobItem } from "@azure/storage-blob";
 
 
 function createTreeMarkerOps(
@@ -90,8 +91,8 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
     public text: SharedString;
     public collabManager: FluidCollabManager;
     private view: ProseMirrorView;
-    private StorageUtilModule: IStorageUtil;
-    public snapshotList: string[] = [];
+    public StorageUtilModule: IStorageUtil;
+    public snapshotList: BlobItem[] = [];
     // private readonly debouncingInterval: number = 1000;
 
 
@@ -112,7 +113,6 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
         text.insertText(1, "Hello, world!");
 
         this.root.set("text", text.handle);
-        // this.snapshotList = await getSnapshotList()
     }
 
     protected async hasInitialized() {
@@ -132,16 +132,15 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
         else {
             this.StorageUtilModule = new StorageUtil(true);
         }
-
+        this.snapshotList = await this.StorageUtilModule.getSnapShotlist();
 
         this.hasValueChanged();
         this.hasSnapshotChanged();
     }
 
     public hasSnapshotChanged() {
-        this.on("valueChanged", () => { // change this to snapshot changed
-            //this.snapshotList = await getSnapshotList()
-            this.snapshotList.push("# hello world");
+        this.on("snapshotTaken", (snapshotList) => {
+            this.snapshotList = snapshotList;
             this.emit("snapshotAdded", this.snapshotList);
         })
     }

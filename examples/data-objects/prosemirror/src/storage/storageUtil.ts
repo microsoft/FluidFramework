@@ -8,6 +8,8 @@ export interface IStorageUtil {
     getMardownDataAndConvertIntoNode(schema: any): Promise<any>;
     storeEditorStateAsMarkdown(schema: any, data: any): void;
     storeDeltaChangesOfEditor(schema: any, data: any): void;
+    getSnapShotlist() : Promise<any>;
+    getSnapShotContent(snapshot: string) : Promise<any>;
 }
 
 export class StorageUtil implements IStorageUtil {
