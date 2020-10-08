@@ -1258,6 +1258,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             pkg = quorum.get("code2");
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return pkg;
     }
 

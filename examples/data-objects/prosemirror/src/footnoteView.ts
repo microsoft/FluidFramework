@@ -50,7 +50,9 @@ export class FootnoteView {
             state: EditorState.create({
                 doc: this.node,
                 plugins: [keymap({
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     "Mod-z": () => undo(this.outerView.state, this.outerView.dispatch),
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     "Mod-y": () => redo(this.outerView.state, this.outerView.dispatch),
                 })],
             }),
@@ -120,6 +122,7 @@ export class FootnoteView {
     }
 
     stopEvent(event) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.innerView && this.innerView.dom.contains(event.target);
     }
 

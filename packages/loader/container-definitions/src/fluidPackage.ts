@@ -3,82 +3,75 @@
  * Licensed under the MIT License.
  */
 
-/**
- * Person definition in a npm script
- */
-export interface IPerson {
-    name: string;
-    email: string;
-    url: string;
+ /**
+  * Specifies an environment on Fluid property of a IFluidPackage
+  */
+export interface IFluidPackageEnvironment {
+
+    /**
+     * The name of the target. For a browser environment, this could be umd for scripts
+     * or css for styles.
+     */
+    [target: string]: undefined | {
+        /**
+         * List of files for the target. These can be relative or absolute.
+         * The code loader should resolve relative paths, and validate all
+         * full urls.
+         */
+        files: string[];
+
+        /**
+         * General access for extended fields as specific usages will
+         * likely have additional infornamation like a definition
+         * of Library, the entrypoint for umd packages
+         */
+        [key: string]: unknown;
+    }
 }
 
 /**
- * Typescript interface definition for fields within a npm module's package.json.
+ * Fluid-specific properties expected on a package to be loaded by the code loader.
+ * While compatible with the npm package format it is not necessary that that package is an
+ * npm package:
+ * https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
  */
-export interface IPackage {
-    // General access for extended fields
-    [key: string]: any;
+export interface IFluidPackage {
+    /**
+     * The name of the package that this code represnets
+     */
     name: string;
-    version: string;
-    description?: string;
-    keywords?: string[];
-    homepage?: string;
-    bugs?: { url: string; email: string };
-    license?: string;
-    author?: IPerson;
-    contributors?: IPerson[];
-    files?: string[];
-    main?: string;
-    // Same as main but for browser based clients (check if webpack supports this)
-    browser?: string;
-    bin?: { [key: string]: string };
-    man?: string | string[];
-    repository?: string | { type: string; url: string };
-    scripts?: { [key: string]: string };
-    config?: { [key: string]: string };
-    dependencies?: { [key: string]: string };
-    devDependencies?: { [key: string]: string };
-    peerDependencies?: { [key: string]: string };
-    bundledDependencies?: { [key: string]: string };
-    optionalDependencies?: { [key: string]: string };
-    engines?: { node: string; npm: string };
-    os?: string[];
-    cpu?: string[];
-    private?: boolean;
-}
-
-/**
- * Fluid-specific properties expected on a package to be loaded by the Fluid code loader
- */
-export interface IFluidPackage extends IPackage {
-    // https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
+    /**
+     * This object represents the Fluid specific properties of the package
+     */
     fluid: {
-        browser: {
-            [libraryTarget: string]: {
-                // List of bundled JS files. Absolute URLs will be loaded directly. Relative paths will be specific
-                // to the CDN location
-                files: string[];
-
-                // If libraryTarget is umd then library is the global name that the script entry points will be exposed
-                // under. Other target formats may choose to reinterpret this value.
-                library: string;
-            };
-        };
+        /**
+         * The name of the of the environment. This should be something like browser, or node
+         * and contain the necessary targets for loading this code in that environment.
+         */
+        [environment: string]:  undefined | IFluidPackageEnvironment;
     };
+    /**
+     * General access for extended fields as specific usages will
+     * likely have additional infornamation like a definition of
+     * compatible versions, or deployment information like rings or rollouts.
+     */
+    [key: string]: unknown;
 }
 
 /**
  * Check if the package.json defines a Fluid module, which requires a `fluid` entry
  * @param pkg - the package json data to check if it is a Fluid package.
  */
-export const isFluidPackage = (pkg: IPackage): pkg is IFluidPackage =>
-    pkg.fluid?.browser?.umd !== undefined;
+export const isFluidPackage = (pkg: any): pkg is Readonly<IFluidPackage> =>
+    typeof pkg === "object"
+    && typeof pkg?.name === "string"
+    && typeof pkg?.fluid === "object";
 
 /**
  * Package manager configuration. Provides a key value mapping of config values
  */
-export interface IPackageConfig {
-    [key: string]: string;
+export interface IFluidCodeDetailsConfig {
+    readonly [key: string]: string;
 }
 
 /**
@@ -89,10 +82,10 @@ export interface IFluidCodeDetails {
      * The code package to be used on the Fluid document. This is either the package name which will be loaded
      * from a package manager. Or the expanded Fluid package.
      */
-    package: string | IFluidPackage;
+    readonly package: string | Readonly<IFluidPackage>;
 
     /**
      * Configuration details. This includes links to the package manager and base CDNs.
      */
-    config: IPackageConfig;
+    readonly config: IFluidCodeDetailsConfig;
 }

@@ -23,6 +23,18 @@ parameters:
   type: string
   default: ci:test
 
+- name: taskBundleAnalysis
+  type: boolean
+  default: false
+
+- name: taskPublishBundleSizeArtifacts
+  type: boolean
+  default: false
+
+- name: taskPack
+  type: boolean
+  default: true
+
 - name: poolCG
   type: object
   default: Lite
@@ -51,10 +63,6 @@ parameters:
 - name: namespace
   type: boolean
   default: true
-
-- name: runBundleAnalysis
-  type: boolean
-  default: false
 
 - name: buildNumberInPatch
   type: string
@@ -241,44 +249,61 @@ stages:
             condition: succeededOrFailed()
 
         # Pack
-        - task: Bash@3
-          displayName: npm pack
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
-            script: |
-              mkdir $(Build.ArtifactStagingDirectory)/pack/
-              if [ -f "lerna.json" ]; then
-                npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
-                npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
-              else
-                npm pack --unsafe-perm
-                mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
-              fi
+        - ${{ if ne(parameters.taskPack, false) }}:
+          - task: Bash@3
+            displayName: npm pack
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                mkdir $(Build.ArtifactStagingDirectory)/pack/
+                if [ -f "lerna.json" ]; then
+                  npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
+                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+                else
+                  npm pack --unsafe-perm
+                  mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+                fi
 
-        - task: PublishBuildArtifacts@1
-          displayName: Publish Artifact - pack
-          inputs:
-            PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
-            ArtifactName: 'pack'
-            publishLocation: 'Container'
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifact - pack
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
+              ArtifactName: 'pack'
+              publishLocation: 'Container'
 
-        # Collect bundle analysis
-        - ${{ if eq(parameters.runBundleAnalysis, true) }}:
+        # Collect/publish/run bundle analysis
+        - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
           - task: Npm@1
-            displayName: npm run bundle-analysis
+            displayName: npm run bundle-analysis:collect
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'run bundle-analysis'
+              customCommand: 'run bundle-analysis:collect'
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts - bundle-analysis
-            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+            condition:
+              and(
+                succeeded(),
+                ne(variables['Build.Reason'], 'PullRequest'),
+                eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true)
+              )
             inputs:
               PathtoPublish: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
               Artifactname: 'bundleAnalysis'
               publishLocation: 'Container'
+
+          - task: Npm@1
+            displayName: run bundle size comparison
+            condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+            env:
+              ADO_API_TOKEN: $(System.AccessToken)
+              DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run bundle-analysis:run'
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:

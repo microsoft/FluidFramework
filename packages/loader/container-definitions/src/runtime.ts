@@ -12,7 +12,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-    ConnectionState,
     IClientDetails,
     IQuorum,
     ISequencedDocumentMessage,
@@ -71,11 +70,6 @@ export interface IRuntime extends IDisposable {
      * Notifies the runtime of a change in the connection state
      */
     setConnectionState(connected: boolean, clientId?: string);
-
-    /**
-     * Deprecated: Back-compat, supporting 0.16 data stores and earlier
-     */
-    changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
      * @deprecated in 0.14 async stop()

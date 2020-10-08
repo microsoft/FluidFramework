@@ -24,7 +24,7 @@ import { AttachState } from "./runtime";
  */
 export interface ICodeLoader {
     /**
-     * Loads the package specified by IPackage and returns a promise to its entry point exports.
+     * Loads the package specified by code details and returns a promise to its entry point exports.
      */
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
@@ -37,11 +37,11 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
     /**
      * A resolved version of the Fluid package. All Fluid browser file entries should be absolute urls.
      */
-    resolvedPackage: IFluidPackage;
+    readonly resolvedPackage: Readonly<IFluidPackage>;
     /**
      * If not undefined, this id will be used to cache the entry point for the code package
      */
-    resolvedPackageCacheId: string | undefined;
+    readonly resolvedPackageCacheId: string | undefined;
 }
 
 /**

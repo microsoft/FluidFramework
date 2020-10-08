@@ -3,13 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { markdown } from "danger";
 import { ADOSizeComparator, getAzureDevopsApi } from "@fluidframework/bundle-size-tools";
+
+// Handle weirdness with Danger import.  The current module setup prevents us
+// from using this file directly, and the js transpilation renames the danger
+// import which prevents danger from removing it before evaluation (because it
+// actually puts its exports in the global namespace at that time)
+declare function markdown(message: string, file?: string, line?: number): void;
 
 const adoConstants = {
     orgUrl: 'https://dev.azure.com/fluidframework',
-    projectName: 'internal',
-    ciBuildDefinitionId: 12,
+    projectName: 'public',
+    ciBuildDefinitionId: 48,
     prBuildDefinitionId: undefined,
     bundleAnalysisArtifactName: 'bundleAnalysis',
     projectRepoGuid: undefined,

@@ -13,10 +13,10 @@ import { ISharedString } from "@fluidframework/sequence";
 // eslint-disable-next-line import/no-internal-modules
 import queue from "async/queue";
 
-import Counter = api.RateCounter;
-
 // eslint-disable-next-line import/no-internal-modules
 import clone from "lodash/clone";
+
+import Counter = api.RateCounter;
 
 let play: boolean = false;
 

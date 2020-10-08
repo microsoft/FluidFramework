@@ -297,6 +297,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
             value,
             this.runtime.IFluidHandleContext,
             this.handle);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return JSON.parse(stringified);
     }
 
@@ -312,6 +313,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
             value = handle;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value !== undefined
             ? this.runtime.IFluidSerializer.parse(JSON.stringify(value), this.runtime.IFluidHandleContext)
             : value;
