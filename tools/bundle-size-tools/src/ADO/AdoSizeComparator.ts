@@ -7,7 +7,6 @@ import { WebApi } from 'azure-devops-node-api';
 import JSZip from 'jszip';
 import { join } from 'path';
 import { getBaselineCommit, getBuilds, getPriorCommit } from '../utilities';
-import { getAzureDevopsApi } from './getAzureDevopsApi';
 import { BuildStatus, BuildResult } from 'azure-devops-node-api/interfaces/BuildInterfaces';
 import { IADOConstants } from './Constants';
 import { getZipObjectFromArtifact, getBundlePathsFromZipObject, getStatsFileFromZip } from './AdoArtifactFileProvider';
@@ -24,6 +23,15 @@ import { getBundleSummaries } from './getBundleSummaries';
 import { getBundleBuddyConfigMap } from './getBundleBuddyConfigMap';
 
 export class ADOSizeComparator {
+  /**
+   * The default number of most recent builds on the ADO pipeline to search when
+   * looking for a build matching a baseline commit, and the default number of
+   * fallback commits returned by the provided default fallback generator.  The
+   * most recent builds may not necessarily match the chain of commits, but
+   * typically will when the pipeline only builds commits to main.
+   */
+  private static readonly defaultBuildsToSearch = 20;
+
   constructor(
     /**
      * ADO constants identifying where to fetch baseline bundle info
@@ -57,7 +65,7 @@ export class ADOSizeComparator {
    */
   public static * naiveFallbackCommitGenerator(startingCommit: string): Generator<string> {
     let currentCommit = startingCommit;
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < ADOSizeComparator.defaultBuildsToSearch; i++) {
       currentCommit = getPriorCommit(currentCommit);
       yield currentCommit;
     }
@@ -80,7 +88,7 @@ export class ADOSizeComparator {
     const recentBuilds = await getBuilds(this.adoConnection, {
       project: this.adoConstants.projectName,
       definitions: [this.adoConstants.ciBuildDefinitionId],
-      maxBuildsPerDefinition: this.adoConstants.buildsToSearch ?? 20
+      maxBuildsPerDefinition: this.adoConstants.buildsToSearch ?? ADOSizeComparator.defaultBuildsToSearch,
     });
     while (baselineCommit !== undefined) {
       let baselineBuild = recentBuilds.find((build) => build.sourceVersion === baselineCommit);
