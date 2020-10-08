@@ -12,10 +12,6 @@ import {
     getOrigin,
 } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
-import {
-    fetchIncorrectResponse,
-    throwOdspNetworkError,
-} from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 
 /**
