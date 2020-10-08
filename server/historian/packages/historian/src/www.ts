@@ -3,34 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as http from "http";
 import * as path from "path";
 import * as debug from "debug";
 import * as nconf from "nconf";
-import * as redis from "redis";
 import * as winston from "winston";
-import * as app from "@fluidframework/historian-base/app";
-import * as services from "@fluidframework/historian-base/services";
-
-/**
- * Normalize a port into a number, string, or false.
- */
-
-function normalizePort(val) {
-    const normalizedPort = parseInt(val, 10);
-
-    if (isNaN(normalizedPort)) {
-    // named pipe
-        return val;
-    }
-
-    if (normalizedPort >= 0) {
-    // port number
-        return normalizedPort;
-    }
-
-    return false;
-}
+import { runService } from "@fluidframework/server-services-utils";
+import { HistorianResourcesFactory, HistorianRunnerFactory } from "@fluidframework/historian-base";
 
 const provider = nconf.argv().env("__" as any).file(path.join(__dirname, "../config.json")).use("memory");
 
@@ -60,93 +38,8 @@ winston.configure({
     args[0] = `${name  } ${  args[0]}`;
 };
 
-const redisConfig = provider.get("redis");
-const redisOptions: redis.ClientOpts = { password: redisConfig.pass };
-// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-if (redisConfig.tls) {
-    redisOptions.tls = {
-        serverName: redisConfig.host,
-    };
-}
-
-const redisClient = redis.createClient(
-    redisConfig.port,
-    redisConfig.host,
-    redisOptions);
-const gitCache = new services.RedisCache(redisClient);
-const tenantCache = new services.RedisTenantCache(redisClient);
-
-// Create services
-const riddlerEndpoint = provider.get("riddler");
-const riddler = new services.RiddlerService(riddlerEndpoint, tenantCache);
-
-// Create the historian app
-const historian = app.create(provider, riddler, gitCache);
-
-/**
- * Get port from environment and store in Express.
- */
-// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-const port = normalizePort(process.env.PORT || "3000");
-historian.set("port", port);
-
-/**
- * Create HTTP server.
- */
-
-const server = http.createServer(historian);
-
-/**
- * Event listener for HTTP server "error" event.
- */
-
-function onError(error) {
-    if (error.syscall !== "listen") {
-        throw error;
-    }
-
-    const bind = typeof port === "string"
-        ? `Pipe ${  port}`
-        : `Port ${  port}`;
-
-    // handle specific listen errors with friendly messages
-    switch (error.code) {
-        case "EACCES":
-            winston.error(`${bind  } requires elevated privileges`);
-            process.exit(1);
-            break;
-        case "EADDRINUSE":
-            winston.error(`${bind  } is already in use`);
-            process.exit(1);
-            break;
-        default:
-            throw error;
-    }
-}
-
-/**
- * Event listener for HTTP server "listening" event.
- */
-
-function onListening() {
-    const addr = server.address();
-    const bind = typeof addr === "string"
-        ? `pipe ${  addr}`
-        : `port ${  addr.port}`;
-    winston.info(`Listening on ${  bind}`);
-}
-
-/**
- * Listen on provided port, on all network interfaces.
- */
-
-server.listen(port);
-server.on("error", onError);
-server.on("listening", onListening);
-
-// Listen for shutdown signal in order to shutdown gracefully
-process.on("SIGTERM", () => {
-    server.close(() => {
-        process.exit(0);
-    });
-});
+runService(
+    new HistorianResourcesFactory(),
+    new HistorianRunnerFactory(),
+    "historian",
+    path.join(__dirname, "../../config.json"));

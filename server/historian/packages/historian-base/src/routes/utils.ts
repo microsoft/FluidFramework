@@ -35,13 +35,10 @@ export async function createGitService(
     tenantService: ITenantService,
     cache: ICache,
 ): Promise<RestGitService> {
-    // eslint-disable-next-line no-null/no-null
     let token: string = null;
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (authorization) {
         // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const base64TokenMatch = authorization.match(/Basic (.+)/);
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!base64TokenMatch) {
             return Promise.reject("Malformed authorization token");
         }
@@ -49,7 +46,6 @@ export async function createGitService(
 
         // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const tokenMatch = encoded.match(/(.+):(.+)/);
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!tokenMatch || tenantId !== tokenMatch[1]) {
             return Promise.reject("Malformed authorization token");
         }
@@ -61,4 +57,23 @@ export async function createGitService(
     const service = new RestGitService(details.storage, cache);
 
     return service;
+}
+
+/**
+ * Helper function to convert Request's query param to a number.
+ * @param value - The value to be converted to number.
+ */
+export function queryParamToNumber(value: any): number {
+    if (typeof value !== "string") { return undefined; }
+    const parsedValue = parseInt(value, 10);
+    return isNaN(parsedValue) ? undefined : parsedValue;
+}
+
+/**
+ * Helper function to convert Request's query param to a string.
+ * @param value - The value to be converted to number.
+ */
+export function queryParamToString(value: any): string {
+    if (typeof value !== "string") { return undefined; }
+    return value;
 }

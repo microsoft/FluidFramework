@@ -21,12 +21,16 @@
     "tslint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {
+    "@fluidframework/common-utils": "^0.24.0-0",
     "@fluidframework/gitresources": "^0.1012.0",
+    "@fluidframework/server-services": "^0.1012.2",
+    "@fluidframework/server-services-core": "^0.1012.2",
+    "@fluidframework/server-services-utils": "^0.1012.2",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
     "cors": "^2.8.5",
     "debug": "^4.1.1",
-    "express": "^4.16.4",
+    "express": "^4.16.3",
     "lodash": "^4.17.19",
     "morgan": "^1.9.1",
     "nconf": "^0.10.0",
@@ -53,7 +57,7 @@
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "async": "^2.5.0",
-    "concurrently": "^3.5.1",
+    "concurrently": "^5.2.0",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
     "eslint-plugin-import": "2.20.0",
@@ -68,6 +72,6 @@
     "rimraf": "^2.6.2",
     "supertest": "^3.3.0",
     "tslint": "^5.12.0",
-    "typescript": "~3.4.5"
+    "typescript": "~3.8.2"
   }
 }
