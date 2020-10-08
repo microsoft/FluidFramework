@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/routerlicious-host",
-  "version": "0.26.3",
+  "version": "0.26.4",
   "description": "Routerlicious host interfaces",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -28,8 +28,8 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.23.0",
-    "@fluidframework/core-interfaces": "^0.26.3",
-    "@fluidframework/driver-definitions": "^0.26.3",
+    "@fluidframework/core-interfaces": "^0.26.4",
+    "@fluidframework/driver-definitions": "^0.26.4",
     "@types/debug": "^4.1.5",
     "axios": "^0.18.0",
     "debug": "^4.1.1"
