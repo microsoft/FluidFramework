@@ -60,7 +60,7 @@ export async function getShareLink(
 
     if (createShareLinkResponse.ok) {
         const body = await createShareLinkResponse.json();
-        return body.link.webUrl;
+        return body.link.webUrl as string;
     }
 
     return undefined;
@@ -181,7 +181,7 @@ async function getFileDefaultUrl(
 
     if (fetchResponse.result.ok) {
         const body = await fetchResponse.result.json();
-        return body.d.directUrl;
+        return body.d.directUrl as string;
     }
 
     return undefined;
@@ -245,5 +245,5 @@ export async function getGraphItemLite(
         };
         graphItemLiteCache.add(cacheKey, valueGenerator);
     }
-    return graphItemLiteCache[cacheKey];
+    return graphItemLiteCache[cacheKey] as GraphItemLite;
 }
