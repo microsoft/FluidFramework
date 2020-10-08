@@ -205,7 +205,7 @@ export const createContainerWithOldLoader = async (
     return old.createAndAttachContainer(
         documentId,
         defaultCodeDetails as old.IFluidCodeDetails,
-        loader as old.ILoader,
+        loader,
         urlResolver);
 };
 

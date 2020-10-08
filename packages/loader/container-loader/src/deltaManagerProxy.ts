@@ -114,7 +114,7 @@ export class DeltaManagerProxy
     }
 
     public get hasCheckpointSequenceNumber() {
-        return this.hasCheckpointSequenceNumber;
+        return this.deltaManager.hasCheckpointSequenceNumber;
     }
 
     public get clientDetails(): IClientDetails {
