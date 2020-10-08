@@ -125,7 +125,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     /**
      * Extract the snapshot from the detached container.
      */
-    serialize(): ISnapshotTree;
+    serialize(): string;
 
     /**
      * Get an absolute url for a provided container-relative request url.
@@ -165,7 +165,7 @@ export interface ILoader extends IFluidRouter {
      * Creates a new container using the specified snapshot but in an unattached state. While unattached all
      * updates will only be local until the user explicitly attaches the container to a service provider.
      */
-    rehydrateDetachedContainerFromSnapshot(snapshot: ISnapshotTree): Promise<IContainer>;
+    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
 }
 
 /**

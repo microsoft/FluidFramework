@@ -499,12 +499,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._attachState;
     }
 
-    public serialize(): ISnapshotTree {
+    public serialize(): string {
         assert.strictEqual(this.attachState, AttachState.Detached, "Should only be called in detached container");
 
         const appSummary: ISummaryTree = this.context.createSummary();
         const protocolSummary = this.protocolHandler.captureSummary();
-        return convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
+        const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
+        return JSON.stringify(snapshotTree);
     }
 
     public async attach(request: IRequest): Promise<void> {
