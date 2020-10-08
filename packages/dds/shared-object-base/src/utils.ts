@@ -25,6 +25,7 @@ export function serializeHandles(
     context: IFluidHandleContext,
     bind: IFluidHandle,
 ): string | undefined {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return value !== undefined
         ? serializer.stringify(
             value,
@@ -52,6 +53,7 @@ export function makeHandlesSerializable(
     context: IFluidHandleContext,
     bind: IFluidHandle,
 ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return serializer.replaceHandles(
         value,
         context,
@@ -72,5 +74,6 @@ export function parseHandles(
     serializer: IFluidSerializer,
     context: IFluidHandleContext,
 ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return value !== undefined ? serializer.parse(JSON.stringify(value), context) : value;
 }

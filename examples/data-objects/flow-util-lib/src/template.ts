@@ -54,7 +54,7 @@ class Cursor {
     public end() {
         let pathFn = this.pathFns.get(this.pathName);
         if (!pathFn) {
-            // eslint-disable-next-line no-new-func
+            // eslint-disable-next-line @typescript-eslint/no-implied-eval,no-new-func
             pathFn = new Function("root", this.path) as (element: Element) => Element;
             this.pathFns.set(this.pathName, pathFn);
         }
@@ -71,7 +71,7 @@ class Cursor {
 export interface ITemplateNode {
     tag: string;
     classList?: string[];
-    props?: {};
+    props?: Record<string, unknown>;
     children?: ITemplateNode[];
     ref?: string;
 }

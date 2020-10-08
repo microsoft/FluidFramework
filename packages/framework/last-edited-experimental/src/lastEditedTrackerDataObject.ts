@@ -19,6 +19,7 @@ export class LastEditedTrackerDataObject extends DataObject
         LastEditedTrackerDataObject,
         [SharedSummaryBlock.getFactory()],
         {},
+        undefined,
     );
 
     public static getFactory() {

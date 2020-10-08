@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { FluidObjectSymbolProvider } from "@fluidframework/synthesize";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 
 import { DataObject, IDataObjectProps } from "../data-objects";
 import { PureDataObjectFactory } from "./pureDataObjectFactory";
@@ -24,18 +25,18 @@ import { PureDataObjectFactory } from "./pureDataObjectFactory";
  * ensuring relevant shared objects etc are available to the factory.
  *
  * Generics:
- * P - represents a type that will define optional providers that will be injected
+ * O - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced data object may take during creation
  */
-export class DataObjectFactory<TObj extends DataObject<P, S>, P, S> extends PureDataObjectFactory<TObj, P, S>
+export class DataObjectFactory<TObj extends DataObject<O, S>, O, S> extends PureDataObjectFactory<TObj, O, S>
 {
     constructor(
         type: string,
-        ctor: new (props: IDataObjectProps<P>) => TObj,
+        ctor: new (props: IDataObjectProps<O>) => TObj,
         sharedObjects: readonly IChannelFactory[] = [],
-        optionalProviders: FluidObjectSymbolProvider<P>,
+        optionalProviders: FluidObjectSymbolProvider<O>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,
-        onDemandInstantiation = true,
+        runtimeCtor: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
     ) {
         const mergedObjects = [...sharedObjects];
 
@@ -56,7 +57,7 @@ export class DataObjectFactory<TObj extends DataObject<P, S>, P, S> extends Pure
             mergedObjects,
             optionalProviders,
             registryEntries,
-            onDemandInstantiation,
+            runtimeCtor,
         );
     }
 }

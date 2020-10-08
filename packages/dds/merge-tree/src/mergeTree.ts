@@ -211,12 +211,14 @@ export class MergeNode implements IMergeNodeCommon {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 function addTile(tile: ReferencePosition, tiles: object) {
     for (const tileLabel of tile.getTileLabels()) {
         tiles[tileLabel] = tile;
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 function addTileIfNotPresent(tile: ReferencePosition, tiles: object) {
     for (const tileLabel of tile.getTileLabels()) {
         if (tiles[tileLabel] === undefined) {
@@ -617,9 +619,11 @@ export const reservedRangeLabelsKey = "referenceRangeLabels";
 export const reservedMarkerIdKey = "markerId";
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const refHasTileLabels = (refPos: ReferencePosition) => (refPos.refType & ops.ReferenceType.Tile) &&
     refPos.properties && refPos.properties[reservedTileLabelsKey];
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const refHasRangeLabels = (refPos: ReferencePosition) => (refPos.refType & (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) &&
     refPos.properties && refPos.properties[reservedRangeLabelsKey];
 
@@ -727,15 +731,18 @@ export class Marker extends BaseSegment implements ReferencePosition {
 
     getId(): string {
         if (this.properties && this.properties[reservedMarkerIdKey]) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return this.properties[reservedMarkerIdKey];
         }
     }
 
     hasTileLabels() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return refHasTileLabels(this);
     }
 
     hasRangeLabels() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return refHasRangeLabels(this);
     }
 
@@ -812,6 +819,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
                 // Avoid circular reference when stringifying makers containing handles.
                 // (Substitute a debug string instead.)
                 const handle = !!value && value.IFluidHandle;
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return handle
                     ? `#Handle(${handle.routeContext.path}/${handle.path})`
                     : value;
@@ -1261,6 +1269,7 @@ export class MergeTree {
                 this.blockUpdate(block);
             }
 
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return blocks.length === 1          // If there is only one block at this layer...
                 ? blocks[0]                     // ...then we're done.  Return the root.
                 : buildMergeBlock(blocks);      // ...otherwise recursively build the next layer above blocks.

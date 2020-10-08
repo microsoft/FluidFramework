@@ -27,7 +27,7 @@ describe("Routerlicious", () => {
 
                 testCollection = new TestCollection([]);
                 testContext = new TestContext();
-                lambda = new ScriptoriumLambda(testCollection, undefined, testContext);
+                lambda = new ScriptoriumLambda(testCollection, testContext);
 
             });
 

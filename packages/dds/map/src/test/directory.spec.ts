@@ -18,6 +18,7 @@ import {
 import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../directory";
 import { MapFactory } from "../map";
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 async function populate(directory: SharedDirectory, content: object) {
     const storage = new MockSharedObjectServices({
         header: JSON.stringify(content),

@@ -63,6 +63,7 @@ function CounterReactFunctionalReducer(
     ICounterReducerViewState,
     ICounterReducerFluidState,
     IActionReducer,
+    // eslint-disable-next-line @typescript-eslint/ban-types
     {},
     IFluidDataProps
     >,

@@ -4,6 +4,7 @@
  */
 
 import { parse } from "url";
+import _ from "lodash";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
@@ -14,10 +15,13 @@ import jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { v4 } from "uuid";
 import winston from "winston";
+import dotenv from "dotenv";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
 import { getConfig, getUserDetails, queryParamAsString } from "../utils";
+
+dotenv.config();
 
 export function create(
     config: Provider,
@@ -55,7 +59,6 @@ export function create(
         const chaincode: string = queryParamAsString(request.query.chaincode);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         getUrlWithVersion(chaincode).then((version: string) => {
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (version) {
                 const redirectUrl = `${request.originalUrl}@${version}`;
                 winston.info(`Redirecting to ${redirectUrl}`);
@@ -85,7 +88,6 @@ export function create(
                     config.get("error:track"));
 
                 const pkgP = fullTreeP.then((fullTree) => {
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (fullTree && fullTree.code) {
                         return codeResolver.resolveCodeDetails(fullTree.code);
                     }
@@ -131,12 +133,12 @@ export function create(
                 });
 
                 const scriptsP = pkgP.then((pkg) => {
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (!pkg) {
                         return [];
                     }
 
                     const umd = pkg?.resolvedPackage?.fluid?.browser?.umd;
+                    // TODO: possible bug?
                     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (!umd) {
                         return [];
@@ -169,13 +171,14 @@ export function create(
                         // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         timings!.push(Date.now() - start);
-
+                        const configClientId = config.get("login:microsoft").clientId;
                         response.render(
                             "loaderHost",
                             {
                                 cache: fullTree !== undefined ? JSON.stringify(fullTree.cache) : undefined,
                                 chaincode: JSON.stringify(pkg),
-                                clientId: config.get("login:microsoft").clientId,
+                                clientId: _.isEmpty(configClientId)
+                                    ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : configClientId,
                                 config: workerConfig,
                                 jwt: jwtToken,
                                 npm: config.get("worker:npm"),

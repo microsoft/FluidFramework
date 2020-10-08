@@ -9,7 +9,6 @@ import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluid
 import {
     ConnectionMode,
     IConnected,
-    IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -136,15 +135,6 @@ export class InnerDocumentDeltaConnection
     }
 
     /**
-     * Get contents sent during the connection
-     *
-     * @returns contents sent during the connection
-     */
-    public get initialContents(): IContentMessage[] {
-        return this.details.initialContents;
-    }
-
-    /**
      * Get signals sent during the connection
      *
      * @returns signals sent during the connection
@@ -164,6 +154,7 @@ export class InnerDocumentDeltaConnection
 
     public get lastKnownOpNumber() {
         // TODO: remove once latest server bits are picked up
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return (this.details as any).lastKnownOpNumber;
     }
 
@@ -196,15 +187,6 @@ export class InnerDocumentDeltaConnection
     public submit(messages: IDocumentMessage[]): void {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.outerProxy.submit(messages);
-    }
-
-    /**
-     * Submits a new message to the server without queueing
-     *
-     * @param message - message to submit
-     */
-    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
-        return this.outerProxy.submit(messages);
     }
 
     /**

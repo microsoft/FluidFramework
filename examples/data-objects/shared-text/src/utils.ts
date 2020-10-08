@@ -9,6 +9,7 @@ import { default as axios } from "axios";
 
 export async function downloadRawText(textUrl: string): Promise<string> {
     const data = await axios.get(textUrl);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return data.data;
 }
 

@@ -12,7 +12,6 @@ import {
 import {
     IContainer,
     IFluidCodeDetails,
-    IFluidPackage,
     ILoader,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
@@ -79,10 +78,10 @@ class OldTestDataStoreV2 extends OldTestDataStore {
 describe("context reload", function() {
     const documentId = "contextReloadTest";
     const documentLoadUrl = `fluid-test://localhost/${documentId}`;
-    const codeDetails = (version: string): IFluidCodeDetails => {
+    const codeDetails = (version: string): old.IFluidCodeDetails => {
         return {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            package: { name: TestDataStore.type, version } as IFluidPackage,
+            package: { name: TestDataStore.type, version } as old.IFluidPackage,
             config: {},
         };
     };
@@ -154,6 +153,7 @@ describe("context reload", function() {
             await this.container.getQuorum().propose("code", codeDetails(V2));
 
             // wait for summary ack/nack (non-immediate summary will result in test timeout)
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             await new Promise((resolve, reject) => this.container.on("op", (op) => {
                 if (op.type === "summaryAck") {
                     resolve();
