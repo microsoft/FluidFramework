@@ -11,6 +11,7 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
+import { performance } from "@fluidframework/common-utils";
 import { IFluidObject, IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -29,14 +30,7 @@ import {
     IThrottlingWarning,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { performance } from "@fluidframework/common-utils";
-import {
-    ChildLogger,
-    EventEmitterWithErrorHandling,
-    PerformanceEvent,
-    raiseConnectedEvent,
-    TelemetryLogger,
-} from "@fluidframework/telemetry-utils";
+import { CreateContainerError, GenericError } from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -56,7 +50,6 @@ import {
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
 } from "@fluidframework/driver-utils";
-import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     isSystemMessage,
     ProtocolOpHandler,
@@ -85,6 +78,13 @@ import {
     TreeEntry,
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
+import {
+    ChildLogger,
+    EventEmitterWithErrorHandling,
+    PerformanceEvent,
+    raiseConnectedEvent,
+    TelemetryLogger,
+} from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
@@ -97,6 +97,10 @@ import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
+
+interface ILocalSequencedClient extends ISequencedClient {
+    shouldHaveLeft?: boolean;
+}
 
 export interface IContainerConfig {
     resolvedUrl?: IResolvedUrl;
@@ -1194,6 +1198,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             pkg = quorum.get("code2");
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return pkg;
     }
 
@@ -1391,6 +1396,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._connectionState = value;
 
         if (value === ConnectionState.Connected) {
+            // Mark our old client should have left in the quorum if it's still there
+            if (this._clientId !== undefined) {
+                const client: ILocalSequencedClient | undefined =
+                    this._protocolHandler?.quorum.getMember(this._clientId);
+                if (client !== undefined) {
+                    client.shouldHaveLeft = true;
+                }
+            }
             this._clientId = this.pendingClientId;
             this._deltaManager.updateQuorumJoin();
         } else if (value === ConnectionState.Disconnected) {
@@ -1451,6 +1464,31 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
+        // Check and report if we're getting messages from a clientId that we previously
+        // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
+        if (message.clientId != null) {
+            let errorMsg: string | undefined;
+            const client: ILocalSequencedClient | undefined =
+                this._protocolHandler?.quorum.getMember(message.clientId);
+            if (client === undefined && message.type !== MessageType.ClientJoin) {
+                errorMsg = "messageClientIdMissingFromQuorum";
+            } else if (client?.shouldHaveLeft === true) {
+                errorMsg = "messageClientIdShouldHaveLeft";
+            }
+            if (errorMsg !== undefined) {
+                const error = new GenericError(
+                    errorMsg,
+                    {
+                        clientId: this._clientId,
+                        messageClientId: message.clientId,
+                        sequenceNumber: message.sequenceNumber,
+                        clientSequenceNumber: message.clientSequenceNumber,
+                    },
+                );
+                this.close(CreateContainerError(error));
+            }
+        }
+
         const local = this._clientId === message.clientId;
 
         // Forward non system messages to the loaded runtime for processing

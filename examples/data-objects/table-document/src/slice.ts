@@ -21,6 +21,7 @@ export interface ITableSliceConfig {
     maxCol: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITable {
     public static getFactory() { return TableSlice.factory; }
 

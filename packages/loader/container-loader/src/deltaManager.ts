@@ -26,7 +26,6 @@ import {
     ConnectionMode,
     IClient,
     IClientDetails,
-    IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,
     INack,
@@ -43,7 +42,6 @@ import {
     createGenericNetworkError,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
-import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
@@ -59,11 +57,10 @@ const DefaultChunkSize = 16 * 1024;
 // This can be anything other than null
 const ImmediateNoOpResponse = "";
 
-const DefaultContentBufferSize = 10;
-
 // Test if we deal with NetworkError object and if it has enough information to make a call.
 // If in doubt, allow retries.
 const canRetryOnError = (error: any): boolean => error?.canRetry !== false;
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds;
 
 function getNackReconnectInfo(nackContent: INackContent) {
@@ -77,6 +74,7 @@ function createReconnectError(prefix: string, err: any) {
     const error2 = Object.create(error);
     error2.message = `${prefix}: ${error.message}`;
     error2.canRetry = true;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return error2;
 }
 
@@ -177,8 +175,6 @@ export class DeltaManager
     private handler: IDeltaHandlerStrategy | undefined;
     private deltaStorageP: Promise<IDocumentDeltaStorageService> | undefined;
 
-    private readonly contentCache = new ContentCache(DefaultContentBufferSize);
-
     private messageBuffer: IDocumentMessage[] = [];
 
     private connectFirstConnection = true;
@@ -244,6 +240,7 @@ export class DeltaManager
         // user can't have r/w connection when user has only read permissions.
         // That said, connection can be r/w when host called forceReadonly(), as
         // this is view-only change
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         assert(!(this._readonlyPermissions && res));
         return res;
     }
@@ -585,6 +582,7 @@ export class DeltaManager
         // const serializedContent = JSON.stringify(this.messageBuffer);
         // const maxOpSize = this.context.deltaManager.maxMessageSize;
 
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this.readonly) {
             this.close(CreateContainerError("Op is sent in read-only document state"));
             return -1;
@@ -891,6 +889,8 @@ export class DeltaManager
      * @param connection - The newly established connection
      */
     private setupNewSuccessfulConnection(connection: DeltaConnection, requestedMode: ConnectionMode) {
+        // Old connection should have been cleaned up before establishing a new one
+        assert(this.connection === undefined, "old connection exists on new connection setup");
         this.connection = connection;
 
         // Does information in scopes & mode matches?
@@ -928,10 +928,6 @@ export class DeltaManager
             }
         });
 
-        connection.on("op-content", (message: IContentMessage) => {
-            this.contentCache.set(message);
-        });
-
         connection.on("signal", (message: ISignalMessage) => {
             this._inboundSignal.push(message);
         });
@@ -940,6 +936,7 @@ export class DeltaManager
         connection.on("nack", (documentId: string, messages: INack[]) => {
             const message = messages[0];
             // TODO: we should remove this check when service updates?
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (this._readonlyPermissions) {
                 this.close(createWriteError("WriteOnReadOnlyDocument"));
             }
@@ -1022,7 +1019,6 @@ export class DeltaManager
 
         this.processInitialMessages(
             initialMessages,
-            connection.details.initialContents ?? [],
             connection.details.initialSignals ?? [],
             this.connectFirstConnection);
 
@@ -1118,13 +1114,9 @@ export class DeltaManager
 
     private processInitialMessages(
         messages: ISequencedDocumentMessage[],
-        contents: IContentMessage[],
         signals: ISignalMessage[],
         firstConnection: boolean,
     ): void {
-        for (const content of contents) {
-            this.contentCache.set(content);
-        }
         if (messages.length > 0) {
             this.catchUp(messages, firstConnection ? "InitialOps" : "ReconnectOps");
         }

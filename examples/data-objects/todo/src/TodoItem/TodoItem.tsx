@@ -39,6 +39,7 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
+// eslint-disable-next-line @typescript-eslint/ban-types
 export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements IFluidHTMLView {
     private text: SharedString;
     private innerIdCell: ISharedCell<IFluidHandle>;

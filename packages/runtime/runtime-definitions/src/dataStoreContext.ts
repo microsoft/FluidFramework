@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
-import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidRouter,
@@ -23,7 +22,6 @@ import {
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
-    ConnectionState,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -120,7 +118,7 @@ export interface IContainerRuntimeBase extends
 
     getTaskManager(): Promise<ITaskManager>;
 
-    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 /**
@@ -182,9 +180,6 @@ export interface IFluidDataStoreChannel extends
      * it's new client ID when we are connecting or connected.
      */
     setConnectionState(connected: boolean, clientId?: string);
-
-    // Back-compat: supporting <= 0.16 data stores
-    changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
      * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.
@@ -354,7 +349,7 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
         createParam: CreateChildSummarizerNodeParam,
     ): CreateChildSummarizerNodeFn;
 
-    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

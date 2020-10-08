@@ -7,7 +7,6 @@ import { IDisposable, IEventProvider, IEvent, IErrorEvent } from "@fluidframewor
 import {
     ConnectionMode,
     IClientDetails,
-    IContentMessage,
     IDocumentMessage,
     IProcessMessageResult,
     ISequencedDocumentMessage,
@@ -30,7 +29,6 @@ export interface IConnectionDetails {
     version: string;
     initialClients: ISignalClient[];
     initialMessages: ISequencedDocumentMessage[];
-    initialContents: IContentMessage[];
     initialSignals: ISignalMessage[];
     maxMessageSize: number;
     serviceConfiguration: IServiceConfiguration;
@@ -95,7 +93,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "prepareSend", listener: (messageBuffer: any[]) => void);
     (event: "submitOp", listener: (message: IDocumentMessage) => void);
     (event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
-    (event: "allSentOpsAckd" | "caughtUp", listener: () => void);
+    (event: "allSentOpsAckd", listener: () => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void);
     (event: "disconnect", listener: (reason: string) => void);

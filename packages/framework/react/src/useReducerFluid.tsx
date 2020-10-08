@@ -386,6 +386,7 @@ export function useReducerFluid<
                         );
                     }
                     // Always return the result immediately
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     return actionResult;
                 } else {
                     throw new Error(
@@ -410,6 +411,7 @@ export function useReducerFluid<
             function: (
                 fetchState: ICombinedState<SV, SF, C>,
                 handle?: IFluidHandle,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             ) => fetch(functionName, fetchState, handle),
         };
     });
