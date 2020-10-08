@@ -59,8 +59,8 @@ describe("RequestParser", () => {
             assert.equal(requestParser.createSubRequest(3)?.url, "");
         });
         it("Create request from invalid part ", () => {
-            assert.equal(requestParser.createSubRequest(4), undefined);
-            assert.equal(requestParser.createSubRequest(-1), undefined);
+            assert.throws(() => requestParser.createSubRequest(4));
+            assert.throws(() => requestParser.createSubRequest(-1));
         });
     });
 });

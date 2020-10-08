@@ -47,15 +47,7 @@ class MockRuntime {
 
             const fluidObject = await this.getRootDataStore(requestParser.pathParts[0], wait);
             const subRequest = requestParser.createSubRequest(1);
-            if (subRequest !== undefined) {
-                return fluidObject.request(subRequest);
-            } else {
-                return {
-                    status: 200,
-                    mimeType: "fluid/object",
-                    value: fluidObject,
-                };
-            }
+            return fluidObject.request(subRequest);
         }
         return { status: 404, mimeType: "text/plain", value: "not found" };
     }

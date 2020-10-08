@@ -30,6 +30,13 @@ export class RequestParser implements IRequest {
     private requestPathParts: readonly string[] | undefined;
     public readonly query: string;
     constructor(private readonly request: Readonly<IRequest>) {
+        // Perf optimizations. Even better would be not to create this object
+        if (request instanceof RequestParser) {
+            this.query = request.query;
+            this.requestPathParts = request.pathParts;
+            return;
+        }
+
         const queryStartIndex = this.request.url.indexOf("?");
         if (queryStartIndex >= 0) {
             this.query = this.request.url.substring(queryStartIndex);
@@ -57,13 +64,21 @@ export class RequestParser implements IRequest {
     }
 
     /**
+     * Returns true if it's a terminating path, i.e. no more elements after `elements` entries and empty query.
+     * @param elements - number of elements in path
+     */
+    public isLeaf(elements: number) {
+        return this.query === "" && this.pathParts.length === elements;
+    }
+
+    /**
      * Creates a sub request starting at a specific path part of this request's url
      *
      * @param startingPathIndex - The index of the first path part of the sub request
      */
-    public createSubRequest(startingPathIndex: number): IRequest | undefined {
+    public createSubRequest(startingPathIndex: number): IRequest {
         if (startingPathIndex < 0 || startingPathIndex > this.pathParts.length) {
-            return undefined;
+            throw new Error("incorrect sub-request");
         }
         const path = this.pathParts.slice(startingPathIndex).join("/");
         return {
