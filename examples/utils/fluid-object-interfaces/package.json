@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/fluid-object-interfaces",
-  "version": "0.26.3",
+  "version": "0.26.4",
   "description": "Framework interfaces used by examples.",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -27,7 +27,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.26.3"
+    "@fluidframework/core-interfaces": "^0.26.4"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
