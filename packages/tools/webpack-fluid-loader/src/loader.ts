@@ -371,11 +371,11 @@ async function attachContainer(
             const listItem = document.createElement("option");
             listItem.innerText = `Summary_${summaryNum}`;
             summaryNum += 1;
-            listItem.value = JSON.stringify(summary);
+            listItem.value = summary;
             summaryList.appendChild(listItem);
             rehydrateButton.onclick = async () => {
                 const snapshot = summaryList.value;
-                currentContainer = await loader.rehydrateDetachedContainerFromSnapshot(JSON.parse(snapshot));
+                currentContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
                 let newLeftDiv: HTMLDivElement;
                 if (rightDiv !== undefined) {
                     newLeftDiv = makeSideBySideDiv(uuid());

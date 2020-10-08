@@ -108,7 +108,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     it("Dehydrated container snapshot", async () => {
         const { container } =
             await createDetachedContainerAndGetRootDataStore();
-        const snapshotTree = container.serialize();
+        const snapshotTree = JSON.parse(container.serialize());
 
         assert.strictEqual(Object.keys(snapshotTree.trees).length, 3,
             "3 trees should be there(protocol, default dataStore, scheduler");
@@ -132,12 +132,12 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     it("Dehydrated container snapshot 2 times with changes in between", async () => {
         const { container, defaultDataStore } =
             await createDetachedContainerAndGetRootDataStore();
-        const snapshotTree1 = container.serialize();
+        const snapshotTree1 = JSON.parse(container.serialize());
         // Create a channel
         const channel = defaultDataStore.runtime.createChannel("test1",
             "https://graph.microsoft.com/types/map") as SharedMap;
         channel.bindToContext();
-        const snapshotTree2 = container.serialize();
+        const snapshotTree2 = JSON.parse(container.serialize());
 
         assert.strictEqual(JSON.stringify(Object.keys(snapshotTree1.trees)),
             JSON.stringify(Object.keys(snapshotTree2.trees)),
@@ -172,7 +172,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
         rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-        const snapshotTree = container.serialize();
+        const snapshotTree = JSON.parse(container.serialize());
 
         assert.strictEqual(Object.keys(snapshotTree.trees).length, 4, "4 trees should be there");
         assert(snapshotTree.trees[dataStore2.runtime.id], "Handle Bounded dataStore should be in summary");
@@ -517,7 +517,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         // Create another not bounded dataStore
         await createPeerDataStore(defaultDataStore.context.containerRuntime);
 
-        const snapshotTree = container.serialize();
+        const snapshotTree = JSON.parse(container.serialize());
 
         assert.strictEqual(Object.keys(snapshotTree.trees).length, 3,
             "3 trees should be there(protocol, default dataStore, scheduler). Not bounded/Unreferenced " +
