@@ -5,16 +5,20 @@
 
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { EditorView } from "prosemirror-view";
-import { FluidCollabManager } from "./fluidCollabManager";
+import {ProseMirror} from "./prosemirror";
+import {getNodeFromMarkdown} from './utils';
 
 export class ProseMirrorView implements IFluidHTMLView {
     private content: HTMLDivElement;
     private editorView: EditorView;
     private textArea: HTMLDivElement;
     private inputFile: HTMLInputElement;
+    private snapshots: HTMLDivElement;
     public get IFluidHTMLView() { return this; }
 
-    public constructor(private readonly collabManager: FluidCollabManager) { }
+    public constructor(private readonly prosemirror: ProseMirror) {
+        this.prosemirror.on("snapshotAdded", (snapshotList) => {this.updateSnapshots(snapshotList)});
+    }
 
     public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         // Create base textarea
@@ -22,12 +26,16 @@ export class ProseMirrorView implements IFluidHTMLView {
             this.textArea = document.createElement("div");
             this.textArea.classList.add("editor");
             this.content = document.createElement("div");
-            this.content.style.display = "none";
             this.content.innerHTML = "";
             this.inputFile = document.createElement("input");
             this.inputFile.type = "file";
             this.inputFile.style.padding = "10px";
             this.inputFile.id = "input-file";
+            this.snapshots = document.createElement("div");
+        }
+        if (this.prosemirror.snapshotList.length > 0) {
+            this.content.innerHTML = `<p>Snapshots</p>`;
+            this.updateSnapshots(this.prosemirror.snapshotList);
         }
 
         // Reparent if needed
@@ -35,17 +43,33 @@ export class ProseMirrorView implements IFluidHTMLView {
             this.textArea.remove();
             this.content.remove();
             this.inputFile.remove();
+            elm.appendChild(this.inputFile);
             elm.appendChild(this.textArea);
             elm.appendChild(this.content);
-            elm.appendChild(this.inputFile);
+            elm.appendChild(this.snapshots);
         }
 
         if (!this.editorView) {
-            this.editorView = this.collabManager.setupEditor(this.textArea);
+            this.editorView = this.prosemirror.collabManager.setupEditor(this.textArea);
+        }
+    }
+
+    public updateSnapshots(snapshotList: string[]) {
+        this.content.innerHTML = `<p>Snapshots</p>`;
+        this.snapshots.innerHTML = "";
+        for (let idx = 0; idx < snapshotList.length; idx++) {
+            let snapshotButton = document.createElement("button");
+            snapshotButton.innerText = snapshotList[idx];
+            snapshotButton.onclick = async () => {
+                //hit get snapshot content api
+                const node = await getNodeFromMarkdown(this.prosemirror.collabManager.getSchema(), snapshotList[idx]);
+                await this.prosemirror.collabManager.initializeValue(node);
+            };
+            this.snapshots.appendChild(snapshotButton);
         }
     }
 
     public remove() {
-        // Maybe implement this some time.
+        this.prosemirror.off("snapshotAdded", (snapshotList) => {this.updateSnapshots(snapshotList)});
     }
 }

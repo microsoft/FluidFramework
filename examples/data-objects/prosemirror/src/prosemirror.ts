@@ -88,9 +88,10 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
     public get IRichTextEditor() { return this.collabManager; }
 
     public text: SharedString;
-    private collabManager: FluidCollabManager;
+    public collabManager: FluidCollabManager;
     private view: ProseMirrorView;
     private StorageUtilModule: IStorageUtil;
+    public snapshotList: string[] = [];
     private readonly debouncingInterval: number = 1000;
 
 
@@ -111,6 +112,7 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
         text.insertText(1, "Hello, world!");
 
         this.root.set("text", text.handle);
+        // this.snapshotList = await getSnapshotList()
     }
 
     protected async hasInitialized() {
@@ -131,6 +133,15 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
 
 
         this.hasValueChanged();
+        this.hasSnapshotChanged();
+    }
+
+    public hasSnapshotChanged() {
+        this.on("valueChanged", () => { // change this to snapshot changed
+            //this.snapshotList = await getSnapshotList()
+            this.snapshotList.push("# hello world");
+            this.emit("snapshotAdded", this.snapshotList);
+        })
     }
 
     public hasValueChanged() {
@@ -152,7 +163,7 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
     public render(elm: HTMLElement): void {
         if (isWebClient()) {
             if (!this.view) {
-                this.view = new ProseMirrorView(this.collabManager);
+                this.view = new ProseMirrorView(this);
             }
             this.view.render(elm);
             document.getElementById('input-file').addEventListener('change', e => {this.onFileSelect(e)} , false);
