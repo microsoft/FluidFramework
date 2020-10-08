@@ -157,18 +157,18 @@ async function asyncWithRetryImpl<T>(
 export type FetchWithRetryResponse = AsyncWithRetryResult<FetchResponse>;
 
 /**
- * Creates a filter that will allow retries for the whitelisted status codes
+ * Creates a filter that will allow retries for the allowed status codes
  * @param retriableCodes - Cannot be null/undefined
  */
-export function whitelist(retriableCodes: number[]): RetryFilter<Response> {
+export function allowlist(retriableCodes: number[]): RetryFilter<Response> {
     return (response: Response) => response && retriableCodes.includes(response.status);
 }
 
 /**
- * Creates a filter that will allow retries for everything except codes on the blacklist
+ * Creates a filter that will allow retries for everything except codes on the deny list
  * @param nonRetriableCodes - Cannot be null/undefined
  */
-export function blacklist(nonRetriableCodes: number[]): RetryFilter<Response> {
+export function denylist(nonRetriableCodes: number[]): RetryFilter<Response> {
     return (response: Response) => response && !nonRetriableCodes.includes(response.status);
 }
 
