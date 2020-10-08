@@ -139,7 +139,7 @@ export type DetachedContainerSource = {
  * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
  * up to date. Host may chose to wait in such case and retry resolving URI.
  * Warning: Will wait infinitely for connection to establish if there is no connection.
- * May result in deadlock if Contaner.setAutoReconnect(false) is called and never switched back to auto-reconnect.
+ * May result in deadlock if Container.setAutoReconnect(false) is called and never switched back to auto-reconnect.
  * @returns true: container is up to date, it processed all the ops that were know at the time of first connection
  *          false: storage does not provide indication of how far the client is. Container processed
  *          all the ops known to it, but it maybe still behind.
