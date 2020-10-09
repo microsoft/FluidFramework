@@ -12,7 +12,7 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { testWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
+import { generateTestWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
 
 const cellId = "cellKey";
 const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
@@ -214,5 +214,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("Cell", () => {
-    testWithCompat(tests, { testFluidDataObject: true });
+    generateTestWithCompat(tests, { testFluidDataObject: true });
 });

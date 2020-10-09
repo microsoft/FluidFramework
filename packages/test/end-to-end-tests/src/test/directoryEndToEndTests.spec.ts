@@ -13,7 +13,7 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { testWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
+import { generateTestWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
 
 const directoryId = "directoryKey";
 const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
@@ -626,5 +626,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("Directory", () => {
-    testWithCompat(tests, { testFluidDataObject: true });
+    generateTestWithCompat(tests, { testFluidDataObject: true });
 });

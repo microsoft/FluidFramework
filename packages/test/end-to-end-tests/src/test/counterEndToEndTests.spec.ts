@@ -11,7 +11,7 @@ import {
     ITestFluidObject,
     OpProcessingController,
 } from "@fluidframework/test-utils";
-import { testWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
+import { generateTestWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
 
 const counterId = "counterKey";
 const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
@@ -148,5 +148,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("SharedCounter", () => {
-    testWithCompat(tests, { testFluidDataObject: true });
+    generateTestWithCompat(tests, { testFluidDataObject: true });
 });
