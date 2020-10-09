@@ -212,6 +212,15 @@ export class Loader extends EventEmitter implements ILoader {
         });
     }
 
+    public cacheContainer(container: Container, request: IRequest, parsedUrl: IParsedUrl) {
+        const { canCache } = this.parseHeader(parsedUrl, request);
+
+        if (canCache) {
+            const key = this.getKeyForContainerCache(request, parsedUrl);
+            this.containers.set(key, Promise.resolve(container));
+        }
+    }
+
     public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
         // Currently the loader only supports web worker environment. Eventually we will
         // detect environment and bring appropriate loader (e.g., worker_thread for node).
@@ -241,6 +250,13 @@ export class Loader extends EventEmitter implements ILoader {
         }
     }
 
+    private getKeyForContainerCache(request: IRequest, parsedUrl: IParsedUrl): string {
+        const key = request.headers?.[LoaderHeader.version] !== undefined
+            ? `${parsedUrl.id}@${request.headers[LoaderHeader.version]}`
+            : parsedUrl.id;
+        return key;
+    }
+
     private async resolveCore(
         request: IRequest,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
@@ -260,10 +276,8 @@ export class Loader extends EventEmitter implements ILoader {
 
         let container: Container;
         if (canCache) {
-            const versionedId = request.headers[LoaderHeader.version] !== undefined
-                ? `${parsed.id}@${request.headers[LoaderHeader.version]}`
-                : parsed.id;
-            const maybeContainer = await this.containers.get(versionedId);
+            const key = this.getKeyForContainerCache(request, parsed);
+            const maybeContainer = await this.containers.get(key);
             if (maybeContainer !== undefined) {
                 container = maybeContainer;
             } else {
@@ -272,7 +286,7 @@ export class Loader extends EventEmitter implements ILoader {
                         parsed.id,
                         request,
                         resolvedAsFluid);
-                this.containers.set(versionedId, containerP);
+                this.containers.set(key, containerP);
                 container = await containerP;
             }
         } else {
