@@ -86,9 +86,9 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     /**
      * Create a set of object to
-     * @param createFluidEntryPoint callback to create a fluidEntryPoint from a set of channel registry
-     * @param serviceConfiguration optional serviceConfiguration to create the LocalDeltaConnectionServer with
-     * @param _deltaConnectionServer optional deltaConnectionServer to share documents between different provider
+     * @param createFluidEntryPoint - callback to create a fluidEntryPoint from a set of channel registry
+     * @param serviceConfiguration - optional serviceConfiguration to create the LocalDeltaConnectionServer with
+     * @param _deltaConnectionServer - optional deltaConnectionServer to share documents between different provider
      */
     constructor(
         private readonly createFluidEntryPoint: (registry?: ChannelFactoryRegistryType) => fluidEntryPoint,
@@ -136,7 +136,7 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     /**
      * Make a test loader
-     * @param registry optional registry to create the fluidEntryPoint
+     * @param registry - optional registry to create the fluidEntryPoint
      */
     public makeTestLoader(registry?: ChannelFactoryRegistryType) {
         return this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(registry) ]]);
@@ -144,7 +144,7 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     /**
      * Make a container using a default document id and code details
-     * @param registry optional registry to create the fluidEntryPoint
+     * @param registry - optional registry to create the fluidEntryPoint
      */
     public async makeTestContainer(registry?: ChannelFactoryRegistryType) {
         const loader = this.makeTestLoader(registry);
@@ -153,7 +153,7 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     /**
      * Load a container using a default document id and code details
-     * @param registry optional registry to create the fluidEntryPoint
+     * @param registry - optional registry to create the fluidEntryPoint
      */
     public async loadTestContainer(registry?: ChannelFactoryRegistryType) {
         const loader = this.makeTestLoader(registry);
