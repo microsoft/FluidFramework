@@ -50,14 +50,14 @@ const defaultCodeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-// This is a replica to the code in localLoader.ts in test-utils, but bind to the old version.
+// This is a replica of the code in localLoader.ts in test-utils, but bind to the old version.
 // TODO: once 0.27 is the back-compat version that we test, we can just use the version in the old-test-utils
 // However, if there are any changes to these class and code, we can shim it here.
 
 /**
  * A convenience class to manage a set of local test object to create loaders/containers with configurable way
- * to create a runtime factory from channels to allow different version of the runtime to be created.
- * These includes the LocalDeltaConnectionServer, DocumentServiceFactory, UrlResolver.
+ * to create a runtime factory from channels and factories to allow different version of the runtime to be created.
+ * The objects includes the LocalDeltaConnectionServer, DocumentServiceFactory, UrlResolver.
  *
  * When creating and loading containers, it uses a default document id and code detail.
  *
@@ -73,9 +73,10 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     /**
      * Create a set of object to
-     * @param createFluidEntryPoint callback to create a fluidEntryPoint from a set of channel registry
-     * @param serviceConfiguration optional serviceConfiguration to create the LocalDeltaConnectionServer with
-     * @param _deltaConnectionServer optional deltaConnectionServer to share documents between different provider
+     * @param createFluidEntryPoint - callback to create a fluidEntryPoint, with an optiona; set of channel name
+     * and factory for TestFluidObject
+     * @param serviceConfiguration - optional serviceConfiguration to create the LocalDeltaConnectionServer with
+     * @param _deltaConnectionServer - optional deltaConnectionServer to share documents between different provider
      */
     constructor(
         private readonly createFluidEntryPoint: (registry?: ChannelFactoryRegistryType) => fluidEntryPoint,
@@ -98,10 +99,6 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     get documentServiceFactory() {
         if (!this._documentServiceFactory) {
-            // We are using the new DeltaConnectionServer, which is not type compatible with the old one.
-            // However it doesn't matter functionality wise, so force casting it.
-            // TODO: this can be removed once we upgrade version or move this to test-utils to use
-            // a consistent version of the class
             this._documentServiceFactory = new LocalDocumentServiceFactory(this.deltaConnectionServer as any);
         }
         return this._documentServiceFactory;
@@ -127,7 +124,7 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     /**
      * Make a test loader
-     * @param registry optional registry to create the fluidEntryPoint
+     * @param registry - optional channel to factory pair used create the TestfluidObject with
      */
     public makeTestLoader(registry?: ChannelFactoryRegistryType) {
         return this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(registry) ]]);
@@ -135,7 +132,7 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     /**
      * Make a container using a default document id and code details
-     * @param registry optional registry to create the fluidEntryPoint
+     * @param registry - optional channel to factory pair used create the TestfluidObject with
      */
     public async makeTestContainer(registry?: ChannelFactoryRegistryType) {
         const loader = this.makeTestLoader(registry);
@@ -144,7 +141,7 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     /**
      * Load a container using a default document id and code details
-     * @param registry optional registry to create the fluidEntryPoint
+     * @param registry - optional channel to factory pair used create the TestfluidObject with
      */
     public async loadTestContainer(registry?: ChannelFactoryRegistryType) {
         const loader = this.makeTestLoader(registry);

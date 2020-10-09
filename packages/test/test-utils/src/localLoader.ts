@@ -69,8 +69,8 @@ const defaultCodeDetails: IFluidCodeDetails = {
 
 /**
  * A convenience class to manage a set of local test object to create loaders/containers with configurable way
- * to create a runtime factory from channels to allow different version of the runtime to be created.
- * These includes the LocalDeltaConnectionServer, DocumentServiceFactory, UrlResolver.
+ * to create a runtime factory from channels and factories to allow different version of the runtime to be created.
+ * The objects includes the LocalDeltaConnectionServer, DocumentServiceFactory, UrlResolver.
  *
  * When creating and loading containers, it uses a default document id and code detail.
  *
@@ -86,7 +86,8 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     /**
      * Create a set of object to
-     * @param createFluidEntryPoint - callback to create a fluidEntryPoint from a set of channel registry
+     * @param createFluidEntryPoint - callback to create a fluidEntryPoint, with an optiona; set of channel name
+     * and factory for TestFluidObject
      * @param serviceConfiguration - optional serviceConfiguration to create the LocalDeltaConnectionServer with
      * @param _deltaConnectionServer - optional deltaConnectionServer to share documents between different provider
      */
@@ -136,7 +137,7 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     /**
      * Make a test loader
-     * @param registry - optional registry to create the fluidEntryPoint
+     * @param registry - optional channel to factory pair used create the TestfluidObject with
      */
     public makeTestLoader(registry?: ChannelFactoryRegistryType) {
         return this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(registry) ]]);
@@ -144,7 +145,7 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     /**
      * Make a container using a default document id and code details
-     * @param registry - optional registry to create the fluidEntryPoint
+     * @param registry - optional channel to factory pair used create the TestfluidObject with
      */
     public async makeTestContainer(registry?: ChannelFactoryRegistryType) {
         const loader = this.makeTestLoader(registry);
@@ -153,7 +154,7 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     /**
      * Load a container using a default document id and code details
-     * @param registry - optional registry to create the fluidEntryPoint
+     * @param registry - optional channel to factory pair used create the TestfluidObject with
      */
     public async loadTestContainer(registry?: ChannelFactoryRegistryType) {
         const loader = this.makeTestLoader(registry);
