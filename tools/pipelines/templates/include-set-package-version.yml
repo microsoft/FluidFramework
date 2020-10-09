@@ -33,7 +33,7 @@ steps:
       node $(Build.SourcesDirectory)/tools/pipelines/scripts/build-version.js
 - task: Bash@3
   displayName: Update Package Version
-    inputs:
+  inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |

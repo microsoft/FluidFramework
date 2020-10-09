@@ -36,7 +36,7 @@ jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
   pool: ${{ parameters.pool }}
-  environment: test # ${{ parameters.environment }}
+  environment: ${{ parameters.environment }}
   workspace:
     clean: all
   variables:
