@@ -97,7 +97,7 @@ jobs:
                   tag="--tag canary"
                   if [[ "$(release)" == "release" ]]; then
                     if [ "$(isLatest)" = "true" ]; then
-                      tag="--tag latest
+                      tag="--tag latest"
                     fi
                   elif [[ "$(Build.SourceBranch)" = refs/heads/main ]]; then
                     tag="--tag next"
