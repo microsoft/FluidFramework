@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { EventForwarder } from "@fluidframework/common-utils";
 import {
+    ConnectionMode,
     IClientDetails,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -135,6 +136,10 @@ export class DeltaManagerProxy
 
     public get readonly(): boolean | undefined {
         return this.deltaManager.readonly;
+    }
+
+    public get connectionMode(): ConnectionMode {
+        return this.deltaManager.connectionMode;
     }
 
     constructor(private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {

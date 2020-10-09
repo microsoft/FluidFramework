@@ -250,7 +250,7 @@ export class DeltaManager
     }
 
     /**
-     * The current connection mode, initially write.
+     * The current connection mode, initially read.
      */
     public get connectionMode(): ConnectionMode {
         if (this.connection === undefined) {

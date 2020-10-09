@@ -62,16 +62,13 @@ describe("Quorum.EndToEnd", () => {
             container1 = await createContainer([["map", SharedMap.getFactory()]]);
 
             opProcessingController = new OpProcessingController(deltaConnectionServer);
-            opProcessingController.addDeltaManagers(
-                container1.deltaManager);
+            opProcessingController.addDeltaManagers(container1.deltaManager);
 
             await opProcessingController.process();
 
             // Load the Container that was created by the first client.
             container2 = await loadContainer([["map", SharedMap.getFactory()]]);
-
-            opProcessingController.addDeltaManagers(
-                container1.deltaManager);
+            opProcessingController.addDeltaManagers(container1.deltaManager);
 
             const quorum1 = container1.getQuorum();
             const quorum2 = container2.getQuorum();
@@ -89,10 +86,11 @@ describe("Quorum.EndToEnd", () => {
             const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             const map1 = await dataObject1.getSharedObject<ISharedMap>("map");
 
+            // BUG BUG quorum.propose doesn't handle readonly, so make sure connection is write
             while (container1.deltaManager.connectionMode === "read" || !container1.connected) {
                 map1.set("foo","bar");
                 await Promise.all([
-                    new Promise((resolve) => container1.connected ? resolve : container1.once("connect", resolve)),
+                    new Promise((resolve) => container1.connected ? resolve() : container1.once("connect", resolve)),
                     opProcessingController.process(),
                 ]);
             }
