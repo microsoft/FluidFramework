@@ -340,7 +340,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     /**
      * Disconnect from the websocket
      */
-    public disconnect(socketProtocolError: boolean = false) {
+    public disconnectCore(socketProtocolError: boolean, reason: string) {
         // We set the closed flag as a part of the contract for overriding the disconnect method.  This is used by
         // DocumentDeltaConnection to determine if emitting on the socket is allowed, which is important since
         // OdspDocumentDeltaConnection reuses the socket rather than truly disconnecting it.  Note that below we may
@@ -352,9 +352,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             const key = this.socketReferenceKey;
             this.socketReferenceKey = undefined;
 
-            const reason = "client closing connection";
-
-            if (this.enableMultiplexing && !socketProtocolError && this.hasDetails) {
+            if (!socketProtocolError && this.hasDetails) {
                 // tell the server we are disconnecting this client from the document
                 this.socket.emit("disconnect_document", this.clientId, this.documentId);
             }
@@ -365,5 +363,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             // If it's not critical error, we want to raise event on this object only.
             this.emit("disconnect", reason);
         }
+
+        // Remove all listeners after "disconnect" event was raised.
+        this.removeTrackedListeners(false);
     }
 }

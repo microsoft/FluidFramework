@@ -306,12 +306,21 @@ export class DocumentDeltaConnection
     }
 
     /**
+     * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.
+     */
+    public disconnect() {
+        this.disconnectCore(false, "client closing connection");
+    }
+
+    /**
      * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.  Subclasses which
      * override this method must set the "closed" flag after disconnecting.
      * @param socketProtocolError - true if error happened on socket / socket.io protocol level
      *  (not on Fluid protocol level)
+     * @param reason - reason for disconnect
      */
-    public disconnect(socketProtocolError: boolean = false) {
+    public disconnectCore(socketProtocolError: boolean, reason: string) {
+        this.closed = true;
         this.removeTrackedListeners(false);
         this.socket.disconnect();
         this.closed = true;
@@ -326,21 +335,20 @@ export class DocumentDeltaConnection
         this._details = await new Promise<IConnected>((resolve, reject) => {
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
-                debug(`Socket connection error: [${error}]`);
-                this.disconnect(true);
+                this.disconnectCore(true, `Socket connection error: ${error}`);
                 reject(createErrorObject("connect_error", error));
             });
 
             // Listen for timeouts
             this.addConnectionListener("connect_timeout", () => {
-                this.disconnect(true);
+                this.disconnectCore(true, "connect_timeout");
                 reject(createErrorObject("connect_timeout", "Socket connection timed out"));
             });
 
             // Socket can be disconnected while waiting for Fluid protocol messages
             // (connect_document_error / connect_document_success)
             this.addConnectionListener("disconnect", (reason) => {
-                this.disconnect(true);
+                this.disconnectCore(true, `disconnect : ${reason}`);
                 reject(createErrorObject("disconnect", reason));
             });
 
@@ -369,7 +377,7 @@ export class DocumentDeltaConnection
                 this.emit("error", errorObj);
 
                 // Safety net - disconnect socket if client did not do so as result of processing "error" event.
-                this.disconnect(true);
+                this.disconnectCore(true, `error: ${error}`);
             }));
 
             this.addConnectionListener("connect_document_error", ((error) => {
@@ -383,7 +391,7 @@ export class DocumentDeltaConnection
                 // This is not an error for the socket - it's a protocol error.
                 // In this case we disconnect the socket and indicate that we were unable to create the
                 // DocumentDeltaConnection.
-                this.disconnect(false);
+                this.disconnectCore(false, `connect_document_error: ${error}`);
                 reject(createErrorObject("connect_document_error", error));
             }));
 
@@ -430,7 +438,7 @@ export class DocumentDeltaConnection
         this.trackedListeners.push({ event, connectionListener: false, listener });
     }
 
-    private removeTrackedListeners(connectionListenerOnly) {
+    protected removeTrackedListeners(connectionListenerOnly: boolean) {
         const remaining: IEventListener[] = [];
         for (const { event, connectionListener, listener } of this.trackedListeners) {
             if (!connectionListenerOnly || connectionListener) {

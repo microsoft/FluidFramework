@@ -812,7 +812,9 @@ export class DeltaManager
         this.stopSequenceNumberUpdate();
 
         // This raises "disconnect" event
-        this.disconnectFromDeltaStream(error !== undefined ? `${error.message}` : "Container closed");
+        if (this.connection !== undefined) {
+            this.disconnectFromDeltaStream(error !== undefined ? `${error.message}` : "Container closed");
+        }
 
         this._inbound.clear();
         this._outbound.clear();
@@ -1039,9 +1041,7 @@ export class DeltaManager
      */
     private disconnectFromDeltaStream(reason: string) {
         const connection = this.connection;
-        if (connection === undefined) {
-            return;
-        }
+        assert(connection !== undefined);
 
         // We cancel all ops on lost of connectivity, and rely on DDSes to resubmit them.
         // Semantics are not well defined for batches (and they are broken right now on disconnects anyway),
@@ -1075,9 +1075,8 @@ export class DeltaManager
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
-        if (connection !== this.connection) {
-            return;
-        }
+        // We should correctly unregister all event listeners not to re-enter here again!
+        assert(connection === this.connection);
 
         this.disconnectFromDeltaStream(error.message);
 
