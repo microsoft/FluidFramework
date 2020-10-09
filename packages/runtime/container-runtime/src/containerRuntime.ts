@@ -964,7 +964,7 @@ export class ContainerRuntime extends EventEmitter
         const requestParser = new RequestParser(request);
         const id = requestParser.pathParts[0];
 
-        if (id === "store") {
+        if (id === "_store") {
             return this.resolveHandle(requestParser.createSubRequest(1) as IRequest);
         }
 

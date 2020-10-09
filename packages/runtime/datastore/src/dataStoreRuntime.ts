@@ -272,7 +272,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         const parser = new RequestParser(request);
         const id = parser.pathParts[0];
 
-        if (id === "dds" || id === "object") {
+        if (id === "_dds" || id === "_object") {
             return this.request(parser.createSubRequest(1) as IRequest);
         }
 
