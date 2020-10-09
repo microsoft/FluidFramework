@@ -29,14 +29,16 @@ export class RequestParser implements IRequest {
 
     private requestPathParts: readonly string[] | undefined;
     public readonly query: string;
-    constructor(private readonly request: Readonly<IRequest>) {
-        // Perf optimizations. Even better would be not to create this object
-        if (request instanceof RequestParser) {
-            this.query = request.query;
-            this.requestPathParts = request.pathParts;
-            return;
-        }
 
+    public static create(request: Readonly<IRequest>) {
+        // Perf optimizations.
+        if (request instanceof RequestParser) {
+            return request;
+        }
+        return new RequestParser(request);
+    }
+
+    protected constructor(private readonly request: Readonly<IRequest>) {
         const queryStartIndex = this.request.url.indexOf("?");
         if (queryStartIndex >= 0) {
             this.query = this.request.url.substring(queryStartIndex);

@@ -44,7 +44,7 @@ describe("RequestParser", () => {
     describe(".createSubRequest", () => {
         let requestParser: RequestParser;
         beforeEach(() => {
-            requestParser = new RequestParser({ url: "/dataStoreId//some/route/" });
+            requestParser = RequestParser.create({ url: "/dataStoreId//some/route/" });
         });
         it("Create request from part 0", () => {
             assert.equal(requestParser.createSubRequest(0)?.url, "dataStoreId/some/route");

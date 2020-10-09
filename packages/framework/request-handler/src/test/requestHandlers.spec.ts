@@ -39,7 +39,7 @@ class MockRuntime {
     }
 
     public async resolveHandle(request: IRequest) {
-        const requestParser = new RequestParser(request);
+        const requestParser = RequestParser.create(request);
 
         if (requestParser.pathParts.length > 0) {
             const wait =
@@ -65,7 +65,7 @@ describe("RequestParser", () => {
         const runtime = new MockRuntime() as any as IContainerRuntime;
 
         it("Empty request", async () => {
-            const requestParser = new RequestParser({ url: "/" });
+            const requestParser = RequestParser.create({ url: "/" });
             const response = await deprecated_innerRequestHandler(
                 requestParser,
                 runtime);
@@ -73,7 +73,7 @@ describe("RequestParser", () => {
         });
 
         it("Data store request without wait", async () => {
-            const requestParser = new RequestParser({ url: "/nonExistingUri" });
+            const requestParser = RequestParser.create({ url: "/nonExistingUri" });
             const responseP = deprecated_innerRequestHandler(
                 requestParser,
                 runtime);
@@ -81,7 +81,7 @@ describe("RequestParser", () => {
         });
 
         it("Data store  request with wait", async () => {
-            const requestParser = new RequestParser({ url: "/nonExistingUri", headers: { wait: true } });
+            const requestParser = RequestParser.create({ url: "/nonExistingUri", headers: { wait: true } });
             const responseP = deprecated_innerRequestHandler(
                 requestParser,
                 runtime);
@@ -89,14 +89,14 @@ describe("RequestParser", () => {
         });
 
         it("Data store  request with sub route", async () => {
-            const requestParser = new RequestParser({ url: "/objectId/route", headers: { wait: true } });
+            const requestParser = RequestParser.create({ url: "/objectId/route", headers: { wait: true } });
             const response = await deprecated_innerRequestHandler(requestParser, runtime);
             assert.equal(response.status, 200);
             assert.equal(response.value.route, "route");
         });
 
         it("Data store  request with non-existing sub route", async () => {
-            const requestParser = new RequestParser({ url: "/objectId/doesNotExist", headers: { wait: true } });
+            const requestParser = RequestParser.create({ url: "/objectId/doesNotExist", headers: { wait: true } });
             const responseP = deprecated_innerRequestHandler(requestParser, runtime);
             await assertRejected(responseP);
         });

@@ -958,7 +958,7 @@ export class ContainerRuntime extends EventEmitter
      * @param request - Request made to the handler.
      */
     public async resolveHandle(request: IRequest): Promise<IResponse> {
-        const requestParser = new RequestParser(request);
+        const requestParser = RequestParser.create(request);
         const id = requestParser.pathParts[0];
 
         if (id === this.blobManager.basePath && requestParser.isLeaf(2)) {

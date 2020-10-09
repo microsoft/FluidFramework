@@ -47,7 +47,7 @@ import {
     ISummaryTreeWithStats,
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { generateHandleContextPath, SummaryTreeBuilder, RequestParser } from "@fluidframework/runtime-utils";
+import { generateHandleContextPath, RequestParser, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
     IChannel,
     IFluidDataStoreRuntime,
@@ -269,7 +269,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const parser = new RequestParser(request);
+        const parser = RequestParser.create(request);
         const id = parser.pathParts[0];
 
         // Check for a data type reference first
