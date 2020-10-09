@@ -216,8 +216,8 @@ export class Loader extends EventEmitter implements ILoader {
         const { canCache } = this.parseHeader(parsedUrl, request);
 
         if (canCache) {
-            const versionedId = this.getKeyForContainerCache(request, parsedUrl);
-            this.containers.set(versionedId, Promise.resolve(container));
+            const key = this.getKeyForContainerCache(request, parsedUrl);
+            this.containers.set(key, Promise.resolve(container));
         }
     }
 
@@ -251,10 +251,10 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     private getKeyForContainerCache(request: IRequest, parsedUrl: IParsedUrl): string {
-        const versionedId = request.headers?.[LoaderHeader.version] !== undefined
+        const key = request.headers?.[LoaderHeader.version] !== undefined
             ? `${parsedUrl.id}@${request.headers[LoaderHeader.version]}`
             : parsedUrl.id;
-        return versionedId;
+        return key;
     }
 
     private async resolveCore(
@@ -276,8 +276,8 @@ export class Loader extends EventEmitter implements ILoader {
 
         let container: Container;
         if (canCache) {
-            const versionedId = this.getKeyForContainerCache(request, parsed);
-            const maybeContainer = await this.containers.get(versionedId);
+            const key = this.getKeyForContainerCache(request, parsed);
+            const maybeContainer = await this.containers.get(key);
             if (maybeContainer !== undefined) {
                 container = maybeContainer;
             } else {
@@ -286,7 +286,7 @@ export class Loader extends EventEmitter implements ILoader {
                         parsed.id,
                         request,
                         resolvedAsFluid);
-                this.containers.set(versionedId, containerP);
+                this.containers.set(key, containerP);
                 container = await containerP;
             }
         } else {
