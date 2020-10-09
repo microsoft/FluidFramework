@@ -6,69 +6,44 @@
 import { strict as assert } from "assert";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-    createAndAttachContainer,
-    createLocalLoader,
     OpProcessingController,
     ITestFluidObject,
-    TestFluidObjectFactory,
+    ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
+import { testWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
 
-describe("Cell", () => {
-    const documentId = "cellTest";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
-    const cellId = "cellKey";
+const cellId = "cellKey";
+const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
+
+const tests = (args: ICompatLocalTestObjectProvider) => {
     const initialCellValue = "Initial cell value";
     const newCellValue = "A new cell value";
-    const codeDetails: IFluidCodeDetails = {
-        package: "sharedCellTestPackage",
-        config: {},
-    };
-    const factory = new TestFluidObjectFactory([[cellId, SharedCell.getFactory()]]);
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: IUrlResolver;
     let opProcessingController: OpProcessingController;
     let dataObject1: ITestFluidObject;
     let sharedCell1: ISharedCell;
     let sharedCell2: ISharedCell;
     let sharedCell3: ISharedCell;
 
-    async function createContainer(): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
-    }
-
-    async function loadContainer(): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-        return loader.resolve({ url: documentLoadUrl });
-    }
-
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
-        urlResolver = new LocalResolver();
-
         // Create a Container for the first client.
-        const container1 = await createContainer();
+        const container1 = await args.makeTestContainer(registry);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedCell1 = await dataObject1.getSharedObject<SharedCell>(cellId);
 
         // Load the Container that was created by the first client.
-        const container2 = await loadContainer();
+        const container2 = await args.loadTestContainer(registry);
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedCell2 = await dataObject2.getSharedObject<SharedCell>(cellId);
 
         // Load the Container that was created by the first client.
-        const container3 = await loadContainer();
+        const container3 = await args.loadTestContainer(registry);
         const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         sharedCell3 = await dataObject3.getSharedObject<SharedCell>(cellId);
 
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
         opProcessingController.addDeltaManagers(
             dataObject1.runtime.deltaManager,
             dataObject2.runtime.deltaManager,
@@ -236,8 +211,8 @@ describe("Cell", () => {
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell2))), cellValue, 2);
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell3))), cellValue, 3);
     });
+};
 
-    afterEach(async () => {
-        await deltaConnectionServer.webSocketServer.close();
-    });
+describe("Cell", () => {
+    testWithCompat(tests, { testFluidDataObject: true });
 });
