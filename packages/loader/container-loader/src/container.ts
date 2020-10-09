@@ -284,7 +284,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public subLogger: TelemetryLogger;
 
-    // Tells if container can reconnect on loosing fist connection
+    // Tells if container can reconnect on losing fist connection
     // If false, container gets closed on loss of connection.
     private readonly _canReconnect: boolean = true;
 
