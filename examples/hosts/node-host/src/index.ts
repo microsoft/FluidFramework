@@ -118,10 +118,10 @@ export async function start(): Promise<void> {
 
 export async function storageAccount() {
     const azureStorage = new AzureBlobStorage("DefaultEndpointsProtocol=https;AccountName=prosemirror;AccountKey=5LkbRyZcII5Tq6r2sjCB95vNbFOswTlJ8ZvmN5HJtEmPusAG4e8SfpWit0npF25/bT9SLZKrKT1Xq/DC/GSRRg==;EndpointSuffix=core.windows.net")
-    const data = await azureStorage.getSnapShotListForBlobName("samples", "sampletext.txt");
+    // const data = await azureStorage.getSnapShotListForBlobName("samples", "sampletext.txt");
 
-    console.log(data);
-    const snapshotdata = await azureStorage.getSnapShotContent("samples", "sampletext.txt", "2020-10-05T10:00:45.1137620Z")
+    // console.log(data);
+    const snapshotdata = await azureStorage.putandcommitblockblobtest("samples", "sampletext.txt")
     console.log(snapshotdata);
 }
 // storageAccount();
