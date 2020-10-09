@@ -935,7 +935,7 @@ export class ContainerRuntime extends EventEmitter
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-        const parser = new RequestParser(request);
+        const parser = RequestParser.create(request);
         const id = parser.pathParts[0];
 
         if (id === "_summarizer" && parser.pathParts.length === 1) {
