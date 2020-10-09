@@ -136,7 +136,7 @@ const tests = (args: ICompatTestArgs) => {
         // Now attach the container
         await container.attach(request);
 
-        assert.strictEqual(testDataStore.runtime.IFluidHandleContext.isAttached, true,
+        assert(testDataStore.runtime.attachState !== AttachState.Detached,
             "DataStore should be attached!!");
 
         // Get the sub dataStore's "root" channel and verify that it is attached.
@@ -169,7 +169,7 @@ const tests = (args: ICompatTestArgs) => {
         // Get the sub dataStore and assert that it is attached.
         const response2 = await container2.request({ url: `/${subDataStore1.context.id}` });
         const subDataStore2 = response2.value as ITestFluidObject;
-        assert.strictEqual(subDataStore2.runtime.IFluidHandleContext.isAttached, true,
+        assert(subDataStore2.runtime.attachState !== AttachState.Detached,
             "DataStore should be attached!!");
 
         // Verify the attributes of the root channel of both sub dataStores.
