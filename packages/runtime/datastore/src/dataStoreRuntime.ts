@@ -140,6 +140,10 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
     public get IFluidHandleContext() { return this; }
 
+    public get rootRoutingContext() { return this; }
+    public get ddsRoutingContext() { return this; }
+    public get objectsRoutingContext() { return this; }
+
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
