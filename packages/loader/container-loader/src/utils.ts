@@ -7,8 +7,6 @@ import { parse } from "url";
 import { fromUtf8ToBase64, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import uuid from "uuid";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { LoaderHeader } from "@fluidframework/container-definitions";
 
 export interface IParsedUrl {
     id: string;
@@ -97,40 +95,4 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
     };
 
     return snapshotTree;
-}
-
-export function canUseCache(request: IRequest): boolean {
-    if (request.headers === undefined) {
-        return true;
-    }
-
-    const noCache =
-        request.headers[LoaderHeader.cache] === false ||
-        request.headers[LoaderHeader.reconnect] === false ||
-        request.headers[LoaderHeader.pause] === true;
-
-    return !noCache;
-}
-
-export function parseHeader(parsed: IParsedUrl, request: IRequest) {
-    let fromSequenceNumber = -1;
-
-    request.headers = request.headers ?? {};
-
-    const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
-    if (headerSeqNum !== undefined) {
-        fromSequenceNumber = headerSeqNum;
-    }
-
-    // If set in both query string and headers, use query string
-    request.headers[LoaderHeader.version] = parsed.version ?? request.headers[LoaderHeader.version];
-
-    // Version === null means not use any snapshot.
-    if (request.headers[LoaderHeader.version] === "null") {
-        request.headers[LoaderHeader.version] = null;
-    }
-    return {
-        canCache: canUseCache(request),
-        fromSequenceNumber,
-    };
 }

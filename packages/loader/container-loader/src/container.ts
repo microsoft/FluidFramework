@@ -21,7 +21,6 @@ import {
     IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
-    ILoader,
     IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
@@ -94,7 +93,7 @@ import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
 import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
-import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree, parseHeader } from "./utils";
+import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -146,7 +145,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         codeLoader: ICodeLoader,
         options: any,
         scope: IFluidObject,
-        loader: ILoader,
+        loader: Loader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
         urlResolver: IUrlResolver,
@@ -207,7 +206,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         source: DetachedContainerSource,
         serviceFactory: IDocumentServiceFactory,
         urlResolver: IUrlResolver,
-        cachedContainers: Map<string, Promise<Container>>,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
@@ -218,8 +216,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             serviceFactory,
             urlResolver,
             {},
-            logger,
-            cachedContainers);
+            logger);
 
         if (source.create) {
             await container.createDetached(source.codeDetails);
@@ -397,12 +394,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         public readonly options: any,
         private readonly scope: IFluidObject,
         private readonly codeLoader: ICodeLoader,
-        private readonly loader: ILoader,
+        private readonly loader: Loader,
         private readonly serviceFactory: IDocumentServiceFactory,
         private readonly urlResolver: IUrlResolver,
         config: IContainerConfig,
         logger: ITelemetryBaseLogger | undefined,
-        private readonly cachedContainers?: Map<string, Promise<Container>>,
     ) {
         super();
         this._audience = new Audience();
@@ -580,15 +576,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 throw new Error("Unable to parse Url");
             }
 
-            const { canCache } = parseHeader(parsedUrl, request);
-
-            // Cache the container if we are allowed to cache it.
-            if (canCache) {
-                const versionedId = request.headers[LoaderHeader.version] !== undefined
-                    ? `${parsedUrl.id}@${request.headers[LoaderHeader.version]}`
-                    : parsedUrl.id;
-                this.cachedContainers?.set(versionedId, Promise.resolve(this));
-            }
+            this.loader.cacheContainer(this, request, parsedUrl);
 
             const [, docId] = parsedUrl.id.split("/");
             this._id = decodeURI(docId);
