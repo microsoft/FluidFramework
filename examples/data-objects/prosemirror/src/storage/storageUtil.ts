@@ -87,7 +87,7 @@ export class StorageUtil implements IStorageUtil {
 
         // let oldMarkdown = await this.getMardownDataAndConvertIntoNode(schema);
         let oldMarkdown = "Hello, world!";
-
+        console.log(oldMarkdown);
         console.log("///////// Markdown Data writing Example //////////////");
         console.log(updatedMarkdown);
 
