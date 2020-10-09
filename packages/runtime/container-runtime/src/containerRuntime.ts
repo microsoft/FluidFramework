@@ -935,7 +935,10 @@ export class ContainerRuntime extends EventEmitter
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "_summarizer" || request.url === "/_summarizer") {
+        const parser = new RequestParser(request);
+        const id = parser.pathParts[0];
+
+        if (id === "_summarizer" && parser.pathParts.length === 1) {
             return {
                 status: 200,
                 mimeType: "fluid/object",
@@ -943,7 +946,7 @@ export class ContainerRuntime extends EventEmitter
             };
         }
         if (this.requestHandler !== undefined) {
-            return this.requestHandler(request, this);
+            return this.requestHandler(parser, this);
         }
 
         return {
@@ -959,9 +962,13 @@ export class ContainerRuntime extends EventEmitter
      */
     public async resolveHandle(request: IRequest): Promise<IResponse> {
         const requestParser = new RequestParser(request);
+        const id = requestParser.pathParts[0];
 
-        if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === this.blobManager.basePath) {
-            assert(requestParser.pathParts.length === 2 && !requestParser.query);
+        if (id === "store") {
+            return this.resolveHandle(requestParser.createSubRequest(1) as IRequest);
+        }
+
+        if (id === this.blobManager.basePath && requestParser.pathParts.length === 2 && !requestParser.query) {
             const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
             if (handle) {
                 return {
@@ -980,17 +987,9 @@ export class ContainerRuntime extends EventEmitter
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const dataStore = await this.getDataStore(requestParser.pathParts[0], wait);
-            const subRequest = requestParser.createSubRequest(1);
-            if (subRequest !== undefined) {
-                return dataStore.IFluidRouter.request(subRequest);
-            } else {
-                return {
-                    status: 200,
-                    mimeType: "fluid/object",
-                    value: dataStore,
-                };
-            }
+            const dataStore = await this.getDataStore(id, wait);
+            const subRequest = requestParser.createSubRequest(1) as IRequest;
+            return dataStore.IFluidRouter.request(subRequest);
         }
 
         return {

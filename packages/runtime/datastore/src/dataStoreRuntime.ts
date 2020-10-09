@@ -47,7 +47,7 @@ import {
     ISummaryTreeWithStats,
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { generateHandleContextPath, RequestParser, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
     IChannel,
     IFluidDataStoreRuntime,
@@ -269,8 +269,12 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        // Parse out the leading slash
-        const id = request.url.startsWith("/") ? request.url.substr(1) : request.url;
+        const parser = new RequestParser(request);
+        const id = parser.pathParts[0];
+
+        if (id === "dds" || id === "object") {
+            return this.request(parser.createSubRequest(1) as IRequest);
+        }
 
         // Check for a data type reference first
         if (this.contextsDeferred.has(id)) {
@@ -285,7 +289,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         if (this.requestHandler === undefined) {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         } else {
-            return this.requestHandler(request);
+            return this.requestHandler(parser);
         }
     }
 
