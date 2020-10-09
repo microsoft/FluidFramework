@@ -168,7 +168,7 @@ function main() {
                 process.exit(8);
             }
             const tagName = `${arg_tag}_v${split[0]}.${parseInt(split[1]) + 1}.*`;
-            const out = child_process_1.default.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
+            const out = child_process.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
             if (out.trim()) {
                 isLatest = false;
             }
