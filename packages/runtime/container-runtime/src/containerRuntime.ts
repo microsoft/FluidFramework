@@ -595,7 +595,8 @@ export class ContainerRuntime extends EventEmitter
     public nextSummarizerP?: Promise<Summarizer>;
     public nextSummarizerD?: Deferred<Summarizer>;
 
-    public readonly IFluidSerializer: IFluidSerializer = new FluidSerializer();
+    // Back compat: 0.28, can be removed in 0.29
+    public readonly IFluidSerializer: IFluidSerializer;
 
     public readonly IFluidHandleContext: IFluidHandleContext;
 
@@ -690,6 +691,7 @@ export class ContainerRuntime extends EventEmitter
         this.chunkMap = new Map<string, string[]>(chunks);
 
         this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
+        this.IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
 
         this.logger = ChildLogger.create(context.logger, undefined, {
             runtimeVersion: pkgVersion,

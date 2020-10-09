@@ -9,7 +9,6 @@ import {
     IFluidObject,
     IFluidRouter,
     IProvideFluidHandleContext,
-    IProvideFluidSerializer,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
@@ -57,7 +56,6 @@ export enum FlushMode {
 export interface IContainerRuntimeBase extends
     EventEmitter,
     IProvideFluidHandleContext,
-    IProvideFluidSerializer,
     /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
     IProvideFluidDataStoreRegistry {
 

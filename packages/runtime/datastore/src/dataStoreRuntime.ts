@@ -47,7 +47,7 @@ import {
     ISummaryTreeWithStats,
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { generateHandleContextPath, SummaryTreeBuilder, FluidSerializer } from "@fluidframework/runtime-utils";
 import {
     IChannel,
     IFluidDataStoreRuntime,
@@ -136,7 +136,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return this.dataStoreContext.containerRuntime.IFluidHandleContext;
     }
 
-    public get IFluidSerializer() { return this.dataStoreContext.containerRuntime.IFluidSerializer; }
+    private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
+    public get IFluidSerializer() { return this.serializer; }
 
     public get IFluidHandleContext() { return this; }
 
