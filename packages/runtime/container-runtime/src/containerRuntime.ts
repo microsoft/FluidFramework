@@ -1734,6 +1734,14 @@ export class ContainerRuntime extends EventEmitter
                 return { ...attemptData, ...generateData, ...uploadData, reason: "disconnected" };
             }
 
+            // We need the summary op's reference sequence number to match our summary sequence number
+            // Otherwise we'll get the wrong sequence number stamped on the summary's .protocol attributes
+            assert(
+                this.deltaManager.lastSequenceNumber === summaryRefSeqNum,
+                `lastSequenceNumber changed before the summary op could be submitted. `
+                    + `${lastSequenceNumber} !== ${summaryRefSeqNum}`,
+            );
+
             const clientSequenceNumber =
                 this.submitSystemMessage(MessageType.Summarize, summaryMessage);
 
