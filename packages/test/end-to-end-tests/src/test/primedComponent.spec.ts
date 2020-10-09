@@ -4,19 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { DataObject } from "@fluidframework/aqueduct";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { ISharedDirectory } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, createAndAttachContainer } from "@fluidframework/test-utils";
-import { compatTest, ICompatTestArgs } from "./compatUtils";
-
-const PrimedType = "@fluidframework/primedTestDataObject";
+import { generateTestWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
 
 /**
  * My sample dataObject
@@ -30,7 +23,7 @@ class TestDataObject extends DataObject {
     }
 }
 
-const tests = (args: ICompatTestArgs) => {
+const tests = (args: ICompatLocalTestObjectProvider) => {
     let dataObject: TestDataObject;
 
     beforeEach(async () => {
@@ -56,41 +49,5 @@ const tests = (args: ICompatTestArgs) => {
 };
 
 describe("DataObject", () => {
-    describe("Blob support", () => {
-        const documentId = "primedComponentTest";
-        const documentLoadUrl = `fluid-test://localhost/${documentId}`;
-        const codeDetails: IFluidCodeDetails = {
-            package: "primedTestDataObjectTestPackage",
-            config: {},
-        };
-        const factory = new DataObjectFactory(PrimedType, TestDataObject, [], {});
-
-        let deltaConnectionServer: ILocalDeltaConnectionServer;
-        let urlResolver: IUrlResolver;
-
-        async function makeTestContainer(): Promise<IContainer> {
-            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-            return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
-        }
-
-        async function loadTestContainer(): Promise<IContainer> {
-            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-            return loader.resolve({ url: documentLoadUrl });
-        }
-
-        beforeEach(async () => {
-            deltaConnectionServer = LocalDeltaConnectionServer.create();
-            urlResolver = new LocalResolver();
-        });
-
-        tests({ makeTestContainer, loadTestContainer });
-
-        afterEach(async () => {
-            await deltaConnectionServer.webSocketServer.close();
-        });
-    });
-
-    describe("compatibility", () => {
-        compatTest(tests);
-    });
+    generateTestWithCompat(tests);
 });
