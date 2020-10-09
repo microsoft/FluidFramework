@@ -9,7 +9,6 @@ import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
@@ -165,7 +164,7 @@ export interface ILoader extends IFluidRouter {
      * Creates a new container using the specified snapshot but in an unattached state. While unattached all
      * updates will only be local until the user explicitly attaches the container to a service provider.
      */
-    rehydrateDetachedContainerFromSnapshot(snapshot: ISnapshotTree): Promise<IContainer>;
+    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
 }
 
 /**

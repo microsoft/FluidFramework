@@ -47,7 +47,7 @@ import {
     ISummaryTreeWithStats,
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { generateHandleContextPath, RequestParser, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
     IChannel,
     IFluidDataStoreRuntime,
@@ -269,11 +269,11 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        // Parse out the leading slash
-        const id = request.url.startsWith("/") ? request.url.substr(1) : request.url;
+        const parser = RequestParser.create(request);
+        const id = parser.pathParts[0];
 
         // Check for a data type reference first
-        if (this.contextsDeferred.has(id)) {
+        if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const value = await this.contextsDeferred.get(id)!.promise;
             const channel = await value.getChannel();

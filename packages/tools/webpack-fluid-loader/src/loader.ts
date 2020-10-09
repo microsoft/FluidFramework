@@ -239,7 +239,7 @@ export async function start(
         div.append(leftDiv, rightDiv);
     }
 
-    const reqParser = new RequestParser({ url });
+    const reqParser = RequestParser.create({ url });
     const fluidObjectUrl = `/${reqParser.createSubRequest(4).url}`;
 
     // Load and render the Fluid object.
@@ -375,7 +375,7 @@ async function attachContainer(
             summaryList.appendChild(listItem);
             rehydrateButton.onclick = async () => {
                 const snapshot = summaryList.value;
-                currentContainer = await loader.rehydrateDetachedContainerFromSnapshot(JSON.parse(snapshot));
+                currentContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
                 let newLeftDiv: HTMLDivElement;
                 if (rightDiv !== undefined) {
                     newLeftDiv = makeSideBySideDiv(uuid());

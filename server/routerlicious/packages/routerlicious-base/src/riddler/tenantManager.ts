@@ -170,7 +170,7 @@ export class TenantManager {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
-        await collection.update({ _id: tenantId }, customData, null);
+        await collection.update({ _id: tenantId }, { customData }, null);
 
         return (await this.getTenantDocument(tenantId)).customData;
     }

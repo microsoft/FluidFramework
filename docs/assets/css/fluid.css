@@ -52,7 +52,7 @@ footer {
     padding-left: 0;
 }
 
-.cta:hover {
+.cta:hover, .cta:focus {
     text-decoration: none;
     transition: none;
     background: #5a5a66;

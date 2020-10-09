@@ -15,10 +15,7 @@ const adoConstants = {
     orgUrl: 'https://dev.azure.com/fluidframework',
     projectName: 'public',
     ciBuildDefinitionId: 48,
-    prBuildDefinitionId: undefined,
     bundleAnalysisArtifactName: 'bundleAnalysis',
-    projectRepoGuid: undefined,
-    buildsToSearch: undefined,
 };
 
 const localReportPath = "./artifacts/bundleAnalysis";
