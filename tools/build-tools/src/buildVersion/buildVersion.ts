@@ -178,7 +178,7 @@ function main() {
 
     // Generate and print the version to console
     const version = getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
-    console.log("version=${version}");
+    console.log(`version=${version}`);
     console.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
     if (arg_release) {
         let isLatest = true;
@@ -194,7 +194,7 @@ function main() {
                 isLatest = false;
             }
         }
-        console.log("isLatest=${isLatest}");
+        console.log(`isLatest=${isLatest}`);
         console.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);
     }
 }
