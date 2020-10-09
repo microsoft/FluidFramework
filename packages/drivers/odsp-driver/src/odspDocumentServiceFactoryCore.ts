@@ -142,7 +142,11 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
             return PerformanceEvent.timedExecAsync(
                 logger,
-                { eventName: `${name || "OdspDocumentService"}_GetToken` },
+                {
+                    eventName: `${name || "OdspDocumentService"}_GetToken`,
+                    refresh: options.refresh,
+                    hasClaims: !!options.claims,
+                },
                 async (event) => tokenFetcher(resolvedUrl.siteUrl, options.refresh, options.claims)
                 .then((tokenResponse) => {
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });

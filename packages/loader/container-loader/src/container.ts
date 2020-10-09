@@ -429,6 +429,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 docId: () => this.id,
                 containerAttachState: () => this._attachState,
+                containerLoaded: () => this.loaded,
             });
 
         // Prefix all events in this file with container-loader
@@ -480,7 +481,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 {
                     eventName: "ContainerClose",
                     sequenceNumber: error.sequenceNumber ?? this._deltaManager.lastSequenceNumber,
-                    loading: !this.loaded,
                 },
                 error,
             );
