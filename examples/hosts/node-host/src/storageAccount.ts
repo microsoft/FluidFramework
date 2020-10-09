@@ -88,6 +88,28 @@ export class AzureBlobStorage {
 
     }
 
+    public async addorUpdateBlockBlob(containerName: string, blobName: string, keyname: string, data: any) {
+        const blockBlobClient = this.getBlockBlobClient(containerName, blobName);
+        await blockBlobClient.stageBlock(Buffer.from(keyname).toString("base64"), data, 10);
+
+    }
+
+    public async orderedCommitBlockBlob(containerName: string, blobName: string, listBlocks: string[]) {
+        const blockBlobClient = this.getBlockBlobClient(containerName, blobName);
+        await blockBlobClient.commitBlockList(listBlocks);
+    }
+
+    public async putandcommitblockblobtest(containerName: string, blobName: string) {
+        const blockBlobClient = this.getBlockBlobClient(containerName, blobName);
+        const v = await blockBlobClient.stageBlock(Buffer.from("a").toString("base64"), "hello ", 10);
+        const y = await blockBlobClient.stageBlock(Buffer.from("b").toString("base64"), "punjab", 10);
+
+        const z = await blockBlobClient.commitBlockList(["YQ==", "Yg=="]);
+        console.log(v, y, z);
+        const downloadBlockBlobResponse = await blockBlobClient.getBlockList("all");
+        console.log(downloadBlockBlobResponse);
+    }
+
     private streamToString(readableStream) {
         return new Promise((resolve, reject) => {
             const chunks: any = [];
