@@ -36,7 +36,7 @@ jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
   pool: ${{ parameters.pool }}
-  environment: ${{ parameters.environment }}
+  environment: test # ${{ parameters.environment }}
   workspace:
     clean: all
   variables:
@@ -105,13 +105,13 @@ jobs:
                   echo Tag: $tag
                   cp .npmrc ~/.npmrc
                   t1=0
-                  for f in *.tgz
-                  do
-                      if ! npm publish $f $tag ${{ parameters.publishFlags }}
-                      then
-                          let t1+=1
-                      fi
-                  done
+                  # for f in *.tgz
+                  # do
+                  #     if ! npm publish $f $tag ${{ parameters.publishFlags }}
+                  #     then
+                  #         let t1+=1
+                  #     fi
+                  # done
                   rm ~/.npmrc
                   exit $t1
             - template: include-git-tag-steps.yml
