@@ -46,7 +46,7 @@ function parseFileVersion(file_version: string, build_id?: number) {
         const r = release_version.split('.');
         if (r.length !== 3) {
             console.error(`ERROR: Invalid format for release version ${release_version}`);
-            process.exit(6);
+            process.exit(9);
         }
         r[2] = (parseInt(r[2]) + build_id).toString();
         release_version = r.join('.');
@@ -177,7 +177,24 @@ function main() {
     }
 
     // Generate and print the version to console
-    console.log(getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch));
+    const version = getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
+    console.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
+    if (arg_release) {
+        let isLatest = true;
+        if (arg_tag) {
+            const split = version.split(".");
+            if (split.length !== 3) {
+                console.error(`ERROR: Invalid format for release version ${version}`);
+                process.exit(8);
+            }
+            const tagName = `${arg_tag}_v${split[0]}.${parseInt(split[1]) + 1}.*`;
+            const out = child_process.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
+            if (out.trim()) {
+                isLatest = false;
+            }
+        }
+        console.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);
+    }
 }
 
 main();

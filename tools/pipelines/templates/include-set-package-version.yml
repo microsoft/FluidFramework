@@ -30,13 +30,7 @@ steps:
       echo VERSION_RELEASE=$VERSION_RELEASE
       echo VERSION_PATCH=$VERSION_PATCH
 
-      version=`node $(Build.SourcesDirectory)/tools/pipelines/scripts/build-version.js`
-      echo COMPUTED_VERSION=$version
-      if [ "$version" = "" ]; then
-        exit -1
-      fi
-
-      echo "##vso[task.setvariable variable=version;isOutput=true]$version"
+      node $(Build.SourcesDirectory)/tools/pipelines/scripts/build-version.js
 - task: Bash@3
   displayName: Update Package Version
     inputs:

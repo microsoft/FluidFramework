@@ -22,4 +22,4 @@ steps:
         tag=${{ parameters.tagName }}_v$(version)
         echo Tag=$tag
         git tag $tag
-        git push origin $tag
+        # git push origin $tag

@@ -41,6 +41,7 @@ jobs:
     clean: all
   variables:
     version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
+    isLatest: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
   strategy:
     runOnce:
         deploy:
@@ -94,10 +95,12 @@ jobs:
                 workingDirectory: $(Pipeline.Workspace)/pack
                 script: |
                   tag="--tag canary"
-                  if [[ "$(Build.SourceBranch)" = refs/heads/main ]]; then
+                  if [[ "$(release)" == "release" ]]; then
+                    if [ "$(isLatest)" = "true" ]; then
+                      tag="--tag latest
+                    fi
+                  elif [[ "$(Build.SourceBranch)" = refs/heads/main ]]; then
                     tag="--tag next"
-                  elif [[ "$(release)" == "release" ]]; then
-                    tag="--tag latest"
                   fi
                   echo Tag: $tag
                   cp .npmrc ~/.npmrc
