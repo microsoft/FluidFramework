@@ -16,8 +16,6 @@ import { getShareLink } from "./graph";
 import { IdentityType, TokenFetchOptions } from "./tokenFetch";
 
 export class OdspDriverUrlResolver2 implements IUrlResolver {
-    private readonly shareLinkMap = new Map<string, Promise<string>>();
-
     public constructor(
         private readonly getSharingLinkToken:
             (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => Promise<string | null>,
@@ -28,10 +26,6 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
 
     public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string) {
         return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
-    }
-
-    private getKey(resolvedUrl: IOdspResolvedUrl): string {
-        return `${resolvedUrl.siteUrl},${resolvedUrl.driveId},${resolvedUrl.itemId}`;
     }
 
     /**
@@ -86,9 +80,6 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
         }
         if (sharingLink) {
             odspResolvedUrl.sharingLink = sharingLink;
-            // Add to cache.
-            const key = this.getKey(odspResolvedUrl);
-            this.shareLinkMap.set(key, Promise.resolve(sharingLink));
         }
         return odspResolvedUrl;
     }
@@ -98,10 +89,8 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
             throw new Error("Failed to get share link because necessary information is missing " +
                 "(e.g. siteUrl, driveId or itemId)");
         }
-        const key = this.getKey(resolvedUrl);
-        const cachedLinkPromise = this.shareLinkMap.get(key);
-        if (cachedLinkPromise) {
-            return cachedLinkPromise;
+        if (resolvedUrl.sharingLink !== undefined) {
+            return resolvedUrl.sharingLink;
         }
         const newLinkPromise = getShareLink(
             this.getSharingLinkToken,
@@ -120,13 +109,9 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
             if (this.logger) {
                 this.logger.sendErrorEvent({ eventName: "FluidFileUrlError" }, error);
             }
-            if (this.shareLinkMap.has(key)) {
-                this.shareLinkMap.delete(key);
-            }
             throw error;
         });
 
-        this.shareLinkMap.set(key, newLinkPromise);
         return newLinkPromise;
     }
 
