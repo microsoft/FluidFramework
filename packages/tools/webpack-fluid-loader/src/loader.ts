@@ -375,7 +375,7 @@ async function attachContainer(
             summaryList.appendChild(listItem);
             rehydrateButton.onclick = async () => {
                 const snapshot = summaryList.value;
-                currentContainer = await loader.rehydrateDetachedContainerFromSnapshot(JSON.parse(snapshot));
+                currentContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
                 let newLeftDiv: HTMLDivElement;
                 if (rightDiv !== undefined) {
                     newLeftDiv = makeSideBySideDiv(uuid());

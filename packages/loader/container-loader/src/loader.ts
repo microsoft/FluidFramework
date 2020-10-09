@@ -28,7 +28,7 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     ensureFluidResolvedUrl,
     MultiUrlResolver,
@@ -106,7 +106,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         throw new Error("Relative loader should not create a detached container");
     }
 
-    public async rehydrateDetachedContainerFromSnapshot(source: ISnapshotTree): Promise<Container> {
+    public async rehydrateDetachedContainerFromSnapshot(source: string): Promise<Container> {
         throw new Error("Relative loader should not create a detached container from snapshot");
     }
 
@@ -181,7 +181,7 @@ export class Loader extends EventEmitter implements ILoader {
             this.subLogger);
     }
 
-    public async rehydrateDetachedContainerFromSnapshot(snapshot: ISnapshotTree): Promise<Container> {
+    public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
 
         return Container.create(
@@ -190,7 +190,7 @@ export class Loader extends EventEmitter implements ILoader {
             this.scope,
             this,
             {
-                snapshot,
+                snapshot: JSON.parse(snapshot),
                 create: false,
             },
             this.documentServiceFactory,

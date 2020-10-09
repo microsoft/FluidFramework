@@ -182,7 +182,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const { container } =
             await createDetachedContainerAndGetRootDataStore();
 
-        const snapshotTree = JSON.parse(container.serialize());
+        const snapshotTree = container.serialize();
 
         const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
@@ -225,7 +225,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const { container } =
             await createDetachedContainerAndGetRootDataStore();
 
-        const snapshotTree = JSON.parse(container.serialize());
+        const snapshotTree = container.serialize();
 
         const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
         await container2.attach(request);
@@ -274,7 +274,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const sharedStringBefore = await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
         sharedStringBefore.insertText(0, "Hello");
 
-        const snapshotTree = JSON.parse(container.serialize());
+        const snapshotTree = container.serialize();
 
         const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
@@ -293,7 +293,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const defaultComponent1 = response1.value as TestFluidObject;
         const sharedString1 = await defaultComponent1.getSharedObject<SharedString>(sharedStringId);
         sharedString1.insertText(0, str);
-        const snapshotTree = JSON.parse(container.serialize());
+        const snapshotTree = container.serialize();
 
         const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
         const responseBefore = await container2.request({ url: "/" });
@@ -327,7 +327,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         peerDataStore.peerDataStoreRuntimeChannel.bindToContext();
         const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
         sharedMap1.set("0", "A");
-        const snapshotTree = JSON.parse(container.serialize());
+        const snapshotTree = container.serialize();
 
         const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
         await rehydratedContainer.attach(request);
@@ -370,7 +370,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         peerDataStore.peerDataStoreRuntimeChannel.bindToContext();
         const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
         sharedMap1.set("0", "A");
-        const snapshotTree = JSON.parse(container.serialize());
+        const snapshotTree = container.serialize();
 
         const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
         await rehydratedContainer.attach(request);
@@ -413,7 +413,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
         rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-        const snapshotTree = JSON.parse(container.serialize());
+        const snapshotTree = container.serialize();
         const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
         const response = await rehydratedContainer.request({ url: `/${dataStore2.context.id}` });
@@ -433,7 +433,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
         rootOfDataStore1.set("dd2", dds2.handle);
 
-        const snapshotTree = JSON.parse(container.serialize());
+        const snapshotTree = container.serialize();
         const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
         const response = await rehydratedContainer.request({ url: `/${defaultDataStore.runtime.id}/${ddsId}` });
@@ -461,7 +461,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
         rootOfDataStore1.set("dd2", dds2.handle);
 
-        const snapshotTree = JSON.parse(container.serialize());
+        const snapshotTree = container.serialize();
         const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
         const responseForDDS = await rehydratedContainer.request({ url: `/${defaultDataStore.runtime.id}/${ddsId}` });
@@ -495,7 +495,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
         rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-        const snapshotTree = JSON.parse(container.serialize());
+        const snapshotTree = container.serialize();
         const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
         const responseForDDS = await rehydratedContainer.request({ url: `/${dataStore2.runtime.id}/${ddsId}` });
