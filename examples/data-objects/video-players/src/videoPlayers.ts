@@ -223,7 +223,7 @@ export class VideoPlayerCollection extends LazyLoadedDataObject<ISharedDirectory
                 new VideoPlayer(
                     this.root.get(key),
                     `${this.url}/${key}`,
-                    this.runtime.objectsRoutingContext,
+                    this.runtime.objectRoutingContext,
                     key,
                     youTubeApi,
                     this));
@@ -237,7 +237,7 @@ export class VideoPlayerCollection extends LazyLoadedDataObject<ISharedDirectory
                 const player = new VideoPlayer(
                     this.root.get(changed.key),
                     `${this.url}/${changed.key}`,
-                    this.runtime.objectsRoutingContext,
+                    this.runtime.objectRoutingContext,
                     changed.key,
                     youTubeApi,
                     this);

@@ -408,7 +408,7 @@ export class Scribe
         super();
 
         this.url = context.id;
-        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.objectsRoutingContext);
+        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.objectRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
