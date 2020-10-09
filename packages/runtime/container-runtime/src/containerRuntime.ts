@@ -958,10 +958,10 @@ export class ContainerRuntime extends EventEmitter
      * @param request - Request made to the handler.
      */
     public async resolveHandle(request: IRequest): Promise<IResponse> {
-        const requestParser = new RequestParser(request);
+        const requestParser = RequestParser.create(request);
+        const id = requestParser.pathParts[0];
 
-        if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === this.blobManager.basePath) {
-            assert(requestParser.pathParts.length === 2 && !requestParser.query);
+        if (id === this.blobManager.basePath && requestParser.isLeaf(2)) {
             const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
             if (handle) {
                 return {
@@ -980,17 +980,9 @@ export class ContainerRuntime extends EventEmitter
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const dataStore = await this.getDataStore(requestParser.pathParts[0], wait);
+            const dataStore = await this.getDataStore(id, wait);
             const subRequest = requestParser.createSubRequest(1);
-            if (subRequest !== undefined) {
-                return dataStore.IFluidRouter.request(subRequest);
-            } else {
-                return {
-                    status: 200,
-                    mimeType: "fluid/object",
-                    value: dataStore,
-                };
-            }
+            return dataStore.IFluidRouter.request(subRequest);
         }
 
         return {

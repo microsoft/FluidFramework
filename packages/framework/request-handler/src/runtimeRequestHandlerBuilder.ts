@@ -22,7 +22,7 @@ export class RuntimeRequestHandlerBuilder {
     }
 
     public async handleRequest(request: IRequest, runtime: IContainerRuntime): Promise<IResponse> {
-        const parser = new RequestParser(request);
+        const parser = RequestParser.create(request);
         for (const handler of this.handlers) {
             const response = await handler(parser, runtime);
             if (response !== undefined) {

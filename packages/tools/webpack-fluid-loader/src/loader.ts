@@ -239,7 +239,7 @@ export async function start(
         div.append(leftDiv, rightDiv);
     }
 
-    const reqParser = new RequestParser({ url });
+    const reqParser = RequestParser.create({ url });
     const fluidObjectUrl = `/${reqParser.createSubRequest(4).url}`;
 
     // Load and render the Fluid object.

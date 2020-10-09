@@ -39,7 +39,7 @@ const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string)
 
 // Just a little helper, since we're going to request multiple coordinates.
 async function requestObjectStoreFromId<T>(request: RequestParser, runtime: IContainerRuntime, id: string) {
-    const coordinateRequest = new RequestParser({
+    const coordinateRequest = RequestParser.create({
         url: ``,
         headers: request.headers,
     });
