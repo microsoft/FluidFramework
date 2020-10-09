@@ -332,7 +332,8 @@ export class DebugLogger extends TelemetryLogger {
     public static create(
         namespace: string,
         properties?: ITelemetryProperties,
-        propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
+        propertyGetters?: ITelemetryPropertyGetters,
+    ): TelemetryLogger {
         // Setup base logger upfront, such that host can disable it (if needed)
         const debug = registerDebug(namespace);
 
@@ -355,7 +356,8 @@ export class DebugLogger extends TelemetryLogger {
         namespace: string,
         baseLogger?: ITelemetryBaseLogger,
         properties?: ITelemetryProperties,
-        propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
+        propertyGetters?: ITelemetryPropertyGetters,
+    ): TelemetryLogger {
         if (!baseLogger) {
             return DebugLogger.create(namespace, properties, propertyGetters);
         }
@@ -480,7 +482,8 @@ export class PerformanceEvent {
 
     protected constructor(
         private readonly logger: ITelemetryLogger,
-        event: ITelemetryGenericEvent) {
+        event: ITelemetryGenericEvent,
+    ) {
         this.event = { ...event };
         this.reportEvent("start");
 
@@ -516,7 +519,6 @@ export class PerformanceEvent {
         if (!this.event) {
             this.logger.sendErrorEvent({
                 eventName: "PerformanceEventAfterStop",
-                perfEventName: this.event!.eventName,
                 eventNameSuffix,
             });
             return;
@@ -543,8 +545,8 @@ export class PerformanceEvent {
 export class CustomErrorWithProps extends Error {
     constructor(
         message: string,
-        props?: ITelemetryProperties)
-    {
+        props?: ITelemetryProperties,
+    ) {
         super(message);
         Object.assign(this, props);
     }
