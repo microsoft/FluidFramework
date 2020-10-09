@@ -4,88 +4,29 @@
  */
 
 import { strict as assert } from "assert";
-import {
-    DataObject,
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
 import { TaskManager } from "@fluidframework/agent-scheduler";
-import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { taskSchedulerId } from "@fluidframework/container-runtime";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {
-    createAndAttachContainer,
-    createLocalLoader,
-    OpProcessingController,
-} from "@fluidframework/test-utils";
+import { OpProcessingController } from "@fluidframework/test-utils";
+import { testWithCompat, ICompatLocalTestObjectProvider, TestDataObject } from "./compatUtils";
 
-class TestDataObject extends DataObject {
-    public get _root() {
-        return this.root;
-    }
-
-    public get _runtime() {
-        return this.runtime;
-    }
-
-    public get _context() {
-        return this.context;
-    }
-}
-
-describe("AgentScheduler", () => {
+const tests = (args: ICompatLocalTestObjectProvider) => {
     const leader = "leader";
-    const documentId = "agentSchedulerTest";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
-    const codeDetails: IFluidCodeDetails = {
-        package: "agentSchedulerTestPackage",
-        config: {},
-    };
-    const factory = new DataObjectFactory(
-        "TestDataObject",
-        TestDataObject,
-        [],
-        []);
-
-    let urlResolver: IUrlResolver;
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
-
-    async function createContainer(): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader(
-            [[codeDetails, factory]],
-            deltaConnectionServer,
-            urlResolver);
-
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
-    }
-
-    async function loadContainer(): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader(
-            [[codeDetails, factory]],
-            deltaConnectionServer,
-            urlResolver);
-
-        return loader.resolve({ url: documentLoadUrl });
-    }
 
     describe("Single client", () => {
         let scheduler: IAgentScheduler;
 
         beforeEach(async () => {
-            deltaConnectionServer = LocalDeltaConnectionServer.create();
-            urlResolver = new LocalResolver();
-
-            const container = await createContainer();
+            const container = await args.makeTestContainer();
             scheduler = await requestFluidObject<TaskManager>(container, taskSchedulerId)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
             const dataObject = await requestFluidObject<TestDataObject>(container, "default");
 
-            opProcessingController = new OpProcessingController(deltaConnectionServer);
+            opProcessingController = new OpProcessingController(args.deltaConnectionServer);
             opProcessingController.addDeltaManagers(container.deltaManager);
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
@@ -146,10 +87,6 @@ describe("AgentScheduler", () => {
             await scheduler.release("task1");
             assert.deepStrictEqual(scheduler.pickedTasks(), [leader]);
         });
-
-        afterEach(async () => {
-            await deltaConnectionServer.webSocketServer.close();
-        });
     });
 
     describe("Multiple clients", () => {
@@ -159,15 +96,13 @@ describe("AgentScheduler", () => {
         let scheduler2: IAgentScheduler;
 
         beforeEach(async () => {
-            deltaConnectionServer = LocalDeltaConnectionServer.create();
-
             // Create a new Container for the first document.
-            container1 = await createContainer();
+            container1 = await args.makeTestContainer();
             scheduler1 = await requestFluidObject<TaskManager>(container1, taskSchedulerId)
                 .then((taskManager) => taskManager.IAgentScheduler);
             const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
-            opProcessingController = new OpProcessingController(deltaConnectionServer);
+            opProcessingController = new OpProcessingController(args.deltaConnectionServer);
             opProcessingController.addDeltaManagers(container1.deltaManager);
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
@@ -176,7 +111,7 @@ describe("AgentScheduler", () => {
             await opProcessingController.process();
 
             // Load existing Container for the second document.
-            container2 = await loadContainer();
+            container2 = await args.loadTestContainer();
             scheduler2 = await requestFluidObject<TaskManager>(container2, taskSchedulerId)
                 .then((taskManager) => taskManager.IAgentScheduler);
             const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
@@ -298,9 +233,9 @@ describe("AgentScheduler", () => {
             assert.deepStrictEqual(scheduler1.pickedTasks(), []);
             assert.deepStrictEqual(scheduler2.pickedTasks(), [leader]);
         });
-
-        afterEach(async () => {
-            await deltaConnectionServer.webSocketServer.close();
-        });
     });
+};
+
+describe("AgentScheduler", () => {
+    testWithCompat(tests);
 });

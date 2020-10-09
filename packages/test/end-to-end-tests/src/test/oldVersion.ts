@@ -27,6 +27,7 @@ export { SharedString, SparseMatrix } from "old-sequence";
 export { LocalDocumentServiceFactory, LocalResolver } from "old-local-driver";
 export { ConsensusRegisterCollection } from "old-register-collection";
 export { SharedCell } from "old-cell";
+export { SharedCounter } from "old-counter";
 export { Ink } from "old-ink";
 export { SharedMatrix } from "old-matrix";
 export { ConsensusQueue } from "old-ordered-collection";

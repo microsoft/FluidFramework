@@ -17,6 +17,7 @@ import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { Ink } from "@fluidframework/ink";
 import { LocalResolver } from "@fluidframework/local-driver";
+import { SharedCounter } from "@fluidframework/counter";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
@@ -81,6 +82,8 @@ function convertRegistry(registry: ChannelFactoryRegistry = []): old.ChannelFact
                 oldRegistry.push([key, old.ConsensusQueue.getFactory()]); break;
             case SparseMatrix.getFactory().type:
                 oldRegistry.push([key, old.SparseMatrix.getFactory()]); break;
+            case SharedCounter.getFactory().type:
+                oldRegistry.push([key, old.SharedCounter.getFactory()]); break;
             default:
                 throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
         }
