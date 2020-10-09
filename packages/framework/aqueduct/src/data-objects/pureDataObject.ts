@@ -90,7 +90,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
         // Create a FluidObjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
         // same as reaching its routeContext (FluidDataStoreRuntime) so there is so the relative path to it from the
         // routeContext is empty.
-        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectRoutingContext);
 
         // Container event handlers
         this.runtime.once("dispose", () => {

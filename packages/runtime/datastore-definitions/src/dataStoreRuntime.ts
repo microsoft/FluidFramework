@@ -41,6 +41,10 @@ export interface IFluidDataStoreRuntime extends
 
     readonly IFluidHandleContext: IFluidHandleContext;
 
+    readonly rootRoutingContext: IFluidHandleContext;
+    readonly ddsRoutingContext: IFluidHandleContext;
+    readonly objectRoutingContext: IFluidHandleContext;
+
     readonly options: any;
 
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

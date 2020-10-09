@@ -37,7 +37,7 @@ class MockRuntime {
     }
 
     protected async resolveHandle(request: IRequest) {
-        const requestParser = new RequestParser(request);
+        const requestParser = RequestParser.create(request);
 
         if (requestParser.pathParts.length > 0) {
             const wait =
@@ -45,15 +45,7 @@ class MockRuntime {
 
             const dataStore = await this.getRootDataStore(requestParser.pathParts[0], wait);
             const subRequest = requestParser.createSubRequest(1);
-            if (subRequest !== undefined) {
-                return dataStore.request(subRequest);
-            } else {
-                return {
-                    status: 200,
-                    mimeType: "fluid/object",
-                    value: dataStore,
-                };
-            }
+            return dataStore.request(subRequest);
         }
         return { status: 404, mimeType: "text/plain", value: "not found" };
     }
@@ -72,13 +64,13 @@ describe("defaultRouteRequestHandler", () => {
     it("Data store request with default ID", async () => {
         const handler = defaultRouteRequestHandler("objectId");
 
-        const requestParser = new RequestParser({ url: "", headers: {} });
+        const requestParser = RequestParser.create({ url: "", headers: {} });
         const response = await handler(requestParser, runtime);
         assert(response);
         assert.equal(response.status, 200);
         assert.equal(response.value.route, "");
 
-        const requestParser2 = new RequestParser({ url: "/", headers: {} });
+        const requestParser2 = RequestParser.create({ url: "/", headers: {} });
         const response2 = await handler(requestParser2, runtime);
         assert(response2);
         assert.equal(response2.status, 200);
@@ -88,11 +80,11 @@ describe("defaultRouteRequestHandler", () => {
     it("Data store request with non-existing default ID", async () => {
         const handler = defaultRouteRequestHandler("foobar");
 
-        const requestParser = new RequestParser({ url: "", headers: { wait: true } });
+        const requestParser = RequestParser.create({ url: "", headers: { wait: true } });
         const responseP = handler(requestParser, runtime);
         await assertRejected(responseP);
 
-        const requestParser2 = new RequestParser({ url: "/", headers: { wait: true } });
+        const requestParser2 = RequestParser.create({ url: "/", headers: { wait: true } });
         const responseP2 = handler(requestParser2, runtime);
         await assertRejected(responseP2);
     });

@@ -140,6 +140,10 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
     public get IFluidHandleContext() { return this; }
 
+    public get rootRoutingContext() { return this; }
+    public get ddsRoutingContext() { return this; }
+    public get objectRoutingContext() { return this; }
+
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
@@ -269,15 +273,15 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const parser = new RequestParser(request);
+        const parser = RequestParser.create(request);
         const id = parser.pathParts[0];
 
         if (id === "_dds" || id === "_object") {
-            return this.request(parser.createSubRequest(1) as IRequest);
+            return this.request(parser.createSubRequest(1));
         }
 
         // Check for a data type reference first
-        if (this.contextsDeferred.has(id)) {
+        if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const value = await this.contextsDeferred.get(id)!.promise;
             const channel = await value.getChannel();
