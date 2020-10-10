@@ -16,6 +16,11 @@ export enum ContainerErrorType {
      * Throttling error from server. Server is busy and is asking not to reconnect for some time
      */
     throttlingError = "throttlingError",
+
+    /**
+     * Throttling error from server. Server is busy and is asking not to reconnect for some time
+     */
+    dataCorruption = "dataCorruption",
 }
 
 /**

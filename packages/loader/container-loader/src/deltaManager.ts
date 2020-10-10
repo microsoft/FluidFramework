@@ -154,6 +154,8 @@ export class DeltaManager
     private lastQueuedSequenceNumber: number = 0;
     private lastObservedSeqNumber: number = 0;
     private lastProcessedSequenceNumber: number = 0;
+    // Last messages we received from socket (excludes initialMessages)
+    private lastSocketSequenceNumber = 0;
     private baseTerm: number = 0;
 
     // The sequence number we initially loaded from
@@ -410,6 +412,7 @@ export class DeltaManager
         this.minSequenceNumber = minSequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
         this.lastObservedSeqNumber = sequenceNumber;
+        this.lastSocketSequenceNumber = sequenceNumber;
 
         // We will use same check in other places to make sure all the seq number above are set properly.
         assert(this.handler === undefined);
@@ -922,9 +925,9 @@ export class DeltaManager
 
         connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
             if (messages instanceof Array) {
-                this.enqueueMessages(messages);
+                this.enqueueSocketMessages(messages);
             } else {
-                this.enqueueMessages([messages]);
+                this.enqueueSocketMessages([messages]);
             }
         });
 
@@ -1123,6 +1126,25 @@ export class DeltaManager
         for (const signal of signals) {
             this._inboundSignal.push(signal);
         }
+    }
+
+    private enqueueSocketMessages(messages: ISequencedDocumentMessage[]): void {
+        // Socket messages should only go forward, even across reconnects.
+        // If we detect the opposite, this likely points to data loss and broken session
+        // There is nothing we can do about it - failing fast is the best option,
+        // giving a chance for user to save state locally and not corrupt remaining file
+        if (messages[0].sequenceNumber <= this.lastSocketSequenceNumber) {
+            const error = {
+                errorType: ContainerErrorType.dataCorruption,
+                message: "sequence number goes backward",
+                clientId: this.connection?.details.clientId,
+                incomingSeqNumber: messages[0].sequenceNumber,
+                lastSocketSequenceNumber: this.lastSocketSequenceNumber,
+            };
+            this.close(error);
+        }
+        this.lastSocketSequenceNumber = messages[messages.length - 1].sequenceNumber;
+        this.enqueueMessages(messages);
     }
 
     private enqueueMessages(
