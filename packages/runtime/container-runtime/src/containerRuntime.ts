@@ -964,8 +964,8 @@ export class ContainerRuntime extends EventEmitter
         const requestParser = RequestParser.create(request);
         const id = requestParser.pathParts[0];
 
-        if (id === "_store") {
-            return this.resolveHandle(requestParser.createSubRequest(1) );
+        if (id === "_channel") {
+            return this.resolveHandle(requestParser.createSubRequest(1));
         }
 
         if (id === this.blobManager.basePath && requestParser.isLeaf(2)) {
