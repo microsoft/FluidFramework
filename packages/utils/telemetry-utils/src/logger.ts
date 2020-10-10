@@ -477,6 +477,7 @@ export class PerformanceEvent {
     }
 
     private event?: ITelemetryGenericEvent;
+    private readonly eventName: string;
     private readonly startTime = performance.now();
     private startMark?: string;
 
@@ -485,6 +486,7 @@ export class PerformanceEvent {
         event: ITelemetryGenericEvent,
     ) {
         this.event = { ...event };
+        this.eventName = event.eventName;
         this.reportEvent("start");
 
         if (typeof window === "object" && window != null && window.performance) {
@@ -519,6 +521,7 @@ export class PerformanceEvent {
         if (!this.event) {
             this.logger.sendErrorEvent({
                 eventName: "PerformanceEventAfterStop",
+                perfEventName: this.eventName,
                 eventNameSuffix,
             });
             return;
