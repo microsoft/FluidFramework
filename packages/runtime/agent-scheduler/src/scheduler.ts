@@ -209,7 +209,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         // Probably okay for now to have every client try to do this.
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         quorum.on("removeMember", async (clientId: string) => {
-            assert(this.runtime.objectRoutingContext.isAttached);
+            assert(this.runtime.objectsRoutingContext.isAttached);
             // Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
             if (this.isActive()) {
                 const leftTasks: string[] = [];
@@ -389,7 +389,7 @@ export class TaskManager implements ITaskManager {
         private readonly scheduler: IAgentScheduler,
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly context: IFluidDataStoreContext) {
-        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectRoutingContext);
+        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

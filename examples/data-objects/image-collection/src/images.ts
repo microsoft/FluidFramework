@@ -120,7 +120,7 @@ export class ImageCollection extends LazyLoadedDataObject<ISharedDirectory> impl
                     this.root.get(key),
                     `${this.url}/${key}`,
                     key,
-                    this.runtime.objectRoutingContext));
+                    this.runtime.objectsRoutingContext));
         }
 
         this.root.on("valueChanged", (changed) => {
@@ -132,7 +132,7 @@ export class ImageCollection extends LazyLoadedDataObject<ISharedDirectory> impl
                     this.root.get(changed.key),
                     `${this.url}/${changed.key}`,
                     changed.key,
-                    this.runtime.objectRoutingContext);
+                    this.runtime.objectsRoutingContext);
                 this.images.set(changed.key, player);
             }
         });

@@ -42,8 +42,8 @@ export interface IFluidDataStoreRuntime extends
     readonly IFluidHandleContext: IFluidHandleContext;
 
     readonly rootRoutingContext: IFluidHandleContext;
-    readonly ddsRoutingContext: IFluidHandleContext;
-    readonly objectRoutingContext: IFluidHandleContext;
+    readonly channelsRoutingContext: IFluidHandleContext;
+    readonly objectsRoutingContext: IFluidHandleContext;
 
     readonly options: any;
 

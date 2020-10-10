@@ -141,8 +141,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     public get IFluidHandleContext() { return this; }
 
     public get rootRoutingContext() { return this; }
-    public get ddsRoutingContext() { return this; }
-    public get objectRoutingContext() { return this; }
+    public get channelsRoutingContext() { return this; }
+    public get objectsRoutingContext() { return this; }
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
@@ -276,6 +276,10 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         const parser = RequestParser.create(request);
         const id = parser.pathParts[0];
 
+        if (id === "_channels" || id === "_objects") {
+            return this.request(parser.createSubRequest(1));
+        }
+
         // Check for a data type reference first
         if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -289,7 +293,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         if (this.requestHandler === undefined) {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         } else {
-            return this.requestHandler(request);
+            return this.requestHandler(parser);
         }
     }
 

@@ -224,7 +224,7 @@ export class CodeMirrorComponent
     ) {
         super();
         this.url = context.id;
-        this.innerHandle = new FluidObjectHandle(this, this.url, runtime.objectRoutingContext);
+        this.innerHandle = new FluidObjectHandle(this, this.url, runtime.objectsRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
