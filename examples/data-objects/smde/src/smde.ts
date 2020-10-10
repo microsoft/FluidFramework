@@ -64,7 +64,7 @@ export class Smde extends EventEmitter implements
     constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
         super();
 
-        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

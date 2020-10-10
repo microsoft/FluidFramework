@@ -141,7 +141,7 @@ export class ProgressCollection
     constructor(private readonly runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         super();
 
-        this.handle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
+        this.handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
     }
 
     public changeValue(key: string, newValue: number) {
@@ -198,7 +198,7 @@ export class ProgressCollection
                 new ProgressBar(
                     this.root.get(key),
                     key,
-                    this.runtime.IFluidHandleContext,
+                    this.runtime.objectsRoutingContext,
                     this));
         }
 
@@ -211,7 +211,7 @@ export class ProgressCollection
                     new ProgressBar(
                         this.root.get(changed.key),
                         changed.key,
-                        this.runtime.IFluidHandleContext,
+                        this.runtime.objectsRoutingContext,
                         this));
                 this.emit("progressAdded", `/${changed.key}`);
             }

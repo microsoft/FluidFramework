@@ -5,13 +5,14 @@
 
 import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
-import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidRouter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
     IFluidHandle,
+    IRequest,
+    IResponse,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -77,6 +78,11 @@ export interface IContainerRuntimeBase extends
     setFlushMode(mode: FlushMode): void;
 
     /**
+     * Executes a request against the container runtime
+     */
+    request(request: IRequest): Promise<IResponse>;
+
+    /**
      * Submits a container runtime level signal to be sent to other clients.
      * @param type - Type of the signal.
      * @param content - Content of the signal.
@@ -119,7 +125,7 @@ export interface IContainerRuntimeBase extends
 
     getTaskManager(): Promise<ITaskManager>;
 
-    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 /**
@@ -350,7 +356,7 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
         createParam: CreateChildSummarizerNodeParam,
     ): CreateChildSummarizerNodeFn;
 
-    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

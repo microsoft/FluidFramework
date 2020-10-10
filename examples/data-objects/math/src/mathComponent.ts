@@ -545,7 +545,7 @@ export class MathCollection extends LazyLoadedDataObject<ISharedDirectory> imple
 
     public createCollectionItem(options?: IMathOptions): MathInstance {
         const leafId = `math-${Date.now()}`;
-        return new MathInstance(leafId, this.runtime.IFluidHandleContext, this, options);
+        return new MathInstance(leafId, this.runtime.objectsRoutingContext, this, options);
     }
 
     public getText(instance: MathInstance) {
@@ -611,7 +611,7 @@ export class MathCollection extends LazyLoadedDataObject<ISharedDirectory> imple
                 if (mathMarker.properties.componentOptions) {
                     options = mathMarker.properties.componentOptions;
                 }
-                mathMarker.mathInstance = new MathInstance(id, this.runtime.IFluidHandleContext, this, options, true);
+                mathMarker.mathInstance = new MathInstance(id, this.runtime.objectsRoutingContext, this, options, true);
             }
             return mathMarker.mathInstance as MathInstance;
         }

@@ -74,6 +74,7 @@ class ActiveSession {
 }
 
 // Format a number separating 3 digits by comma
+// eslint-disable-next-line unicorn/no-unsafe-regex
 export const formatNumber = (num: number): string => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 function dumpStats(

@@ -47,6 +47,7 @@ export async function loadFrame(iframeId: string, logId: string) {
     const log =
         (emitter: { on(event: string, listener: (...args: any[]) => void) }, name: string, ...events: string[]) => {
             events.forEach((event) =>
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 emitter.on(event, (...args) => {
                     text.innerHTML += `${name}: ${event}: ${JSON.stringify(args)}<br/>`;
                 }));

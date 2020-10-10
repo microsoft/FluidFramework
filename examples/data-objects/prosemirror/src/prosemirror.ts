@@ -125,7 +125,7 @@ export class ProseMirror extends EventEmitter
     ) {
         super();
 
-        this.innerHandle = new FluidObjectHandle(this, "", runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

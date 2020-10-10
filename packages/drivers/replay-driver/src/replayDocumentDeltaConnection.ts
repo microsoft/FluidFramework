@@ -6,8 +6,8 @@
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
-    IDocumentStorageService,
     IDocumentDeltaConnectionEvents,
+    IDocumentService,
 } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
@@ -55,7 +55,7 @@ export class ReplayControllerStatic extends ReplayController {
         }
     }
 
-    public async initStorage(storage: IDocumentStorageService) {
+    public async initStorage(documentService: IDocumentService) {
         return true;
     }
 
@@ -199,7 +199,6 @@ export class ReplayDocumentDeltaConnection
             claims: ReplayDocumentDeltaConnection.claims,
             clientId: "",
             existing: true,
-            initialContents: [],
             initialMessages: [],
             initialSignals: [],
             initialClients: [],

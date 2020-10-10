@@ -404,6 +404,7 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     private deserializeValue(content: string) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.runtime.IFluidSerializer.parse(
             content,
             this.runtime.IFluidHandleContext);

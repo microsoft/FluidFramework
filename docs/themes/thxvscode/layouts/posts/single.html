@@ -4,15 +4,6 @@
 
 
 {{ define "main" }}
-
-<!-- sections.bodyTag-->
-<!-- EU Cookie Compliance JS -->
-<script src="//uhf.microsoft.com/mscc/statics/mscc-0.3.6.min.js"></script>
-
-<!-- > cookie-header  -->
-
-{{ partial "navbarSticky.html" . }}
-
 <div class="container body-content docs">
     <div class="row">
         <div class="col-md-2 docs-navbar-container"> {{ partial "blogNav.html" .}} </div>
@@ -53,7 +44,6 @@
 {{/* $script := resources.Get "js/main.js" | minify | fingerprint - */}}
 <!-- <script src="{{/* $script.Permalink | relURL */}}" -->
 <!-- {{/* printf "integrity=%q" $script.Data.Integrity | safeHTMLAttr */}}></script> -->
-{{- partial "analytics.html" . }}
 {{- if templates.Exists "partials/extra-foot.html" -}}
 {{ partial "extra-foot.html" . }}
 {{- end }}

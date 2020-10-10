@@ -79,9 +79,9 @@ export interface IDocumentStorageService {
     /**
      * Creates a blob out of the given buffer
      */
-    createBlob(file: Uint8Array): Promise<ICreateBlobResponse>;
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
 
-    readBlob(id: string): Promise<Uint8Array>;
+    readBlob(id: string): Promise<ArrayBufferLike>;
 
     /**
      * Fetch blob Data url
@@ -202,6 +202,7 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
      * Gets the listeners for an event
      * @param event - The name of the event
      */
+    // eslint-disable-next-line @typescript-eslint/ban-types
     listeners(event: string): Function[];
 
     /**

@@ -34,7 +34,7 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainer
  * handling of external URI to internal handle is required (in future, we will support weak handle references,
  * that will allow any GC policy to be implemented by container authors.)
  */
-export const deprecated_innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+export const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
     runtime.IFluidHandleContext.resolveHandle(request);
 
 export const createFluidObjectResponse = (fluidObject: IFluidObject) => {
@@ -56,6 +56,7 @@ class LegacyUriHandle<T = IFluidObject & IFluidLoadable> implements IFluidHandle
     public async get(): Promise<any> {
         const response = await this.runtime.IFluidHandleContext.resolveHandle({ url: this.absolutePath });
         if (response.status === 200 && response.mimeType === "fluid/object") {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return response.value;
         }
         throw new Error(`Failed to resolve container path ${this.absolutePath}`);

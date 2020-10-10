@@ -57,7 +57,7 @@ export class TestFluidObject implements ITestFluidObject {
         public readonly context: IFluidDataStoreContext,
         private readonly factoryEntriesMap: Map<string, IChannelFactory>,
     ) {
-        this.innerHandle = new FluidObjectHandle(this, "", runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
     }
 
     /**

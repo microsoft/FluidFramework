@@ -102,6 +102,7 @@ export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLVie
     }
 
     public get value() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.root.get(diceValueKey);
     }
 

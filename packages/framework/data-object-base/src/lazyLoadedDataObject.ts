@@ -63,7 +63,7 @@ export abstract class LazyLoadedDataObject<
             this._handle = new FluidObjectHandle(
                 this,
                 "",
-                this.runtime.IFluidHandleContext);
+                this.runtime.objectsRoutingContext);
         }
 
         return this._handle;

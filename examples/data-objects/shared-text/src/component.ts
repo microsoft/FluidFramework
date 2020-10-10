@@ -86,7 +86,7 @@ export class SharedTextRunner
         private readonly context: IFluidDataStoreContext,
     ) {
         super();
-        this.innerHandle = new FluidObjectHandle(this, "/text", this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "/text", this.runtime.objectsRoutingContext);
     }
 
     public render(element: HTMLElement) {

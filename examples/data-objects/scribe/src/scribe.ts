@@ -32,7 +32,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import {
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
@@ -44,7 +44,7 @@ import * as scribe from "./tools-core";
 // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules, import/no-unassigned-import
 require("bootstrap/dist/css/bootstrap.min.css");
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
 const pkgVersion = require("../package.json").version;
 const version = `${pkgVersion.endsWith(".0") ? "^" : ""}${pkgVersion}`;
 
@@ -405,8 +405,7 @@ export class Scribe
 
     constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
         super();
-
-        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -468,7 +467,7 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
             registry,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
-                deprecated_innerRequestHandler,
+                innerRequestHandler,
             ),
             { generateSummaries: true });
 

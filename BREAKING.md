@@ -1,7 +1,36 @@
-# Breaking changes
-
 ## 0.28 Breaking Changes
+
+- [IFluidPackage Changes](#IFluidPackage-Changes)
+- [DataObject changes](#DataObject-changes)
+- [RequestParser](#RequestParser)
 - [IFluidLodable.url is removed](#IFluidLodable.url-is-removed)
+
+### IFluidPackage Changes
+- Remove npm specific IPackage interface
+- Simplify the IFluidPackage by removing browser and npm specific properties
+- Add new interface IFluidBrowserPackage, and isFluidBrowserPackage which defines browser specific properties
+- Added resolveFluidPackageEnvironment helper for resolving a package environment
+
+### DataObject changes
+DataObject are now always created when Data Store is created. Full initialization for existing objects (in file) continues to happen to be on demand, i.e. when request() is processed. Full DataObject initialization does happen for newly created (detached) DataObjects.
+The impact of that change is that all changed objects would get loaded by summarizer container, but would not get initialized. Before this change, summarizer would not be loading any DataObjects.
+This change
+1. Ensures that initial summary generated for when data store attaches to container has fully initialized object, with all DDSs created. Before this change this initial snapshot was empty in most cases.
+2. Allows DataObjects to modify FluidDataStoreRuntime behavior before it gets registered and used by the rest of the system, including setting various hooks.
+
+But it also puts more constraints on DataObject - its constructor should be light and not do any expensive work (all such work should be done in corresponding initialize methods), or access any data store runtime functionality that requires fully initialized runtime (like loading DDSs will not work in this state)
+
+### RequestParser
+RequestParser's ctor is made protected. Please replace this code
+```
+    const a = new RequestParser(request);
+```
+with this one:
+```
+    const a = RequestParser.create(request);
+```
+
+>>>>>>> 54ba7f7d997007d245e89911dee35257d193e417
 
 ### IFluidLodable.url is removed
 `url` property is removed. As a temporary solution, you can use IFluidLoadable.handle.absolutePath instead. That said, internal routing and URIs will be hidden in future versions. If you rely on it, you need to rethink managing (external) URIs, as only handles can be used inside container - any external URI resolution should go through redirection of URI -> handle. `url` property is left on core objects but it will be cleared in next version. 
@@ -290,7 +319,7 @@ example:
     const builder = new RuntimeRequestHandlerBuilder();
     builder.pushHandler(...this.requestHandlers);
     builder.pushHandler(defaultRouteRequestHandler("defaultComponent"));
-    builder.pushHandler(deprecated_innerRequestHandler());
+    builder.pushHandler(innerRequestHandler());
 
     const runtime = await ContainerRuntime.load(
         context,
