@@ -144,7 +144,7 @@ export class ProgressCollection
         super();
 
         this.url = context.id;
-        this.handle = new FluidObjectHandle(this, "", this.runtime.objectRoutingContext);
+        this.handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
     }
 
     public changeValue(key: string, newValue: number) {
@@ -202,7 +202,7 @@ export class ProgressCollection
                     this.root.get(key),
                     `${this.url}/${key}`,
                     key,
-                    this.runtime.objectRoutingContext,
+                    this.runtime.objectsRoutingContext,
                     this));
         }
 
@@ -216,7 +216,7 @@ export class ProgressCollection
                         this.root.get(changed.key),
                         `${this.url}/${changed.key}`,
                         changed.key,
-                        this.runtime.objectRoutingContext,
+                        this.runtime.objectsRoutingContext,
                         this));
                 this.emit("progressAdded", `/${changed.key}`);
             }

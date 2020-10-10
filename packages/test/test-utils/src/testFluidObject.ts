@@ -59,7 +59,7 @@ export class TestFluidObject implements ITestFluidObject {
         private readonly factoryEntriesMap: Map<string, IChannelFactory>,
     ) {
         this.url = context.id;
-        this.innerHandle = new FluidObjectHandle(this, "", runtime.objectRoutingContext);
+        this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
     }
 
     /**
