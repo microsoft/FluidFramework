@@ -138,16 +138,18 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         tokenFetcher: StorageTokenFetcher,
     ): (options: TokenFetchOptions, name?: string) => Promise<string | null> {
         return async (options: TokenFetchOptions, name?: string) => {
-            if (options.refresh) {
-                // Potential perf issue: Host should optimize and provide non-expired tokens on all critical paths.
-                // Exceptions: race conditions around expiration, revoked tokens, host that does not care
-                // (fluid-fetcher)
-                logger.sendTelemetryEvent({ eventName: "StorageTokenRefresh", hasClaims: !!options.claims });
-            }
+            // Telemetry note: if options.refresh is true, there is a potential perf issue:
+            // Host should optimize and provide non-expired tokens on all critical paths.
+            // Exceptions: race conditions around expiration, revoked tokens, host that does not care
+            // (fluid-fetcher)
 
             return PerformanceEvent.timedExecAsync(
                 logger,
-                { eventName: `${name || "OdspDocumentService"}_GetToken` },
+                {
+                    eventName: `${name || "OdspDocumentService"}_GetToken`,
+                    refresh: options.refresh,
+                    hasClaims: !!options.claims,
+                },
                 async (event) => tokenFetcher(resolvedUrl.siteUrl, options.refresh, options.claims)
                 .then((tokenResponse) => {
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
