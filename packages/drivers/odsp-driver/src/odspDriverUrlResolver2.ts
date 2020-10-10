@@ -39,7 +39,19 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
             return undefined;
         }
 
-        fluidInfo.dataStorePath = `${fluidInfo.dataStorePath}/${pathToAppend}`;
+        const parsingUrl = new URL(fluidInfo.dataStorePath, `${requestUrl.protocol}//${requestUrl.hostname}`);
+        // Determine if the caller is passing a query parameter or path since processing will be different.
+        if (pathToAppend.startsWith("/?") || pathToAppend.startsWith("?")) {
+            const queryParams = new URLSearchParams(pathToAppend);
+            queryParams.forEach((value: string, key: string) => {
+                parsingUrl.searchParams.append(key, value);
+            });
+            fluidInfo.dataStorePath = `${parsingUrl.pathname}${parsingUrl.search}`;
+        } else {
+            fluidInfo.dataStorePath = `${parsingUrl.pathname}${
+                parsingUrl.pathname.endsWith("/") || pathToAppend.startsWith("/") ? "" : "/"
+            }${pathToAppend}/${parsingUrl.search}`;
+        }
         storeLocatorInOdspUrl(requestUrl, fluidInfo);
 
         return requestUrl.href;
