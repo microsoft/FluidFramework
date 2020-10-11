@@ -294,7 +294,7 @@ export class ReplayDocumentDeltaConnection
         debug("dropping the outbound signal and wait for response");
     }
 
-    public disconnect() {
+    public close() {
         debug("no implementation for disconnect...");
     }
 

@@ -340,7 +340,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     /**
      * Disconnect from the websocket
      */
-    public disconnectCore(socketProtocolError: boolean, reason: string) {
+    public disconnect(socketProtocolError: boolean, reason: string) {
         // We set the closed flag as a part of the contract for overriding the disconnect method.  This is used by
         // DocumentDeltaConnection to determine if emitting on the socket is allowed, which is important since
         // OdspDocumentDeltaConnection reuses the socket rather than truly disconnecting it.  Note that below we may

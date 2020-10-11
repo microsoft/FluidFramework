@@ -115,7 +115,7 @@ export class DeltaConnection
         if (this._connection !== undefined) {
             const connection = this._connection;
             this._connection = undefined;
-            connection.disconnect();
+            connection.close();
         }
     }
 

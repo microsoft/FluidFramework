@@ -189,7 +189,7 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     /**
      * Disconnects the given delta connection
      */
-    disconnect();
+    close();
 
     /**
      * Emits an event from this document delta connection
