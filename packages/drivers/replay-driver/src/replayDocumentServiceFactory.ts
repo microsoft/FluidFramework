@@ -5,10 +5,24 @@
 
 import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ReplayController } from "./replayController";
 import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";
 import { ReplayDocumentService } from "./replayDocumentService";
+
+/**
+ * Wrapper logger that adds isReplay: true to each event.
+ * ReplayDriver is used in testing/debugging scenarios, so we want to be able to filter these events out sometimes
+ */
+class ReplayDriverTelemetryLogger implements ITelemetryBaseLogger {
+    constructor(
+        private readonly logger: ITelemetryBaseLogger,
+    ) { }
+
+    send(event: ITelemetryBaseEvent): void {
+        this.logger.send({ ...event, isReplay: true });
+    }
+}
 
 export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
     public static create(
@@ -39,8 +53,9 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
+        const replayLogger = logger && new ReplayDriverTelemetryLogger(logger);
         return Promise.resolve(ReplayDocumentService.create(
-            await this.documentServiceFactory.createDocumentService(resolvedUrl, logger),
+            await this.documentServiceFactory.createDocumentService(resolvedUrl, replayLogger),
             this.controller));
     }
 
