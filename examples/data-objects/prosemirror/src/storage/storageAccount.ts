@@ -68,7 +68,8 @@ export class AzureBlobStorage {
         const blockBlobClient = this.getBlockBlobClient(containerName, blobName);
         const blockBlobSnapshot = blockBlobClient.withSnapshot(snapshot)
         const downloadBlockBlobResponse = await blockBlobSnapshot.download();
-        return await this.streamToString(downloadBlockBlobResponse.readableStreamBody);
+        const downloaded = await this.blobToString(await downloadBlockBlobResponse.blobBody);
+        return downloaded
         // const containerClient = this.blobServiceClient.getContainerClient(containerName);
         // // console.log(containerClient.listBlobsFlat());
         // const x: ContainerListBlobsOptions = { includeSnapshots: true }
@@ -88,6 +89,18 @@ export class AzureBlobStorage {
         // return downloadBlockBlobResponse;
 
     }
+
+    private async blobToString(blob) {
+        const fileReader = new FileReader();
+        return new Promise((resolve, reject) => {
+            fileReader.onloadend = (ev) => {
+                resolve(ev.target.result);
+            };
+            fileReader.onerror = reject;
+            fileReader.readAsText(blob);
+        });
+    }
+
 
     private streamToString(readableStream) {
         return new Promise((resolve, reject) => {

@@ -23,6 +23,7 @@ import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager
 import { ProseMirrorView } from "./prosemirrorView";
 import { IStorageUtil, StorageUtil } from './storage';
 import { getNodeFromMarkdown } from './utils';
+import { BlobItem } from "@azure/storage-blob";
 
 
 function createTreeMarkerOps(
@@ -88,9 +89,10 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
     public get IRichTextEditor() { return this.collabManager; }
 
     public text: SharedString;
-    private collabManager: FluidCollabManager;
+    public collabManager: FluidCollabManager;
     private view: ProseMirrorView;
-    private StorageUtilModule: IStorageUtil;
+    public StorageUtilModule: IStorageUtil;
+    public snapshotList: BlobItem[] = [];
     // private readonly debouncingInterval: number = 1000;
 
 
@@ -130,9 +132,17 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
         else {
             this.StorageUtilModule = new StorageUtil(true);
         }
-
+        this.snapshotList = await this.StorageUtilModule.getSnapShotlist();
 
         this.hasValueChanged();
+        this.hasSnapshotChanged();
+    }
+
+    public hasSnapshotChanged() {
+        this.on("snapshotTaken", (snapshotList) => {
+            this.snapshotList = snapshotList;
+            this.emit("snapshotAdded", this.snapshotList);
+        })
     }
 
     public hasValueChanged() {
@@ -154,7 +164,7 @@ export class ProseMirror extends DataObject implements IFluidHTMLView, IProvideR
     public render(elm: HTMLElement): void {
         if (isWebClient()) {
             if (!this.view) {
-                this.view = new ProseMirrorView(this.collabManager);
+                this.view = new ProseMirrorView(this);
             }
             this.view.render(elm);
             document.getElementById('input-file').addEventListener('change', e => { this.onFileSelect(e) }, false);

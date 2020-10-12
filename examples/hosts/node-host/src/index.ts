@@ -121,7 +121,7 @@ export async function storageAccount() {
     const data = await azureStorage.getSnapShotListForBlobName("samples", "sampletext.txt");
 
     console.log(data);
-    const snapshotdata = await azureStorage.getSnapShotContent("samples", "sampletext.txt", "2020-10-05T10:00:45.1137620Z")
+    const snapshotdata = await azureStorage.getSnapShotContent("samples", "sampletext.txt", "2020-10-05T09:45:31.8038417Z")
     console.log(snapshotdata);
 }
 // storageAccount();
