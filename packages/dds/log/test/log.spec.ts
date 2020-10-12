@@ -49,12 +49,26 @@ describe("SharedLog", () => {
         });
 
         it("Works", async () => {
-            for (let i = 0; i < (256 * 256); i++) {
+            for (let i = 0; i < (256 * 256 * 2); i++) {
+                // Append the entry
                 log.appendEntry(i);
+
+                // Initially, the new entry is unacked
+                assert.equal(log.ackedLength, i);
                 assert.equal(log.length, i + 1);
-                assert.equal(await log.getEntry(i), i);
+
+                // Ensure we can read the unacked entry (currenly stored in the pending list)
+                assert.equal(log.getEntry(i), i);
+
+                // Processes the ack message
                 containterRuntimeFactory.processAllMessages();
-                assert.equal(await log.getEntry(i), i);
+
+                // Entry should now be acked
+                assert.equal(log.ackedLength, i + 1);
+                assert.equal(log.length, i + 1);
+
+                // Ensure we can still read it (now stored in the B-Tree)
+                assert.equal(log.getEntry(i), i);
             }
         });
     });

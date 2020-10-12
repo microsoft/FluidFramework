@@ -8,7 +8,8 @@ import { run } from "hotloop";
 (async () => {
     console.group("Populated");
     await run([
-        { path: "./src/bench" },
+        { path: "./src/array-sum", args: { count: 256 * 256 }},
+        { path: "./src/log-sum", args: { count: 256 * 256 } },
     ]);
     console.groupEnd();
 })();

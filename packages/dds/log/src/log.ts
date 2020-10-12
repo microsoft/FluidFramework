@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     ISequencedDocumentMessage,
     ITree,
@@ -58,35 +59,36 @@ export class SharedLog<T extends Serializable = Serializable>
      * is always loaded.  The children of other interior nodes and leaves may be evicted.
      */
     public readonly root: IInteriorNode<T> = {
-        a: 0,
-        i: undefined,
+        p: 1,
         c: [{
-            a: 0,
-            i: undefined,
+            p: 1,
             c: [{
-                a: 0,
-                i: undefined,
+                p: 1,
                 c: [{
-                    a: 0,
-                    i: undefined,
+                    h: undefined,
                     c: this.rightmostLeaf,
                 }],
             }],
         }],
     };
 
-    private get ackedLength(): number {
+    public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+        super(id, runtime, attributes);
+    }
+
+    public get ackedLength(): number {
+        // Calculates the number of entries in the B-Tree by computing the number
+        // of fully populated leaves and then adding the number of entries in the
+        // partially populated rightmostLeaf.
         let length = 0;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        for (let i = 0, children: unknown[] = this.root.c!; i < 3; i++) {
+        for (let i = 0, children: unknown[] = this.root.c; i < 3; i++) {
             const lastChild = children.length - 1;
             /* eslint-disable no-bitwise */
             length |= lastChild;
             length <<= 8;
             /* eslint-enable no-bitwise */
 
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            children = (children[lastChild] as IInteriorNode).c!;
+            children = (children[lastChild] as IInteriorNode).c;
         }
 
         return length + this.rightmostLeaf.length;
@@ -96,46 +98,31 @@ export class SharedLog<T extends Serializable = Serializable>
         return this.ackedLength + this.pending.length;
     }
 
-    private async loadChildren(parent: LogNode<T>) {
-        const id = typeof parent.i === "object"
-            ? await parent.i
-            : parent.i as string;
-
-        const blob = await this.runtime.getBlob(id);
-        parent.c = JSON.parse(new TextDecoder().decode(blob?.content));
+    private loadLeafChildren(leaf: ILeafNode<T>): T[] {
+        if (leaf.c !== undefined) {
+            return leaf.c;
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return parent.c!;
+        throw (leaf.h! as IFluidHandle<ArrayBufferLike>)
+            .get()
+            .then((blob) => {
+                leaf.c = JSON.parse(new TextDecoder().decode(blob));
+            });
     }
 
-    private getChild(parent: LogNode<T>, index: number, callback: (child: T | LogNode<T>) => void) {
-        if (parent.c === undefined) {
-            this.loadChildren(parent)
-                .then((children) => callback(children[index]))
-                // eslint-disable-next-line @typescript-eslint/unbound-method
-                .catch(console.error);
-        } else {
-            callback(parent.c[index]);
-        }
-    }
-
-    public async getEntry(index: number): Promise<T> {
+    public getEntry(index: number): T {
         /* eslint-disable no-bitwise */
 
         const ackedLength = this.ackedLength;
 
         if (index < ackedLength) {
-            return new Promise((resolve) => {
-                this.getChild(this.root, index >>> 24, (c1) => {
-                    this.getChild(c1 as IInteriorNode<T>, (index << 8) >>> 24, (c2) => {
-                        this.getChild(c2 as IInteriorNode<T>, (index << 16) >>> 24, (c3) => {
-                            this.getChild(c3 as ILeafNode<T>, (index << 24) >>> 24, (c4) => {
-                                resolve(c4 as T);
-                            });
-                        });
-                    });
-                });
-            });
+            const c1 = this.root.c[index >>> 24] as IInteriorNode<T>;
+            const c2 = c1.c[(index << 8) >>> 24] as IInteriorNode<T>;
+            const leaf = c2.c[(index << 16) >>> 24] as ILeafNode<T>;
+
+            const children = this.loadLeafChildren(leaf);
+            return children[(index << 24) >>> 24];
         } else {
             return this.pending[index - ackedLength];
         }
@@ -156,8 +143,7 @@ export class SharedLog<T extends Serializable = Serializable>
         height: number,
         leaf: ILeafNode<T>,
     ): LogNode<T> | undefined {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const children = node.c!;
+        const children = node.c;
         let child: LogNode<T> | undefined;
 
         // eslint-disable-next-line no-param-reassign
@@ -171,40 +157,19 @@ export class SharedLog<T extends Serializable = Serializable>
         }
 
         if (children.length === blockSize) {
-            return { a: 0, i: undefined, c: [child] };
+            return { p: 1, c: [child] };
         }
 
+        node.p++;
         children.push(child);
+
         return undefined;
     }
 
-    /**
-     * Constructs a new shared cell. If the object is non-local an id and service interfaces will
-     * be provided
-     *
-     * @param runtime - data store runtime the shared map belongs to
-     * @param id - optional name of the shared map
-     */
-    public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
-        super(id, runtime, attributes);
-    }
-
-    /**
-     * Create a snapshot for the cell
-     *
-     * @returns the snapshot of the current state of the cell
-     */
     public snapshot(): ITree {
         throw new Error("NYI");
     }
 
-    /**
-     * Load cell from snapshot
-     *
-     * @param branchId - Not used
-     * @param storage - the storage to get the snapshot from
-     * @returns - promise that resolved when the load is completed
-     */
     protected async loadCore(
         branchId: string,
         storage: IChannelStorageService,
@@ -212,41 +177,24 @@ export class SharedLog<T extends Serializable = Serializable>
         throw new Error("NYI");
     }
 
-    /**
-     * Initialize a local instance of cell
-     */
     protected initializeLocalCore() { }
 
-    /**
-     * Process the cell value on register
-     */
     protected registerCore() { }
 
-    /**
-     * Call back on disconnect
-     */
     protected onDisconnect() {
         debug(`'${this.id}' now disconnected.`);
     }
 
     private async uploadLeaf(node: ILeafNode<T>) {
         assert.equal(node.c?.length, blockSize);
-        assert.equal(node.i, undefined);
+        assert.equal(node.h, undefined);
 
-        const content = new TextEncoder()
-            .encode(JSON.stringify(node.c));
+        node.h = this.runtime.uploadBlob(
+            new TextEncoder()
+                .encode(JSON.stringify(node.c)));
 
-        node.i = this.runtime.uploadBlob({
-            content,
-            size: content.byteLength,
-            fileName: "",
-            id: "",
-            type: "generic",
-            url: "",
-        }).then((blob) => blob.id);
-
-        // When the promise resolves, replace 'node.i' with the resolved 'id' string.
-        node.i = await node.i;
+        // When the promise resolves, replace 'node.h' with the resolved handle.
+        node.h = await node.h;
     }
 
     private findRightMost(node: LogNode<T> = this.root, height = 3): ILeafNode<T> {
@@ -280,8 +228,7 @@ export class SharedLog<T extends Serializable = Serializable>
 
                 this.rightmostLeaf = [];
                 this.insert(this.root, /* height: */ 3, {
-                    a: 0,
-                    i: undefined,
+                    h: undefined,
                     c: this.rightmostLeaf,
                 });
             }

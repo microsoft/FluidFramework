@@ -379,7 +379,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
     private readonly activeDeferred = new Deferred<void>();
     public readonly quorum = new MockQuorum();
-    private readonly blobs = new Map<string, IGenericBlob>();
 
     public get absolutePath() {
         return `/${this.id}`;
@@ -459,11 +458,15 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
 
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
-        return null;
-    }
-
-    public async getBlob(blobId: string): Promise<any> {
-        return null;
+        return {
+            get IFluidHandle() { return this as any; },
+            absolutePath: "",
+            isAttached: false,
+            attachGraph() {},
+            // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+            async get() { return blob; },
+            bind() {},
+        };
     }
 
     public submitMessage(type: MessageType, content: any) {
