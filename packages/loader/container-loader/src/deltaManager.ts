@@ -1173,14 +1173,16 @@ export class DeltaManager
                 // Validate that we do not have data loss, i.e. sequencing is reset and started again
                 // with numbers that this client already observed before.
                 if (this.previouslyProcessedMessage?.sequenceNumber === message.sequenceNumber) {
-                    const m1 = this.comparableMessagePayload(this.previouslyProcessedMessage);
-                    const m2 = this.comparableMessagePayload(message);
-                    if (m1 !== m2) {
+                    const message1 = this.comparableMessagePayload(this.previouslyProcessedMessage);
+                    const message2 = this.comparableMessagePayload(message);
+                    if (message1 !== message2) {
                         const error = {
                             errorType: ContainerErrorType.dataCorruption,
                             message: "Two messages with same seq# and different payload!",
                             clientId: this.connection?.details.clientId,
                             sequenceNumber: message.sequenceNumber,
+                            message1,
+                            message2,
                         };
                         this.close(error);
                     }
