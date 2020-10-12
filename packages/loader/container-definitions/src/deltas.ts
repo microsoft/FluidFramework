@@ -161,7 +161,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     submitSignal(content: any): void;
 }
 
-/** Events emmitted by a Delta Queue */
+/** Events emitted by a Delta Queue */
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "push" | "op", listener: (task: T) => void);
     (event: "idle", listener: () => void);
