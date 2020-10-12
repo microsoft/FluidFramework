@@ -20,7 +20,7 @@ import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 describe("CodeProposal.EndToEnd", () => {
-    const documentId = "sharedIntervalTest";
+    const documentId = "codeProposalTest";
     const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const codeDetails: IFluidCodeDetails = {
         package: "test",
@@ -96,14 +96,14 @@ describe("CodeProposal.EndToEnd", () => {
     });
 
     it("Code Proposal", async () => {
-        container1.on("contextChanged",(c)=>{
+        container1.once("contextChanged",(c)=>{
             assert.deepStrictEqual(
                 c,
                 codeDetails2,
                 "container1 context should be update");
         });
 
-        container2.on("contextChanged",(c)=>{
+        container2.once("contextChanged",(c)=>{
             assert.deepStrictEqual(
                 c,
                 codeDetails2,
