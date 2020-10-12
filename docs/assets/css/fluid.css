@@ -215,3 +215,10 @@ footer {
     position: absolute !important;
     word-wrap: normal !important;
 }
+
+
+/* fixing https://github.com/microsoft/FluidFramework/issues/3821
+where bootstrap caption color is too light for white background */
+.table caption {
+    color: #767676
+}
