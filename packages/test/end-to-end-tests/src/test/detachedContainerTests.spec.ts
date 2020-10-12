@@ -30,6 +30,9 @@ import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+
+const detachedContainerRefSeqNumber = 0;
+
 import { ICompatTestArgs, compatTest } from "./compatUtils";
 
 const documentId = "detachedContainerTest";
@@ -355,7 +358,12 @@ const tests = (args: ICompatTestArgs) => {
     });
 
     it("Fire ops during container attach for consensus register collection", async () => {
-        const op = { key: "1", type: "write", serializedValue: JSON.stringify("b"), refSeq: 0 };
+        const op = {
+            key: "1",
+            type: "write",
+            serializedValue: JSON.stringify("b"),
+            refSeq: detachedContainerRefSeqNumber,
+        };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
