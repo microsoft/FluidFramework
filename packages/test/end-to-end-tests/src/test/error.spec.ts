@@ -59,10 +59,8 @@ describe("Errors Types", () => {
 
         try {
             const mockFactory = Object.create(serviceFactory) as IDocumentServiceFactory;
-            // Issue typescript-eslint/typescript-eslint #1256
             mockFactory.createDocumentService = async (resolvedUrl) => {
                 const service = await serviceFactory.createDocumentService(resolvedUrl);
-                // Issue typescript-eslint/typescript-eslint #1256
                 service.connectToDeltaStorage = async () => Promise.reject(false);
                 return service;
             };
