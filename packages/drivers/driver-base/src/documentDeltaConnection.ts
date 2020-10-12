@@ -309,6 +309,8 @@ export class DocumentDeltaConnection
      * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.
      */
     public close() {
+        // close() assumes silent close - no events fired to avoid reentrancy
+        this.removeAllListeners();
         this.disconnect(false, "client closing connection");
     }
 
@@ -319,11 +321,24 @@ export class DocumentDeltaConnection
      *  (not on Fluid protocol level)
      * @param reason - reason for disconnect
      */
-    public disconnect(socketProtocolError: boolean, reason: string) {
+    protected disconnect(socketProtocolError: boolean, reason: string) {
+        // We set the closed flag as a part of the contract for overriding the disconnect method. This is used by
+        // DocumentDeltaConnection to determine if emitting on the socket is allowed, which is important since
+        // OdspDocumentDeltaConnection reuses the socket rather than truly disconnecting it.  Note that below we may
+        // still send disconnect_document which is allowed; this is only intended to prevent normal messages from
+        // being emitted.
+        if (this.closed) {
+            return;
+        }
         this.closed = true;
+
         this.removeTrackedListeners(false);
+        this.disconnectCore(socketProtocolError, reason);
+        this.removeAllListeners();
+    }
+
+    protected disconnectCore(socketProtocolError: boolean, reason: string) {
         this.socket.disconnect();
-        this.closed = true;
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
@@ -331,6 +346,8 @@ export class DocumentDeltaConnection
         this.socket.on("op", this.earlyOpHandler!);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.socket.on("signal", this.earlySignalHandler!);
+
+        let success = false;
 
         this._details = await new Promise<IConnected>((resolve, reject) => {
             // Listen for connection issues
@@ -364,6 +381,7 @@ export class DocumentDeltaConnection
 
                 this.removeTrackedListeners(true);
                 resolve(response);
+                success = true;
             });
 
             // WARNING: this has to stay as addTrackedListener listener and not be removed after successful connection.
@@ -376,7 +394,7 @@ export class DocumentDeltaConnection
                 reject(errorObj);
                 this.emit("error", errorObj);
 
-                // Safety net - disconnect socket if client did not do so as result of processing "error" event.
+                // Disconnect socket - required if happened before initial handshake
                 this.disconnect(true, `error: ${error}`);
             }));
 
@@ -399,7 +417,11 @@ export class DocumentDeltaConnection
 
             // Give extra 2 seconds for handshake on top of socket connection timeout
             setTimeout(() => {
-                reject(createErrorObject("Timeout waiting for handshake from ordering service", undefined));
+                if (!success) {
+                    const message = "Timeout waiting for handshake from ordering service";
+                    reject(createErrorObject(message, undefined));
+                    this.disconnect(false, message);
+                }
             }, timeout + 2000);
         });
     }

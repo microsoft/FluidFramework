@@ -111,6 +111,7 @@ export class DeltaConnection
      * Closes the delta connection. This disconnects the socket and clears any listeners
      */
     public close() {
+        // closes() assumes silent close - no events fired to avoid reentrancy
         this.removeAllListeners();
         if (this._connection !== undefined) {
             const connection = this._connection;
