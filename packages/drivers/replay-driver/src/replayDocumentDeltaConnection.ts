@@ -199,7 +199,6 @@ export class ReplayDocumentDeltaConnection
             claims: ReplayDocumentDeltaConnection.claims,
             clientId: "",
             existing: true,
-            initialContents: [],
             initialMessages: [],
             initialSignals: [],
             initialClients: [],

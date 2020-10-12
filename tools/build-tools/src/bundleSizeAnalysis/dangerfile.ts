@@ -13,12 +13,9 @@ declare function markdown(message: string, file?: string, line?: number): void;
 
 const adoConstants = {
     orgUrl: 'https://dev.azure.com/fluidframework',
-    projectName: 'internal',
-    ciBuildDefinitionId: 12,
-    prBuildDefinitionId: undefined,
+    projectName: 'public',
+    ciBuildDefinitionId: 48,
     bundleAnalysisArtifactName: 'bundleAnalysis',
-    projectRepoGuid: undefined,
-    buildsToSearch: undefined,
 };
 
 const localReportPath = "./artifacts/bundleAnalysis";

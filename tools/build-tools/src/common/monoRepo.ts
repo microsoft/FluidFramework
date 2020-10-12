@@ -38,11 +38,9 @@ export class MonoRepo {
     }
 
     public async install() {
-        // TODO: Remove env once publish to the public feed.
-        const env = process.env["NPM_TOKEN"]? process.env : { ...process.env, "NPM_TOKEN": "" };
         console.log(`${MonoRepoKind[this.kind]}: Installing - npm i`);
         const installScript = "npm i";
-        return execWithErrorAsync(installScript, { cwd: this.repoPath, env }, this.repoPath);
+        return execWithErrorAsync(installScript, { cwd: this.repoPath }, this.repoPath);
     }
     public async uninstall() {
         return rimrafWithErrorAsync(this.getNodeModulePath(), this.repoPath);

@@ -28,7 +28,7 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     ensureFluidResolvedUrl,
     MultiUrlResolver,
@@ -106,7 +106,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         throw new Error("Relative loader should not create a detached container");
     }
 
-    public async rehydrateDetachedContainerFromSnapshot(source: ISnapshotTree): Promise<Container> {
+    public async rehydrateDetachedContainerFromSnapshot(source: string): Promise<Container> {
         throw new Error("Relative loader should not create a detached container from snapshot");
     }
 
@@ -181,7 +181,7 @@ export class Loader extends EventEmitter implements ILoader {
             this.subLogger);
     }
 
-    public async rehydrateDetachedContainerFromSnapshot(snapshot: ISnapshotTree): Promise<Container> {
+    public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
 
         return Container.create(
@@ -190,7 +190,7 @@ export class Loader extends EventEmitter implements ILoader {
             this.scope,
             this,
             {
-                snapshot,
+                snapshot: JSON.parse(snapshot),
                 create: false,
             },
             this.documentServiceFactory,
@@ -210,6 +210,15 @@ export class Loader extends EventEmitter implements ILoader {
             const resolved = await this.resolveCore(request);
             return resolved.container.request({ url: resolved.parsed.path });
         });
+    }
+
+    public cacheContainer(container: Container, request: IRequest, parsedUrl: IParsedUrl) {
+        const { canCache } = this.parseHeader(parsedUrl, request);
+
+        if (canCache) {
+            const key = this.getKeyForContainerCache(request, parsedUrl);
+            this.containers.set(key, Promise.resolve(container));
+        }
     }
 
     public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
@@ -241,6 +250,13 @@ export class Loader extends EventEmitter implements ILoader {
         }
     }
 
+    private getKeyForContainerCache(request: IRequest, parsedUrl: IParsedUrl): string {
+        const key = request.headers?.[LoaderHeader.version] !== undefined
+            ? `${parsedUrl.id}@${request.headers[LoaderHeader.version]}`
+            : parsedUrl.id;
+        return key;
+    }
+
     private async resolveCore(
         request: IRequest,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
@@ -260,10 +276,8 @@ export class Loader extends EventEmitter implements ILoader {
 
         let container: Container;
         if (canCache) {
-            const versionedId = request.headers[LoaderHeader.version] !== undefined
-                ? `${parsed.id}@${request.headers[LoaderHeader.version]}`
-                : parsed.id;
-            const maybeContainer = await this.containers.get(versionedId);
+            const key = this.getKeyForContainerCache(request, parsed);
+            const maybeContainer = await this.containers.get(key);
             if (maybeContainer !== undefined) {
                 container = maybeContainer;
             } else {
@@ -272,7 +286,7 @@ export class Loader extends EventEmitter implements ILoader {
                         parsed.id,
                         request,
                         resolvedAsFluid);
-                this.containers.set(versionedId, containerP);
+                this.containers.set(key, containerP);
                 container = await containerP;
             }
         } else {
