@@ -37,6 +37,7 @@ describe("Detached Container", () => {
         config: {},
     };
 
+    const detachedContainerRefSeqNumber = 0;
     const sharedStringId = "ss1Key";
     const sharedMapId = "sm1Key";
     const crcId = "crc1Key";
@@ -370,7 +371,12 @@ describe("Detached Container", () => {
     });
 
     it("Fire ops during container attach for consensus register collection", async () => {
-        const op = { key: "1", type: "write", serializedValue: JSON.stringify("b"), refSeq: 0 };
+        const op = {
+            key: "1",
+            type: "write",
+            serializedValue: JSON.stringify("b"),
+            refSeq: detachedContainerRefSeqNumber,
+        };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
