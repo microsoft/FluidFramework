@@ -502,10 +502,10 @@ export class PerformanceEvent {
     public end(props?: ITelemetryProperties, eventNameSuffix = "end"): void {
         this.reportEvent(eventNameSuffix, props);
 
-        if (this.startMark) {
-            const endMark = `${this.event!.eventName}-${eventNameSuffix}`;
+        if (this.startMark && this.event) {
+            const endMark = `${this.event.eventName}-${eventNameSuffix}`;
             window.performance.mark(endMark);
-            window.performance.measure(`${this.event!.eventName}`, this.startMark, endMark);
+            window.performance.measure(`${this.event.eventName}`, this.startMark, endMark);
             this.startMark = undefined;
         }
 
