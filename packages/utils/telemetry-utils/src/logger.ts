@@ -520,8 +520,7 @@ export class PerformanceEvent {
     public reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: any): void {
         if (!this.event) {
             const errorEvent = {
-                eventName: "PerformanceEventAfterStop",
-                perfEventName: this.eventName,
+                eventName: `${this.eventName}_doubleReport`,
                 eventNameSuffix,
             };
             this.logger.sendErrorEvent(errorEvent, error);
