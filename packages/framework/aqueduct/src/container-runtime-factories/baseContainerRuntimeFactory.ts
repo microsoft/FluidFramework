@@ -14,7 +14,7 @@ import {
 import {
     RuntimeRequestHandler,
     buildRuntimeRequestHandler,
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
 } from "@fluidframework/request-handler";
 import {
     IFluidDataStoreRegistry,
@@ -70,7 +70,7 @@ export class BaseContainerRuntimeFactory implements
             this.registryEntries,
             buildRuntimeRequestHandler(
                 ...this.requestHandlers,
-                deprecated_innerRequestHandler),
+                innerRequestHandler),
             undefined,
             scope);
 

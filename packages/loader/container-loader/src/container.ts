@@ -21,7 +21,6 @@ import {
     IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
-    ILoader,
     IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
@@ -98,6 +97,8 @@ import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
+const detachedContainerRefSeqNumber = 0;
+
 interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
@@ -146,7 +147,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         codeLoader: ICodeLoader,
         options: any,
         scope: IFluidObject,
-        loader: ILoader,
+        loader: Loader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
         urlResolver: IUrlResolver,
@@ -395,7 +396,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         public readonly options: any,
         private readonly scope: IFluidObject,
         private readonly codeLoader: ICodeLoader,
-        private readonly loader: ILoader,
+        private readonly loader: Loader,
         private readonly serviceFactory: IDocumentServiceFactory,
         private readonly urlResolver: IUrlResolver,
         config: IContainerConfig,
@@ -430,6 +431,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 docId: () => this.id,
                 containerAttachState: () => this._attachState,
+                containerLoaded: () => this.loaded,
             });
 
         // Prefix all events in this file with container-loader
@@ -481,7 +483,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 {
                     eventName: "ContainerClose",
                     sequenceNumber: error.sequenceNumber ?? this._deltaManager.lastSequenceNumber,
-                    loading: !this.loaded,
                 },
                 error,
             );
@@ -576,6 +577,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (parsedUrl === undefined) {
                 throw new Error("Unable to parse Url");
             }
+
+            this.loader.cacheContainer(this, request, parsedUrl);
+
             const [, docId] = parsedUrl.id.split("/");
             this._id = decodeURI(docId);
 
@@ -773,8 +777,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
              * There are currently two scenarios where this is called:
              * 1. When a new code proposal is accepted - This should be set to true before `this.loadContext` is
              * called which creates and loads the ContainerRuntime. This is because for "read" mode clients this
-             * flag is false which causes ContainerRuntime to create the internal compoents again.
-             * 2. When the first client connects in "write" mode - This happens when a clent does not create the
+             * flag is false which causes ContainerRuntime to create the internal components again.
+             * 2. When the first client connects in "write" mode - This happens when a client does not create the
              * Container in detached mode. In this case, when the code proposal is accepted, we come here and we
              * need to create the internal data stores in ContainerRuntime.
              * Once we move to using detached container everywhere, this can move outside this block.
@@ -999,7 +1003,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async createDetached(source: IFluidCodeDetails) {
         const attributes: IDocumentAttributes = {
             branch: "",
-            sequenceNumber: 0,
+            sequenceNumber: detachedContainerRefSeqNumber,
             term: 1,
             minimumSequenceNumber: 0,
         };

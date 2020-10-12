@@ -117,7 +117,6 @@ export class ReplayFileDeltaConnection
             claims: Claims,
             clientId: "",
             existing: true,
-            initialContents: [],
             initialMessages: [],
             initialSignals: [],
             initialClients: [],

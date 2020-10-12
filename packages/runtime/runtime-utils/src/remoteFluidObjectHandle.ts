@@ -50,7 +50,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
                 .then<IFluidObject>((response) =>
                     response.mimeType === "fluid/object"
                         ? response.value as IFluidObject
-                        : Promise.reject("Not found"));
+                        : Promise.reject(new Error("Not found")));
         }
 
         return this.dataStoreP;

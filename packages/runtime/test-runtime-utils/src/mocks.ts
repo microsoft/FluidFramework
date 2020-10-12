@@ -364,6 +364,10 @@ export class MockQuorum implements IQuorum, EventEmitter {
 export class MockFluidDataStoreRuntime extends EventEmitter
     implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     public get IFluidHandleContext(): IFluidHandleContext { return this; }
+    public get rootRoutingContext(): IFluidHandleContext { return this; }
+    public get channelsRoutingContext(): IFluidHandleContext { return this; }
+    public get objectsRoutingContext(): IFluidHandleContext { return this; }
+
     public get IFluidRouter() { return this; }
 
     public readonly IFluidSerializer = new FluidSerializer();
