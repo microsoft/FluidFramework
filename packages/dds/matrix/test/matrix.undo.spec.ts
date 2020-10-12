@@ -135,6 +135,68 @@ describe("Matrix", () => {
                 expectSize(matrix, /* rowCount */ 0, /* colCount: */ 1);
             });
 
+            it("undo/redo removeRow 0 of 2x2", async () => {
+                matrix.insertRows(/* start: */ 0, /* count: */ 2);
+                matrix.insertCols(/* start: */ 0, /* count: */ 2);
+                matrix.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
+                    0, 1,
+                    2, 3,
+                ]);
+                undo.closeCurrentOperation();
+                await expect([
+                    [0, 1],
+                    [2, 3],
+                ]);
+
+                matrix.removeRows(/* rowStart: */ 0, /* rowCount: */ 1);
+                undo.closeCurrentOperation();
+                await expect([
+                    [2, 3]
+                ]);
+
+                undo.undoOperation();
+                await expect([
+                    [0, 1],
+                    [2, 3],
+                ]);
+
+                undo.redoOperation();
+                await expect([
+                    [2, 3]
+                ]);
+            });
+
+            it("undo/redo removeRow 1 of 2x2", async () => {
+                matrix.insertRows(/* start: */ 0, /* count: */ 2);
+                matrix.insertCols(/* start: */ 0, /* count: */ 2);
+                matrix.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
+                    0, 1,
+                    2, 3,
+                ]);
+                undo.closeCurrentOperation();
+                await expect([
+                    [0, 1],
+                    [2, 3],
+                ]);
+
+                matrix.removeRows(/* rowStart: */ 1, /* rowCount: */ 1);
+                undo.closeCurrentOperation();
+                await expect([
+                    [0, 1]
+                ]);
+
+                undo.undoOperation();
+                await expect([
+                    [0, 1],
+                    [2, 3],
+                ]);
+
+                undo.redoOperation();
+                await expect([
+                    [0, 1]
+                ]);
+            });
+
             it("undo/redo insertCol", async () => {
                 matrix.insertCols(/* start: */ 0, /* count: */ 1);
                 undo.closeCurrentOperation();
@@ -167,6 +229,72 @@ describe("Matrix", () => {
 
                 undo.redoOperation();
                 expectSize(matrix, /* rowCount */ 1, /* colCount: */ 0);
+            });
+
+            it("undo/redo removeCol 0 of 2x2", async () => {
+                matrix.insertRows(/* start: */ 0, /* count: */ 2);
+                matrix.insertCols(/* start: */ 0, /* count: */ 2);
+                matrix.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
+                    0, 1,
+                    2, 3,
+                ]);
+                await expect([
+                    [0, 1],
+                    [2, 3],
+                ]);
+                undo.closeCurrentOperation();
+
+                matrix.removeCols(/* colStart: */ 0, /* colCount: */ 1);
+                undo.closeCurrentOperation();
+                await expect([
+                    [1],
+                    [3],
+                ]);
+
+                undo.undoOperation();
+                await expect([
+                    [0, 1],
+                    [2, 3],
+                ]);
+
+                undo.redoOperation();
+                await expect([
+                    [1],
+                    [3],
+                ]);
+            });
+
+            it("undo/redo removeCol 1 of 2x2", async () => {
+                matrix.insertRows(/* start: */ 0, /* count: */ 2);
+                matrix.insertCols(/* start: */ 0, /* count: */ 2);
+                matrix.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
+                    0, 1,
+                    2, 3,
+                ]);
+                await expect([
+                    [0, 1],
+                    [2, 3],
+                ]);
+                undo.closeCurrentOperation();
+
+                matrix.removeCols(/* colStart: */ 1, /* colCount: */ 1);
+                undo.closeCurrentOperation();
+                await expect([
+                    [0],
+                    [2],
+                ]);
+
+                undo.undoOperation();
+                await expect([
+                    [0, 1],
+                    [2, 3],
+                ]);
+
+                undo.redoOperation();
+                await expect([
+                    [0],
+                    [2],
+                ]);
             });
         });
     });
