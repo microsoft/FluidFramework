@@ -86,13 +86,13 @@ describe("CodeProposal.EndToEnd", () => {
         const map1 = await dataObject1.getSharedObject<ISharedMap>("map");
 
         // BUG BUG quorum.propose doesn't handle readonly, so make sure connection is write
-        while (container1.deltaManager.connectionMode === "read" || !container1.connected) {
+        do {
             map1.set("foo","bar");
             await Promise.all([
                 new Promise((resolve) => container1.connected ? resolve() : container1.once("connect", resolve)),
                 opProcessingController.process(),
             ]);
-        }
+        } while (!container1.connected);
     });
 
     it("Code Proposal", async () => {

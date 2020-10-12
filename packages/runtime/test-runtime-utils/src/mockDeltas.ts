@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import {
-    ConnectionMode,
     IClientDetails,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -93,9 +92,6 @@ export class MockDeltaManager extends EventEmitter
     public get inboundSignal(): IDeltaQueue<ISignalMessage> {
         return this._inboundSignal;
     }
-
-    public readonly connectionMode: ConnectionMode = "write";
-
     public minimumSequenceNumber = 0;
 
     public lastSequenceNumber = 0;
