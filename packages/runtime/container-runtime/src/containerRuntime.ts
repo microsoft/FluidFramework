@@ -176,6 +176,7 @@ export interface IUploadedSummaryData {
 export interface IUnsubmittedSummaryData extends Partial<IGeneratedSummaryData>, Partial<IUploadedSummaryData> {
     readonly referenceSequenceNumber: number;
     readonly submitted: false;
+    readonly reason: "disconnected";
 }
 
 export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedSummaryData {
@@ -934,7 +935,10 @@ export class ContainerRuntime extends EventEmitter
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "_summarizer" || request.url === "/_summarizer") {
+        const parser = RequestParser.create(request);
+        const id = parser.pathParts[0];
+
+        if (id === "_summarizer" && parser.pathParts.length === 1) {
             return {
                 status: 200,
                 mimeType: "fluid/object",
@@ -942,7 +946,7 @@ export class ContainerRuntime extends EventEmitter
             };
         }
         if (this.requestHandler !== undefined) {
-            return this.requestHandler(request, this);
+            return this.requestHandler(parser, this);
         }
 
         return {
@@ -957,10 +961,14 @@ export class ContainerRuntime extends EventEmitter
      * @param request - Request made to the handler.
      */
     public async resolveHandle(request: IRequest): Promise<IResponse> {
-        const requestParser = new RequestParser(request);
+        const requestParser = RequestParser.create(request);
+        const id = requestParser.pathParts[0];
 
-        if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === this.blobManager.basePath) {
-            assert(requestParser.pathParts.length === 2 && !requestParser.query);
+        if (id === "_channel") {
+            return this.resolveHandle(requestParser.createSubRequest(1));
+        }
+
+        if (id === this.blobManager.basePath && requestParser.isLeaf(2)) {
             const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
             if (handle) {
                 return {
@@ -979,17 +987,9 @@ export class ContainerRuntime extends EventEmitter
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const dataStore = await this.getDataStore(requestParser.pathParts[0], wait);
+            const dataStore = await this.getDataStore(id, wait);
             const subRequest = requestParser.createSubRequest(1);
-            if (subRequest !== undefined) {
-                return dataStore.IFluidRouter.request(subRequest);
-            } else {
-                return {
-                    status: 200,
-                    mimeType: "fluid/object",
-                    value: dataStore,
-                };
-            }
+            return dataStore.IFluidRouter.request(subRequest);
         }
 
         return {
@@ -1672,14 +1672,14 @@ export class ContainerRuntime extends EventEmitter
         try {
             await this.scheduleManager.pause();
 
-            const attemptData: IUnsubmittedSummaryData = {
+            const attemptData: Omit<IUnsubmittedSummaryData, "reason"> = {
                 referenceSequenceNumber: summaryRefSeqNum,
                 submitted: false,
             };
 
             if (!this.connected) {
                 // If summarizer loses connection it will never reconnect
-                return attemptData;
+                return { ...attemptData, reason: "disconnected" };
             }
 
             const trace = Trace.start();
@@ -1691,8 +1691,15 @@ export class ContainerRuntime extends EventEmitter
             };
 
             if (!this.connected) {
-                return { ...attemptData, ...generateData };
+                return { ...attemptData, ...generateData, reason: "disconnected" };
             }
+
+            // Ensure that lastSequenceNumber has not changed after pausing
+            const lastSequenceNumber = this.deltaManager.lastSequenceNumber;
+            assert(
+                lastSequenceNumber === summaryRefSeqNum,
+                `lastSequenceNumber changed while paused. ${lastSequenceNumber} !== ${summaryRefSeqNum}`,
+            );
 
             const handle = await this.storage.uploadSummaryWithContext(
                 treeWithStats.summary,
@@ -1723,7 +1730,7 @@ export class ContainerRuntime extends EventEmitter
             };
 
             if (!this.connected) {
-                return { ...attemptData, ...generateData, ...uploadData };
+                return { ...attemptData, ...generateData, ...uploadData, reason: "disconnected" };
             }
 
             const clientSequenceNumber =

@@ -1,6 +1,6 @@
 html {
     background-color: #2c2c32;
-    overflow-y:scroll;
+    overflow-y: scroll;
 }
 
 footer {
@@ -19,7 +19,8 @@ footer {
     flex-wrap: wrap;
 }
 
-.row:after, .row:before{
+.row:after,
+.row:before {
     display: none;
 }
 
@@ -29,8 +30,8 @@ footer {
     height: 100%;
     display: flex;
     flex-flow: column;
-    color:#f3f5f7;
-    transition: .1s ease-in;
+    color: #f3f5f7;
+    transition: 0.1s ease-in;
     background: #404049;
 }
 
@@ -51,7 +52,7 @@ footer {
     padding-left: 0;
 }
 
-.cta:hover {
+.cta:hover, .cta:focus {
     text-decoration: none;
     transition: none;
     background: #5a5a66;
@@ -105,7 +106,7 @@ footer {
     font-size: 16px;
     padding: 8em 4em;
     background-color: #2c2c32;
-    color: rgba(255, 255, 255, .6);
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .omt .container {
@@ -201,4 +202,16 @@ footer {
 
 .highlight-copy-btn:hover {
     background-color: #666;
+}
+
+.screen-reader-text {
+    border: 0;
+    clip: rect(1px, 1px, 1px, 1px);
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    width: 1px;
+    overflow: hidden;
+    position: absolute !important;
+    word-wrap: normal !important;
 }

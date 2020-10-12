@@ -44,7 +44,6 @@ export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> impl
         [
             TableSlice.getFactory().registryEntry,
         ],
-        true,
     );
 
     public get numCols() { return this.maybeCols.getLength(); }

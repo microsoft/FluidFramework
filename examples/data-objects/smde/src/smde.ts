@@ -66,7 +66,7 @@ export class Smde extends EventEmitter implements
         super();
 
         this.url = context.id;
-        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.objectsRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

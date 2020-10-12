@@ -40,8 +40,6 @@ export async function initialize(
     scriptIds: string[],
     jwt: string,
     config: any,
-    clientId: string,
-    user: any,
 ) {
     const documentFactory = new DocumentFactory(config.tenantId);
 

@@ -17,7 +17,6 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
     IClient,
-    IContentMessage,
     IDocumentMessage,
     IVersion,
     ISummaryTree,
@@ -208,7 +207,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             clientId: deltaStream.clientId,
             existing: deltaStream.existing,
             get initialClients() { return deltaStream.initialClients; },
-            get initialContents() { return [] as IContentMessage[]; },
             get initialMessages() { return deltaStream.initialMessages; },
             get initialSignals() { return deltaStream.initialSignals; },
             maxMessageSize: deltaStream.maxMessageSize,
