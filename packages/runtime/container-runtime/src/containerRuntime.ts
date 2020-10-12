@@ -1739,7 +1739,7 @@ export class ContainerRuntime extends EventEmitter
             assert(
                 this.deltaManager.lastSequenceNumber === summaryRefSeqNum,
                 `lastSequenceNumber changed before the summary op could be submitted. `
-                    + `${lastSequenceNumber} !== ${summaryRefSeqNum}`,
+                    + `${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
             );
 
             const clientSequenceNumber =
