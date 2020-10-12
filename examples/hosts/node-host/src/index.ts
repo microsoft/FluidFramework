@@ -124,5 +124,5 @@ export async function storageAccount() {
     const snapshotdata = await azureStorage.getSnapShotContent("samples", "sampletext.txt", "2020-10-05T09:45:31.8038417Z")
     console.log(snapshotdata);
 }
-storageAccount();
-// start();
+// storageAccount();
+start();
