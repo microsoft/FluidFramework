@@ -34,8 +34,6 @@ export function generateToken(
         scopes,
         tenantId,
         user,
-        aud: "",
-        iss: "",
         iat: now,
         nbf: now,
         exp: now + 5 * 60, // 5 minute expiration window
