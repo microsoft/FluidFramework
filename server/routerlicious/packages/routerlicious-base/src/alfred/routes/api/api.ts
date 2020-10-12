@@ -145,8 +145,14 @@ async function verifyToken(request: Request, tenantManager: core.ITenantManager)
     }
     const tenantId = getParam(request.params, "tenantId");
     const documentId = getParam(request.params, "id");
+    const now = Math.round((new Date()).getTime() / 1000);
     const claims = jwt.decode(token) as ITokenClaims;
-    if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
+    if (!claims
+        || claims.documentId !== documentId
+        || claims.tenantId !== tenantId
+        || now < claims.nbf
+        || now >= claims.exp
+    ) {
         return Promise.reject("Invalid access token");
     }
     return tenantManager.verifyToken(tenantId, token);

@@ -26,11 +26,20 @@ export function generateToken(
         user = generateUser();
     }
 
+    // Current time in seconds
+    const now = Math.round((new Date()).getTime() / 1000);
+
     const claims: ITokenClaims = {
         documentId,
         scopes,
         tenantId,
         user,
+        aud: "",
+        iss: "",
+        iat: now,
+        nbf: now,
+        exp: now + 5 * 60, // 5 minute expiration window
+        ver: "1.0",
     };
 
     return jwt.sign(claims, key);
