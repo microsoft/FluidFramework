@@ -105,8 +105,8 @@ footer {
 .omt {
     font-size: 16px;
     padding: 8em 4em;
-    background-color: #2c2c32;
-    color: rgba(255, 255, 255, 0.6);
+    background-color: ##f5f5f5;
+    color: #444;
 }
 
 .omt .container {
