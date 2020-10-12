@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/tool-utils",
-  "version": "0.25.6",
+  "version": "0.25.7",
   "description": "Common utilities for Fluid tools",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.22.1",
-    "@fluidframework/odsp-utils": "^0.25.6",
+    "@fluidframework/odsp-utils": "^0.25.7",
     "proper-lockfile": "^4.1.1"
   },
   "devDependencies": {
