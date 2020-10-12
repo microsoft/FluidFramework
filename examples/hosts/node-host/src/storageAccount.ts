@@ -67,6 +67,7 @@ export class AzureBlobStorage {
         const blockBlobClient = this.getBlockBlobClient(containerName, blobName);
         const blockBlobSnapshot = blockBlobClient.withSnapshot(snapshot)
         const downloadBlockBlobResponse = await blockBlobSnapshot.download();
+        console.log(downloadBlockBlobResponse)
         return await this.streamToString(downloadBlockBlobResponse.readableStreamBody);
         // const containerClient = this.blobServiceClient.getContainerClient(containerName);
         // // console.log(containerClient.listBlobsFlat());
