@@ -27,6 +27,8 @@ import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ICompatLocalTestObjectProvider, generateTestWithCompat, generateTest } from "./compatUtils";
 
+const detachedContainerRefSeqNumber = 0;
+
 const documentId = "detachedContainerTest";
 
 const sharedStringId = "ss1Key";
@@ -127,7 +129,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         // Now attach the container
         await container.attach(request);
 
-        assert.strictEqual(testDataStore.runtime.IFluidHandleContext.isAttached, true,
+        assert(testDataStore.runtime.attachState !== AttachState.Detached,
             "DataStore should be attached!!");
 
         // Get the sub dataStore's "root" channel and verify that it is attached.
@@ -159,7 +161,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         // Get the sub dataStore and assert that it is attached.
         const response2 = await container2.request({ url: `/${subDataStore1.context.id}` });
         const subDataStore2 = response2.value as ITestFluidObject;
-        assert.strictEqual(subDataStore2.runtime.IFluidHandleContext.isAttached, true,
+        assert(subDataStore2.runtime.attachState !== AttachState.Detached,
             "DataStore should be attached!!");
 
         // Verify the attributes of the root channel of both sub dataStores.
@@ -340,7 +342,12 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
     });
 
     it("Fire ops during container attach for consensus register collection", async () => {
-        const op = { key: "1", type: "write", serializedValue: JSON.stringify("b"), refSeq: 0 };
+        const op = {
+            key: "1",
+            type: "write",
+            serializedValue: JSON.stringify("b"),
+            refSeq: detachedContainerRefSeqNumber,
+        };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
         container.deltaManager.submit = (type, contents, batch, metadata) => {

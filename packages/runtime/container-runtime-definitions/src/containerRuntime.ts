@@ -10,7 +10,12 @@ import {
     IDeltaManager,
     ILoader,
 } from "@fluidframework/container-definitions";
-import { IFluidObject, IFluidRouter } from "@fluidframework/core-interfaces";
+import {
+    IRequest,
+    IResponse,
+    IFluidObject,
+    IFluidRouter,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
@@ -124,4 +129,10 @@ export interface IContainerRuntime extends
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+    /**
+     * Resolves handle URI
+     * @param request - request to resolve
+     */
+    resolveHandle(request: IRequest): Promise<IResponse>;
 }

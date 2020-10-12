@@ -125,7 +125,7 @@ describe(`r11s End-To-End tests`, () => {
         // Get the sub component and assert that it is attached.
         const response2 = await container2.request({ url: `/${subComponent1.context.id}` });
         const subComponent2 = response2.value as ITestFluidObject;
-        assert.strictEqual(subComponent2.runtime.IFluidHandleContext.isAttached, true,
+        assert(subComponent2.runtime.attachState !== AttachState.Detached,
             "Component should be attached!!");
 
         // Verify the attributes of the root channel of both sub components.

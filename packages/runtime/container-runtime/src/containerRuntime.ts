@@ -935,7 +935,10 @@ export class ContainerRuntime extends EventEmitter
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "_summarizer" || request.url === "/_summarizer") {
+        const parser = RequestParser.create(request);
+        const id = parser.pathParts[0];
+
+        if (id === "_summarizer" && parser.pathParts.length === 1) {
             return {
                 status: 200,
                 mimeType: "fluid/object",
@@ -943,7 +946,7 @@ export class ContainerRuntime extends EventEmitter
             };
         }
         if (this.requestHandler !== undefined) {
-            return this.requestHandler(request, this);
+            return this.requestHandler(parser, this);
         }
 
         return {
@@ -960,6 +963,10 @@ export class ContainerRuntime extends EventEmitter
     public async resolveHandle(request: IRequest): Promise<IResponse> {
         const requestParser = RequestParser.create(request);
         const id = requestParser.pathParts[0];
+
+        if (id === "_channel") {
+            return this.resolveHandle(requestParser.createSubRequest(1));
+        }
 
         if (id === this.blobManager.basePath && requestParser.isLeaf(2)) {
             const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
@@ -1725,6 +1732,14 @@ export class ContainerRuntime extends EventEmitter
             if (!this.connected) {
                 return { ...attemptData, ...generateData, ...uploadData, reason: "disconnected" };
             }
+
+            // We need the summary op's reference sequence number to match our summary sequence number
+            // Otherwise we'll get the wrong sequence number stamped on the summary's .protocol attributes
+            assert(
+                this.deltaManager.lastSequenceNumber === summaryRefSeqNum,
+                `lastSequenceNumber changed before the summary op could be submitted. `
+                    + `${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
+            );
 
             const clientSequenceNumber =
                 this.submitSystemMessage(MessageType.Summarize, summaryMessage);

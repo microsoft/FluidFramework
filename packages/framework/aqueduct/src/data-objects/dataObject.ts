@@ -87,7 +87,7 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
         });
         const path = `${this.bigBlobs}${uuid()}`;
         this.root.set(path, blob);
-        return new BlobHandle(path, this.root, this.runtime.IFluidHandleContext);
+        return new BlobHandle(path, this.root, this.runtime.objectsRoutingContext);
     }
 
     /**

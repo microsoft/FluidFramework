@@ -314,7 +314,7 @@ example:
     const builder = new RuntimeRequestHandlerBuilder();
     builder.pushHandler(...this.requestHandlers);
     builder.pushHandler(defaultRouteRequestHandler("defaultComponent"));
-    builder.pushHandler(deprecated_innerRequestHandler());
+    builder.pushHandler(innerRequestHandler());
 
     const runtime = await ContainerRuntime.load(
         context,
