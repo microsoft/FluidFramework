@@ -154,9 +154,9 @@ export class DeltaManager
     private lastQueuedSequenceNumber: number = 0;
     private lastObservedSeqNumber: number = 0;
     private lastProcessedSequenceNumber: number = 0;
-    // Last messages we received from socket (excludes initialMessages)
-    private lastSocketSequenceNumber = 0;
     private baseTerm: number = 0;
+
+    private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
 
     // The sequence number we initially loaded from
     private initSequenceNumber: number = 0;
@@ -412,7 +412,6 @@ export class DeltaManager
         this.minSequenceNumber = minSequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
         this.lastObservedSeqNumber = sequenceNumber;
-        this.lastSocketSequenceNumber = sequenceNumber;
 
         // We will use same check in other places to make sure all the seq number above are set properly.
         assert(this.handler === undefined);
@@ -925,9 +924,9 @@ export class DeltaManager
 
         connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
             if (messages instanceof Array) {
-                this.enqueueSocketMessages(messages);
+                this.enqueueMessages(messages);
             } else {
-                this.enqueueSocketMessages([messages]);
+                this.enqueueMessages([messages]);
             }
         });
 
@@ -1128,23 +1127,14 @@ export class DeltaManager
         }
     }
 
-    private enqueueSocketMessages(messages: ISequencedDocumentMessage[]): void {
-        // Socket messages should only go forward, even across reconnects.
-        // If we detect the opposite, this likely points to data loss and broken session
-        // There is nothing we can do about it - failing fast is the best option,
-        // giving a chance for user to save state locally and not corrupt remaining file
-        if (messages[0].sequenceNumber <= this.lastSocketSequenceNumber) {
-            const error = {
-                errorType: ContainerErrorType.dataCorruption,
-                message: "sequence number goes backward",
-                clientId: this.connection?.details.clientId,
-                incomingSeqNumber: messages[0].sequenceNumber,
-                lastSocketSequenceNumber: this.lastSocketSequenceNumber,
-            };
-            this.close(error);
-        }
-        this.lastSocketSequenceNumber = messages[messages.length - 1].sequenceNumber;
-        this.enqueueMessages(messages);
+    // returns parts of message (in string format) that should never change for a given message.
+    // Used for message comparison. It attempts to avoid comparing fields that potentially may differ.
+    // for example, it's not clear if serverMetadata or timestamp property is a property of message or server state.
+    // We only extract the most obvious fields that are sufficient (with high probability) to detect sequence number
+    // reuse.
+    // Also payload goes to telemetry, so no PII, including content!!
+    private comparableMessagePayload(m: ISequencedDocumentMessage) {
+        return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}`;
     }
 
     private enqueueMessages(
@@ -1179,12 +1169,29 @@ export class DeltaManager
                 if (duplicateEnd === undefined || duplicateEnd < message.sequenceNumber) {
                     duplicateEnd = message.sequenceNumber;
                 }
+
+                // Validate that we do not have data loss, i.e. sequencing is reset and started again
+                // with numbers that this client already observed before.
+                if (this.previouslyProcessedMessage?.sequenceNumber === message.sequenceNumber) {
+                    const m1 = this.comparableMessagePayload(this.previouslyProcessedMessage);
+                    const m2 = this.comparableMessagePayload(message);
+                    if (m1 !== m2) {
+                        const error = {
+                            errorType: ContainerErrorType.dataCorruption,
+                            message: "Two messages with same seq# and different payload!",
+                            clientId: this.connection?.details.clientId,
+                            sequenceNumber: message.sequenceNumber,
+                        };
+                        this.close(error);
+                    }
+                }
             } else if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
                 this.pending.push(message);
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.fetchMissingDeltas(telemetryEventSuffix, this.lastQueuedSequenceNumber, message.sequenceNumber);
             } else {
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
+                this.previouslyProcessedMessage = message;
                 this._inbound.push(message);
             }
         }
