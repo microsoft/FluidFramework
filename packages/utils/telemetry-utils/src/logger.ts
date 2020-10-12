@@ -446,7 +446,7 @@ export class PerformanceEvent {
         const perfEvent = PerformanceEvent.start(logger, event);
         try {
             const ret = callback(perfEvent);
-            // Event might been cancelled or end was already reported
+            // Event might have been cancelled or ended in the callback
             if (perfEvent.event) {
                 perfEvent.end();
             }
@@ -465,7 +465,7 @@ export class PerformanceEvent {
         const perfEvent = PerformanceEvent.start(logger, event);
         try {
             const ret = await callback(perfEvent);
-            // Event might been cancelled or end was already reported
+            // Event might have been cancelled or ended in the callback
             if (perfEvent.event) {
                 perfEvent.end();
             }
@@ -519,11 +519,12 @@ export class PerformanceEvent {
 
     public reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: any): void {
         if (!this.event) {
-            this.logger.sendErrorEvent({
+            const errorEvent = {
                 eventName: "PerformanceEventAfterStop",
                 perfEventName: this.eventName,
                 eventNameSuffix,
-            });
+            };
+            this.logger.sendErrorEvent(errorEvent, error);
             return;
         }
 
