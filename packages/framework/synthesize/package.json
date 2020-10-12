@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/synthesize",
-  "version": "0.25.6",
+  "version": "0.25.7",
   "description": "A library for synthesizing scope objects.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -54,13 +54,13 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.25.6"
+    "@fluidframework/core-interfaces": "^0.25.7"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
-    "@fluidframework/datastore": "^0.25.6",
+    "@fluidframework/datastore": "^0.25.7",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/mocha-test-setup": "^0.25.6",
+    "@fluidframework/mocha-test-setup": "^0.25.7",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
