@@ -37,11 +37,12 @@ import * as old from "./oldVersion";
 /* eslint-enable import/no-extraneous-dependencies */
 
 /**
- * Arguments given to the function passed into compatTest()
+ * Arguments given to the function passed into generateTest, generateCompatTest or generateTestWithCompat
  */
 export interface ICompatLocalTestObjectProvider {
     /**
-     * Used to create a test Container. In compatTest(), this Container and its runtime will be arbitrarily-versioned.
+     * Used to create a test Container.
+     * In generateCompatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
     makeTestContainer(registry?: ChannelFactoryRegistry): Promise<IContainer | old.IContainer>,
     loadTestContainer(registry?: ChannelFactoryRegistry): Promise<IContainer | old.IContainer>,
