@@ -65,6 +65,7 @@ class YouTubeAPI {
                 width,
             });
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return player;
     }
 }
@@ -222,7 +223,7 @@ export class VideoPlayerCollection extends LazyLoadedDataObject<ISharedDirectory
                 new VideoPlayer(
                     this.root.get(key),
                     `${this.url}/${key}`,
-                    this.runtime.IFluidHandleContext,
+                    this.runtime.objectsRoutingContext,
                     key,
                     youTubeApi,
                     this));
@@ -236,7 +237,7 @@ export class VideoPlayerCollection extends LazyLoadedDataObject<ISharedDirectory
                 const player = new VideoPlayer(
                     this.root.get(changed.key),
                     `${this.url}/${changed.key}`,
-                    this.runtime.IFluidHandleContext,
+                    this.runtime.objectsRoutingContext,
                     changed.key,
                     youTubeApi,
                     this);

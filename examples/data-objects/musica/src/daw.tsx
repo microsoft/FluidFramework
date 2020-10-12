@@ -260,6 +260,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
             return [];
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return savedInstruments;
     }
 
@@ -354,6 +355,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
                     style={{ maxWidth: 150, marginTop: 20 }}
                     defaultValue={instrumentDropdownData[0].label}
                     data={this.getInstrumentDropdownData()}
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     textField={(i) => i.label}
                     valueField="label"
                     onChange={(data) => this.onInstrumentChange(data.label, data.id)}
@@ -364,6 +366,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
                         style={{ maxWidth: 200, marginTop: 20, display: "inline-block" }}
                         defaultValue={songDropdownData[0].label}
                         data={this.getSongDropdownData()}
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         textField={(i) => i.label}
                         valueField="label"
                         onChange={(data) => this.onSongSelectionChange(data.label, data.id)}
@@ -389,11 +392,14 @@ export class DAW extends React.Component<DAWProps, DAWState> {
 
                     <button
                         style={{ marginLeft: 10, height: 36 }}
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         onClick={() => this.recorder.startRecording(this.state.customSongName)}
                     >
                         Start Recording!
                     </button>
-                    <button style={{ marginLeft: 10, height: 36 }} onClick={() => this.recorder.stopRecording()}>
+                    <button style={{ marginLeft: 10, height: 36 }}
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                            onClick={() => this.recorder.stopRecording()}>
                         Stop Recording!
                     </button>
                     <hr />

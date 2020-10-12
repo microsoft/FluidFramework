@@ -66,6 +66,7 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
             user: { id: uuid() },
         };
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return jwt.sign(claims, "12345");
     }
 }

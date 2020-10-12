@@ -78,7 +78,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
     // specific item we want.  We route through Spaces because it's the one with the registry, and so it's the one
     // that knows how to getViewForItem().
     public async request(req: IRequest): Promise<IResponse> {
-        const requestParser = new RequestParser({ url: req.url });
+        const requestParser = RequestParser.create({ url: req.url });
         // The only time we have a path will be direct links to items.
         if (requestParser.pathParts.length > 0) {
             const itemId = requestParser.pathParts[0];

@@ -216,7 +216,6 @@ export async function fluidFetchMessages(documentService?: IDocumentService, sav
             dumpMessages,
             messageTypeFilter);
     } else {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         let item;
         for await (item of generator) { }
     }

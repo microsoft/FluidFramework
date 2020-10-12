@@ -100,8 +100,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 
     public get packagePath(): readonly string[] {
-        // The store must be loaded before the path is accessed.
-        assert(this.loaded);
         assert(this.pkg !== undefined);
         return this.pkg;
     }
@@ -111,6 +109,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 
     public get options(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this._containerRuntime.options;
     }
 

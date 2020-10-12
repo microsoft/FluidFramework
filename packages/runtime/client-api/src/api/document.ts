@@ -29,7 +29,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
 const apiVersion = require("../../package.json").version;
 
 // Registered services to use when loading a document
@@ -78,6 +78,7 @@ export class Document extends EventEmitter {
     }
 
     public get options(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.runtime.options;
     }
 
@@ -247,7 +248,6 @@ async function requestDocument(loader: Loader, container: Container, uri: string
         attach(loader, uri, deferred);
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     deferred.promise.finally(() => container.removeListener("error", errorHandler));
     return deferred.promise;
 }

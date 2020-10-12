@@ -30,6 +30,9 @@ import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+
+const detachedContainerRefSeqNumber = 0;
+
 import { ICompatTestArgs, compatTest } from "./compatUtils";
 
 const documentId = "detachedContainerTest";
@@ -136,7 +139,7 @@ const tests = (args: ICompatTestArgs) => {
         // Now attach the container
         await container.attach(request);
 
-        assert.strictEqual(testDataStore.runtime.IFluidHandleContext.isAttached, true,
+        assert(testDataStore.runtime.attachState !== AttachState.Detached,
             "DataStore should be attached!!");
 
         // Get the sub dataStore's "root" channel and verify that it is attached.
@@ -169,7 +172,7 @@ const tests = (args: ICompatTestArgs) => {
         // Get the sub dataStore and assert that it is attached.
         const response2 = await container2.request({ url: `/${subDataStore1.context.id}` });
         const subDataStore2 = response2.value as ITestFluidObject;
-        assert.strictEqual(subDataStore2.runtime.IFluidHandleContext.isAttached, true,
+        assert(subDataStore2.runtime.attachState !== AttachState.Detached,
             "DataStore should be attached!!");
 
         // Verify the attributes of the root channel of both sub dataStores.
@@ -233,7 +236,6 @@ const tests = (args: ICompatTestArgs) => {
         const ops = { pos1: 0, seg: "b", type: 0 };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.equal(type, MessageType.Operation);
             assert.equal(contents.type, ContainerMessageType.FluidDataStoreOp);
@@ -268,7 +270,6 @@ const tests = (args: ICompatTestArgs) => {
         const ops = { key: "1", type: "set", value: { type: "Plain", value: "b" } };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedMapId, "Address should be shared map");
@@ -298,7 +299,6 @@ const tests = (args: ICompatTestArgs) => {
         const testChannelId = "testChannel1";
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.id,
                 testChannelId, "Channel id should match");
@@ -336,7 +336,6 @@ const tests = (args: ICompatTestArgs) => {
         const router = await dataStore.context.containerRuntime.createDataStore([testDataStoreType]);
         const comp2 = await requestFluidObject<ITestFluidObject>(router, "/");
 
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
             assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
@@ -355,10 +354,14 @@ const tests = (args: ICompatTestArgs) => {
     });
 
     it("Fire ops during container attach for consensus register collection", async () => {
-        const op = { key: "1", type: "write", serializedValue: JSON.stringify("b"), refSeq: 0 };
+        const op = {
+            key: "1",
+            type: "write",
+            serializedValue: JSON.stringify("b"),
+            refSeq: detachedContainerRefSeqNumber,
+        };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 crcId, "Address should be consensus register collection");
@@ -393,7 +396,6 @@ const tests = (args: ICompatTestArgs) => {
         };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedDirectoryId, "Address should be shared directory");
@@ -422,7 +424,6 @@ const tests = (args: ICompatTestArgs) => {
         const op = { type: "setCell", value: { type: "Plain", value: "b" } };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedCellId, "Address should be shared directory");
@@ -450,7 +451,6 @@ const tests = (args: ICompatTestArgs) => {
     it("Fire ops during container attach for shared ink", async () => {
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedInkId, "Address should be ink");
@@ -484,7 +484,6 @@ const tests = (args: ICompatTestArgs) => {
         const op = { opName: "add", value: JSON.stringify("s") };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 cocId, "Address should be consensus queue");
@@ -515,7 +514,6 @@ const tests = (args: ICompatTestArgs) => {
         const seg = { items: ["s"] };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sparseMatrixId, "Address should be sparse matrix");
@@ -551,7 +549,6 @@ const tests = (args: ICompatTestArgs) => {
         const op = { pos1: 0, seg: 9, type: 0, target: "rows" };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedMatrixId, "Address should be shared matrix");
@@ -582,6 +579,8 @@ const tests = (args: ICompatTestArgs) => {
 describe("Detached Container", () => {
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let documentServiceFactory: LocalDocumentServiceFactory;
+    let loader: Loader;
+    let resolver: LocalResolver;
 
     function createTestLoader(reg, code, urlResolver: IUrlResolver): Loader {
         const factory: TestFluidObjectFactory = new TestFluidObjectFactory(reg);
@@ -598,6 +597,8 @@ describe("Detached Container", () => {
     beforeEach(async () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
         documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+        resolver = new LocalResolver();
+        loader = createTestLoader(registry, pkg, resolver);
     });
 
     tests({
@@ -611,5 +612,20 @@ describe("Detached Container", () => {
 
     describe("compatibility", () => {
         compatTest(tests, { testFluidDataObject: true });
+    });
+
+    describe("Non-Compat Tests", () => {
+        it("Load attached container from cache and check if they are same", async () => {
+            const container = await loader.createDetachedContainer(pkg);
+
+            // Now attach the container and get the sub dataStore.
+            await container.attach(resolver.createCreateNewRequest(documentId));
+
+            const urlResolver2 = new LocalResolver();
+            // Create a new request url from the resolvedUrl of the first container.
+            const requestUrl2 = await urlResolver2.getAbsoluteUrl(container.resolvedUrl, "");
+            const container2 = await loader.resolve({ url: requestUrl2 });
+            assert.strictEqual(container, container2, "Both containers should be same");
+        });
     });
 });

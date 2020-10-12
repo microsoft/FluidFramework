@@ -308,6 +308,7 @@ export class LocalValueMaker {
             throw new Error(`Unknown type '${type}' specified`);
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return valueType.factory.load(emitter, params);
     }
 }

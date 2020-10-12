@@ -101,6 +101,7 @@ export async function start(): Promise<void> {
     fetchFluidObject(loader, fluidDocument, documentUrl);
 
     // Proposes the code package for a new document.
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!fluidDocument.existing) {
         const details: IFluidCodeDetails = {
             config: {},

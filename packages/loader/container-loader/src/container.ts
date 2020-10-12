@@ -21,7 +21,6 @@ import {
     IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
-    ILoader,
     IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
@@ -98,6 +97,8 @@ import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
+const detachedContainerRefSeqNumber = 0;
+
 interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
@@ -146,7 +147,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         codeLoader: ICodeLoader,
         options: any,
         scope: IFluidObject,
-        loader: ILoader,
+        loader: Loader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
         urlResolver: IUrlResolver,
@@ -395,7 +396,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         public readonly options: any,
         private readonly scope: IFluidObject,
         private readonly codeLoader: ICodeLoader,
-        private readonly loader: ILoader,
+        private readonly loader: Loader,
         private readonly serviceFactory: IDocumentServiceFactory,
         private readonly urlResolver: IUrlResolver,
         config: IContainerConfig,
@@ -430,6 +431,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 docId: () => this.id,
                 containerAttachState: () => this._attachState,
+                containerLoaded: () => this.loaded,
             });
 
         // Prefix all events in this file with container-loader
@@ -481,7 +483,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 {
                     eventName: "ContainerClose",
                     sequenceNumber: error.sequenceNumber ?? this._deltaManager.lastSequenceNumber,
-                    loading: !this.loaded,
                 },
                 error,
             );
@@ -576,6 +577,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (parsedUrl === undefined) {
                 throw new Error("Unable to parse Url");
             }
+
+            this.loader.cacheContainer(this, request, parsedUrl);
+
             const [, docId] = parsedUrl.id.split("/");
             this._id = decodeURI(docId);
 
@@ -999,7 +1003,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async createDetached(source: IFluidCodeDetails) {
         const attributes: IDocumentAttributes = {
             branch: "",
-            sequenceNumber: 0,
+            sequenceNumber: detachedContainerRefSeqNumber,
             term: 1,
             minimumSequenceNumber: 0,
         };
@@ -1198,6 +1202,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             pkg = quorum.get("code2");
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return pkg;
     }
 

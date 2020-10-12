@@ -3,6 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidBrowserPackageEnvironment } from "@fluidframework/container-definitions";
+
+const precacheTargetList: readonly string[] =
+    [
+        "audio", "document", "embed", "fetch", "font", "image", " object",
+        "script", "style", "track", "video", "worker",
+        // umd will need to convert to script to cache
+        "umd",
+    ];
+
 /**
  * Helper class to manage loading of script elements. Only loads a given script once.
  */
@@ -66,25 +76,35 @@ export class ScriptManager {
         return this.loadCache.get(scriptUrl);
     }
 
-    public async preCacheFiles(files: string[], tryPreload: boolean): Promise<void> {
-        await Promise.all(
-            files.map(async (url) => {
-                const cacheLink = document.createElement("link");
-                cacheLink.href = url;
-                cacheLink.as = "script";
+    public async preCacheFiles(browser: IFluidBrowserPackageEnvironment): Promise<void> {
+        const preCachePs: Promise<void>[] = [];
+        const docfrag = document.createDocumentFragment();
+        for (const targetName of Object.keys(browser).filter((t) => precacheTargetList.includes(t))) {
+            const target = browser[targetName];
+            if (target !== undefined) {
+                for (const url of target.files) {
+                    const cacheLink = document.createElement("link");
+                    cacheLink.href = url;
+                    cacheLink.as = targetName === "umd" ? "script" : targetName;
+                    cacheLink.crossOrigin = "anonymous";
 
-                if (tryPreload && cacheLink.relList?.supports("preload") === true) {
-                    cacheLink.rel = "preload";
-                } else {
-                    cacheLink.rel = "prefetch";
+                    if (cacheLink.relList?.supports("preload") === true) {
+                        cacheLink.rel = "preload";
+                    } else {
+                        cacheLink.rel = "prefetch";
+                    }
+                    const loadP = new Promise<void>((resolve, reject) => {
+                        cacheLink.onload = () => resolve();
+                        cacheLink.onerror = (...args: any[]) => reject({ ...args });
+                    });
+                    docfrag.appendChild(docfrag);
+                    preCachePs.push(loadP);
                 }
-                const loadP = new Promise<void>((resolve, reject) => {
-                    cacheLink.onload = () => resolve();
-                    cacheLink.onerror = (...args: any[]) => reject({ ...args });
-                });
-                document.head.appendChild(cacheLink);
-                return loadP;
-            }));
+            }
+        }
+        document.appendChild(docfrag);
+
+        await Promise.all(preCachePs);
     }
 
     public async loadScript(scriptUrl: string, entryPoint: string): Promise<unknown> {

@@ -174,6 +174,7 @@ export function throttle(type: string, name: string, obj?: any) {
 export class AnimationFrameThrottler {
     private running = false;
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     constructor(private readonly callback: Function) {
     }
 

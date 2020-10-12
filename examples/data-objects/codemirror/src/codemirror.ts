@@ -153,7 +153,6 @@ class CodemirrorView implements IFluidHTMLView {
             // to submit new ops
             this.updatingSequence = true;
 
-            // eslint-disable-next-line max-len
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const doc = this.codeMirror!.getDoc();
             for (const range of ev.ranges) {
@@ -225,7 +224,7 @@ export class CodeMirrorComponent
     ) {
         super();
         this.url = context.id;
-        this.innerHandle = new FluidObjectHandle(this, this.url, runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, this.url, runtime.objectsRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

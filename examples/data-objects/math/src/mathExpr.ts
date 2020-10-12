@@ -1568,6 +1568,7 @@ function accumCoefficients(expr: IExpr, v: IVariable, poly: ISplitTerm[], negate
             case ExprType.UNOP: {
                 const unex = expr as IUnop;
                 negate = !negate;
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return accumCoefficients(unex.operand1, v, poly, negate);
             }
             case ExprType.VARIABLE: {
@@ -1584,10 +1585,12 @@ function accumCoefficients(expr: IExpr, v: IVariable, poly: ISplitTerm[], negate
                     case Operator.ADD:
                     case Operator.SUB: {
                         accumCoefficients(binex.operand1, v, poly, negate);
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         return accumCoefficients(binex.operand2, v, poly, binex.op === Operator.SUB ? !negate : negate);
                     }
                     case Operator.EQ: {
                         accumCoefficients(binex.operand1, v, poly, false);
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         return accumCoefficients(binex.operand2, v, poly, true);
                     }
                     case Operator.MUL: {
@@ -1738,6 +1741,7 @@ function subst(e: IExpr, env: IEnvironment) {
 
 function buildExpr(s: string, env: IEnvironment) {
     const template = parse(s);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return subst(template, env);
 }
 
@@ -1776,6 +1780,7 @@ function buildIfMatch(pats: ITransformString[], e: IExpr, seedEnv?: () => IEnvir
                     const etex = exprToTex(e);
                     console.log(`applied ${pats[i].pattern} to ${etex} yielding ${builtTex}`);
                 }
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return built;
             }
         }
@@ -1849,6 +1854,7 @@ function isFactor(expr: IExpr) {
         return true;
     }
     if (expr.type === ExprType.UNOP) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return isFactor((expr as IUnop).operand1);
     } else if (expr.type === ExprType.BINOP) {
         const binex = expr as IBinop;
@@ -1865,11 +1871,13 @@ function isTerm(e: IExpr): boolean {
     if (e.type === ExprType.BINOP) {
         const binex = e as IBinop;
         if (binex.op === Operator.MUL) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return isTerm(binex.operand1) && (isFactor(binex.operand2));
         }
     } else if (e.type === ExprType.UNOP) {
         return isTerm((e as IUnop).operand1);
     } else {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return isFactor(e);
     }
 }
@@ -1886,6 +1894,7 @@ function isSumOfProducts(e: IExpr): boolean {
             } else if (binex.op === Operator.MUL) {
                 return isTerm(binex);
             } else if (binex.op === Operator.EXP) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return isFactor(binex);
             }
         }
@@ -1893,6 +1902,7 @@ function isSumOfProducts(e: IExpr): boolean {
             return isSumOfProducts(e);
         }
         default:
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return isFactor(e);
     }
 }

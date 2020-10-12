@@ -29,6 +29,7 @@ export interface ITableDocumentEvents extends IEvent {
         listener: (delta: SequenceDeltaEvent, target: SharedNumberSequence | SparseMatrix) => void);
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
@@ -43,7 +44,6 @@ export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> impl
         [
             TableSlice.getFactory().registryEntry,
         ],
-        true,
     );
 
     public get numCols() { return this.maybeCols.getLength(); }
