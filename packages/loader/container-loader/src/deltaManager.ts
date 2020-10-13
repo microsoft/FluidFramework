@@ -1057,7 +1057,7 @@ export class DeltaManager
         this._outbound.clear();
         this.emit("disconnect", reason);
 
-        // Avoid re-entrncy - remove all listeners before closing!
+        // Avoid re-entrancy - remove all listeners before closing!
         connection.removeAllListeners();
         connection.close();
     }
