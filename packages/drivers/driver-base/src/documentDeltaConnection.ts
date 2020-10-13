@@ -319,10 +319,21 @@ export class DocumentDeltaConnection
      * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.
      */
     public close() {
+        // We set the closed flag as a part of the contract for overriding the disconnect method. This is used by
+        // DocumentDeltaConnection to determine if emitting on the socket is allowed, which is important since
+        // OdspDocumentDeltaConnection reuses the socket rather than truly disconnecting it.  Note that below we may
+        // still send disconnect_document which is allowed; this is only intended to prevent normal messages from
+        // being emitted.
+        if (this.closed) {
+            return;
+        }
+        this.closed = true;
+
         const reason = createGenericNetworkError(
             "client closing connection",
             true, // canRetry
         );
+        this.removeTrackedListeners(false);
         this.disconnect(false, reason);
     }
 
@@ -334,21 +345,6 @@ export class DocumentDeltaConnection
      * @param reason - reason for disconnect
      */
     protected disconnect(socketProtocolError: boolean, reason: DriverError) {
-        // We set the closed flag as a part of the contract for overriding the disconnect method. This is used by
-        // DocumentDeltaConnection to determine if emitting on the socket is allowed, which is important since
-        // OdspDocumentDeltaConnection reuses the socket rather than truly disconnecting it.  Note that below we may
-        // still send disconnect_document which is allowed; this is only intended to prevent normal messages from
-        // being emitted.
-        if (this.closed) {
-            return;
-        }
-        this.closed = true;
-
-        this.removeTrackedListeners(false);
-        this.disconnectCore(socketProtocolError, reason);
-    }
-
-    protected disconnectCore(socketProtocolError: boolean, reason: DriverError) {
         this.socket.disconnect();
     }
 
@@ -361,26 +357,26 @@ export class DocumentDeltaConnection
         let success = false;
 
         this._details = await new Promise<IConnected>((resolve, reject) => {
+            const fail = (socketProtocolError: boolean, err: DriverError) => {
+                this.removeTrackedListeners(false);
+                this.disconnect(socketProtocolError, err);
+                reject(err);
+            };
+
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
-                const err = createErrorObject("connect_error", error);
-                this.disconnect(true, err);
-                reject(err);
+                fail(true, createErrorObject("connect_error", error));
             });
 
             // Listen for timeouts
             this.addConnectionListener("connect_timeout", () => {
-                const err = createErrorObject("connect_timeout");
-                this.disconnect(true, err);
-                reject(err);
+                fail(true, createErrorObject("connect_timeout"));
             });
 
             // Socket can be disconnected while waiting for Fluid protocol messages
             // (connect_document_error / connect_document_success)
             this.addConnectionListener("disconnect", (reason) => {
-                const err = createErrorObject("disconnect", reason);
-                this.disconnect(true, err);
-                reject(err);
+                fail(true, createErrorObject("disconnect", reason));
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
@@ -405,11 +401,9 @@ export class DocumentDeltaConnection
                 // First, raise an error event, to give clients a chance to observe error contents
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
                 const err = createErrorObject("error", error, error !== "Invalid namespace");
-                reject(err);
                 this.emit("error", err);
-
                 // Disconnect socket - required if happened before initial handshake
-                this.disconnect(true, err);
+                fail(true, err);
             }));
 
             this.addConnectionListener("connect_document_error", ((error) => {
@@ -420,12 +414,9 @@ export class DocumentDeltaConnection
                     return;
                 }
 
-                // This is not an error for the socket - it's a protocol error.
-                // In this case we disconnect the socket and indicate that we were unable to create the
-                // DocumentDeltaConnection.
-                const err = createErrorObject("connect_document_error", error);
-                this.disconnect(false, err);
-                reject(err);
+                // This is not an socket.io error - it's Fluid protocol error.
+                // In this case fail connection and indicate that we were unable to create connection
+                fail(false, createErrorObject("connect_document_error", error));
             }));
 
             this.socket.emit("connect_document", connectMessage);
@@ -433,9 +424,7 @@ export class DocumentDeltaConnection
             // Give extra 2 seconds for handshake on top of socket connection timeout
             setTimeout(() => {
                 if (!success) {
-                    const err = createErrorObject("Timeout waiting for handshake from ordering service");
-                    reject(err);
-                    this.disconnect(false, err);
+                    fail(false, createErrorObject("Timeout waiting for handshake from ordering service"));
                 }
             }, timeout + 2000);
         });
