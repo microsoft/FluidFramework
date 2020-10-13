@@ -164,11 +164,9 @@ export class DocumentDeltaConnection
             });
 
         this.on("newListener", (event, listener) => {
-            assert(!this.closed, "can't add listeners after close");
-
             // Register for the event on socket.io
             // "error" is special - we already subscribed to it to modify error object on the fly.
-            if (event !== "error" && this.listeners(event).length === 0) {
+            if (!this.closed && event !== "error" && this.listeners(event).length === 0) {
                 this.addTrackedListener(
                     event,
                     (...args: any[]) => {
@@ -357,6 +355,7 @@ export class DocumentDeltaConnection
 
         this._details = await new Promise<IConnected>((resolve, reject) => {
             const fail = (socketProtocolError: boolean, err: DriverError) => {
+                this.closed = true;
                 this.removeTrackedListeners(false);
                 this.disconnect(socketProtocolError, err);
                 reject(err);
