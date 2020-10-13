@@ -18,7 +18,7 @@ export enum ContainerErrorType {
     throttlingError = "throttlingError",
 
     /**
-     * Throttling error from server. Server is busy and is asking not to reconnect for some time
+     * Data loss error detected by Container / DeltaManager. Likely points to storage issue.
      */
     dataCorruption = "dataCorruption",
 }
