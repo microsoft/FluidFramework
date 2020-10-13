@@ -17,6 +17,7 @@
         "sourceMap": true,
         "inlineSources": true,
         "skipLibCheck": true,
+        "esModuleInterop": true ,
         "types": [
             "mocha"
         ]

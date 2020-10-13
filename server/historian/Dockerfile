@@ -3,6 +3,14 @@
 
 FROM node:12.16.3-slim AS base
 
+# node-gyp dependencies
+RUN apt-get update && apt-get install -y \
+        python3 \
+        make \
+        git \
+        curl \
+        g++
+
 # Add Tini
 ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
@@ -11,8 +19,14 @@ RUN chmod +x /tini
 # Copy over and build the server
 WORKDIR /home/node/server
 
-COPY packages/historian-base/package*.json packages/historian-base/
-RUN npm install
+COPY package*.json ./
+COPY lerna.json .
+COPY lerna-package-lock.json .
+
+COPY packages/historian/package.json packages/historian/
+COPY packages/historian-base/package.json packages/historian-base/
+
+RUN npm install --unsafe-perm
 COPY . .
 RUN npm run build
 
