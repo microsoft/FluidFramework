@@ -6,6 +6,7 @@
 import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ReplayController } from "./replayController";
 import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";
 import { ReplayDocumentService } from "./replayDocumentService";
@@ -39,9 +40,13 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
-        return Promise.resolve(ReplayDocumentService.create(
-            await this.documentServiceFactory.createDocumentService(resolvedUrl, logger),
-            this.controller));
+        // Always include isReplay: true on events for the Replay Driver.
+        // It's used in testing/debugging scenarios, so we want to be able to filter these events out sometimes.
+        const replayLogger = ChildLogger.create(logger, undefined /* namespace */, { isReplay: true } /* properties */);
+
+        return ReplayDocumentService.create(
+            await this.documentServiceFactory.createDocumentService(resolvedUrl, replayLogger),
+            this.controller);
     }
 
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.

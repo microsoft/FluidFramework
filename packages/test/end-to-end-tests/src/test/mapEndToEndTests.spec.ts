@@ -5,34 +5,21 @@
 
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     ChannelFactoryRegistry,
-    createAndAttachContainer,
-    createLocalLoader,
     ITestFluidObject,
     OpProcessingController,
-    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { compatTest, ICompatTestArgs } from "./compatUtils";
+import { generateTestWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
 
-const documentId = "mapTest";
-const documentLoadUrl = `fluid-test://localhost/${documentId}`;
 const mapId = "mapKey";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
-const codeDetails: IFluidCodeDetails = {
-    package: "sharedMapTestPackage",
-    config: {},
-};
 
-const tests = (args: ICompatTestArgs) => {
+const tests = (args: ICompatLocalTestObjectProvider) => {
     let opProcessingController: OpProcessingController;
     let dataObject1: ITestFluidObject;
     let sharedMap1: ISharedMap;
@@ -313,35 +300,5 @@ const tests = (args: ICompatTestArgs) => {
 };
 
 describe("Map", () => {
-    const factory = new TestFluidObjectFactory(registry);
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: IUrlResolver;
-    const makeTestContainer = async () => {
-        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
-    };
-    const loadTestContainer = async () => {
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-        return loader.resolve({ url: documentLoadUrl });
-    };
-
-    beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
-        urlResolver = new LocalResolver();
-    });
-
-    tests({
-        makeTestContainer,
-        loadTestContainer,
-        get deltaConnectionServer() { return deltaConnectionServer; },
-        get urlResolver() { return urlResolver; },
-    });
-
-    afterEach(async () => {
-        await deltaConnectionServer.webSocketServer.close();
-    });
-
-    describe("compatibility", () => {
-        compatTest(tests, { testFluidDataObject: true });
-    });
+    generateTestWithCompat(tests, { testFluidDataObject: true });
 });

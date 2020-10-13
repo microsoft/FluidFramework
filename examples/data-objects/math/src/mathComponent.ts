@@ -423,7 +423,6 @@ export class MathInstance extends EventEmitter implements IFluidLoadable, IFluid
     public solnVar = "x";
 
     constructor(
-        public url: string,
         public leafId: string,
         context: IFluidHandleContext,
         public readonly collection: MathCollection,
@@ -546,7 +545,7 @@ export class MathCollection extends LazyLoadedDataObject<ISharedDirectory> imple
 
     public createCollectionItem(options?: IMathOptions): MathInstance {
         const leafId = `math-${Date.now()}`;
-        return new MathInstance(`${this.url}/${leafId}`, leafId, this.runtime.objectsRoutingContext, this, options);
+        return new MathInstance(leafId, this.runtime.objectsRoutingContext, this, options);
     }
 
     public getText(instance: MathInstance) {
@@ -612,8 +611,7 @@ export class MathCollection extends LazyLoadedDataObject<ISharedDirectory> imple
                 if (mathMarker.properties.componentOptions) {
                     options = mathMarker.properties.componentOptions;
                 }
-                mathMarker.mathInstance = new MathInstance(
-                    `${this.url}/${id}`, id, this.runtime.objectsRoutingContext, this, options, true);
+                mathMarker.mathInstance = new MathInstance(id, this.runtime.objectsRoutingContext, this, options, true);
             }
             return mathMarker.mathInstance as MathInstance;
         }

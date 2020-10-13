@@ -5,7 +5,6 @@
 
 import {
     IFluidHandle,
-    IFluidHandleContext,
     IFluidSerializer,
     ISerializedHandle,
 } from "@fluidframework/core-interfaces";
@@ -43,13 +42,11 @@ export interface ILocalValue {
     /**
      * Retrieve the serialized form of the value stored within.
      * @param serializer - Data store runtime's serializer
-     * @param context - Data store runtime's handle context
      * @param bind - Container type's handle
      * @returns The serialized form of the contained value
      */
     makeSerialized(
         serializer: IFluidSerializer,
-        context: IFluidHandleContext,
         bind: IFluidHandle,
     ): ISerializedValue;
 }
@@ -57,9 +54,8 @@ export interface ILocalValue {
 export function makeSerializable(
     localValue: ILocalValue,
     serializer: IFluidSerializer,
-    context: IFluidHandleContext,
     bind: IFluidHandle): ISerializableValue {
-    const value = localValue.makeSerialized(serializer, context, bind);
+    const value = localValue.makeSerialized(serializer, bind);
     return {
         type: value.type,
         value: value.value && JSON.parse(value.value),
@@ -96,12 +92,11 @@ export class PlainLocalValue implements ILocalValue {
      */
     public makeSerialized(
         serializer: IFluidSerializer,
-        context: IFluidHandleContext,
         bind: IFluidHandle,
     ): ISerializedValue {
         // Stringify to convert to the serialized handle values - and then parse in order to create
         // a POJO for the op
-        const value = serializeHandles(this.value, serializer, context, bind);
+        const value = serializeHandles(this.value, serializer, bind);
 
         return {
             type: this.type,
@@ -172,11 +167,10 @@ export class ValueTypeLocalValue implements ILocalValue {
      */
     public makeSerialized(
         serializer: IFluidSerializer,
-        context: IFluidHandleContext,
         bind: IFluidHandle,
     ): ISerializedValue {
         const storedValueType = this.valueType.factory.store(this.value);
-        const value = serializeHandles(storedValueType, serializer, context, bind);
+        const value = serializeHandles(storedValueType, serializer, bind);
 
         return {
             type: this.type,
@@ -244,8 +238,7 @@ export class LocalValueMaker {
 
             const translatedValue = parseHandles(
                 serializable.value,
-                this.runtime.IFluidSerializer,
-                this.runtime.IFluidHandleContext);
+                this.runtime.IFluidSerializer);
 
             return new PlainLocalValue(translatedValue);
         } else if (this.valueTypes.has(serializable.type)) {
@@ -256,8 +249,7 @@ export class LocalValueMaker {
 
             serializable.value = parseHandles(
                 serializable.value,
-                this.runtime.IFluidSerializer,
-                this.runtime.IFluidHandleContext);
+                this.runtime.IFluidSerializer);
 
             const localValue = valueType.factory.load(emitter, serializable.value);
             return new ValueTypeLocalValue(localValue, valueType);

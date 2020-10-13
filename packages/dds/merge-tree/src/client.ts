@@ -923,7 +923,6 @@ export class Client {
             snap.extractSync();
             return snap.emit(
                 runtime.IFluidSerializer,
-                runtime.IFluidHandleContext,
                 handle);
         } else {
             const snap = new SnapshotLegacy(this.mergeTree, this.logger);
@@ -931,7 +930,6 @@ export class Client {
             return snap.emit(
                 catchUpMsgs,
                 runtime.IFluidSerializer,
-                runtime.IFluidHandleContext,
                 handle);
         }
     }

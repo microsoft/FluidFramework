@@ -40,7 +40,10 @@ class OpPerfTelemetry {
 
         this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
         this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
+
+        // Back-compat: <= 0.28: Replace to "op" and remove "beforeOpProcessing" in the future.
         this.deltaManager.on("beforeOpProcessing", (message) => this.beforeProcessingOp(message));
+
         this.deltaManager.on("connect", (details, opsBehind) => {
             this.clientId = details.clientId;
             this.clientSequenceNumberForLatencyStatistics = undefined;
@@ -58,11 +61,6 @@ class OpPerfTelemetry {
         this.deltaManager.on("disconnect", () => {
             this.connectionOpSeqNumber = undefined;
             this.firstConnection = false;
-        });
-        this.deltaManager.on("beforeOpProcessing", (message) => {
-            if (message.sequenceNumber === this.connectionOpSeqNumber) {
-                this.reportGettingUpToDate();
-            }
         });
     }
 
@@ -100,6 +98,10 @@ class OpPerfTelemetry {
     }
 
     private beforeProcessingOp(message: ISequencedDocumentMessage) {
+        if (message.sequenceNumber === this.connectionOpSeqNumber) {
+            this.reportGettingUpToDate();
+        }
+
         // Record collab window max size after every 1000th op.
         if (message.sequenceNumber % 1000 === 0) {
             if (this.opSendTimeForLatencyStatisticsForMsnStatistics !== undefined) {

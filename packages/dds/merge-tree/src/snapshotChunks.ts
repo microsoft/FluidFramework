@@ -4,7 +4,6 @@
  */
 import {
     IFluidSerializer,
-    IFluidHandleContext,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -24,7 +23,7 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
     chunkSegmentCount: number;
     chunkLengthChars: number;
     totalLengthChars: number;
-    totalSegmentCount: number;
+totalSegmentCount: number;
     chunkSequenceNumber: number;
     chunkMinSequenceNumber?: number;
     segmentTexts: JsonSegmentSpecs[];
@@ -79,7 +78,6 @@ export function serializeAsMinSupportedVersion(
     logger: ITelemetryLogger,
     options: PropertySet | undefined,
     serializer?: IFluidSerializer,
-    context?: IFluidHandleContext,
     bind?: IFluidHandle) {
     let targetChuck: MergeTreeChunkLegacy;
 
@@ -118,7 +116,7 @@ export function serializeAsMinSupportedVersion(
         default:
             throw new Error(`Unsupported chunk path: ${path} version: ${chunk.version}`);
     }
-    return serializer !== undefined ? serializer.stringify(targetChuck, context, bind) : JSON.stringify(targetChuck);
+    return serializer !== undefined ? serializer.stringify(targetChuck, bind) : JSON.stringify(targetChuck);
 }
 
 export function serializeAsMaxSupportedVersion(
@@ -127,10 +125,9 @@ export function serializeAsMaxSupportedVersion(
     logger: ITelemetryLogger,
     options: PropertySet | undefined,
     serializer?: IFluidSerializer,
-    context?: IFluidHandleContext,
     bind?: IFluidHandle) {
     const targetChuck = toLatestVersion(path, chunk, logger, options);
-    return serializer !== undefined ? serializer.stringify(targetChuck, context, bind) : JSON.stringify(targetChuck);
+    return serializer !== undefined ? serializer.stringify(targetChuck, bind) : JSON.stringify(targetChuck);
 }
 
 export function toLatestVersion(
