@@ -14,6 +14,27 @@ export interface ICollectionProperty {
     limit?: number;  // Range query maximum fetch. If set, last index should be a number.
 }
 
+/**
+ * Helper function to read a sublevel stream and return a promise for an array of the results.
+ */
+async function readStream<T>(stream): Promise<T[]> {
+    const entries: T[] = [];
+
+    return new Promise<T[]>((resolve, reject) => {
+        stream.on("data", (data: T) => {
+            entries.push(data);
+        });
+
+        stream.on("end", () => {
+            resolve(entries);
+        });
+
+        stream.on("error", (error) => {
+            reject(error);
+        });
+    });
+}
+
 export class Collection<T> implements ICollection<T> {
     constructor(private readonly db: any,
                 private readonly property: ICollectionProperty) {
@@ -24,7 +45,7 @@ export class Collection<T> implements ICollection<T> {
     }
 
     public async findAll(): Promise<T[]> {
-        throw new Error("Method not implemented.");
+        return readStream(this.db.createValueStream());
     }
 
     public findOne(query: any): Promise<T> {
@@ -34,7 +55,7 @@ export class Collection<T> implements ICollection<T> {
     public async update(filter: any, set: any, addToSet: any): Promise<void> {
         const value = await this.findOneInternal(filter);
         if (!value) {
-            return Promise.reject("Not found");
+            return Promise.reject(new Error("Not found"));
         } else {
             _.extend(value, set);
             return this.insertOne(value);
@@ -91,7 +112,16 @@ export class Collection<T> implements ICollection<T> {
     }
 
     private async insertOneInternal(value: any): Promise<any> {
-        await this.db.put(this.getKey(value), value);
+        await new Promise((resolve, reject) => {
+            this.db.put(this.getKey(value), value, (error) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            });
+        });
+
         return value;
     }
 
@@ -149,19 +179,7 @@ export class Collection<T> implements ICollection<T> {
                 limit: this.property.limit,
             });
 
-            const entries: T[] = [];
-
-            return new Promise<T[]>((resolve, reject) => {
-                valueStream.on("data", (data: T) => {
-                    entries.push(data);
-                });
-                valueStream.on("end", () => {
-                    resolve(entries);
-                });
-                valueStream.on("error", (error) => {
-                    reject(error);
-                });
-            });
+            return readStream(valueStream);
         } else {
             return new Promise<T[]>((resolve, reject) => {
                 this.db.get(key, (err, val) => {

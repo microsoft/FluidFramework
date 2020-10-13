@@ -92,7 +92,6 @@ export class MockDeltaManager extends EventEmitter
     public get inboundSignal(): IDeltaQueue<ISignalMessage> {
         return this._inboundSignal;
     }
-
     public minimumSequenceNumber = 0;
 
     public lastSequenceNumber = 0;
@@ -100,6 +99,7 @@ export class MockDeltaManager extends EventEmitter
     readonly lastKnownSeqNumber = 0;
 
     public initialSequenceNumber = 0;
+    public hasCheckpointSequenceNumber = false;
 
     public get version(): string {
         return undefined;

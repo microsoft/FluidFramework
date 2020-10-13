@@ -47,7 +47,12 @@ import {
     ISummaryTreeWithStats,
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { generateHandleContextPath, SummaryTreeBuilder, FluidSerializer } from "@fluidframework/runtime-utils";
+import {
+    generateHandleContextPath,
+    RequestParser,
+    SummaryTreeBuilder,
+    FluidSerializer,
+} from "@fluidframework/runtime-utils";
 import {
     IChannel,
     IFluidDataStoreRuntime,
@@ -140,6 +145,10 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     public get IFluidSerializer() { return this.serializer; }
 
     public get IFluidHandleContext() { return this; }
+
+    public get rootRoutingContext() { return this; }
+    public get channelsRoutingContext() { return this; }
+    public get objectsRoutingContext() { return this; }
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
@@ -270,11 +279,15 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        // Parse out the leading slash
-        const id = request.url.startsWith("/") ? request.url.substr(1) : request.url;
+        const parser = RequestParser.create(request);
+        const id = parser.pathParts[0];
+
+        if (id === "_channels" || id === "_objects") {
+            return this.request(parser.createSubRequest(1));
+        }
 
         // Check for a data type reference first
-        if (this.contextsDeferred.has(id)) {
+        if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const value = await this.contextsDeferred.get(id)!.promise;
             const channel = await value.getChannel();
@@ -286,7 +299,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         if (this.requestHandler === undefined) {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         } else {
-            return this.requestHandler(request);
+            return this.requestHandler(parser);
         }
     }
 

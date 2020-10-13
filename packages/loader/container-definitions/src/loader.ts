@@ -9,7 +9,6 @@ import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
@@ -85,7 +84,6 @@ export interface IContainerEvents extends IEvent {
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
-    (event: "pong" | "processTime", listener: (latency: number) => void);
 }
 
 /**
@@ -165,7 +163,7 @@ export interface ILoader extends IFluidRouter {
      * Creates a new container using the specified snapshot but in an unattached state. While unattached all
      * updates will only be local until the user explicitly attaches the container to a service provider.
      */
-    rehydrateDetachedContainerFromSnapshot(snapshot: ISnapshotTree): Promise<IContainer>;
+    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
 }
 
 /**

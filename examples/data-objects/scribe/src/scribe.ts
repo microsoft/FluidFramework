@@ -32,7 +32,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import {
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
@@ -400,15 +400,12 @@ export class Scribe
     public get IFluidRouter() { return this; }
     public get IFluidHTMLView() { return this; }
 
-    public url: string;
     private root: ISharedMap;
     private div: HTMLDivElement;
 
     constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
         super();
-
-        this.url = context.id;
-        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -470,7 +467,7 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
             registry,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
-                deprecated_innerRequestHandler,
+                innerRequestHandler,
             ),
             { generateSummaries: true });
 

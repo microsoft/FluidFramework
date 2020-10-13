@@ -64,7 +64,7 @@ export async function fetchFile(
 
         extract.on("finish", () => {
             if (chunks.length === 0) {
-                reject("Not found");
+                reject(new Error("Not found"));
             } else {
                 const fullChunk = Buffer.concat(chunks);
                 resolve(fullChunk);

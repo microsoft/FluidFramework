@@ -2,6 +2,8 @@
 
 - [IFluidPackage Changes](#IFluidPackage-Changes)
 - [DataObject changes](#DataObject-changes)
+- [RequestParser](#RequestParser)
+- [IFluidLodable.url is removed](#IFluidLodable.url-is-removed)
 
 ### IFluidPackage Changes
 - Remove npm specific IPackage interface
@@ -17,6 +19,19 @@ This change
 2. Allows DataObjects to modify FluidDataStoreRuntime behavior before it gets registered and used by the rest of the system, including setting various hooks.
 
 But it also puts more constraints on DataObject - its constructor should be light and not do any expensive work (all such work should be done in corresponding initialize methods), or access any data store runtime functionality that requires fully initialized runtime (like loading DDSs will not work in this state)
+
+### RequestParser
+RequestParser's ctor is made protected. Please replace this code
+```
+    const a = new RequestParser(request);
+```
+with this one:
+```
+    const a = RequestParser.create(request);
+```
+
+### IFluidLodable.url is removed
+`url` property is removed. If you need a path to an object (in a container), you can use IFluidLoadable.handle.absolutePath instead.
 
 ## 0.27 Breaking Changes
 - [Local Web Host Removed](#Local-Web-Host-Removed)
@@ -302,7 +317,7 @@ example:
     const builder = new RuntimeRequestHandlerBuilder();
     builder.pushHandler(...this.requestHandlers);
     builder.pushHandler(defaultRouteRequestHandler("defaultComponent"));
-    builder.pushHandler(deprecated_innerRequestHandler());
+    builder.pushHandler(innerRequestHandler());
 
     const runtime = await ContainerRuntime.load(
         context,

@@ -5,20 +5,15 @@
 
 {{ define "main" }}
 
-{{ partial "navbarSticky.html" . }}
-
-
 <div class="container body-content docs">
     <div class="row">
         <div class="col-md-2 docs-navbar-container"> {{ partial "apiNav.html" .}} </div>
-        <div class="col-sm-9 col-md-8 body">
-
+        <div role="main" id="main-content" class="col-sm-9 col-md-8 body">
             <div>
                 <h1>{{ .Title  }}</h1>
                 {{ $section := .CurrentSection }}
                 {{ $packagePages := where $section.RegularPages "Params.kind" "Package" }}
                 {{ range $grouping, $names :=  $.Site.Data.packages }}
-
 
                 <h2>{{ $grouping | humanize | title }} packages</h2>
 
@@ -33,7 +28,7 @@
                     <tbody>
                         {{ range $names }}
 
-                        {{ range where $packagePages "Params.package" .  }}
+                        {{ range where $packagePages "Params.package" . }}
                         <tr>
                             <td><a href="{{ .Permalink | safeURL }}" title="{{ .Title }}">{{ .Title }}</a></td>
                             <td>{{ truncate 170 (.Params.Summary | markdownify) }}</td>
@@ -45,13 +40,12 @@
                 {{ end }}
 
             </div>
-
         </div>
+
         <div class="hidden-xs col-sm-3 col-md-2 docs-subnavbar-container">
             {{ partial "toc.html" .}}
             <!-- TODO: OR subnav -->
         </div>
-
     </div>
 </div>
 
@@ -59,7 +53,6 @@
 {{/* $script := resources.Get "js/main.js" | minify | fingerprint - */}}
 <!-- <script src="{{/* $script.Permalink | relURL */}}" -->
 <!-- {{/* printf "integrity=%q" $script.Data.Integrity | safeHTMLAttr */}}></script> -->
-{{- partial "analytics.html" . }}
 {{- if templates.Exists "partials/extra-foot.html" -}}
 {{ partial "extra-foot.html" . }}
 {{- end }}

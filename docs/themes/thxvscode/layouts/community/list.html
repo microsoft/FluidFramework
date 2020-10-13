@@ -5,13 +5,12 @@
 
 {{ define "main" }}
 
-{{ partial "navbarSticky.html" . }}
-
+<main role="main" id="main-content">
 {{ .Content }}
+</main>
 
 {{ block "footer" . -}}{{ end }}
 
-{{- partial "analytics.html" . }}
 {{- if templates.Exists "partials/extra-foot.html" -}}
 {{ partial "extra-foot.html" . }}
 {{- end }}

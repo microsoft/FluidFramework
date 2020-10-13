@@ -90,7 +90,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
         // Create a FluidObjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
         // same as reaching its routeContext (FluidDataStoreRuntime) so there is so the relative path to it from the
         // routeContext is empty.
-        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
 
         // Container event handlers
         this.runtime.once("dispose", () => {
@@ -111,7 +111,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     public async request(req: IRequest): Promise<IResponse> {
         const pathParts = RequestParser.getPathParts(req.url);
         const requestUrl = (pathParts.length > 0) ? pathParts[0] : req.url;
-        if (requestUrl === "/" || requestUrl === this.url || requestUrl === "") {
+        if (requestUrl === "/" || requestUrl === "") {
             return {
                 mimeType: "fluid/object",
                 status: 200,
@@ -125,9 +125,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
 
     // #region IFluidLoadable
 
-    /**
-     * Absolute URL to the data store within the document
-     */
+    // Back-compat <= 0.28
     public get url() { return this.context.id; }
 
     // #endregion IFluidLoadable

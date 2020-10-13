@@ -10,6 +10,8 @@ import {
     IFluidRouter,
     IProvideFluidHandleContext,
     IFluidHandle,
+    IRequest,
+    IResponse,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -72,6 +74,11 @@ export interface IContainerRuntimeBase extends
      * Sets the flush mode for operations on the document.
      */
     setFlushMode(mode: FlushMode): void;
+
+    /**
+     * Executes a request against the container runtime
+     */
+    request(request: IRequest): Promise<IResponse>;
 
     /**
      * Submits a container runtime level signal to be sent to other clients.
