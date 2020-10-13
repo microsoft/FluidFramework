@@ -5,10 +5,8 @@
 
 import { parse } from "url";
 import _ from "lodash";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { Router } from "express";
 import safeStringify from "json-stringify-safe";
 import jwt from "jsonwebtoken";
@@ -16,7 +14,7 @@ import { Provider } from "nconf";
 import { v4 } from "uuid";
 import winston from "winston";
 import dotenv from "dotenv";
-import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
+import { getSpfxFluidObjectData, spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
 import { getConfig, getJWTClaims, getUserDetails, queryParamAsString } from "../utils";
@@ -32,7 +30,6 @@ export function create(
     cache: IKeyValueWrapper): Router {
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
-    const codeResolver = new SemVerCdnCodeResolver();
 
     /**
      * Looks up the version of a chaincode in the cache.
@@ -86,72 +83,90 @@ export function create(
                     tenantId,
                     config.get("error:track"));
 
-                const pkgP = fullTreeP.then((fullTree) => {
-                    if (fullTree && fullTree.code) {
-                        return codeResolver.resolveCodeDetails(fullTree.code);
-                    }
+                const spPackageP = getSpfxFluidObjectData();
 
-                    if (request.query.chaincode === undefined) {
-                        return;
-                    }
+                const scriptsP = spPackageP.then((manifest) => {
+                    winston.info(JSON.stringify(manifest));
 
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                    const cdn = request.query.cdn ? request.query.cdn : config.get("worker:npm");
-                    const entryPoint = queryParamAsString(request.query.entrypoint);
-
-                    let codeDetails: IFluidCodeDetails;
-                    if (chaincode.startsWith("http")) {
-                        codeDetails = {
-                            config: {
-                                [`@gateway:cdn`]: chaincode,
-                            },
-                            package: {
-                                fluid: {
-                                    browser: {
-                                        umd: {
-                                            files: [chaincode],
-                                            library: entryPoint,
-                                        },
-                                    },
-                                },
-                                name: `@gateway/${v4()}`,
-                                version: "0.0.0",
-                            },
-                        };
-                    } else {
-                        const details = extractPackageIdentifierDetails(chaincode);
-                        codeDetails = {
-                            config: {
-                                [`@${details.scope}:cdn`]: cdn,
-                            },
-                            package: chaincode,
-                        };
-                    }
-
-                    return codeResolver.resolveCodeDetails(codeDetails);
-                });
-
-                const scriptsP = pkgP.then((pkg) => {
-                    if (pkg === undefined) {
-                        return [];
-                    }
-
-                    const umd = pkg.resolvedPackage.fluid?.browser?.umd;
-                    if (umd === undefined) {
-                        return [];
-                    }
-
+                    const baseUrl = manifest.loaderConfig.internalModuleBaseUrls[0] ?? "";
+                    const scriptResources = manifest.loaderConfig.scriptResources[
+                        `fluid.${manifest.loaderConfig.entryModuleId}`
+                    ] ?? "";
+                    const bundle = scriptResources.path;
                     return {
-                        entrypoint: umd.library,
-                        scripts: umd.files.map(
-                            (script, index) => {
-                                return {
-                                    id: `${pkg.resolvedPackageCacheId}-${index}`,
-                                    url: script,
-                                };
-                            }),
+                        entrypoint: manifest.loaderConfig.entryModuleId,
+                        scripts: [
+                            {
+                                id: baseUrl,
+                                url: `${baseUrl}/${bundle}`,
+                            },
+                        ],
                     };
                 });
+                const pkgP = scriptsP.then((scripts) => {
+                    return {
+                        resolvedPackage: {
+                            fluid: {
+                                browser: {
+                                    umd: {
+                                        files: [scripts.scripts[0].url],
+                                        library: "main",
+                                    },
+                                },
+                            },
+                            name: `@gateway/${v4()}`,
+                            version: "0.0.0",
+                        },
+                        package: {
+                            fluid: {
+                                browser: {
+                                    umd: {
+                                        files: [scripts.scripts[0].url],
+                                        library: "main",
+                                    },
+                                },
+                            },
+                            name: `@gateway/${v4()}`,
+                            version: "0.0.0",
+                        },
+                        config: {
+                            [`@gateway:cdn`]: scripts.scripts[0].url,
+                        },
+                        fluid: {
+                            browser: {
+                                umd: {
+                                    files: [scripts.scripts[0].url],
+                                    library: "main",
+                                },
+                            },
+                        },
+                        name: `@gateway/${v4()}`,
+                        version: "0.0.0",
+                    };
+                });
+
+                // const scriptsP = pkgP.then((pkg) => {
+                //     winston.info(JSON.stringify(pkg));
+                //     if (pkg === undefined) {
+                //         return [];
+                //     }
+
+                //     const umd = pkg.resolvedPackage.fluid?.browser?.umd;
+                //     if (umd === undefined) {
+                //         return [];
+                //     }
+
+                //     return {
+                //         entrypoint: umd.library,
+                //         scripts: umd.files.map(
+                //             (script, index) => {
+                //                 return {
+                //                     id: `${pkg.resolvedPackageCacheId}-${index}`,
+                //                     url: script,
+                //                 };
+                //             }),
+                //     };
+                // });
 
                 // Track timing
                 const treeTimeP = fullTreeP.then(() => Date.now() - start);
@@ -168,11 +183,11 @@ export function create(
                         // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         timings!.push(Date.now() - start);
-                        const configClientId = config.get("login:microsoft").clientId;
+                        const configClientId: string = config.get("login:microsoft").clientId;
                         response.render(
                             "loader",
                             {
-                                cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
+                                cache: fullTree !== undefined ? JSON.stringify(fullTree.cache) : undefined,
                                 chaincode: JSON.stringify(pkg),
                                 clientId: _.isEmpty(configClientId)
                                 ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : configClientId,

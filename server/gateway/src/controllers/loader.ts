@@ -81,7 +81,6 @@ export async function initialize(
     const baseHost = new BaseHost(hostConfig, seedFromScriptIds(pkg, scriptIds));
     const loader = await baseHost.getLoader();
     documentFactory.resolveLoader(loader);
-
     debug(`Loading ${url}`);
 
     const div = document.getElementById("content") as HTMLDivElement;
