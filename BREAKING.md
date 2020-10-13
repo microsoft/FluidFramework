@@ -3,6 +3,7 @@
 - [IFluidPackage Changes](#IFluidPackage-Changes)
 - [DataObject changes](#DataObject-changes)
 - [RequestParser](#RequestParser)
+- [IFluidLodable.url is removed](#IFluidLodable.url-is-removed)
 
 ### IFluidPackage Changes
 - Remove npm specific IPackage interface
@@ -29,6 +30,8 @@ with this one:
     const a = RequestParser.create(request);
 ```
 
+### IFluidLodable.url is removed
+`url` property is removed. If you need a path to an object (in a container), you can use IFluidLoadable.handle.absolutePath instead.
 
 ## 0.27 Breaking Changes
 - [Local Web Host Removed](#Local-Web-Host-Removed)

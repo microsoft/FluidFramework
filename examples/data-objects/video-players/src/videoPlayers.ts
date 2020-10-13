@@ -95,7 +95,6 @@ export class VideoPlayer implements
 
     constructor(
         public videoId: string,
-        public url: string,
         context: IFluidHandleContext,
         private readonly keyId: string,
         private readonly youTubeApi: YouTubeAPI,
@@ -222,7 +221,6 @@ export class VideoPlayerCollection extends LazyLoadedDataObject<ISharedDirectory
                 key,
                 new VideoPlayer(
                     this.root.get(key),
-                    `${this.url}/${key}`,
                     this.runtime.objectsRoutingContext,
                     key,
                     youTubeApi,
@@ -236,7 +234,6 @@ export class VideoPlayerCollection extends LazyLoadedDataObject<ISharedDirectory
             } else {
                 const player = new VideoPlayer(
                     this.root.get(changed.key),
-                    `${this.url}/${changed.key}`,
                     this.runtime.objectsRoutingContext,
                     changed.key,
                     youTubeApi,
