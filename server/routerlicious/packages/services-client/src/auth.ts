@@ -35,7 +35,6 @@ export function generateToken(
         tenantId,
         user,
         iat: now,
-        nbf: now,
         exp: now + 5 * 60, // 5 minute expiration window
         ver: "1.0",
     };

@@ -10,7 +10,6 @@ export interface ITokenClaims {
     scopes: string[];
     tenantId: string;
     user: IUser;
-    nbf: number;
     iat: number;
     exp: number;
     ver: string;
