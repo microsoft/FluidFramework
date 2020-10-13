@@ -342,16 +342,11 @@ export class ConsensusRegisterCollection<T>
     }
 
     private stringify(value: any): string {
-        return this.runtime.IFluidSerializer.stringify(
-            value,
-            this.runtime.IFluidHandleContext,
-            this.handle);
+        return this.runtime.IFluidSerializer.stringify(value, this.handle);
     }
 
     private parse(content: string): any {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.runtime.IFluidSerializer.parse(
-            content,
-            this.runtime.IFluidHandleContext);
+        return this.runtime.IFluidSerializer.parse(content);
     }
 }
