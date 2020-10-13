@@ -1221,9 +1221,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         protocol.quorum.on("addMember", (clientId, details) => {
             // This is the only one that requires the pending client ID
             if (clientId === this.pendingClientId) {
-                this.setConnectionState(
-                    ConnectionState.Connected,
-                    `joined @ ${details.sequenceNumber}`);
+                this.setConnectionState(ConnectionState.Connected);
             }
         });
 
@@ -1327,16 +1325,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.emit("connect", opsBehind);
 
             // Report telemetry after we set client id!
-            this.logConnectionStateChangeTelemetry(
-                ConnectionState.Connecting,
-                oldState,
-                "websocket established",
-                opsBehind);
+            this.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
 
-            if (deltaManager.connectionMode === "read") {
-                this.setConnectionState(
-                    ConnectionState.Connected,
-                    `joined as readonly`);
+            // Check if we already processed our own join op through delta storage!
+            // we are fetching ops from storage in parallel to connecting to ordering service
+            // Given async processes, it's possible that we have already processed our own join message before
+            // connection was fully established.
+            // Note that we might be still initializing quorum - connection is established proactively on load!
+            if ((this._protocolHandler !== undefined && this._protocolHandler.quorum.has(details.clientId))
+                    || deltaManager.connectionMode === "read") {
+                this.setConnectionState(ConnectionState.Connected);
             }
 
             // Back-compat for new client and old server.
@@ -1387,8 +1385,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private logConnectionStateChangeTelemetry(
         value: ConnectionState,
         oldState: ConnectionState,
-        reason: string,
-        opsBehind?: number) {
+        reason?: string) {
         // Log actual event
         const time = performance.now();
         this.connectionTransitionTimes[value] = time;
@@ -1398,13 +1395,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let connectionMode: string | undefined;
         let connectionInitiationReason: string | undefined;
         let autoReconnect: ReconnectMode | undefined;
+        let checkpointSequenceNumber: number | undefined;
+        let sequenceNumber: number | undefined;
+        let opsBehind: number | undefined;
         if (value === ConnectionState.Disconnected) {
             autoReconnect = this._deltaManager.reconnectMode;
         } else {
             connectionMode = this._deltaManager.connectionMode;
+            sequenceNumber = this.deltaManager.lastSequenceNumber;
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
                 durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
+            } else {
+                // This info is of most interest on establishing connection only.
+                checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
+                if (this.deltaManager.hasCheckpointSequenceNumber) {
+                    opsBehind = checkpointSequenceNumber - sequenceNumber;
+                }
             }
             if (this.firstConnection) {
                 connectionInitiationReason = "InitialConnect";
@@ -1430,6 +1437,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             opsBehind,
             online: OnlineStatus[isOnline()],
             lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
+            checkpointSequenceNumber,
+            sequenceNumber,
         });
 
         if (value === ConnectionState.Connected) {
@@ -1438,9 +1447,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
+    private setConnectionState(value: ConnectionState.Disconnected, reason: string);
+    private setConnectionState(value: ConnectionState.Connecting | ConnectionState.Connected);
     private setConnectionState(
         value: ConnectionState,
-        reason: string) {
+        reason?: string) {
         assert(value !== ConnectionState.Connecting);
         if (this.connectionState === value) {
             // Already in the desired state - exit early
@@ -1525,7 +1536,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (message.clientId != null) {
             let errorMsg: string | undefined;
             const client: ILocalSequencedClient | undefined =
-                this._protocolHandler?.quorum.getMember(message.clientId);
+                this.getQuorum().getMember(message.clientId);
             if (client === undefined && message.type !== MessageType.ClientJoin) {
                 errorMsg = "messageClientIdMissingFromQuorum";
             } else if (client?.shouldHaveLeft === true) {
