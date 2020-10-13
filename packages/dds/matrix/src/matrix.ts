@@ -409,7 +409,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         for (let col = colStart; col < colStart + colCount; col++, colHandle++) {
             for (let row = 0; row < this.rowCount; row++) {
                 const rowHandle = this.rowHandles.getHandle(row);
-                const value = this.cells.getCell(colHandle, rowHandle);
+                const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
                 if (value !== undefined && value !== null) {
                     this.setCellCore(
