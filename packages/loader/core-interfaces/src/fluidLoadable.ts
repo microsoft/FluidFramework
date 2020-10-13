@@ -35,6 +35,5 @@ export interface IProvideFluidConfiguration {
 }
 
 export interface IFluidConfiguration extends IProvideFluidConfiguration {
-    canReconnect: boolean;
     scopes: string[];
 }
