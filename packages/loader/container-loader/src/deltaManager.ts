@@ -909,7 +909,6 @@ export class DeltaManager
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
             this.disconnectFromDeltaStream(`Disconnect on close`);
-            assert(!connection.connected); // Check we indeed closed it!
             return;
         }
 
@@ -1058,6 +1057,8 @@ export class DeltaManager
         this._outbound.clear();
         this.emit("disconnect", reason);
 
+        // Avoid re-entrncy - remove all listeners before closing!
+        connection.removeAllListeners();
         connection.close();
     }
 

@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { IDocumentDeltaConnection, DriverError } from "@fluidframework/driver-definitions";
 import {
     IClient,
     IConnect,
@@ -340,7 +340,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     /**
      * Disconnect from the websocket
      */
-    protected disconnectCore(socketProtocolError: boolean, reason: string) {
+    protected disconnectCore(socketProtocolError: boolean, reason: DriverError) {
         const key = this.socketReferenceKey;
         assert(key !== undefined, "reetrancy not supported!");
         this.socketReferenceKey = undefined;
