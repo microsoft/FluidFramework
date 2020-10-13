@@ -1331,7 +1331,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // we are fetching ops from storage in parallel to connecting to ordering service
             // Given async processes, it's possible that we have already processed our own join message before
             // connection was fully established.
-            if (this.getQuorum().has(details.clientId) || deltaManager.connectionMode === "read") {
+            // Note that we might be still initializing quorum - connection is established proactively on load!
+            if ((this._protocolHandler !== undefined && this._protocolHandler.quorum.has(details.clientId))
+                    || deltaManager.connectionMode === "read") {
                 this.setConnectionState(ConnectionState.Connected);
             }
 
@@ -1534,7 +1536,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (message.clientId != null) {
             let errorMsg: string | undefined;
             const client: ILocalSequencedClient | undefined =
-                this._protocolHandler?.quorum.getMember(message.clientId);
+                this.getQuorum().getMember(message.clientId);
             if (client === undefined && message.type !== MessageType.ClientJoin) {
                 errorMsg = "messageClientIdMissingFromQuorum";
             } else if (client?.shouldHaveLeft === true) {
