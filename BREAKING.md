@@ -30,10 +30,8 @@ with this one:
     const a = RequestParser.create(request);
 ```
 
->>>>>>> 54ba7f7d997007d245e89911dee35257d193e417
-
 ### IFluidLodable.url is removed
-`url` property is removed. As a temporary solution, you can use IFluidLoadable.handle.absolutePath instead. That said, internal routing and URIs will be hidden in future versions. If you rely on it, you need to rethink managing (external) URIs, as only handles can be used inside container - any external URI resolution should go through redirection of URI -> handle. `url` property is left on core objects but it will be cleared in next version. 
+`url` property is removed. If you need a path to an object (in a container), you can use IFluidLoadable.handle.absolutePath instead.
 
 ## 0.27 Breaking Changes
 - [Local Web Host Removed](#Local-Web-Host-Removed)
