@@ -105,8 +105,9 @@ describe("Odsp Driver Resolver", () => {
     it("FilePath with 3 data object ids is resolvable", async () => {
         // Arrange
         filePath = "data1/data2/data3";
+        const itemId = "item1";
         const testRequest: IRequest = {
-            url: `https://localhost?driveId=${driveId}&path=${filePath}&itemId=item1`,
+            url: `https://localhost?driveId=${driveId}&path=${filePath}&itemId=${itemId}`,
         };
 
         // Act
@@ -116,7 +117,7 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.fileName, "", "FileName should be absent");
         assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
-        assert.strictEqual(resolvedUrl.itemId, "item1", "Item id should be equal");
+        assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
         assert.notStrictEqual(resolvedUrl.hashedDocumentId, "", "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
@@ -129,8 +130,9 @@ describe("Odsp Driver Resolver", () => {
     it("FilePath with 2 ending slashes is resolvable", async () => {
         // Arrange
         filePath = "data1/data2//";
+        const itemId = "item1";
         const testRequest: IRequest = {
-            url: `https://localhost?driveId=${driveId}&path=${filePath}&itemId=item1`,
+            url: `https://localhost?driveId=${driveId}&path=${filePath}&itemId=${itemId}`,
         };
 
         // Act
@@ -140,7 +142,7 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.fileName, "", "FileName should be absent");
         assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
-        assert.strictEqual(resolvedUrl.itemId, "item1", "Item id should be equal");
+        assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
         assert.notStrictEqual(resolvedUrl.hashedDocumentId, "", "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
@@ -153,8 +155,9 @@ describe("Odsp Driver Resolver", () => {
     it("FilePath with special characters is resolvable", async () => {
         // Arrange
         filePath = "data1/data2/!@$";
+        const itemId = "item!@$";
         const testRequest: IRequest = {
-            url: `https://localhost?driveId=${driveId}&path=${filePath}&itemId=item!@$`,
+            url: `https://localhost?driveId=${driveId}&path=${filePath}&itemId=${itemId}`,
         };
 
         // Act
@@ -164,7 +167,7 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.fileName, "", "FileName should be absent");
         assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
-        assert.strictEqual(resolvedUrl.itemId, "item!@$", "Item id should be equal");
+        assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
         assert.notStrictEqual(resolvedUrl.hashedDocumentId, "", "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
