@@ -222,3 +222,13 @@ where bootstrap caption color is too light for white background */
 .table caption {
     color: #767676
 }
+
+
+/* fixing https://github.com/microsoft/FluidFramework/issues/3601
+where long words such as function names would not break in api docs causing layout overflow
+Targets the 2nd table cell of api tables
+*/
+
+.table td:nth-child(2) {
+    word-break: break-word
+}
