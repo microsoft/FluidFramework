@@ -60,9 +60,16 @@ export async function getDriveItemByRootFileName(
     path: string,
     authRequestInfo: IOdspAuthRequestInfo,
     create: boolean,
+    driveId?: string,
 ): Promise<IOdspDriveItem> {
-    const accountPath = account ? `/${account}` : "";
-    const getDriveItemUrl = `https://${server}${accountPath}/_api/v2.1/drive/root:${path}:`;
+    const accountPath = account !== undefined ? `/${account}` : "";
+    let getDriveItemUrl;
+    if (driveId !== undefined && driveId !== "") {
+        const encodedDrive = encodeURIComponent(driveId);
+        getDriveItemUrl = `https://${server}${accountPath}/_api/v2.1/drives/${encodedDrive}/root:${path}:`;
+    } else {
+        getDriveItemUrl = `https://${server}${accountPath}/_api/v2.1/drive/root:${path}:`;
+    }
     return getDriveItem(getDriveItemUrl, authRequestInfo, create);
 }
 

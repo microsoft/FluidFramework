@@ -331,7 +331,6 @@ export class MapKernel implements IValueTypeCreator {
         const serializableValue = makeSerializable(
             localValue,
             this.runtime.IFluidSerializer,
-            this.runtime.IFluidHandleContext,
             this.handle);
 
         // Set the value locally.
@@ -368,7 +367,6 @@ export class MapKernel implements IValueTypeCreator {
         const transformedValue = makeHandlesSerializable(
             params,
             this.runtime.IFluidSerializer,
-            this.runtime.IFluidHandleContext,
             this.handle);
 
         // Set the value locally.
@@ -446,7 +444,6 @@ export class MapKernel implements IValueTypeCreator {
         this.data.forEach((localValue, key) => {
             serializableMapData[key] = localValue.makeSerialized(
                 this.runtime.IFluidSerializer,
-                this.runtime.IFluidHandleContext,
                 this.handle);
         });
         return serializableMapData;
@@ -458,7 +455,6 @@ export class MapKernel implements IValueTypeCreator {
             serializableMapData[key] = makeSerializable(
                 localValue,
                 this.runtime.IFluidSerializer,
-                this.runtime.IFluidHandleContext,
                 this.handle);
         });
         return serializableMapData;
@@ -725,8 +721,7 @@ export class MapKernel implements IValueTypeCreator {
                     const previousValue = localValue.value;
                     const translatedValue = parseHandles(
                         op.value.value,
-                        this.runtime.IFluidSerializer,
-                        this.runtime.IFluidHandleContext);
+                        this.runtime.IFluidSerializer);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.eventEmitter.emit("valueChanged", event, local, message, this);
@@ -770,7 +765,6 @@ export class MapKernel implements IValueTypeCreator {
             const translatedParams = makeHandlesSerializable(
                 params,
                 this.runtime.IFluidSerializer,
-                this.runtime.IFluidHandleContext,
                 this.handle);
 
             const op: IMapValueTypeOperation = {

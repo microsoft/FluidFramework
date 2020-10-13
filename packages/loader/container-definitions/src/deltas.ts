@@ -93,6 +93,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "prepareSend", listener: (messageBuffer: any[]) => void);
     (event: "submitOp", listener: (message: IDocumentMessage) => void);
     (event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
+    (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
     (event: "allSentOpsAckd", listener: () => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void);
@@ -124,6 +125,12 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 
     /** The initial sequence number set when attaching the op handler */
     readonly initialSequenceNumber: number;
+
+    /**
+     * Tells if  current connection has checkpoint information.
+     * I.e. we know how far behind the client was at the time of establishing connection
+     */
+    readonly hasCheckpointSequenceNumber: boolean;
 
     /** Details of client */
     readonly clientDetails: IClientDetails;
@@ -161,7 +168,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     submitSignal(content: any): void;
 }
 
-/** Events emmitted by a Delta Queue */
+/** Events emitted by a Delta Queue */
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "push" | "op", listener: (task: T) => void);
     (event: "idle", listener: () => void);

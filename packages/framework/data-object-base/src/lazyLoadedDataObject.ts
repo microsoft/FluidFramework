@@ -69,11 +69,6 @@ export abstract class LazyLoadedDataObject<
         return this._handle;
     }
 
-    /**
-     * Absolute URL to the data object within the document
-     */
-    public get url() { return this.runtime.objectsRoutingContext.absolutePath; }
-
     // #endregion IFluidLoadable
 
     public abstract create(props?: any);

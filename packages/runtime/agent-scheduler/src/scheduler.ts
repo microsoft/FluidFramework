@@ -378,10 +378,6 @@ export class TaskManager implements ITaskManager {
     public get IFluidRouter() { return this; }
     public get ITaskManager() { return this; }
 
-    public get url() {
-        return this.innerHandle.absolutePath;
-    }
-
     protected readonly taskUrl = "_tasks";
 
     private readonly taskMap = new Map<string, IFluidRunnable>();

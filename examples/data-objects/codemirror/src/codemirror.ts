@@ -213,7 +213,6 @@ export class CodeMirrorComponent
 
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
-    public url: string;
     private text: SharedString | undefined;
     private root: ISharedMap | undefined;
     private readonly innerHandle: IFluidHandle<this>;
@@ -223,8 +222,7 @@ export class CodeMirrorComponent
         /* Private */ context: IFluidDataStoreContext,
     ) {
         super();
-        this.url = context.id;
-        this.innerHandle = new FluidObjectHandle(this, this.url, runtime.objectsRoutingContext);
+        this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
