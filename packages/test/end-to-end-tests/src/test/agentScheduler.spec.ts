@@ -9,8 +9,9 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { taskSchedulerId } from "@fluidframework/container-runtime";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { OpProcessingController } from "@fluidframework/test-utils";
+import { OpProcessingController, DeltaManager } from "@fluidframework/test-utils";
 import { generateTestWithCompat, ICompatLocalTestObjectProvider, TestDataObject } from "./compatUtils";
+import * as old from "./oldVersion";
 
 const tests = (args: ICompatLocalTestObjectProvider) => {
     const leader = "leader";
@@ -27,7 +28,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             const dataObject = await requestFluidObject<TestDataObject>(container, "default");
 
             opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-            opProcessingController.addDeltaManagers(container.deltaManager);
+            opProcessingController.addDeltaManagers(container.deltaManager as DeltaManager);
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
@@ -90,8 +91,8 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
     });
 
     describe("Multiple clients", () => {
-        let container1: IContainer;
-        let container2: IContainer;
+        let container1: IContainer | old.IContainer;
+        let container2: IContainer | old.IContainer;
         let scheduler1: IAgentScheduler;
         let scheduler2: IAgentScheduler;
 
@@ -103,7 +104,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
             opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-            opProcessingController.addDeltaManagers(container1.deltaManager);
+            opProcessingController.addDeltaManagers(container1.deltaManager as DeltaManager);
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
@@ -116,7 +117,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 .then((taskManager) => taskManager.IAgentScheduler);
             const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
 
-            opProcessingController.addDeltaManagers(container2.deltaManager);
+            opProcessingController.addDeltaManagers(container2.deltaManager as DeltaManager);
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
