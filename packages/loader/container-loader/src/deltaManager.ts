@@ -811,10 +811,8 @@ export class DeltaManager
 
         this.stopSequenceNumberUpdate();
 
-        // This raises "disconnect" event
-        if (this.connection !== undefined) {
-            this.disconnectFromDeltaStream(error !== undefined ? `${error.message}` : "Container closed");
-        }
+        // This raises "disconnect" event if we have active connection.
+        this.disconnectFromDeltaStream(error !== undefined ? `${error.message}` : "Container closed");
 
         this._inbound.clear();
         this._outbound.clear();
@@ -1040,7 +1038,9 @@ export class DeltaManager
      */
     private disconnectFromDeltaStream(reason: string) {
         const connection = this.connection;
-        assert(connection !== undefined);
+        if (connection === undefined) {
+            return;
+        }
 
         // We cancel all ops on lost of connectivity, and rely on DDSes to resubmit them.
         // Semantics are not well defined for batches (and they are broken right now on disconnects anyway),
