@@ -338,8 +338,7 @@ export class DocumentDeltaConnection
     }
 
     /**
-     * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.  Subclasses which
-     * override this method must set the "closed" flag after disconnecting.
+     * Disconnect from the websocket.
      * @param socketProtocolError - true if error happened on socket / socket.io protocol level
      *  (not on Fluid protocol level)
      * @param reason - reason for disconnect
