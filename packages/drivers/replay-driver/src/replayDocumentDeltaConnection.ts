@@ -287,15 +287,15 @@ export class ReplayDocumentDeltaConnection
     }
 
     public submit(documentMessage: IDocumentMessage[]): void {
-        debug("dropping the outbound message");
+        // ReplayDocumentDeltaConnection.submit() can't be called - client never sees its own join on,
+        // and thus can never move to sending ops.
+        throw new Error("ReplayDocumentDeltaConnection.submit() can't be called");
     }
 
     public async submitSignal(message: any) {
-        debug("dropping the outbound signal and wait for response");
     }
 
     public close() {
-        debug("no implementation for disconnect...");
     }
 
     /**

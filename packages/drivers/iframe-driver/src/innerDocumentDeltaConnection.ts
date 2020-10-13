@@ -203,6 +203,6 @@ export class InnerDocumentDeltaConnection
      * Disconnect from the websocket
      */
     public close() {
-        throw new Error("InnerDocumentDeltaConnection: Disconnect not implemented Yet");
+        throw new Error("InnerDocumentDeltaConnection: close() not implemented Yet");
     }
 }
