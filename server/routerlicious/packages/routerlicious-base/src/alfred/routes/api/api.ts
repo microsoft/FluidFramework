@@ -52,7 +52,8 @@ export function create(
     });
 
     router.patch("/:tenantId/:id/root", async (request, response) => {
-        const validP = verifyRequest(request, tenantManager, storage);
+        const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
+        const validP = verifyRequest(request, tenantManager, storage, isTokenExpiryEnabled);
         returnResponse(validP, request, response, mapSetBuilder);
     });
 
@@ -135,29 +136,33 @@ function sendOp(
 const verifyRequest = async (
     request: Request,
     tenantManager: core.ITenantManager,
+    storage: core.IDocumentStorage,
     // eslint-disable-next-line max-len
-    storage: core.IDocumentStorage) => Promise.all([verifyToken(request, tenantManager), checkDocumentExistence(request, storage)]);
+    isTokenExpiryEnabled: boolean) => Promise.all([verifyToken(request, tenantManager, isTokenExpiryEnabled), checkDocumentExistence(request, storage)]);
 
-async function verifyToken(request: Request, tenantManager: core.ITenantManager): Promise<void> {
+// eslint-disable-next-line max-len
+async function verifyToken(request: Request, tenantManager: core.ITenantManager, isTokenExpiryEnabled: boolean): Promise<void> {
     const token = request.headers["access-token"] as string;
     if (!token) {
         return Promise.reject("Missing access token");
     }
     const tenantId = getParam(request.params, "tenantId");
     const documentId = getParam(request.params, "id");
-    const ONE_HOUR = 60 * 60; // 1 hour in seconds
-    const now = Math.round((new Date()).getTime() / 1000);
     const claims = jwt.decode(token) as ITokenClaims;
     if (!claims
         || claims.documentId !== documentId
         || claims.tenantId !== tenantId
-        || now < claims.iat
-        || now >= claims.exp
-        || claims.exp - claims.iat > ONE_HOUR
+        || (isTokenExpiryEnabled && isTokenExpired(claims))
     ) {
         return Promise.reject("Invalid access token");
     }
     return tenantManager.verifyToken(tenantId, token);
+}
+
+function isTokenExpired(claims: ITokenClaims): boolean {
+    const ONE_HOUR = 60 * 60; // 1 hour in seconds
+    const now = Math.round((new Date()).getTime() / 1000);
+    return now < claims.iat || now >= claims.exp || claims.exp - claims.iat > ONE_HOUR;
 }
 
 async function checkDocumentExistence(request: Request, storage: core.IDocumentStorage): Promise<any> {
