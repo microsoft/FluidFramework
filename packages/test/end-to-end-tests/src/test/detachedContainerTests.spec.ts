@@ -80,7 +80,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         assert.strictEqual(container.getQuorum().getMembers().size, 0, "Quorum should not contain any members");
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in disconnected state!!");
-        assert.strictEqual(container.chaincodePackage.package, pkg.package,
+        assert.strictEqual(container.chaincodePackage?.package, pkg.package,
             "Package should be same as provided");
         assert.strictEqual(container.id, "", "Detached container's id should be empty string");
         assert.strictEqual(container.clientDetails.capabilities.interactive, true,
@@ -155,6 +155,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         // Now load the container from another loader.
         const loader2 = args.makeTestLoader(registry);
         // Create a new request url from the resolvedUrl of the first container.
+        assert(container.resolvedUrl);
         const requestUrl2 = await args.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
 
@@ -209,6 +210,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         // Now load the container from another loader.
         const loader2 = args.makeTestLoader(registry);
         // Create a new request url from the resolvedUrl of the first container.
+        assert(container.resolvedUrl);
         const requestUrl2 = await args.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
 
@@ -585,6 +587,7 @@ describe("Detached Container", () => {
                 await container.attach(request);
 
                 // Create a new request url from the resolvedUrl of the first container.
+                assert(container.resolvedUrl);
                 const requestUrl2 = await args.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
                 const container2 = await loader.resolve({ url: requestUrl2 });
                 assert.strictEqual(container, container2, "Both containers should be same");

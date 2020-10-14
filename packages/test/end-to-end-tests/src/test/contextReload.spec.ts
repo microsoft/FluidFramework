@@ -32,7 +32,7 @@ const V2 = "0.2.0";
 // different versions (defined below) are used to test context reload.
 abstract class TestDataStore extends DataObject {
     public static readonly type = "@fluid-example/test-dataStore";
-    public readonly version: string;
+    public abstract readonly version: string;
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
@@ -56,7 +56,7 @@ class TestDataStoreV2 extends TestDataStore {
 // different runtime versions.
 abstract class OldTestDataStore extends old.DataObject {
     public static readonly type = "@fluid-example/test-dataStore";
-    public readonly version: string;
+    public abstract readonly version: string;
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
