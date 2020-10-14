@@ -12,6 +12,7 @@ import {
     IUrlResolver,
     IResolvedUrl,
     CreateNewHeader,
+    ContainerPackageHeader,
 } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
@@ -64,8 +65,14 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             )}&path=${encodeURIComponent("/")}`;
     }
 
-    public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {
-        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
+    public createCreateNewRequest(
+        siteUrl: string,
+        driveId: string,
+        filePath: string,
+        fileName: string,
+        containerPackageName?: string,
+    ): IRequest {
+        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName, containerPackageName);
     }
 }
 
@@ -106,6 +113,7 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
         const fileName = request.headers[CreateNewHeader.createNew].fileName;
         const driveID = searchParams.get("driveId");
         const filePath = searchParams.get("path");
+        const packageName = request.headers[ContainerPackageHeader.containerPackage]?.packageName;
         if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
             throw new Error("Proper new file params should be there!!");
         }
@@ -124,9 +132,13 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
             itemId: "",
             fileName,
             summarizer: false,
+            containerPackage: {
+                packageName,
+            },
         };
     }
     const { siteUrl, driveId, itemId, path } = decodeOdspUrl(request.url);
+    const containerPackageName = request.headers?.[ContainerPackageHeader.containerPackage]?.packageName;
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);
     assert.ok(!hashedDocumentId.includes("/"), "Docid should not contain slashes!!");
 
@@ -158,5 +170,8 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
         itemId,
         fileName: "",
         summarizer,
+        containerPackage: {
+            packageName: containerPackageName,
+        },
     };
 }

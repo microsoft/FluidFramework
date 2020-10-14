@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { CreateNewHeader } from "@fluidframework/driver-definitions";
+import { CreateNewHeader, ContainerPackageHeader } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 
@@ -13,6 +13,7 @@ describe("Odsp Driver Resolver", () => {
     const driveId = "driveId";
     let filePath = "path";
     const fileName = "fileName";
+    const packageName = "packageName";
     let resolver: OdspDriverUrlResolver;
     let request: IRequest;
 
@@ -36,6 +37,8 @@ describe("Odsp Driver Resolver", () => {
         assert.equal(resolvedUrl.itemId, "", "Item id should be absent");
         assert.equal(resolvedUrl.hashedDocumentId, "", "No doc id should be present");
         assert.equal(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be empty");
+        assert.equal(
+            resolvedUrl.containerPackage?.packageName, undefined, "Container Package Name should be undefined");
 
         const [, queryString] = request.url.split("?");
         const searchParams = new URLSearchParams(queryString);
@@ -70,6 +73,41 @@ describe("Odsp Driver Resolver", () => {
         assert.equal(resolvedUrl.itemId, "", "Item id should be absent");
         assert.equal(resolvedUrl.hashedDocumentId, "", "No doc id should be present");
         assert.equal(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be empty");
+        assert.equal(
+            resolvedUrl.containerPackage?.packageName, undefined, "Container Package Name should be undefined");
+
+        const [, queryString] = request.url.split("?");
+        const searchParams = new URLSearchParams(queryString);
+        assert.equal(searchParams.get("path"), filePath, "filePath should match");
+        assert.equal(searchParams.get("driveId"), driveId, "Drive id should match");
+    });
+
+    it("Request containing packageName", async () => {
+        // Arrange
+        request = resolver.createCreateNewRequest(siteUrl, driveId, filePath, fileName, packageName);
+
+        // Assert
+        assert.equal(request.headers?.[ContainerPackageHeader.containerPackage].packageName, packageName,
+                "Request should contain containerPackage.packageName as a header");
+        const url = `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(filePath)}`;
+        assert.equal(request.url, url, "Request url should not include packageName");
+    });
+
+    it("Resolved Request with package name", async () => {
+        // Arrange
+        request = resolver.createCreateNewRequest(siteUrl, driveId, filePath, fileName, packageName);
+
+        // Act
+        const resolvedUrl = await resolver.resolve(request);
+
+        // Assert
+        assert.equal(resolvedUrl.fileName, fileName, "FileName should be equal");
+        assert.equal(resolvedUrl.driveId, driveId, "Drive id should be equal");
+        assert.equal(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
+        assert.equal(resolvedUrl.itemId, "", "Item id should be absent");
+        assert.equal(resolvedUrl.hashedDocumentId, "", "No doc id should be present");
+        assert.equal(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be empty");
+        assert.equal(resolvedUrl.containerPackage?.packageName, packageName, "Container Package Name should be equal");
 
         const [, queryString] = request.url.split("?");
         const searchParams = new URLSearchParams(queryString);

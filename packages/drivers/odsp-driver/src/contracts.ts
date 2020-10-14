@@ -36,6 +36,10 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
     summarizer: boolean;
 
     sharingLink?: string;
+
+    containerPackage?: {
+        packageName: string
+    }
 }
 
 /**

@@ -24,8 +24,14 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
         private readonly appName?: string,
     ) { }
 
-    public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string) {
-        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
+    public createCreateNewRequest(
+        siteUrl: string,
+        driveId: string,
+        filePath: string,
+        fileName: string,
+        containerPackageName?: string,
+    ) {
+        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName, containerPackageName);
     }
 
     /**
