@@ -60,6 +60,8 @@ interface IEventListener {
 export class DocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
     implements IDocumentDeltaConnection {
+    static readonly eventsToForward = ["nack", "disconnect", "op", "signal", "pong", "error"];
+
     /**
      * Create a DocumentDeltaConnection
      *
@@ -164,6 +166,9 @@ export class DocumentDeltaConnection
             });
 
         this.on("newListener", (event, listener) => {
+            if (!DocumentDeltaConnection.eventsToForward.includes(event)) {
+                throw new Error(`DocumentDeltaConnection: Registering for unknown event: ${event}`);
+            }
             // Register for the event on socket.io
             // "error" is special - we already subscribed to it to modify error object on the fly.
             if (!this.closed && event !== "error" && this.listeners(event).length === 0) {
