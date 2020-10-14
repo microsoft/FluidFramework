@@ -52,7 +52,7 @@ describe("Matrix", () => {
         async function expect<T extends Serializable>(expected: ReadonlyArray<ReadonlyArray<T>>) {
             const actual = extract(matrix);
             assert.deepEqual(actual, expected, "Matrix must match expected.");
-            assert.deepEqual(consumer.extract(), actual, "Matrix must notify IMatrixConsumers of all changes.");
+            assert.deepEqual(extract(consumer), actual, "Matrix must notify IMatrixConsumers of all changes.");
 
             // Ensure ops are ACKed prior to snapshot. Otherwise, unACKed segments won't be included.
             return snapshot(matrix);
@@ -72,8 +72,8 @@ describe("Matrix", () => {
             // in the event that the test case forgets to call/await `expect()`.)
             await snapshot(await snapshot(matrix));
 
-            // Ensure that IMatrixConsumer observed all changes to matrix.
-            assert.deepEqual(consumer.extract(), extract(matrix));
+            assert.deepEqual(extract(consumer), extract(matrix),
+                "Matrix must notify IMatrixConsumers of all changes.");
 
             // Sanity check that removing the consumer stops change notifications.
             matrix.closeMatrix(consumer);
@@ -350,7 +350,7 @@ describe("Matrix", () => {
             }
 
             for (const consumer of [consumer1, consumer2]) {
-                assert.deepEqual(consumer.extract(), actual1, "Matrix must notify IMatrixConsumers of all changes.");
+                assert.deepEqual(extract(consumer), actual1, "Matrix must notify IMatrixConsumers of all changes.");
             }
         };
 
@@ -668,39 +668,6 @@ describe("Matrix", () => {
                     ["B", "A", 2, 3]
                 ]);
             });
-
-            // it("fail", async () => {
-            //     matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 4);
-            //     matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
-            //     matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [0,1,2,3]);
-            //     matrix1.removeCols(/* colStart: */ 0, /* colCount: */ 1);
-            //     matrix1.removeRows(/* rowStart: */ 1, /* rowCount: */ 1);
-            //     await expect([
-            //         [],
-            //         [],
-            //         [],
-            //     ]);
-
-            //     matrix1.removeRows(/* rowStart: */ 0, /* rowCount: */ 1);
-            //     matrix2.insertCols(/* colStart: */ 0, /* colCount: */ 1);
-            //     matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [74,37,0]);
-            //     matrix2.insertCols(/* colStart: */ 0, /* colCount: */ 1);
-            //     matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [34,92,97]);
-            //     matrix1.insertRows(/* rowStart: */ 1, /* rowCount: */ 1);
-            //     await expect([
-            //         [92, 37],
-            //         [undefined, undefined],
-            //         [97, 0]
-            //     ]);
-
-            //     matrix2.insertCols(/* colStart: */ 0, /* colCount: */ 1);
-            //     matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [59,89,55]);
-            //     await expect([
-            //         [59, 92, 37],
-            //         [89, undefined, undefined],
-            //         [55, 97, 0]
-            //     ]);
-            // });
         });
     });
 
@@ -726,7 +693,7 @@ describe("Matrix", () => {
             }
 
             for (const consumer of [consumer1, consumer2]) {
-                assert.deepEqual(consumer.extract(), actual1, "Matrix must notify IMatrixConsumers of all changes.");
+                assert.deepEqual(extract(consumer), actual1, "Matrix must notify IMatrixConsumers of all changes.");
             }
         };
 

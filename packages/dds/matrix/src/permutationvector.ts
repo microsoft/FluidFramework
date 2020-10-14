@@ -58,16 +58,6 @@ export class PermutationSegment extends BaseSegment {
         this._start = value;
     }
 
-    /**
-     * Transfers ownership of the associated row/col handles to the given 'destination' segment.
-     * The original segment's handle allocation is reset.  Used by 'undoRow/ColRemove' when
-     * copying cells to restore row/col segments.)
-     */
-    public transferHandlesTo(destination: PermutationSegment) {
-        destination._start = this._start;
-        this.reset();
-    }
-
     public reset() {
         this._start = Handle.unallocated;
     }
@@ -300,7 +290,9 @@ export class PermutationVector extends Client {
                     // HACK: We need to include the allocated handle in the segment's JSON reperesntation
                     //       for snapshots, but need to ignore the remote client's handle allocations when
                     //       processing remote ops.
-                    segment.reset();
+                    if (segment.clientId !== this.getClientId()) {
+                        segment.reset();
+                    }
 
                     this.handleCache.itemsChanged(
                         position,

@@ -319,7 +319,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         // Do not queue a message or track the pending op, as there will never be an ACK, etc.
         if (this.isAttached()) {
             // Record whether this `op` targets rows or cols.  (See dispatch in `processCore()`)
-            (message).target = dimension;
+            message.target = dimension;
 
             this.submitLocalMessage(
                 message,
@@ -357,16 +357,12 @@ export class SharedMatrix<T extends Serializable = Serializable>
     /** @internal */ public _undoRemoveRows(segment: ISegment) {
         const original = segment as PermutationSegment;
 
-        // (Re)insert the removed number of columns at the original position.
+        // (Re)insert the removed rows at the original position.
         const rowStart = this.rows.getPosition(original);
-        this.insertRows(rowStart, original.cachedLength);
+        const inserted = new PermutationSegment(original.cachedLength, original.start);
+        this.submitRowMessage(this.rows.insertSegmentLocal(rowStart, inserted));
 
-        // Transfer handles from the original segment to the newly inserted segment.
-        // (This allows us to use getCell(..) below to read the previous cell values)
-        const inserted = this.rows.getContainingSegment(rowStart).segment as PermutationSegment;
-        original.transferHandlesTo(inserted);
-
-        // Generate setCell ops for each populated cell in the reinserted cols.
+        // Generate setCell ops for each populated cell in the reinserted rows.
         let rowHandle = inserted.start;
         const rowCount = inserted.cachedLength;
         for (let row = rowStart; row < rowStart + rowCount; row++, rowHandle++) {
@@ -394,14 +390,10 @@ export class SharedMatrix<T extends Serializable = Serializable>
     /** @internal */ public _undoRemoveCols(segment: ISegment) {
         const original = segment as PermutationSegment;
 
-        // (Re)insert the removed number of columns at the original position.
+        // (Re)insert the removed columns at the original position.
         const colStart = this.cols.getPosition(original);
-        this.insertCols(colStart, original.cachedLength);
-
-        // Transfer handles from the original segment to the newly inserted segment.
-        // (This allows us to use getCell(..) below to read the previous cell values)
-        const inserted = this.cols.getContainingSegment(colStart).segment as PermutationSegment;
-        original.transferHandlesTo(inserted);
+        const inserted = new PermutationSegment(original.cachedLength, original.start);
+        this.submitColMessage(this.cols.insertSegmentLocal(colStart, inserted));
 
         // Generate setCell ops for each populated cell in the reinserted cols.
         let colHandle = inserted.start;
