@@ -42,6 +42,7 @@ export const spoEnsureLoggedIn = () => {
     return (req, res, next) => {
         const tenantId = req.params.tenantId;
         const spoTenant = getSpoServer(tenantId);
+        winston.info(JSON.stringify(req.session.tokens));
         if (spoTenant !== undefined) {
             if (
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions

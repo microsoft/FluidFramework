@@ -15,11 +15,12 @@ import {
     IOdspTokens,
     putAsync,
 } from "@fluidframework/odsp-utils";
+import winston from "winston";
 
 const spoTenants = new Map<string, string>([
-    ["spo", "microsoft-my.sharepoint.com"],
-    ["spo-df", "microsoft-my.sharepoint-df.com"],
-    ["spo-shared", "microsoft.sharepoint.com"],
+    ["spo", "a830edad9050849829j20060320.sharepoint.com"],
+    ["spo-df", "a830edad9050849829j20060320.sharepoint.com"],
+    ["spo-shared", "a830edad9050849829j20060320.sharepoint.com"],
 ]);
 
 const pushSrv = "pushchannel.1drv.ms";
@@ -113,6 +114,7 @@ export async function spoGetResolvedUrl(
         return Promise.reject(`Invalid SPO tenantId ${tenantId}`);
     }
     const tokens = serverTokens !== undefined ? serverTokens[server] : undefined;
+    winston.info(JSON.stringify(tokens));
     if (tokens === undefined) {
         return Promise.reject(`Missing tokens for ${server}`);
     }

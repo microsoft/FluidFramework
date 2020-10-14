@@ -5,7 +5,8 @@
 
 const odspTenants = new Map<string, string>([
     ["spo", "microsoft-my.sharepoint.com"],
-    ["spo-df", "microsoft-my.sharepoint-df.com"],
+    ["spo-df", "a830edad9050849829j20060320.sharepoint.com"],
+    ["spo-shared", "a830edad9050849829j20060320.sharepoint.com"],
 ]);
 
 export function isSharepointURL(server: string) {
