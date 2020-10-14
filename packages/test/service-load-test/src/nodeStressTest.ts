@@ -142,17 +142,24 @@ async function main() {
 
     // When runId is specified, kick off a single test runner and exit when it's finished
     if (runId !== undefined) {
-        if (url === undefined) {
-            console.error("Missing --url argument needed to run child process");
+        try {
+            if (url === undefined) {
+                console.error("Missing --url argument needed to run child process");
+                process.exit(-1);
+            }
+            const runConfig: IRunConfig = {
+                runId,
+                testConfig: config.profiles[profile],
+            };
+            const stressTest = await load(config, url, password);
+            await stressTest.run(runConfig);
+            console.log(`${runId.toString().padStart(3)}> exit`);
+            process.exit(0);
+        } catch (e) {
+            console.error(`${runId.toString().padStart(3)}> error: loading test`);
+            console.error(e);
             process.exit(-1);
         }
-        const runConfig: IRunConfig = {
-            runId,
-            testConfig: config.profiles[profile],
-        };
-        const stressTest = await load(config, url, password);
-        await stressTest.run(runConfig);
-        process.exit(0);
     }
 
     // When runId is not specified, this is the orchestrator process which will spawn child test runners.
@@ -204,5 +211,6 @@ async function main() {
 main().catch(
     (error) => {
         console.error(error);
+        process.exit(-1);
     },
 );
