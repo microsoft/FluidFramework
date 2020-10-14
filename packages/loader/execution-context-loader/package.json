@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/execution-context-loader",
-  "version": "0.26.3",
+  "version": "0.26.4",
   "description": "Allows loading container inside execution contexts. Currently supports web worker",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -28,9 +28,9 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.26.3",
-    "@fluidframework/core-interfaces": "^0.26.3",
-    "@fluidframework/driver-definitions": "^0.26.3",
+    "@fluidframework/container-definitions": "^0.26.4",
+    "@fluidframework/core-interfaces": "^0.26.4",
+    "@fluidframework/driver-definitions": "^0.26.4",
     "comlink": "^4.0.2",
     "debug": "^4.1.1"
   },
