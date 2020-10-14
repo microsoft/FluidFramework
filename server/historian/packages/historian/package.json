@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/historian",
-  "version": "0.1012.0",
+  "version": "0.0.1",
   "description": "Git REST API",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -21,8 +21,8 @@
   },
   "dependencies": {
     "@fluidframework/gitresources": "^0.1012.0",
+    "@fluidframework/historian-base": "^0.0.1",
     "@fluidframework/server-services-utils": "^0.1012.2",
-    "@fluidframework/historian-base": "^0.1012.0",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
     "cors": "^2.8.5",
