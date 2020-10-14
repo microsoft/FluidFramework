@@ -78,7 +78,7 @@ describe(`r11s End-To-End tests`, () => {
         assert(bearerSecret, "Missing bearer secret");
         assert(tenantId, "Missing tenantId");
         assert(tenantSecret, "Missing tenant secret");
-        assert(fluidHost, "Missing fluid host");
+        assert(fluidHost, "Missing Fluid host");
 
         return new InsecureUrlResolver(
             fluidHost,
