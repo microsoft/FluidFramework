@@ -339,6 +339,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         // Now load the container from another loader.
         const urlResolver2 = new LocalResolver();
         const loader2 = createTestLoader(urlResolver2);
+        assert(rehydratedContainer.resolvedUrl);
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
 
@@ -382,6 +383,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         // Now load the container from another loader.
         const urlResolver2 = new LocalResolver();
         const loader2 = createTestLoader(urlResolver2);
+        assert(rehydratedContainer.resolvedUrl);
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
 

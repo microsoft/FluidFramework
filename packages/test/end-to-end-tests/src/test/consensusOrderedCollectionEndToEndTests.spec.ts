@@ -111,7 +111,7 @@ function generate(
 
             await opProcessingController.pauseProcessing();
 
-            const addP = [];
+            const addP: Promise<void>[] = [];
             for (const item of input) {
                 addP.push(collection1.add(item));
             }
@@ -301,7 +301,7 @@ function generate(
                 removeCount3 += 1;
             });
 
-            const p = [];
+            const p: Promise<void>[] = [];
             p.push(collection1.add(input[0]));
             // drain the outgoing so that the next set will come after
             await opProcessingController.processOutgoing();

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer, IFluidCodeDetails, ILoader, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { ConnectionState, Container, Loader } from "@fluidframework/container-loader";
@@ -163,6 +163,7 @@ describe("Ops on Reconnect", () => {
             await setupSecondContainersDataObject();
 
             // Disconnect the client.
+            assert(container1.clientId);
             documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
             // The Container should be in disconnected state.
@@ -197,6 +198,7 @@ describe("Ops on Reconnect", () => {
             await setupSecondContainersDataObject();
 
             // Nack the client.
+            assert(container1.clientId);
             documentServiceFactory.nackClient(container1.clientId);
 
             // The Container should be in disconnected state because DeltaManager disconnects on getting Nack'd.
@@ -231,6 +233,7 @@ describe("Ops on Reconnect", () => {
             await setupSecondContainersDataObject();
 
             // Disconnect the client.
+            assert(container1.clientId);
             documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
             // The Container should be in disconnected state.
@@ -289,6 +292,7 @@ describe("Ops on Reconnect", () => {
             assert.ok(container2Object2, "Could not get dataStore2 in the second container");
 
             // Disconnect the client.
+            assert(container1.clientId);
             documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
             // The Container should be in disconnected state.
@@ -339,6 +343,7 @@ describe("Ops on Reconnect", () => {
             container1Object1Directory.set("key6", "value6");
 
             // Disconnect the client.
+            assert(container1.clientId);
             documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
             // The Container should be in disconnected state.
@@ -399,6 +404,7 @@ describe("Ops on Reconnect", () => {
             container1Object2Map2.set("key8", "value8");
 
             // Disconnect the client.
+            assert(container1.clientId);
             documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
             // The Container should be in disconnected state.
@@ -431,6 +437,7 @@ describe("Ops on Reconnect", () => {
             await setupSecondContainersDataObject();
 
             // Disconnect the client.
+            assert(container1.clientId);
             documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
             // The Container should be in disconnected state.
@@ -472,6 +479,7 @@ describe("Ops on Reconnect", () => {
             await setupSecondContainersDataObject();
 
             // Disconnect the client.
+            assert(container1.clientId);
             documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
             // The Container should be in disconnected state.
@@ -519,6 +527,7 @@ describe("Ops on Reconnect", () => {
             await setupSecondContainersDataObject();
 
             // Disconnect the client.
+            assert(container1.clientId);
             documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
             // The Container should be in disconnected state.

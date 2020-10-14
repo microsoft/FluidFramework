@@ -75,6 +75,11 @@ describe(`r11s End-To-End tests`, () => {
         const tenantSecret = process.env.fluid__webpack__tenantSecret;
         const fluidHost = process.env.fluid__webpack__fluidHost;
 
+        assert(bearerSecret, "Missing bearer secret");
+        assert(tenantId, "Missing tenantId");
+        assert(tenantSecret, "Missing tenant secret");
+        assert(fluidHost, "Missing Fluid host");
+
         return new InsecureUrlResolver(
             fluidHost,
             fluidHost.replace("www", "alfred"),
@@ -114,6 +119,7 @@ describe(`r11s End-To-End tests`, () => {
 
         // Now attach the container and get the sub component.
         await container.attach(request);
+        assert(container.resolvedUrl, "attached container should have resolved URL");
 
         // Now load the container from another loader.
         const urlResolver2 = getResolver();

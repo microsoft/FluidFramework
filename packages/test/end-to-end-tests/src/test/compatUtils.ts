@@ -62,7 +62,7 @@ export interface ICompatTestOptions {
 
 // convert a channel factory registry for TestFluidDataStoreFactory to one with old channel factories
 function convertRegistry(registry: ChannelFactoryRegistry = []): old.ChannelFactoryRegistry {
-    const oldRegistry = [];
+    const oldRegistry: [string | undefined, old.IChannelFactory][] = [];
     for (const [key, factory] of registry) {
         switch (factory.type) {
             case SharedMap.getFactory().type:
@@ -90,7 +90,6 @@ function convertRegistry(registry: ChannelFactoryRegistry = []): old.ChannelFact
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return oldRegistry;
 }
 

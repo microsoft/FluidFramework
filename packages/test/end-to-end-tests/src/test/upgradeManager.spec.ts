@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
 import {
@@ -172,7 +172,7 @@ describe("UpgradeManager", () => {
         const container1 = await createContainer(TestDataObject.getFactory());
 
         // Load the second Container.
-        const container2 = await loadContainer(TestDataObject.getFactory());
+        const container2 = await loadContainer(TestDataObject.getFactory()) as Container;
 
         const upgradeManager = new UpgradeManager((container1 as any).context.runtime);
 
@@ -198,7 +198,8 @@ describe("UpgradeManager", () => {
         upgradeManager.upgrade(codeDetails);
 
         // disconnect one client, which should initiate upgrade
-        documentServiceFactory.disconnectClient((container2 as Container).clientId, "test");
+        assert(container2.clientId);
+        documentServiceFactory.disconnectClient(container2.clientId, "test");
 
         await upgradeP;
     });
