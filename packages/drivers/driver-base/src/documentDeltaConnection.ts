@@ -5,7 +5,11 @@
 
 import { strict as assert } from "assert";
 import { BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
-import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
+import {
+    IDocumentDeltaConnection,
+    IDocumentDeltaConnectionEvents,
+    DriverError,
+} from "@fluidframework/driver-definitions";
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
@@ -26,13 +30,17 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 /**
  * Error raising for socket.io issues
  */
-function createErrorObject(handler: string, error: any, canRetry = true) {
+function createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
     // Note: we suspect the incoming error object is either:
     // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
     // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
     //   over it.
+    let message = `socket.io: ${handler}`;
+    if (error !== undefined) {
+        message = `${message}: ${error}`;
+    }
     const errorObj = createGenericNetworkError(
-        `socket.io error: ${handler}: ${error}`,
+        message,
         canRetry,
     );
 
@@ -158,7 +166,7 @@ export class DocumentDeltaConnection
         this.on("newListener", (event, listener) => {
             // Register for the event on socket.io
             // "error" is special - we already subscribed to it to modify error object on the fly.
-            if (event !== "error" && this.listeners(event).length === 0) {
+            if (!this.closed && event !== "error" && this.listeners(event).length === 0) {
                 this.addTrackedListener(
                     event,
                     (...args: any[]) => {
@@ -306,15 +314,35 @@ export class DocumentDeltaConnection
     }
 
     /**
-     * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.  Subclasses which
-     * override this method must set the "closed" flag after disconnecting.
+     * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.
+     */
+    public close() {
+        // We set the closed flag as a part of the contract for overriding the disconnect method. This is used by
+        // DocumentDeltaConnection to determine if emitting on the socket is allowed, which is important since
+        // OdspDocumentDeltaConnection reuses the socket rather than truly disconnecting it.  Note that below we may
+        // still send disconnect_document which is allowed; this is only intended to prevent normal messages from
+        // being emitted.
+        if (this.closed) {
+            return;
+        }
+        this.closed = true;
+
+        const reason = createGenericNetworkError(
+            "client closing connection",
+            true, // canRetry
+        );
+        this.removeTrackedListeners(false);
+        this.disconnect(false, reason);
+    }
+
+    /**
+     * Disconnect from the websocket.
      * @param socketProtocolError - true if error happened on socket / socket.io protocol level
      *  (not on Fluid protocol level)
+     * @param reason - reason for disconnect
      */
-    public disconnect(socketProtocolError: boolean = false) {
-        this.removeTrackedListeners(false);
+    protected disconnect(socketProtocolError: boolean, reason: DriverError) {
         this.socket.disconnect();
-        this.closed = true;
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
@@ -323,25 +351,30 @@ export class DocumentDeltaConnection
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.socket.on("signal", this.earlySignalHandler!);
 
+        let success = false;
+
         this._details = await new Promise<IConnected>((resolve, reject) => {
+            const fail = (socketProtocolError: boolean, err: DriverError) => {
+                this.closed = true;
+                this.removeTrackedListeners(false);
+                this.disconnect(socketProtocolError, err);
+                reject(err);
+            };
+
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
-                debug(`Socket connection error: [${error}]`);
-                this.disconnect(true);
-                reject(createErrorObject("connect_error", error));
+                fail(true, createErrorObject("connect_error", error));
             });
 
             // Listen for timeouts
             this.addConnectionListener("connect_timeout", () => {
-                this.disconnect(true);
-                reject(createErrorObject("connect_timeout", "Socket connection timed out"));
+                fail(true, createErrorObject("connect_timeout"));
             });
 
             // Socket can be disconnected while waiting for Fluid protocol messages
             // (connect_document_error / connect_document_success)
             this.addConnectionListener("disconnect", (reason) => {
-                this.disconnect(true);
-                reject(createErrorObject("disconnect", reason));
+                fail(true, createErrorObject("disconnect", reason));
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
@@ -356,6 +389,7 @@ export class DocumentDeltaConnection
 
                 this.removeTrackedListeners(true);
                 resolve(response);
+                success = true;
             });
 
             // WARNING: this has to stay as addTrackedListener listener and not be removed after successful connection.
@@ -364,12 +398,10 @@ export class DocumentDeltaConnection
             this.addTrackedListener("error", ((error) => {
                 // First, raise an error event, to give clients a chance to observe error contents
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
-                const errorObj = createErrorObject("error", error, error !== "Invalid namespace");
-                reject(errorObj);
-                this.emit("error", errorObj);
-
-                // Safety net - disconnect socket if client did not do so as result of processing "error" event.
-                this.disconnect(true);
+                const err = createErrorObject("error", error, error !== "Invalid namespace");
+                this.emit("error", err);
+                // Disconnect socket - required if happened before initial handshake
+                fail(true, err);
             }));
 
             this.addConnectionListener("connect_document_error", ((error) => {
@@ -380,18 +412,18 @@ export class DocumentDeltaConnection
                     return;
                 }
 
-                // This is not an error for the socket - it's a protocol error.
-                // In this case we disconnect the socket and indicate that we were unable to create the
-                // DocumentDeltaConnection.
-                this.disconnect(false);
-                reject(createErrorObject("connect_document_error", error));
+                // This is not an socket.io error - it's Fluid protocol error.
+                // In this case fail connection and indicate that we were unable to create connection
+                fail(false, createErrorObject("connect_document_error", error));
             }));
 
             this.socket.emit("connect_document", connectMessage);
 
             // Give extra 2 seconds for handshake on top of socket connection timeout
             setTimeout(() => {
-                reject(createErrorObject("Timeout waiting for handshake from ordering service", undefined));
+                if (!success) {
+                    fail(false, createErrorObject("Timeout waiting for handshake from ordering service"));
+                }
             }, timeout + 2000);
         });
     }
@@ -430,7 +462,7 @@ export class DocumentDeltaConnection
         this.trackedListeners.push({ event, connectionListener: false, listener });
     }
 
-    private removeTrackedListeners(connectionListenerOnly) {
+    protected removeTrackedListeners(connectionListenerOnly: boolean) {
         const remaining: IEventListener[] = [];
         for (const { event, connectionListener, listener } of this.trackedListeners) {
             if (!connectionListenerOnly || connectionListener) {

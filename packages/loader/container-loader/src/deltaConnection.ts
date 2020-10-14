@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import {
     IConnectionDetails,
 } from "@fluidframework/container-definitions";
@@ -15,7 +14,6 @@ import {
 import {
     IClient,
     IDocumentMessage,
-    INack,
 } from "@fluidframework/protocol-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
@@ -32,19 +30,7 @@ export class DeltaConnection
         return this._details;
     }
 
-    public get nacked(): boolean {
-        return this._nacked;
-    }
-
-    public get connected(): boolean {
-        return this._connection !== undefined;
-    }
-
     private readonly _details: IConnectionDetails;
-    private _nacked = false;
-
-    private readonly forwardEvents = ["op", "signal", "error", "pong"];
-    private readonly nonForwardEvents = ["nack", "disconnect"];
 
     private _connection?: IDocumentDeltaConnection;
 
@@ -74,17 +60,6 @@ export class DeltaConnection
             version: connection.version,
         };
 
-        connection.on("nack", (documentId: string, message: INack[]) => {
-            // Mark nacked and also pause any outbound communication
-            this._nacked = true;
-            this.emit("nack", documentId, message);
-        });
-
-        connection.on("disconnect", (reason) => {
-            this.emit("disconnect", reason);
-            this.close();
-        });
-
         this.on("newListener", (event: string, listener: (...args: any[]) => void) => {
             // Register for the event on connection
             // A number of events that are pass-through.
@@ -92,17 +67,12 @@ export class DeltaConnection
             // that is used as a signal in DocumentDeltaConnection to know if anyone has subscribed
             // to these events, and thus stop accumulating ops / signals in early handlers.
             // See DocumentDeltaConnection.initialMessages() implementation for details.
-            if (this.forwardEvents.includes(event)) {
-                if (this.listeners(event).length === 0) {
-                    this.connection.on(
-                        event as any,
-                        (...args: any[]) => {
-                            this.emit(event, ...args);
-                        });
-                }
-            } else {
-                // These are events that we already subscribed to and already emit on object.
-                assert(this.nonForwardEvents.includes(event));
+            if (this.listeners(event).length === 0) {
+                this.connection.on(
+                    event as any,
+                    (...args: any[]) => {
+                        this.emit(event, ...args);
+                    });
             }
         });
     }
@@ -114,9 +84,10 @@ export class DeltaConnection
         if (this._connection !== undefined) {
             const connection = this._connection;
             this._connection = undefined;
-            connection.disconnect();
+            // Avoid re-entrncy - remove all listeners before closing!
+            this.removeAllListeners();
+            connection.close();
         }
-        this.removeAllListeners();
     }
 
     public submit(messages: IDocumentMessage[]): void {

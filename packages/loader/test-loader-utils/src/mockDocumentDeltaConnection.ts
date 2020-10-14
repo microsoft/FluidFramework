@@ -73,8 +73,8 @@ export class MockDocumentDeltaConnection
             this.submitSignalHandler(message);
         }
     }
-    public disconnect(reason?: string) {
-        this.emit("disconnect", reason ?? "mock disconnect called");
+    public close(reason?: string) {
+        this.emit("disconnect", reason ?? "mock close() called");
     }
 
     // Mock methods for raising events

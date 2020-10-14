@@ -155,7 +155,7 @@ describe("Container", () => {
             localResolver);
         assert.strictEqual(container.connectionState, ConnectionState.Connecting,
             "Container should be in Connecting state");
-        deltaConnection.disconnect();
+        deltaConnection.close();
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in Disconnected state");
         deltaConnection.removeAllListeners();

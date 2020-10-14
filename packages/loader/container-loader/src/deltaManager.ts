@@ -825,7 +825,7 @@ export class DeltaManager
 
         this.stopSequenceNumberUpdate();
 
-        // This raises "disconnect" event
+        // This raises "disconnect" event if we have active connection.
         this.disconnectFromDeltaStream(error !== undefined ? `${error.message}` : "Container closed");
 
         this._inbound.clear();
@@ -921,7 +921,6 @@ export class DeltaManager
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
             this.disconnectFromDeltaStream(`Disconnect on close`);
-            assert(!connection.connected); // Check we indeed closed it!
             return;
         }
 
@@ -1072,6 +1071,8 @@ export class DeltaManager
         this._outbound.clear();
         this.emit("disconnect", reason);
 
+        // Avoid re-entrancy - remove all listeners before closing!
+        connection.removeAllListeners();
         connection.close();
     }
 
@@ -1089,9 +1090,8 @@ export class DeltaManager
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
-        if (connection !== this.connection) {
-            return;
-        }
+        // We should correctly unregister all event listeners not to re-enter here again!
+        assert(connection === this.connection);
 
         this.disconnectFromDeltaStream(error.message);
 

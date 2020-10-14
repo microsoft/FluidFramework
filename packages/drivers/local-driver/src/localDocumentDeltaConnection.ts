@@ -191,7 +191,7 @@ export class LocalDocumentDeltaConnection
         this.submitManager.drain();
     }
 
-    public disconnect() {
+    public close() {
         // Do nothing
     }
 
