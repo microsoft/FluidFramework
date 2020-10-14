@@ -520,9 +520,12 @@ export class PerformanceEvent {
     public reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: any): void {
         if (!this.event) {
             const errorEvent = {
-                eventName: `${this.eventName}_doubleReport`,
+                eventName: "PerformanceEventAfterStop",
+                perfEventName: this.eventName,
                 eventNameSuffix,
             };
+            // Include the error object if present to get a callstack, even though it
+            // doesn't really "belong" to this event (which is about telemetry health, not the perf event)
             this.logger.sendErrorEvent(errorEvent, error);
             return;
         }
