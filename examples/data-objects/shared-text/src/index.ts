@@ -19,7 +19,7 @@ import {
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
@@ -111,7 +111,7 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
             ],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(DefaultComponentName),
-                deprecated_innerRequestHandler,
+                innerRequestHandler,
             ),
         );
 
