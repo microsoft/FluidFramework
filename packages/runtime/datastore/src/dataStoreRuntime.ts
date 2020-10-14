@@ -444,7 +444,9 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                     assert(this.pendingAttach.has(id), "Unexpected attach (local) channel OP");
                     this.pendingAttach.delete(id);
                 } else {
-                    assert(!this.contexts.has(id), "Unexpected attach channel OP");
+                    assert(!this.contexts.has(id), `Unexpected attach channel OP,
+                        is in pendingAttach set: ${this.pendingAttach.has(id)},
+                        is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}`);
 
                     // Create storage service that wraps the attach data
                     const origin = message.origin?.id ?? this.documentId;
