@@ -148,11 +148,11 @@ export class DocumentDeltaConnection
     /**
      * @param socket - websocket to be used
      * @param documentId - ID of the document
-     * @param details - details of the websocket connection
      */
     protected constructor(
         protected readonly socket: SocketIOClient.Socket,
-        public documentId: string) {
+        public documentId: string
+    ) {
         super();
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
