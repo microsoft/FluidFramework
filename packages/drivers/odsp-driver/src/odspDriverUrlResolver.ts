@@ -132,8 +132,8 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
             itemId: "",
             fileName,
             summarizer: false,
-            containerPackage: {
-                packageName,
+            codeHint: {
+                containerPackageName: packageName,
             },
         };
     }
@@ -170,8 +170,8 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
         itemId,
         fileName: "",
         summarizer,
-        containerPackage: {
-            packageName: containerPackageName,
+        codeHint: {
+            containerPackageName,
         },
     };
 }
