@@ -141,12 +141,12 @@ function createCachedResolver(resolver: IUrlResolver) {
 export interface ILoaderProps {
     /**
      * The url resolver used by the loader for resolving external urls
-     * into fluid urls such that the container specified by the
+     * into Fluid urls such that the container specified by the
      * external url can be loaded.
      */
     readonly urlResolver: IUrlResolver;
     /**
-     * The document service factory take the fluid url provided
+     * The document service factory take the Fluid url provided
      * by the resolved url and constucts all the necessary services
      * for communication with the container's server.
      */
@@ -187,12 +187,12 @@ export interface ILoaderProps {
 export interface ILoaderServices {
     /**
      * The url resolver used by the loader for resolving external urls
-     * into fluid urls such that the container specified by the
+     * into Fluid urls such that the container specified by the
      * external url can be loaded.
      */
     readonly urlResolver: IUrlResolver;
     /**
-     * The document service factory take the fluid url provided
+     * The document service factory take the Fluid url provided
      * by the resolved url and constucts all the necessary services
      * for communication with the container's server.
      */
