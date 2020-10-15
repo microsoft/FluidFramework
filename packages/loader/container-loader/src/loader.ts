@@ -236,7 +236,7 @@ export class Loader extends EventEmitter implements ILoader {
     private readonly logger: ITelemetryLogger;
 
     /**
-     * {@deprecated} use constructor with loader props
+     * @deprecated use constructor with loader props
      */
     public static _create(
         resolver: IUrlResolver | IUrlResolver[],
