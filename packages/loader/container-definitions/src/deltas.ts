@@ -28,8 +28,6 @@ export interface IConnectionDetails {
     parentBranch: string | null;
     version: string;
     initialClients: ISignalClient[];
-    initialMessages: ISequencedDocumentMessage[];
-    initialSignals: ISignalMessage[];
     maxMessageSize: number;
     serviceConfiguration: IServiceConfiguration;
     /**
