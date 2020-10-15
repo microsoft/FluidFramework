@@ -21,7 +21,7 @@ import { SharedCounter } from "@fluidframework/counter";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
+import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
@@ -44,9 +44,18 @@ export interface ICompatLocalTestObjectProvider {
      * Used to create a test Container.
      * In generateCompatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
-    makeTestContainer(registry?: ChannelFactoryRegistry): Promise<IContainer | old.IContainer>,
-    loadTestContainer(registry?: ChannelFactoryRegistry): Promise<IContainer | old.IContainer>,
-    makeTestLoader(registry?: ChannelFactoryRegistry): ILoader | old.ILoader,
+    makeTestContainer(
+        registry?: ChannelFactoryRegistry,
+        runtimeOptions?: IContainerRuntimeOptions,
+    ): Promise<IContainer | old.IContainer>,
+    loadTestContainer(
+        registry?: ChannelFactoryRegistry,
+        runtimeOptions?: IContainerRuntimeOptions,
+    ): Promise<IContainer | old.IContainer>,
+    makeTestLoader(
+        registry?: ChannelFactoryRegistry,
+        runtimeOptions?: IContainerRuntimeOptions,
+    ): ILoader | old.ILoader,
     deltaConnectionServer: ILocalDeltaConnectionServer
     documentServiceFactory: IDocumentServiceFactory | old.IDocumentServiceFactory,
     urlResolver: LocalResolver | old.LocalResolver,
@@ -57,7 +66,9 @@ export interface ICompatTestOptions {
     /**
      * Use TestFluidDataObject instead of PrimedDataStore
      */
-    testFluidDataObject?: boolean
+    testFluidDataObject?: boolean,
+
+    serviceConfiguration?: Partial<IServiceConfiguration>,
 }
 
 // convert a channel factory registry for TestFluidDataStoreFactory to one with old channel factories
@@ -146,11 +157,20 @@ export const generateTest = (
     options: ICompatTestOptions = {},
 ) => {
     // Run with all current versions
+    const runtimeFactory = (
+        registry?: ChannelFactoryRegistry,
+        runtimeOptions?: IContainerRuntimeOptions,
+    ) => createRuntimeFactory(
+        TestDataObject.type,
+        options.testFluidDataObject
+            ? createTestFluidDataStoreFactory(registry)
+            : createPrimedDataStoreFactory(),
+        runtimeOptions,
+    );
+
     const localTestObjectProvider = new LocalTestObjectProvider(
-        (registry: ChannelFactoryRegistry = []) =>
-            options.testFluidDataObject
-                ? createTestFluidDataStoreFactory(registry)
-                : createPrimedDataStoreFactory(),
+        runtimeFactory,
+        options.serviceConfiguration,
     );
 
     tests(localTestObjectProvider);
@@ -166,17 +186,20 @@ export const generateCompatTest = (
 ) => {
     describe("compatibility", () => {
         describe("old loader, new runtime", function() {
-            const runtimeFactory = (registry?: ChannelFactoryRegistry) => createRuntimeFactory(
+            const runtimeFactory = (
+                registry?: ChannelFactoryRegistry,
+                runtimeOptions?: IContainerRuntimeOptions,
+            ) => createRuntimeFactory(
                 TestDataObject.type,
                 options.testFluidDataObject
                     ? createTestFluidDataStoreFactory(registry)
                     : createPrimedDataStoreFactory(),
+                runtimeOptions,
             ) as any as old.IRuntimeFactory;
 
             const localTestObjectProvider = new old.LocalTestObjectProvider(
                 runtimeFactory,
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                { summary: { maxOps: 1 } as ISummaryConfiguration },
+                options.serviceConfiguration,
             );
 
             tests(localTestObjectProvider);
@@ -187,17 +210,20 @@ export const generateCompatTest = (
         });
 
         describe("new loader, old runtime", function() {
-            const runtimeFactory = (registry?: ChannelFactoryRegistry) => createOldRuntimeFactory(
+            const runtimeFactory = (
+                registry?: ChannelFactoryRegistry,
+                runtimeOptions?: IContainerRuntimeOptions,
+            ) => createOldRuntimeFactory(
                 OldTestDataObject.type,
                 options.testFluidDataObject
                     ? createOldTestFluidDataStoreFactory(registry)
                     : createOldPrimedDataStoreFactory(),
+                runtimeOptions,
             ) as any as IRuntimeFactory;
 
             const localTestObjectProvider = new LocalTestObjectProvider(
                 runtimeFactory,
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                { summary: { maxOps: 1 } as ISummaryConfiguration },
+                options.serviceConfiguration,
             );
 
             tests(localTestObjectProvider);
@@ -208,17 +234,20 @@ export const generateCompatTest = (
         });
 
         describe("new ContainerRuntime, old DataStoreRuntime", function() {
-            const runtimeFactory = (registry?: ChannelFactoryRegistry) => createRuntimeFactory(
+            const runtimeFactory = (
+                registry?: ChannelFactoryRegistry,
+                runtimeOptions?: IContainerRuntimeOptions,
+            ) => createRuntimeFactory(
                 OldTestDataObject.type,
                 options.testFluidDataObject
                     ? createOldTestFluidDataStoreFactory(registry)
                     : createOldPrimedDataStoreFactory(),
+                runtimeOptions,
             );
 
             const localTestObjectProvider = new LocalTestObjectProvider(
                 runtimeFactory,
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                { summary: { maxOps: 1 } as ISummaryConfiguration },
+                options.serviceConfiguration,
             );
 
             tests(localTestObjectProvider);
