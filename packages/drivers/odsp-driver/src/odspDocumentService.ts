@@ -65,6 +65,18 @@ function isAfdCacheValid(): boolean {
 }
 
 /**
+ * Test if we deal with NetworkErrorBasic object and if it has enough information to make a call
+ * If in doubt, allow retries
+ *
+ * @param error - error object
+ */
+function canRetryOnError(error: any) {
+    // Always retry unless told otherwise.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
+}
+
+/**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
@@ -288,18 +300,6 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     /**
-     * Test if we deal with NetworkErrorBasic object and if it has enough information to make a call
-     * If in doubt, allow retries
-     *
-     * @param error - error object
-     */
-    private canRetryOnError(error: any) {
-        // Always retry unless told otherwise.
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
-    }
-
-    /**
      * Connects to a delta stream endpoint
      * If url #1 fails to connect, tries url #2 if applicable
      *
@@ -350,7 +350,7 @@ export class OdspDocumentService implements IDocumentService {
                 const endAfd = performance.now();
                 localStorage.removeItem(lastAfdConnectionTimeMsKey);
                 // Retry on non-AFD URL
-                if (this.canRetryOnError(connectionError)) {
+                if (canRetryOnError(connectionError)) {
                     // eslint-disable-next-line max-len
                     debug(`Socket connection error on AFD URL (cached). Error was [${connectionError}]. Retry on non-AFD URL: ${url}`);
 
@@ -402,7 +402,7 @@ export class OdspDocumentService implements IDocumentService {
             return connection;
         }).catch(async (connectionError) => {
             const endNonAfd = performance.now();
-            if (url2 !== undefined && this.canRetryOnError(connectionError)) {
+            if (url2 !== undefined && canRetryOnError(connectionError)) {
                 // eslint-disable-next-line max-len
                 debug(`Socket connection error on non-AFD URL. Error was [${connectionError}]. Retry on AFD URL: ${url2}`);
 
