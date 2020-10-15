@@ -358,15 +358,15 @@ export class SharedMatrix<T extends Serializable = Serializable>
         const original = segment as PermutationSegment;
 
         // (Re)insert the removed number of rows at the original position.
-        const rowStart = this.rows.getPosition(original);
-        this.insertRows(rowStart, original.cachedLength);
+        const { op, inserted } = this.rows.insertRelative(original, original.cachedLength);
+        this.submitRowMessage(op);
 
         // Transfer handles from the original segment to the newly inserted empty segment.
-        const inserted = this.rows.getContainingSegment(rowStart).segment as PermutationSegment;
         original.transferHandlesTo(inserted);
 
         // Invalidate the handleCache in case it was populated during the 'rowsChanged'
         // callback, which occurs before the handle span is populated.
+        const rowStart = this.rows.getPosition(inserted);
         this.rows.handleCache.itemsChanged(
             rowStart,
             /* removedCount: */ 0,
@@ -401,15 +401,15 @@ export class SharedMatrix<T extends Serializable = Serializable>
         const original = segment as PermutationSegment;
 
         // (Re)insert the removed number of columns at the original position.
-        const colStart = this.cols.getPosition(original);
-        this.insertCols(colStart, original.cachedLength);
+        const { op, inserted } = this.cols.insertRelative(original, original.cachedLength);
+        this.submitColMessage(op);
 
         // Transfer handles from the original segment to the newly inserted empty segment.
-        const inserted = this.cols.getContainingSegment(colStart).segment as PermutationSegment;
         original.transferHandlesTo(inserted);
 
         // Invalidate the handleCache in case it was populated during the 'colsChanged'
         // callback, which occurs before the handle span is populated.
+        const colStart = this.cols.getPosition(inserted);
         this.cols.handleCache.itemsChanged(
             colStart,
             /* removedCount: */ 0,
