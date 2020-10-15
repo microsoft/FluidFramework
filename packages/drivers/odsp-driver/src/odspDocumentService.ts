@@ -77,6 +77,23 @@ function canRetryOnError(error: any) {
 }
 
 /**
+ * Safely tries to write to local storage
+ * Returns false if writing to localStorage fails. True otherwise
+ *
+ * @param key - localStorage key
+ * @returns whether or not the write succeeded
+ */
+function writeLocalStorage(key: string, value: string) {
+    try {
+        localStorage.setItem(key, value);
+        return true;
+    } catch (e) {
+        debug(`Could not write to localStorage due to ${e}`);
+        return false;
+    }
+}
+
+/**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
@@ -283,23 +300,6 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     /**
-     * Safely tries to write to local storage
-     * Returns false if writing to localStorage fails. True otherwise
-     *
-     * @param key - localStorage key
-     * @returns whether or not the write succeeded
-     */
-    private writeLocalStorage(key: string, value: string) {
-        try {
-            localStorage.setItem(key, value);
-            return true;
-        } catch (e) {
-            debug(`Could not write to localStorage due to ${e}`);
-            return false;
-        }
-    }
-
-    /**
      * Connects to a delta stream endpoint
      * If url #1 fails to connect, tries url #2 if applicable
      *
@@ -308,8 +308,8 @@ export class OdspDocumentService implements IDocumentService {
      * @param token - authorization token for storage service
      * @param io - websocket library
      * @param client - information about the client
-     * @param url - websocket URL
-     * @param url2 - alternate websocket URL
+     * @param nonAfdUrl - websocket URL
+     * @param afdUrl - alternate websocket URL
      */
     private async connectToDeltaStreamWithRetry(
         tenantId: string,
@@ -317,8 +317,8 @@ export class OdspDocumentService implements IDocumentService {
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
-        url: string,
-        url2?: string,
+        nonAfdUrl: string,
+        afdUrl?: string,
     ): Promise<IDocumentDeltaConnection> {
         // Create null logger if telemetry logger is not available from caller
         const logger = this.logger ? this.logger : new TelemetryNullLogger();
@@ -326,7 +326,7 @@ export class OdspDocumentService implements IDocumentService {
         const afdCacheValid = isAfdCacheValid();
 
         // Use AFD URL if in cache
-        if (afdCacheValid && url2 !== undefined) {
+        if (afdCacheValid && afdUrl !== undefined) {
             debug("Connecting to AFD URL directly due to valid cache.");
             const startAfd = performance.now();
 
@@ -336,7 +336,7 @@ export class OdspDocumentService implements IDocumentService {
                 token,
                 io,
                 client,
-                url2,
+                afdUrl,
                 20000,
                 this.logger,
             ).then((connection) => {
@@ -352,7 +352,7 @@ export class OdspDocumentService implements IDocumentService {
                 // Retry on non-AFD URL
                 if (canRetryOnError(connectionError)) {
                     // eslint-disable-next-line max-len
-                    debug(`Socket connection error on AFD URL (cached). Error was [${connectionError}]. Retry on non-AFD URL: ${url}`);
+                    debug(`Socket connection error on AFD URL (cached). Error was [${connectionError}]. Retry on non-AFD URL: ${nonAfdUrl}`);
 
                     return OdspDocumentDeltaConnection.create(
                         tenantId,
@@ -360,7 +360,7 @@ export class OdspDocumentService implements IDocumentService {
                         token,
                         io,
                         client,
-                        url,
+                        nonAfdUrl,
                         20000,
                         this.logger,
                     ).then((connection) => {
@@ -394,17 +394,17 @@ export class OdspDocumentService implements IDocumentService {
             token,
             io,
             client,
-            url,
-            url2 !== undefined ? 15000 : 20000,
+            nonAfdUrl,
+            afdUrl !== undefined ? 15000 : 20000,
             this.logger,
         ).then((connection) => {
             logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
             return connection;
         }).catch(async (connectionError) => {
             const endNonAfd = performance.now();
-            if (url2 !== undefined && canRetryOnError(connectionError)) {
+            if (afdUrl !== undefined && canRetryOnError(connectionError)) {
                 // eslint-disable-next-line max-len
-                debug(`Socket connection error on non-AFD URL. Error was [${connectionError}]. Retry on AFD URL: ${url2}`);
+                debug(`Socket connection error on non-AFD URL. Error was [${connectionError}]. Retry on AFD URL: ${afdUrl}`);
 
                 return OdspDocumentDeltaConnection.create(
                     tenantId,
@@ -412,12 +412,12 @@ export class OdspDocumentService implements IDocumentService {
                     token,
                     io,
                     client,
-                    url2,
+                    afdUrl,
                     20000,
                     this.logger,
                 ).then((connection) => {
                     // Refresh AFD cache
-                    const cacheResult = this.writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString());
+                    const cacheResult = writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString());
                     if (cacheResult) {
                         // eslint-disable-next-line max-len
                         debug(`Cached AFD connection time. Expiring in ${new Date(Number(localStorage.getItem(lastAfdConnectionTimeMsKey)) + afdUrlConnectExpirationMs)}`);
