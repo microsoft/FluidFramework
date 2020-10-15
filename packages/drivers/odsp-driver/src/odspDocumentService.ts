@@ -40,6 +40,30 @@ import { TokenFetchOptions } from "./tokenFetch";
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
 
+const localStorageAvailable = isLocalStorageAvailable();
+
+/**
+ * Helper to check the timestamp in localStorage (if available) indicating whether the cache is still valid.
+ */
+function isAfdCacheValid(): boolean {
+    if (localStorageAvailable) {
+        const lastAfdConnection = localStorage.getItem(lastAfdConnectionTimeMsKey);
+        if (lastAfdConnection !== null) {
+            const lastAfdTimeMs = Number(lastAfdConnection);
+            // If we have used the AFD URL within a certain amount of time in the past,
+            // then we should use it again.
+            if (!isNaN(lastAfdTimeMs) && lastAfdTimeMs > 0
+                && Date.now() - lastAfdTimeMs <= afdUrlConnectExpirationMs) {
+                return true;
+            } else {
+                localStorage.removeItem(lastAfdConnectionTimeMsKey);
+            }
+        }
+    }
+
+    return false;
+}
+
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
@@ -79,8 +103,6 @@ export class OdspDocumentService implements IDocumentService {
     private storageManager?: OdspDocumentStorageService;
 
     private readonly logger: TelemetryLogger;
-
-    private readonly localStorageAvailable: boolean;
 
     private readonly joinSessionKey: string;
 
@@ -123,8 +145,6 @@ export class OdspDocumentService implements IDocumentService {
             this.hostPolicy = cloneDeep(this.hostPolicy);
             this.hostPolicy.summarizerClient = true;
         }
-
-        this.localStorageAvailable = isLocalStorageAvailable();
     }
 
     public get resolvedUrl(): IResolvedUrl {
@@ -298,31 +318,15 @@ export class OdspDocumentService implements IDocumentService {
         io: SocketIOClientStatic,
         client: IClient,
         url: string,
-        url2?: string): Promise<IDocumentDeltaConnection> {
-        const hasUrl2 = !!url2;
-
+        url2?: string,
+    ): Promise<IDocumentDeltaConnection> {
         // Create null logger if telemetry logger is not available from caller
         const logger = this.logger ? this.logger : new TelemetryNullLogger();
 
-        let afdCacheValid = false;
-
-        if (this.localStorageAvailable) {
-            const lastAfdConnection = localStorage.getItem(lastAfdConnectionTimeMsKey);
-            if (lastAfdConnection !== null) {
-                const lastAfdTimeMs = Number(lastAfdConnection);
-                // If we have used the AFD URL within a certain amount of time in the past,
-                // then we should use it again.
-                if (!isNaN(lastAfdTimeMs) && lastAfdTimeMs > 0
-                    && Date.now() - lastAfdTimeMs <= afdUrlConnectExpirationMs) {
-                    afdCacheValid = true;
-                } else {
-                    localStorage.removeItem(lastAfdConnectionTimeMsKey);
-                }
-            }
-        }
+        const afdCacheValid = isAfdCacheValid();
 
         // Use AFD URL if in cache
-        if (afdCacheValid && hasUrl2) {
+        if (afdCacheValid && url2 !== undefined) {
             debug("Connecting to AFD URL directly due to valid cache.");
             const startAfd = performance.now();
 
@@ -332,7 +336,7 @@ export class OdspDocumentService implements IDocumentService {
                 token,
                 io,
                 client,
-                url2!,
+                url2,
                 20000,
                 this.logger,
             ).then((connection) => {
@@ -382,6 +386,7 @@ export class OdspDocumentService implements IDocumentService {
             });
         }
 
+        // Cache was not valid or url2 undefined
         const startNonAfd = performance.now();
         return OdspDocumentDeltaConnection.create(
             tenantId,
@@ -390,14 +395,14 @@ export class OdspDocumentService implements IDocumentService {
             io,
             client,
             url,
-            hasUrl2 ? 15000 : 20000,
+            url2 !== undefined ? 15000 : 20000,
             this.logger,
         ).then((connection) => {
             logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
             return connection;
         }).catch(async (connectionError) => {
             const endNonAfd = performance.now();
-            if (hasUrl2 && this.canRetryOnError(connectionError)) {
+            if (url2 !== undefined && this.canRetryOnError(connectionError)) {
                 // eslint-disable-next-line max-len
                 debug(`Socket connection error on non-AFD URL. Error was [${connectionError}]. Retry on AFD URL: ${url2}`);
 
@@ -407,7 +412,7 @@ export class OdspDocumentService implements IDocumentService {
                     token,
                     io,
                     client,
-                    url2!,
+                    url2,
                     20000,
                     this.logger,
                 ).then((connection) => {
