@@ -28,3 +28,7 @@ export interface IActorClient {
 export interface ITokenService {
     extractClaims(token: string): ITokenClaims;
 }
+
+export interface ITokenProvider {
+    isValid(): boolean;
+}
