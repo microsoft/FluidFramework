@@ -41,6 +41,7 @@ describe(`r11s End-To-End tests`, () => {
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const documentServiceFactory = new RouterliciousDocumentServiceFactory(
+            undefined,
             false,
             new DefaultErrorTracking(),
             false,

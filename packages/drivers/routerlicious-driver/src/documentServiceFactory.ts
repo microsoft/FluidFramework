@@ -19,10 +19,11 @@ import {
     getQuorumValuesFromProtocolSummary,
 } from "@fluidframework/driver-utils";
 import Axios from "axios";
+import { DefaultTokenProvider } from "./defaultTokenProvider";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
-import { TokenProvider } from "./tokens";
+import { ITokenProvider } from "./tokens";
 
 /**
  * Factory for creating the routerlicious document service. Use this if you want to
@@ -31,6 +32,7 @@ import { TokenProvider } from "./tokens";
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
     constructor(
+        private readonly tokenProvider: ITokenProvider | undefined = undefined,
         private readonly useDocumentService2: boolean = false,
         private readonly errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
         private readonly disableCache: boolean = false,
@@ -103,7 +105,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             throw new Error(`Token was not provided.`);
         }
 
-        const tokenProvider = new TokenProvider(jwtToken);
+        // Fall back to default provider if token provider is not provided.
+        const tokenProvider = this.tokenProvider ?? new DefaultTokenProvider(jwtToken);
 
         if (this.useDocumentService2) {
             return new DocumentService2(
