@@ -87,7 +87,7 @@ export async function loadDiv(divId: string) {
             codeResolver: new SemVerCdnCodeResolver(),
             documentServiceFactory,
             urlResolver,
-            config: {},
+            options: {},
         });
 
     const url = createRequest().url;

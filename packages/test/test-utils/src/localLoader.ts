@@ -8,7 +8,6 @@ import {
     IContainer,
     ILoader,
     IFluidCodeDetails,
-    IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
@@ -30,13 +29,11 @@ export function createLocalLoader(
     const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
     const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
 
-    return new Loader(
+    return new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
-        {},
-        {},
-        new Map<string, IProxyLoaderFactory>());
+    });
 }
 
 /**
@@ -126,13 +123,11 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         const codeLoader = new LocalCodeLoader(packageEntries);
-        return new Loader(
-            this.urlResolver,
-            this.documentServiceFactory,
+        return new Loader({
+            urlResolver: this.urlResolver,
+            documentServiceFactory: this.documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
     }
 
     /**

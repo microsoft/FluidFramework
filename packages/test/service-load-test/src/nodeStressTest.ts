@@ -6,7 +6,7 @@
 import fs from "fs";
 import child_process from "child_process";
 import commander from "commander";
-import { IProxyLoaderFactory, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { OdspDocumentServiceFactory, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
@@ -49,34 +49,33 @@ const passwordTokenConfig = (username, password): OdspTokenConfig => ({
 });
 
 function createLoader(config: IConfig, password: string) {
-    // Construct the loader
-    const loader = new Loader(
-        urlResolver,
-        new OdspDocumentServiceFactory(
-            async (_siteUrl: string, refresh: boolean, _claims?: string) => {
-                const tokens = await odspTokenManager.getOdspTokens(
-                    config.server,
-                    getMicrosoftConfiguration(),
-                    passwordTokenConfig(config.username, password),
-                    refresh,
-                );
-                return tokens.accessToken;
-            },
-            async (refresh: boolean, _claims?: string) => {
-                const tokens = await odspTokenManager.getPushTokens(
-                    config.server,
-                    getMicrosoftConfiguration(),
-                    passwordTokenConfig(config.username, password),
-                    refresh,
-                );
-                return tokens.accessToken;
-            },
-        ),
-        codeLoader,
-        {},
-        {},
-        new Map<string, IProxyLoaderFactory>(),
+    const documentServiceFactory = new OdspDocumentServiceFactory(
+        async (_siteUrl: string, refresh: boolean, _claims?: string) => {
+            const tokens = await odspTokenManager.getOdspTokens(
+                config.server,
+                getMicrosoftConfiguration(),
+                passwordTokenConfig(config.username, password),
+                refresh,
+            );
+            return tokens.accessToken;
+        },
+        async (refresh: boolean, _claims?: string) => {
+            const tokens = await odspTokenManager.getPushTokens(
+                config.server,
+                getMicrosoftConfiguration(),
+                passwordTokenConfig(config.username, password),
+                refresh,
+            );
+            return tokens.accessToken;
+        },
     );
+
+    // Construct the loader
+    const loader = new Loader({
+        urlResolver,
+        documentServiceFactory,
+        codeLoader,
+    });
     return loader;
 }
 

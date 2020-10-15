@@ -8,14 +8,12 @@ import { strict as assert } from "assert";
 import merge from "lodash/merge";
 import uuid from "uuid";
 import {
-    ITelemetryBaseLogger,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
-import { IFluidObject, IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import {  IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    ICodeLoader,
     IConnectionDetails,
     IContainer,
     IContainerEvents,
@@ -34,8 +32,6 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
-    IUrlResolver,
-    IDocumentServiceFactory,
     IResolvedUrl,
     CreateNewHeader,
 } from "@fluidframework/driver-definitions";
@@ -197,31 +193,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      */
     public static async load(
         id: string,
-        serviceFactory: IDocumentServiceFactory,
-        codeLoader: ICodeLoader,
-        options: any,
-        scope: IFluidObject,
         loader: Loader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
-        urlResolver: IUrlResolver,
-        logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const [, docId] = id.split("/");
         const container = new Container(
-            options,
-            scope,
-            codeLoader,
             loader,
-            serviceFactory,
-            urlResolver,
             {
                 originalRequest: request,
                 id: decodeURI(docId),
                 resolvedUrl,
                 canReconnect: !(request.headers?.[LoaderHeader.reconnect] === false),
-            },
-            logger);
+            });
 
         return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
             return new Promise<Container>((res, rej) => {
@@ -255,24 +239,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public static async create(
-        codeLoader: ICodeLoader,
-        options: any,
-        scope: IFluidObject,
         loader: Loader,
         source: DetachedContainerSource,
-        serviceFactory: IDocumentServiceFactory,
-        urlResolver: IUrlResolver,
-        logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
-            options,
-            scope,
-            codeLoader,
             loader,
-            serviceFactory,
-            urlResolver,
-            {},
-            logger);
+            {});
 
         if (source.create) {
             await container.createDetached(source.codeDetails);
@@ -445,16 +417,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public get parentBranch(): string | null {
         return this._parentBranch;
     }
-
+    private get serviceFactory() {return this.loader.services.documentServiceFactory;}
+    private get urlResolver() {return this.loader.services.urlResolver;}
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    public get options() { return this.loader.services.options;}
+    private get scope() { return this.loader.services.scope;}
+    private get codeLoader() { return this.loader.services.codeLoader;}
     constructor(
-        public readonly options: any,
-        private readonly scope: IFluidObject,
-        private readonly codeLoader: ICodeLoader,
         private readonly loader: Loader,
-        private readonly serviceFactory: IDocumentServiceFactory,
-        private readonly urlResolver: IUrlResolver,
         config: IContainerConfig,
-        logger: ITelemetryBaseLogger | undefined,
     ) {
         super();
         this._audience = new Audience();
@@ -475,7 +446,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
         this.subLogger = ChildLogger.create(
-            logger,
+            loader.services.subLogger,
             undefined,
             {
                 clientType, // Differentiating summarizer container from main container

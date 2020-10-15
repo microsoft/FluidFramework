@@ -10,7 +10,6 @@ import {
     ICodeLoader,
     IContainer,
     IFluidCodeDetails,
-    IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -55,26 +54,22 @@ describe("UpgradeManager", () => {
 
     async function createContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const loader = new Loader(
+        const loader = new Loader({
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
 
         return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
     }
 
     async function loadContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const loader = new Loader(
+        const loader = new Loader({
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
 
         return loader.resolve({ url: documentLoadUrl });
     }

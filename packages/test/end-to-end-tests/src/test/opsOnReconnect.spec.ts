@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IFluidCodeDetails, ILoader, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { ConnectionState, Container, Loader } from "@fluidframework/container-loader";
 import {
     ContainerMessageType,
@@ -83,13 +83,11 @@ describe("Ops on Reconnect", () => {
 
         const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
-        return new Loader(
+        return new Loader({
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
     }
 
     async function createContainer(): Promise<IContainer> {

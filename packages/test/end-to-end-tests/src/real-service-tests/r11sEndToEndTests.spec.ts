@@ -7,7 +7,7 @@ import assert from "assert";
 import * as moniker from "moniker";
 import uuid from "uuid";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, AttachState } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import {
@@ -47,13 +47,11 @@ describe(`r11s End-To-End tests`, () => {
             true,
             undefined,
         );
-        return new Loader(
+        return new Loader({
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
     }
 
     const createFluidObject = (async (
