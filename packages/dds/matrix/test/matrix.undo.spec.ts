@@ -52,7 +52,7 @@ describe("Matrix", () => {
             async function expect<T extends Serializable>(expected: ReadonlyArray<ReadonlyArray<T>>) {
                 const actual = extract(matrix);
                 assert.deepEqual(actual, expected, "Matrix must match expected.");
-                assert.deepEqual(consumer.extract(), actual, "Matrix must notify IMatrixConsumers of all changes.");
+                assert.deepEqual(extract(consumer), actual, "Matrix must notify IMatrixConsumers of all changes.");
 
                 // Ensure ops are ACKed prior to snapshot. Otherwise, unACKed segments won't be included.
                 return snapshot(matrix);
@@ -76,7 +76,7 @@ describe("Matrix", () => {
                 await snapshot(await snapshot(matrix));
 
                 // Ensure that IMatrixConsumer observed all changes to matrix.
-                assert.deepEqual(consumer.extract(), extract(matrix));
+                assert.deepEqual(extract(consumer), extract(matrix), "Matrix must notify IMatrixConsumers of all changes.");
 
                 // Sanity check that removing the consumer stops change notifications.
                 matrix.closeMatrix(consumer);

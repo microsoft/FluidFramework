@@ -319,7 +319,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         // Do not queue a message or track the pending op, as there will never be an ACK, etc.
         if (this.isAttached()) {
             // Record whether this `op` targets rows or cols.  (See dispatch in `processCore()`)
-            (message).target = dimension;
+            message.target = dimension;
 
             this.submitLocalMessage(
                 message,
@@ -366,6 +366,13 @@ export class SharedMatrix<T extends Serializable = Serializable>
         const inserted = this.rows.getContainingSegment(rowStart).segment as PermutationSegment;
         original.transferHandlesTo(inserted);
 
+        // Invalidate the handleCache in case it was populated during the 'rowsChanged'
+        // callback, which occurs before the handle span is populated.
+        this.rows.handleCache.itemsChanged(
+            rowStart,
+            /* removedCount: */ 0,
+            /* insertedCount: */ inserted.cachedLength);
+
         // Generate setCell ops for each populated cell in the reinserted cols.
         let rowHandle = inserted.start;
         const rowCount = inserted.cachedLength;
@@ -402,6 +409,13 @@ export class SharedMatrix<T extends Serializable = Serializable>
         // (This allows us to use getCell(..) below to read the previous cell values)
         const inserted = this.cols.getContainingSegment(colStart).segment as PermutationSegment;
         original.transferHandlesTo(inserted);
+
+        // Invalidate the handleCache in case it was populated during the 'rowsChanged'
+        // callback, which occurs before the handle span is populated.
+        this.cols.handleCache.itemsChanged(
+            colStart,
+            /* removedCount: */ 0,
+            /* insertedCount: */ inserted.cachedLength);
 
         // Generate setCell ops for each populated cell in the reinserted cols.
         let colHandle = inserted.start;
