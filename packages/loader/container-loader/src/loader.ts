@@ -222,9 +222,9 @@ export interface ILoaderServices {
     readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
 
     /**
-     * The logger that all telemetry should be pushed to.
+     * The logger downstream consumers should construct their loggers from
      */
-    readonly logger: ITelemetryLogger;
+    readonly subLogger: ITelemetryLogger;
 }
 
 /**
@@ -233,6 +233,7 @@ export interface ILoaderServices {
 export class Loader extends EventEmitter implements ILoader {
     private readonly containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
+    private readonly logger: ITelemetryLogger;
 
     /**
      * {@deprecated} use constructor with loader props
@@ -260,17 +261,16 @@ export class Loader extends EventEmitter implements ILoader {
 
     constructor(loaderProps: ILoaderProps) {
         super();
-        const subLogger = DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { loaderId: uuid() });
-
         this.services = {
             urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),
             documentServiceFactory: MultiDocumentServiceFactory.create(loaderProps.documentServiceFactory),
             codeLoader: loaderProps.codeLoader,
             options: loaderProps.options ?? {},
             scope: loaderProps.scope ?? {},
-            logger: ChildLogger.create(subLogger, "Loader"),
+            subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { loaderId: uuid() }),
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
         };
+        this.logger = ChildLogger.create(this.services.subLogger, "Loader");
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
@@ -298,14 +298,14 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     public async resolve(request: IRequest): Promise<Container> {
-        return PerformanceEvent.timedExecAsync(this.services.logger, { eventName: "Resolve" }, async () => {
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Resolve" }, async () => {
             const resolved = await this.resolveCore(request);
             return resolved.container;
         });
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return PerformanceEvent.timedExecAsync(this.services.logger, { eventName: "Request" }, async () => {
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
             const resolved = await this.resolveCore(request);
             return resolved.container.request({ url: resolved.parsed.path });
         });
