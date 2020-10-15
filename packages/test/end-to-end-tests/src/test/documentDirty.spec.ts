@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -84,13 +84,11 @@ describe("Document Dirty", () => {
         const urlResolver = new LocalResolver();
         const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
-        const loader = new Loader(
+        const loader = new Loader({
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
 
         return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
     }
@@ -162,6 +160,7 @@ describe("Document Dirty", () => {
 
         it(`doesn't affect document state while reconnecting`, async () => {
             // Disconnect the client.
+            assert(container.clientId);
             documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
             // Wait for the Container to get reconnected.
@@ -176,6 +175,7 @@ describe("Document Dirty", () => {
     describe("Disconnected state", () => {
         it(`sets operations when disconnected and then reconnects to process them`, async () => {
             // Disconnect the client.
+            assert(container.clientId);
             documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
             // Set values in DDSes in disconnected state.
@@ -233,6 +233,7 @@ describe("Document Dirty", () => {
                 "Document is marked dirty on edit");
 
             // Disconnect the client.
+            assert(container.clientId);
             documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
             assert.equal(wasMarkedDirtyCount, 1,
@@ -273,6 +274,7 @@ describe("Document Dirty", () => {
     describe("Disconnected state with batch operations", () => {
         it(`sets operations when disconnected and then reconnects to process them`, async () => {
             // Disconnect the client.
+            assert(container.clientId);
             documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
             // Set batch values in DDSes in disconnected state.
@@ -334,6 +336,8 @@ describe("Document Dirty", () => {
 
             assert.equal(containerRuntime.isDocumentDirty(), true,
                 "Document is marked dirty on edit");
+
+            assert(container.clientId);
 
             // Disconnect the client.
             documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");

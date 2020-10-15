@@ -136,30 +136,141 @@ function createCachedResolver(resolver: IUrlResolver) {
 }
 
 /**
+ * Services and properties necessary for creating a loader
+ */
+export interface ILoaderProps {
+    /**
+     * The url resolver used by the loader for resolving external urls
+     * into Fluid urls such that the container specified by the
+     * external url can be loaded.
+     */
+    readonly urlResolver: IUrlResolver;
+    /**
+     * The document service factory take the Fluid url provided
+     * by the resolved url and constucts all the necessary services
+     * for communication with the container's server.
+     */
+    readonly documentServiceFactory: IDocumentServiceFactory;
+    /**
+     * The code loader handles loading the necessary code
+     * for running a container once it is loaded.
+     */
+    readonly codeLoader: ICodeLoader;
+
+    /**
+     * A property bag of options used by various layers
+     * to control features
+     */
+    readonly options?: any;
+
+    /**
+     * Scope is provided to all container and is a set of shared
+     * services for container's to integrate with their host environment.
+     */
+    readonly scope?: IFluidObject;
+
+    /**
+     * Proxy loader factories for loading containers via proxy in other contexts,
+     * like web workers, or worker threads.
+     */
+    readonly proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
+
+    /**
+     * The logger that all telemetry should be pushed to.
+     */
+    readonly logger?: ITelemetryBaseLogger;
+}
+
+/**
+ * Services and properties used by and exposed by the loader
+ */
+export interface ILoaderServices {
+    /**
+     * The url resolver used by the loader for resolving external urls
+     * into Fluid urls such that the container specified by the
+     * external url can be loaded.
+     */
+    readonly urlResolver: IUrlResolver;
+    /**
+     * The document service factory take the Fluid url provided
+     * by the resolved url and constucts all the necessary services
+     * for communication with the container's server.
+     */
+    readonly documentServiceFactory: IDocumentServiceFactory;
+    /**
+     * The code loader handles loading the necessary code
+     * for running a container once it is loaded.
+     */
+    readonly codeLoader: ICodeLoader;
+
+    /**
+     * A property bag of options used by various layers
+     * to control features
+     */
+    readonly options: any;
+
+    /**
+     * Scope is provided to all container and is a set of shared
+     * services for container's to integrate with their host environment.
+     */
+    readonly scope: IFluidObject;
+
+    /**
+     * Proxy loader factories for loading containers via proxy in other contexts,
+     * like web workers, or worker threads.
+     */
+    readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
+
+    /**
+     * The logger downstream consumers should construct their loggers from
+     */
+    readonly subLogger: ITelemetryLogger;
+}
+
+/**
  * Manages Fluid resource loading
  */
 export class Loader extends EventEmitter implements ILoader {
     private readonly containers = new Map<string, Promise<Container>>();
-    private readonly resolver: IUrlResolver;
-    private readonly documentServiceFactory: IDocumentServiceFactory;
-    private readonly subLogger: ITelemetryLogger;
+    public readonly services: ILoaderServices;
     private readonly logger: ITelemetryLogger;
 
-    constructor(
+    /**
+     * @deprecated use constructor with loader props
+     */
+    public static _create(
         resolver: IUrlResolver | IUrlResolver[],
         documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
-        private readonly codeLoader: ICodeLoader,
-        private readonly options: any,
-        private readonly scope: IFluidObject,
-        private readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
+        codeLoader: ICodeLoader,
+        options: any,
+        scope: IFluidObject,
+        proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
         logger?: ITelemetryBaseLogger,
     ) {
-        super();
+        return new Loader(
+            {
+                urlResolver: MultiUrlResolver.create(resolver),
+                documentServiceFactory: MultiDocumentServiceFactory.create(documentServiceFactory),
+                codeLoader,
+                options,
+                scope,
+                proxyLoaderFactories,
+                logger,
+            });
+    }
 
-        this.subLogger = DebugLogger.mixinDebugLogger("fluid:telemetry", logger, { loaderId: uuid() });
-        this.logger = ChildLogger.create(this.subLogger, "Loader");
-        this.resolver = createCachedResolver(MultiUrlResolver.create(resolver));
-        this.documentServiceFactory = MultiDocumentServiceFactory.create(documentServiceFactory);
+    constructor(loaderProps: ILoaderProps) {
+        super();
+        this.services = {
+            urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),
+            documentServiceFactory: MultiDocumentServiceFactory.create(loaderProps.documentServiceFactory),
+            codeLoader: loaderProps.codeLoader,
+            options: loaderProps.options ?? {},
+            scope: loaderProps.scope ?? {},
+            subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { loaderId: uuid() }),
+            proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
+        };
+        this.logger = ChildLogger.create(this.services.subLogger, "Loader");
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
@@ -168,34 +279,22 @@ export class Loader extends EventEmitter implements ILoader {
         debug(`Container creating in detached state: ${performance.now()} `);
 
         return Container.create(
-            this.codeLoader,
-            this.options,
-            this.scope,
             this,
             {
                 codeDetails,
                 create: true,
-            },
-            this.documentServiceFactory,
-            this.resolver,
-            this.subLogger);
+            });
     }
 
     public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
 
         return Container.create(
-            this.codeLoader,
-            this.options,
-            this.scope,
             this,
             {
                 snapshot: JSON.parse(snapshot),
                 create: false,
-            },
-            this.documentServiceFactory,
-            this.resolver,
-            this.subLogger);
+            });
     }
 
     public async resolve(request: IRequest): Promise<Container> {
@@ -225,14 +324,14 @@ export class Loader extends EventEmitter implements ILoader {
         // Currently the loader only supports web worker environment. Eventually we will
         // detect environment and bring appropriate loader (e.g., worker_thread for node).
         const supportedEnvironment = "webworker";
-        const proxyLoaderFactory = this.proxyLoaderFactories.get(supportedEnvironment);
+        const proxyLoaderFactory = this.services.proxyLoaderFactories.get(supportedEnvironment);
 
         // If the loader does not support any other environment, request falls back to current loader.
         if (proxyLoaderFactory === undefined) {
             const container = await this.resolve({ url: baseUrl, headers: request.headers });
             return container.request(request);
         } else {
-            const resolved = await this.resolver.resolve({ url: baseUrl, headers: request.headers });
+            const resolved = await this.services.urlResolver.resolve({ url: baseUrl, headers: request.headers });
             const resolvedAsFluid = resolved as IFluidResolvedUrl;
             const parsed = parseUrl(resolvedAsFluid.url);
             if (parsed === undefined) {
@@ -242,7 +341,7 @@ export class Loader extends EventEmitter implements ILoader {
                 this.parseHeader(parsed, { url: baseUrl, headers: request.headers });
             const proxyLoader = await proxyLoaderFactory.createProxyLoader(
                 parsed.id,
-                this.options,
+                this.services.options,
                 resolvedAsFluid,
                 fromSequenceNumber,
             );
@@ -260,7 +359,7 @@ export class Loader extends EventEmitter implements ILoader {
     private async resolveCore(
         request: IRequest,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
-        const resolvedAsFluid = await this.resolver.resolve(request);
+        const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
 
         // Parse URL into data stores
@@ -356,14 +455,8 @@ export class Loader extends EventEmitter implements ILoader {
     ): Promise<Container> {
         return Container.load(
             id,
-            this.documentServiceFactory,
-            this.codeLoader,
-            this.options,
-            this.scope,
             this,
             request,
-            resolved,
-            this.resolver,
-            this.subLogger);
+            resolved);
     }
 }

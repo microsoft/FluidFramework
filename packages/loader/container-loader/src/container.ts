@@ -8,14 +8,12 @@ import { strict as assert } from "assert";
 import merge from "lodash/merge";
 import uuid from "uuid";
 import {
-    ITelemetryBaseLogger,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
-import { IFluidObject, IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import {  IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    ICodeLoader,
     IConnectionDetails,
     IContainer,
     IContainerEvents,
@@ -34,8 +32,6 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
-    IUrlResolver,
-    IDocumentServiceFactory,
     IResolvedUrl,
     CreateNewHeader,
 } from "@fluidframework/driver-definitions";
@@ -197,31 +193,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      */
     public static async load(
         id: string,
-        serviceFactory: IDocumentServiceFactory,
-        codeLoader: ICodeLoader,
-        options: any,
-        scope: IFluidObject,
         loader: Loader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
-        urlResolver: IUrlResolver,
-        logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const [, docId] = id.split("/");
         const container = new Container(
-            options,
-            scope,
-            codeLoader,
             loader,
-            serviceFactory,
-            urlResolver,
             {
                 originalRequest: request,
                 id: decodeURI(docId),
                 resolvedUrl,
                 canReconnect: !(request.headers?.[LoaderHeader.reconnect] === false),
-            },
-            logger);
+            });
 
         return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
             return new Promise<Container>((res, rej) => {
@@ -255,24 +239,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public static async create(
-        codeLoader: ICodeLoader,
-        options: any,
-        scope: IFluidObject,
         loader: Loader,
         source: DetachedContainerSource,
-        serviceFactory: IDocumentServiceFactory,
-        urlResolver: IUrlResolver,
-        logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
-            options,
-            scope,
-            codeLoader,
             loader,
-            serviceFactory,
-            urlResolver,
-            {},
-            logger);
+            {});
 
         if (source.create) {
             await container.createDetached(source.codeDetails);
@@ -445,16 +417,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public get parentBranch(): string | null {
         return this._parentBranch;
     }
-
+    private get serviceFactory() {return this.loader.services.documentServiceFactory;}
+    private get urlResolver() {return this.loader.services.urlResolver;}
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    public get options() { return this.loader.services.options;}
+    private get scope() { return this.loader.services.scope;}
+    private get codeLoader() { return this.loader.services.codeLoader;}
     constructor(
-        public readonly options: any,
-        private readonly scope: IFluidObject,
-        private readonly codeLoader: ICodeLoader,
         private readonly loader: Loader,
-        private readonly serviceFactory: IDocumentServiceFactory,
-        private readonly urlResolver: IUrlResolver,
         config: IContainerConfig,
-        logger: ITelemetryBaseLogger | undefined,
     ) {
         super();
         this._audience = new Audience();
@@ -475,7 +446,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
         this.subLogger = ChildLogger.create(
-            logger,
+            loader.services.subLogger,
             undefined,
             {
                 clientType, // Differentiating summarizer container from main container
@@ -1221,9 +1192,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         protocol.quorum.on("addMember", (clientId, details) => {
             // This is the only one that requires the pending client ID
             if (clientId === this.pendingClientId) {
-                this.setConnectionState(
-                    ConnectionState.Connected,
-                    `joined @ ${details.sequenceNumber}`);
+                this.setConnectionState(ConnectionState.Connected);
             }
         });
 
@@ -1327,16 +1296,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.emit("connect", opsBehind);
 
             // Report telemetry after we set client id!
-            this.logConnectionStateChangeTelemetry(
-                ConnectionState.Connecting,
-                oldState,
-                "websocket established",
-                opsBehind);
+            this.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
 
-            if (deltaManager.connectionMode === "read") {
-                this.setConnectionState(
-                    ConnectionState.Connected,
-                    `joined as readonly`);
+            // Check if we already processed our own join op through delta storage!
+            // we are fetching ops from storage in parallel to connecting to ordering service
+            // Given async processes, it's possible that we have already processed our own join message before
+            // connection was fully established.
+            // Note that we might be still initializing quorum - connection is established proactively on load!
+            if ((this._protocolHandler !== undefined && this._protocolHandler.quorum.has(details.clientId))
+                    || deltaManager.connectionMode === "read") {
+                this.setConnectionState(ConnectionState.Connected);
             }
 
             // Back-compat for new client and old server.
@@ -1387,8 +1356,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private logConnectionStateChangeTelemetry(
         value: ConnectionState,
         oldState: ConnectionState,
-        reason: string,
-        opsBehind?: number) {
+        reason?: string) {
         // Log actual event
         const time = performance.now();
         this.connectionTransitionTimes[value] = time;
@@ -1398,13 +1366,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let connectionMode: string | undefined;
         let connectionInitiationReason: string | undefined;
         let autoReconnect: ReconnectMode | undefined;
+        let checkpointSequenceNumber: number | undefined;
+        let sequenceNumber: number | undefined;
+        let opsBehind: number | undefined;
         if (value === ConnectionState.Disconnected) {
             autoReconnect = this._deltaManager.reconnectMode;
         } else {
             connectionMode = this._deltaManager.connectionMode;
+            sequenceNumber = this.deltaManager.lastSequenceNumber;
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
                 durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
+            } else {
+                // This info is of most interest on establishing connection only.
+                checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
+                if (this.deltaManager.hasCheckpointSequenceNumber) {
+                    opsBehind = checkpointSequenceNumber - sequenceNumber;
+                }
             }
             if (this.firstConnection) {
                 connectionInitiationReason = "InitialConnect";
@@ -1430,6 +1408,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             opsBehind,
             online: OnlineStatus[isOnline()],
             lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
+            checkpointSequenceNumber,
+            sequenceNumber,
         });
 
         if (value === ConnectionState.Connected) {
@@ -1438,9 +1418,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
+    private setConnectionState(value: ConnectionState.Disconnected, reason: string);
+    private setConnectionState(value: ConnectionState.Connecting | ConnectionState.Connected);
     private setConnectionState(
         value: ConnectionState,
-        reason: string) {
+        reason?: string) {
         assert(value !== ConnectionState.Connecting);
         if (this.connectionState === value) {
             // Already in the desired state - exit early
@@ -1525,7 +1507,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (message.clientId != null) {
             let errorMsg: string | undefined;
             const client: ILocalSequencedClient | undefined =
-                this._protocolHandler?.quorum.getMember(message.clientId);
+                this.getQuorum().getMember(message.clientId);
             if (client === undefined && message.type !== MessageType.ClientJoin) {
                 errorMsg = "messageClientIdMissingFromQuorum";
             } else if (client?.shouldHaveLeft === true) {

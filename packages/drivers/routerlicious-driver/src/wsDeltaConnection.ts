@@ -177,7 +177,7 @@ export class WSDeltaConnection
         this.submitManager.add("submitSignal", message);
     }
 
-    public disconnect() {
+    public close() {
         this.socket.close();
     }
 

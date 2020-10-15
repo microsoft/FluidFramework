@@ -14,6 +14,7 @@ export { Container, Loader } from "old-container-loader";
 export { ContainerRuntime, IContainerRuntimeOptions } from "old-container-runtime";
 export { IDocumentServiceFactory } from "old-driver-definitions";
 export { IFluidDataStoreFactory } from "old-runtime-definitions";
+export { IChannelFactory } from "old-datastore-definitions";
 export {
     createLocalLoader,
     createAndAttachContainer,

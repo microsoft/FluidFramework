@@ -6,7 +6,6 @@
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
     IFluidCodeDetails,
-    IProxyLoaderFactory,
     IFluidModule,
 } from "@fluidframework/container-definitions";
 import { Loader, Container } from "@fluidframework/container-loader";
@@ -32,23 +31,10 @@ async function createWebLoader(
         }
     }
 
-    const config = hostConfig.config ? hostConfig.config : {};
-
-    // We need to extend options, otherwise we nest properties, like client, too deeply
-    //
-    config.blockUpdateMarkers = true;
-
-    const scope = hostConfig.scope ? hostConfig.scope : {};
-    const proxyLoaderFactories = hostConfig.proxyLoaderFactories ?
-        hostConfig.proxyLoaderFactories : new Map<string, IProxyLoaderFactory>();
-
-    return new Loader(
-        hostConfig.urlResolver,
-        hostConfig.documentServiceFactory,
+    return new Loader({
+        ...hostConfig,
         codeLoader,
-        config,
-        scope,
-        proxyLoaderFactories);
+    });
 }
 
 export class BaseHost {
