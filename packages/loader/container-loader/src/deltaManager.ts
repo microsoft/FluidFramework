@@ -1213,7 +1213,7 @@ export class DeltaManager
                         const error = {
                             errorType: ContainerErrorType.dataCorruption,
                             message: "Two messages with same seq# and different payload!",
-                            clientId: this.connection?.details.clientId,
+                            clientId: this.connection?.clientId,
                             sequenceNumber: message.sequenceNumber,
                             message1,
                             message2,
