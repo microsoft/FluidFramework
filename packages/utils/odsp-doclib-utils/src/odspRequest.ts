@@ -9,25 +9,17 @@ import {
     authRequestWithRetry,
 } from "./odspAuth";
 
-export interface IRequestResult {
-    href: string | undefined;
-    status: number;
-    data: any;
-}
-
-export type RequestResultError = Error & { requestResult?: IRequestResult };
-
 export async function getAsync(
     url: string,
     authRequestInfo: IOdspAuthRequestInfo,
-): Promise<IRequestResult> {
+): Promise<AxiosResponse> {
     return authRequest(authRequestInfo, async (config) => Axios.get(url, config));
 }
 
 export async function putAsync(
     url: string,
     authRequestInfo: IOdspAuthRequestInfo,
-): Promise<IRequestResult> {
+): Promise<AxiosResponse> {
     return authRequest(authRequestInfo, async (config) => Axios.put(url, undefined, config));
 }
 
@@ -35,18 +27,18 @@ export async function postAsync(
     url: string,
     body: any,
     authRequestInfo: IOdspAuthRequestInfo,
-): Promise<IRequestResult> {
+): Promise<AxiosResponse> {
     return authRequest(authRequestInfo, async (config) => Axios.post(url, body, config));
 }
 
-export async function unauthPostAsync(url: string, body: any): Promise<IRequestResult> {
+export async function unauthPostAsync(url: string, body: any): Promise<AxiosResponse> {
     return safeRequestCore(async () => Axios.post(url, body));
 }
 
 async function authRequest(
     authRequestInfo: IOdspAuthRequestInfo,
     requestCallback: (config: AxiosRequestConfig) => Promise<any>,
-): Promise<IRequestResult> {
+): Promise<AxiosResponse> {
     return authRequestWithRetry(
         authRequestInfo,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -54,7 +46,7 @@ async function authRequest(
     );
 }
 
-async function safeRequestCore(requestCallback: () => Promise<AxiosResponse>): Promise<IRequestResult> {
+async function safeRequestCore(requestCallback: () => Promise<AxiosResponse>): Promise<AxiosResponse> {
     let response: AxiosResponse;
     try {
         response = await requestCallback();
@@ -65,11 +57,5 @@ async function safeRequestCore(requestCallback: () => Promise<AxiosResponse>): P
             throw error;
         }
     }
-    return { href: response.config.url, status: response.status, data: response.data };
-}
-
-export function createErrorFromResponse(message: string, requestResult: IRequestResult): RequestResultError {
-    const error: RequestResultError = Error(message);
-    error.requestResult = requestResult;
-    return error;
+    return response;
 }

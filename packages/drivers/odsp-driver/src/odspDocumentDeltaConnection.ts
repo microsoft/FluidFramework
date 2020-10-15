@@ -8,6 +8,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IDocumentDeltaConnection, DriverError } from "@fluidframework/driver-definitions";
+import { OdspError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
     IConnect,
@@ -19,7 +20,7 @@ import {
 import uuid from "uuid/v4";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
-import { errorObjectFromSocketError, OdspError } from "./odspError";
+import { errorObjectFromSocketError } from "./odspError";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 

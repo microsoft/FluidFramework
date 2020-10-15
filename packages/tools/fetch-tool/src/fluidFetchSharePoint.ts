@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
     getChildrenByDriveItem,
     getDriveItemByServerRelativePath,
@@ -11,7 +12,7 @@ import {
     IOdspDriveItem,
     getOdspRefreshTokenFn,
     IOdspAuthRequestInfo,
-} from "@fluidframework/odsp-utils";
+} from "@fluidframework/odsp-doclib-utils";
 import {
     getMicrosoftConfiguration,
     OdspTokenManager,
@@ -56,19 +57,11 @@ export async function resolveWrapper<T>(
         }
         return result;
     } catch (e) {
-        if (e.requestResultError) {
-            const parsedBody = JSON.parse(e.requestResult.data);
-            if (parsedBody.error === "invalid_grant"
-                && parsedBody.suberror === "consent_required"
-                && !forceTokenReauth
-            ) {
-                // Re-auth
-                return resolveWrapper<T>(callback, server, clientConfig, true);
-            }
-            const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
-            return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${responseMsg}`);
+        if (e.errorType === DriverErrorType.authorizationError && !forceTokenReauth) {
+            // Re-auth
+            return resolveWrapper<T>(callback, server, clientConfig, true, forToken);
         }
-        throw e;
+        return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${e}`);
     }
 }
 

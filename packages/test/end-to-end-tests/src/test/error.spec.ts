@@ -4,11 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { IRequest } from "@fluidframework/core-interfaces";
 import {
     ContainerErrorType,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
+import { CreateContainerError } from "@fluidframework/container-utils";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IFluidResolvedUrl,
     IDocumentServiceFactory,
@@ -16,14 +17,13 @@ import {
     IThrottlingWarning,
 } from "@fluidframework/driver-definitions";
 import { createWriteError } from "@fluidframework/driver-utils";
-import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
-import { CreateContainerError } from "@fluidframework/container-utils";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import {
     createOdspNetworkError,
     invalidFileNameStatusCode,
     OdspErrorType,
-} from "@fluidframework/odsp-driver";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+} from "@fluidframework/odsp-doclib-utils";
+import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 

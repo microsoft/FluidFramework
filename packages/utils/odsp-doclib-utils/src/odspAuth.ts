@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { AxiosRequestConfig } from "axios";
-import { IRequestResult, createErrorFromResponse, unauthPostAsync } from "./odspRequest";
-import { getSharepointTenant } from "./odspUtils";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
+import { getSharepointTenant } from "./odspDocLibUtils";
+import { throwOdspNetworkError } from "./odspErrorUtils";
+import { unauthPostAsync } from "./odspRequest";
 
 export interface IOdspTokens {
     accessToken: string;
@@ -101,7 +102,7 @@ export async function fetchTokens(
     const refreshToken = result.data.refresh_token;
 
     if (accessToken === undefined || refreshToken === undefined) {
-        throw createErrorFromResponse("Unable to get access token.", result);
+        throwOdspNetworkError("Unable to get access token.", result);
     }
     return { accessToken, refreshToken };
 }
@@ -142,7 +143,7 @@ export async function refreshTokens(
 export async function authRequestWithRetry(
     authRequestInfo: IOdspAuthRequestInfo,
     requestCallback: (config: AxiosRequestConfig) => Promise<any>,
-): Promise<IRequestResult> {
+): Promise<AxiosResponse> {
     const createConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
 
     const result = await requestCallback(createConfig(authRequestInfo.accessToken));
