@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
     getChildrenByDriveItem,
     getDriveItemByServerRelativePath,
@@ -19,7 +20,6 @@ import {
     OdspTokenConfig,
     IOdspCacheKey,
 } from "@fluidframework/tool-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { fluidFetchWebNavigator } from "./fluidFetchInit";
 import { getForceTokenReauth } from "./fluidFetchArgs";
 

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { DriverError, DriverErrorType } from "@fluidframework/driver-definitions";
 import {
     AuthorizationError,
     createGenericNetworkError,
@@ -12,7 +13,6 @@ import {
     NonRetryableError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
-import { DriverError, DriverErrorType } from "@fluidframework/driver-definitions";
 import { AxiosResponse } from "axios";
 
 export const offlineFetchFailureStatusCode: number = 709;

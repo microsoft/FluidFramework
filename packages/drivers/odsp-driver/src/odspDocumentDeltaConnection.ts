@@ -8,6 +8,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { OdspError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
     IConnect,
@@ -15,7 +16,6 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
-import { OdspError } from "@fluidframework/odsp-doclib-utils";
 // eslint-disable-next-line import/no-internal-modules
 import uuid from "uuid/v4";
 import { IOdspSocketError } from "./contracts";
