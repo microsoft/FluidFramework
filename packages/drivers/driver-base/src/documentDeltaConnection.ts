@@ -151,7 +151,7 @@ export class DocumentDeltaConnection
      */
     protected constructor(
         protected readonly socket: SocketIOClient.Socket,
-        public documentId: string
+        public documentId: string,
     ) {
         super();
 
