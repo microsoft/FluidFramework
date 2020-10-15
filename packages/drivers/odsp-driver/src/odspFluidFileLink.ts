@@ -13,6 +13,7 @@ const fluidDriveIdParamName = "d";
 const fluidFileIdParamName = "f";
 const fluidDataStorePathParamName = "c";
 const fluidAppNameParamName = "a";
+const fluidContainerPackageNameParamName = "p"; 
 
 /**
  * Transforms given Fluid data store locator into string that can be embedded into url
@@ -31,6 +32,10 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
         fluidSignatureParamName}=${fluidSignature}`;
     if (locator.appName) {
         locatorSerialized += `&${fluidAppNameParamName}=${encodeURIComponent(locator.appName)}`;
+    }
+    if (locator.containerPackageName) {
+        locatorSerialized += `&${fluidContainerPackageNameParamName}=${
+            encodeURIComponent(locator.containerPackageName)}`;
     }
 
     return btoa(locatorSerialized);
@@ -59,6 +64,7 @@ function decodeOdspFluidDataStoreLocator(
     const fileId = locatorInfo.get(fluidFileIdParamName);
     const dataStorePath = locatorInfo.get(fluidDataStorePathParamName);
     const appName = locatorInfo.get(fluidAppNameParamName) ?? undefined;
+    const containerPackageName = locatorInfo.get(fluidContainerPackageNameParamName) ?? undefined;
     // "" is a valid value for dataStorePath so simply check for absence of the param;
     // the rest of params must be present and non-empty
     if (!sitePath || !driveId || !fileId || dataStorePath === null) {
@@ -82,6 +88,7 @@ function decodeOdspFluidDataStoreLocator(
         fileId,
         dataStorePath,
         appName,
+        containerPackageName,
     };
 }
 

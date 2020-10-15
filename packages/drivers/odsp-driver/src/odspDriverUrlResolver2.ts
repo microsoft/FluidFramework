@@ -22,6 +22,7 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
         private readonly identityType: IdentityType = "Enterprise",
         private readonly logger?: ITelemetryLogger,
         private readonly appName?: string,
+        private readonly containerPackageName?: string,
     ) { }
 
     public createCreateNewRequest(
@@ -83,6 +84,11 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
                     odspFluidInfo.fileId,
                     odspFluidInfo.dataStorePath,
                 );
+
+                if (odspFluidInfo.containerPackageName) {
+                    request.headers = { ...{ containerPackage: { packageName: odspFluidInfo.containerPackageName } },
+                        ...request.headers };
+                }
             }
         } catch {
             // If the locator throws some error, then try to resolve the request as it is.
@@ -151,6 +157,7 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
             fileId: odspResolvedUrl.itemId,
             dataStorePath: relativeUrl,
             appName: this.appName,
+            containerPackageName: this.containerPackageName,
         });
 
         return shareLinkUrl.href;
