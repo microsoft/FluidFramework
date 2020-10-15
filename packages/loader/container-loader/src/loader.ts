@@ -135,24 +135,95 @@ function createCachedResolver(resolver: IUrlResolver) {
     return cacheResolver;
 }
 
+/**
+ * Services and properties necessary for creating a loader
+ */
 export interface ILoaderProps {
+    /**
+     * The url resolver used by the loader for resolving external urls
+     * into fluid urls such that the container specified by the
+     * external url can be loaded.
+     */
     readonly urlResolver: IUrlResolver;
+    /**
+     * The document service factory take the fluid url provided
+     * by the resolved url and constucts all the necessary services
+     * for communication with the container's server.
+     */
     readonly documentServiceFactory: IDocumentServiceFactory;
+    /**
+     * The code loader handles loading the necessary code
+     * for running a container once it is loaded.
+     */
     readonly codeLoader: ICodeLoader;
 
+    /**
+     * A property bag of options used by various layers
+     * to control features
+     */
     readonly options?: any;
+
+    /**
+     * Scope is provided to all container and is a set of shared
+     * services for container's to integrate with their host environment.
+     */
     readonly scope?: IFluidObject;
+
+    /**
+     * Proxy loader factories for loading containers via proxy in other contexts,
+     * like web workers, or worker threads.
+     */
     readonly proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
+
+    /**
+     * The logger that all telemetry should be pushed to.
+     */
     readonly logger?: ITelemetryBaseLogger;
 }
 
+/**
+ * Services and properties used by and exposed by the loader
+ */
 export interface ILoaderServices {
+    /**
+     * The url resolver used by the loader for resolving external urls
+     * into fluid urls such that the container specified by the
+     * external url can be loaded.
+     */
     readonly urlResolver: IUrlResolver;
+    /**
+     * The document service factory take the fluid url provided
+     * by the resolved url and constucts all the necessary services
+     * for communication with the container's server.
+     */
     readonly documentServiceFactory: IDocumentServiceFactory;
+    /**
+     * The code loader handles loading the necessary code
+     * for running a container once it is loaded.
+     */
     readonly codeLoader: ICodeLoader;
+
+    /**
+     * A property bag of options used by various layers
+     * to control features
+     */
     readonly options: any;
+
+    /**
+     * Scope is provided to all container and is a set of shared
+     * services for container's to integrate with their host environment.
+     */
     readonly scope: IFluidObject;
+
+    /**
+     * Proxy loader factories for loading containers via proxy in other contexts,
+     * like web workers, or worker threads.
+     */
     readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
+
+    /**
+     * The logger that all telemetry should be pushed to.
+     */
     readonly logger: ITelemetryLogger;
 }
 
