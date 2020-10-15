@@ -8,6 +8,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IDocumentDeltaConnection, DriverError } from "@fluidframework/driver-definitions";
+import { OdspError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
     IConnect,
