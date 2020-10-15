@@ -9,7 +9,6 @@ import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     IDeltaManager,
     IFluidCodeDetails,
-    IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -257,23 +256,21 @@ async function requestDocument(loader: Loader, container: Container, uri: string
  */
 export async function load(
     url: string,
-    resolver: IUrlResolver,
+    urlResolver: IUrlResolver,
     options: any = {},
-    serviceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
+    documentServiceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
     runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
 ): Promise<Document> {
     const codeLoader = new CodeLoader(runtimeOptions);
 
     // Load the Fluid document
     // For legacy purposes we currently fill in a default domain
-    const loader = new Loader(
-        resolver,
-        serviceFactory,
+    const loader = new Loader({
+        urlResolver,
+        documentServiceFactory,
         codeLoader,
         options,
-        {},
-        new Map<string, IProxyLoaderFactory>(),
-    );
+    });
     const container = await loader.resolve({ url });
 
     // The client-api CodeLoader doesn't actually read the proposed code details, so this doesn't really matter.

@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     ContainerErrorType,
-    IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
@@ -33,48 +32,40 @@ describe("Errors Types", () => {
     const testRequest: IRequest = { url: id };
 
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
-    let localResolver: LocalResolver;
+    let urlResolver: LocalResolver;
     let testResolved: IFluidResolvedUrl;
-    let serviceFactory: IDocumentServiceFactory;
+    let documentServiceFactory: IDocumentServiceFactory;
     let codeLoader: LocalCodeLoader;
     let loader: Loader;
 
     it("GeneralError Test", async () => {
         // Setup
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        localResolver = new LocalResolver();
-        testResolved = await localResolver.resolve(testRequest) as IFluidResolvedUrl;
-        serviceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+        urlResolver = new LocalResolver();
+        testResolved = await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
+        documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+
+        const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
+        mockFactory.createDocumentService = async (resolvedUrl) => {
+            const service = await documentServiceFactory.createDocumentService(resolvedUrl);
+            service.connectToDeltaStorage = async () => Promise.reject(false);
+            return service;
+        };
 
         codeLoader = new LocalCodeLoader([]);
-        const options = {};
 
-        loader = new Loader(
-            localResolver,
-            serviceFactory,
+        loader = new Loader({
+            urlResolver,
+            documentServiceFactory: mockFactory,
             codeLoader,
-            options,
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
 
         try {
-            const mockFactory = Object.create(serviceFactory) as IDocumentServiceFactory;
-            mockFactory.createDocumentService = async (resolvedUrl) => {
-                const service = await serviceFactory.createDocumentService(resolvedUrl);
-                service.connectToDeltaStorage = async () => Promise.reject(false);
-                return service;
-            };
-
             await Container.load(
                 "tenantId/documentId",
-                mockFactory,
-                codeLoader,
-                {},
-                {},
                 loader,
                 testRequest,
-                testResolved,
-                localResolver);
+                testResolved);
 
             assert.fail("Error expected");
         } catch (error) {

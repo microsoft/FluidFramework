@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
@@ -45,7 +45,7 @@ export async function start(url: string, code: string, createNew: boolean): Prom
     // not want to use this in a production environment and would want to protect the secret on your server. To give
     // the client access you would then have the client code authenticate via OAuth (or similar) and perform REST
     // calls against your service.
-    const insecureResolver = new InsecureUrlResolver(
+    const urlResolver = new InsecureUrlResolver(
         hostUrl,
         ordererUrl,
         storageUrl,
@@ -55,7 +55,7 @@ export async function start(url: string, code: string, createNew: boolean): Prom
         bearerSecret);
 
     // The RouterliciousDocumentServiceFactory creates the driver that allows connections to the Routerlicious service.
-    const documentServicesFactory = new RouterliciousDocumentServiceFactory();
+    const documentServiceFactory = new RouterliciousDocumentServiceFactory();
 
     // The code loader provides the ability to load npm packages that have been quorumed on and that represent
     // the code for the document. The base WebCodeLoader supports both code on a CDN as well as those defined
@@ -69,13 +69,11 @@ export async function start(url: string, code: string, createNew: boolean): Prom
     const codeLoader = new WebCodeLoader(new SemVerCdnCodeResolver(), new AllowList());
 
     // Finally with all the above objects created we can fully construct the loader
-    const loader = new Loader(
-        insecureResolver,
-        documentServicesFactory,
+    const loader = new Loader({
+        urlResolver,
+        documentServiceFactory,
         codeLoader,
-        { blockUpdateMarkers: true },
-        {},
-        new Map<string, IProxyLoaderFactory>());
+    });
 
     let container;
     if (createNew) {
@@ -88,7 +86,7 @@ export async function start(url: string, code: string, createNew: boolean): Prom
             package: code,
         };
         container = await loader.createDetachedContainer(details);
-        await container.attach(insecureResolver.createCreateNewRequest("example"));
+        await container.attach(urlResolver.createCreateNewRequest("example"));
     } else {
         // This flow is used to get the existing container.
         container = await loader.resolve({ url });
