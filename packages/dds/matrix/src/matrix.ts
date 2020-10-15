@@ -357,12 +357,11 @@ export class SharedMatrix<T extends Serializable = Serializable>
     /** @internal */ public _undoRemoveRows(segment: ISegment) {
         const original = segment as PermutationSegment;
 
-        // (Re)insert the removed number of columns at the original position.
+        // (Re)insert the removed number of rows at the original position.
         const rowStart = this.rows.getPosition(original);
         this.insertRows(rowStart, original.cachedLength);
 
-        // Transfer handles from the original segment to the newly inserted segment.
-        // (This allows us to use getCell(..) below to read the previous cell values)
+        // Transfer handles from the original segment to the newly inserted empty segment.
         const inserted = this.rows.getContainingSegment(rowStart).segment as PermutationSegment;
         original.transferHandlesTo(inserted);
 
@@ -373,7 +372,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
             /* removedCount: */ 0,
             /* insertedCount: */ inserted.cachedLength);
 
-        // Generate setCell ops for each populated cell in the reinserted cols.
+        // Generate setCell ops for each populated cell in the reinserted rows.
         let rowHandle = inserted.start;
         const rowCount = inserted.cachedLength;
         for (let row = rowStart; row < rowStart + rowCount; row++, rowHandle++) {
@@ -405,12 +404,11 @@ export class SharedMatrix<T extends Serializable = Serializable>
         const colStart = this.cols.getPosition(original);
         this.insertCols(colStart, original.cachedLength);
 
-        // Transfer handles from the original segment to the newly inserted segment.
-        // (This allows us to use getCell(..) below to read the previous cell values)
+        // Transfer handles from the original segment to the newly inserted empty segment.
         const inserted = this.cols.getContainingSegment(colStart).segment as PermutationSegment;
         original.transferHandlesTo(inserted);
 
-        // Invalidate the handleCache in case it was populated during the 'rowsChanged'
+        // Invalidate the handleCache in case it was populated during the 'colsChanged'
         // callback, which occurs before the handle span is populated.
         this.cols.handleCache.itemsChanged(
             colStart,
