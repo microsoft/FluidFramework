@@ -32,6 +32,8 @@ export interface IChannel extends IFluidLoadable {
      * Enables the channel to send and receive ops
      */
     connect(services: IChannelServices): void;
+
+    getReferencedRoutes(): string[];
 }
 
 /**

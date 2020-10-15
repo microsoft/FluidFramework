@@ -145,7 +145,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return sharedCollection;
     }
 
-    public snapshot(): ITree {
+    protected snapshotCore(): ITree {
         const tree: ITree = {
             entries: [
                 {

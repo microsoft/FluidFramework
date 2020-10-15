@@ -587,7 +587,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
      */
-    public snapshot(): ITree {
+    protected snapshotCore(): ITree {
         return serializeDirectory(this.root);
     }
 

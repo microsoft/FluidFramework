@@ -193,6 +193,10 @@ export interface IFluidDataStoreChannel extends
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     reSubmit(type: string, content: any, localOpMetadata: unknown);
+
+    getReferencedRoutes(): string[];
+
+    collectUnreferencedFluidObjects(referencedObjects: string[]): void;
 }
 
 /**

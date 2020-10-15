@@ -204,4 +204,9 @@ export class RemoteChannelContext implements IChannelContext {
         this.services.deltaConnection.setConnectionState(this.dataStoreContext.connected);
         return this.channel;
     }
+
+    public getReferencedRoutes(): string[] {
+        assert(this.channel, "Channel should be available");
+        return this.channel.getReferencedRoutes();
+    }
 }

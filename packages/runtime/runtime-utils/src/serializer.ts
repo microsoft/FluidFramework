@@ -24,6 +24,9 @@ export class FluidSerializer implements IFluidSerializer {
         }
     }
 
+    private _serializedRoutes: string[] = [];
+    private shouldRecordRoutes: boolean = false;
+
     public get IFluidSerializer() { return this; }
 
     public replaceHandles(
@@ -74,7 +77,7 @@ export class FluidSerializer implements IFluidSerializer {
             });
     }
 
-    // Invoked by `replaceHandles()` for non-null objects to recursively replace IFluidHandle references
+    // Invoked by `replaceRoutes()` for non-null objects to recursively replace IFluidHandle references
     // with serialized handles (cloning as-needed to avoid mutating the original `input` object.)
     private recursivelyReplaceHandles(
         input: any,
@@ -121,9 +124,28 @@ export class FluidSerializer implements IFluidSerializer {
 
     private serializeHandle(handle: IFluidHandle, bind: IFluidHandle) {
         bind.bind(handle);
+
+        if (this.shouldRecordRoutes) {
+            this._serializedRoutes.push(handle.absolutePath);
+        }
+
         return {
             type: "__fluid_handle__",
             url: handle.absolutePath,
         };
+    }
+
+    public get serializedRoutes() {
+        return this._serializedRoutes;
+    }
+
+    public startRecordingRoutes() {
+        this._serializedRoutes = [];
+        this.shouldRecordRoutes = true;
+    }
+
+    public stopRecordingRoutes() {
+        this._serializedRoutes = [];
+        this.shouldRecordRoutes = false;
     }
 }

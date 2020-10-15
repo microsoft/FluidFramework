@@ -428,7 +428,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
     }
 
-    public snapshot(): ITree {
+    protected snapshotCore(): ITree {
         return {
             entries: [
                 {

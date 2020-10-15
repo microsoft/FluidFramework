@@ -167,7 +167,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
      *
      * @returns the snapshot of the current state of the cell
      */
-    public snapshot(): ITree {
+    protected snapshotCore(): ITree {
         // Get a serializable form of data
         const content: ICellValue = {
             type: ValueType[ValueType.Plain],

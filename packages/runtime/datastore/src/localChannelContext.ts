@@ -196,4 +196,9 @@ export class LocalChannelContext implements IChannelContext {
             this.collectExtraBlobsAndSanitizeSnapshot(value, blobMap);
         }
     }
+
+    public getReferencedRoutes(): string[] {
+        assert(this.channel, "Channel should be available");
+        return this.channel.getReferencedRoutes();
+    }
 }

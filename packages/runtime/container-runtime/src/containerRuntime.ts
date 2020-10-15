@@ -455,6 +455,11 @@ class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
     }
 }
 
+interface IReferences {
+    visited: boolean;
+    referencedRoutes: Set<string>;
+}
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -784,7 +789,7 @@ export class ContainerRuntime extends EventEmitter
                 }
                 const snapshotTree = value as ISnapshotTree;
                 // Need to rip through snapshot.
-                const { pkg, snapshotFormatVersion } = readAndParseFromBlobs<IFluidDataStoreAttributes>(
+                const { pkg, snapshotFormatVersion, isRootStore } = readAndParseFromBlobs<IFluidDataStoreAttributes>(
                     snapshotTree.blobs,
                     snapshotTree.blobs[".component"]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
@@ -805,7 +810,9 @@ export class ContainerRuntime extends EventEmitter
                     this.summaryTracker.createOrGetChild(key, this.deltaManager.lastSequenceNumber),
                     this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
                     (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
-                    snapshotTree);
+                    snapshotTree,
+                    undefined,
+                    isRootStore);
             }
             this.setNewContext(key, dataStoreContext);
         }
@@ -1294,7 +1301,7 @@ export class ContainerRuntime extends EventEmitter
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>
     {
-        const fluidDataStore = await this._createDataStore(pkg, rootDataStoreId);
+        const fluidDataStore = await this._createDataStore(pkg, rootDataStoreId, true);
         fluidDataStore.bindToContext();
         return fluidDataStore;
     }
@@ -1320,16 +1327,20 @@ export class ContainerRuntime extends EventEmitter
         return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props).realize();
     }
 
-    private async _createDataStore(pkg: string | string[], id = uuid()): Promise<IFluidDataStoreChannel>
+    private async _createDataStore(
+        pkg: string | string[],
+        id = uuid(),
+        root: boolean = false,
+    ): Promise<IFluidDataStoreChannel>
     {
-        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id).realize();
+        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, undefined, root).realize();
     }
 
     private canSendOps() {
         return this.connected && !this.deltaManager.readonly;
     }
 
-    private _createFluidDataStoreContext(pkg: string[], id: string, props?: any) {
+    private _createFluidDataStoreContext(pkg: string[], id: string, props?: any, root: boolean = false) {
         const context = new LocalFluidDataStoreContext(
             id,
             pkg,
@@ -1341,6 +1352,7 @@ export class ContainerRuntime extends EventEmitter
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
             props,
+            root,
         );
         this.setupNewContext(context);
         return context;
@@ -1466,9 +1478,124 @@ export class ContainerRuntime extends EventEmitter
                 builder.addWithStats(key, contextSummary);
             }));
 
+        const deletedDataStores = this.runGarbageCollection();
+        builder.addBlob(".deletedDataStores", JSON.stringify(deletedDataStores));
+
         this.serializeContainerBlobs(builder);
         const summary = builder.getSummaryTree();
         return { ...summary, id: "" };
+    }
+
+    public runGarbageCollection(): string[] {
+        // Maintains a map of dataStoreId to an IReferences object. The IReferences object keeps track of whether
+        // the data store has been visited (to detect loops) and the fluid objects in it that are referenced.
+        const dataStoreReferencesMap: Map<string, IReferences> = new Map();
+
+        // A stack of routes that are referenced through handles in DDSes.
+        const referencedRoutesStack: string[] = [];
+
+        // Start with the root data stores. Add all the fluid objects referenced by the root data stores in to the
+        // referencedObjectsStack.
+        this.contexts.forEach((value: FluidDataStoreContext) => {
+            if (value.isRootStore) {
+                // Ignore the scheduler.
+                if (value.id === taskSchedulerId) {
+                    return;
+                }
+
+                // Get the fluid objects referenced by this data store and add them to the referencedObjectsStack.
+                const referencedRoutes = value.getReferencedRoutes();
+                referencedRoutesStack.push(...referencedRoutes);
+
+                // Set the IReferences object in the dataStoreReferencesMap for this data store. Mark it as visited.
+                dataStoreReferencesMap.set(value.id, { visited: true, referencedRoutes: new Set<string>() });
+            }
+        });
+
+        // Do a Bread First Search on the referencedRoutesStack.
+        while (referencedRoutesStack.length > 0) {
+            // Get the next route.
+            const nextRoute = referencedRoutesStack.shift();
+            assert(nextRoute);
+
+            // Get the dataStoreId from the referenced object.
+            const dataStoreId = nextRoute.split("/")[1];
+            // If there is no reference object for it in the dataStoreReferencesMap, it means this is the first time we
+            // are seeing it. Creata a reference object for it.
+            let references = dataStoreReferencesMap.get(dataStoreId);
+            if (references === undefined) {
+                references = {
+                    visited: false,
+                    referencedRoutes: new Set<string>(),
+                };
+            }
+
+            const visited: boolean = references.visited;
+            // Keeps track of whether the entry for this data store in the dataStoreReferencesMap changes.
+            let dataStoreEntryChanged: boolean = false;
+
+            // Get the path of the referenced object relative to the dataStoreId and add it to the
+            // referencedFluidObjects in its references.
+            const dataStoreIdRelativePath = nextRoute.slice(dataStoreId.length + 1);
+            if (dataStoreIdRelativePath !== "") {
+                assert(references.referencedRoutes);
+                references.referencedRoutes.add(dataStoreIdRelativePath);
+                dataStoreEntryChanged = true;
+            }
+
+            // If this data store has not been visited yet, mark it as visited.
+            if (!references.visited) {
+                references.visited = true;
+                dataStoreEntryChanged = true;
+            }
+
+            // If the entry has changed, update it in the dataStoreReferencesMap.
+            if (dataStoreEntryChanged) {
+                dataStoreReferencesMap.set(dataStoreId, references);
+            }
+
+            // If this data store has been already visited, ignore it.
+            if (visited) {
+                continue;
+            }
+
+            // Get the routes referenced by this data store and add them to the referencedRoutesStack.
+            const referencedRoutes = this.getDataStoreReferencedRoutes(dataStoreId);
+            referencedRoutesStack.push(...referencedRoutes);
+        }
+
+        const deletedDataStores: string[] = [];
+        // Now we have a map of all the data stores that are referenced and the routes that are referenced in it.
+        // Iterate through all the data stores in this runtime and:
+        // 1. If they are not referneced, mark them for collection.
+        // 2. If they are referenced, pass the list of routes in them that are referenced so it can collect
+        //    unreferenced objects.
+        this.contexts.forEach((value: FluidDataStoreContext) => {
+            // Ignore the scheduler.
+            if (value.id === taskSchedulerId) {
+                return;
+            }
+
+            // If the data store does exists in the dataStoreReferencesMap, it is no referenced. Mark it for collection.
+            // Else, get the list of the referenced routes in it and ask it to collect the unreferenced objects.
+            if (!dataStoreReferencesMap.has(value.id)) {
+                deletedDataStores.push(value.id);
+                value.setReferenced(false);
+            } else {
+                const references = dataStoreReferencesMap.get(value.id);
+                assert(references);
+                value.setReferenced(true);
+                value.collectUnreferencedFluidObjects([...references.referencedRoutes]);
+            }
+        });
+        return deletedDataStores;
+    }
+
+    private getDataStoreReferencedRoutes(dataStoreId: string): string[] {
+        const dataStore = this.contexts.get(dataStoreId);
+        assert(dataStore);
+
+        return dataStore.getReferencedRoutes();
     }
 
     private processAttachMessage(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {
@@ -1507,7 +1634,7 @@ export class ContainerRuntime extends EventEmitter
                     sequenceNumber: message.sequenceNumber,
                     snapshot: attachMessage.snapshot ?? {
                         id: null,
-                        entries: [createAttributesBlob(pkg)],
+                        entries: [createAttributesBlob(pkg, false, true)],
                     },
                 }),
             pkg);

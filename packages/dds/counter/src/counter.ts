@@ -101,7 +101,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      *
      * @returns the snapshot of the current state of the counter
      */
-    public snapshot(): ITree {
+    protected snapshotCore(): ITree {
         // Get a serializable form of data
         const content: ICounterSnapshotFormat = {
             value: this.value,

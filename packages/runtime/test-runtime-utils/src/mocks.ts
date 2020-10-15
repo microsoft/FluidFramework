@@ -541,6 +541,12 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public reSubmit(content: any, localOpMetadata: unknown) {
         return;
     }
+
+    public getReferencedRoutes(): string[] {
+        return [];
+    }
+
+    public collectUnreferencedFluidObjects(referencedObject: string[]): void { }
 }
 
 /**

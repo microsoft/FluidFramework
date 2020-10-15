@@ -252,7 +252,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
     */
-    public snapshot(): ITree {
+    protected snapshotCore(): ITree {
         let currentSize = 0;
         let counter = 0;
         let headerBlob: IMapDataObjectSerializable = {};

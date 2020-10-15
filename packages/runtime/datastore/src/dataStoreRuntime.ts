@@ -567,8 +567,19 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                 // And then store the tree
                 return new TreeTreeEntry(key, snapshot);
             }));
-
         return entries;
+    }
+
+    public getReferencedRoutes(): string[] {
+        const referencedRoutes: string[] = [];
+        this.contexts.forEach((value: IChannelContext) => {
+            const routes = value.getReferencedRoutes();
+            referencedRoutes.push(...routes);
+        });
+        return referencedRoutes;
+    }
+
+    public collectUnreferencedFluidObjects(referencedObjectRoutes: string[]) {
     }
 
     public async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {

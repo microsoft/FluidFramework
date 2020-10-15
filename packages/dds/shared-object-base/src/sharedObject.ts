@@ -61,6 +61,12 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     private _isBoundToContext: boolean = false;
 
+    private _referencedRoutes: string[] = [];
+
+    public getReferencedRoutes(): string[] {
+        return this._referencedRoutes;
+    }
+
     /**
      * Gets the connection state
      * @returns The state of the connection
@@ -186,7 +192,17 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * {@inheritDoc (ISharedObject:interface).snapshot}
      */
-    public abstract snapshot(): ITree;
+    public snapshot(): ITree {
+        this.runtime.IFluidSerializer.startRecordingRoutes();
+
+        const snapshot: ITree = this.snapshotCore();
+
+        this._referencedRoutes = this.runtime.IFluidSerializer.serializedRoutes;
+
+        this.runtime.IFluidSerializer.stopRecordingRoutes();
+
+        return snapshot;
+    }
 
     /**
      * Set the owner of the object if it is an OwnedSharedObject
@@ -204,6 +220,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected abstract loadCore(
         branchId: string | undefined,
         services: IChannelStorageService): Promise<void>;
+
+    protected abstract snapshotCore(): ITree;
 
     /**
      * Allows the distributed data type to perform custom local loading.

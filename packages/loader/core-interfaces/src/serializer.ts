@@ -41,4 +41,10 @@ export interface IFluidSerializer extends IProvideFluidSerializer {
      * handles will be realized as part of the parse
      */
     parse(value: string): any;
+
+    serializedRoutes: string[];
+
+    startRecordingRoutes(): void;
+
+    stopRecordingRoutes(): void;
 }

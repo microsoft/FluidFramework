@@ -28,6 +28,8 @@ export interface IChannelContext {
     summarize(fullTree?: boolean): Promise<ISummarizeResult>;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
+
+    getReferencedRoutes(): string[];
 }
 
 export function createServiceEndpoints(

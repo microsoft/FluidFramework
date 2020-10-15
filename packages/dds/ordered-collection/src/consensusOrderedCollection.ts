@@ -184,7 +184,7 @@ export class ConsensusOrderedCollection<T = any>
         } while (!(await this.acquire(callback)));
     }
 
-    public snapshot(): ITree {
+    protected snapshotCore(): ITree {
         // If we are transitioning from unattached to attached mode,
         // then we are losing all checked out work!
         this.removeClient(idForLocalUnattachedClient);

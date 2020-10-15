@@ -412,7 +412,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return sharedCollection;
     }
 
-    public snapshot(): ITree {
+    protected snapshotCore(): ITree {
         const tree: ITree = {
             entries: [
                 {

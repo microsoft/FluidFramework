@@ -130,7 +130,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
      */
-    public snapshot(): ITree {
+    protected snapshotCore(): ITree {
         const tree: ITree = {
             entries: [
                 {

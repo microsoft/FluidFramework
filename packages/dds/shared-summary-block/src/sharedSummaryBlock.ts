@@ -97,7 +97,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
      */
-    public snapshot(): ITree {
+    protected snapshotCore(): ITree {
         const contentsBlob: ISharedSummaryBlockDataSerializable = {};
         this.data.forEach((value, key) => {
             contentsBlob[key] = value;

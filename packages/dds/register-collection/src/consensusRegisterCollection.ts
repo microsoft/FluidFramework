@@ -186,7 +186,7 @@ export class ConsensusRegisterCollection<T>
         return [...this.data.keys()];
     }
 
-    public snapshot(): ITree {
+    protected snapshotCore(): ITree {
         const dataObj: { [key: string]: ILocalData<T> } = {};
         this.data.forEach((v, k) => { dataObj[k] = v; });
 
