@@ -20,7 +20,7 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { ICompatLocalTestObjectProvider, generateTestWithCompat } from "./compatUtils";
+import { ICompatLocalTestObjectProvider, generateTestWithCompat, ITestContainerConfig } from "./compatUtils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
@@ -63,7 +63,12 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         };
 
         beforeEach(async () => {
-            const container = await args.makeTestContainer([[stringId, SharedString.getFactory()]]);
+            const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+            const testContainerConfig: ITestContainerConfig = {
+                testFluidDataObject: true,
+                registry,
+            };
+            const container = await args.makeTestContainer(testContainerConfig);
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             sharedString = await dataObject.getSharedObject<SharedString>(stringId);
             sharedString.insertText(0, "012");
@@ -175,10 +180,14 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         it("propagates", async () => {
             const stringId = "stringKey";
             const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+            const testContainerConfig: ITestContainerConfig = {
+                testFluidDataObject: true,
+                registry,
+            };
             opProcessingController = new OpProcessingController(args.deltaConnectionServer);
 
             // Create a Container for the first client.
-            const container1 = await args.makeTestContainer(registry);
+            const container1 = await args.makeTestContainer(testContainerConfig);
             const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
@@ -188,7 +197,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
 
             // Load the Container that was created by the first client.
-            const container2 = await args.loadTestContainer(registry);
+            const container2 = await args.loadTestContainer(testContainerConfig);
             const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
             opProcessingController.addDeltaManagers(
@@ -220,6 +229,11 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             [mapId, SharedMap.getFactory()],
             [stringId, SharedString.getFactory()],
         ];
+        const testContainerConfig: ITestContainerConfig = {
+            testFluidDataObject: true,
+            registry,
+        };
+
         let dataObject1: ITestFluidObject;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
@@ -227,17 +241,17 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
         beforeEach(async () => {
             // Create a Container for the first client.
-            const container1 = await args.makeTestContainer(registry);
+            const container1 = await args.makeTestContainer(testContainerConfig);
             dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            const container2 = await args.loadTestContainer(registry);
+            const container2 = await args.loadTestContainer(testContainerConfig);
             const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            const container3 = await args.loadTestContainer(registry);
+            const container3 = await args.loadTestContainer(testContainerConfig);
             const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
             sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
 
@@ -320,5 +334,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("SharedInterval", () => {
-    generateTestWithCompat(tests, { testFluidDataObject: true });
+    generateTestWithCompat(tests);
 });

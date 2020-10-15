@@ -68,7 +68,7 @@ const defaultCodeDetails: IFluidCodeDetails = {
  *   IServiceConfiguration
  *   ILocalDeltaConnectionServer
  */
-export class LocalTestObjectProvider<ChannelFactoryRegistryType, ContainerRuntimeOptionsType> {
+export class LocalTestObjectProvider<TestContainerConfigType> {
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _defaultUrlResolver: LocalResolver | undefined;
 
@@ -80,9 +80,7 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType, ContainerRuntim
      * @param _deltaConnectionServer - optional deltaConnectionServer to share documents between different provider
      */
     constructor(
-        private readonly createFluidEntryPoint: (
-            registry?: ChannelFactoryRegistryType,
-            runtimeOptions?: ContainerRuntimeOptionsType) => fluidEntryPoint,
+        private readonly createFluidEntryPoint: (testContainerConfig?: TestContainerConfigType) => fluidEntryPoint,
         private readonly serviceConfiguration?: Partial<IServiceConfiguration>,
         private _deltaConnectionServer?: ILocalDeltaConnectionServer | undefined,
     ) {
@@ -127,39 +125,27 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType, ContainerRuntim
 
     /**
      * Make a test loader
-     * @param registry - optional channel to factory pair used create the TestfluidObject with
-     * @param runtimeOptions - optional container runtime options
+     * @param testContainerConfig - optional configuring the test Container
      */
-    public makeTestLoader(
-        registry?: ChannelFactoryRegistryType,
-        runtimeOptions?: ContainerRuntimeOptionsType,
-    ) {
-        return this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(registry, runtimeOptions)]]);
+    public makeTestLoader(testContainerConfig?: TestContainerConfigType) {
+        return this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]]);
     }
 
     /**
      * Make a container using a default document id and code details
-     * @param registry - optional channel to factory pair used create the TestfluidObject with
-     * @param runtimeOptions - optional container runtime options
+     * @param testContainerConfig - optional configuring the test Container
      */
-    public async makeTestContainer(
-        registry?: ChannelFactoryRegistryType,
-        runtimeOptions?: ContainerRuntimeOptionsType,
-    ) {
-        const loader = this.makeTestLoader(registry, runtimeOptions);
+    public async makeTestContainer(testContainerConfig?: TestContainerConfigType) {
+        const loader = this.makeTestLoader(testContainerConfig);
         return createAndAttachContainer(defaultDocumentId, defaultCodeDetails, loader, this.urlResolver);
     }
 
     /**
      * Load a container using a default document id and code details
-     * @param registry - optional channel to factory pair used create the TestfluidObject with
-     * @param runtimeOptions - optional container runtime options
+     * @param testContainerConfig - optional configuring the test Container
      */
-    public async loadTestContainer(
-        registry?: ChannelFactoryRegistryType,
-        runtimeOptions?: ContainerRuntimeOptionsType,
-    ) {
-        const loader = this.makeTestLoader(registry, runtimeOptions);
+    public async loadTestContainer(testContainerConfig?: TestContainerConfigType) {
+        const loader = this.makeTestLoader(testContainerConfig);
         return loader.resolve({ url: defaultDocumentLoadUrl });
     }
 

@@ -44,18 +44,9 @@ export interface ICompatLocalTestObjectProvider {
      * Used to create a test Container.
      * In generateCompatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
-    makeTestContainer(
-        registry?: ChannelFactoryRegistry,
-        runtimeOptions?: IContainerRuntimeOptions,
-    ): Promise<IContainer | old.IContainer>,
-    loadTestContainer(
-        registry?: ChannelFactoryRegistry,
-        runtimeOptions?: IContainerRuntimeOptions,
-    ): Promise<IContainer | old.IContainer>,
-    makeTestLoader(
-        registry?: ChannelFactoryRegistry,
-        runtimeOptions?: IContainerRuntimeOptions,
-    ): ILoader | old.ILoader,
+    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer | old.IContainer>,
+    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer | old.IContainer>,
+    makeTestLoader(testContainerConfig?: ITestContainerConfig): ILoader | old.ILoader,
     deltaConnectionServer: ILocalDeltaConnectionServer
     documentServiceFactory: IDocumentServiceFactory | old.IDocumentServiceFactory,
     urlResolver: LocalResolver | old.LocalResolver,
@@ -63,12 +54,18 @@ export interface ICompatLocalTestObjectProvider {
 }
 
 export interface ICompatTestOptions {
-    /**
-     * Use TestFluidDataObject instead of PrimedDataStore
-     */
+    serviceConfiguration?: Partial<IServiceConfiguration>,
+}
+
+export interface ITestContainerConfig {
+    // TestFluidDataObject instead of PrimedDataStore
     testFluidDataObject?: boolean,
 
-    serviceConfiguration?: Partial<IServiceConfiguration>,
+    // And array of channel name and DDS factory pair to create on container creation time
+    registry?: ChannelFactoryRegistry,
+
+    // Container runtime options for the container instance
+    runtimeOptions?: IContainerRuntimeOptions,
 }
 
 // convert a channel factory registry for TestFluidDataStoreFactory to one with old channel factories
@@ -157,16 +154,14 @@ export const generateTest = (
     options: ICompatTestOptions = {},
 ) => {
     // Run with all current versions
-    const runtimeFactory = (
-        registry?: ChannelFactoryRegistry,
-        runtimeOptions?: IContainerRuntimeOptions,
-    ) => createRuntimeFactory(
-        TestDataObject.type,
-        options.testFluidDataObject
-            ? createTestFluidDataStoreFactory(registry)
-            : createPrimedDataStoreFactory(),
-        runtimeOptions,
-    );
+    const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+        createRuntimeFactory(
+            TestDataObject.type,
+            containerOptions?.testFluidDataObject
+                ? createTestFluidDataStoreFactory(containerOptions?.registry)
+                : createPrimedDataStoreFactory(),
+            containerOptions?.runtimeOptions,
+        );
 
     const localTestObjectProvider = new LocalTestObjectProvider(
         runtimeFactory,
@@ -186,16 +181,14 @@ export const generateCompatTest = (
 ) => {
     describe("compatibility", () => {
         describe("old loader, new runtime", function() {
-            const runtimeFactory = (
-                registry?: ChannelFactoryRegistry,
-                runtimeOptions?: IContainerRuntimeOptions,
-            ) => createRuntimeFactory(
-                TestDataObject.type,
-                options.testFluidDataObject
-                    ? createTestFluidDataStoreFactory(registry)
-                    : createPrimedDataStoreFactory(),
-                runtimeOptions,
-            ) as any as old.IRuntimeFactory;
+            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+                createRuntimeFactory(
+                    TestDataObject.type,
+                    containerOptions?.testFluidDataObject
+                        ? createTestFluidDataStoreFactory(containerOptions?.registry)
+                        : createPrimedDataStoreFactory(),
+                    containerOptions?.runtimeOptions,
+                ) as any as old.IRuntimeFactory;
 
             const localTestObjectProvider = new old.LocalTestObjectProvider(
                 runtimeFactory,
@@ -210,16 +203,14 @@ export const generateCompatTest = (
         });
 
         describe("new loader, old runtime", function() {
-            const runtimeFactory = (
-                registry?: ChannelFactoryRegistry,
-                runtimeOptions?: IContainerRuntimeOptions,
-            ) => createOldRuntimeFactory(
-                OldTestDataObject.type,
-                options.testFluidDataObject
-                    ? createOldTestFluidDataStoreFactory(registry)
-                    : createOldPrimedDataStoreFactory(),
-                runtimeOptions,
-            ) as any as IRuntimeFactory;
+            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+                createOldRuntimeFactory(
+                    OldTestDataObject.type,
+                    containerOptions?.testFluidDataObject
+                        ? createOldTestFluidDataStoreFactory(containerOptions?.registry)
+                        : createOldPrimedDataStoreFactory(),
+                    containerOptions?.runtimeOptions,
+                ) as any as IRuntimeFactory;
 
             const localTestObjectProvider = new LocalTestObjectProvider(
                 runtimeFactory,
@@ -234,16 +225,14 @@ export const generateCompatTest = (
         });
 
         describe("new ContainerRuntime, old DataStoreRuntime", function() {
-            const runtimeFactory = (
-                registry?: ChannelFactoryRegistry,
-                runtimeOptions?: IContainerRuntimeOptions,
-            ) => createRuntimeFactory(
-                OldTestDataObject.type,
-                options.testFluidDataObject
-                    ? createOldTestFluidDataStoreFactory(registry)
-                    : createOldPrimedDataStoreFactory(),
-                runtimeOptions,
-            );
+            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+                createRuntimeFactory(
+                    OldTestDataObject.type,
+                    containerOptions?.testFluidDataObject
+                        ? createOldTestFluidDataStoreFactory(containerOptions?.registry)
+                        : createOldPrimedDataStoreFactory(),
+                    containerOptions?.runtimeOptions,
+                );
 
             const localTestObjectProvider = new LocalTestObjectProvider(
                 runtimeFactory,

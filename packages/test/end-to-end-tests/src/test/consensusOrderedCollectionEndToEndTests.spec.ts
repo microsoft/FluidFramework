@@ -20,21 +20,25 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { generateTestWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
+import { generateTestWithCompat, ICompatLocalTestObjectProvider, ITestContainerConfig } from "./compatUtils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IFluidDataStoreRuntime, id?: string): T;
 }
 
+const mapId = "mapKey";
+const registry: ChannelFactoryRegistry = [
+    [mapId, SharedMap.getFactory()],
+    [undefined, ConsensusQueue.getFactory()],
+];
+const testContainerConfig: ITestContainerConfig = {
+    testFluidDataObject: true,
+    registry,
+};
+
 function generate(
     name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
     input: any[], output: any[]) {
-    const mapId = "mapKey";
-    const registry: ChannelFactoryRegistry = [
-        [mapId, SharedMap.getFactory()],
-        [undefined, ConsensusQueue.getFactory()],
-    ];
-
     const tests = (args: ICompatLocalTestObjectProvider) => {
         let opProcessingController: OpProcessingController;
         let dataStore1: ITestFluidObject;
@@ -45,17 +49,17 @@ function generate(
 
         beforeEach(async () => {
             // Create a Container for the first client.
-            const container1 = await args.makeTestContainer(registry);
+            const container1 = await args.makeTestContainer(testContainerConfig);
             dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            const container2 = await args.loadTestContainer(registry);
+            const container2 = await args.loadTestContainer(testContainerConfig);
             dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            const container3 = await args.loadTestContainer(registry);
+            const container3 = await args.loadTestContainer(testContainerConfig);
             const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
             sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 
@@ -336,7 +340,7 @@ function generate(
     };
 
     describe(name, () => {
-        generateTestWithCompat(tests, { testFluidDataObject: true });
+        generateTestWithCompat(tests);
     });
 }
 
