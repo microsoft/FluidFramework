@@ -79,7 +79,7 @@ export interface IContainerEvents extends IEvent {
      * @param opsBehind - number of ops this client is behind (if present).
      */
     (event: "connect", listener: (opsBehind?: number) => void);
-    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
+    (event: "contextDisposed" | "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
     (event: "disconnected" | "attaching" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
