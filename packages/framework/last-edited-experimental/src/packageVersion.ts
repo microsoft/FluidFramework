@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/last-edited-experimental";
-export const pkgVersion = "0.27.1";
+export const pkgVersion = "0.27.2";
