@@ -122,17 +122,6 @@ export interface IRef {
 }
 
 /**
- * Required params to create ref with config
- */
-export interface ICreateRefParamsExternal extends ICreateRefParams {
-    config?: IExternalWriterConfig;
-}
-
-interface IExternalWriterConfig {
-    shouldWriteToExternalStorage: boolean;
-}
-
-/**
  * Required params to create ref
  */
 export interface ICreateRefParams {
