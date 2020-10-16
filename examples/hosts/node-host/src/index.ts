@@ -4,7 +4,7 @@
  */
 
 import * as url from "url";
-import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
@@ -74,24 +74,21 @@ export async function start(): Promise<void> {
         url: documentUrl,
     };
 
-    const resolver = new ContainerUrlResolver(
+    const urlResolver = new ContainerUrlResolver(
         ordererEndpoint,
         hostToken,
         new Map([[documentUrl, resolved]]));
 
     // A code loader that installs the code package in a specified location (installPath).
     // Once installed, the loader returns an entry point to Fluid Container to invoke the code.
-    const nodeCodeLoader = new NodeCodeLoader(installPath, timeoutMS);
+    const codeLoader = new NodeCodeLoader(installPath, timeoutMS);
 
     // Construct the loader
-    const loader = new Loader(
-        resolver,
-        new RouterliciousDocumentServiceFactory(),
-        nodeCodeLoader,
-        {},
-        {},
-        new Map<string, IProxyLoaderFactory>(),
-    );
+    const loader = new Loader({
+        urlResolver,
+        documentServiceFactory: new RouterliciousDocumentServiceFactory(),
+        codeLoader,
+    });
 
     // Resolving the URL to its underlying Fluid document.
     const fluidDocument = await loader.resolve({ url: documentUrl });

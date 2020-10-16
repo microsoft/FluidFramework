@@ -258,7 +258,7 @@ export async function typeChunk(
             pingCounter.increment(latency);
         });
 
-        runtime.deltaManager.on("processTime", (time) => {
+        runtime.deltaManager.on("op", (_, time) => {
             processCounter.increment(time);
         });
 

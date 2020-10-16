@@ -13,7 +13,6 @@ import {
     IFluidPackage,
     IFluidCodeDetails,
     IFluidCodeResolver,
-    IProxyLoaderFactory,
     IResolvedFluidCodeDetails,
     isFluidBrowserPackage,
 } from "@fluidframework/container-definitions";
@@ -161,13 +160,11 @@ async function createWebLoader(
         wrapWithRuntimeFactoryIfNeeded(codeDetails.package as IFluidPackage, fluidModule),
     );
 
-    return new Loader(
+    return new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
-        { blockUpdateMarkers: true },
-        {},
-        new Map<string, IProxyLoaderFactory>());
+    });
 }
 
 export async function start(

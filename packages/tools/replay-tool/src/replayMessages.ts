@@ -9,7 +9,6 @@ import fs from "fs";
 import * as API from "@fluid-internal/client-api";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -272,7 +271,7 @@ class Document {
     private resolveC = () => { };
 
     private async loadContainer(
-        serviceFactory: IDocumentServiceFactory,
+        documentServiceFactory: IDocumentServiceFactory,
         containerDescription: string,
         errorHandler: (event: ITelemetryBaseEvent) => boolean,
     ): Promise<Container> {
@@ -287,7 +286,7 @@ class Document {
             url: `fluid-file://localhost:6000/fluid/${FileStorageDocumentName}`,
         };
 
-        const resolver = new ContainerUrlResolver(
+        const urlResolver = new ContainerUrlResolver(
             new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
         const chaincode = new API.Chaincode(() => {
             throw new Error("Can't close Document");
@@ -315,13 +314,13 @@ class Document {
 
         // Load the Fluid document
         this.docLogger = ChildLogger.create(new Logger(containerDescription, errorHandler));
-        const loader = new Loader(
-            resolver,
-            serviceFactory,
+        const loader = new Loader({
+            urlResolver,
+            documentServiceFactory,
             codeLoader,
-            options, {},
-            new Map<string, IProxyLoaderFactory>(),
-            this.docLogger);
+            options,
+            logger: this.docLogger,
+        });
         const container: Container = await loader.resolve({ url: resolved.url });
 
         assert(container.existing); // ReplayFileDeltaConnection.create() guarantees that

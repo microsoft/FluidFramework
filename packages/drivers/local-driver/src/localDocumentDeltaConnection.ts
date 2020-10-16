@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
@@ -96,8 +95,8 @@ export class LocalDocumentDeltaConnection
         return Promise.resolve(deltaConnection);
     }
 
-    private readonly emitter = new EventEmitter();
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
+    private readonly subscribedEvents = new Set<string>();
 
     public get clientId(): string {
         return this.details.clientId;
@@ -162,12 +161,14 @@ export class LocalDocumentDeltaConnection
         });
 
         this.on("newListener", (event, listener) => {
-            this.socket.on(
-                event,
-                (...args: any[]) => {
-                    this.emitter.emit(event, ...args);
-                });
-            this.emitter.on(event, listener);
+            if (!this.subscribedEvents.has(event)) {
+                this.subscribedEvents.add(event);
+                this.socket.on(
+                    event,
+                    (...args: any[]) => {
+                        this.emit(event, ...args);
+                    });
+                }
         });
     }
 
@@ -191,7 +192,7 @@ export class LocalDocumentDeltaConnection
         this.submitManager.drain();
     }
 
-    public disconnect() {
+    public close() {
         // Do nothing
     }
 

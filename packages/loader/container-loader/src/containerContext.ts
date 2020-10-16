@@ -135,7 +135,6 @@ export class ContainerContext implements IContainerContext {
 
     public get configuration(): IFluidConfiguration {
         const config: Partial<IFluidConfiguration> = {
-            canReconnect: this.container.canReconnect,
             scopes: this.container.scopes,
         };
         return config as IFluidConfiguration;

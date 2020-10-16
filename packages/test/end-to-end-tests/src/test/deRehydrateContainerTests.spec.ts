@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -29,6 +29,8 @@ import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/orde
 import { SharedCounter } from "@fluidframework/counter";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+
+const detachedContainerRefSeqNumber = 0;
 
 describe(`Dehydrate Rehydrate Container Test`, () => {
     const documentId = "deReHydrateContainerTest";
@@ -77,13 +79,11 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
-        return new Loader(
+        return new Loader({
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
     }
 
     const createPeerDataStore = async (
@@ -119,8 +119,10 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
         const protocolAttributes: IDocumentAttributes =
             JSON.parse(fromBase64ToUtf8(snapshotTree.trees[".protocol"].blobs[protocolAttributesBlobId]));
-        assert.strictEqual(protocolAttributes.sequenceNumber, 0, "Seq number should be 0");
-        assert.strictEqual(protocolAttributes.minimumSequenceNumber, 0, "Min Seq number should be 0");
+        assert.strictEqual(protocolAttributes.sequenceNumber, detachedContainerRefSeqNumber, "initial aeq #");
+        assert(
+            protocolAttributes.minimumSequenceNumber <= protocolAttributes.sequenceNumber,
+            "Min Seq # <= seq #");
 
         // Check for default dataStore
         const defaultDataStoreBlobId = snapshotTree.trees.default.blobs[".component"];
@@ -335,6 +337,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         // Now load the container from another loader.
         const urlResolver2 = new LocalResolver();
         const loader2 = createTestLoader(urlResolver2);
+        assert(rehydratedContainer.resolvedUrl);
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
 
@@ -378,6 +381,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         // Now load the container from another loader.
         const urlResolver2 = new LocalResolver();
         const loader2 = createTestLoader(urlResolver2);
+        assert(rehydratedContainer.resolvedUrl);
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
 

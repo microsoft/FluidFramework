@@ -14,7 +14,7 @@ export class LocalChannelStorageService implements IChannelStorageService {
 
     public async read(path: string): Promise<string> {
         const contents = this.readSync(path);
-        return contents !== undefined ? Promise.resolve(contents) : Promise.reject("Not found");
+        return contents !== undefined ? Promise.resolve(contents) : Promise.reject(new Error("Not found"));
     }
 
     public async contains(path: string): Promise<boolean> {

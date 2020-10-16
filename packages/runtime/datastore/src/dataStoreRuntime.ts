@@ -47,7 +47,12 @@ import {
     ISummaryTreeWithStats,
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { generateHandleContextPath, RequestParser, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import {
+    generateHandleContextPath,
+    RequestParser,
+    SummaryTreeBuilder,
+    FluidSerializer,
+} from "@fluidframework/runtime-utils";
 import {
     IChannel,
     IFluidDataStoreRuntime,
@@ -136,7 +141,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return this.dataStoreContext.containerRuntime.IFluidHandleContext;
     }
 
-    public get IFluidSerializer() { return this.dataStoreContext.containerRuntime.IFluidSerializer; }
+    private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
+    public get IFluidSerializer() { return this.serializer; }
 
     public get IFluidHandleContext() { return this; }
 
@@ -468,7 +474,9 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                     assert(this.pendingAttach.has(id), "Unexpected attach (local) channel OP");
                     this.pendingAttach.delete(id);
                 } else {
-                    assert(!this.contexts.has(id), "Unexpected attach channel OP");
+                    assert(!this.contexts.has(id), `Unexpected attach channel OP,
+                        is in pendingAttach set: ${this.pendingAttach.has(id)},
+                        is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}`);
 
                     // Create storage service that wraps the attach data
                     const origin = message.origin?.id ?? this.documentId;
