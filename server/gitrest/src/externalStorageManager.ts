@@ -14,7 +14,7 @@ export class ExternalStorageManager {
     }
 
     public async readAndSync(tenantId: string, documentId: string): Promise<void> {
-        if (!process.env.EXTERNAL_STORAGE_ENABLED || process.env.EXTERNAL_STORAGE_ENABLED == "false") {
+        if (process.env.EXTERNAL_STORAGE_ENABLED != "true") {
             winston.info(`External storage is not enabled`);
             return;
         }
@@ -35,7 +35,7 @@ export class ExternalStorageManager {
     }
 
     public async writeFile(tenantId: string, ref: string, sha: string, update: boolean): Promise<void> {
-        if (!process.env.EXTERNAL_STORAGE_ENABLED || process.env.EXTERNAL_STORAGE_ENABLED == "false") {
+        if (process.env.EXTERNAL_STORAGE_ENABLED != "true") {
             winston.info(`External storage is not enabled`);
             return;
         }

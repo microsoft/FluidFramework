@@ -42,7 +42,7 @@ async function getRef(
         const ref = await git.Reference.lookup(repository, refId, undefined);
         return refToIRef(ref);
     } catch (err) {
-        if (!process.env.EXTERNAL_STORAGE_ENABLED || process.env.EXTERNAL_STORAGE_ENABLED == "false") {
+        if (process.env.EXTERNAL_STORAGE_ENABLED != "true") {
             winston.info(`External storage is not enabled`);
             return;
         }
@@ -79,7 +79,7 @@ async function createRef(
     // tslint:disable-next-line
     winston.info(`CREATE REF!!!! ${repo}`);
 
-    if (!process.env.EXTERNAL_STORAGE_ENABLED || process.env.EXTERNAL_STORAGE_ENABLED == "false") {
+    if (process.env.EXTERNAL_STORAGE_ENABLED != "true") {
         winston.info(`External storage is not enabled`);
     } else {
         if (createParams.config.shouldWriteToExternalStorage) {
@@ -120,7 +120,7 @@ async function patchRef(
         patchParams.force ? 1 : 0,
         "");
     
-    if (!process.env.EXTERNAL_STORAGE_ENABLED || process.env.EXTERNAL_STORAGE_ENABLED == "false") {
+    if (process.env.EXTERNAL_STORAGE_ENABLED != "true") {
         winston.info(`External storage is not enabled`);
     } else {
          // tslint:disable-next-line

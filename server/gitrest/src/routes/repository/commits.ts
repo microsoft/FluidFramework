@@ -50,7 +50,7 @@ export async function getCommits(
 
         return Promise.all(detailedCommits);
     } catch (err) {
-        if (!process.env.EXTERNAL_STORAGE_ENABLED || process.env.EXTERNAL_STORAGE_ENABLED == "false") {
+        if (process.env.EXTERNAL_STORAGE_ENABLED != "true") {
             winston.info(`External storage is not enabled`);
             return;
         } else {
