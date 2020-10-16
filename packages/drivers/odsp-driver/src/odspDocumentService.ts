@@ -77,7 +77,6 @@ function writeLocalStorage(key: string, value: string) {
         localStorage.setItem(key, value);
         return true;
     } catch (e) {
-        debug(`Could not write to localStorage due to ${e}`);
         return false;
     }
 }
