@@ -278,23 +278,18 @@ export class Loader extends EventEmitter implements ILoader {
     public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
 
-        return Container.create(
+        return Container.createDetached(
             this,
-            {
-                codeDetails,
-                create: true,
-            });
+            codeDetails,
+            );
     }
 
     public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
 
-        return Container.create(
+        return Container.rehydrateDetachedFromSnapshot(
             this,
-            {
-                snapshot: JSON.parse(snapshot),
-                create: false,
-            });
+            JSON.parse(snapshot));
     }
 
     public async resolve(request: IRequest): Promise<Container> {

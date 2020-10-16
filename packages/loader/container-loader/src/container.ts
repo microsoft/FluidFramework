@@ -123,14 +123,6 @@ export enum ConnectionState {
     Connected,
 }
 
-export type DetachedContainerSource = {
-    codeDetails: IFluidCodeDetails,
-    create: true,
-} | {
-    snapshot: ISnapshotTree,
-    create: false,
-};
-
 /**
  * Waits until container connects to delta storage and gets up-to-date
  * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
@@ -189,7 +181,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static version = "^0.1.0";
 
     /**
-     * Load container.
+     * Load an existing container.
      */
     public static async load(
         id: string,
@@ -238,20 +230,32 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
     }
 
-    public static async create(
+    /**
+     * Create a new container in a detached state.
+     */
+    public static async createDetached(
         loader: Loader,
-        source: DetachedContainerSource,
+        codeDetails: IFluidCodeDetails,
     ): Promise<Container> {
         const container = new Container(
             loader,
             {});
+        await container.createDetached(codeDetails);
+        return container;
+    }
 
-        if (source.create) {
-            await container.createDetached(source.codeDetails);
-        } else {
-            await container.rehydrateDetachedFromSnapshot(source.snapshot);
-        }
-
+    /**
+     * Create a new container in a detached that is initialize with a
+     * snapshot from a previous detached container.
+     */
+    public static async rehydrateDetachedFromSnapshot(
+        loader: Loader,
+        snapshot: ISnapshotTree,
+    ): Promise<Container> {
+        const container = new Container(
+            loader,
+            {});
+        await container.rehydrateDetachedFromSnapshot(snapshot);
         return container;
     }
 
@@ -1031,7 +1035,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         };
     }
 
-    private async createDetached(source: IFluidCodeDetails) {
+    public async createDetached(source: IFluidCodeDetails) {
         const attributes: IDocumentAttributes = {
             branch: "",
             sequenceNumber: detachedContainerRefSeqNumber,
@@ -1072,7 +1076,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.loaded = true;
     }
 
-    private async rehydrateDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
+    public async rehydrateDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert.strictEqual(attributes.sequenceNumber, 0, "Seq number in detached container should be 0!!");
         this.attachDeltaManagerOpHandler(attributes);
