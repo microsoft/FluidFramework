@@ -324,7 +324,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         const translated = makeHandlesSerializable(
             message,
             this.runtime.IFluidSerializer,
-            this.runtime.IFluidHandleContext,
             this.handle);
         const metadata = this.client.peekPendingSegmentGroups(
             message.type === MergeTree.MergeTreeDeltaType.GROUP ? message.ops.length : 1);
@@ -507,7 +506,27 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             // catch up ops, and finishing the loading process
             const loadCatchUpOps = catchupOpsP
                 .then((msgs) => {
-                    msgs.forEach((m) => this.processMergeTreeMsg(m));
+                    msgs.forEach((m) => {
+                        const collabWindow = this.client.getCollabWindow();
+                        if (m.minimumSequenceNumber < collabWindow.minSeq
+                            || m.referenceSequenceNumber < collabWindow.minSeq
+                            || m.sequenceNumber <= collabWindow.minSeq
+                            || m.sequenceNumber <= collabWindow.currentSeq) {
+                            assert.fail(`Invalid catchup operations in snapshot: ${
+                                JSON.stringify({
+                                    op:{
+                                        seq: m.sequenceNumber,
+                                        minSeq: m.minimumSequenceNumber,
+                                        refSeq:m.referenceSequenceNumber,
+                                    },
+                                    collabWindow:{
+                                        seq: collabWindow.currentSeq,
+                                        minSeq: collabWindow.minSeq,
+                                    },
+                                })}`);
+                        }
+                        this.processMergeTreeMsg(m);
+                    });
                     this.loadFinished();
                 })
                 .catch((error) => {
@@ -580,8 +599,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         rawMessage: ISequencedDocumentMessage) {
         const message = parseHandles(
             rawMessage,
-            this.runtime.IFluidSerializer,
-            this.runtime.IFluidHandleContext);
+            this.runtime.IFluidSerializer);
 
         const ops: MergeTree.IMergeTreeDeltaOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {

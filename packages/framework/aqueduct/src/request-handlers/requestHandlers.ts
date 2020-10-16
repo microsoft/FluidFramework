@@ -56,7 +56,7 @@ export const mountableViewRequestHandler =
  */
 export const defaultRouteRequestHandler = (defaultRootId: string) => {
     return async (request: IRequest, runtime: IContainerRuntime) => {
-        const parser = new RequestParser(request);
+        const parser = RequestParser.create(request);
         if (parser.pathParts.length === 0) {
             return runtime.IFluidHandleContext.resolveHandle({
                 url: `/${defaultRootId}${parser.query}`,

@@ -25,14 +25,5 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         },
         true);
 
-    const contentCollection = db.collection("content");
-    await contentCollection.createIndex(
-        {
-            documentId: 1,
-            sequenceNumber: 1,
-            tenantId: 1,
-        },
-        false);
-
-    return new ScriptoriumLambdaFactory(mongoManager, opCollection, contentCollection);
+    return new ScriptoriumLambdaFactory(mongoManager, opCollection);
 }

@@ -9,6 +9,7 @@ import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
 
 function messageFromError(error: any) {
     if (typeof error?.message === "string") {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return error.message;
     }
     return `${error}`;
@@ -17,7 +18,7 @@ function messageFromError(error: any) {
 /**
  * Generic error
  */
-class GenericError extends CustomErrorWithProps implements IGenericError {
+export class GenericError extends CustomErrorWithProps implements IGenericError {
     readonly errorType = ContainerErrorType.genericError;
 
     constructor(
@@ -38,6 +39,7 @@ export function CreateContainerError(error: any): ICriticalContainerError {
     if (typeof error === "object" && error !== null) {
         const err = error;
         if (error.errorType !== undefined && error instanceof CustomErrorWithProps) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return err;
         }
 

@@ -8,9 +8,9 @@ import child_process from "child_process";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";
 import { FluidAppOdspUrlResolver } from "@fluid-internal/fluidapp-odsp-urlresolver";
+import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils";
 import * as odsp from "@fluidframework/odsp-driver";
 import { OdspUrlResolver } from "@fluidframework/odsp-urlresolver";
-import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-utils";
 import * as r11s from "@fluidframework/routerlicious-driver";
 import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
 import { getMicrosoftConfiguration } from "@fluidframework/tool-utils";
@@ -102,7 +102,7 @@ async function initializeR11s(server: string, pathname: string, r11sResolvedUrl:
     }
 
     console.log(`Connecting to r11s: tenantId=${tenantId} id:${documentId}`);
-    const tokenProvider = new r11s.TokenProvider(paramJWT);
+    const tokenProvider = new r11s.DefaultTokenProvider(paramJWT);
     return r11s.createDocumentService(
         r11sResolvedUrl,
         r11sResolvedUrl.endpoints.ordererUrl,

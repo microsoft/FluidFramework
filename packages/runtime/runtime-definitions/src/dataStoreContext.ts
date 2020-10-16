@@ -5,13 +5,13 @@
 
 import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
-import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidRouter,
     IProvideFluidHandleContext,
-    IProvideFluidSerializer,
     IFluidHandle,
+    IRequest,
+    IResponse,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -23,7 +23,6 @@ import {
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
-    ConnectionState,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -59,7 +58,6 @@ export enum FlushMode {
 export interface IContainerRuntimeBase extends
     EventEmitter,
     IProvideFluidHandleContext,
-    IProvideFluidSerializer,
     /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
     IProvideFluidDataStoreRegistry {
 
@@ -76,6 +74,11 @@ export interface IContainerRuntimeBase extends
      * Sets the flush mode for operations on the document.
      */
     setFlushMode(mode: FlushMode): void;
+
+    /**
+     * Executes a request against the container runtime
+     */
+    request(request: IRequest): Promise<IResponse>;
 
     /**
      * Submits a container runtime level signal to be sent to other clients.
@@ -120,7 +123,7 @@ export interface IContainerRuntimeBase extends
 
     getTaskManager(): Promise<ITaskManager>;
 
-    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 /**
@@ -182,9 +185,6 @@ export interface IFluidDataStoreChannel extends
      * it's new client ID when we are connecting or connected.
      */
     setConnectionState(connected: boolean, clientId?: string);
-
-    // Back-compat: supporting <= 0.16 data stores
-    changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
      * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.
@@ -354,7 +354,7 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
         createParam: CreateChildSummarizerNodeParam,
     ): CreateChildSummarizerNodeFn;
 
-    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

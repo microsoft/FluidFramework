@@ -6,12 +6,28 @@ Routerlicious.
 
 Historically, Gateway was used internally to test the Fluid Framework.
 
+## Testing changes under Gateway with other services running separately
+
+Prior to running locally, the .env file needs to be created and filled out. Please see sample.env to find the fields to configure.
+
+1. From ```./server/``` directory, run ```docker-compose up```. You may see some errors here, such as MongoDB port is not found. This is fine, Gateway doesn't need these services.
+2. From ```./server/gateway``` directory, run ```docker-compose build```.
+3. Then, in the same directory, run ```docker-compose -f docker-compose.server.yml up```. After a stream of messages, the output should settle on:
+```info: Listening on port 3000```
+4. Anytime you make changes to the server/client code, on the terminal running the command from step 3, simply quit out and repeat steps 2 & 3.
+
+### Server-side Secrets for ODSP Driver
+
+NOTE: If you are using any gateway routers that use the ODSP driver, i.e. "spo-df", "spo", and "spo-shared", you will need the appropriate client IDs and secrets locally available in your .env file. Please add them in here and NOT in config.json.
+Config.json is a file that is pushed to git and we DO NOT want these secrets pushed with any changes. Please only set the client IDs and secrets in the .env file which has already been added to .gitignore.
+
+
 ## Testing changes under gateway
 
 In addition to the standard install/build, also:
 * Run install and build under gateway (running build from a parent dir doesn't build gateway)
 * Compose a local instance of gateway in Docker
-* 
+*
 ````bash
 # From FluidFramework/server/gateway
 docker-compose build

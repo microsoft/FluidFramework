@@ -42,11 +42,11 @@ Creating a loader is a simple process
 ```typescript
 import { Loader } from "@fluidframework/container-loader";
 
-const loader = new Loader(
-    insecureResolver,
+const loader = new Loader({
+    urlResolver,
     documentServicesFactory,
     codeLoader,
-    { blockUpdateMarkers: true });
+});
 ```
 
 The loader takes in four parameters. The first is a set of host interfaces. These allow the loader to interact with

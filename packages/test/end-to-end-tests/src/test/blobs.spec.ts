@@ -14,6 +14,7 @@ import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createAndAttachContainer, createLocalLoader, TestContainerRuntimeFactory } from "@fluidframework/test-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 class TestComponent extends DataObject {
     public static readonly type = "@fluid-example/test-component";
@@ -94,7 +95,7 @@ describe("blobs", () => {
         const container2 = await loadContainer();
         const component2 = await requestFluidObject<TestComponent>(container2, "default");
 
-        const blobHandle = await component2._root.wait(testKey);
-        assert.strictEqual((await blobHandle.get()).toString("utf-8"), testString);
+        const blobHandle = await component2._root.wait<IFluidHandle<ArrayBufferLike>>(testKey);
+        assert.strictEqual(new TextDecoder().decode(await blobHandle.get()), testString);
     });
 });

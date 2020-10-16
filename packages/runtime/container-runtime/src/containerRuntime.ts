@@ -32,7 +32,6 @@ import {
 import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
-    IsoBuffer,
     Trace,
     unreachableCase,
 } from "@fluidframework/common-utils";
@@ -54,7 +53,6 @@ import {
     TreeTreeEntry,
 } from "@fluidframework/protocol-base";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
@@ -179,6 +177,7 @@ export interface IUploadedSummaryData {
 export interface IUnsubmittedSummaryData extends Partial<IGeneratedSummaryData>, Partial<IUploadedSummaryData> {
     readonly referenceSequenceNumber: number;
     readonly submitted: false;
+    readonly reason: "disconnected";
 }
 
 export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedSummaryData {
@@ -487,6 +486,7 @@ export class ContainerRuntime extends EventEmitter
         // Back-compat: <= 0.18 loader
         if (context.deltaManager.lastSequenceNumber === undefined) {
             Object.defineProperty(context.deltaManager, "lastSequenceNumber", {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 get: () => (context.deltaManager as any).referenceSequenceNumber,
             });
         }
@@ -538,6 +538,7 @@ export class ContainerRuntime extends EventEmitter
     }
 
     public get options(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.context.options;
     }
 
@@ -602,7 +603,8 @@ export class ContainerRuntime extends EventEmitter
     public nextSummarizerP?: Promise<Summarizer>;
     public nextSummarizerD?: Deferred<Summarizer>;
 
-    public readonly IFluidSerializer: IFluidSerializer = new FluidSerializer();
+    // Back compat: 0.28, can be removed in 0.29
+    public readonly IFluidSerializer: IFluidSerializer;
 
     public readonly IFluidHandleContext: IFluidHandleContext;
 
@@ -698,6 +700,7 @@ export class ContainerRuntime extends EventEmitter
         this.chunkMap = new Map<string, string[]>(chunks);
 
         this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
+        this.IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
 
         this.logger = ChildLogger.create(context.logger, undefined, {
             runtimeVersion: pkgVersion,
@@ -717,9 +720,8 @@ export class ContainerRuntime extends EventEmitter
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         const isSummarizerClient = this.clientDetails.type === summarizerClientType;
-        // Use runtimeOptions if provided, otherwise check localStorage, defaulting to true/enabled.
-        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode
-            ?? (typeof localStorage === "object" && localStorage?.fluidDisableSummarizerNode ? false : true);
+        // Use runtimeOptions if provided, otherwise default to true/enabled.
+        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode ?? true;
         const summarizerNode = SummarizerNode.createRoot(
             this.logger,
             // Summarize function to call when summarize is called
@@ -945,7 +947,10 @@ export class ContainerRuntime extends EventEmitter
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "_summarizer" || request.url === "/_summarizer") {
+        const parser = RequestParser.create(request);
+        const id = parser.pathParts[0];
+
+        if (id === "_summarizer" && parser.pathParts.length === 1) {
             return {
                 status: 200,
                 mimeType: "fluid/object",
@@ -953,7 +958,7 @@ export class ContainerRuntime extends EventEmitter
             };
         }
         if (this.requestHandler !== undefined) {
-            return this.requestHandler(request, this);
+            return this.requestHandler(parser, this);
         }
 
         return {
@@ -968,10 +973,14 @@ export class ContainerRuntime extends EventEmitter
      * @param request - Request made to the handler.
      */
     public async resolveHandle(request: IRequest): Promise<IResponse> {
-        const requestParser = new RequestParser(request);
+        const requestParser = RequestParser.create(request);
+        const id = requestParser.pathParts[0];
 
-        if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === this.blobManager.basePath) {
-            assert(requestParser.pathParts.length === 2 && !requestParser.query);
+        if (id === "_channel") {
+            return this.resolveHandle(requestParser.createSubRequest(1));
+        }
+
+        if (id === this.blobManager.basePath && requestParser.isLeaf(2)) {
             const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
             if (handle) {
                 return {
@@ -990,17 +999,9 @@ export class ContainerRuntime extends EventEmitter
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const dataStore = await this.getDataStore(requestParser.pathParts[0], wait);
+            const dataStore = await this.getDataStore(id, wait);
             const subRequest = requestParser.createSubRequest(1);
-            if (subRequest !== undefined) {
-                return dataStore.IFluidRouter.request(subRequest);
-            } else {
-                return {
-                    status: 200,
-                    mimeType: "fluid/object",
-                    value: dataStore,
-                };
-            }
+            return dataStore.IFluidRouter.request(subRequest);
         }
 
         return {
@@ -1079,13 +1080,6 @@ export class ContainerRuntime extends EventEmitter
         return { snapshot, state };
     }
 
-    // Back-compat: <= 0.17
-    public changeConnectionState(state: ConnectionState, clientId?: string) {
-        if (state !== ConnectionState.Connecting) {
-            this.setConnectionState(state === ConnectionState.Connected, clientId);
-        }
-    }
-
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
@@ -1109,7 +1103,7 @@ export class ContainerRuntime extends EventEmitter
                 context.setConnectionState(connected, clientId);
             } catch (error) {
                 this._logger.sendErrorEvent({
-                    eventName: "ChangeConnectionStateError",
+                    eventName: "SetConnectionStateError",
                     clientId,
                     fluidDataStore,
                 }, error);
@@ -1696,14 +1690,14 @@ export class ContainerRuntime extends EventEmitter
         try {
             await this.scheduleManager.pause();
 
-            const attemptData: IUnsubmittedSummaryData = {
+            const attemptData: Omit<IUnsubmittedSummaryData, "reason"> = {
                 referenceSequenceNumber: summaryRefSeqNum,
                 submitted: false,
             };
 
             if (!this.connected) {
                 // If summarizer loses connection it will never reconnect
-                return attemptData;
+                return { ...attemptData, reason: "disconnected" };
             }
 
             const trace = Trace.start();
@@ -1715,8 +1709,15 @@ export class ContainerRuntime extends EventEmitter
             };
 
             if (!this.connected) {
-                return { ...attemptData, ...generateData };
+                return { ...attemptData, ...generateData, reason: "disconnected" };
             }
+
+            // Ensure that lastSequenceNumber has not changed after pausing
+            const lastSequenceNumber = this.deltaManager.lastSequenceNumber;
+            assert(
+                lastSequenceNumber === summaryRefSeqNum,
+                `lastSequenceNumber changed while paused. ${lastSequenceNumber} !== ${summaryRefSeqNum}`,
+            );
 
             const handle = await this.storage.uploadSummaryWithContext(
                 treeWithStats.summary,
@@ -1747,8 +1748,16 @@ export class ContainerRuntime extends EventEmitter
             };
 
             if (!this.connected) {
-                return { ...attemptData, ...generateData, ...uploadData };
+                return { ...attemptData, ...generateData, ...uploadData, reason: "disconnected" };
             }
+
+            // We need the summary op's reference sequence number to match our summary sequence number
+            // Otherwise we'll get the wrong sequence number stamped on the summary's .protocol attributes
+            assert(
+                this.deltaManager.lastSequenceNumber === summaryRefSeqNum,
+                `lastSequenceNumber changed before the summary op could be submitted. `
+                    + `${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
+            );
 
             const clientSequenceNumber =
                 this.submitSystemMessage(MessageType.Summarize, summaryMessage);
@@ -1831,7 +1840,7 @@ export class ContainerRuntime extends EventEmitter
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
     }
 
-    public async uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>> {
+    public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         return this.blobManager.createBlob(blob);
     }
 

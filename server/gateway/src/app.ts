@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import path from "path";
-// tslint:disable-next-line: ordered-imports
+import _ from "lodash";
 import { getRandomName, IAlfredTenant } from "@fluidframework/server-services-client";
 import { ICache, MongoManager } from "@fluidframework/server-services-core";
 import bodyParser from "body-parser";
@@ -26,6 +26,8 @@ import favicon from "serve-favicon";
 import expiry from "static-expiry";
 import { v4 } from "uuid";
 import winston from "winston";
+import dotenv from "dotenv";
+
 import { AccountManager } from "./accounts";
 import { saveSpoTokens } from "./gatewayOdspUtils";
 import { IAlfred } from "./interfaces";
@@ -35,6 +37,8 @@ import * as gatewayRoutes from "./routes";
 const split = require("split");
 // Base endpoint to expose static files at
 const staticFilesEndpoint = "/public";
+
+dotenv.config();
 
 // Helper function to translate from a static files URL to the path to find the file
 // relative to the static assets directory
@@ -78,6 +82,7 @@ async function refreshUser(user: any, accountManager: AccountManager) {
     const accounts = await accountManager.getAccounts(user.sub);
     user.accounts = accounts;
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return user;
 }
 
@@ -142,15 +147,16 @@ export function create(
 
     // Static cache to help map from full to minified files
     const staticMinCache: { [key: string]: string } = {};
-
     const microsoftConfiguration = config.get("login:microsoft");
     passport.use(
         new passportOpenIdConnect.Strategy(
             {
                 authorizationURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize",
                 callbackURL: "/auth/callback",
-                clientID: microsoftConfiguration.clientId,
-                clientSecret: microsoftConfiguration.secret,
+                clientID: _.isEmpty(microsoftConfiguration.clientId)
+                    ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : microsoftConfiguration.clientId,
+                clientSecret: _.isEmpty(microsoftConfiguration.secret)
+                    ? process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET : microsoftConfiguration.secret,
                 issuer: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0",
                 passReqToCallback: true,
                 skipUserProfile: true,
@@ -182,8 +188,10 @@ export function create(
                     // I believe consumers should make sure we pull the right thing
                     authorizationURL: "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize",
                     callbackURL: "/connect/microsoft/callback",
-                    clientID: msaConfiguration.clientId,
-                    clientSecret: msaConfiguration.secret,
+                    clientID: _.isEmpty(msaConfiguration.clientId)
+                        ? process.env.MSA_CONFIGURATION_CLIENT_ID : msaConfiguration.clientId,
+                    clientSecret: _.isEmpty(msaConfiguration.secret)
+                        ? process.env.MSA_CONFIGURATION_CLIENT_SECRET : msaConfiguration.secret,
                     issuer: "https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0",
                     passReqToCallback: true,
                     skipUserProfile: true,

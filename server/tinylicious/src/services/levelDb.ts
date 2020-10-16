@@ -22,6 +22,7 @@ export class LevelDb extends EventEmitter implements IDb {
     }
 
     public async close(): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.db.close();
     }
 

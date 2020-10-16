@@ -27,7 +27,7 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import {
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
@@ -80,6 +80,7 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
     }
 
     public get(key: string): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.root.get(key);
     }
 
@@ -141,7 +142,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
             new Map([[ComponentName, Promise.resolve(this)]]),
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(this.defaultComponentId),
-                deprecated_innerRequestHandler,
+                innerRequestHandler,
             ),
         );
 

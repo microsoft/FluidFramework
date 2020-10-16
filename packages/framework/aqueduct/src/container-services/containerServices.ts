@@ -87,17 +87,13 @@ export const generateContainerServicesRequestHandler =
 
             const service = await factory.getService(runtime);
             const router = service.IFluidRouter;
-            let subRequest = request.createSubRequest(2);
+            const subRequest = request.createSubRequest(2);
             if (router) {
-                // If the service is also a router then we will route to it
-                if (!subRequest) {
-                    // If there is nothing left of the url we will request with empty path.
-                    subRequest = { url: "" };
-                }
-
                 return router.request(subRequest);
-            } else if (!router && subRequest) {
-                // If there is not service to route but a sub-route was requested then we will fail.
+            }
+
+            if (!request.isLeaf(2)) {
+                // If there is not terminating route but a sub-route was requested then we will fail.
                 return {
                     status: 400,
                     mimeType: "text/plain",

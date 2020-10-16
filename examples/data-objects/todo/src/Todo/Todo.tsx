@@ -85,7 +85,7 @@ export class Todo extends DataObject implements IFluidHTMLView {
         const component = await TodoItem.getFactory().createChildInstance(this.context, props);
 
         // Store the id of the component in our ids map so we can reference it later
-        this.todoItemsMap.set(component.url, component.handle);
+        this.todoItemsMap.set(component.handle.absolutePath, component.handle);
 
         this.emit("todoItemsChanged");
     }

@@ -15,7 +15,7 @@ export async function requestFluidObject<T = IFluidObject>(
     const response = await router.request(request);
 
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        return Promise.reject("Not found");
+        return Promise.reject(new Error("Not found"));
     }
 
     assert(response.value);

@@ -8,7 +8,7 @@
 //       for undo.
 
 import { EventEmitter } from "events";
-import { IRevertable } from "../src/types";
+import { IRevertible } from "../src/types";
 
 enum UndoRedoMode { None, Redo, Undo }
 
@@ -48,8 +48,8 @@ class Stack<T> {
 /**
  * Helper class for creating the Undo and Redo stacks
  */
-class UndoRedoStack extends Stack<Stack<IRevertable> | undefined> {
-    public push(item: Stack<IRevertable> | undefined) {
+class UndoRedoStack extends Stack<Stack<IRevertible> | undefined> {
+    public push(item: Stack<IRevertible> | undefined) {
         if (item !== undefined) {
             // eslint-disable-next-line @typescript-eslint/unbound-method
             item.itemPushedCallback = () => this.callItemPushedCallback;
@@ -161,7 +161,7 @@ export class UndoRedoStackManager {
         return true;
     }
 
-    public pushToCurrentOperation(revertible: IRevertable) {
+    public pushToCurrentOperation(revertible: IRevertible) {
         let currentStack: UndoRedoStack;
 
         switch (this.mode) {
@@ -183,7 +183,7 @@ export class UndoRedoStackManager {
         }
         const operationStack = currentStack.top();
         if (operationStack === undefined) {
-            currentStack.push(new Stack<IRevertable>(revertible));
+            currentStack.push(new Stack<IRevertible>(revertible));
         } else {
             operationStack.push(revertible);
         }
@@ -196,7 +196,7 @@ export class UndoRedoStackManager {
                 while (!redoOpertionStack.empty()) {
                     const redoOperation = redoOpertionStack.pop();
                     if (redoOperation !== undefined) {
-                        redoOperation.disgard();
+                        redoOperation.discard();
                     }
                 }
             }

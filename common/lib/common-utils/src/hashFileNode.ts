@@ -17,6 +17,7 @@ import { IsoBuffer } from "./bufferNode";
  */
 export async function hashFile(file: IsoBuffer): Promise<string> {
     const engine = new sha1();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return engine.update(file).digest("hex");
 }
 
@@ -31,6 +32,7 @@ export async function gitHashFile(file: IsoBuffer): Promise<string> {
     const size = file.byteLength;
     const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
     const engine = new sha1();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return engine.update(filePrefix)
         .update(file)
         .digest("hex");

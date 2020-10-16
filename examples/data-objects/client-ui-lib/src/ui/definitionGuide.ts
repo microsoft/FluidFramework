@@ -19,6 +19,7 @@ export class DefinitionGuide extends EventEmitter {
     }
 
     public getValue(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.value;
     }
 

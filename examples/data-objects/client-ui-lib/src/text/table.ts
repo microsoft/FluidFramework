@@ -851,6 +851,8 @@ export function parseTable(
     return table;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const rowIsMoribund = (rowMarker: IRowMarker) => rowMarker.properties && rowMarker.properties.moribund;
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const cellIsMoribund = (cellMarker: ICellMarker) => cellMarker.properties && cellMarker.properties.moribund;
