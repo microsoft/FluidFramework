@@ -28,7 +28,6 @@ import {
     HostStoragePolicyInternal,
     ISocketStorageDiscovery,
 } from "./contracts";
-import { debug } from "./debug";
 import { IOdspCache, startingUpdateUsageOpFrequency, updateUsageOpMultiplier } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
