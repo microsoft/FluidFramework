@@ -9,6 +9,7 @@ import * as debug from "debug";
 import * as nconf from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
+import { ExternalStorageManager } from "./externalStorageManager";
 
 /**
  * Normalize a port into a number, string, or false.
@@ -61,7 +62,8 @@ winston.configure({
  * Get port from environment and store in Express.
  */
 const port = normalizePort(process.env.PORT || "3000");
-const historian = app.create(provider);
+const externalStorageManager = new ExternalStorageManager(provider.get("externalStorage:endpoint"));
+const historian = app.create(provider, externalStorageManager);
 historian.set("port", port);
 
 /**

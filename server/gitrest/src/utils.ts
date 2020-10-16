@@ -72,6 +72,24 @@ export async function commitToICommit(commit: git.Commit): Promise<resources.ICo
     };
 }
 
+export async function treeEntryToITreeEntry(repository: git.Repository, entry: git.TreeEntry): Promise<any> {
+    let content;
+    if (entry.type() === GitObjectType.blob) {
+        const blob = await repository.getBlob(entry.id().tostrS());
+        content = blob.content().toString("base64");
+    }
+
+    return {
+        content,
+        mode: entry.filemode().toString(8),
+        path: entry.path(),
+        sha: entry.id().tostrS(),
+        size: 0,
+        type: GitObjectType[entry.type()],
+        url: "",
+    };
+}
+
 export function blobToIBlob(blob: git.Blob, owner: string, repo: string): resources.IBlob {
     const buffer = blob.content();
     const sha = blob.id().tostrS();
@@ -100,6 +118,7 @@ export class RepositoryManager {
         const isBare: any = 1;
         const repository = git.Repository.init(`${this.baseDir}/${repoPath}`, isBare);
         this.repositoryCache[repoPath] = repository;
+        winston.info("Created a new repo for owner " + owner + " reponame: " + name);
 
         return repository;
     }
@@ -111,7 +130,7 @@ export class RepositoryManager {
             const directory = `${this.baseDir}/${repoPath}`;
 
             if (!await exists(directory)) {
-                return Promise.reject("Repo does not exist");
+                return Promise.reject("Repo does not exist" + directory);
             }
 
             this.repositoryCache[repoPath] = git.Repository.open(directory);
