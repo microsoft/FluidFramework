@@ -103,12 +103,14 @@ function convertRegistry(registry: ChannelFactoryRegistry = []): old.ChannelFact
 
 export class TestDataObject extends DataObject {
     public static readonly type = "@fluid-example/test-dataStore";
+    public get _context() { return this.context; }
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
 
 export class OldTestDataObject extends old.DataObject {
     public static readonly type = "@fluid-example/test-dataStore";
+    public get _context() { return this.context; }
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
@@ -181,12 +183,14 @@ export const generateCompatTest = (
 ) => {
     describe("compatibility", () => {
         describe("old loader, new runtime", function() {
+            const dataStoreFactory = (containerOptions?: ITestContainerConfig) =>
+                containerOptions?.testFluidDataObject
+                    ? createTestFluidDataStoreFactory(containerOptions?.registry)
+                    : createPrimedDataStoreFactory();
             const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
                 createRuntimeFactory(
                     TestDataObject.type,
-                    containerOptions?.testFluidDataObject
-                        ? createTestFluidDataStoreFactory(containerOptions?.registry)
-                        : createPrimedDataStoreFactory(),
+                    dataStoreFactory(containerOptions),
                     containerOptions?.runtimeOptions,
                 ) as any as old.IRuntimeFactory;
 
