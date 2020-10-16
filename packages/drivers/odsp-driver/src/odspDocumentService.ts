@@ -357,6 +357,10 @@ export class OdspDocumentService implements IDocumentService {
         const connectWithAfd = async () => {
             assert(afdUrl !== undefined, "Tried to connect with AFD but no AFD url provided");
 
+            this.logger.sendTelemetryEvent({
+                eventName: "AfdConnectionAttempt",
+            });
+
             try {
                 const connection = await OdspDocumentDeltaConnection.create(
                     tenantId,
