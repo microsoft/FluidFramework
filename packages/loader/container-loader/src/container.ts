@@ -805,7 +805,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // which would futher spread the usage of the hasNullRuntime property
         // making it harder to deprecate.
         if (!this.hasNullRuntime()) {
-            this.emit("contextDisposed",codeDetails, this.context?.codeDetails);
+            this.emit("contextDisposed", codeDetails, this.context?.codeDetails);
         }
         if (!this.closed) {
             let snapshot: ISnapshotTree | undefined;
