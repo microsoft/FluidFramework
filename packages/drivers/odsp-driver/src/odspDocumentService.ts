@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 
@@ -319,14 +320,9 @@ export class OdspDocumentService implements IDocumentService {
         nonAfdUrl: string,
         afdUrl?: string,
     ): Promise<IDocumentDeltaConnection> {
-        const afdCacheValid = isAfdCacheValid();
-
-        // First use the AFD URL if we've logged a successful AFD connection in the cache - its presence in the cache
-        // means the non-AFD url has failed in the past, in which case we would prefer to skip doing another
-        // attempt->fail on the non-AFD.
-        if (afdCacheValid && afdUrl !== undefined) {
+        const connectWithNonAfd = async () => {
             this.logger.sendTelemetryEvent({
-                eventName: "AfdCacheValid",
+                eventName: "NonAfdConnectionAttempt",
             });
 
             try {
@@ -336,70 +332,31 @@ export class OdspDocumentService implements IDocumentService {
                     token,
                     io,
                     client,
-                    afdUrl,
+                    nonAfdUrl,
                     20000,
                     this.logger,
                 );
-                // Should we update the cache here?  And/or do we already?
                 this.logger.sendTelemetryEvent({
-                    eventName: "ConnectedWithAfdUrl",
+                    eventName: "ConnectedWithNonAfdUrl",
                 });
                 return connection;
             } catch (connectionError) {
-                // Clear cache since it failed
-                localStorage.removeItem(lastAfdConnectionTimeMsKey);
-                // Log failure, but then fall through to fallback attempts if possible
+                // Log before throwing
                 const canRetry = canRetryOnError(connectionError);
                 this.logger.sendTelemetryEvent(
                     {
-                        eventName: "FailedConnectionWithAfdUrl",
+                        eventName: "FailedConnectionWithNonAfdUrl",
                         canRetry,
                     },
                     connectionError,
                 );
-                if (!canRetry) {
-                    throw connectionError;
-                }
-            }
-        }
-
-        // If we don't have a successful AFD connection in the cache, prefer connecting with non-AFD.
-        this.logger.sendTelemetryEvent({
-            eventName: "NonAfdConnectionAttempt",
-        });
-
-        try {
-            const connection = await OdspDocumentDeltaConnection.create(
-                tenantId,
-                documentId,
-                token,
-                io,
-                client,
-                nonAfdUrl,
-                20000,
-                this.logger,
-            );
-            this.logger.sendTelemetryEvent({
-                eventName: "ConnectedWithNonAfdUrl",
-            });
-            return connection;
-        } catch (connectionError) {
-            // Log failure, but then fall through to fallback attempts if possible
-            const canRetry = canRetryOnError(connectionError);
-            this.logger.sendTelemetryEvent(
-                {
-                    eventName: "FailedConnectionWithNonAfdUrl",
-                    canRetry,
-                },
-                connectionError,
-            );
-            if (!canRetry) {
                 throw connectionError;
             }
-        }
+        };
 
-        // If the non-AFD connection attempt failed, try with AFD.
-        if (afdUrl !== undefined) {
+        const connectWithAfd = async () => {
+            assert(afdUrl !== undefined, "Tried to connect with AFD but no AFD url provided");
+
             try {
                 const connection = await OdspDocumentDeltaConnection.create(
                     tenantId,
@@ -419,7 +376,9 @@ export class OdspDocumentService implements IDocumentService {
                 });
                 return connection;
             } catch (connectionError) {
-                // Log failure, but then fall through to fallback attempts if possible
+                // Clear cache since it failed
+                localStorage.removeItem(lastAfdConnectionTimeMsKey);
+                // Log before throwing
                 const canRetry = canRetryOnError(connectionError);
                 this.logger.sendTelemetryEvent(
                     {
@@ -432,9 +391,41 @@ export class OdspDocumentService implements IDocumentService {
                 // We have no more fallback options, so just throw the error at this point.
                 throw connectionError;
             }
+        };
+
+        const afdCacheValid = isAfdCacheValid();
+
+        // First use the AFD URL if we've logged a successful AFD connection in the cache - its presence in the cache
+        // means the non-AFD url has failed in the past, in which case we would prefer to skip doing another
+        // attempt->fail on the non-AFD.
+        if (afdCacheValid && afdUrl !== undefined) {
+            this.logger.sendTelemetryEvent({
+                eventName: "AfdCacheValid",
+            });
+
+            try {
+                const connection = await connectWithAfd();
+                return connection;
+            } catch (connectionError) {
+                // If the AFD connection attempt failed, retry with non-AFD if possible
+                if (canRetryOnError(connectionError)) {
+                    return connectWithNonAfd();
+                }
+                throw connectionError;
+            }
         }
 
-        throw new Error("Failed to connect");
+        // If we don't have a successful AFD connection in the cache, prefer connecting with non-AFD.
+        try {
+            const connection = await connectWithNonAfd();
+            return connection;
+        } catch (connectionError) {
+            // Fall back to AFD if possible
+            if (canRetryOnError(connectionError) && afdUrl !== undefined) {
+                return connectWithAfd();
+            }
+            throw connectionError;
+        }
     }
 
     // Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
