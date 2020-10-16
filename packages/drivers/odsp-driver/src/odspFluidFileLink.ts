@@ -13,7 +13,7 @@ const fluidDriveIdParamName = "d";
 const fluidFileIdParamName = "f";
 const fluidDataStorePathParamName = "c";
 const fluidAppNameParamName = "a";
-const fluidContainerPackageNameParamName = "p"; 
+const fluidContainerPackageNameParamName = "p";
 
 /**
  * Transforms given Fluid data store locator into string that can be embedded into url

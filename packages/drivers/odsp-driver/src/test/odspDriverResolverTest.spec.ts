@@ -38,7 +38,7 @@ describe("Odsp Driver Resolver", () => {
         assert.equal(resolvedUrl.hashedDocumentId, "", "No doc id should be present");
         assert.equal(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be empty");
         assert.equal(
-            resolvedUrl.containerPackage?.packageName, undefined, "Container Package Name should be undefined");
+            resolvedUrl.codeHint?.containerPackageName, undefined, "Container Package Name should be undefined");
 
         const [, queryString] = request.url.split("?");
         const searchParams = new URLSearchParams(queryString);
@@ -74,7 +74,7 @@ describe("Odsp Driver Resolver", () => {
         assert.equal(resolvedUrl.hashedDocumentId, "", "No doc id should be present");
         assert.equal(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be empty");
         assert.equal(
-            resolvedUrl.containerPackage?.packageName, undefined, "Container Package Name should be undefined");
+            resolvedUrl.codeHint?.containerPackageName, undefined, "Container Package Name should be undefined");
 
         const [, queryString] = request.url.split("?");
         const searchParams = new URLSearchParams(queryString);
@@ -107,7 +107,7 @@ describe("Odsp Driver Resolver", () => {
         assert.equal(resolvedUrl.itemId, "", "Item id should be absent");
         assert.equal(resolvedUrl.hashedDocumentId, "", "No doc id should be present");
         assert.equal(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be empty");
-        assert.equal(resolvedUrl.containerPackage?.packageName, packageName, "Container Package Name should be equal");
+        assert.equal(resolvedUrl.codeHint?.containerPackageName, packageName, "Container Package Name should be equal");
 
         const [, queryString] = request.url.split("?");
         const searchParams = new URLSearchParams(queryString);
