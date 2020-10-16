@@ -387,6 +387,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     private readonly activeDeferred = new Deferred<void>();
     public readonly quorum = new MockQuorum();
 
+    public readonly extraSnapshotContract = undefined;
+
     public get absolutePath() {
         return `/${this.id}`;
     }
@@ -542,9 +544,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
-    /**
-     * NOTE: Search blob concept
-     */
     public registerExtraSnapshotContract(contract: ISnapshotContract): void {
         return;
     }

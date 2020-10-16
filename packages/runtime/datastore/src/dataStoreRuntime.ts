@@ -182,7 +182,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
     private extraSnapshotContract: ISnapshotContract | undefined;
 
-
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
@@ -559,7 +558,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         );
     }
 
-    // NOTE: Search blob concept!
     public registerExtraSnapshotContract(contract: ISnapshotContract) {
         this.extraSnapshotContract = contract;
     }
@@ -601,13 +599,9 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                 builder.addWithStats(key, channelSummary);
             }));
 
-        // NOTE: Search blob concept!
-        // If there is an extra contract to be executed, then do so and push the results onto the tree:
-        const summaryTree = builder.getSummaryTree().summary.tree
-
         if (this.extraSnapshotContract !== undefined) {
-            const extras = await this.extraSnapshotContract();
-            entries.push(...extras);
+            const extraSnapshotInfo = await this.extraSnapshotContract();
+            builder.addBlob("extraSnapshotContract", extraSnapshotInfo);
         }
 
         return builder.getSummaryTree();
@@ -825,3 +819,35 @@ export function summaryWaitFluidDataStoreMixin(
         }
     } as typeof FluidDataStoreRuntime;
 }
+
+// export function extraSnapshotFluidDataStoreMixin(
+//     Base: typeof FluidDataStoreRuntime,
+//     esc: ISnapshotContract)
+// {
+//     return class RuntimeWithExtraSnapshotContract extends Base {
+//         public async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {
+//             const builder = new SummaryTreeBuilder();
+
+//             // Iterate over each data store and ask it to snapshot
+//             await Promise.all(Array.from(this.contexts)
+//                 .filter(([key, _]) => {
+//                     const isAttached = this.isChannelAttached(key);
+//                     // We are not expecting local dds! Summary may not capture local state.
+//                     assert(isAttached, "Not expecting detached channels during summarize");
+//                     // If the object is registered - and we have received the sequenced op creating the object
+//                     // (i.e. it has a base mapping) - then we go ahead and snapshot
+//                     return isAttached;
+//                 }).map(async ([key, value]) => {
+//                     const channelSummary = await value.summarize(fullTree);
+//                     builder.addWithStats(key, channelSummary);
+//                 }));
+
+//             if (esc !== undefined) {
+//                 const extraSnapshotInfo = await esc();
+//                 builder.addBlob("extraSnapshotContract", extraSnapshotInfo);
+//             }
+
+//             return builder.getSummaryTree();
+//         }
+//     } as typeof FluidDataStoreRuntime;
+// }

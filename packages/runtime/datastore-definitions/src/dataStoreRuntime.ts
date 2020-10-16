@@ -73,11 +73,9 @@ export interface IFluidDataStoreRuntime extends
     readonly attachState: AttachState;
 
     /**
-     * NOTE: Search blob concept!
-     *
      * Optional support for performing an extra "contract" (some extra work) during snapshot.
      */
-    readonly extraSnapshotContract: ISnapshotContract | undefined;
+    // readonly extraSnapshotContract: ISnapshotContract | undefined;
 
     on(
         event: "disconnected" | "dispose" | "leader" | "notleader" | "attaching" | "attached",
@@ -146,8 +144,6 @@ export interface IFluidDataStoreRuntime extends
     raiseContainerWarning(warning: ContainerWarning): void;
 
     /**
-     * NOTE: Search blob concept!
-     *
      * Registers an additional contract between the runtime and the DataObject that will be executed on snapshot. The
      * `contract` variable itself makes no assumptions about what the contract (typically defined in a particular
      * DataObject's code) will do.

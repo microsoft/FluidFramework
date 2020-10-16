@@ -40,11 +40,6 @@ import {
 } from "@fluidframework/sequence";
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import {
-    ITreeEntry,
-    TreeEntry,
-    FileMode,
-} from "@fluidframework/protocol-definitions";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 
@@ -106,6 +101,10 @@ export class SharedTextRunner
 
     public getRoot(): ISharedMap {
         return this.rootView;
+    }
+
+    public getText(): string {
+        return this.sharedString.getText();
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -340,25 +339,13 @@ export async function instantiateDataStore(context: IFluidDataStoreContext) {
     });
 
     /**
-     * NOTE: Search blob concept!
-     *
      * A simple contract between shared-text and the runtime that will pipe the current state of the text box into the
      * contents of a new `TreeEntry` and return it as a singleton array.
      */
     const runnerP2 = SharedTextRunner.load(runtime, context);
     runtime.registerExtraSnapshotContract(async () => {
         const runner2 = await runnerP2;
-        const allText = runner2.ISharedString.getText();
-        const searchEntry: ITreeEntry = {
-            path: "searchblob",
-            type: TreeEntry.Blob,
-            value: {
-                contents: allText,
-                encoding: "utf-8",
-            },
-            mode: FileMode.File,
-        };
-        return [searchEntry];
+        return runner2.getText();
     });
 
     return runtime;
