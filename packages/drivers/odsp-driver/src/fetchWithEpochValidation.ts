@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { createOdspNetworkError, fluidEpochMismatchError, OdspErrorType } from "./odspError";
+import { createOdspNetworkError, fluidEpochMismatchError, OdspErrorType } from "@fluidframework/odsp-doclib-utils";
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, IPersistedCache, IPersistedCacheValue } from "./odspCache";
 
