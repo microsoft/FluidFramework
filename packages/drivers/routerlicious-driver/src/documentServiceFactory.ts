@@ -100,13 +100,19 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 `Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
-        const jwtToken = fluidResolvedUrl.tokens.jwt;
-        if (!jwtToken) {
-            throw new Error(`Token was not provided.`);
-        }
+        let tokenProvider: ITokenProvider;
 
         // Fall back to default provider if token provider is not provided.
-        const tokenProvider = this.tokenProvider ?? new DefaultTokenProvider(jwtToken);
+        if (this.tokenProvider === undefined) {
+            const jwtToken = fluidResolvedUrl.tokens.jwt;
+            if (!jwtToken) {
+                throw new Error(`No token or provider is present.`);
+            } else {
+                tokenProvider = new DefaultTokenProvider(jwtToken);
+            }
+        } else {
+            tokenProvider = this.tokenProvider;
+        }
 
         if (this.useDocumentService2) {
             return new DocumentService2(
