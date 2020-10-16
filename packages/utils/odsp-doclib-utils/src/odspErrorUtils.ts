@@ -13,7 +13,6 @@ import {
     NonRetryableError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
-import { AxiosResponse } from "axios";
 
 export const offlineFetchFailureStatusCode: number = 709;
 export const fetchFailureStatusCode: number = 710;
@@ -121,11 +120,12 @@ export function createOdspNetworkError(
  */
 export function throwOdspNetworkError(
     errorMessage: string,
-    response: AxiosResponse,
+    statusCode: number,
+    response?: Response,
 ) {
     const networkError = createOdspNetworkError(
-        response ? `${errorMessage}, msg = ${response.statusText}, type = ${response.data?.error}` : errorMessage,
-        response.data?.error === "invalid_grant" ? 401 : response.status,
+        response ? `${errorMessage}, msg = ${response.statusText}, type = ${response.type}` : errorMessage,
+        statusCode,
         undefined /* retryAfterSeconds */,
         undefined);
 

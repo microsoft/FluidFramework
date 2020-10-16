@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import Axios, { AxiosResponse, AxiosRequestConfig } from "axios";
+import fetch from "node-fetch";
 import {
     IOdspAuthRequestInfo,
     authRequestWithRetry,
@@ -12,42 +12,56 @@ import {
 export async function getAsync(
     url: string,
     authRequestInfo: IOdspAuthRequestInfo,
-): Promise<AxiosResponse> {
-    return authRequest(authRequestInfo, async (config) => Axios.get(url, config));
+): Promise<Response> {
+    return authRequest(authRequestInfo, async (config: RequestInit) => fetch(url, config) as Response);
 }
 
 export async function putAsync(
     url: string,
     authRequestInfo: IOdspAuthRequestInfo,
-): Promise<AxiosResponse> {
-    return authRequest(authRequestInfo, async (config) => Axios.put(url, undefined, config));
+): Promise<Response> {
+    return authRequest(authRequestInfo, async (config: RequestInit) => {
+        const putConfig = {
+            ...config,
+            method: "PUT",
+        };
+        return fetch(url, putConfig) as Response;
+    });
 }
 
 export async function postAsync(
     url: string,
     body: any,
     authRequestInfo: IOdspAuthRequestInfo,
-): Promise<AxiosResponse> {
-    return authRequest(authRequestInfo, async (config) => Axios.post(url, body, config));
+): Promise<Response> {
+    return authRequest(authRequestInfo, async (config: RequestInit) => {
+        const postConfig = {
+            ...config,
+            body,
+            method: "POST",
+        };
+        return fetch(url, postConfig) as Response;
+    });
 }
 
-export async function unauthPostAsync(url: string, body: any): Promise<AxiosResponse> {
-    return safeRequestCore(async () => Axios.post(url, body));
+export async function unauthPostAsync(url: string, body: any): Promise<Response> {
+    return safeRequestCore(async () => {
+        return fetch(url, { body, method: "POST" }) as Response;
+    });
 }
 
 async function authRequest(
     authRequestInfo: IOdspAuthRequestInfo,
-    requestCallback: (config: AxiosRequestConfig) => Promise<any>,
-): Promise<AxiosResponse> {
+    requestCallback: (config: RequestInit) => Promise<Response>,
+): Promise<Response> {
     return authRequestWithRetry(
         authRequestInfo,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        async (config) => safeRequestCore(async () => requestCallback(config)),
+        async (config: RequestInit) => safeRequestCore(async () => requestCallback(config)),
     );
 }
 
-async function safeRequestCore(requestCallback: () => Promise<AxiosResponse>): Promise<AxiosResponse> {
-    let response: AxiosResponse;
+async function safeRequestCore(requestCallback: () => Promise<Response>): Promise<Response> {
+    let response: Response;
     try {
         response = await requestCallback();
     } catch (error) {
