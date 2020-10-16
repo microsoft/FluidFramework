@@ -387,8 +387,6 @@ export class OdspDocumentService implements IDocumentService {
                     },
                     connectionError,
                 );
-
-                // We have no more fallback options, so just throw the error at this point.
                 throw connectionError;
             }
         };
@@ -407,7 +405,7 @@ export class OdspDocumentService implements IDocumentService {
                 const connection = await connectWithAfd();
                 return connection;
             } catch (connectionError) {
-                // If the AFD connection attempt failed, retry with non-AFD if possible
+                // Fall back to non-AFD if possible
                 if (canRetryOnError(connectionError)) {
                     return connectWithNonAfd();
                 }
