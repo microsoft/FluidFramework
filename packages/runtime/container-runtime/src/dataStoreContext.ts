@@ -57,15 +57,16 @@ export const currentSnapshotFormatVersion = "0.1";
 
 const attributesBlobKey = ".component";
 
-function createAttributes(pkg: readonly string[]): IFluidDataStoreAttributes {
+function createAttributes(pkg: readonly string[], isRootDataStore: boolean): IFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
     return {
         pkg: stringifiedPkg,
         snapshotFormatVersion: currentSnapshotFormatVersion,
+        isRootDataStore,
     };
 }
-export function createAttributesBlob(pkg: readonly string[]): ITreeEntry {
-    const attributes = createAttributes(pkg);
+export function createAttributesBlob(pkg: readonly string[], isRootDataStore: boolean): ITreeEntry {
+    const attributes = createAttributes(pkg, isRootDataStore);
     return new BlobTreeEntry(attributesBlobKey, JSON.stringify(attributes));
 }
 
@@ -77,6 +78,7 @@ export function createAttributesBlob(pkg: readonly string[]): ITreeEntry {
 export interface IFluidDataStoreAttributes {
     pkg: string;
     readonly snapshotFormatVersion?: string;
+    readonly isRootDataStore?: boolean;
 }
 
 interface ISnapshotDetails {
@@ -168,6 +170,10 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._attachState;
     }
 
+    public get isRootDataStore(): boolean {
+        return this._isRootDataStore;
+    }
+
     public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
         return this.registry;
     }
@@ -196,6 +202,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         public readonly isLocalDataStore: boolean,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         protected pkg?: readonly string[],
+        protected _isRootDataStore = false,
     ) {
         super();
 
@@ -375,7 +382,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const entries = await this.channel!.snapshotInternal(fullTree);
 
-        const attributesBlob = createAttributesBlob(pkg);
+        const attributesBlob = createAttributesBlob(pkg, this.isRootDataStore);
         entries.push(attributesBlob);
 
         return { entries, id: null };
@@ -394,13 +401,13 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         const channel = this.channel!;
         if (channel.summarize !== undefined) {
             const summary = await channel.summarize(fullTree);
-            const attributes: IFluidDataStoreAttributes = createAttributes(pkg);
+            const attributes: IFluidDataStoreAttributes = createAttributes(pkg, this.isRootDataStore);
             addBlobToSummary(summary, attributesBlobKey, JSON.stringify(attributes));
             return { ...summary, id: this.id };
         } else {
             // back-compat summarizerNode - remove this case
             const entries = await channel.snapshotInternal(fullTree);
-            const attributesBlob = createAttributesBlob(pkg);
+            const attributesBlob = createAttributesBlob(pkg, this.isRootDataStore);
             entries.push(attributesBlob);
             const summary = convertToSummaryTree({ entries, id: null });
             return { ...summary, id: this.id };
@@ -621,7 +628,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 
             if (tree !== null && tree.blobs[attributesBlobKey] !== undefined) {
                 // Need to rip through snapshot and use that to populate extraBlobs
-                const { pkg, snapshotFormatVersion } =
+                const { pkg, snapshotFormatVersion, isRootDataStore } =
                     await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[attributesBlobKey]);
 
                 let pkgFromSnapshot: string[];
@@ -639,6 +646,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                     throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
                 }
                 this.pkg = pkgFromSnapshot;
+                this._isRootDataStore = isRootDataStore ?? false;
             }
 
             this.details = {
@@ -670,6 +678,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
          * @deprecated 0.16 Issue #1635, #3631
          */
         public readonly createProps?: any,
+        isRootDataStore: boolean = false,
     ) {
         super(
             runtime,
@@ -682,7 +691,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             snapshotTree ? BindState.Bound : BindState.NotBound,
             true,
             bindChannel,
-            pkg);
+            pkg,
+            isRootDataStore);
         this.attachListeners();
     }
 
@@ -704,7 +714,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         const snapshot: ITree = { entries, id: null };
 
         assert(this.pkg !== undefined);
-        const attributesBlob = createAttributesBlob(this.pkg);
+        const attributesBlob = createAttributesBlob(this.pkg, this.isRootDataStore);
         snapshot.entries.push(attributesBlob);
 
         const message: IAttachMessage = {
@@ -746,6 +756,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
          * @deprecated 0.16 Issue #1635, #3631
          */
         createProps?: any,
+        isRootDataStore: boolean = false,
     ) {
         super(
             id,
@@ -757,7 +768,8 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
             createSummarizerNode,
             bindChannel,
             snapshotTree,
-            createProps);
+            createProps,
+            isRootDataStore);
     }
 }
 
