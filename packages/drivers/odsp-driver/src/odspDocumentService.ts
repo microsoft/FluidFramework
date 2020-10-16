@@ -337,7 +337,7 @@ export class OdspDocumentService implements IDocumentService {
                     this.logger,
                 );
                 this.logger.sendTelemetryEvent({
-                    eventName: "ConnectedWithNonAfdUrl",
+                    eventName: "NonAfdConnectionSuccess",
                 });
                 return connection;
             } catch (connectionError) {
@@ -345,7 +345,7 @@ export class OdspDocumentService implements IDocumentService {
                 const canRetry = canRetryOnError(connectionError);
                 this.logger.sendTelemetryEvent(
                     {
-                        eventName: "FailedConnectionWithNonAfdUrl",
+                        eventName: "NonAfdConnectionFail",
                         canRetry,
                     },
                     connectionError,
@@ -376,7 +376,7 @@ export class OdspDocumentService implements IDocumentService {
                 // we try to connect and immediately try AFD instead.
                 writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString());
                 this.logger.sendTelemetryEvent({
-                    eventName: "ConnectedWithAfdUrl",
+                    eventName: "AfdConnectionSuccess",
                 });
                 return connection;
             } catch (connectionError) {
@@ -386,7 +386,7 @@ export class OdspDocumentService implements IDocumentService {
                 const canRetry = canRetryOnError(connectionError);
                 this.logger.sendTelemetryEvent(
                     {
-                        eventName: "FailedConnectionWithAfdUrl",
+                        eventName: "AfdConnectionFail",
                         canRetry,
                     },
                     connectionError,
