@@ -16,6 +16,7 @@ import {
     IResolvedUrl,
     IDocumentStorageService,
 } from "@fluidframework/driver-definitions";
+import { canRetryOnError } from "@fluidframework/driver-utils";
 import {
     IClient,
     IErrorTrackingService,
@@ -62,18 +63,6 @@ function isAfdCacheValid(): boolean {
     }
 
     return false;
-}
-
-/**
- * Test if we deal with NetworkErrorBasic object and if it has enough information to make a call
- * If in doubt, allow retries
- *
- * @param error - error object
- */
-function canRetryOnError(error: any) {
-    // Always retry unless told otherwise.
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
 }
 
 /**
