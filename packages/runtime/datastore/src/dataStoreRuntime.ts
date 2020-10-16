@@ -569,13 +569,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                 return new TreeTreeEntry(key, snapshot);
             }));
 
-        // NOTE: Search blob concept!
-        // If there is an extra contract to be executed, then do so and push the results onto the tree:
-        if (this.extraSnapshotContract !== undefined) {
-            const extras = await this.extraSnapshotContract();
-            entries.push(...extras);
-        }
-
         return entries;
     }
 
@@ -595,6 +588,15 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                 const channelSummary = await value.summarize(fullTree);
                 builder.addWithStats(key, channelSummary);
             }));
+
+        // NOTE: Search blob concept!
+        // If there is an extra contract to be executed, then do so and push the results onto the tree:
+        const summaryTree = builder.getSummaryTree().summary.tree
+
+        if (this.extraSnapshotContract !== undefined) {
+            const extras = await this.extraSnapshotContract();
+            entries.push(...extras);
+        }
 
         return builder.getSummaryTree();
     }
