@@ -1035,7 +1035,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         };
     }
 
-    public async createDetached(source: IFluidCodeDetails) {
+    private async createDetached(source: IFluidCodeDetails) {
         const attributes: IDocumentAttributes = {
             branch: "",
             sequenceNumber: detachedContainerRefSeqNumber,
@@ -1076,7 +1076,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.loaded = true;
     }
 
-    public async rehydrateDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
+    private async rehydrateDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert.strictEqual(attributes.sequenceNumber, 0, "Seq number in detached container should be 0!!");
         this.attachDeltaManagerOpHandler(attributes);
