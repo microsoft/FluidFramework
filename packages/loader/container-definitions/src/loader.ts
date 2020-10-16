@@ -80,7 +80,7 @@ export interface IContainerEvents extends IEvent {
      */
     (event: "connect", listener: (opsBehind?: number) => void);
     (event: "contextDisposed" | "contextChanged",
-        listener: (codeDetails: IFluidCodeDetails, previousCodeDetails: IFluidCodeDetails) => void);
+        listener: (codeDetails: IFluidCodeDetails, previousCodeDetails: IFluidCodeDetails | undefined) => void);
     (event: "disconnected" | "attaching" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);

@@ -1239,7 +1239,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private getCodeDetailsFromQuorum(): IFluidCodeDetails {
         const quorum = this.protocolHandler.quorum;
 
-        const pkg = quorum.get("code");
+        let pkg = quorum.get("code");
+
+        // Back compat
+        if (pkg === undefined) {
+            pkg = quorum.get("code2");
+        }
 
         if (!isFluidCodeDetails(pkg)) {
             this.logger.send({
