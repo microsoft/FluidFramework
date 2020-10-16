@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { CreateNewHeader, ContainerPackageHeader } from "@fluidframework/driver-definitions";
+import { CreateNewHeader } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 
@@ -87,10 +87,9 @@ describe("Odsp Driver Resolver", () => {
         request = resolver.createCreateNewRequest(siteUrl, driveId, filePath, fileName, packageName);
 
         // Assert
-        assert.equal(request.headers?.[ContainerPackageHeader.containerPackage].packageName, packageName,
-                "Request should contain containerPackage.packageName as a header");
-        const url = `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(filePath)}`;
-        assert.equal(request.url, url, "Request url should not include packageName");
+        const url = `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(filePath,
+            )}&containerPackageName=${encodeURIComponent(packageName)}`;
+        assert.equal(request.url, url, "Request url should include packageName");
     });
 
     it("Resolved Request with package name", async () => {

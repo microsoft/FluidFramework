@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IRequest } from "@fluidframework/core-interfaces";
-import { CreateNewHeader, ContainerPackageHeader } from "@fluidframework/driver-definitions";
+import { CreateNewHeader } from "@fluidframework/driver-definitions";
 
 export function createOdspCreateContainerRequest(
     siteUrl: string,
@@ -12,16 +12,15 @@ export function createOdspCreateContainerRequest(
     fileName: string,
     containerPackageName?: string,
 ): IRequest {
+    let odspUrl = `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(filePath)}`;
+    if (containerPackageName) {
+        odspUrl += `&containerPackageName=${encodeURIComponent(containerPackageName)}`;
+    }
     const createNewRequest: IRequest = {
-        url: `${siteUrl}?driveId=${encodeURIComponent(
-            driveId,
-        )}&path=${encodeURIComponent(filePath)}`,
+        url: odspUrl,
         headers: {
             [CreateNewHeader.createNew]: {
                 fileName,
-            },
-            [ContainerPackageHeader.containerPackage]: {
-                packageName: containerPackageName,
             },
         },
     };

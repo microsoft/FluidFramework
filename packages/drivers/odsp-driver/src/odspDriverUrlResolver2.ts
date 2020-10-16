@@ -83,12 +83,8 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
                     odspFluidInfo.driveId,
                     odspFluidInfo.fileId,
                     odspFluidInfo.dataStorePath,
+                    odspFluidInfo.containerPackageName,
                 );
-
-                if (odspFluidInfo.containerPackageName) {
-                    request.headers = { ...{ containerPackage: { packageName: odspFluidInfo.containerPackageName } },
-                        ...request.headers };
-                }
             }
         } catch {
             // If the locator throws some error, then try to resolve the request as it is.

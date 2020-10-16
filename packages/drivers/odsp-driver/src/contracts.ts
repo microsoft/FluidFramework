@@ -39,7 +39,7 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
 
     codeHint?: {
         // containerPackageName is used for adding the package name to the request headers.
-        // This may be used for preloading the container package when loading fluid content.
+        // This may be used for preloading the container package when loading Fluid content.
         containerPackageName?: string
     }
 }
