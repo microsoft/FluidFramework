@@ -87,5 +87,12 @@ export interface IFluidCodeDetails {
     /**
      * Configuration details. This includes links to the package manager and base CDNs.
      */
-    readonly config: IFluidCodeDetailsConfig;
+    readonly config?: IFluidCodeDetailsConfig;
 }
+
+export const isFluidCodeDetails = (details: any): details is Readonly<IFluidPackage> =>{
+    const maybeCodeDetails = details as Partial<IFluidCodeDetails> | undefined;
+    return typeof maybeCodeDetails === "object"
+        && (typeof maybeCodeDetails?.package === "string" || isFluidPackage(maybeCodeDetails?.package))
+        && (maybeCodeDetails?.config === undefined || typeof maybeCodeDetails?.config === "object");
+};

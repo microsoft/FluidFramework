@@ -71,7 +71,7 @@ export class SemVerCdnCodeResolver implements IFluidCodeResolver {
     public async resolveCodeDetails(codeDetails: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
         const parsed = extractPackageIdentifierDetails(codeDetails.package);
 
-        const cdn = codeDetails.config[`@${parsed.scope}:cdn`] ?? codeDetails.config.cdn;
+        const cdn = codeDetails.config?.[`@${parsed.scope}:cdn`] ?? codeDetails.config?.cdn;
         const scopePath = parsed.scope !== undefined && parsed.scope.length > 0 ? `@${encodeURI(parsed.scope)}/` : "";
         const packageUrl = parsed.version !== undefined
             ? `${cdn}/${scopePath}${encodeURI(`${parsed.name}@${parsed.version}`)}`
