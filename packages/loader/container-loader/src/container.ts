@@ -389,7 +389,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager.clientDetails;
     }
 
-    /** @deprecated */
     public get chaincodePackage(): IFluidCodeDetails | undefined {
         return this._context?.codeDetails;
     }
