@@ -245,7 +245,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * Create a new container in a detached that is initialize with a
+     * Create a new container in a detached state that is initialized with a
      * snapshot from a previous detached container.
      */
     public static async rehydrateDetachedFromSnapshot(
