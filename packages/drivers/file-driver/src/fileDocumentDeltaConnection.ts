@@ -7,7 +7,6 @@ import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluid
 import {
     ConnectionMode,
     IConnected,
-    IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -17,7 +16,6 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { debug } from "./debug";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
 
 const MaxBatchDeltas = 2000;
@@ -118,7 +116,6 @@ export class ReplayFileDeltaConnection
             claims: Claims,
             clientId: "",
             existing: true,
-            initialContents: [],
             initialMessages: [],
             initialSignals: [],
             initialClients: [],
@@ -181,10 +178,6 @@ export class ReplayFileDeltaConnection
         return this.details.version;
     }
 
-    public get initialContents(): IContentMessage[] {
-        return this.details.initialContents;
-    }
-
     public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
     }
@@ -202,18 +195,14 @@ export class ReplayFileDeltaConnection
     }
 
     public submit(documentMessages: IDocumentMessage[]): void {
-        debug("dropping the outbound message");
-    }
-
-    public async submitAsync(documentMessages: IDocumentMessage[]): Promise<void> {
-        debug("dropping the outbound message and wait for response");
+        // ReplayFileDeltaConnection.submit() can't be called - client never sees its own join on,
+        // and thus can never move to sending ops.
+        throw new Error("ReplayFileDeltaConnection.submit() can't be called");
     }
 
     public async submitSignal(message: any) {
-        debug("dropping the outbound signal and wait for response");
     }
 
-    public disconnect() {
-        debug("no implementation for disconnect...");
+    public close() {
     }
 }

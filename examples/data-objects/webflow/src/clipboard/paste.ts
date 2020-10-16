@@ -21,6 +21,8 @@ export function paste(doc: FlowDocument, data: DataTransfer, position: number) {
         const root = document.createElement("span");
         root.innerHTML = content;
         pasteChildren(doc, root, position);
+        // TODO: fix this bug
+        // eslint-disable-next-line no-dupe-else-if
     } else if (content = data.getData(ClipboardFormat.html)) {
         debug("paste('text/plain'): %s", content);
         doc.insertText(position, content);

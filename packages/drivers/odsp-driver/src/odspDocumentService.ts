@@ -53,8 +53,6 @@ export class OdspDocumentService implements IDocumentService {
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
      * referred to as the "Push" token in SPO.
      * @param logger - a logger that can capture performance and diagnostic information
-     * @param storageFetchWrapper - if not provided FetchWrapper will be used
-     * @param deltasFetchWrapper - if not provided FetchWrapper will be used
      * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
      * @param cache - This caches response for joinSession.
      */
@@ -100,9 +98,8 @@ export class OdspDocumentService implements IDocumentService {
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also referred
      * to as the "Push" token in SPO.
      * @param logger - a logger that can capture performance and diagnostic information
-     * @param storageFetchWrapper - if not provided FetchWrapper will be used
-     * @param deltasFetchWrapper - if not provided FetchWrapper will be used
      * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
+     * @param cache - This caches response for joinSession.
      */
     constructor(
         public readonly odspResolvedUrl: IOdspResolvedUrl,
@@ -278,6 +275,7 @@ export class OdspDocumentService implements IDocumentService {
      */
     private canRetryOnError(error: any) {
         // Always retry unless told otherwise.
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
     }
 

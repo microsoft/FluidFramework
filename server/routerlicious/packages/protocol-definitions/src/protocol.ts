@@ -179,15 +179,6 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
     additionalContent: string;
 }
 
-export interface IContentMessage {
-
-    clientId: string;
-
-    clientSequenceNumber: number;
-
-    contents: string;
-}
-
 export interface ISignalMessage {
 
     clientId: string;

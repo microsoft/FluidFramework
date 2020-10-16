@@ -34,12 +34,11 @@ import {
     // ISnapshotContract,
 } from "@fluidframework/runtime-definitions";
 import {
-    IProvideSharedString,
     SharedNumberSequence,
     SharedObjectSequence,
     SharedString,
 } from "@fluidframework/sequence";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import {
     ITreeEntry,
@@ -61,7 +60,7 @@ async function getHandle(runtimeP: Promise<IFluidRouter>): Promise<IFluidHandle>
 
 export class SharedTextRunner
     extends EventEmitter
-    implements IFluidHTMLView, IFluidLoadable, IProvideSharedString {
+    implements IFluidHTMLView, IFluidLoadable {
     public static async load(
         runtime: FluidDataStoreRuntime,
         context: IFluidDataStoreContext,
@@ -79,9 +78,7 @@ export class SharedTextRunner
     public get IFluidLoadable() { return this; }
 
     public get IFluidHTMLView() { return this; }
-    public get ISharedString() { return this.sharedString; }
 
-    public readonly url = "/text";
     private sharedString: SharedString;
     private insightsMap: ISharedMap;
     private rootView: ISharedMap;
@@ -95,7 +92,7 @@ export class SharedTextRunner
         private readonly context: IFluidDataStoreContext,
     ) {
         super();
-        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "/text", this.runtime.objectsRoutingContext);
     }
 
     public render(element: HTMLElement) {
@@ -112,9 +109,13 @@ export class SharedTextRunner
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "" || request.url === "/") {
+        const pathParts = RequestParser.getPathParts(request.url);
+        if (pathParts.length === 0) {
             return { status: 200, mimeType: "fluid/object", value: this };
-        } else {
+        } else if (pathParts.length === 1 && pathParts[0].toLocaleLowerCase() === "sharedstring") {
+            return { status:200, mimeType: "fluid/sharedstring", value: this.sharedString };
+        }
+        else {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
     }

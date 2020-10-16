@@ -21,13 +21,11 @@ export class TenantInfoModal extends React.Component<ITenantInfoProps> {
 
     public render() {
         const { visible, record, onOk } = this.props;
-        /* eslint-disable @typescript-eslint/strict-boolean-expressions */
         const name = !record ? "" : record.name;
         const id = !record ? "" : record.id;
         const key = !record ? "" : record.key;
         const orderer = !record ? "" : record.orderer.url;
         const storage = !record ? "" : record.historianUrl;
-        /* eslint-enable @typescript-eslint/strict-boolean-expressions */
 
         return (
             <div>

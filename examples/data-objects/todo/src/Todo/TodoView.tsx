@@ -83,7 +83,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
         const todoItemComponents = this.state.todoItemComponents.map((todoItemComponent) => (
             <TodoItemView
                 todoItemModel={todoItemComponent}
-                key={todoItemComponent.url}
+                key={todoItemComponent.handle.absolutePath}
             />
         ));
 

@@ -30,7 +30,6 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
-    ConnectionState,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -101,8 +100,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 
     public get packagePath(): readonly string[] {
-        // The store must be loaded before the path is accessed.
-        assert(this.loaded);
         assert(this.pkg !== undefined);
         return this.pkg;
     }
@@ -112,6 +109,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 
     public get options(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this._containerRuntime.options;
     }
 
@@ -129,11 +127,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public get leader(): boolean {
         return this._containerRuntime.leader;
-    }
-
-    // Back-compat: supporting <= 0.16 stores
-    public get connectionState(): ConnectionState {
-        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
     public get snapshotFn(): (message: string) => Promise<void> {
@@ -320,16 +313,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         assert(this.connected === connected);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const channel: IFluidDataStoreChannel = this.channel!;
-
-        // Back-compat: supporting <= 0.16 stores
-        if (channel.setConnectionState) {
-            channel.setConnectionState(connected, clientId);
-        } else if (channel.changeConnectionState) {
-            channel.changeConnectionState(this.connectionState, clientId);
-        } else {
-            assert(false);
-        }
+        this.channel!.setConnectionState(connected, clientId);
     }
 
     public process(messageArg: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
@@ -574,7 +558,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         );
     }
 
-    public async uploadBlob(blob: Buffer): Promise<IFluidHandle<string>> {
+    public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         return this.containerRuntime.uploadBlob(blob);
     }
 }

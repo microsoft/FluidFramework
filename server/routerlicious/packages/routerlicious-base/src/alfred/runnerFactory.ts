@@ -86,8 +86,7 @@ export class AlfredResources implements utils.IResources {
         public mongoManager: core.MongoManager,
         public port: any,
         public documentsCollectionName: string,
-        public metricClientConfig: any,
-        public contentCollection: core.ICollection<any>) {
+        public metricClientConfig: any) {
         this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);
     }
 
@@ -178,16 +177,6 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const storage = new services.DocumentStorage(databaseManager, tenantManager, producer);
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
-
-        const contentCollection = db.collection("content");
-        await contentCollection.createIndex(
-            {
-                documentId: 1,
-                sequenceNumber: 1,
-                tenantId: 1,
-            },
-            false);
-
         const address = `${await utils.getHostIp()}:4000`;
         const nodeFactory = new LocalNodeFactory(
             os.hostname(),
@@ -243,8 +232,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             mongoManager,
             port,
             documentsCollectionName,
-            metricClientConfig,
-            contentCollection);
+            metricClientConfig);
     }
 }
 
@@ -261,7 +249,6 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.appTenants,
             resources.mongoManager,
             resources.producer,
-            resources.metricClientConfig,
-            resources.contentCollection);
+            resources.metricClientConfig);
     }
 }

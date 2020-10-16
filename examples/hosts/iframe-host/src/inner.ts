@@ -34,7 +34,7 @@ export async function runInner(divId: string) {
             codeResolver: new SemVerCdnCodeResolver(),
             documentServiceFactory,
             urlResolver: documentServiceFactory.urlResolver,
-            config: {},
+            options: {},
         });
 
     const url = documentServiceFactory.resolvedUrl.url;

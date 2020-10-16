@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IsoBuffer } from "@fluidframework/common-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
@@ -14,6 +14,7 @@ import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createAndAttachContainer, createLocalLoader, TestContainerRuntimeFactory } from "@fluidframework/test-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 class TestComponent extends DataObject {
     public static readonly type = "@fluid-example/test-component";
@@ -66,7 +67,7 @@ describe("blobs", () => {
         }));
 
         const component = await requestFluidObject<TestComponent>(container, "default");
-        const blob = await component._runtime.uploadBlob(Buffer.from("some random text"));
+        const blob = await component._runtime.uploadBlob(IsoBuffer.from("some random text"));
 
         component._root.set("my blob", blob);
 
@@ -80,13 +81,13 @@ describe("blobs", () => {
 
         const component1 = await requestFluidObject<TestComponent>(container1, "default");
 
-        const blob = await component1._runtime.uploadBlob(Buffer.from(testString));
+        const blob = await component1._runtime.uploadBlob(IsoBuffer.from(testString, "utf-8"));
         component1._root.set(testKey, blob);
 
         const container2 = await createContainer();
         const component2 = await requestFluidObject<TestComponent>(container2, "default");
 
-        const blobHandle = await component2._root.wait(testKey);
-        assert.strictEqual(fromBase64ToUtf8(await blobHandle.get()), testString);
+        const blobHandle = await component2._root.wait<IFluidHandle<ArrayBufferLike>>(testKey);
+        assert.strictEqual(new TextDecoder().decode(await blobHandle.get()), testString);
     });
 });

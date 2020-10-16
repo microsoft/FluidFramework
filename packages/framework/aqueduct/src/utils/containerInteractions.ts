@@ -24,6 +24,7 @@ export async function getDefaultObjectFromContainer<T = IFluidObject>(container:
         throw new Error(`Empty response from URL: "${url}"`);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return response.value;
 }
 
@@ -47,6 +48,7 @@ export async function getObjectWithIdFromContainer<T = IFluidObject>(id: string,
         throw new Error(`Empty response for ID: "${id}" from URL: "${url}"`);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return response.value;
 }
 
@@ -68,5 +70,6 @@ export async function getObjectFromContainer<T = IFluidObject>(path: string, con
         throw new Error(`Empty response for from URL: "${path}"`);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return response.value;
 }

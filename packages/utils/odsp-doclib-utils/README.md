@@ -1,4 +1,4 @@
-# @fluidframework/odsp-utils
+# @fluidframework/odsp-doclib-utils
 
 Shared ODSP utilities for tools.
 

@@ -23,14 +23,19 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
 
     endpoints: {
         snapshotStorageUrl: string;
+        attachmentPOSTStorageUrl: string;
+        attachmentGETStorageUrl: string;
     };
 
     // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
+    // eslint-disable-next-line @typescript-eslint/ban-types
     tokens: {};
 
     fileName: string;
 
     summarizer: boolean;
+
+    sharingLink?: string;
 }
 
 /**
@@ -229,4 +234,34 @@ export interface ICreateFileResponse {
     itemId: string;
     itemUrl: string;
     sequenceNumber: number;
+}
+
+export interface OdspDocumentInfo {
+    siteUrl: string;
+    driveId: string;
+    fileId: string;
+    dataStorePath: string;
+}
+
+export interface OdspFluidDataStoreLocator {
+    siteUrl: string;
+    driveId: string;
+    fileId: string;
+    dataStorePath: string;
+    appName?: string;
+}
+
+export enum SharingLinkHeader {
+    isSharingLink = "isSharingLink",
+    generateSharingLink = "generateSharingLink",
+}
+
+export interface ISharingLinkHeader {
+    [SharingLinkHeader.isSharingLink]: boolean;
+    [SharingLinkHeader.generateSharingLink]: boolean;
+}
+
+declare module "@fluidframework/core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IRequestHeader extends Partial<ISharingLinkHeader> { }
 }

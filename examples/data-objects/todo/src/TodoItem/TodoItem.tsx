@@ -39,6 +39,7 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
+// eslint-disable-next-line @typescript-eslint/ban-types
 export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements IFluidHTMLView {
     private text: SharedString;
     private innerIdCell: ISharedCell<IFluidHandle>;
@@ -100,7 +101,7 @@ export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements I
 
         waitForAttach(this.runtime)
             .then(async () => {
-                const url = await this.context.getAbsoluteUrl(this.url);
+                const url = await this.context.getAbsoluteUrl(this.handle.absolutePath);
                 this._absoluteUrl = url;
                 this.emit("stateChanged");
             })

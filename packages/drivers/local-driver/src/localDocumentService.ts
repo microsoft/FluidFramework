@@ -17,14 +17,14 @@ import { LocalDeltaStorageService, LocalDocumentDeltaConnection } from ".";
 export class LocalDocumentService implements api.IDocumentService {
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
-     * @param tokenProvider - token provider with a single token
+     * @param tokenProvider - token provider
      * @param tenantId - ID of tenant
      * @param documentId - ID of document
      */
     constructor(
         public readonly resolvedUrl: api.IResolvedUrl,
         private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
-        private readonly tokenProvider: socketStorage.TokenProvider,
+        private readonly tokenProvider: socketStorage.ITokenProvider,
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
@@ -54,10 +54,11 @@ export class LocalDocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStream(
         client: IClient): Promise<api.IDocumentDeltaConnection> {
+        const ordererToken = await this.tokenProvider.fetchOrdererToken();
         const documentDeltaConnection = await LocalDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
-            this.tokenProvider.token,
+            ordererToken.jwt,
             client,
             this.localDeltaConnectionServer.webSocketServer);
 
@@ -101,7 +102,7 @@ export class LocalDocumentService implements api.IDocumentService {
 export function createLocalDocumentService(
     resolvedUrl: api.IResolvedUrl,
     localDeltaConnectionServer: ILocalDeltaConnectionServer,
-    tokenProvider: socketStorage.TokenProvider,
+    tokenProvider: socketStorage.ITokenProvider,
     tenantId: string,
     documentId: string,
     documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>): api.IDocumentService {

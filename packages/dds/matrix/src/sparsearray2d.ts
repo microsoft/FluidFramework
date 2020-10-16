@@ -83,6 +83,7 @@ export class SparseArray2D<T> implements IMatrixReader<T | undefined | null>, IM
         return undefined;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     public get matrixProducer() { return undefined as any; }
 
     public setCell(row: number, col: number, value: T | undefined) {
@@ -218,6 +219,7 @@ export class SparseArray2D<T> implements IMatrixReader<T | undefined | null>, IM
 
     private getLevel<T>(parent: UA<UA<T>>, subKey: number) {
         const level = parent[subKey];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return level === undefined
             ? (parent[subKey] = new Array(256).fill(undefined))
             : level;

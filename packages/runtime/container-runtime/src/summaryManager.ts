@@ -356,7 +356,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         const clientId = this.latestClientId!;
         this.runningSummarizer = summarizer;
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         PerformanceEvent.timedExecAsync(
             this.logger,
             { eventName: "RunningSummarizer", attempt: this.startThrottler.attempts },

@@ -7,6 +7,12 @@ import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/data
 import { SharedObjectSequenceFactory } from "./sequenceFactory";
 import { SharedSequence } from "./sharedSequence";
 
+/**
+ * The SharedObjectSequence holds a sequence of serializable objects. Each object will be stored
+ * at a position within the sequence. See the
+ * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/sequence/README.md | sequence readme}
+ * for details on working with sequences.
+ */
 export class SharedObjectSequence<T> extends SharedSequence<T> {
     /**
      * Create a new shared object sequence

@@ -225,6 +225,7 @@ const unsafe = {
         return res as UntypedProduct<T>;
     },
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     restrict<T extends object, Props extends (keyof T)[]>(object: T, ...props: Props) {
         const res: Partial<Restrict<T, Props>> = {};
         for (const key of props) {
@@ -346,7 +347,6 @@ const tryUnionSubspaces = (() => {
             if (newDim === dense) {
                 // we are actually deleting the `differentDimension`, so the variable
                 // `deleted` must be there. Hence disabling the rule here.
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { [differentDimension]: deleted, ...leftBoundsWithoutDifferentDimension } = left.bounds;
                 return (cache.res = subspace<unknown>(leftBoundsWithoutDifferentDimension));
             }
@@ -705,7 +705,6 @@ function tryExceptSubspaces<T>(
         if (newDim === dense) {
             // we are actually deleting the `differentDimension`, so the variable
             // `deleted` must be there. Hence disabling the rule here.
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { [notContainedDimension]: deleted, ...leftBoundsWithoutDifferentDimension } = left.bounds;
             return subspace<unknown>(leftBoundsWithoutDifferentDimension);
         }

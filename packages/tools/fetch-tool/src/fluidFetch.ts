@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import util from "util";
-import { isSharepointURL, IOdspDriveItem } from "@fluidframework/odsp-utils";
+import { isSharepointURL, IOdspDriveItem } from "@fluidframework/odsp-doclib-utils";
 import { paramSaveDir, paramURL, parseArguments } from "./fluidFetchArgs";
 import { connectionInfo, fluidFetchInit } from "./fluidFetchInit";
 import { fluidFetchMessages } from "./fluidFetchMessages";

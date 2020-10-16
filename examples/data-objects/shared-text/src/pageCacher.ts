@@ -11,7 +11,9 @@ interface IWindow extends Window {
 // Extract the head and body HTML. Remove any <script> tag. And then wrap inside a basic HTML page.
 export function createCacheHTML(): void {
     const [bodyHTML, headHTML] = [document.body.innerHTML, document.head.innerHTML];
+    // eslint-disable-next-line unicorn/no-unsafe-regex
     const cleanBodyHTML = bodyHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+    // eslint-disable-next-line unicorn/no-unsafe-regex
     const cleanHeadHTML = headHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
     const pageHTML = craftCachePage(cleanHeadHTML, cleanBodyHTML);
     ((window as unknown) as IWindow).cachePage(pageHTML);

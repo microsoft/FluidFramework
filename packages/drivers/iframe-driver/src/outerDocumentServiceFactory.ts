@@ -32,7 +32,6 @@ const socketIOEvents = [
     "nack",
     "pong",
     "disconnect",
-    "op-content",
     "signal",
     "connect_error",
     "connect_timeout",
@@ -170,6 +169,9 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             createBlob: async (file) => {
                 return storage.createBlob(file);
             },
+            readBlob: async (blobId) => {
+                return storage.readBlob(blobId);
+            },
             getRawUrl: (blobId) => {
                 return storage.getRawUrl(blobId);
             },
@@ -205,7 +207,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             clientId: deltaStream.clientId,
             existing: deltaStream.existing,
             get initialClients() { return deltaStream.initialClients; },
-            get initialContents() { return deltaStream.initialContents; },
             get initialMessages() { return deltaStream.initialMessages; },
             get initialSignals() { return deltaStream.initialSignals; },
             maxMessageSize: deltaStream.maxMessageSize,

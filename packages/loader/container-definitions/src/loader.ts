@@ -9,7 +9,6 @@ import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
@@ -24,7 +23,7 @@ import { AttachState } from "./runtime";
  */
 export interface ICodeLoader {
     /**
-     * Loads the package specified by IPackage and returns a promise to its entry point exports.
+     * Loads the package specified by code details and returns a promise to its entry point exports.
      */
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
@@ -37,11 +36,11 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
     /**
      * A resolved version of the Fluid package. All Fluid browser file entries should be absolute urls.
      */
-    resolvedPackage: IFluidPackage;
+    readonly resolvedPackage: Readonly<IFluidPackage>;
     /**
      * If not undefined, this id will be used to cache the entry point for the code package
      */
-    resolvedPackageCacheId: string | undefined;
+    readonly resolvedPackageCacheId: string | undefined;
 }
 
 /**
@@ -85,7 +84,6 @@ export interface IContainerEvents extends IEvent {
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
-    (event: "pong" | "processTime", listener: (latency: number) => void);
 }
 
 /**
@@ -165,7 +163,7 @@ export interface ILoader extends IFluidRouter {
      * Creates a new container using the specified snapshot but in an unattached state. While unattached all
      * updates will only be local until the user explicitly attaches the container to a service provider.
      */
-    rehydrateDetachedContainerFromSnapshot(snapshot: ISnapshotTree): Promise<IContainer>;
+    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
 }
 
 /**

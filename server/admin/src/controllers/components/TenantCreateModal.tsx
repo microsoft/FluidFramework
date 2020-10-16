@@ -40,8 +40,8 @@ export class CreateTenantModal extends React.Component<ITenantCreateProps, ITena
 
     public render() {
         const { confirmLoading, visible, onCancel, onCreate, form } = this.props;
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         const { getFieldDecorator } = form;
-        /* eslint-disable @typescript-eslint/strict-boolean-expressions */
         return (
             <Modal
                 visible={visible}
@@ -126,7 +126,6 @@ export class CreateTenantModal extends React.Component<ITenantCreateProps, ITena
                 </Form>
             </Modal>
         );
-        /* eslint-enable @typescript-eslint/strict-boolean-expressions */
     }
 
     private onStorageInputChange(e) {

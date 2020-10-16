@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import path from "path";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
@@ -20,6 +19,7 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import * as path from "path-browserify";
 import { debug } from "./debug";
 import {
     IDirectory,
@@ -40,12 +40,10 @@ import {
 } from "./localValues";
 import { pkgVersion } from "./packageVersion";
 
-// path-browserify only supports posix functionality but doesn't have a path.posix to enforce it.  But we need to
-// enforce posix when using the normal node module on Windows (otherwise it will use path.win32).  Also including an
-// assert here to help protect in case path-browserify changes in the future, because we only want posix path
-// functionality.
-const posix = path.posix || path;
-assert(posix.sep === "/");
+// We use path-browserify since this code can run safely on the server or the browser.
+// We standardize on using posix slashes everywhere.
+const posix: typeof import("path").posix = path.posix;
+
 const snapshotFileName = "header";
 
 /**
@@ -254,6 +252,7 @@ function serializeDirectory(root: SubDirectory): ITree {
             }
             const result: ISerializableValue = {
                 type: value.type,
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 value: value.value && JSON.parse(value.value) as object,
             };
             if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
@@ -896,8 +895,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
-                    const translatedValue = this.runtime.IFluidSerializer.parse(
-                        JSON.stringify(op.value.value), this.runtime.IFluidHandleContext);
+                    const translatedValue = this.runtime.IFluidSerializer.parse(JSON.stringify(op.value.value));
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
                     this.emit("valueChanged", event, local, message);
@@ -1019,7 +1017,6 @@ class SubDirectory implements IDirectory {
         const serializableValue = makeSerializable(
             localValue,
             this.runtime.IFluidSerializer,
-            this.runtime.IFluidHandleContext,
             this.directory.handle);
 
         // Set the value locally.
@@ -1405,7 +1402,6 @@ class SubDirectory implements IDirectory {
         for (const [key, localValue] of this._storage) {
             const value = localValue.makeSerialized(
                 this.runtime.IFluidSerializer,
-                this.runtime.IFluidHandleContext,
                 this.directory.handle);
             const res: [string, ISerializedValue] = [key, value];
             yield res;
