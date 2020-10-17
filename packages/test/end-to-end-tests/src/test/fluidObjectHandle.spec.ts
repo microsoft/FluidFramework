@@ -55,7 +55,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         assert.equal(containerRuntime2.absolutePath, absolutePath, "The remote ContainerRuntime's path is incorrect");
     });
 
-    it("should generate the absolute path for FluidDataObjectRuntime correctly", () => {
+    it("should generate the absolute path for FluidDataObjectRuntime correctly", function() {
         // The expected absolute path for the FluidDataObjectRuntime.
         const absolutePath = `/${firstContainerObject1._runtime.id}`;
 
@@ -72,6 +72,8 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 fluidHandleContext12.absolutePath,
                 absolutePath,
                 "The remote FluidDataObjectRuntime's path is incorrect");
+        } else {
+            this.skip();
         }
     });
 
