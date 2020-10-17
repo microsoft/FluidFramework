@@ -62,12 +62,13 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
      */
     public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
         const requestToBeResolved = { headers: request.headers, url: request.url };
-        let sharingLink: string | undefined;
+        let sharingLinkP: Promise<string> | undefined;
+        const isSharingLink = requestToBeResolved.headers?.[SharingLinkHeader.isSharingLink];
         try {
             const url = new URL(request.url);
             // Check if the url is the sharing link.
-            if (request.headers?.[SharingLinkHeader.isSharingLink]) {
-                sharingLink = request.url.split("?")[0];
+            if (isSharingLink) {
+                sharingLinkP = Promise.resolve(request.url.split("?")[0]);
             }
             const odspFluidInfo = getLocatorFromOdspUrl(url);
             if (odspFluidInfo) {
@@ -84,14 +85,14 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
 
         const odspResolvedUrl = await resolveRequest(requestToBeResolved);
 
-        // Generate sharingLink only if specified in the request.
-        if (requestToBeResolved.headers?.[SharingLinkHeader.generateSharingLink]) {
-            await this.getShareLinkPromise(odspResolvedUrl)
-            .then((shareLink: string) => sharingLink = shareLink)
-            .catch(() => {});
+        // Generate sharingLink only if main url is not sharing link.
+        if (!isSharingLink) {
+            try {
+                sharingLinkP = this.getShareLinkPromise(odspResolvedUrl);
+            } catch (error) {}
         }
-        if (sharingLink) {
-            odspResolvedUrl.sharingLink = sharingLink;
+        if (sharingLinkP) {
+            odspResolvedUrl.sharingLinkP = sharingLinkP;
         }
         return odspResolvedUrl;
     }
@@ -101,8 +102,8 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
             throw new Error("Failed to get share link because necessary information is missing " +
                 "(e.g. siteUrl, driveId or itemId)");
         }
-        if (resolvedUrl.sharingLink !== undefined) {
-            return resolvedUrl.sharingLink;
+        if (resolvedUrl.sharingLinkP !== undefined) {
+            return resolvedUrl.sharingLinkP;
         }
         const newLinkPromise = getShareLink(
             this.getSharingLinkToken,
