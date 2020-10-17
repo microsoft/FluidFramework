@@ -8,8 +8,9 @@
   "author": "Microsoft",
   "main": "dist/index.js",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:lint",
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc",
+    "build:genver": "gen-version",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",

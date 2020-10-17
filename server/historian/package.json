@@ -6,8 +6,9 @@
   "license": "MIT",
   "author": "Microsoft",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:lint",
+    "build": "npm run build:genver && npm run build:compile && npm run lint",
     "build:compile": "lerna run build:compile --stream",
+    "build:genver": "lerna run build:genver --stream --parallel",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "postinstall": "npm run postinstall:lerna",
     "lint": "lerna run lint --no-sort --stream",
