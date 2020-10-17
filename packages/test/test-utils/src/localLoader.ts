@@ -15,6 +15,7 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
+import { OpProcessingController } from "./opProcessingController";
 
 /**
  * Creates a loader with the given package entries and a delta connection server.
@@ -80,6 +81,7 @@ const defaultCodeDetails: IFluidCodeDetails = {
 export class LocalTestObjectProvider<TestContainerConfigType> {
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _defaultUrlResolver: LocalResolver | undefined;
+    private _opProcessingController: OpProcessingController | undefined;
 
     /**
      * Create a set of object to
@@ -121,6 +123,13 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
         return this._defaultUrlResolver;
     }
 
+    get opProcessingController() {
+        if (!this._opProcessingController) {
+            this._opProcessingController = new OpProcessingController(this.deltaConnectionServer);
+        }
+        return this._opProcessingController;
+    }
+
     private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         const codeLoader = new LocalCodeLoader(packageEntries);
         return new Loader({
@@ -144,7 +153,10 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
      */
     public async makeTestContainer(testContainerConfig?: TestContainerConfigType) {
         const loader = this.makeTestLoader(testContainerConfig);
-        return createAndAttachContainer(defaultDocumentId, defaultCodeDetails, loader, this.urlResolver);
+        const container =
+            await createAndAttachContainer(defaultDocumentId, defaultCodeDetails, loader, this.urlResolver);
+        this.opProcessingController.addDeltaManagers(container.deltaManager);
+        return container;
     }
 
     /**
@@ -153,7 +165,9 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
      */
     public async loadTestContainer(testContainerConfig?: TestContainerConfigType) {
         const loader = this.makeTestLoader(testContainerConfig);
-        return loader.resolve({ url: defaultDocumentLoadUrl });
+        const container = await loader.resolve({ url: defaultDocumentLoadUrl });
+        this.opProcessingController.addDeltaManagers(container.deltaManager);
+        return container;
     }
 
     /**
@@ -164,5 +178,6 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
         await this._deltaConnectionServer?.webSocketServer.close();
         this._deltaConnectionServer = undefined;
         this._documentServiceFactory = undefined;
+        this._opProcessingController = undefined;
     }
 }

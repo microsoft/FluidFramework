@@ -16,7 +16,6 @@ import {
     SharedString,
 } from "@fluidframework/sequence";
 import {
-    OpProcessingController,
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
@@ -50,8 +49,6 @@ const assertIntervalsHelper = (
 };
 
 const tests = (args: ICompatLocalTestObjectProvider) => {
-    let opProcessingController: OpProcessingController;
-
     describe("one client", () => {
         const stringId = "stringKey";
 
@@ -73,9 +70,6 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             sharedString = await dataObject.getSharedObject<SharedString>(stringId);
             sharedString.insertText(0, "012");
             intervals = await sharedString.getIntervalCollection("intervals").getView();
-
-            opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-            opProcessingController.addDeltaManagers(dataObject.runtime.deltaManager);
         });
 
         it("replace all is included", async () => {
@@ -171,7 +165,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                     assertIntervals([{ start: 0, end: 2 }]);
                 }
 
-                await opProcessingController.process();
+                await args.opProcessingController.process();
             }
         });
     });
@@ -184,7 +178,6 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 testFluidDataObject: true,
                 registry,
             };
-            opProcessingController = new OpProcessingController(args.deltaConnectionServer);
 
             // Create a Container for the first client.
             const container1 = await args.makeTestContainer(testContainerConfig);
@@ -200,11 +193,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             const container2 = await args.loadTestContainer(testContainerConfig);
             const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
-            opProcessingController.addDeltaManagers(
-                dataObject1.runtime.deltaManager,
-                dataObject2.runtime.deltaManager);
-
-            await opProcessingController.process();
+            await args.opProcessingController.process();
 
             const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
             const intervals2 = await sharedString2.getIntervalCollection("intervals").getView();
@@ -216,7 +205,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             sharedString2.insertText(4, "x");
             assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
 
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
         });
     });
@@ -254,18 +243,12 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             const container3 = await args.loadTestContainer(testContainerConfig);
             const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
             sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
-
-            opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-            opProcessingController.addDeltaManagers(
-                dataObject1.runtime.deltaManager,
-                dataObject2.runtime.deltaManager,
-                dataObject3.runtime.deltaManager);
         });
 
         // This functionality is used in Word and FlowView's "add comment" functionality.
         it("Can store shared objects in a shared string's interval collection via properties", async () => {
             sharedMap1.set("outerString", SharedString.create(dataObject1.runtime).handle);
-            await opProcessingController.process();
+            await args.opProcessingController.process();
 
             const outerString1 = await sharedMap1.get<IFluidHandle<SharedString>>("outerString").get();
             const outerString2 = await sharedMap2.get<IFluidHandle<SharedString>>("outerString").get();
@@ -277,7 +260,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             outerString1.insertText(0, "outer string");
 
             const intervalCollection1 = outerString1.getIntervalCollection("comments");
-            await opProcessingController.process();
+            await args.opProcessingController.process();
 
             const intervalCollection2 = outerString2.getIntervalCollection("comments");
             const intervalCollection3 = outerString3.getIntervalCollection("comments");
@@ -294,7 +277,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             const nestedMap = SharedMap.create(dataObject1.runtime);
             nestedMap.set("nestedKey", "nestedValue");
             intervalCollection1.add(8, 9, IntervalType.SlideOnRemove, { story: nestedMap.handle });
-            await opProcessingController.process();
+            await args.opProcessingController.process();
 
             const serialized1 = intervalCollection1.serializeInternal();
             const serialized2 = intervalCollection2.serializeInternal();

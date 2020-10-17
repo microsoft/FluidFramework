@@ -231,9 +231,16 @@ export class OpProcessingController {
      * Pauses the inbound and outbound queues of all the delta managers in our collection.
      */
     private async pauseAllDeltaManagerQueues() {
+        console.log("pausing");
+        const p: Promise<void>[] = [];
+
         for (const deltaManager of this.deltaManagers) {
-            await deltaManager.inbound.pause();
-            await deltaManager.outbound.pause();
+            p.push(deltaManager.inbound.pause());
+            p.push(deltaManager.outbound.pause());
         }
+
+        await Promise.all(p);
+        console.log("done");
+        return;
     }
 }

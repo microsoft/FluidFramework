@@ -85,6 +85,11 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public async pause(): Promise<void> {
+        const e = { stack: "" };
+        // eslint-disable-next-line dot-notation
+        const c = Error["captureStackTrace"];
+        c(e);
+        console.log("pause", e.stack);
         this.userPause = true;
         // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
@@ -94,6 +99,11 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public resume(): void {
+        const e = { stack: "" };
+        // eslint-disable-next-line dot-notation
+        const c = Error["captureStackTrace"];
+        c(e);
+        console.log("resume", e.stack);
         this.userPause = false;
         if (!this.paused) {
             this.ensureProcessing();
