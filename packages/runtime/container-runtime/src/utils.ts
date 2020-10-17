@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Buffer } from "buffer";
+import { IsoBuffer } from "@fluidframework/common-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ISummarizeResult } from "@fluidframework/runtime-definitions";
@@ -18,7 +18,7 @@ export function convertSnapshotToSummaryTree(snapshotTree: ISnapshotTree): ISumm
         }
     }
     for (const [key, value] of Object.entries(blobMapFinal)) {
-        const decoded = Buffer.from(value, "base64").toString();
+        const decoded = IsoBuffer.from(value, "base64").toString();
         builder.addBlob(key, decoded);
     }
     for (const [key, tree] of Object.entries(snapshotTree.trees)) {
