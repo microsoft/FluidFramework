@@ -17,6 +17,7 @@ export async function addTenant(url: string, tenant: ITenantInput): Promise<any>
             },
             json: true,
         });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return newTenant;
 }
 

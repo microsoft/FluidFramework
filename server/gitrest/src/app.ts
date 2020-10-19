@@ -5,9 +5,8 @@
 
 import * as bodyParser from "body-parser";
 import * as cors from "cors";
-// eslint-disable-next-line import/no-duplicates
 import * as express from "express";
-// eslint-disable-next-line no-duplicate-imports, import/no-duplicates
+// eslint-disable-next-line no-duplicate-imports
 import { Express } from "express";
 import * as morgan from "morgan";
 import * as nconf from "nconf";
@@ -59,7 +58,6 @@ export function create(store: nconf.Provider) {
     // will print stacktrace
     if (app.get("env") === "development") {
         app.use((err, req, res, next) => {
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             res.status(err.status || 500);
             res.json({
                 error: err,
@@ -71,7 +69,6 @@ export function create(store: nconf.Provider) {
     // production error handler
     // no stacktraces leaked to user
     app.use((err, req, res, next) => {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         res.status(err.status || 500);
         res.json({
             error: {},

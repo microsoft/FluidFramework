@@ -20,6 +20,10 @@ import { MenuItem } from "prosemirror-menu";
 import { DOMSerializer, Fragment, NodeSpec, Schema, Slice } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
 import { EditorState, NodeSelection, Plugin, Transaction } from "prosemirror-state";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import OrderedMap = require("orderedmap");
+
 import { insertPoint } from "prosemirror-transform";
 import { EditorView } from "prosemirror-view";
 import { ComponentView } from "./componentView";
@@ -28,9 +32,6 @@ import { schema } from "./fluidSchema";
 import { FootnoteView } from "./footnoteView";
 import { openPrompt, TextField } from "./prompt";
 import { create as createSelection } from "./selection";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import OrderedMap = require("orderedmap");
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface

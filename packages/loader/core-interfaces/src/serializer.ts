@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidHandle, IFluidHandleContext } from "./handles";
+import { IFluidHandle } from "./handles";
 
 /**
  * JSON serialized form of an IFluidHandle
@@ -29,16 +29,16 @@ export interface IFluidSerializer extends IProvideFluidSerializer {
      * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
      * the root to any replaced handles.  (If no handles are found, returns the original object.)
      */
-    replaceHandles(value: any, context: IFluidHandleContext, bind: IFluidHandle): any;
+    replaceHandles(value: any, bind: IFluidHandle): any;
 
     /**
      * Stringifies a given value. Converts any IFluidHandle to its stringified equivalent.
      */
-    stringify(value: any, context: IFluidHandleContext, bind: IFluidHandle): string;
+    stringify(value: any, bind: IFluidHandle): string;
 
     /**
      * Parses the given JSON input string and returns the JavaScript object defined by it. Any Fluid
      * handles will be realized as part of the parse
      */
-    parse(value: string, context: IFluidHandleContext): any;
+    parse(value: string): any;
 }

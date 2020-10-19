@@ -72,7 +72,7 @@ describe("ConsensusOrderedCollection", () => {
                 const acquiredValue = await removeItem();
                 assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
                 const dataStore = await handle.get();
-                assert.strictEqual(dataStore.url, testCollection.url);
+                assert.strictEqual(dataStore.handle.absolutePath, testCollection.handle.absolutePath);
 
                 assert.strictEqual(await removeItem(), undefined);
             });

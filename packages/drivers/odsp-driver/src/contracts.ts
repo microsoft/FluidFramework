@@ -28,11 +28,14 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
     };
 
     // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
+    // eslint-disable-next-line @typescript-eslint/ban-types
     tokens: {};
 
     fileName: string;
 
     summarizer: boolean;
+
+    sharingLinkP?: Promise<string>;
 }
 
 /**
@@ -50,9 +53,14 @@ export interface ISocketStorageDiscovery {
     snapshotStorageUrl: string;
     deltaStorageUrl: string;
 
+    /**
+     * The non-AFD URL
+     */
     deltaStreamSocketUrl: string;
 
-    // The AFD URL for PushChannel
+    /**
+     * The AFD URL for PushChannel
+     */
     deltaStreamSocketUrl2?: string;
 }
 
@@ -231,4 +239,32 @@ export interface ICreateFileResponse {
     itemId: string;
     itemUrl: string;
     sequenceNumber: number;
+}
+
+export interface OdspDocumentInfo {
+    siteUrl: string;
+    driveId: string;
+    fileId: string;
+    dataStorePath: string;
+}
+
+export interface OdspFluidDataStoreLocator {
+    siteUrl: string;
+    driveId: string;
+    fileId: string;
+    dataStorePath: string;
+    appName?: string;
+}
+
+export enum SharingLinkHeader {
+    isSharingLink = "isSharingLink",
+}
+
+export interface ISharingLinkHeader {
+    [SharingLinkHeader.isSharingLink]: boolean;
+}
+
+declare module "@fluidframework/core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IRequestHeader extends Partial<ISharingLinkHeader> { }
 }

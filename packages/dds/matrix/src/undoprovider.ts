@@ -59,7 +59,7 @@ export class VectorUndoProvider {
                     sg.trackingCollection.unlink(trackingGroup);
                 }
             },
-            disgard: () => {    // [sic]
+            discard: () => {
                 while (trackingGroup.size > 0) {
                     trackingGroup.unlink(trackingGroup.segments[0]);
                 }
@@ -108,7 +108,7 @@ export class MatrixUndoProvider<T extends Serializable = Serializable> {
                         this.cols.handleToPosition(colHandle),
                         oldValue);
                 },
-                disgard: () => {},  // [sic]
+                discard: () => {},
             });
         }
     }

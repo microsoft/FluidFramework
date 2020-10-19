@@ -13,12 +13,13 @@ import {
     IPromiseTimerResult,
 } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IFluidObject, IRequest, DriverHeader } from "@fluidframework/core-interfaces";
+import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
 import {
     IContainerContext,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
+import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ISummarizer, Summarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
 
 export const summarizerClientType = "summarizer";
@@ -356,7 +357,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         const clientId = this.latestClientId!;
         this.runningSummarizer = summarizer;
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         PerformanceEvent.timedExecAsync(
             this.logger,
             { eventName: "RunningSummarizer", attempt: this.startThrottler.attempts },

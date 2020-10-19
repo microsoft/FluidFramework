@@ -4,6 +4,7 @@
  */
 
 export * from "./odspAuth";
-export * from "./odspUtils";
+export * from "./odspDocLibUtils";
 export * from "./odspRequest";
 export * from "./odspDrives";
+export * from "./odspErrorUtils";

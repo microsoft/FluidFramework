@@ -7,17 +7,6 @@ import { ITree, ISequencedDocumentMessage } from "@fluidframework/protocol-defin
 import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface IFluidObject extends Readonly<Partial<IProvideSharedObject>> { }
-}
-
-export const ISharedObject: keyof IProvideSharedObject = "ISharedObject";
-
-export interface IProvideSharedObject {
-    readonly ISharedObject: ISharedObject;
-}
-
 export interface ISharedObjectEvents extends IErrorEvent {
     (event: "pre-op" | "op",
         listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void);
@@ -27,7 +16,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
  * Base interface for shared objects from which other interfaces derive. Implemented by SharedObject
  */
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
-    extends IProvideSharedObject, IChannel, IEventProvider<TEvent> {
+    extends IChannel, IEventProvider<TEvent> {
     /**
      * Binds the given shared object to its containing data store runtime, causing it to attach once
      * the runtime attaches.

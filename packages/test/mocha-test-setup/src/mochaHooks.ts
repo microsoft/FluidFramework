@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/unbound-method */
 const log = console.log;
 const error = console.log;
 export const mochaHooks = {

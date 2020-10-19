@@ -117,11 +117,11 @@ describe("FluidObjectHandle", () => {
         const absolutePath = `/${firstContainerObject1._runtime.id}`;
 
         // Verify that the local client's FluidDataObjectRuntime has the correct absolute path.
-        const fluidHandleContext11 = firstContainerObject1._runtime.IFluidHandleContext;
+        const fluidHandleContext11 = firstContainerObject1._runtime.rootRoutingContext;
         assert.equal(fluidHandleContext11.absolutePath, absolutePath, "The FluidDataObjectRuntime's path is incorrect");
 
         // Verify that the remote client's FluidDataObjectRuntime has the correct absolute path.
-        const fluidHandleContext12 = secondContainerObject1._runtime.IFluidHandleContext;
+        const fluidHandleContext12 = secondContainerObject1._runtime.rootRoutingContext;
         assert.equal(
             fluidHandleContext12.absolutePath,
             absolutePath,
@@ -213,7 +213,10 @@ describe("FluidObjectHandle", () => {
         // Get the dataObject from the handle.
         const container2DataObject2 = await remoteDataObjectHandle.get();
         // Verify that the `url` matches with that of the dataObject in container1.
-        assert.equal(container2DataObject2.url, firstContainerObject2.url, "The urls do not match");
+        assert.equal(
+            container2DataObject2.handle.absolutePath,
+            firstContainerObject2.handle.absolutePath,
+            "The urls do not match");
     });
 
     afterEach(async () => {

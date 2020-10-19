@@ -35,6 +35,7 @@ import {
  * the render function to be filled in.
  */
 export abstract class SyncedDataObject<
+    // eslint-disable-next-line @typescript-eslint/ban-types
     P extends IFluidObject = object,
     S = undefined,
     E extends IEvent = IEvent

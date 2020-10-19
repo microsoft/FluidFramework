@@ -6,6 +6,7 @@
 import { ISegment } from "@fluidframework/merge-tree";
 
 export class SegmentSpan {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     public get segments(): readonly ISegment[] { return this._segments; }
     public get startOffset() { return this._startOffset; }
     public get startPosition() { return this.firstPosition + this._startOffset; }

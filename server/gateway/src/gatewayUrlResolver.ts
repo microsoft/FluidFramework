@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import _ from "lodash";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";
@@ -14,8 +15,11 @@ import { chooseCelaName } from "@fluidframework/server-services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
+import dotenv from "dotenv";
 import { IAlfred } from "./interfaces";
 import { isSpoTenant, spoGetResolvedUrl } from "./odspUtils";
+
+dotenv.config();
 
 interface FullTree {
     cache: IGitCache,
@@ -30,17 +34,26 @@ export function resolveUrl(
     documentId: string,
     scopes: ScopeType[],
     request: Request,
+    driveId?: string,
 ): [Promise<IFluidResolvedUrl>, Promise<undefined | FullTree>] {
     if (isSpoTenant(tenantId)) {
         const microsoftConfiguration = config.get("login:microsoft");
-        const clientConfig: IClientConfig = {
-            clientId: microsoftConfiguration.clientId,
-            clientSecret: microsoftConfiguration.secret,
-        };
-        const resolvedP = spoGetResolvedUrl(tenantId, documentId,
-            request.session?.tokens, clientConfig);
-        const fullTreeP = Promise.resolve(undefined);
-        return [resolvedP, fullTreeP];
+        const clientId = _.isEmpty(microsoftConfiguration.clientId)
+            ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : microsoftConfiguration.clientId;
+        const clientSecret = _.isEmpty(microsoftConfiguration.clientSecret)
+            ? process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET : microsoftConfiguration.clientSecret;
+        if (clientId !== undefined && clientSecret !== undefined) {
+            const clientConfig: IClientConfig = {
+                clientId,
+                clientSecret,
+            };
+            const resolvedP = spoGetResolvedUrl(tenantId, documentId,
+                request.session?.tokens, clientConfig, driveId);
+            const fullTreeP = Promise.resolve(undefined);
+            return [resolvedP, fullTreeP];
+        } else {
+            throw new Error("Failed to find client ID and secret values");
+        }
     } else {
         let user: IAlfredUser | undefined;
         if ("cela" in request.query) {

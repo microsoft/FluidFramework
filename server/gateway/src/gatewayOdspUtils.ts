@@ -41,6 +41,7 @@ export const spoEnsureLoggedIn = () => {
                 || !req.session.tokens[spoTenant].accessToken) {
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 req.session.returnTo = req.originalUrl || req.url;
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return res.redirect(`/login_${req.params.tenantId}`);
             }
 
@@ -48,6 +49,7 @@ export const spoEnsureLoggedIn = () => {
             if (!req.session.tokens[getSpoPushServer()]) {
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 req.session.returnTo = req.originalUrl || req.url;
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return res.redirect(`/login_pushsrv`);
             }
         }

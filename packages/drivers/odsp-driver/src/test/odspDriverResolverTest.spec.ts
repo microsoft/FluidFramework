@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { CreateNewHeader } from "@fluidframework/driver-definitions";
+import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
@@ -24,7 +24,7 @@ describe("Odsp Driver Resolver", () => {
     });
 
     it("Create New Request", async () => {
-        assert.strictEqual(request.headers?.[CreateNewHeader.createNew].fileName, fileName,
+        assert.stricEqual(request.headers?.[DriverHeader.createNew].fileName, fileName,
             "Request should contain fileName");
         const url = `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(filePath)}`;
         assert.strictEqual(request.url, url, "Request url should match");

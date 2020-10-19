@@ -211,12 +211,14 @@ export class MergeNode implements IMergeNodeCommon {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 function addTile(tile: ReferencePosition, tiles: object) {
     for (const tileLabel of tile.getTileLabels()) {
         tiles[tileLabel] = tile;
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 function addTileIfNotPresent(tile: ReferencePosition, tiles: object) {
     for (const tileLabel of tile.getTileLabels()) {
         if (tiles[tileLabel] === undefined) {
@@ -571,55 +573,16 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     protected abstract createSplitSegmentAt(pos: number): BaseSegment;
 }
 
-interface IJSONExternalSegment extends ops.IJSONSegment {
-    sequenceIndex: number;
-    sequenceLength: number;
-}
-/**
- * A non-shared placeholder for external content.
- */
-export class ExternalSegment extends BaseSegment {
-    public static readonly type = "ExternalSegment";
-    public readonly type = ExternalSegment.type;
-
-    constructor(
-        public placeholderSeq,
-        public sequenceLength: number,
-        public sequenceIndex: number) {
-        super();
-    }
-
-    toJSONObject() {
-        const obj: IJSONExternalSegment = { sequenceIndex: this.sequenceIndex, sequenceLength: this.sequenceLength };
-        super.addSerializedProps(obj);
-        return obj;
-    }
-
-    mergeTreeInsert(mergeTree: MergeTree, pos: number, refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs) {
-        mergeTree.insertSegments(pos, [this], refSeq, clientId, seq, opArgs);
-    }
-
-    clone(): ISegment {
-        throw new Error("clone not implemented");
-    }
-
-    append() {
-        throw new Error("Can not append to external segment");
-    }
-
-    protected createSplitSegmentAt(pos: number): BaseSegment {
-        throw new Error("Method not implemented.");
-    }
-}
-
 export const reservedTileLabelsKey = "referenceTileLabels";
 export const reservedRangeLabelsKey = "referenceRangeLabels";
 export const reservedMarkerIdKey = "markerId";
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const refHasTileLabels = (refPos: ReferencePosition) => (refPos.refType & ops.ReferenceType.Tile) &&
     refPos.properties && refPos.properties[reservedTileLabelsKey];
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const refHasRangeLabels = (refPos: ReferencePosition) => (refPos.refType & (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) &&
     refPos.properties && refPos.properties[reservedRangeLabelsKey];
 
@@ -727,15 +690,18 @@ export class Marker extends BaseSegment implements ReferencePosition {
 
     getId(): string {
         if (this.properties && this.properties[reservedMarkerIdKey]) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return this.properties[reservedMarkerIdKey];
         }
     }
 
     hasTileLabels() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return refHasTileLabels(this);
     }
 
     hasRangeLabels() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return refHasRangeLabels(this);
     }
 
@@ -812,6 +778,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
                 // Avoid circular reference when stringifying makers containing handles.
                 // (Substitute a debug string instead.)
                 const handle = !!value && value.IFluidHandle;
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return handle
                     ? `#Handle(${handle.routeContext.path}/${handle.path})`
                     : value;
@@ -1261,6 +1228,7 @@ export class MergeTree {
                 this.blockUpdate(block);
             }
 
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return blocks.length === 1          // If there is only one block at this layer...
                 ? blocks[0]                     // ...then we're done.  Return the root.
                 : buildMergeBlock(blocks);      // ...otherwise recursively build the next layer above blocks.

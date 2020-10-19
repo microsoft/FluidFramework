@@ -11,7 +11,6 @@ import {
     IClient,
     IConnect,
     IConnected,
-    IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -50,7 +49,6 @@ export class WSDeltaConnection
 
             const resolveHandler = () => {
                 resolve(connection);
-                // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 connection.removeListener("disconnected", rejectHandler);
             };
 
@@ -98,10 +96,6 @@ export class WSDeltaConnection
 
     public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details!.initialMessages;
-    }
-
-    public get initialContents(): IContentMessage[] {
-        return this.details!.initialContents;
     }
 
     public get initialSignals(): ISignalMessage[] {
@@ -183,20 +177,7 @@ export class WSDeltaConnection
         this.submitManager.add("submitSignal", message);
     }
 
-    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.socket.send(JSON.stringify(["submitContent", this.details!.clientId, messages]), (error) => {
-                if (error) {
-                    this.emit("error", error);
-                    reject(error);
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
-
-    public disconnect() {
+    public close() {
         this.socket.close();
     }
 

@@ -57,6 +57,7 @@ export type Jsonable<T = JsonablePrimitive> = T | JsonableArray<T> | JsonableObj
 export type AsJsonable<T, J = JsonablePrimitive> =
     T extends Jsonable<J> ?
     T :
+    // eslint-disable-next-line @typescript-eslint/ban-types
     Extract<T, Function> extends never ?
     { [K in keyof T]: Extract<K, symbol> extends never ?
         AsJsonable<T[K], J> :

@@ -8,7 +8,6 @@ import path from "path";
 import express from "express";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
-import { IOdspTokens, getServer } from "@fluidframework/odsp-utils";
 import {
     getMicrosoftConfiguration,
     OdspTokenManager,
@@ -16,6 +15,7 @@ import {
     OdspTokenConfig,
 } from "@fluidframework/tool-utils";
 import { IFluidPackage } from "@fluidframework/container-definitions";
+import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils";
 import Axios from "axios";
 import { RouteOptions } from "./loader";
 import { createManifestResponse } from "./bohemiaIntercept";
@@ -37,6 +37,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
     const config: nconf.Provider = nconf.env("__").file(path.join(baseDir, "config.json"));
     const buildTokenConfig = (response, redirectUriCallback?): OdspTokenConfig => ({
         type: "browserLogin",
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         navigator: (url: string) => response.redirect(url),
         redirectUriCallback,
     });
@@ -255,7 +256,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
 
 const fluid = (req: express.Request, res: express.Response, baseDir: string, options: RouteOptions) => {
     const documentId = req.params.id;
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
     const packageJson = require(path.join(baseDir, "./package.json")) as IFluidPackage;
 
     const html =
