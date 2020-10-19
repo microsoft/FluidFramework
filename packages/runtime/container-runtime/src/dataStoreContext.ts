@@ -202,7 +202,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         public readonly isLocalDataStore: boolean,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         protected pkg?: readonly string[],
-        protected _isRootDataStore = false,
+        protected _isRootDataStore: boolean = false,
     ) {
         super();
 
@@ -583,6 +583,11 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         createSummarizerNode: CreateChildSummarizerNodeFn,
         pkg?: string[],
     ) {
+        // Default isRootDataStore to true. This will ensure that documents with old data stores that do not have
+        // isRootDataStore in the attributes blob are not garbage collected incorrectly. If it has isRootDataStore,
+        // it will get updated when the data store is realized. This may lead to additional roots in the document but
+        // they won't break.
+        // This covers the scenario where garbage collection runs on a data store which is not realized.
         super(
             runtime,
             id,
@@ -596,7 +601,8 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             () => {
                 throw new Error("Already attached");
             },
-            pkg);
+            pkg,
+            true /* isRootDataStore */);
     }
 
     public generateAttachMessage(): IAttachMessage {
@@ -646,7 +652,11 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                     throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
                 }
                 this.pkg = pkgFromSnapshot;
-                this._isRootDataStore = isRootDataStore ?? false;
+
+                // If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that
+                // data stores in older documents are not garbage collected incorrectly. This may lead to additional
+                // roots in the document but they won't break.
+                this._isRootDataStore = isRootDataStore ?? true;
             }
 
             this.details = {
@@ -792,6 +802,7 @@ export class LocalDetachedFluidDataStoreContext
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
+        isRootDataStore: boolean = false,
     ) {
         super(
             id,
@@ -802,7 +813,9 @@ export class LocalDetachedFluidDataStoreContext
             summaryTracker,
             createSummarizerNode,
             bindChannel,
-            snapshotTree);
+            snapshotTree,
+            undefined,
+            isRootDataStore);
         assert(this.pkg === undefined);
         this.detachedRuntimeCreation = true;
     }

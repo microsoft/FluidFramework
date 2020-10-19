@@ -809,6 +809,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 } else {
                     throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
                 }
+
+                // If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that
+                // data stores in older documents are not garbage collected incorrectly. This may lead to additional
+                // roots in the document but they won't break.
                 dataStoreContext = new LocalFluidDataStoreContext(
                     key,
                     pkgFromSnapshot,
@@ -819,7 +823,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
                     (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
                     snapshotTree,
-                    isRootDataStore);
+                    isRootDataStore ?? true);
             }
             this.setNewContext(key, dataStoreContext);
         }
@@ -1325,12 +1329,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async createDataStore(pkg: string | string[]): Promise<IFluidRouter>
     {
-        return this._createDataStore(pkg);
+        return this._createDataStore(pkg, undefined, false /* isRoot */);
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>
     {
-        const fluidDataStore = await this._createDataStore(pkg, rootDataStoreId, true);
+        const fluidDataStore = await this._createDataStore(pkg, rootDataStoreId, true /* isRoot */);
         fluidDataStore.bindToContext();
         return fluidDataStore;
     }
@@ -1346,6 +1350,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
+            false /* isRootDataStore */
         );
         this.setupNewContext(context);
         return context;
@@ -1353,23 +1358,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async _createDataStoreWithProps(pkg: string | string[], props?: any, id = uuid()):
         Promise<IFluidDataStoreChannel> {
-        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, false, props).realize();
+        return this._createFluidDataStoreContext(
+            Array.isArray(pkg) ? pkg : [pkg], id, false /* isRoot */, props).realize();
     }
 
     private async _createDataStore(
         pkg: string | string[],
         id = uuid(),
-        root: boolean = false,
+        isRoot: boolean,
         ): Promise<IFluidDataStoreChannel>
     {
-        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, root).realize();
+        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot).realize();
     }
 
     private canSendOps() {
         return this.connected && !this.deltaManager.readonly;
     }
 
-    private _createFluidDataStoreContext(pkg: string[], id: string, root: boolean = false, props?: any) {
+    private _createFluidDataStoreContext(pkg: string[], id: string, isRoot: boolean, props?: any) {
         const context = new LocalFluidDataStoreContext(
             id,
             pkg,
@@ -1381,7 +1387,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
             props,
-            root,
+            isRoot,
         );
         this.setupNewContext(context);
         return context;
@@ -1544,7 +1550,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     sequenceNumber: message.sequenceNumber,
                     snapshot: attachMessage.snapshot ?? {
                         id: null,
-                        entries: [createAttributesBlob(pkg, false)],
+                        entries: [createAttributesBlob(pkg, false /* isRootDataStore */)],
                     },
                 }),
             pkg);
