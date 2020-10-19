@@ -8,6 +8,7 @@ import assert from "assert";
 import cloneDeep from "lodash/cloneDeep";
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { performance } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaConnection,
@@ -308,10 +309,7 @@ export class OdspDocumentService implements IDocumentService {
         afdUrl?: string,
     ): Promise<IDocumentDeltaConnection> {
         const connectWithNonAfd = async () => {
-            this.logger.sendTelemetryEvent({
-                eventName: "NonAfdConnectionAttempt",
-            });
-
+            const startTime = performance.now();
             try {
                 const connection = await OdspDocumentDeltaConnection.create(
                     tenantId,
@@ -323,17 +321,21 @@ export class OdspDocumentService implements IDocumentService {
                     20000,
                     this.logger,
                 );
-                this.logger.sendTelemetryEvent({
+                const endTime = performance.now();
+                this.logger.sendPerformanceEvent({
                     eventName: "NonAfdConnectionSuccess",
+                    duration: endTime - startTime,
                 });
                 return connection;
             } catch (connectionError) {
+                const endTime = performance.now();
                 // Log before throwing
                 const canRetry = canRetryOnError(connectionError);
-                this.logger.sendTelemetryEvent(
+                this.logger.sendPerformanceEvent(
                     {
                         eventName: "NonAfdConnectionFail",
                         canRetry,
+                        duration: endTime - startTime,
                     },
                     connectionError,
                 );
@@ -344,10 +346,7 @@ export class OdspDocumentService implements IDocumentService {
         const connectWithAfd = async () => {
             assert(afdUrl !== undefined, "Tried to connect with AFD but no AFD url provided");
 
-            this.logger.sendTelemetryEvent({
-                eventName: "AfdConnectionAttempt",
-            });
-
+            const startTime = performance.now();
             try {
                 const connection = await OdspDocumentDeltaConnection.create(
                     tenantId,
@@ -362,19 +361,23 @@ export class OdspDocumentService implements IDocumentService {
                 // Set the successful connection attempt in the cache so we can skip the non-AFD failure the next time
                 // we try to connect and immediately try AFD instead.
                 writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString());
-                this.logger.sendTelemetryEvent({
+                const endTime = performance.now();
+                this.logger.sendPerformanceEvent({
                     eventName: "AfdConnectionSuccess",
+                    duration: endTime - startTime,
                 });
                 return connection;
             } catch (connectionError) {
+                const endTime = performance.now();
                 // Clear cache since it failed
                 localStorage.removeItem(lastAfdConnectionTimeMsKey);
                 // Log before throwing
                 const canRetry = canRetryOnError(connectionError);
-                this.logger.sendTelemetryEvent(
+                this.logger.sendPerformanceEvent(
                     {
                         eventName: "AfdConnectionFail",
                         canRetry,
+                        duration: endTime - startTime,
                     },
                     connectionError,
                 );
@@ -388,10 +391,6 @@ export class OdspDocumentService implements IDocumentService {
         // means the non-AFD url has failed in the past, in which case we would prefer to skip doing another
         // attempt->fail on the non-AFD.
         if (afdCacheValid && afdUrl !== undefined) {
-            this.logger.sendTelemetryEvent({
-                eventName: "AfdCacheValid",
-            });
-
             try {
                 const connection = await connectWithAfd();
                 return connection;
