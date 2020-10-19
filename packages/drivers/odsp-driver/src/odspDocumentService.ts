@@ -358,10 +358,10 @@ export class OdspDocumentService implements IDocumentService {
                     20000,
                     this.logger,
                 );
+                const endTime = performance.now();
                 // Set the successful connection attempt in the cache so we can skip the non-AFD failure the next time
                 // we try to connect and immediately try AFD instead.
                 writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString());
-                const endTime = performance.now();
                 this.logger.sendPerformanceEvent({
                     eventName: "AfdConnectionSuccess",
                     duration: endTime - startTime,
