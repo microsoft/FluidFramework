@@ -37,15 +37,22 @@ export interface IUrlResolver {
     ): Promise<string>;
 }
 
-export enum CreateNewHeader {
+/**
+ * Additional key in the loader request header
+ */
+export enum DriverHeader {
+    // Key to indicate whether the request for summarizer
+    summarizingClient = "fluid-client-summarizer",
+    // createNew information, specific to each driver
     createNew = "createNew",
 }
 
-export interface ICreateNewHeader {
-    [CreateNewHeader.createNew]: any;
+export interface IDriverHeader {
+    [DriverHeader.summarizingClient]: boolean;
+    [DriverHeader.createNew]: any;
 }
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IRequestHeader extends Partial<ICreateNewHeader> { }
+    export interface IRequestHeader extends Partial<IDriverHeader> { }
 }

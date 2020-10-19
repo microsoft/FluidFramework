@@ -33,7 +33,7 @@ import {
     IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
-    CreateNewHeader,
+    DriverHeader,
 } from "@fluidframework/driver-definitions";
 import {
     BlobCacheStorageService,
@@ -586,10 +586,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             assert(this.cachedAttachSummary,
                 "Summary should be there either by this attach call or previous attach call!!");
 
-            if (request.headers?.[CreateNewHeader.createNew] === undefined) {
+            if (request.headers?.[DriverHeader.createNew] === undefined) {
                 request.headers = {
                     ...request.headers,
-                    [CreateNewHeader.createNew]: {},
+                    [DriverHeader.createNew]: {},
                 };
             }
 
