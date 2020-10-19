@@ -1,5 +1,5 @@
 ---
-title: Fluid Framework
+title: Documentation for Fluid Framework
 meta: "What is Fluid Framework"
 ---
 
