@@ -25,6 +25,8 @@ module.exports = {
       },
     ],
   },
+  // Webpack 5 does not support automatic polyfilling of node modules, setting node to false will help simulate webpack 5 behavior by throwing build errors when we rely on node polyfills
+  node: false,
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
   },
