@@ -6,12 +6,11 @@
 import { strict as assert } from "assert";
 import {
     IRequest,
-    DriverHeader,
 } from "@fluidframework/core-interfaces";
 import {
     IUrlResolver,
     IResolvedUrl,
-    CreateNewHeader,
+    DriverHeader,
 } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
@@ -99,11 +98,11 @@ function decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId:
 }
 
 export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUrl> {
-    if (request.headers && request.headers[CreateNewHeader.createNew]) {
+    if (request.headers && request.headers[DriverHeader.createNew]) {
         const [siteURL, queryString] = request.url.split("?");
 
         const searchParams = new URLSearchParams(queryString);
-        const fileName = request.headers[CreateNewHeader.createNew].fileName;
+        const fileName = request.headers[DriverHeader.createNew].fileName;
         const driveID = searchParams.get("driveId");
         const filePath = searchParams.get("path");
         if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {

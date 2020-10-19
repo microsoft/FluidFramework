@@ -53,9 +53,14 @@ export interface ISocketStorageDiscovery {
     snapshotStorageUrl: string;
     deltaStorageUrl: string;
 
+    /**
+     * The non-AFD URL
+     */
     deltaStreamSocketUrl: string;
 
-    // The AFD URL for PushChannel
+    /**
+     * The AFD URL for PushChannel
+     */
     deltaStreamSocketUrl2?: string;
 }
 
