@@ -41,19 +41,11 @@ export enum CreateNewHeader {
     createNew = "createNew",
 }
 
-export enum ContainerPackageHeader {
-    containerPackage = "containerPackage",
-}
-
 export interface ICreateNewHeader {
     [CreateNewHeader.createNew]: any;
 }
 
-export interface IContainerPackageHeader {
-    [ContainerPackageHeader.containerPackage]: any;
-}
-
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IRequestHeader extends Partial<ICreateNewHeader>, Partial<IContainerPackageHeader> { }
+    export interface IRequestHeader extends Partial<ICreateNewHeader> { }
 }
