@@ -39,6 +39,7 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import {
+    canRetryOnError,
     createWriteError,
     createGenericNetworkError,
 } from "@fluidframework/driver-utils";
@@ -61,9 +62,6 @@ const ImmediateNoOpResponse = "";
 
 const DefaultContentBufferSize = 10;
 
-// Test if we deal with NetworkError object and if it has enough information to make a call.
-// If in doubt, allow retries.
-const canRetryOnError = (error: any): boolean => error?.canRetry !== false;
 const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds;
 
 function getNackReconnectInfo(nackContent: INackContent) {
