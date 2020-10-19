@@ -42,4 +42,4 @@ runService(
     new HistorianResourcesFactory(),
     new HistorianRunnerFactory(),
     "historian",
-    path.join(__dirname, "../../config.json"));
+    provider);

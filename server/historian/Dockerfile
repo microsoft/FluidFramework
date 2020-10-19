@@ -44,4 +44,4 @@ USER node
 ENTRYPOINT ["/tini", "--"]
 
 # And set the default command to start the server
-CMD ["node", "dist/www.js"]
+CMD ["node", "packages/historian/dist/www.js"]
