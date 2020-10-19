@@ -7,7 +7,7 @@ import { debug } from "util";
 import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
 import { getRandomName } from "./generateNames";
-import * as jsrsasign from "jsrsasign";
+import {KJUR as jsrsasign} from "jsrsasign";
 
 /**
  * Generates a JWT token to authorize routerlicious
@@ -33,7 +33,7 @@ export function generateToken(
         user,
     };
 
-    return jsrsasign.KJUR.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, key);
+    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, key);
 }
 
 export function generateUser(): IUser {

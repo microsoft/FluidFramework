@@ -17,7 +17,7 @@ import {
     IUser,
 } from "@fluidframework/protocol-definitions";
 import Axios from "axios";
-import * as jsrsasign from "jsrsasign";
+import { KJUR as jsrsasign } from "jsrsasign";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
@@ -149,6 +149,6 @@ export class InsecureUrlResolver implements IUrlResolver {
             user: this.user,
         };
 
-        return jsrsasign.KJUR.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, this.tenantKey);
+        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, this.tenantKey);
     }
 }
