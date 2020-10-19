@@ -5,8 +5,10 @@
 
 import { strict as assert } from "assert";
 import { CreateNewHeader } from "@fluidframework/driver-definitions";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
+import { getHashedDocumentId } from "../odspUtils";
 
 describe("Odsp Driver Resolver", () => {
     const siteUrl = "https://localhost";
@@ -80,13 +82,15 @@ describe("Odsp Driver Resolver", () => {
     it("Non-Empty string filePath is resolvable", async () => {
         // Arrange
         filePath = "data1";
+        const itemId = "item1";
         const testRequest: IRequest = {
-            url: `https://localhost?driveId=${driveId}&path=${filePath}&itemId=item1`,
+            url: `${siteUrl}?driveId=${driveId}&path=${filePath}&itemId=${itemId}`,
             headers: { createNew:{ fileName:`${fileName}` } },
         };
 
         // Act
         const resolvedUrl = await resolver.resolve(testRequest);
+        ensureFluidResolvedUrl(resolvedUrl);
 
         // Assert
         assert.strictEqual(resolvedUrl.fileName, fileName, "FileName should be equal");
@@ -96,10 +100,9 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.hashedDocumentId, "", "No doc id should be present");
         assert.strictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be empty");
 
-        const [, queryString] = testRequest.url.split("?");
-        const searchParams = new URLSearchParams(queryString);
-        assert.strictEqual(searchParams.get("path"), filePath, "filePath should match");
-        assert.strictEqual(searchParams.get("driveId"), driveId, "Drive id should match");
+        const expectedResolvedUrl = `fluid-odsp://${siteUrl}?driveId=${driveId}&path=${filePath}&itemId=${itemId}`
+        + `&version=null`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
     });
 
     it("FilePath with 3 data object ids is resolvable", async () => {
@@ -107,24 +110,25 @@ describe("Odsp Driver Resolver", () => {
         filePath = "data1/data2/data3";
         const itemId = "item1";
         const testRequest: IRequest = {
-            url: `https://localhost?driveId=${driveId}&path=${filePath}&itemId=${itemId}`,
+            url: `${siteUrl}?driveId=${driveId}&path=${filePath}&itemId=${itemId}`,
         };
 
         // Act
         const resolvedUrl = await resolver.resolve(testRequest);
+        ensureFluidResolvedUrl(resolvedUrl);
 
         // Assert
         assert.strictEqual(resolvedUrl.fileName, "", "FileName should be absent");
         assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
         assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
-        assert.notStrictEqual(resolvedUrl.hashedDocumentId, "", "Doc id should be present");
+        assert.strictEqual(resolvedUrl.hashedDocumentId, getHashedDocumentId(driveId, itemId),
+            "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
-        const [, queryString] = testRequest.url.split("?");
-        const searchParams = new URLSearchParams(queryString);
-        assert.strictEqual(searchParams.get("path"), filePath, "filePath should match");
-        assert.strictEqual(searchParams.get("driveId"), driveId, "Drive id should match");
+        const expectedResolvedUrl = `fluid-odsp://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/${filePath}`
+            + `?driveId=${driveId}&path=${filePath}&itemId=${itemId}`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
     });
 
     it("FilePath with 2 ending slashes is resolvable", async () => {
@@ -132,24 +136,25 @@ describe("Odsp Driver Resolver", () => {
         filePath = "data1/data2//";
         const itemId = "item1";
         const testRequest: IRequest = {
-            url: `https://localhost?driveId=${driveId}&path=${filePath}&itemId=${itemId}`,
+            url: `${siteUrl}?driveId=${driveId}&path=${filePath}&itemId=${itemId}`,
         };
 
         // Act
         const resolvedUrl = await resolver.resolve(testRequest);
+        ensureFluidResolvedUrl(resolvedUrl);
 
         // Assert
         assert.strictEqual(resolvedUrl.fileName, "", "FileName should be absent");
         assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
         assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
-        assert.notStrictEqual(resolvedUrl.hashedDocumentId, "", "Doc id should be present");
+        assert.strictEqual(resolvedUrl.hashedDocumentId, getHashedDocumentId(driveId, itemId),
+            "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
-        const [, queryString] = testRequest.url.split("?");
-        const searchParams = new URLSearchParams(queryString);
-        assert.strictEqual(searchParams.get("path"), filePath, "filePath should match");
-        assert.strictEqual(searchParams.get("driveId"), driveId, "Drive id should match");
+        const expectedResolvedUrl = `fluid-odsp://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/${filePath}`
+            + `?driveId=${driveId}&path=${filePath}&itemId=${itemId}`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
     });
 
     it("FilePath with special characters is resolvable", async () => {
@@ -157,23 +162,24 @@ describe("Odsp Driver Resolver", () => {
         filePath = "data1/data2/!@$";
         const itemId = "item!@$";
         const testRequest: IRequest = {
-            url: `https://localhost?driveId=${driveId}&path=${filePath}&itemId=${itemId}`,
+            url: `${siteUrl}?driveId=${driveId}&path=${filePath}&itemId=${itemId}`,
         };
 
         // Act
         const resolvedUrl = await resolver.resolve(testRequest);
+        ensureFluidResolvedUrl(resolvedUrl);
 
         // Assert
         assert.strictEqual(resolvedUrl.fileName, "", "FileName should be absent");
         assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
         assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
-        assert.notStrictEqual(resolvedUrl.hashedDocumentId, "", "Doc id should be present");
+        assert.strictEqual(resolvedUrl.hashedDocumentId, getHashedDocumentId(driveId, itemId),
+            "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
-        const [, queryString] = testRequest.url.split("?");
-        const searchParams = new URLSearchParams(queryString);
-        assert.strictEqual(searchParams.get("path"), filePath, "filePath should match");
-        assert.strictEqual(searchParams.get("driveId"), driveId, "Drive id should match");
+        const expectedResolvedUrl = `fluid-odsp://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/${filePath}`
+            + `?driveId=${driveId}&path=${filePath}&itemId=${itemId}`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
     });
 });
