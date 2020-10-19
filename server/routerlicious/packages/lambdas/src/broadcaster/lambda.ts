@@ -78,26 +78,23 @@ export class BroadcasterLambda implements IPartitionLambda {
     }
 
     private sendPending() {
-        // If there is work currently being sent or we have no pending work return early
-        if (this.current.size > 0 || this.pending.size === 0) {
+        if (this.pending.size === 0) {
             return;
         }
 
-        // Swap current and pending
-        const temp = this.current;
-        this.current = this.pending;
-        this.pending = temp;
-        const batchOffset = this.pendingOffset;
-
-        // Process all the batches + checkpoint
-        this.current.forEach((batch, topic) => {
-            this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
-        });
-
-        this.context.checkpoint(batchOffset);
-
         // Invoke the next send after a setImmediate to give IO time to create more batches
         setImmediate(() => {
+            const batchOffset = this.pendingOffset;
+
+            this.current = this.pending;
+            this.pending = new Map<string, BroadcasterBatch>();
+
+            // Process all the batches + checkpoint
+            this.current.forEach((batch, topic) => {
+                this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
+            });
+
+            this.context.checkpoint(batchOffset);
             this.current.clear();
             this.sendPending();
         });
