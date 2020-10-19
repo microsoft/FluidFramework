@@ -1329,12 +1329,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async createDataStore(pkg: string | string[]): Promise<IFluidRouter>
     {
-        return this._createDataStore(pkg, undefined, false /* isRoot */);
+        return this._createDataStore(pkg, false /* isRoot */);
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>
     {
-        const fluidDataStore = await this._createDataStore(pkg, rootDataStoreId, true /* isRoot */);
+        const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
         fluidDataStore.bindToContext();
         return fluidDataStore;
     }
@@ -1364,8 +1364,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private async _createDataStore(
         pkg: string | string[],
-        id = uuid(),
         isRoot: boolean,
+        id = uuid(),
         ): Promise<IFluidDataStoreChannel>
     {
         return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot).realize();
