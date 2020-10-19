@@ -24,7 +24,7 @@ describe("Odsp Driver Resolver", () => {
     });
 
     it("Create New Request", async () => {
-        assert.stricEqual(request.headers?.[DriverHeader.createNew].fileName, fileName,
+        assert.strictEqual(request.headers?.[DriverHeader.createNew].fileName, fileName,
             "Request should contain fileName");
         const url = `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(filePath)}`;
         assert.strictEqual(request.url, url, "Request url should match");
