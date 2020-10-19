@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { IContainer, IFluidModule } from "@fluidframework/container-definitions";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
+import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { OpProcessingController, LocalTestObjectProvider, ChannelFactoryRegistry } from "@fluidframework/test-utils";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -130,5 +131,8 @@ describe("loader/runtime compatibility", () => {
         });
     };
 
-    generateCompatTest(tests);
+    generateCompatTest(tests, {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        serviceConfiguration: { summary: { maxOps: 1 } as ISummaryConfiguration },
+    });
 });

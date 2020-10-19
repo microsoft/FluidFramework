@@ -12,10 +12,14 @@ import {
     ITestFluidObject,
     OpProcessingController,
 } from "@fluidframework/test-utils";
-import { generateTestWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
+import { generateTestWithCompat, ICompatLocalTestObjectProvider, ITestContainerConfig } from "./compatUtils";
 
 const stringId = "sharedStringKey";
 const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+const testContainerConfig: ITestContainerConfig = {
+    testFluidDataObject: true,
+    registry,
+};
 
 const tests = (args: ICompatLocalTestObjectProvider) => {
     let sharedString1: SharedString;
@@ -23,11 +27,11 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
     let opProcessingController: OpProcessingController;
 
     beforeEach(async () => {
-        const container1 = await args.makeTestContainer(registry) as Container;
+        const container1 = await args.makeTestContainer(testContainerConfig) as Container;
         const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
-        const container2 = await args.loadTestContainer(registry) as Container;
+        const container2 = await args.loadTestContainer(testContainerConfig) as Container;
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 
@@ -55,7 +59,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         await opProcessingController.process();
 
         // Create a initialize a new container with the same id.
-        const newContainer = await args.loadTestContainer(registry) as Container;
+        const newContainer = await args.loadTestContainer(testContainerConfig) as Container;
         const newComponent = await requestFluidObject<ITestFluidObject>(newContainer, "default");
         const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
         assert.equal(newSharedString.getText(), text, "The new container should receive the inserted text on creation");
@@ -63,5 +67,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("SharedString", () => {
-    generateTestWithCompat(tests, { testFluidDataObject: true });
+    generateTestWithCompat(tests);
 });

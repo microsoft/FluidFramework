@@ -11,7 +11,11 @@ import {
     OpProcessingController,
     ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { generateTestWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
+import { generateTestWithCompat, ICompatLocalTestObjectProvider, ITestContainerConfig } from "./compatUtils";
+
+const testContainerConfig: ITestContainerConfig = {
+    testFluidDataObject: true,
+};
 
 const tests = (args: ICompatLocalTestObjectProvider) => {
     let dataObject1: ITestFluidObject;
@@ -19,10 +23,10 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
     let opProcessingController: OpProcessingController;
 
     beforeEach(async () => {
-        const container1 = await args.makeTestContainer() as Container;
+        const container1 = await args.makeTestContainer(testContainerConfig) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 
-        const container2 = await args.loadTestContainer() as Container;
+        const container2 = await args.loadTestContainer(testContainerConfig) as Container;
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
         opProcessingController = new OpProcessingController(args.deltaConnectionServer);
@@ -138,5 +142,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("TestSignals", () => {
-    generateTestWithCompat(tests, { testFluidDataObject: true });
+    generateTestWithCompat(tests);
 });

@@ -12,10 +12,14 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { generateTestWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
+import { generateTestWithCompat, ICompatLocalTestObjectProvider, ITestContainerConfig } from "./compatUtils";
 
 const cellId = "cellKey";
 const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
+const testContainerConfig: ITestContainerConfig = {
+    testFluidDataObject: true,
+    registry,
+};
 
 const tests = (args: ICompatLocalTestObjectProvider) => {
     const initialCellValue = "Initial cell value";
@@ -29,17 +33,17 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
     beforeEach(async () => {
         // Create a Container for the first client.
-        const container1 = await args.makeTestContainer(registry);
+        const container1 = await args.makeTestContainer(testContainerConfig);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedCell1 = await dataObject1.getSharedObject<SharedCell>(cellId);
 
         // Load the Container that was created by the first client.
-        const container2 = await args.loadTestContainer(registry);
+        const container2 = await args.loadTestContainer(testContainerConfig);
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedCell2 = await dataObject2.getSharedObject<SharedCell>(cellId);
 
         // Load the Container that was created by the first client.
-        const container3 = await args.loadTestContainer(registry);
+        const container3 = await args.loadTestContainer(testContainerConfig);
         const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         sharedCell3 = await dataObject3.getSharedObject<SharedCell>(cellId);
 
@@ -214,5 +218,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("Cell", () => {
-    generateTestWithCompat(tests, { testFluidDataObject: true });
+    generateTestWithCompat(tests);
 });

@@ -14,10 +14,14 @@ import {
     ITestFluidObject,
     OpProcessingController,
 } from "@fluidframework/test-utils";
-import { generateTestWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
+import { generateTestWithCompat, ICompatLocalTestObjectProvider, ITestContainerConfig } from "./compatUtils";
 
 const mapId = "mapKey";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
+const testContainerConfig: ITestContainerConfig = {
+    testFluidDataObject: true,
+    registry,
+};
 
 const tests = (args: ICompatLocalTestObjectProvider) => {
     let opProcessingController: OpProcessingController;
@@ -27,15 +31,15 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
     let sharedMap3: ISharedMap;
 
     beforeEach(async () => {
-        const container1 = await args.makeTestContainer(registry) as Container;
+        const container1 = await args.makeTestContainer(testContainerConfig) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 
-        const container2 = await args.loadTestContainer(registry) as Container;
+        const container2 = await args.loadTestContainer(testContainerConfig) as Container;
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
 
-        const container3 = await args.loadTestContainer(registry) as Container;
+        const container3 = await args.loadTestContainer(testContainerConfig) as Container;
         const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
 
@@ -300,5 +304,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("Map", () => {
-    generateTestWithCompat(tests, { testFluidDataObject: true });
+    generateTestWithCompat(tests);
 });
