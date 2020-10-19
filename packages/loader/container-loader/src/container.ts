@@ -810,42 +810,43 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (!this.hasNullRuntime()) {
             this.emit("contextDisposed", codeDetails, this.context?.codeDetails);
         }
-        if (!this.closed) {
-            let snapshot: ISnapshotTree | undefined;
-            const blobs = new Map();
-            if (previousContextState.snapshot !== undefined) {
-                snapshot = await buildSnapshotTree(previousContextState.snapshot.entries, blobs);
-
-                /**
-                 * Should be removed / updated after issue #2914 is fixed.
-                 * There are currently two scenarios where this is called:
-                 * 1. When a new code proposal is accepted - This should be set to true before `this.loadContext` is
-                 * called which creates and loads the ContainerRuntime. This is because for "read" mode clients this
-                 * flag is false which causes ContainerRuntime to create the internal components again.
-                 * 2. When the first client connects in "write" mode - This happens when a client does not create the
-                 * Container in detached mode. In this case, when the code proposal is accepted, we come here and we
-                 * need to create the internal data stores in ContainerRuntime.
-                 * Once we move to using detached container everywhere, this can move outside this block.
-                 */
-                this._existing = true;
-            }
-
-            if (blobs.size > 0) {
-                this.blobsCacheStorageService =
-                    new BlobCacheStorageService(this.storageService, Promise.resolve(blobs));
-            }
-            const attributes: IDocumentAttributes = {
-                branch: this.id,
-                minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
-                sequenceNumber: this._deltaManager.lastSequenceNumber,
-                term: this._deltaManager.referenceTerm,
-            };
-
-            await this.loadContext(codeDetails, attributes, snapshot, previousContextState);
-
-            this.deltaManager.inbound.systemResume();
-            this.deltaManager.inboundSignal.systemResume();
+        if (this.closed) {
+            return;
         }
+        let snapshot: ISnapshotTree | undefined;
+        const blobs = new Map();
+        if (previousContextState.snapshot !== undefined) {
+            snapshot = await buildSnapshotTree(previousContextState.snapshot.entries, blobs);
+
+            /**
+             * Should be removed / updated after issue #2914 is fixed.
+             * There are currently two scenarios where this is called:
+             * 1. When a new code proposal is accepted - This should be set to true before `this.loadContext` is
+             * called which creates and loads the ContainerRuntime. This is because for "read" mode clients this
+             * flag is false which causes ContainerRuntime to create the internal components again.
+             * 2. When the first client connects in "write" mode - This happens when a client does not create the
+             * Container in detached mode. In this case, when the code proposal is accepted, we come here and we
+             * need to create the internal data stores in ContainerRuntime.
+             * Once we move to using detached container everywhere, this can move outside this block.
+             */
+            this._existing = true;
+        }
+
+        if (blobs.size > 0) {
+            this.blobsCacheStorageService =
+                new BlobCacheStorageService(this.storageService, Promise.resolve(blobs));
+        }
+        const attributes: IDocumentAttributes = {
+            branch: this.id,
+            minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
+            sequenceNumber: this._deltaManager.lastSequenceNumber,
+            term: this._deltaManager.referenceTerm,
+        };
+
+        await this.loadContext(codeDetails, attributes, snapshot, previousContextState);
+
+        this.deltaManager.inbound.systemResume();
+        this.deltaManager.inboundSignal.systemResume();
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
