@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { CreateNewHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { DriverHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
@@ -30,7 +30,7 @@ describe("Insecure Url Resolver Test", () => {
     });
 
     it("Create New Request", async () => {
-        assert(!!request.headers?.[CreateNewHeader.createNew],
+        assert(!!request.headers?.[DriverHeader.createNew],
             "Request should contain create new header");
         const url = `${hostUrl}?fileName=${fileName}`;
         assert.strictEqual(request.url, url, "Request url should match");

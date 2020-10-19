@@ -35,7 +35,7 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
 
     summarizer: boolean;
 
-    sharingLink?: string;
+    sharingLinkP?: Promise<string>;
 }
 
 /**
@@ -53,9 +53,14 @@ export interface ISocketStorageDiscovery {
     snapshotStorageUrl: string;
     deltaStorageUrl: string;
 
+    /**
+     * The non-AFD URL
+     */
     deltaStreamSocketUrl: string;
 
-    // The AFD URL for PushChannel
+    /**
+     * The AFD URL for PushChannel
+     */
     deltaStreamSocketUrl2?: string;
 }
 
@@ -257,12 +262,10 @@ export interface OdspFluidDataStoreLocator {
 
 export enum SharingLinkHeader {
     isSharingLink = "isSharingLink",
-    generateSharingLink = "generateSharingLink",
 }
 
 export interface ISharingLinkHeader {
     [SharingLinkHeader.isSharingLink]: boolean;
-    [SharingLinkHeader.generateSharingLink]: boolean;
 }
 
 declare module "@fluidframework/core-interfaces" {
