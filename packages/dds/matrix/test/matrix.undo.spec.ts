@@ -57,6 +57,32 @@ describe("Matrix", () => {
                 expectSize(matrix1, /* rowCount */ 1, /* colCount: */ 0);
             });
 
+            it("fail: undo/redo insertRow 2x1", async () => {
+                matrix1.insertCols(/* start: */ 0, /* count: */ 1);
+                undo1.closeCurrentOperation();
+
+                matrix1.insertRows(/* start: */ 0, /* count: */ 2);
+                matrix1.setCells(/* rowStart: */ 0, /* colStart: */ 0, /* colCount: */ 1, [
+                    0,
+                    1,
+                ]);
+                undo1.closeCurrentOperation();
+
+                await expect([
+                    [0],
+                    [1],
+                ]);
+
+                undo1.undoOperation();
+                expectSize(matrix1, /* rowCount */ 0, /* colCount: */ 1);
+
+                undo1.redoOperation();
+                await expect([
+                    [0],
+                    [1],
+                ]);
+            });
+
             it("undo/redo removeRow", async () => {
                 matrix1.insertRows(/* start: */ 0, /* count: */ 1);
                 matrix1.insertCols(/* start: */ 0, /* count: */ 1);
@@ -219,6 +245,29 @@ describe("Matrix", () => {
 
                 undo1.redoOperation();
                 expectSize(matrix1, /* rowCount */ 0, /* colCount: */ 1);
+            });
+
+            it("undo/redo insertCol 1x2", async () => {
+                matrix1.insertRows(/* start: */ 0, /* count: */ 1);
+                undo1.closeCurrentOperation();
+
+                matrix1.insertCols(/* start: */ 0, /* count: */ 2);
+                matrix1.setCells(/* rowStart: */ 0, /* colStart: */ 0, /* colCount: */ 2, [
+                    0, 1
+                ])
+                undo1.closeCurrentOperation();
+
+                await expect([
+                    [0, 1]
+                ])
+
+                undo1.undoOperation();
+                expectSize(matrix1, /* rowCount */ 1, /* colCount: */ 0);
+
+                undo1.redoOperation();
+                await expect([
+                    [0, 1]
+                ])
             });
 
             it("undo/redo removeCol", async () => {
@@ -579,6 +628,80 @@ describe("Matrix", () => {
                 await expect([
                     [2, 3],
                 ]);
+            });
+
+            it("undo/redo races split column span", async () => {
+                matrix1.insertRows(/* start: */ 0, /* count: */ 1);
+                undo1.closeCurrentOperation();
+                await expect([
+                    [],
+                ]);
+
+                matrix1.insertCols(/* start: */ 0, /* count: */ 2);
+                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
+                    0, 2,
+                ]);
+                undo1.closeCurrentOperation();
+                await expect([
+                    [0, 2],
+                ]);
+
+                matrix2.insertCols(/* start: */ 1, /* count: */ 1);
+                matrix2.setCell(/* row: */ 0, /* col: */ 1, /* value: */ 1);
+                undo2.closeCurrentOperation();
+
+                await expect([
+                    [0, 1, 2],
+                ]);
+
+                undo1.undoOperation();
+                await expect([
+                    [1],
+                ]);
+
+                undo1.redoOperation();
+                await expect([
+                    [0, 1, 2],
+                ]);
+            });
+
+            it("undo/redo races split column span", async () => {
+                matrix1.insertRows(/* start: */ 0, /* count: */ 1);
+                undo1.closeCurrentOperation();
+                await expect([
+                    [],
+                ]);
+
+                matrix1.insertCols(/* start: */ 0, /* count: */ 2);
+                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
+                    0, 2,
+                ]);
+                undo1.closeCurrentOperation();
+                await expect([
+                    [0, 2],
+                ]);
+
+                matrix2.insertCols(/* start: */ 1, /* count: */ 1);
+                matrix2.setCell(/* row: */ 0, /* col: */ 1, /* value: */ 1);
+                undo2.closeCurrentOperation();
+
+                undo1.undoOperation();
+                undo1.redoOperation();
+
+                // Only check for convergence due to GitHub issue #3964...  (See below.)
+                await expect(undefined as any);
+
+                // A known weakness of our current undo implementation is that undoing a
+                // removal reinserts the segment at it's start position.
+                //
+                // This can lead to percieved reordering when a remove/re-insert races with
+                // an insertion that splits the original segment.
+                //
+                // (See https://github.com/microsoft/FluidFramework/issues/3964)
+                //
+                // await expect([
+                //     [0, 1, 2],
+                // ]);
             });
         });
     });

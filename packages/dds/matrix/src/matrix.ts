@@ -250,6 +250,10 @@ export class SharedMatrix<T extends Serializable = Serializable>
         this.cells.setCell(rowHandle, colHandle, value);
         this.annotations.setCell(rowHandle, colHandle, undefined);
 
+        this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+    }
+
+    private sendSetCellOp(row: number, col: number, value: T, rowHandle: Handle, colHandle: Handle) {
         // If the SharedMatrix is local, it will by synchronized via a Snapshot when initially connected.
         // Do not queue a message or track the pending op, as there will never be an ACK, etc.
         if (this.isAttached()) {
@@ -381,7 +385,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
                 if (value !== undefined && value !== null) {
-                    this.setCellCore(
+                    this.sendSetCellOp(
                         row,
                         col,
                         value,
@@ -424,7 +428,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
                 if (value !== undefined && value !== null) {
-                    this.setCellCore(
+                    this.sendSetCellOp(
                         row,
                         col,
                         value,
