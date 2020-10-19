@@ -85,6 +85,8 @@ export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, co
 }
 
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
+    private attachmentCounter: number = 0;
+
     public get summary(): ISummaryTree {
         return {
             type: SummaryType.Tree,
@@ -129,8 +131,8 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
         this.summaryStats = mergeStats(this.summaryStats, summarizeResult.stats);
     }
 
-    public addAttachment(key: string, id: string) {
-        this.summaryTree[key] = { id, type: SummaryType.Attachment };
+    public addAttachment(id: string) {
+        this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
     }
 
     public getSummaryTree(): ISummaryTreeWithStats {
@@ -186,7 +188,7 @@ export function convertToSummaryTree(
 
                 case TreeEntry.Attachment: {
                     const id = (entry.value as IAttachment).id;
-                    builder.addAttachment(id, id);
+                    builder.addAttachment(id);
 
                     break;
                 }

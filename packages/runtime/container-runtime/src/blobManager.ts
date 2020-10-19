@@ -42,7 +42,7 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 
 export class BlobManager {
     public readonly basePath = "_blobs";
-    private readonly blobs: Set<string> = new Set();
+    private readonly blobIds: Set<string> = new Set();
 
     constructor(
         private readonly routeContext: IFluidHandleContext,
@@ -73,7 +73,7 @@ export class BlobManager {
     }
 
     public addBlobId(blobId: string) {
-        this.blobs.add(blobId);
+        this.blobIds.add(blobId);
     }
 
     public load(blobsBlob?: string) {
@@ -88,7 +88,7 @@ export class BlobManager {
     }
 
     public snapshot(): ITree {
-        const entries = [...this.blobs].map((id) => new AttachmentTreeEntry(id, id));
+        const entries = [...this.blobIds].map((id) => new AttachmentTreeEntry(id, id));
         return { entries, id: null };
     }
 }
