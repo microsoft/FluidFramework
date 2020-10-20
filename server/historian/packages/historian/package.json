@@ -20,7 +20,6 @@
     "tslint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {
-    "@fluidframework/gitresources": "^0.1012.0",
     "@fluidframework/historian-base": "^0.0.1",
     "@fluidframework/server-services-utils": "^0.1012.2",
     "body-parser": "^1.17.2",
