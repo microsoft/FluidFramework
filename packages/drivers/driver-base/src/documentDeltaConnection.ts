@@ -50,7 +50,6 @@ function createErrorObject(handler: string, error?: any, canRetry = true): Drive
 
 interface IEventListener {
     event: string;
-    connectionListener: boolean; // True if this event listener only needed while connection is in progress
     listener(...args: any[]): void;
 }
 
@@ -126,6 +125,8 @@ export class DocumentDeltaConnection
 
     private _details: IConnected | undefined;
 
+    // Listeners only needed while the connection is in progress
+    private connectionListeners: IEventListener[] = [];
     private trackedListeners: IEventListener[] = [];
 
     protected get hasDetails(): boolean {
@@ -334,7 +335,7 @@ export class DocumentDeltaConnection
             "client closing connection",
             true, // canRetry
         );
-        this.removeTrackedListeners(false);
+        this.removeTrackedListeners();
         this.disconnect(false, reason);
     }
 
@@ -357,7 +358,7 @@ export class DocumentDeltaConnection
         this._details = await new Promise<IConnected>((resolve, reject) => {
             const fail = (socketProtocolError: boolean, err: DriverError) => {
                 this.closed = true;
-                this.removeTrackedListeners(false);
+                this.removeTrackedListeners();
                 this.disconnect(socketProtocolError, err);
                 reject(err);
             };
@@ -388,7 +389,7 @@ export class DocumentDeltaConnection
 
                 this.checkpointSequenceNumber = response.checkpointSequenceNumber;
 
-                this.removeTrackedListeners(true);
+                this.removeConnectionListeners();
                 resolve(response);
                 success = true;
             });
@@ -449,28 +450,31 @@ export class DocumentDeltaConnection
 
     private addConnectionListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({ event, connectionListener: true, listener });
+        this.connectionListeners.push({ event, listener });
     }
 
     protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({ event, connectionListener: false, listener });
+        this.trackedListeners.push({ event, listener });
     }
 
-    protected removeTrackedListeners(connectionListenerOnly: boolean) {
-        const remaining: IEventListener[] = [];
-        for (const { event, connectionListener, listener } of this.trackedListeners) {
-            if (!connectionListenerOnly || connectionListener) {
-                this.socket.off(event, listener);
-            } else {
-                remaining.push({ event, connectionListener, listener });
-            }
+    private removeTrackedListeners() {
+        for (const { event, listener } of this.trackedListeners) {
+            this.socket.off(event, listener);
         }
-        this.trackedListeners = remaining;
+        // removeTrackedListeners removes all listeners, including connection listeners
+        this.removeConnectionListeners();
 
-        if (!connectionListenerOnly) {
-            this.removeEarlyOpHandler();
-            this.removeEarlySignalHandler();
+        this.removeEarlyOpHandler();
+        this.removeEarlySignalHandler();
+
+        this.trackedListeners = [];
+    }
+
+    private removeConnectionListeners() {
+        for (const { event, listener } of this.connectionListeners) {
+            this.socket.off(event, listener);
         }
+        this.connectionListeners = [];
     }
 }
