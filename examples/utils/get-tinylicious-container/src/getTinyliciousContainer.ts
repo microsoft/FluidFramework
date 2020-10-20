@@ -44,6 +44,8 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
             },
             tokens: { jwt: this.auth(documentId) },
             type: "fluid",
+            // This is wrong as it should contain the full path, but it doesn't matter
+            // because we never give out loader in this flow
             url: documentUrl,
         };
         return response;
