@@ -86,7 +86,8 @@ data:
             }
         },
         "auth": {
-            "endpoint": "http://{{ template "riddler.fullname" . }}"
+            "endpoint": "http://{{ template "riddler.fullname" . }}",
+            "enableTokenExpiration": false
         },
         "routemanager": {
             "topics": {

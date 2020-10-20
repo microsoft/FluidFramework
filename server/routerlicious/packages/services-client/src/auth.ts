@@ -50,3 +50,28 @@ export function generateUser(): IUser {
 
     return randomUser;
 }
+
+/**
+ * Validates a JWT token to authorize routerlicious and returns decoded claims.
+ * An undefined return value indicates invalid claims.
+ */
+export function validateTokenClaims(
+    token: string,
+    documentId: string,
+    tenantId: string,
+    isTokenExpiryEnabled: boolean): ITokenClaims {
+    const claims = jwt.decode(token) as ITokenClaims;
+
+    const ONE_HOUR = 60 * 60; // 1 hour in seconds
+    const now = Math.round((new Date()).getTime() / 1000);
+    const isTokenExpired = now < claims.iat || now >= claims.exp || claims.exp - claims.iat > ONE_HOUR;
+
+    if (!claims
+        || claims.documentId !== documentId
+        || claims.tenantId !== tenantId
+        || (isTokenExpiryEnabled && isTokenExpired)
+    ) {
+        return undefined;
+    }
+    return claims;
+}

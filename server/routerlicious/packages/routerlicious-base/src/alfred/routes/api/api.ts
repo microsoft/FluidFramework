@@ -7,10 +7,10 @@
 
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
-import { IClient, IClientJoin, ITokenClaims, ScopeType } from "@fluidframework/protocol-definitions";
+import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
+import { validateTokenClaims } from "@fluidframework/server-services-client";
 import { Request, Response, Router } from "express";
-import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import requestAPI from "request";
@@ -148,21 +148,11 @@ async function verifyToken(request: Request, tenantManager: core.ITenantManager,
     }
     const tenantId = getParam(request.params, "tenantId");
     const documentId = getParam(request.params, "id");
-    const claims = jwt.decode(token) as ITokenClaims;
-    if (!claims
-        || claims.documentId !== documentId
-        || claims.tenantId !== tenantId
-        || (isTokenExpiryEnabled && isTokenExpired(claims))
-    ) {
+    const claims = validateTokenClaims(token, documentId, tenantId, isTokenExpiryEnabled);
+    if (!claims) {
         return Promise.reject("Invalid access token");
     }
-    return tenantManager.verifyToken(tenantId, token);
-}
-
-function isTokenExpired(claims: ITokenClaims): boolean {
-    const ONE_HOUR = 60 * 60; // 1 hour in seconds
-    const now = Math.round((new Date()).getTime() / 1000);
-    return now < claims.iat || now >= claims.exp || claims.exp - claims.iat > ONE_HOUR;
+    return tenantManager.verifyToken(claims.tenantId, token);
 }
 
 async function checkDocumentExistence(request: Request, storage: core.IDocumentStorage): Promise<any> {

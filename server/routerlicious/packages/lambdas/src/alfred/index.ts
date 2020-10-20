@@ -15,13 +15,11 @@ import {
     INack,
     IServiceConfiguration,
     ISignalMessage,
-    ITokenClaims,
     MessageType,
     NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { canSummarize, canWrite } from "@fluidframework/server-services-client";
+import { canSummarize, canWrite, validateTokenClaims } from "@fluidframework/server-services-client";
 
-import * as jwt from "jsonwebtoken";
 import safeStringify from "json-stringify-safe";
 import * as semver from "semver";
 import * as core from "@fluidframework/server-services-core";
@@ -116,7 +114,8 @@ export function configureWebSocketServices(
     clientManager: core.IClientManager,
     metricLogger: core.IMetricClient,
     logger: core.ILogger,
-    maxNumberOfClientsPerDocument: number = 1000000) {
+    maxNumberOfClientsPerDocument: number = 1000000,
+    isTokenExpiryEnabled: boolean = false) {
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, core.IOrdererConnection>();
@@ -161,8 +160,8 @@ export function configureWebSocketServices(
 
             // Validate token signature and claims
             const token = message.token;
-            const claims = jwt.decode(token) as ITokenClaims;
-            if (claims.documentId !== message.id || claims.tenantId !== message.tenantId) {
+            const claims = validateTokenClaims(token, message.id, message.tenantId, isTokenExpiryEnabled);
+            if (!claims) {
                 return Promise.reject("Invalid claims");
             }
             await tenantManager.verifyToken(claims.tenantId, token);

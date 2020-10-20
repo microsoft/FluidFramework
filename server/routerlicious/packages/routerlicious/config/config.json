@@ -78,7 +78,7 @@
     },
     "auth": {
         "endpoint": "http://riddler:5000",
-        "enableTokenExpiration": true
+        "enableTokenExpiration": false
     },
     "routemanager": {
         "topics": {
