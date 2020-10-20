@@ -1350,7 +1350,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
-            false /* isRootDataStore */
+            false /* isRootDataStore */,
         );
         this.setupNewContext(context);
         return context;
