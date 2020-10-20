@@ -5,7 +5,7 @@
 
 import * as querystring from "querystring";
 import * as git from "@fluidframework/gitresources";
-import * as request from "request";
+import request from "request";
 import * as winston from "winston";
 import { ICache, IStorage } from "./definitions";
 
@@ -34,7 +34,6 @@ export class RestGitService {
     private readonly authHeader: string;
 
     constructor(private readonly storage: IStorage, private readonly cache: ICache) {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             this.authHeader = `Basic ${token.toString("base64")}`;
@@ -311,7 +310,6 @@ export class RestGitService {
      * Updates the provided options with authorization information
      */
     private authorize(options: request.OptionsWithUrl) {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this.authHeader) {
             options.headers.Authorization = this.authHeader;
         }
@@ -322,7 +320,6 @@ export class RestGitService {
             request(
                 options,
                 (error, response, body) => {
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (error) {
                         return reject(error);
                     } else if (response.statusCode !== statusCode) {
@@ -350,11 +347,9 @@ export class RestGitService {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue = await this.cache.get<T>(key).catch((error) => {
                 winston.error(`Error fetching ${key} from cache`, error);
-                // eslint-disable-next-line no-null/no-null
                 return null;
             });
 
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (cachedValue) {
                 winston.info(`Resolving ${key} from cache`);
                 return cachedValue;

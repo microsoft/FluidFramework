@@ -20,10 +20,8 @@ export class RiddlerService implements ITenantService {
     private async getTenantDetails(tenantId: string): Promise<ITenant> {
         const cachedDetail = await this.cache.get(tenantId).catch((error) => {
             winston.error(`Error fetching tenant details from cache`, error);
-            // eslint-disable-next-line no-null/no-null
             return null;
         });
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (cachedDetail) {
             winston.info(`Resolving tenant details from cache`);
             return JSON.parse(cachedDetail) as ITenant;
