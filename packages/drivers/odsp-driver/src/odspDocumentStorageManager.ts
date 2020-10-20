@@ -975,7 +975,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             const baseEntry: ISnapshotTreeBaseEntry = {
                 path: encodeURIComponent(key),
-                type: getGitType(summaryObject),
+                type: getGitType(summaryObject) === "attachment" ? "blob" : getGitType(summaryObject),
             };
 
             let entry: SnapshotTreeEntry;
