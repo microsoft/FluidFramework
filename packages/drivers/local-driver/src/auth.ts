@@ -1,16 +1,11 @@
-/*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License.
- */
-
-import { debug } from "util";
 import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
-import * as jwt from "jsonwebtoken";
+import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
-import { getRandomName } from "./generateNames";
+import { getRandomName } from "@fluidframework/server-services-client";
 
 /**
- * Generates a JWT token to authorize routerlicious
+ * Generates a JWT token to authorize against. We do not use the implementation in
+ * services-client since it cannot run in the browser without polyfills.
  */
 export function generateToken(
     tenantId: string,
@@ -21,7 +16,6 @@ export function generateToken(
     // eslint-disable-next-line @typescript-eslint/no-use-before-define, no-param-reassign
     user = (user) ? user : generateUser();
     if (user.id === "" || user.id === undefined) {
-        debug("User with no id");
         // eslint-disable-next-line @typescript-eslint/no-use-before-define, no-param-reassign
         user = generateUser();
     }
@@ -33,7 +27,7 @@ export function generateToken(
         user,
     };
 
-    return jwt.sign(claims, key);
+    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, key);
 }
 
 export function generateUser(): IUser {
