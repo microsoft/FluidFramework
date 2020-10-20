@@ -14,7 +14,7 @@ import {
     odspTokensCache,
     OdspTokenConfig,
 } from "@fluidframework/tool-utils";
-import { IFluidPackage } from "@fluidframework/container-definitions";
+import { IFluidPackage } from "@fluidframework/core-interfaces";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils";
 import Axios from "axios";
 import { RouteOptions } from "./loader";

@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/core-interfaces";
-import {
-    IFluidCodeDetails,
-    IFluidModule,
-} from "@fluidframework/container-definitions";
+import { IFluidObject, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidModule } from "@fluidframework/container-definitions";
 import { Loader, Container } from "@fluidframework/container-loader";
 import { WebCodeLoader } from "@fluidframework/web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";

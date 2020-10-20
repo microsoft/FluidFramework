@@ -9,11 +9,11 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import {
     IContainer,
-    IFluidCodeDetails,
     ILoader,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { Ink } from "@fluidframework/ink";
 import { LocalResolver } from "@fluidframework/local-driver";

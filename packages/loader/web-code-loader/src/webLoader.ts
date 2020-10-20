@@ -6,12 +6,12 @@
 import {
     ICodeLoader,
     ICodeAllowList,
-    IFluidCodeDetails,
     IFluidModule,
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
     isFluidBrowserPackage,
 } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ScriptManager } from "./scriptManager";
 
 export class WebCodeLoader implements ICodeLoader {

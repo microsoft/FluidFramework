@@ -4,7 +4,7 @@
  */
 
 import _ from "lodash";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";
 import { IClientConfig } from "@fluidframework/odsp-utils";

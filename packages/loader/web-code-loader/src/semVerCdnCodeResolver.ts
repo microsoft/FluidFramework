@@ -4,8 +4,9 @@
  */
 
 import {
-    IFluidCodeDetails, IFluidCodeResolver, IResolvedFluidCodeDetails, isFluidBrowserPackage,
+    IFluidCodeResolver, IResolvedFluidCodeDetails, isFluidBrowserPackage,
 } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import fetch from "isomorphic-fetch";
 import {
     extractPackageIdentifierDetails,

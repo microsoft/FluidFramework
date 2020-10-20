@@ -10,8 +10,6 @@ import { Deferred } from "@fluidframework/common-utils";
 import {
     AttachState,
     IFluidModule,
-    IFluidPackage,
-    IFluidCodeDetails,
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
     isFluidBrowserPackage,
@@ -26,7 +24,7 @@ import {
     resolveFluidPackageEnvironment,
     WebCodeLoader,
 } from "@fluidframework/web-code-loader";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { IFluidObject, IFluidPackage, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { MultiUrlResolver } from "./multiResolver";
 import { getDocumentServiceFactory } from "./multiDocumentServiceFactory";
