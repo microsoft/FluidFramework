@@ -13,7 +13,7 @@ import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/containe
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {  createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
+import { createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 class TestSharedDataObject1 extends DataObject {

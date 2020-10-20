@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { IMatrixConsumer, IMatrixReader, IMatrixProducer } from "@tiny-calc/nano";
+import { DenseVector, RowMajorMatrix } from "@tiny-calc/micro";
+import { Serializable } from "@fluidframework/datastore-definitions";
 
 /**
  * IMatrixConsumer implementation that applies change notifications to it's own
@@ -13,65 +14,66 @@ import { IMatrixConsumer, IMatrixReader, IMatrixProducer } from "@tiny-calc/nano
  * Comparing the state of the TestConsumer with the original IMatrixProducer is a
  * convenient way to vet that the producer is emitting the correct change notifications.
  */
-export class TestConsumer<T = any> implements IMatrixConsumer<T>, IMatrixReader<T> {
-    private _rowCount = 0;
-    private _colCount = 0;
-    private readonly cells: T[] = [];
-    private readonly reader: IMatrixReader<T>;
+export class TestConsumer<T extends Serializable = Serializable> implements IMatrixConsumer<T>, IMatrixReader<T> {
+    private rows: DenseVector<void> = new DenseVector<void>();
+    private cols: DenseVector<void> = new DenseVector<void>();
+    private actual: RowMajorMatrix<T> = new RowMajorMatrix<T>(this.rows, this.cols);
+    private readonly expected: IMatrixReader<T>;
 
     constructor (producer: IMatrixProducer<T>) {
-        this.reader = producer.openMatrix(this);
+        this.expected = producer.openMatrix(this);
+
+        this.rows.splice(/* start: */ 0, /* deleteCount: */ 0, /* insertCount: */ this.expected.rowCount);
+        this.cols.splice(/* start: */ 0, /* deleteCount: */ 0, /* insertCount: */ this.expected.colCount);
+        this.updateCells();
     }
 
-    public get rowCount() { this.vet(); return this._rowCount; }
-    public get colCount() { this.vet(); return this._colCount; }
-    public get matrixProducer() { return undefined as any; }
-
-    // #region IMatrixConsumer
-
-    rowsChanged(rowStart: number, removedCount: number, insertedCount: number): void {
-        if (removedCount > 0) {
-            this.removeRows(rowStart, removedCount);
-        }
-
-        if (insertedCount > 0) {
-            this.insertRows(rowStart, insertedCount);
-        }
-
-        this.vet();
-    }
-
-    colsChanged(colStart: number, removedCount: number, insertedCount: number): void {
-        if (removedCount > 0) {
-            this.removeCols(colStart, removedCount);
-        }
-
-        if (insertedCount > 0) {
-            this.insertCols(colStart, insertedCount);
-        }
-
-        this.vet();
-    }
-
-    cellsChanged(rowStart: number, colStart: number, rowCount: number, colCount: number): void {
+    private forEachCell(
+        callback: (row, col) => void,
+        rowStart = 0,
+        colStart = 0,
+        rowCount = this.rowCount,
+        colCount = this.colCount
+    ) {
         const rowEnd = rowStart + rowCount;
         const colEnd = colStart + colCount;
 
         for (let row = rowStart; row < rowEnd; row++) {
             for (let col = colStart; col < colEnd; col++) {
-                this.cells[this.getRowIndex(row) + col] = this.reader.getCell(row, col);
+                callback(row, col);
             }
         }
+    }
 
-        // Vet that `rowCount` & `colCount` are consistent with the source `reader`.
-        assert(this._rowCount === this.reader.rowCount
-            && this._colCount == this.reader.colCount);
+    private updateCells(
+        rowStart = 0,
+        colStart = 0,
+        rowCount = this.rowCount,
+        colCount = this.colCount
+    ) {
+        this.forEachCell((row, col) => {
+            this.actual.setCell(row, col, this.expected.getCell(row, col));
+        }, rowStart, colStart, rowCount, colCount);
+    }
 
-        for (let i = 0, r = 0; r < this._rowCount; r++) {
-            for (let c = 0; c < this._colCount; c++) {
-                assert.equal(this.cells[i++], this.reader.getCell(r, c));
-            }
-        }
+    public get rowCount() { return this.actual.rowCount; }
+    public get colCount() { return this.actual.colCount; }
+    public get matrixProducer() { return undefined as any; }
+
+    // #region IMatrixConsumer
+
+    rowsChanged(rowStart: number, removedCount: number, insertedCount: number): void {
+        this.rows.splice(rowStart, removedCount, insertedCount);
+        this.updateCells(rowStart, /* colStart: */ 0, /* rowCount: */ insertedCount, this.actual.colCount);
+    }
+
+    colsChanged(colStart: number, removedCount: number, insertedCount: number): void {
+        this.cols.splice(colStart, removedCount, insertedCount);
+        this.updateCells(/* rowStart: */ 0, colStart, /* rowCount: */ this.actual.rowCount, /* colCount: */ insertedCount);
+    }
+
+    cellsChanged(rowStart: number, colStart: number, rowCount: number, colCount: number): void {
+        this.updateCells(rowStart, colStart, rowCount, colCount);
     }
 
     // #endregion IMatrixConsumer
@@ -79,60 +81,8 @@ export class TestConsumer<T = any> implements IMatrixConsumer<T>, IMatrixReader<
     // #region IMatrixReader
 
     getCell(row: number, col: number): T {
-        return this.cells[this.getRowIndex(row) + col];
+        return this.expected.getCell(row, col);
     }
 
     // #endregion IMatrixReader
-
-    private insertRows(row: number, rowCount: number) {
-        this.cells.splice(this.getRowIndex(row), 0, ...new Array(rowCount * this._colCount));
-        this._rowCount += rowCount;
-    }
-
-    private removeRows(row: number, rowCount: number) {
-        this.cells.splice(this.getRowIndex(row), rowCount * this._colCount);
-        this._rowCount -= rowCount;
-    }
-
-    private insertCols(col: number, colCount: number) {
-        const stride = this._colCount + colCount;
-        const max = this._rowCount * stride;
-        for (let c = col; c < max; c += stride) {
-            this.cells.splice(c, 0, ...new Array(colCount));
-        }
-
-        this._colCount = stride;
-    }
-
-    private removeCols(col: number, colCount: number) {
-        const stride = this._colCount - colCount;
-        for (let c = col; c < this.cells.length; c += stride) {
-            this.cells.splice(c, colCount);
-        }
-        this._colCount = stride;
-    }
-
-    private getRowIndex(row: number) {
-        return row * this._colCount;
-    }
-
-    public extract(this): ReadonlyArray<ReadonlyArray<T>> {
-        const m: T[][] = [];
-        for (let r = 0; r < this._rowCount; r++) {
-            const row: T[] = [];
-            m.push(row);
-
-            for (let c = 0; c < this.colCount; c++) {
-                row.push(this.getCell(r, c));
-            }
-        }
-
-        return m;
-    }
-
-    private vet() {
-        // Vet that `rowCount` & `colCount` are consistent with the `cells` array.
-        assert((this._colCount === 0 && this.cells.length === 0)
-            || (this._rowCount === this.cells.length / this._colCount));
-    }
 }
