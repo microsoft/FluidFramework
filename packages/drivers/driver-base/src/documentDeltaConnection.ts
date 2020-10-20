@@ -255,8 +255,6 @@ export class DocumentDeltaConnection
      * @returns messages sent during the connection
      */
     public get initialMessages(): ISequencedDocumentMessage[] {
-        // Can't really calling initialMessages() twice - we do not keep ops after first call!
-        assert(this.earlyOpHandler !== undefined, "initialMessages called twice");
         // We will lose ops and perf will tank as we need to go to storage to become current!
         assert(this.listeners("op").length !== 0, "No op handler is setup!");
 
@@ -351,10 +349,8 @@ export class DocumentDeltaConnection
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.socket.on("op", this.earlyOpHandler!);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.socket.on("signal", this.earlySignalHandler!);
+        this.socket.on("op", this.earlyOpHandler);
+        this.socket.on("signal", this.earlySignalHandler);
 
         let success = false;
 
@@ -433,28 +429,22 @@ export class DocumentDeltaConnection
         });
     }
 
-    protected earlyOpHandler?= (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+    protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
         debug("Queued early ops", msgs.length);
         this.queuedMessages.push(...msgs);
     };
 
-    protected earlySignalHandler?= (msg: ISignalMessage) => {
+    protected earlySignalHandler = (msg: ISignalMessage) => {
         debug("Queued early signals");
         this.queuedSignals.push(msg);
     };
 
     private removeEarlyOpHandler() {
-        if (this.earlyOpHandler) {
-            this.socket.removeListener("op", this.earlyOpHandler);
-            this.earlyOpHandler = undefined;
-        }
+        this.socket.removeListener("op", this.earlyOpHandler);
     }
 
     private removeEarlySignalHandler() {
-        if (this.earlySignalHandler) {
-            this.socket.removeListener("signal", this.earlySignalHandler);
-            this.earlySignalHandler = undefined;
-        }
+        this.socket.removeListener("signal", this.earlySignalHandler);
     }
 
     private addConnectionListener(event: string, listener: (...args: any[]) => void) {
