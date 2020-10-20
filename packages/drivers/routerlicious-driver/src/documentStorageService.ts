@@ -116,23 +116,17 @@ export class DocumentStorageService implements IDocumentStorageService {
         /** Entire previous snapshot, not subtree */
         previousFullSnapshot: ISnapshotTree | undefined,
     ): Promise<string> {
-        const entries = await Promise.all(Object.keys(summaryTree.tree)
-            // Attachment entries are used for garbage collection, which we don't do on r11s, so just ignore them
-            .filter((key) => {
-                const entry = summaryTree.tree[key];
-                return entry.type !== SummaryType.Attachment;
-            }).map(async (key) => {
-                const entry = summaryTree.tree[key];
-                const pathHandle = await this.writeSummaryTreeObject(key, entry, previousFullSnapshot);
-                const treeEntry: resources.ICreateTreeEntry = {
-                    mode: this.getGitMode(entry),
-                    path: encodeURIComponent(key),
-                    sha: pathHandle,
-                    type: this.getGitType(entry),
-                };
-                return treeEntry;
-            }),
-        );
+        const entries = await Promise.all(Object.keys(summaryTree.tree).map(async (key) => {
+            const entry = summaryTree.tree[key];
+            const pathHandle = await this.writeSummaryTreeObject(key, entry, previousFullSnapshot);
+            const treeEntry: resources.ICreateTreeEntry = {
+                mode: this.getGitMode(entry),
+                path: encodeURIComponent(key),
+                sha: pathHandle,
+                type: this.getGitType(entry),
+            };
+            return treeEntry;
+        }));
 
         const treeHandle = await this.manager.createGitTree({ tree: entries });
         return treeHandle.sha;
@@ -156,6 +150,9 @@ export class DocumentStorageService implements IDocumentStorageService {
             }
             case SummaryType.Tree: {
                 return this.writeSummaryTree(object, previousFullSnapshot);
+            }
+            case SummaryType.Attachment: {
+                return object.id;
             }
 
             default:
@@ -226,6 +223,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         const type = value.type === SummaryType.Handle ? value.handleType : value.type;
         switch (type) {
             case SummaryType.Blob:
+            case SummaryType.Attachment:
                 return FileMode.File;
             case SummaryType.Commit:
                 return FileMode.Commit;
@@ -241,6 +239,7 @@ export class DocumentStorageService implements IDocumentStorageService {
 
         switch (type) {
             case SummaryType.Blob:
+            case SummaryType.Attachment:
                 return "blob";
             case SummaryType.Commit:
                 return "commit";
