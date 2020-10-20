@@ -65,7 +65,7 @@ function getRoomId(room: IRoom) {
     return `${room.tenantId}/${room.documentId}`;
 }
 
-// Sanitize the receeived op before sending.
+// Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
     // Trace sampling.
     if (getRandomInt(100) === 0 && message.operation && message.operation.traces) {

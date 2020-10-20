@@ -10,7 +10,7 @@ import {
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { TokenProvider } from "@fluidframework/routerlicious-driver";
+import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     ensureFluidResolvedUrl,
@@ -92,7 +92,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             throw new Error(`Token was not provided.`);
         }
 
-        const tokenProvider = new TokenProvider(jwtToken);
+        const tokenProvider = new DefaultTokenProvider(jwtToken);
 
         return createLocalDocumentService(
             resolvedUrl,
