@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { fetchFailureStatusCode, offlineFetchFailureStatusCode } from "./odspError";
+import { fetchFailureStatusCode, offlineFetchFailureStatusCode } from "@fluidframework/odsp-doclib-utils";
 
 /**
  * returns a promise that resolves after timeMs

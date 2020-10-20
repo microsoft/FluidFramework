@@ -51,7 +51,7 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluidframework/odsp-utils](/packages/utils/odsp-utils) | &nbsp; |
+| - [@fluidframework/odsp-doclib-utils](/packages/utils/odsp-doclib-utils) | &nbsp; |
 
 ### Tool-Utils
 

@@ -41,7 +41,6 @@ export class TestFluidObject implements ITestFluidObject {
 
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
-    public url: string;
     public root!: ISharedMap;
     private readonly innerHandle: IFluidHandle<this>;
 
@@ -58,7 +57,6 @@ export class TestFluidObject implements ITestFluidObject {
         public readonly context: IFluidDataStoreContext,
         private readonly factoryEntriesMap: Map<string, IChannelFactory>,
     ) {
-        this.url = context.id;
         this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
     }
 

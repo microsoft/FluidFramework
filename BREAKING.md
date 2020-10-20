@@ -3,6 +3,8 @@
 - [IFluidPackage Changes](#IFluidPackage-Changes)
 - [DataObject changes](#DataObject-changes)
 - [RequestParser](#RequestParser)
+- [IFluidLodable.url is removed](#IFluidLodable.url-is-removed)
+- [Loader Constructor Changes](#Loader-Constructor-Changes)
 
 ### IFluidPackage Changes
 - Remove npm specific IPackage interface
@@ -28,6 +30,35 @@ with this one:
 ```
     const a = RequestParser.create(request);
 ```
+
+### IFluidLodable.url is removed
+`url` property is removed. If you need a path to an object (in a container), you can use IFluidLoadable.handle.absolutePath instead.
+
+### Loader Constructor Changes
+The loader constructor has changed to now take a props object, rather than a series of paramaters. This should make it easier to construct loaders as the optional services can be easily excluded.
+
+Before:
+``` typescript
+    const loader = new Loader(
+        urlResolver,
+        documentServiceFactory,
+        codeLoader,
+        { blockUpdateMarkers: true },
+        {},
+        new Map(),
+    );
+```
+
+After:
+``` typescript
+    const loader = new Loader({
+        urlResolver,
+        documentServiceFactory,
+        codeLoader,
+    });
+```
+
+if for some reason this change causes you problems, we've added a deprecated `Loader._create` method that has the same parameters as the previous constructor which can be used in the interim.
 
 
 ## 0.27 Breaking Changes

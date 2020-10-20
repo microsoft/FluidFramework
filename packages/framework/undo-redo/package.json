@@ -53,6 +53,7 @@
   },
   "dependencies": {
     "@fluidframework/map": "^0.28.0",
+    "@fluidframework/matrix": "^0.28.0",
     "@fluidframework/merge-tree": "^0.28.0",
     "@fluidframework/sequence": "^0.28.0"
   },

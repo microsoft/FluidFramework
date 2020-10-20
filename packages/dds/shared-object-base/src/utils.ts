@@ -5,7 +5,6 @@
 
 import {
     IFluidHandle,
-    IFluidHandleContext,
     IFluidSerializer,
 } from "@fluidframework/core-interfaces";
 
@@ -22,14 +21,12 @@ import {
 export function serializeHandles(
     value: any,
     serializer: IFluidSerializer,
-    context: IFluidHandleContext,
     bind: IFluidHandle,
 ): string | undefined {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return value !== undefined
         ? serializer.stringify(
             value,
-            context,
             bind)
         : value;
 }
@@ -50,13 +47,11 @@ export function serializeHandles(
 export function makeHandlesSerializable(
     value: any,
     serializer: IFluidSerializer,
-    context: IFluidHandleContext,
     bind: IFluidHandle,
 ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return serializer.replaceHandles(
         value,
-        context,
         bind);
 }
 
@@ -72,8 +67,7 @@ export function makeHandlesSerializable(
 export function parseHandles(
     value: any,
     serializer: IFluidSerializer,
-    context: IFluidHandleContext,
 ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return value !== undefined ? serializer.parse(JSON.stringify(value), context) : value;
+    return value !== undefined ? serializer.parse(JSON.stringify(value)) : value;
 }

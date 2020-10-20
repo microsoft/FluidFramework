@@ -113,7 +113,6 @@ export class ProseMirror extends EventEmitter
     public get IFluidHTMLView() { return this; }
     public get IRichTextEditor() { return this.collabManager; }
 
-    public url: string;
     public text: SharedString;
     private root: ISharedMap;
     private collabManager: FluidCollabManager;
@@ -126,8 +125,7 @@ export class ProseMirror extends EventEmitter
     ) {
         super();
 
-        this.url = context.id;
-        this.innerHandle = new FluidObjectHandle(this, this.url, runtime.objectsRoutingContext);
+        this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

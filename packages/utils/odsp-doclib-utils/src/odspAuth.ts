@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { AxiosRequestConfig } from "axios";
-import { IRequestResult, createErrorFromResponse, unauthPostAsync } from "./odspRequest";
-import { getSharepointTenant } from "./odspUtils";
+import { getSharepointTenant } from "./odspDocLibUtils";
+import { throwOdspNetworkError } from "./odspErrorUtils";
+import { unauthPostAsync } from "./odspRequest";
 
 export interface IOdspTokens {
     accessToken: string;
@@ -97,11 +97,12 @@ export async function fetchTokens(
         getFetchTokenUrl(server),
         new URLSearchParams(body), // This formats the body like a query string which is the expected format
     );
-    const accessToken = result.data.access_token;
-    const refreshToken = result.data.refresh_token;
+    const tokens = await result.json();
+    const accessToken = tokens.access_token;
+    const refreshToken = tokens.refresh_token;
 
     if (accessToken === undefined || refreshToken === undefined) {
-        throw createErrorFromResponse("Unable to get access token.", result);
+        throwOdspNetworkError("Unable to get access token.", tokens.error === "invalid_grant" ? 401 : result.status);
     }
     return { accessToken, refreshToken };
 }
@@ -141,8 +142,8 @@ export async function refreshTokens(
  */
 export async function authRequestWithRetry(
     authRequestInfo: IOdspAuthRequestInfo,
-    requestCallback: (config: AxiosRequestConfig) => Promise<any>,
-): Promise<IRequestResult> {
+    requestCallback: (config: RequestInit) => Promise<Response>,
+): Promise<Response> {
     const createConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
 
     const result = await requestCallback(createConfig(authRequestInfo.accessToken));
@@ -150,10 +151,7 @@ export async function authRequestWithRetry(
     if (authRequestInfo.refreshTokenFn && (result.status === 401 || result.status === 403)) {
         // Unauthorized, try to refresh the token
         const refreshedAccessToken = await authRequestInfo.refreshTokenFn();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return requestCallback(createConfig(refreshedAccessToken));
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return result;
 }

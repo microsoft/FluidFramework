@@ -141,7 +141,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
             await this.root.get<IFluidHandle<SpacesStorage<ISpacesItem>>>(SpacesStorageKey)?.get();
 
         // We'll cache this async result on initialization, since we need it synchronously during render.
-        this.baseUrl = await this.context.getAbsoluteUrl(this.url);
+        this.baseUrl = await this.context.getAbsoluteUrl(this.handle.absolutePath);
     }
 
     private readonly applyTemplate = async (template: string) => {

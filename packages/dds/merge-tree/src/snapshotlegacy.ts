@@ -7,7 +7,6 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
-    IFluidHandleContext,
     IFluidSerializer,
 } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -104,7 +103,6 @@ export class SnapshotLegacy {
     emit(
         catchUpMsgs: ISequencedDocumentMessage[],
         serializer?: IFluidSerializer,
-        context?: IFluidHandleContext,
         bind?: IFluidHandle,
     ): ITree {
         const chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.chunkSize);
@@ -123,7 +121,6 @@ export class SnapshotLegacy {
                             this.logger,
                             this.mergeTree.options,
                             serializer,
-                            context,
                             bind),
                         encoding: "utf-8",
                     },
@@ -148,7 +145,6 @@ export class SnapshotLegacy {
                         this.logger,
                         this.mergeTree.options,
                         serializer,
-                        context,
                         bind),
                     encoding: "utf-8",
                 },
@@ -168,7 +164,7 @@ export class SnapshotLegacy {
             path: this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
             type: TreeEntry.Blob,
             value: {
-                contents: serializer ? serializer.stringify(catchUpMsgs, context, bind) : JSON.stringify(catchUpMsgs),
+                contents: serializer ? serializer.stringify(catchUpMsgs, bind) : JSON.stringify(catchUpMsgs),
                 encoding: "utf-8",
             },
         });

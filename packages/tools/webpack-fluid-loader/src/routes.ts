@@ -8,7 +8,6 @@ import path from "path";
 import express from "express";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
-import { IOdspTokens, getServer } from "@fluidframework/odsp-utils";
 import {
     getMicrosoftConfiguration,
     OdspTokenManager,
@@ -16,6 +15,7 @@ import {
     OdspTokenConfig,
 } from "@fluidframework/tool-utils";
 import { IFluidPackage } from "@fluidframework/container-definitions";
+import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils";
 import Axios from "axios";
 import { RouteOptions } from "./loader";
 import { createManifestResponse } from "./bohemiaIntercept";

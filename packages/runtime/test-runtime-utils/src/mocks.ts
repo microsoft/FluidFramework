@@ -370,7 +370,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public get IFluidRouter() { return this; }
 
-    public readonly IFluidSerializer = new FluidSerializer();
+    public readonly IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
 
     public readonly documentId: string;
     public readonly id: string = uuid();

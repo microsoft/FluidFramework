@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
 import {
-    OnlineStatus, isOnline,
-} from "@fluidframework/driver-utils";
-import {
-    DriverErrorType,
-} from "@fluidframework/driver-definitions";
+    fetchIncorrectResponse,
+    offlineFetchFailureStatusCode,
+    fetchFailureStatusCode,
+} from "@fluidframework/odsp-doclib-utils";
 import {
     default as fetch,
     RequestInfo as FetchRequestInfo,
@@ -17,12 +18,7 @@ import {
 } from "node-fetch";
 import sha from "sha.js";
 import { debug } from "./debug";
-import {
-    offlineFetchFailureStatusCode,
-    fetchFailureStatusCode,
-    fetchIncorrectResponse,
-    throwOdspNetworkError,
-} from "./odspError";
+import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 
 /** Parse the given url and return the origin (host name) */

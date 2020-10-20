@@ -39,14 +39,11 @@ export async function getSessionStorageContainer(
     const module = { fluidExport: containerRuntimeFactory };
     const codeLoader = { load: async () => module };
 
-    const loader = new Loader(
+    const loader = new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
-        { blockUpdateMarkers: true },
-        {},
-        new Map(),
-    );
+    });
 
     let container: Container;
 

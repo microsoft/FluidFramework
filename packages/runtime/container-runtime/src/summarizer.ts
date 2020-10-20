@@ -584,7 +584,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     constructor(
-        public readonly url: string,
+        url: string,
         private readonly runtime: ISummarizerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
         // eslint-disable-next-line max-len
@@ -611,7 +611,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             (op) => this.summaryCollection.handleOp(op));
 
         this.runtime.previousState.nextSummarizerD?.resolve(this);
-        this.innerHandle = new SummarizerHandle(this, this.url, handleContext);
+        this.innerHandle = new SummarizerHandle(this, url, handleContext);
     }
 
     public async run(onBehalfOf: string): Promise<void> {

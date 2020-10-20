@@ -26,7 +26,7 @@ export function serializeBlob(
         type: TreeEntry.Blob,
         value: {
             contents: serializer !== undefined
-                ? serializer.stringify(snapshot, runtime.IFluidHandleContext, handle)
+                ? serializer.stringify(snapshot, handle)
                 : JSON.stringify(snapshot),
             encoding: "utf-8",
         },
@@ -39,7 +39,7 @@ export async function deserializeBlob(runtime: IFluidDataStoreRuntime, storage: 
 
     const serializer = runtime.IFluidSerializer;
     const data = serializer !== undefined
-        ? serializer.parse(utf8, runtime.IFluidHandleContext)
+        ? serializer.parse(utf8)
         : JSON.parse(utf8);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
