@@ -52,9 +52,9 @@ export function create(
     });
 
     router.patch("/:tenantId/:id/root", async (request, response) => {
-        const maxTokenLifetime = config.get("auth:maxTokenLifetimeSec") as number;
+        const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
         const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
-        const validP = verifyRequest(request, tenantManager, storage, maxTokenLifetime, isTokenExpiryEnabled);
+        const validP = verifyRequest(request, tenantManager, storage, maxTokenLifetimeSec, isTokenExpiryEnabled);
         returnResponse(validP, request, response, mapSetBuilder);
     });
 
@@ -138,19 +138,19 @@ const verifyRequest = async (
     request: Request,
     tenantManager: core.ITenantManager,
     storage: core.IDocumentStorage,
-    maxTokenLifetime: number,
+    maxTokenLifetimeSec: number,
     // eslint-disable-next-line max-len
-    isTokenExpiryEnabled: boolean) => Promise.all([verifyToken(request, tenantManager, maxTokenLifetime, isTokenExpiryEnabled), checkDocumentExistence(request, storage)]);
+    isTokenExpiryEnabled: boolean) => Promise.all([verifyToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled), checkDocumentExistence(request, storage)]);
 
 // eslint-disable-next-line max-len
-async function verifyToken(request: Request, tenantManager: core.ITenantManager, maxTokenLifetime: number, isTokenExpiryEnabled: boolean): Promise<void> {
+async function verifyToken(request: Request, tenantManager: core.ITenantManager, maxTokenLifetimeSec: number, isTokenExpiryEnabled: boolean): Promise<void> {
     const token = request.headers["access-token"] as string;
     if (!token) {
         return Promise.reject("Missing access token");
     }
     const tenantId = getParam(request.params, "tenantId");
     const documentId = getParam(request.params, "id");
-    const claims = validateTokenClaims(token, documentId, tenantId, maxTokenLifetime, isTokenExpiryEnabled);
+    const claims = validateTokenClaims(token, documentId, tenantId, maxTokenLifetimeSec, isTokenExpiryEnabled);
     if (!claims) {
         return Promise.reject("Invalid access token");
     }

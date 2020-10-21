@@ -115,7 +115,7 @@ export function configureWebSocketServices(
     metricLogger: core.IMetricClient,
     logger: core.ILogger,
     maxNumberOfClientsPerDocument: number = 1000000,
-    maxTokenLifetime: number = 60 * 60,
+    maxTokenLifetimeSec: number = 60 * 60,
     isTokenExpiryEnabled: boolean = false) {
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
@@ -164,7 +164,7 @@ export function configureWebSocketServices(
             const claims = validateTokenClaims(token,
                 message.id,
                 message.tenantId,
-                maxTokenLifetime,
+                maxTokenLifetimeSec,
                 isTokenExpiryEnabled);
             if (!claims) {
                 return Promise.reject("Invalid claims");

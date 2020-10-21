@@ -61,7 +61,7 @@ export function validateTokenClaims(
     token: string,
     documentId: string,
     tenantId: string,
-    maxTokenLifetime: number,
+    maxTokenLifetimeSec: number,
     isTokenExpiryEnabled: boolean): ITokenClaims {
     const claims = jwt.decode(token) as ITokenClaims;
 
@@ -74,7 +74,7 @@ export function validateTokenClaims(
 
     if (isTokenExpiryEnabled === true) {
         const now = Math.round((new Date()).getTime() / 1000);
-        if (now >= claims.exp || claims.exp - claims.iat > maxTokenLifetime) {
+        if (now >= claims.exp || claims.exp - claims.iat > maxTokenLifetimeSec) {
             return undefined;
         }
     }
