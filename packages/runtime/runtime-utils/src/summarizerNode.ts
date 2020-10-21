@@ -149,10 +149,17 @@ function decodeSummary(snapshot: ISnapshotTree, logger: Pick<ITelemetryLogger, "
                         if (outstandingOps.length > 0 && newOutstandingOps.length > 0) {
                             const latestSeq = outstandingOps[outstandingOps.length - 1].sequenceNumber;
                             const newEarliestSeq = newOutstandingOps[0].sequenceNumber;
-                            assert(
-                                latestSeq < newEarliestSeq,
-                                `latestSeq exceeds newEarliestSeq in decodeSummary: ${latestSeq} >= ${newEarliestSeq}`,
-                            );
+                            if (newEarliestSeq <= latestSeq) {
+                                logger.sendTelemetryEvent({
+                                    eventName:"DuplicateOutstandingOps",
+                                    category: "generic",
+                                    // eslint-disable-next-line max-len
+                                    message: `latestSeq exceeds newEarliestSeq in decodeSummary: ${latestSeq} >= ${newEarliestSeq}`,
+                                });
+                                while (newOutstandingOps[0].sequenceNumber <= latestSeq) {
+                                    newOutstandingOps.shift();
+                                }
+                            }
                         }
                         outstandingOps = outstandingOps.concat(newOutstandingOps);
                     }
@@ -324,6 +331,11 @@ export class SummarizerNode implements ISummarizerNode {
                 // No base summary to reference
                 throw error;
             }
+            this.logger.logException({
+                eventName: "SummaringWithBaseSummaryPlusOps",
+                category: "error",
+            },
+            error);
             const summary = encodeSummary(encodeParam, this.outstandingOps);
             this.wipLocalPaths = {
                 localPath,
