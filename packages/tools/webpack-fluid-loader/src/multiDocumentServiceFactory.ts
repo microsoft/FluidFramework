@@ -10,7 +10,7 @@ import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { RouteOptions } from "./loader";
 
-const deltaConns = new Map<string, ILocalDeltaConnectionServer>();
+export const deltaConns = new Map<string, ILocalDeltaConnectionServer>();
 
 export function getDocumentServiceFactory(documentId: string, options: RouteOptions) {
     const deltaConn = deltaConns.get(documentId) ??

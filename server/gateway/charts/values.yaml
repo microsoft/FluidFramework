@@ -1,5 +1,5 @@
 replicaCount: 1
-image: prague.azurecr.io/gateway:18309
+image: fluidcr.azurecr.io/build/gateway:latest
 
 imagePullPolicy: IfNotPresent
 
