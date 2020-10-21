@@ -154,9 +154,10 @@ function decodeSummary(snapshot: ISnapshotTree, logger: Pick<ITelemetryLogger, "
                                     eventName:"DuplicateOutstandingOps",
                                     category: "generic",
                                     // eslint-disable-next-line max-len
-                                    message: `latestSeq exceeds newEarliestSeq in decodeSummary: ${latestSeq} >= ${newEarliestSeq}`,
+                                    message: `newEarliestSeq <= latestSeq in decodeSummary: ${newEarliestSeq} <= ${latestSeq}`,
                                 });
-                                while (newOutstandingOps[0].sequenceNumber <= latestSeq) {
+                                while (newOutstandingOps.length > 0
+                                    && newOutstandingOps[0].sequenceNumber <= latestSeq) {
                                     newOutstandingOps.shift();
                                 }
                             }
