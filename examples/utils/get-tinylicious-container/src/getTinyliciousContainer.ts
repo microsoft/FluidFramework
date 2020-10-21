@@ -27,12 +27,10 @@ import { getContainer } from "./getContainer";
  */
 class InsecureTinyliciousUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const parsedUrl = new URL(request.url);
-        const fullPath = parsedUrl.pathname.substr(1);
-        const documentId = fullPath.split("/")[0];
+        const documentId = request.url.split("/")[0];
         const encodedDocId = encodeURIComponent(documentId);
 
-        const documentUrl = `fluid://localhost:3000/tinylicious/${fullPath}`;
+        const documentUrl = `fluid://localhost:3000/tinylicious/${encodedDocId}`;
         const deltaStorageUrl = `http://localhost:3000/deltas/tinylicious/${encodedDocId}`;
         const storageUrl = `http://localhost:3000/repos/tinylicious`;
 
