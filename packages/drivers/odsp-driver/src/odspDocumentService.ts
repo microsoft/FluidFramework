@@ -246,7 +246,7 @@ export class OdspDocumentService implements IDocumentService {
                 const connection = await this.connectToDeltaStreamWithRetry(
                     websocketEndpoint.tenantId,
                     websocketEndpoint.id,
-                    webSocketToken,
+                    webSocketToken || websocketEndpoint.socketToken,
                     io,
                     client,
                     websocketEndpoint.deltaStreamSocketUrl,
