@@ -11,21 +11,25 @@ import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
-import {  IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import {
+    IRequest,
+    IResponse,
+    IFluidRouter,
+    IFluidCodeDetails,
+    isFluidCodeDetails,
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IConnectionDetails,
     IContainer,
     IContainerEvents,
     IDeltaManager,
-    IFluidCodeDetails,
     LoaderHeader,
     IRuntimeState,
     ICriticalContainerError,
     ContainerWarning,
     IThrottlingWarning,
     AttachState,
-    isFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, GenericError } from "@fluidframework/container-utils";
 import {
@@ -773,7 +777,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (legacyResolver.getAbsoluteUrl !== undefined) {
             return this.urlResolver.getAbsoluteUrl(
                 this.resolvedUrl,
-                relativeUrl);
+                relativeUrl,
+                this._context?.codeDetails);
         }
 
         if (legacyResolver.requestUrl !== undefined) {

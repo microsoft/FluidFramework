@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";

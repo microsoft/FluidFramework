@@ -5,9 +5,8 @@
 import {
     RouterliciousDocumentServiceFactory,
 } from "@fluidframework/routerlicious-driver";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { BaseHost } from "@fluidframework/base-host";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
