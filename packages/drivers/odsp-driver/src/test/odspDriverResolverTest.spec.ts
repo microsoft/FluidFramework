@@ -39,8 +39,6 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.itemId, "", "Item id should be absent");
         assert.strictEqual(resolvedUrl.hashedDocumentId, "", "No doc id should be present");
         assert.strictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be empty");
-        assert.strictEqual(
-            resolvedUrl.codeHint?.containerPackageName, undefined, "Container Package Name should be undefined");
 
         const [, queryString] = request.url.split("?");
         const searchParams = new URLSearchParams(queryString);
@@ -57,6 +55,20 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(searchParams.get("itemId"), resolvedUrl.itemId, "Item id should match");
         assert.strictEqual(searchParams.get("driveId"), driveId, "Drive Id should match");
         assert.strictEqual(searchParams.get("path"), "/", "Path should match");
+        assert.strictEqual(url, `${siteUrl}/datastore`, "Url should match");
+    });
+
+    it("Should resolve url with container Package", async () => {
+        const resolvedUrl = await resolver.resolve(request);
+        const codeDetails = { package: packageName };
+        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails);
+
+        const [url, queryString] = response?.split("?") ?? [];
+        const searchParams = new URLSearchParams(queryString);
+        assert.strictEqual(searchParams.get("itemId"), resolvedUrl.itemId, "Item id should match");
+        assert.strictEqual(searchParams.get("driveId"), driveId, "Drive Id should match");
+        assert.strictEqual(searchParams.get("path"), "/", "Path should match");
+        assert.strictEqual(searchParams.get("containerPackageName"), packageName, "ContainerPackageName should match");
         assert.strictEqual(url, `${siteUrl}/datastore`, "Url should match");
     });
 
@@ -81,39 +93,6 @@ describe("Odsp Driver Resolver", () => {
         const [, queryString] = request.url.split("?");
         const searchParams = new URLSearchParams(queryString);
         assert.strictEqual(searchParams.get("path"), testFilePath, "filePath should match");
-        assert.strictEqual(searchParams.get("driveId"), driveId, "Drive id should match");
-    });
-
-    it("Request containing packageName", async () => {
-        // Arrange
-        request = resolver.createCreateNewRequest(siteUrl, driveId, filePath, fileName, packageName);
-
-        // Assert
-        const url = `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(filePath,
-            )}&containerPackageName=${encodeURIComponent(packageName)}`;
-        assert.strictEqual(request.url, url, "Request url should include packageName");
-    });
-
-    it("Resolved Request with package name", async () => {
-        // Arrange
-        request = resolver.createCreateNewRequest(siteUrl, driveId, filePath, fileName, packageName);
-
-        // Act
-        const resolvedUrl = await resolver.resolve(request);
-
-        // Assert
-        assert.strictEqual(resolvedUrl.fileName, fileName, "FileName should be equal");
-        assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
-        assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
-        assert.strictEqual(resolvedUrl.itemId, "", "Item id should be absent");
-        assert.strictEqual(resolvedUrl.hashedDocumentId, "", "No doc id should be present");
-        assert.strictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be empty");
-        assert.strictEqual(
-            resolvedUrl.codeHint?.containerPackageName, packageName, "Container Package Name should be equal");
-
-        const [, queryString] = request.url.split("?");
-        const searchParams = new URLSearchParams(queryString);
-        assert.strictEqual(searchParams.get("path"), filePath, "filePath should match");
         assert.strictEqual(searchParams.get("driveId"), driveId, "Drive id should match");
     });
 

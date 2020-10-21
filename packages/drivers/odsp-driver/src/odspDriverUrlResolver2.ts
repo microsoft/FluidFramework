@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { getLocatorFromOdspUrl, storeLocatorInOdspUrl, encodeOdspFluidDataStoreLocator } from "./odspFluidFileLink";
@@ -142,6 +142,7 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
+        codeDetails?: IFluidCodeDetails,
     ): Promise<string> {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
 
@@ -149,7 +150,7 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
 
         const shareLinkUrl = new URL(shareLink);
 
-        const containerPackageName = odspResolvedUrl.codeHint?.containerPackageName;
+        const containerPackageName = typeof codeDetails?.package === "string" ? codeDetails.package : undefined;
 
         storeLocatorInOdspUrl(shareLinkUrl, {
             siteUrl: odspResolvedUrl.siteUrl,

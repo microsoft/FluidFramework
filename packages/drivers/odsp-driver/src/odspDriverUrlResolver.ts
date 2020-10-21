@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
+    IFluidCodeDetails,
     IRequest,
 } from "@fluidframework/core-interfaces";
 import {
@@ -51,7 +52,11 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         return resolveRequest(request);
     }
 
-    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(
+        resolvedUrl: IResolvedUrl,
+        relativeUrl: string,
+        codeDetails?: IFluidCodeDetails,
+    ): Promise<string> {
         let url = relativeUrl;
         if (url.startsWith("/")) {
             url = url.substr(1);
@@ -59,8 +64,9 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         let odspUrl = `${odspResolvedUrl.siteUrl}/${url}?driveId=${encodeURIComponent(odspResolvedUrl.driveId,
             )}&itemId=${encodeURIComponent(odspResolvedUrl.itemId)}&path=${encodeURIComponent("/")}`;
-        if (odspResolvedUrl.codeHint?.containerPackageName) {
-            odspUrl += `&containerPackageName=${encodeURIComponent(odspResolvedUrl.codeHint?.containerPackageName)}`;
+        const containerPackageName = typeof codeDetails?.package === "string" ? codeDetails.package : undefined;
+        if (containerPackageName) {
+            odspUrl += `&containerPackageName=${encodeURIComponent(containerPackageName)}`;
         }
 
         return odspUrl;
