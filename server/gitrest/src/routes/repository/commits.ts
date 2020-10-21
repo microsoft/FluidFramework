@@ -8,15 +8,16 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";
 import * as winston from "winston";
-import { ExternalStorageManager } from "../../ExternalStorageManager";
+import { IExternalStorageManager } from "../../ExternalStorageManager";
 import * as utils from "../../utils";
 
 export async function getCommits(
     repoManager: utils.RepositoryManager,
     owner: string,
     repo: string,
+    ref: string,
     count: number,
-    externalStorageManager: ExternalStorageManager): Promise<resources.ICommitDetails[]> {
+    externalStorageManager: IExternalStorageManager): Promise<resources.ICommitDetails[]> {
     const repository = await repoManager.open(owner, repo);
     try {
         const walker = git.Revwalk.create(repository);
@@ -50,30 +51,28 @@ export async function getCommits(
 
         return Promise.all(detailedCommits);
     } catch (err) {
-        if (process.env.EXTERNAL_STORAGE_ENABLED != "true") {
-            winston.info(`External storage is not enabled`);
-            return;
-        } else {
-            if (config.get("externalStorage:endpoint") != null)
-            {
-                winston.error("getCommits error: " + err);
-                // Lookup external storage if commit does not exist.
-                winston.info(`Commit# Ref not found: ${repo} : ${ref}`);
-                try {
-                    await externalStorageManager.readAndSync(repo, ref);
-                    return getCommits(repoManager, owner, repo, ref, count, externalStorageManager);
-                } catch (bridgeError) {
-                    // If file does not exist or error trying to look up commit, return the original error.
-                    winston.error(`BridgeError: ${bridgeError}`);
-                    return Promise.reject(err);
+        winston.info(`getCommits error: ${err}`);
+        winston.info(`Commit# Ref not found: ${repo} : ${ref}`);
+        if (config.get("externalStorage:endpoint") != null)
+        {
+            try {
+                winston.info("Look up external storage if commit does not exist");
+                const resultP = await externalStorageManager.readAndSync(repo, ref);
+                if (resultP === false) {
+                    return;
                 }
+                return getCommits(repoManager, owner, repo, ref, count, externalStorageManager);
+            } catch (bridgeError) {
+                // If file does not exist or error trying to look up commit, return the original error.
+                winston.error(`BridgeError: ${bridgeError}`);
+                return Promise.reject(err);
             }
         }
     }
 }
 
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager,
-    externalStorageManager: ExternalStorageManager): Router {
+    externalStorageManager: IExternalStorageManager): Router {
     const router: Router = Router();
 
     // https://developer.github.com/v3/repos/commits/
@@ -88,8 +87,8 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
             repoManager,
             request.params.owner,
             request.params.repo,
-            request.query.sha,
-            request.query.count,
+            request.query.sha as string,
+            Number(request.query.count as string),
             externalStorageManager);
         return resultP.then(
             (result) => {

@@ -32,7 +32,7 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
             request.params.owner,
             request.params.repo,
             request.params[0],
-            request.query.ref);
+            request.query.ref as string);
         return resultP.then(
             (blob) => {
                 response.status(200).json(blob);

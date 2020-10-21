@@ -8,6 +8,7 @@ import * as path from "path";
 import * as util from "util";
 import * as git from "nodegit";
 import * as resources from "@fluidframework/gitresources";
+import * as winston from "winston";
 
 const exists = util.promisify(fs.exists);
 
@@ -118,7 +119,7 @@ export class RepositoryManager {
         const isBare: any = 1;
         const repository = git.Repository.init(`${this.baseDir}/${repoPath}`, isBare);
         this.repositoryCache[repoPath] = repository;
-        winston.info("Created a new repo for owner " + owner + " reponame: " + name);
+        winston.info(`Created a new repo for owner ${owner} reponame: ${name}`);
 
         return repository;
     }
@@ -130,6 +131,7 @@ export class RepositoryManager {
             const directory = `${this.baseDir}/${repoPath}`;
 
             if (!await exists(directory)) {
+                winston.info(`Repo does not exist ${directory}`);
                 return Promise.reject("Repo does not exist" + directory);
             }
 

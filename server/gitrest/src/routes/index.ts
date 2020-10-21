@@ -5,7 +5,7 @@
 
 import { Router } from "express";
 import * as nconf from "nconf";
-import { ExternalStorageManager } from "../externalStorageManager";
+import { IExternalStorageManager } from "../externalStorageManager";
 import * as utils from "../utils";
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
@@ -36,7 +36,7 @@ export interface IRoutes {
 export function create(
     store: nconf.Provider, 
     repoManager: utils.RepositoryManager,
-    externalStorageManager: ExternalStorageManager,
+    externalStorageManager: IExternalStorageManager,
 ): IRoutes {
     return {
         git: {

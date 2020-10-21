@@ -13,7 +13,7 @@ import * as nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import split = require("split");
 import * as winston from "winston";
-import { ExternalStorageManager } from "./externalStorageManager";
+import { IExternalStorageManager } from "./externalStorageManager";
 import * as routes from "./routes";
 import * as utils from "./utils";
 
@@ -26,7 +26,7 @@ const stream = split().on("data", (message) => {
 
 export function create(
     store: nconf.Provider,
-    externalStorageManager: ExternalStorageManager,
+    externalStorageManager: IExternalStorageManager,
 ) {
     // Express app configuration
     const app: Express = express();

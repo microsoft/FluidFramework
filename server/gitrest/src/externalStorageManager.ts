@@ -6,20 +6,27 @@
 import Axios from "axios";
 import * as winston from "winston";
 
+export interface IExternalStorageManager
+{
+    readAndSync(tenantId: string, documentId: string): Promise<boolean>;
+
+    writeFile(tenantId: string, ref: string, sha: string, update: boolean): Promise<void>;
+}
+
 /**
  * Manages api calls to external storage
  */
-export class ExternalStorageManager {
+export class ExternalStorageManager implements IExternalStorageManager {
     constructor(private endpoint: string) {
     }
 
-    public async readAndSync(tenantId: string, documentId: string): Promise<void> {
-        if (process.env.EXTERNAL_STORAGE_ENABLED != "true") {
-            winston.info(`External storage is not enabled`);
-            return;
+    public async readAndSync(tenantId: string, documentId: string): Promise<boolean> {
+        if (process.env.external_storage_enabled != "true") {
+            winston.info("External storage is not enabled");
+            return false;
         }
-        winston.info("Gitrest calling read from external storage on tenant " + tenantId + "/" + documentId);
-        await Axios.get<void>(
+        winston.info(`Gitrest calling read from external storage on tenant ${tenantId} / ${documentId}`);
+        await Axios.post<void>(
             `${this.endpoint}/file/${tenantId}/${documentId}`,
             {
                 headers: {
@@ -27,19 +34,16 @@ export class ExternalStorageManager {
                     "Content-Type": "application/json",
                 },
             }).catch((error) => {
-                console.log("Axios error " + error + " tenantId " + tenantId);
+                winston.error(`Axios error ${error} tenantId ${tenantId}`);
                 throw error;
             });
 
         winston.info("Read and sync successful");
+        return true;
     }
 
     public async writeFile(tenantId: string, ref: string, sha: string, update: boolean): Promise<void> {
-        if (process.env.EXTERNAL_STORAGE_ENABLED != "true") {
-            winston.info(`External storage is not enabled`);
-            return;
-        }
-        winston.info("Gitrest calling write to external storage on tenant " + tenantId);
+        winston.info(`Gitrest calling write to external storage on tenant ${tenantId}`);
         await Axios.post<void>(
             `${this.endpoint}/file/${tenantId}`,
             {

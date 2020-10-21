@@ -111,12 +111,7 @@ export class RestGitService {
     }
 
     public async createRef(params: ICreateRefParamsExternal): Promise<git.IRef> {
-        if (params.config.shouldWriteToExternalStorage === true)
-        {
-            return this.post(`/repos/${this.getRepoPath()}/git/refs`, params);
-        } else {
-            return this.post(`/repos/${this.getRepoPath()}/git/refs/nowrite`, params);
-        }
+        return this.post(`/repos/${this.getRepoPath()}/git/refs`, params);
     }
 
     public async updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {

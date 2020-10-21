@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ICreateRefParams, IPatchRefParams, IRef } from "@fluidframework/gitresources";
+import { IPatchRefParams, IRef } from "@fluidframework/gitresources";
 import { ICreateRefParamsExternal } from "@fluidframework/server-services-core";
 import { Response, Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";
 import * as winston from "winston";
-import { ExternalStorageManager } from "../../externalStorageManager";
+import { IExternalStorageManager } from "../../externalStorageManager";
 import * as utils from "../../utils";
 
 function refToIRef(ref: git.Reference): IRef {
@@ -36,23 +36,22 @@ async function getRef(
     owner: string,
     repo: string,
     refId: string,
-    externalStorageManager: ExternalStorageManager): Promise<IRef> {
+    externalStorageManager: IExternalStorageManager): Promise<IRef> {
     const repository = await repoManager.open(owner, repo);
     try {
         const ref = await git.Reference.lookup(repository, refId, undefined);
         return refToIRef(ref);
     } catch (err) {
-        if (process.env.EXTERNAL_STORAGE_ENABLED != "true") {
-            winston.info(`External storage is not enabled`);
-            return;
-        }
-        winston.error(`getRef error: ` + err);
+        winston.error(`getRef error: ${err}`);
         // Lookup external storage if commit does not exist.
         winston.info(`Ref# Ref not found!: ${repo} : ${refId}`);
         const fileName = refId.substring(refId.lastIndexOf("/") + 1);
         // If file does not exist or error trying to look up commit, return the original error.
         try {
-            await externalStorageManager.readAndSync(repo, fileName);
+            const resultP = await externalStorageManager.readAndSync(repo, fileName);
+            if (resultP === false) {
+                return;
+            }
             winston.info("Rehydration completed. Getting ref");
             return getRef(repoManager, owner, repo, refId, externalStorageManager);
         } catch (bridgeError) {
@@ -67,7 +66,7 @@ async function createRef(
     owner: string,
     repo: string,
     createParams: ICreateRefParamsExternal,
-    externalStorageManager: ExternalStorageManager,
+    externalStorageManager: IExternalStorageManager,
 ): Promise<IRef> {{
     const repository = await repoManager.open(owner, repo);
     const ref = await git.Reference.create(
@@ -77,17 +76,13 @@ async function createRef(
         0,
         "");
     // tslint:disable-next-line
-    winston.info(`CREATE REF!!!! ${repo}`);
+    winston.info(`Create ref ${repo}`);
 
-    if (process.env.EXTERNAL_STORAGE_ENABLED != "true") {
-        winston.info(`External storage is not enabled`);
-    } else {
-        if (createParams.config.shouldWriteToExternalStorage) {
-            try {
-                await externalStorageManager.writeFile(repo, createParams.ref, createParams.sha, false);
-            } catch (e) {
-                // ignored
-            }
+    if (createParams.config.enabled) {
+        try {
+            await externalStorageManager.writeFile(repo, createParams.ref, createParams.sha, false);
+        } catch (e) {
+            winston.error(`Error writing to file ${e}`);
         }
     }
     
@@ -110,7 +105,7 @@ async function patchRef(
     repo: string,
     refId: string,
     patchParams: IPatchRefParams,
-    externalStorageManager: ExternalStorageManager,
+    externalStorageManager: IExternalStorageManager,
 ): Promise<IRef> {
     const repository = await repoManager.open(owner, repo);
     const ref = await git.Reference.create(
@@ -119,18 +114,14 @@ async function patchRef(
         git.Oid.fromString(patchParams.sha),
         patchParams.force ? 1 : 0,
         "");
-    
-    if (process.env.EXTERNAL_STORAGE_ENABLED != "true") {
-        winston.info(`External storage is not enabled`);
-    } else {
-         // tslint:disable-next-line
-        winston.info(`PATCH REF!!!! ${repo}`);
-        try {
-            await externalStorageManager.writeFile(repo, refId, patchParams.sha, true);
-        } catch (e) {
-            winston.error("External storage write failed while trying to update file " + repo + "/" + refId);
-            winston.error(e);
-        }
+
+    // tslint:disable-next-line
+    winston.info(`Patch ref ${repo}`);
+    try {
+        await externalStorageManager.writeFile(repo, refId, patchParams.sha, true);
+    } catch (e) {
+        winston.error(`External storage write failed while trying to update file ${repo} / ${refId}`);
+        winston.error(e);
     }
     
     return refToIRef(ref);
@@ -156,7 +147,7 @@ function getRefId(id): string {
 export function create(
     store: nconf.Provider,
     repoManager: utils.RepositoryManager,
-    externalStorageManager: ExternalStorageManager,
+    externalStorageManager: IExternalStorageManager
 ): Router {
     const router: Router = Router();
 
@@ -204,4 +195,5 @@ export function create(
     });
 
     return router;
+
 }
