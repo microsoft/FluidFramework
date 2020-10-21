@@ -147,6 +147,9 @@ export class InsecureUrlResolver implements IUrlResolver {
             scopes: ["doc:read", "doc:write", "summary:write"],
             tenantId,
             user: this.user,
+            iat: Math.round(new Date().getTime() / 1000),
+            exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
+            ver: "1.0",
         };
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return

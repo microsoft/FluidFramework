@@ -5,6 +5,7 @@
 
 import { EventEmitter } from "events";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import * as jwt from "jsonwebtoken";
 import * as puppeteer from "puppeteer";
 import request from "request";
@@ -30,17 +31,18 @@ export class PuppetMaster extends EventEmitter {
         });
 
         const page = await browser.newPage();
-        const token = jwt.sign(
-            {
-                documentId,
-                scopes: ["doc:read", "doc:write", "summary:write"],
-                tenantId,
-                user: {
-                    id: "headless-chrome",
-                    name: "Arnold Wesker",
-                },
+        const claims: ITokenClaims = {
+            documentId,
+            scopes: ["doc:read", "doc:write", "summary:write"],
+            tenantId,
+            user: {
+                id: "headless-chrome",
             },
-            jwtKey);
+            iat: Math.round(new Date().getTime() / 1000),
+            exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
+            ver: "1.0",
+        };
+        const token = jwt.sign(claims, jwtKey);
 
         const puppetMaster = new PuppetMaster(documentId,
             tenantId,

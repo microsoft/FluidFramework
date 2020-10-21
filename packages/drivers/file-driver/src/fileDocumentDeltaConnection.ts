@@ -34,6 +34,9 @@ const Claims: ITokenClaims = {
     user: {
         id: "",
     },
+    iat: Math.round(new Date().getTime() / 1000),
+    exp: Math.round(new Date().getTime() / 1000) + 5 * 60, // 5 minute expiration
+    ver: "1.0",
 };
 
 /**

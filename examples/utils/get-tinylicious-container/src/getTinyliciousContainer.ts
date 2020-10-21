@@ -64,6 +64,9 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
             scopes: ["doc:read", "doc:write", "summary:write"],
             tenantId: "tinylicious",
             user: { id: uuid() },
+            iat: Math.round(new Date().getTime() / 1000),
+            exp: Math.round(new Date().getTime() / 1000) + 5 * 60, // 5 minute expiration
+            ver: "1.0",
         };
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return

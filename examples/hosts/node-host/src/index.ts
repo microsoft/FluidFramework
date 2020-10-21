@@ -7,7 +7,7 @@ import * as url from "url";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
-import { IUser } from "@fluidframework/protocol-definitions";
+import { ITokenClaims, IUser } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import * as jwt from "jsonwebtoken";
@@ -46,16 +46,18 @@ export async function start(): Promise<void> {
             user,
         },
         bearerSecret);
-    const token = jwt.sign(
-        {
-            documentId,
-            scopes: ["doc:read", "doc:write", "summary:write"],
-            tenantId,
-            user,
-        },
-        tenantKey);
+    const claims: ITokenClaims = {
+        documentId,
+        scopes: ["doc:read", "doc:write", "summary:write"],
+        tenantId,
+        user,
+        iat: Math.round(new Date().getTime() / 1000),
+        exp: Math.round(new Date().getTime() / 1000) + 5 * 60, // 5 minute expiration
+        ver: "1.0",
+    };
+    const token = jwt.sign(claims, tenantKey);
 
-    // Genearting Fluid urls.
+    // Generating Fluid urls.
     const encodedTenantId = encodeURIComponent(tenantId);
     const encodedDocId = encodeURIComponent(documentId);
     const documentUrl = `fluid://${url.parse(ordererEndpoint).host}/${encodedTenantId}/${encodedDocId}`;
