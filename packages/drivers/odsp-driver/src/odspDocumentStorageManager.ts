@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import AbortController from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
 import {
@@ -26,6 +27,7 @@ import {
     IDocumentStorageService,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
+import { OdspErrorType } from "@fluidframework/odsp-doclib-utils";
 import {
     IDocumentStorageGetVersionsResponse,
     IOdspResolvedUrl,
@@ -340,10 +342,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     ...this.hostPolicy.snapshotOptions,
                 };
 
-                // No limit on size of snapshot, as otherwise we fail all clients to summarize
-                if (this.hostPolicy.summarizerClient) {
-                    snapshotOptions.mds = undefined;
-                }
+                const maxSnapshotSizeLimit = 25000000; // 25 MB
+                const maxSnapshotFetchTimeout = 30000; // 30 sec
+                // Choose min of host specified limits or driver specified limits.
+                snapshotOptions.mds = snapshotOptions.mds ? Math.min(snapshotOptions.mds, maxSnapshotSizeLimit) : maxSnapshotSizeLimit;
+                snapshotOptions.timeout = snapshotOptions.timeout ? Math.min(snapshotOptions.timeout, maxSnapshotFetchTimeout) : maxSnapshotFetchTimeout;
 
                 let cachedSnapshot: IOdspSnapshot | undefined;
 
@@ -509,17 +512,39 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // only if it is first failure, otherwise fallback to get call.
         if (usePost) {
             try {
-                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, true);
+                const odspSnapshot = await this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, true);
+                return odspSnapshot;
             } catch (error) {
                 const errorType = error.errorType;
                 if ((errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.incorrectServerResponse) && tokenFetchOptions.refresh === false) {
                     throw error;
                 }
                 this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
-                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
+                return this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, false);
             }
         } else {
-            return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
+            return this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, false);
+        }
+    }
+
+    private async fetchSnapshotWithTimeout(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions, usePost: boolean) {
+        assert(snapshotOptions.timeout !== undefined, "Timeout should be provided for setting a limit");
+        const abortController = new AbortController();
+        setTimeout(
+            () => {
+                abortController.abort();
+            },
+            snapshotOptions.timeout,
+        );
+        try {
+            const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost, abortController);
+            return odspSnapshot;
+        } catch (error) {
+            if (error.errorType === OdspErrorType.snapshotTooBig || error.errorType === OdspErrorType.fetchTimeout) {
+                snapshotOptions.blobs = undefined;
+                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost);
+            }
+            throw error;
         }
     }
 
@@ -527,10 +552,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         snapshotOptions: ISnapshotOptions,
         tokenFetchOptions: TokenFetchOptions,
         usePost: boolean,
+        controller?: AbortController,
     ) {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
         let url: string;
-        let headers: {[index: string]: string};
+        let headers: {[index: string]: any};
         let postBody: string;
         if (usePost) {
             url = `${this.snapshotUrl}/trees/latest?ump=1`;
@@ -564,7 +590,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
 
         // This event measures only successful cases of getLatest call (no tokens, no retries).
-        const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest" }, async (event) => {
+        const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest", fetchTimeout: snapshotOptions.timeout }, async (event) => {
             const startTime = performance.now();
             let response: IOdspResponse<IOdspSnapshot>;
             if (usePost) {
@@ -573,10 +599,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     {
                         body: postBody,
                         headers,
+                        signal: controller?.signal,
                         method: "POST",
                     });
             } else {
-                response = await fetchAndParseHelper<IOdspSnapshot>(url, { headers });
+                response = await fetchAndParseHelper<IOdspSnapshot>(url, { headers, signal: controller?.signal });
             }
             const endTime = performance.now();
             const overallTime = endTime - startTime;
