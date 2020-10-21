@@ -791,14 +791,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async reloadContextCore(): Promise<void> {
+        const codeDetails = this.getCodeDetailsFromQuorum();
+
+        if (await this.context.isCompatible(codeDetails)) {
+            return;
+        }
+
         await Promise.all([
             this.deltaManager.inbound.systemPause(),
             this.deltaManager.inboundSignal.systemPause()]);
 
         const previousContextState = await this.context.snapshotRuntimeState();
         this.context.dispose();
-
-        const codeDetails = this.getCodeDetailsFromQuorum();
 
         // don't fire this event if we are transitioning from a null runtime to a real runtime
         // with detached container we no longer need the null runtime, but for legacy

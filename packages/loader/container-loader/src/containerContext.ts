@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    IProvideCompatibilityChecker,
     IFluidObject,
     IFluidConfiguration,
     IRequest,
@@ -23,6 +24,7 @@ import {
     ContainerWarning,
     AttachState,
     IFluidCodeDetails,
+    IFluidModule,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -40,6 +42,7 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
 import { NullChaincode, NullRuntime } from "./nullRuntime";
 
@@ -165,6 +168,21 @@ export class ContainerContext implements IContainerContext {
         return this._disposed;
     }
 
+    private readonly fluidModuleP = new LazyPromise<IFluidModule>(async () => {
+        if (this.codeDetails === undefined) {
+            const fluidExport =  new NullChaincode();
+            return {
+                fluidExport,
+            };
+        }
+
+        const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
+            async () => this.codeLoader.load(this.codeDetails),
+        );
+
+        return fluidModule;
+    });
+
     constructor(
         private readonly container: Container,
         public readonly scope: IFluidObject,
@@ -270,18 +288,22 @@ export class ContainerContext implements IContainerContext {
         return this.container.getAbsoluteUrl(relativeUrl);
     }
 
-    private async load() {
-        if (this.codeDetails === undefined) {
-            const nullChaincode =  new NullChaincode();
-            this._runtime = await nullChaincode.instantiateRuntime(this);
-            return;
+    public async isCompatible(codeDetails: IFluidCodeDetails) {
+        let foundChecker: boolean = false;
+        for (const obj of [this.scope, this.codeLoader, await this.fluidModuleP]) {
+            const maybeCompatible = (obj as Partial<IProvideCompatibilityChecker>).ICompatibilityChecker;
+            if (maybeCompatible !== undefined) {
+                foundChecker = true;
+                if (await maybeCompatible.isCompatible(this.codeDetails, codeDetails) === false) {
+                    return false;
+                }
+            }
         }
+        return foundChecker;
+    }
 
-        const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
-            async () => this.codeLoader.load(this.codeDetails),
-        );
-
-        const maybeFactory = fluidModule?.fluidExport?.IRuntimeFactory;
+    private async load() {
+        const maybeFactory = (await this.fluidModuleP).fluidExport.IRuntimeFactory;
         if (maybeFactory === undefined) {
             throw new Error(PackageNotFactoryError);
         }
