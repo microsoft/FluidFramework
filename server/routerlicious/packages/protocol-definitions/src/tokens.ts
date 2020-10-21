@@ -10,6 +10,9 @@ export interface ITokenClaims {
     scopes: string[];
     tenantId: string;
     user: IUser;
+    iat: number;
+    exp: number;
+    ver: string;
 }
 
 export interface ISummaryTokenClaims {
