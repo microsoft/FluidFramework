@@ -2,9 +2,11 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import assert from "assert";
 import { IFluidObject, IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { IFluidModule } from "@fluidframework/container-definitions";
+import {
+    IFluidModule,
+} from "@fluidframework/container-definitions";
 import { Loader, Container } from "@fluidframework/container-loader";
 import { WebCodeLoader } from "@fluidframework/web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
@@ -68,6 +70,44 @@ export class BaseHost {
         }
 
         return container;
+    }
+
+    /**
+     * Used to create a detached container from code details.
+     * @param codeDetails - codeDetails used to create detached container.
+     */
+    public async createContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
+        const loader = await this.getLoader();
+        const container = await loader.createDetachedContainer(codeDetails);
+
+        assert(container.hasNullRuntime() === false, "Detached container should never have null runtime");
+        return container;
+    }
+
+    /**
+     * Used to create a detached container from snapshot of another detached container.
+     * @param snapshot - Snapshot of detached container.
+     */
+    public async rehydrateContainer(snapshot: string): Promise<Container> {
+        const loader = await this.getLoader();
+        const container = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+
+        assert(container.hasNullRuntime() === false, "Detached container should never have null runtime");
+        return container;
+    }
+
+    public async requestFluidObjectFromContainer(container: Container, url: string) {
+        const response = await container.request({ url });
+
+        if (response.status !== 200 ||
+            !(
+                response.mimeType === "fluid/component" ||
+                response.mimeType === "fluid/object"
+            )) {
+            return undefined;
+        }
+
+        return response.value as IFluidObject;
     }
 
     public async requestFluidObject(url: string) {
