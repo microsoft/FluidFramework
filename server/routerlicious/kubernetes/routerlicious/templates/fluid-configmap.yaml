@@ -86,7 +86,9 @@ data:
             }
         },
         "auth": {
-            "endpoint": "http://{{ template "riddler.fullname" . }}"
+            "endpoint": "http://{{ template "riddler.fullname" . }}",
+            "maxTokenLifetimeSec": 3600,
+            "enableTokenExpiration": false
         },
         "routemanager": {
             "topics": {
