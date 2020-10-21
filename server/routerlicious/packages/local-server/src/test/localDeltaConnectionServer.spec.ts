@@ -35,11 +35,16 @@ describe("LocalDeltaConnectionServer", () => {
             user,
         };
 
+        const now = Math.round((new Date()).getTime() / 1000);
+
         const claims: ITokenClaims = {
             documentId: "document",
             scopes:  [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
             tenantId: "tenant",
             user,
+            iat: now,
+            exp: now + 60 * 60,
+            ver: "1.0",
         };
 
          // eslint-disable-next-line no-null/no-null
