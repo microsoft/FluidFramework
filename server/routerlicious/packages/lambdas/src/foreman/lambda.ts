@@ -89,7 +89,7 @@ export class ForemanLambda extends SequencedLambda {
                     tenantId,
 
                     // TODO: #4010 extract an interface for token signing
-                    token: JSON.stringify({tenantId, docId, key, scopes}),
+                    token: JSON.stringify({ tenantId, docId, key, scopes }),
                 };
                 this.messageSender.sendTask(
                     queueName,
