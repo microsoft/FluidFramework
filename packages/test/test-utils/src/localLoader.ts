@@ -7,10 +7,9 @@ import {
     ICodeLoader,
     IContainer,
     ILoader,
-    IFluidCodeDetails,
-    IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IUrlResolver, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
@@ -30,13 +29,11 @@ export function createLocalLoader(
     const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
     const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
 
-    return new Loader(
+    return new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
-        {},
-        {},
-        new Map<string, IProxyLoaderFactory>());
+    });
 }
 
 /**
@@ -80,7 +77,7 @@ const defaultCodeDetails: IFluidCodeDetails = {
  *   IServiceConfiguration
  *   ILocalDeltaConnectionServer
  */
-export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
+export class LocalTestObjectProvider<TestContainerConfigType> {
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _defaultUrlResolver: LocalResolver | undefined;
 
@@ -92,7 +89,7 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
      * @param _deltaConnectionServer - optional deltaConnectionServer to share documents between different provider
      */
     constructor(
-        private readonly createFluidEntryPoint: (registry?: ChannelFactoryRegistryType) => fluidEntryPoint,
+        private readonly createFluidEntryPoint: (testContainerConfig?: TestContainerConfigType) => fluidEntryPoint,
         private readonly serviceConfiguration?: Partial<IServiceConfiguration>,
         private _deltaConnectionServer?: ILocalDeltaConnectionServer | undefined,
     ) {
@@ -126,38 +123,36 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         const codeLoader = new LocalCodeLoader(packageEntries);
-        return new Loader(
-            this.urlResolver,
-            this.documentServiceFactory,
+        return new Loader({
+            urlResolver: this.urlResolver,
+            documentServiceFactory: this.documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
     }
 
     /**
      * Make a test loader
-     * @param registry - optional channel to factory pair used create the TestfluidObject with
+     * @param testContainerConfig - optional configuring the test Container
      */
-    public makeTestLoader(registry?: ChannelFactoryRegistryType) {
-        return this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(registry) ]]);
+    public makeTestLoader(testContainerConfig?: TestContainerConfigType) {
+        return this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]]);
     }
 
     /**
      * Make a container using a default document id and code details
-     * @param registry - optional channel to factory pair used create the TestfluidObject with
+     * @param testContainerConfig - optional configuring the test Container
      */
-    public async makeTestContainer(registry?: ChannelFactoryRegistryType) {
-        const loader = this.makeTestLoader(registry);
+    public async makeTestContainer(testContainerConfig?: TestContainerConfigType) {
+        const loader = this.makeTestLoader(testContainerConfig);
         return createAndAttachContainer(defaultDocumentId, defaultCodeDetails, loader, this.urlResolver);
     }
 
     /**
      * Load a container using a default document id and code details
-     * @param registry - optional channel to factory pair used create the TestfluidObject with
+     * @param testContainerConfig - optional configuring the test Container
      */
-    public async loadTestContainer(registry?: ChannelFactoryRegistryType) {
-        const loader = this.makeTestLoader(registry);
+    public async loadTestContainer(testContainerConfig?: TestContainerConfigType) {
+        const loader = this.makeTestLoader(testContainerConfig);
         return loader.resolve({ url: defaultDocumentLoadUrl });
     }
 

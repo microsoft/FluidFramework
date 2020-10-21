@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidRouter, IFluidCodeDetails, IFluidPackage } from "@fluidframework/core-interfaces";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -15,7 +15,6 @@ import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { IFluidModule } from "./fluidModule";
-import { IFluidCodeDetails, IFluidPackage } from "./fluidPackage";
 import { AttachState } from "./runtime";
 
 /**
@@ -79,7 +78,8 @@ export interface IContainerEvents extends IEvent {
      * @param opsBehind - number of ops this client is behind (if present).
      */
     (event: "connect", listener: (opsBehind?: number) => void);
-    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
+    (event: "contextDisposed" | "contextChanged",
+        listener: (codeDetails: IFluidCodeDetails, previousCodeDetails: IFluidCodeDetails | undefined) => void);
     (event: "disconnected" | "attaching" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);

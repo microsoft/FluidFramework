@@ -17,17 +17,18 @@ import { LocalDeltaStorageService, LocalDocumentDeltaConnection } from ".";
 export class LocalDocumentService implements api.IDocumentService {
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
-     * @param tokenProvider - token provider with a single token
+     * @param tokenProvider - token provider
      * @param tenantId - ID of tenant
      * @param documentId - ID of document
      */
     constructor(
         public readonly resolvedUrl: api.IResolvedUrl,
         private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
-        private readonly tokenProvider: socketStorage.TokenProvider,
+        private readonly tokenProvider: socketStorage.ITokenProvider,
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
+        private readonly innerDocumentService?: api.IDocumentService,
     ) { }
 
     /**
@@ -42,6 +43,9 @@ export class LocalDocumentService implements api.IDocumentService {
      * Creates and returns a delta storage service for local use.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
+        if (this.innerDocumentService) {
+            return this.innerDocumentService.connectToDeltaStorage();
+        }
         return new LocalDeltaStorageService(
             this.tenantId,
             this.documentId,
@@ -52,15 +56,18 @@ export class LocalDocumentService implements api.IDocumentService {
      * Creates and returns a delta stream for local use.
      * @param client - client data
      */
-    public async connectToDeltaStream(
-        client: IClient): Promise<api.IDocumentDeltaConnection> {
+    public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
+        if (this.innerDocumentService) {
+            return this.innerDocumentService.connectToDeltaStream(client);
+        }
+        const ordererToken = await this.tokenProvider.fetchOrdererToken();
         const documentDeltaConnection = await LocalDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
-            this.tokenProvider.token,
+            ordererToken.jwt,
             client,
-            this.localDeltaConnectionServer.webSocketServer);
-
+            this.localDeltaConnectionServer.webSocketServer,
+        );
         const clientId = documentDeltaConnection.clientId;
 
         // Add this document service for the clientId in the document service factory.
@@ -101,10 +108,18 @@ export class LocalDocumentService implements api.IDocumentService {
 export function createLocalDocumentService(
     resolvedUrl: api.IResolvedUrl,
     localDeltaConnectionServer: ILocalDeltaConnectionServer,
-    tokenProvider: socketStorage.TokenProvider,
+    tokenProvider: socketStorage.ITokenProvider,
     tenantId: string,
     documentId: string,
-    documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>): api.IDocumentService {
+    documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
+    innerDocumentService?: api.IDocumentService): api.IDocumentService {
     return new LocalDocumentService(
-        resolvedUrl, localDeltaConnectionServer, tokenProvider, tenantId, documentId, documentDeltaConnectionsMap);
+        resolvedUrl,
+        localDeltaConnectionServer,
+        tokenProvider,
+        tenantId,
+        documentId,
+        documentDeltaConnectionsMap,
+        innerDocumentService,
+    );
 }

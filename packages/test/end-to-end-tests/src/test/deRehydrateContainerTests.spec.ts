@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -27,7 +26,7 @@ import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { SharedCounter } from "@fluidframework/counter";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 const detachedContainerRefSeqNumber = 0;
@@ -79,13 +78,11 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
-        return new Loader(
+        return new Loader({
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
     }
 
     const createPeerDataStore = async (
@@ -339,6 +336,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         // Now load the container from another loader.
         const urlResolver2 = new LocalResolver();
         const loader2 = createTestLoader(urlResolver2);
+        assert(rehydratedContainer.resolvedUrl);
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
 
@@ -382,6 +380,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         // Now load the container from another loader.
         const urlResolver2 = new LocalResolver();
         const loader2 = createTestLoader(urlResolver2);
+        assert(rehydratedContainer.resolvedUrl);
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
 

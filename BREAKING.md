@@ -4,8 +4,17 @@
 - [DataObject changes](#DataObject-changes)
 - [RequestParser](#RequestParser)
 - [IFluidLodable.url is removed](#IFluidLodable.url-is-removed)
+- [Loader Constructor Changes](#Loader-Constructor-Changes)
+- [Moving DriverHeader and merge with CreateNewHeader](#moving-driverheader-and-merge-with-createnewheader)
+
+### Moving DriverHeader and merge with CreateNewHeader
+Compile time only API breaking change between runtime and driver.  Only impacts driver implementer.
+No back-compat or mix version impact.
+
+DriverHeader is a driver concept, so move from core-interface to driver-definitions. CreateNewHeader is also a kind of driver header, merged it into DriverHeader.
 
 ### IFluidPackage Changes
+- Moving IFluidPackage and IFluidCodeDetails from "@fluidframework/container-definitions" to '@fluidframework/core-interfaces'
 - Remove npm specific IPackage interface
 - Simplify the IFluidPackage by removing browser and npm specific properties
 - Add new interface IFluidBrowserPackage, and isFluidBrowserPackage which defines browser specific properties
@@ -32,6 +41,33 @@ with this one:
 
 ### IFluidLodable.url is removed
 `url` property is removed. If you need a path to an object (in a container), you can use IFluidLoadable.handle.absolutePath instead.
+
+### Loader Constructor Changes
+The loader constructor has changed to now take a props object, rather than a series of paramaters. This should make it easier to construct loaders as the optional services can be easily excluded.
+
+Before:
+``` typescript
+    const loader = new Loader(
+        urlResolver,
+        documentServiceFactory,
+        codeLoader,
+        { blockUpdateMarkers: true },
+        {},
+        new Map(),
+    );
+```
+
+After:
+``` typescript
+    const loader = new Loader({
+        urlResolver,
+        documentServiceFactory,
+        codeLoader,
+    });
+```
+
+if for some reason this change causes you problems, we've added a deprecated `Loader._create` method that has the same parameters as the previous constructor which can be used in the interim.
+
 
 ## 0.27 Breaking Changes
 - [Local Web Host Removed](#Local-Web-Host-Removed)

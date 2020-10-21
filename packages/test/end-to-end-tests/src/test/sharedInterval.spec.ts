@@ -4,11 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IntervalType, LocalReference } from "@fluidframework/merge-tree";
 import { IBlob } from "@fluidframework/protocol-definitions";
@@ -19,14 +15,12 @@ import {
     SequenceInterval,
     SharedString,
 } from "@fluidframework/sequence";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-    createAndAttachContainer,
-    createLocalLoader,
     OpProcessingController,
     ITestFluidObject,
-    TestFluidObjectFactory,
+    ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
+import { ICompatLocalTestObjectProvider, generateTestWithCompat, ITestContainerConfig } from "./compatUtils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
@@ -55,29 +49,8 @@ const assertIntervalsHelper = (
     }
 };
 
-describe("SharedInterval", () => {
-    const documentId = "sharedIntervalTest";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
-    const codeDetails: IFluidCodeDetails = {
-        package: "sharedIntervalTestPackage",
-        config: {},
-    };
-
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: IUrlResolver;
+const tests = (args: ICompatLocalTestObjectProvider) => {
     let opProcessingController: OpProcessingController;
-
-    async function createContainer(factoryEntries: Iterable<[string, IChannelFactory]>): Promise<IContainer> {
-        const factory = new TestFluidObjectFactory(factoryEntries);
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
-    }
-
-    async function loadContainer(factoryEntries: Iterable<[string, IChannelFactory]>): Promise<IContainer> {
-        const factory = new TestFluidObjectFactory(factoryEntries);
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-        return loader.resolve({ url: documentLoadUrl });
-    }
 
     describe("one client", () => {
         const stringId = "stringKey";
@@ -90,16 +63,18 @@ describe("SharedInterval", () => {
         };
 
         beforeEach(async () => {
-            urlResolver = new LocalResolver();
-            deltaConnectionServer = LocalDeltaConnectionServer.create();
-
-            const container = await createContainer([[stringId, SharedString.getFactory()]]);
+            const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+            const testContainerConfig: ITestContainerConfig = {
+                testFluidDataObject: true,
+                registry,
+            };
+            const container = await args.makeTestContainer(testContainerConfig);
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             sharedString = await dataObject.getSharedObject<SharedString>(stringId);
             sharedString.insertText(0, "012");
             intervals = await sharedString.getIntervalCollection("intervals").getView();
 
-            opProcessingController = new OpProcessingController(deltaConnectionServer);
+            opProcessingController = new OpProcessingController(args.deltaConnectionServer);
             opProcessingController.addDeltaManagers(dataObject.runtime.deltaManager);
         });
 
@@ -199,22 +174,20 @@ describe("SharedInterval", () => {
                 await opProcessingController.process();
             }
         });
-
-        afterEach(async () => {
-            await deltaConnectionServer.webSocketServer.close();
-        });
     });
 
     describe("multiple clients", () => {
         it("propagates", async () => {
             const stringId = "stringKey";
-
-            urlResolver = new LocalResolver();
-            deltaConnectionServer = LocalDeltaConnectionServer.create();
-            opProcessingController = new OpProcessingController(deltaConnectionServer);
+            const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+            const testContainerConfig: ITestContainerConfig = {
+                testFluidDataObject: true,
+                registry,
+            };
+            opProcessingController = new OpProcessingController(args.deltaConnectionServer);
 
             // Create a Container for the first client.
-            const container1 = await createContainer([[stringId, SharedString.getFactory()]]);
+            const container1 = await args.makeTestContainer(testContainerConfig);
             const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
@@ -224,7 +197,7 @@ describe("SharedInterval", () => {
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
 
             // Load the Container that was created by the first client.
-            const container2 = await loadContainer([[stringId, SharedString.getFactory()]]);
+            const container2 = await args.loadTestContainer(testContainerConfig);
             const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
             opProcessingController.addDeltaManagers(
@@ -245,8 +218,6 @@ describe("SharedInterval", () => {
 
             await opProcessingController.process();
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
-
-            await deltaConnectionServer.webSocketServer.close();
         });
     });
 
@@ -254,39 +225,37 @@ describe("SharedInterval", () => {
         const mapId = "mapKey";
         const stringId = "stringKey";
 
+        const registry: ChannelFactoryRegistry = [
+            [mapId, SharedMap.getFactory()],
+            [stringId, SharedString.getFactory()],
+        ];
+        const testContainerConfig: ITestContainerConfig = {
+            testFluidDataObject: true,
+            registry,
+        };
+
         let dataObject1: ITestFluidObject;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
         let sharedMap3: ISharedMap;
 
         beforeEach(async () => {
-            deltaConnectionServer = LocalDeltaConnectionServer.create();
-
             // Create a Container for the first client.
-            const container1 = await createContainer([
-                [mapId, SharedMap.getFactory()],
-                [stringId, SharedString.getFactory()],
-            ]);
+            const container1 = await args.makeTestContainer(testContainerConfig);
             dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            const container2 = await loadContainer([
-                [mapId, SharedMap.getFactory()],
-                [stringId, SharedString.getFactory()],
-            ]);
+            const container2 = await args.loadTestContainer(testContainerConfig);
             const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            const container3 = await loadContainer([
-                [mapId, SharedMap.getFactory()],
-                [stringId, SharedString.getFactory()],
-            ]);
+            const container3 = await args.loadTestContainer(testContainerConfig);
             const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
             sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
 
-            opProcessingController = new OpProcessingController(deltaConnectionServer);
+            opProcessingController = new OpProcessingController(args.deltaConnectionServer);
             opProcessingController.addDeltaManagers(
                 dataObject1.runtime.deltaManager,
                 dataObject2.runtime.deltaManager,
@@ -335,10 +304,12 @@ describe("SharedInterval", () => {
             assert.equal(serialized3.length, 3, "Incorrect interval collection size in container 3");
 
             const interval1From3 = serialized3[0] as ISerializedInterval;
+            assert(interval1From3.properties);
             const comment1From3 = await (interval1From3.properties.story as IFluidHandle<SharedString>).get();
             assert.equal(
                 comment1From3.getText(0, 12), "a comment...", "Incorrect text in interval collection's shared string");
             const interval3From3 = serialized3[2] as ISerializedInterval;
+            assert(interval3From3.properties);
             const mapFrom3 = await (interval3From3.properties.story as IFluidHandle<SharedMap>).get();
             assert.equal(
                 mapFrom3.get("nestedKey"), "nestedValue", "Incorrect value in interval collection's shared map");
@@ -352,15 +323,16 @@ describe("SharedInterval", () => {
             const serializedInterval1FromSnapshot =
                 (parsedSnapshot["intervalCollections/comments"].value as ISerializedInterval[])[0];
             // The "story" is the ILocalValue of the handle pointing to the SharedString
+            assert(serializedInterval1FromSnapshot.properties);
             const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string };
             assert.equal(
                 handleLocalValueFromSnapshot.type,
                 "__fluid_handle__",
                 "Incorrect handle type in shared interval's snapshot");
         });
-
-        afterEach(async () => {
-            await deltaConnectionServer.webSocketServer.close();
-        });
     });
+};
+
+describe("SharedInterval", () => {
+    generateTestWithCompat(tests);
 });

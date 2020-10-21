@@ -13,7 +13,7 @@ import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorage
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
 import { NullBlobStorageService } from "./nullBlobStorageService";
-import { TokenProvider } from "./tokens";
+import { ITokenProvider } from "./tokens";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -30,7 +30,7 @@ export class DocumentService implements api.IDocumentService {
         private readonly historianApi: boolean,
         private readonly directCredentials: ICredentials | undefined,
         private readonly gitCache: IGitCache | undefined,
-        protected tokenProvider: TokenProvider,
+        protected tokenProvider: ITokenProvider,
         protected tenantId: string,
         protected documentId: string,
     ) {
@@ -46,6 +46,7 @@ export class DocumentService implements api.IDocumentService {
             return new NullBlobStorageService();
         }
 
+        const storageToken = await this.tokenProvider.fetchStorageToken();
         // Craft credentials - either use the direct credentials (i.e. a GitHub user + PAT) - or make use of our
         // tenant token
         let credentials: ICredentials | undefined;
@@ -53,7 +54,7 @@ export class DocumentService implements api.IDocumentService {
             credentials = this.directCredentials;
         } else {
             credentials = {
-                password: this.tokenProvider.token,
+                password: storageToken.jwt,
                 user: this.tenantId,
             };
         }
@@ -93,8 +94,8 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta storage service for routerlicious driver.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
-        const deltaStorage = new DeltaStorageService(this.deltaStorageUrl);
-        return new DocumentDeltaStorageService(this.tenantId, this.documentId, this.tokenProvider, deltaStorage);
+        const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, this.tokenProvider);
+        return new DocumentDeltaStorageService(this.tenantId, this.documentId, deltaStorage);
     }
 
     /**
@@ -103,19 +104,21 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta stream service for routerlicious driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
+        const ordererToken = await this.tokenProvider.fetchOrdererToken();
         return R11sDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
-            this.tokenProvider.token,
+            ordererToken.jwt,
             io,
             client,
             this.ordererUrl);
     }
 
     public async branch(): Promise<string> {
+        const ordererToken = await this.tokenProvider.fetchOrdererToken();
         let headers: { Authorization: string } | null = null;
         headers = {
-            Authorization: `Basic ${fromUtf8ToBase64(`${this.tenantId}:${this.tokenProvider.token}`)}`,
+            Authorization: `Basic ${fromUtf8ToBase64(`${this.tenantId}:${ordererToken.jwt}`)}`,
         };
 
         // eslint-disable-next-line max-len

@@ -6,8 +6,8 @@
 import fs from "fs";
 import child_process from "child_process";
 import commander from "commander";
-import { IProxyLoaderFactory, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { OdspDocumentServiceFactory, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import {
@@ -49,34 +49,33 @@ const passwordTokenConfig = (username, password): OdspTokenConfig => ({
 });
 
 function createLoader(config: IConfig, password: string) {
-    // Construct the loader
-    const loader = new Loader(
-        urlResolver,
-        new OdspDocumentServiceFactory(
-            async (_siteUrl: string, refresh: boolean, _claims?: string) => {
-                const tokens = await odspTokenManager.getOdspTokens(
-                    config.server,
-                    getMicrosoftConfiguration(),
-                    passwordTokenConfig(config.username, password),
-                    refresh,
-                );
-                return tokens.accessToken;
-            },
-            async (refresh: boolean, _claims?: string) => {
-                const tokens = await odspTokenManager.getPushTokens(
-                    config.server,
-                    getMicrosoftConfiguration(),
-                    passwordTokenConfig(config.username, password),
-                    refresh,
-                );
-                return tokens.accessToken;
-            },
-        ),
-        codeLoader,
-        {},
-        {},
-        new Map<string, IProxyLoaderFactory>(),
+    const documentServiceFactory = new OdspDocumentServiceFactory(
+        async (_siteUrl: string, refresh: boolean, _claims?: string) => {
+            const tokens = await odspTokenManager.getOdspTokens(
+                config.server,
+                getMicrosoftConfiguration(),
+                passwordTokenConfig(config.username, password),
+                refresh,
+            );
+            return tokens.accessToken;
+        },
+        async (refresh: boolean, _claims?: string) => {
+            const tokens = await odspTokenManager.getPushTokens(
+                config.server,
+                getMicrosoftConfiguration(),
+                passwordTokenConfig(config.username, password),
+                refresh,
+            );
+            return tokens.accessToken;
+        },
     );
+
+    // Construct the loader
+    const loader = new Loader({
+        urlResolver,
+        documentServiceFactory,
+        codeLoader,
+    });
     return loader;
 }
 
@@ -142,17 +141,24 @@ async function main() {
 
     // When runId is specified, kick off a single test runner and exit when it's finished
     if (runId !== undefined) {
-        if (url === undefined) {
-            console.error("Missing --url argument needed to run child process");
+        try {
+            if (url === undefined) {
+                console.error("Missing --url argument needed to run child process");
+                process.exit(-1);
+            }
+            const runConfig: IRunConfig = {
+                runId,
+                testConfig: config.profiles[profile],
+            };
+            const stressTest = await load(config, url, password);
+            await stressTest.run(runConfig);
+            console.log(`${runId.toString().padStart(3)}> exit`);
+            process.exit(0);
+        } catch (e) {
+            console.error(`${runId.toString().padStart(3)}> error: loading test`);
+            console.error(e);
             process.exit(-1);
         }
-        const runConfig: IRunConfig = {
-            runId,
-            testConfig: config.profiles[profile],
-        };
-        const stressTest = await load(config, url, password);
-        await stressTest.run(runConfig);
-        process.exit(0);
     }
 
     // When runId is not specified, this is the orchestrator process which will spawn child test runners.
@@ -204,5 +210,6 @@ async function main() {
 main().catch(
     (error) => {
         console.error(error);
+        process.exit(-1);
     },
 );

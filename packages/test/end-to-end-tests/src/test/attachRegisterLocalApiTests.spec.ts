@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
+import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { AttachState } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -66,13 +66,11 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
-        return new Loader(
+        return new Loader({
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
     }
 
     beforeEach(async () => {

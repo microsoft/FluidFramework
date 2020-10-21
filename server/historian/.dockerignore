@@ -1,3 +1,8 @@
-node_modules/
-dist/
-nyc/
+**/node_modules
+**/dist
+**/lib
+**/nyc
+**/*.tsbuildinfo
+
+.vscode
+.gitignore

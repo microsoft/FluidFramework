@@ -19,7 +19,6 @@ import {
     ISummaryHandle,
     ISummaryTree,
     ITokenClaims,
-    ITokenProvider,
     ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
@@ -35,7 +34,6 @@ export interface IDeltaStorageService {
     get(
         tenantId: string,
         id: string,
-        tokenProvider: ITokenProvider,
         from?: number,
         to?: number): Promise<ISequencedDocumentMessage[]>;
 }

@@ -11,10 +11,14 @@ import {
     ITestFluidObject,
     OpProcessingController,
 } from "@fluidframework/test-utils";
-import { generateTestWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
+import { generateTestWithCompat, ICompatLocalTestObjectProvider, ITestContainerConfig } from "./compatUtils";
 
 const counterId = "counterKey";
 const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
+const testContainerConfig: ITestContainerConfig = {
+    testFluidDataObject: true,
+    registry,
+};
 
 const tests = (args: ICompatLocalTestObjectProvider) => {
     let opProcessingController: OpProcessingController;
@@ -25,17 +29,17 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
     beforeEach(async () => {
         // Create a Container for the first client.
-        const container1 = await args.makeTestContainer(registry);
+        const container1 = await args.makeTestContainer(testContainerConfig);
         dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedCounter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
 
         // Load the Container that was created by the first client.
-        const container2 = await args.loadTestContainer(registry);
+        const container2 = await args.loadTestContainer(testContainerConfig);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedCounter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 
         // Load the Container that was created by the first client.
-        const container3 = await args.loadTestContainer(registry);
+        const container3 = await args.loadTestContainer(testContainerConfig);
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         sharedCounter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
@@ -148,5 +152,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("SharedCounter", () => {
-    generateTestWithCompat(tests, { testFluidDataObject: true });
+    generateTestWithCompat(tests);
 });

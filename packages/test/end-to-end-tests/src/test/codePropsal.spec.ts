@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import {  IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { ILoader } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
@@ -52,94 +53,148 @@ describe("CodeProposal.EndToEnd", () => {
         return loader.resolve({ url: documentLoadUrl }) as any as Container;
     }
 
-    let container1: Container;
-    let container2: Container;
+    let containers: Container[];
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
+        containers = [];
 
         // Create a Container for the first client.
-        container1 = await createContainer([["map", SharedMap.getFactory()]]);
+        containers.push(await createContainer([["map", SharedMap.getFactory()]]));
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
-        opProcessingController.addDeltaManagers(container1.deltaManager);
+        opProcessingController.addDeltaManagers(containers[0].deltaManager);
 
         await opProcessingController.process();
 
         // Load the Container that was created by the first client.
-        container2 = await loadContainer([["map", SharedMap.getFactory()]]);
-        opProcessingController.addDeltaManagers(container1.deltaManager);
+        containers.push(await loadContainer([["map", SharedMap.getFactory()]]));
+        opProcessingController.addDeltaManagers(containers[0].deltaManager);
 
-        const quorum1 = container1.getQuorum();
-        const quorum2 = container2.getQuorum();
+        const quorum1 = containers[0].getQuorum();
+        const quorum2 = containers[1].getQuorum();
 
         assert.deepStrictEqual(
             quorum1.get("code"),
             codeDetails,
-            "Code proposal in container1 doesn't match");
+            "Code proposal in containers[0] doesn't match");
 
         assert.deepStrictEqual(
             quorum2.get("code"),
             codeDetails,
-            "Code proposal in container2 doesn't match");
+            "Code proposal in containers[1] doesn't match");
 
-        const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        const dataObject1 = await requestFluidObject<ITestFluidObject>(containers[0], "default");
         const map1 = await dataObject1.getSharedObject<ISharedMap>("map");
 
         // BUG BUG quorum.propose doesn't handle readonly, so make sure connection is write
         do {
             map1.set("foo","bar");
             await Promise.all([
-                new Promise((resolve) => container1.connected ? resolve() : container1.once("connect", resolve)),
+                new Promise((resolve) => containers[0].connected ? resolve() : containers[0].once("connect", resolve)),
                 opProcessingController.process(),
             ]);
-        } while (!container1.connected);
+        } while (!containers[0].connected);
     });
 
     it("Code Proposal", async () => {
-        container1.once("contextChanged",(c)=>{
-            assert.deepStrictEqual(
-                c,
-                codeDetails2,
-                "container1 context should be update");
-        });
+        for (let i = 0; i < containers.length; i++) {
+            containers[i].once("contextDisposed",(c)=>{
+                assert.deepStrictEqual(
+                    c,
+                    codeDetails2,
+                    `containers[${i}] context should dispose`);
+            });
 
-        container2.once("contextChanged",(c)=>{
-            assert.deepStrictEqual(
-                c,
-                codeDetails2,
-                "container2 context should be update");
-        });
+            containers[i].once("contextChanged",(c)=>{
+                assert.deepStrictEqual(
+                    c,
+                    codeDetails2,
+                    `containers[${i}] context should be change`);
+            });
+        }
 
         await Promise.all([
-            container1.getQuorum().propose("code", codeDetails2),
+            containers[0].getQuorum().propose("code", codeDetails2),
             opProcessingController.process(),
         ]);
+
+        for (let i = 0; i < containers.length; i++) {
+            assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
+            const quorum = containers[i].getQuorum();
+            assert.deepStrictEqual(
+                quorum.get("code"),
+                codeDetails2,
+                `containers[${i}] code details should update`);
+        }
     });
 
     it("Code Proposal Rejection", async () => {
-        const quorum1 = container1.getQuorum();
-        const quorum2 = container2.getQuorum();
+        for (let i = 0; i < containers.length; i++) {
+            containers[i].once("contextDisposed",(c)=>{
+                assert.fail(`Context Shouldn't dispose for containers[${i}]`);
+            });
 
-        container1.on("contextChanged",(c)=>{
-            assert.fail("Conext Shouldn't Change for container1");
-        });
+            containers[i].once("contextChanged",(c)=>{
+                assert.fail(`Context Shouldn't Change for containers[${i}]`);
+            });
+        }
 
-        container2.on("contextChanged",(c)=>{
-            assert.fail("Conext Shouldn't Change for container2");
-        });
-
-        quorum2.on("addProposal",(p)=>{
+        containers[1].getQuorum().on("addProposal",(p)=>{
             if (p.key === "code") {
+                assert.deepStrictEqual(
+                    p.value,
+                    codeDetails2,
+                    "codeDetails2 should have been proposed");
                 p.reject();
             }
         });
 
         await Promise.all([
-            quorum1.propose("code", codeDetails2)
+            containers[0].getQuorum().propose("code", codeDetails2)
                 .then(()=>assert.fail("expected rejection"))
                 .catch(()=>{}),
             opProcessingController.process(),
         ]);
+
+        for (let i = 0; i < containers.length; i++) {
+            assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
+            const quorum = containers[i].getQuorum();
+            assert.deepStrictEqual(
+                quorum.get("code"),
+                codeDetails,
+                `containers[${i}] code details should not update`);
+        }
+    });
+
+    it("Close Container on Context Dispose", async () => {
+        for (let i = 0; i < containers.length; i++) {
+            containers[i].once("contextDisposed",(c)=>{
+                assert.deepStrictEqual(
+                    c,
+                    codeDetails2,
+                    `containers[${i}] context should dispose`);
+            });
+        }
+
+        containers[1].once("contextDisposed",()=>{
+            containers[1].close();
+            containers[1].once("contextChanged",()=>{
+                assert.fail("containers[1]: contextChanged should not fire");
+            });
+        });
+
+        await Promise.all([
+            containers[0].getQuorum().propose("code", codeDetails2),
+            opProcessingController.process(),
+        ]);
+
+        assert.strictEqual(containers[0].closed, false, "containers[0] should not be closed");
+        assert.deepStrictEqual(
+            containers[0].getQuorum().get("code"),
+            codeDetails2,
+            `containers[0] code details should update`);
+
+        assert.strictEqual(containers[1].closed, true, "containers[1] should be closed");
     });
 
     afterEach(async () => {

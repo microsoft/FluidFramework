@@ -4,7 +4,7 @@
  */
 import { InnerDocumentServiceFactory } from "@fluidframework/iframe-driver";
 import { BaseHost } from "@fluidframework/base-host";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 
@@ -34,7 +34,7 @@ export async function runInner(divId: string) {
             codeResolver: new SemVerCdnCodeResolver(),
             documentServiceFactory,
             urlResolver: documentServiceFactory.urlResolver,
-            config: {},
+            options: {},
         });
 
     const url = documentServiceFactory.resolvedUrl.url;

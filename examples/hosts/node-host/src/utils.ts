@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/core-interfaces";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidObject, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { launchCLI } from "./cli";
 

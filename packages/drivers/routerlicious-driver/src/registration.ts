@@ -8,7 +8,7 @@ import { IErrorTrackingService } from "@fluidframework/protocol-definitions";
 import { IGitCache } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { DefaultErrorTracking } from "./errorTracking";
-import { TokenProvider } from "./tokens";
+import { ITokenProvider } from "./tokens";
 
 /**
  * Returns the document service associated with the factory.
@@ -21,7 +21,7 @@ export function createDocumentService(
     ordererUrl: string,
     deltaStorageUrl: string,
     gitUrl: string,
-    tokenProvider: TokenProvider,
+    tokenProvider: ITokenProvider,
     tenantId: string,
     documentId: string,
     errorTracking: IErrorTrackingService = new DefaultErrorTracking(),

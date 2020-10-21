@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { CreateNewHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { DriverHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { LocalResolver } from "../localResolver";
 
@@ -21,7 +21,7 @@ describe("Local Driver Resolver", () => {
         });
 
         it("should successfully create a creatNewRequest", async () => {
-            assert(!!request.headers?.[CreateNewHeader.createNew],
+            assert(!!request.headers?.[DriverHeader.createNew],
                 "Request should contain create new header");
             const expectedUrl = `http://localhost:3000/${documentId}`;
             assert.equal(request.url, expectedUrl, "The url in createNewRequest should match");

@@ -10,7 +10,7 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-    CreateNewHeader,
+    DriverHeader,
 } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "@fluidframework/server-services-client";
@@ -71,7 +71,7 @@ export class LocalResolver implements IUrlResolver {
         const createNewRequest: IRequest = {
             url: `http://localhost:3000/${documentId}`,
             headers: {
-                [CreateNewHeader.createNew]: true,
+                [DriverHeader.createNew]: true,
             },
         };
         return createNewRequest;
