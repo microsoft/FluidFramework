@@ -33,7 +33,9 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
      */
-    constructor(private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer) { }
+    constructor(
+        private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
+        private readonly innerDocumentService?: IDocumentService) { }
 
     public async createContainer(
         createNewSummary: ISummaryTree,
@@ -100,7 +102,8 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             tokenProvider,
             tenantId,
             documentId,
-            this.documentDeltaConnectionsMap);
+            this.documentDeltaConnectionsMap,
+            this.innerDocumentService);
     }
 
     /**
