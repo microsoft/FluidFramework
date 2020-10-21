@@ -6,11 +6,10 @@
 import Axios from "axios";
 import * as winston from "winston";
 
-export interface IExternalStorageManager
-{
-    readAndSync(tenantId: string, documentId: string): Promise<boolean>;
+export interface IExternalStorageManager {
+    read(tenantId: string, documentId: string): Promise<boolean>;
 
-    writeFile(tenantId: string, ref: string, sha: string, update: boolean): Promise<void>;
+    write(tenantId: string, ref: string, sha: string, update: boolean): Promise<void>;
 }
 
 /**
@@ -20,7 +19,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
     constructor(private endpoint: string) {
     }
 
-    public async readAndSync(tenantId: string, documentId: string): Promise<boolean> {
+    public async read(tenantId: string, documentId: string): Promise<boolean> {
         if (process.env.external_storage_enabled != "true") {
             winston.info("External storage is not enabled");
             return false;
@@ -42,7 +41,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
         return true;
     }
 
-    public async writeFile(tenantId: string, ref: string, sha: string, update: boolean): Promise<void> {
+    public async write(tenantId: string, ref: string, sha: string, update: boolean): Promise<void> {
         winston.info(`Gitrest calling write to external storage on tenant ${tenantId}`);
         await Axios.post<void>(
             `${this.endpoint}/file/${tenantId}`,
