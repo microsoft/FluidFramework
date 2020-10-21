@@ -48,8 +48,10 @@ describe("SharedLog", () => {
             assert.equal(log.length, 0);
         });
 
-        it("Works", async () => {
-            for (let i = 0; i < (256 * 256 * 2); i++) {
+        it("Works big", function () {
+            this.timeout(150000);
+
+            for (let i = 0; i < ((2 ** 12) * (2 ** 10) + 1); i++) {
                 // Append the entry
                 log.appendEntry(i);
 
@@ -65,7 +67,6 @@ describe("SharedLog", () => {
 
                 // Entry should now be acked
                 assert.equal(log.ackedLength, i + 1);
-                assert.equal(log.length, i + 1);
 
                 // Ensure we can still read it (now stored in the B-Tree)
                 assert.equal(log.getEntry(i), i);
