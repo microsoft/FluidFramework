@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { getLocatorFromOdspUrl, storeLocatorInOdspUrl, encodeOdspFluidDataStoreLocator } from "./odspFluidFileLink";
@@ -150,7 +150,8 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
 
         const shareLinkUrl = new URL(shareLink);
 
-        const containerPackageName = typeof codeDetails?.package === "string" ? codeDetails.package : undefined;
+        const packageName = isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
+        odspResolvedUrl.codeHint?.containerPackageName;
 
         storeLocatorInOdspUrl(shareLinkUrl, {
             siteUrl: odspResolvedUrl.siteUrl,
@@ -158,7 +159,7 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
             fileId: odspResolvedUrl.itemId,
             dataStorePath: relativeUrl,
             appName: this.appName,
-            containerPackageName,
+            containerPackageName: packageName,
         });
 
         return shareLinkUrl.href;

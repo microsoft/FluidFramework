@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import {
     IFluidCodeDetails,
     IRequest,
+    isFluidPackage,
 } from "@fluidframework/core-interfaces";
 import {
     IUrlResolver,
@@ -64,9 +65,10 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         let odspUrl = `${odspResolvedUrl.siteUrl}/${url}?driveId=${encodeURIComponent(odspResolvedUrl.driveId,
             )}&itemId=${encodeURIComponent(odspResolvedUrl.itemId)}&path=${encodeURIComponent("/")}`;
-        const containerPackageName = typeof codeDetails?.package === "string" ? codeDetails.package : undefined;
-        if (containerPackageName) {
-            odspUrl += `&containerPackageName=${encodeURIComponent(containerPackageName)}`;
+        const packageName = isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
+             odspResolvedUrl.codeHint?.containerPackageName;
+        if (packageName) {
+            odspUrl += `&containerPackageName=${encodeURIComponent(packageName)}`;
         }
 
         return odspUrl;
