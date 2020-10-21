@@ -14,7 +14,7 @@ No back-compat or mix version impact.
 DriverHeader is a driver concept, so move from core-interface to driver-definitions. CreateNewHeader is also a kind of driver header, merged it into DriverHeader.
 
 ### IFluidPackage Changes
-- Moving IFluidPackage from "@fluidframework/container-definitions" to '@fluidframework/core-interfaces'
+- Moving IFluidPackage and IFluidCodeDetails from "@fluidframework/container-definitions" to '@fluidframework/core-interfaces'
 - Remove npm specific IPackage interface
 - Simplify the IFluidPackage by removing browser and npm specific properties
 - Add new interface IFluidBrowserPackage, and isFluidBrowserPackage which defines browser specific properties
