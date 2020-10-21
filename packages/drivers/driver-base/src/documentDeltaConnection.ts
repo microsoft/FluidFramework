@@ -127,6 +127,7 @@ export class DocumentDeltaConnection
 
     // Listeners only needed while the connection is in progress
     private connectionListeners: IEventListener[] = [];
+    // Listeners used throughout the lifetime of the DocumentDeltaConnection
     private trackedListeners: IEventListener[] = [];
 
     protected get hasDetails(): boolean {
