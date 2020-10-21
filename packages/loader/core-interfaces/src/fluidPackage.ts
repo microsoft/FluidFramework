@@ -6,7 +6,7 @@
  /**
   * Specifies an environment on Fluid property of a IFluidPackage
   */
- export interface IFluidPackageEnvironment {
+export interface IFluidPackageEnvironment {
 
     /**
      * The name of the target. For a browser environment, this could be umd for scripts
