@@ -22,7 +22,6 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
         private readonly identityType: IdentityType = "Enterprise",
         private readonly logger?: ITelemetryLogger,
         private readonly appName?: string,
-        private readonly containerPackageName?: string,
     ) { }
 
     public createCreateNewRequest(
@@ -30,9 +29,8 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
         driveId: string,
         filePath: string,
         fileName: string,
-        containerPackageName?: string,
     ) {
-        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName, containerPackageName);
+        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     }
 
     /**
@@ -141,12 +139,17 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
      * @param resolvedUrl - The driver resolved URL
      * @param request - The relative data store path URL. For requesting a driver URL, this value should always be '/'
      */
-    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(
+        resolvedUrl: IResolvedUrl,
+        relativeUrl: string,
+    ): Promise<string> {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
 
         const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
 
         const shareLinkUrl = new URL(shareLink);
+
+        const containerPackageName = odspResolvedUrl.codeHint?.containerPackageName;
 
         storeLocatorInOdspUrl(shareLinkUrl, {
             siteUrl: odspResolvedUrl.siteUrl,
@@ -154,7 +157,7 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
             fileId: odspResolvedUrl.itemId,
             dataStorePath: relativeUrl,
             appName: this.appName,
-            containerPackageName: this.containerPackageName,
+            containerPackageName,
         });
 
         return shareLinkUrl.href;

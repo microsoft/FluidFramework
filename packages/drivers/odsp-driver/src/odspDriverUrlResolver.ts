@@ -71,9 +71,8 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         driveId: string,
         filePath: string,
         fileName: string,
-        containerPackageName?: string,
     ): IRequest {
-        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName, containerPackageName);
+        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     }
 }
 
