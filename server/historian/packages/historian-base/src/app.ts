@@ -4,13 +4,10 @@
  */
 
 import * as bodyParser from "body-parser";
-import * as compression from "compression";
-import * as cors from "cors";
-// eslint-disable-next-line import/no-duplicates
-import * as express from "express";
-// eslint-disable-next-line no-duplicate-imports, import/no-duplicates
-import { Express } from "express";
-import * as morgan from "morgan";
+import compression from "compression";
+import cors from "cors";
+import express from "express";
+import morgan from "morgan";
 import * as nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import split = require("split");
@@ -27,7 +24,7 @@ const stream = split().on("data", (message) => {
 
 export function create(config: nconf.Provider, tenantService: ITenantService, cache: ICache) {
     // Express app configuration
-    const app: Express = express();
+    const app: express.Express = express();
 
     // TODO we probably want to switch morgan to use the common format in prod
     app.use(morgan(config.get("logger:morganFormat"), { stream }));
@@ -62,7 +59,6 @@ export function create(config: nconf.Provider, tenantService: ITenantService, ca
     // will print stacktrace
     if (app.get("env") === "development") {
         app.use((err, req, res, next) => {
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             res.status(err.status || 500);
             res.json({
                 error: err,
@@ -74,7 +70,6 @@ export function create(config: nconf.Provider, tenantService: ITenantService, ca
     // production error handler
     // no stacktraces leaked to user
     app.use((err, req, res, next) => {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         res.status(err.status || 500);
         res.json({
             error: {},

@@ -11,5 +11,9 @@
     "redis": {
         "host": "redis",
         "port": 6379
+    },
+    "error": {
+        "track": false,
+        "endpoint" : ""
     }
 }

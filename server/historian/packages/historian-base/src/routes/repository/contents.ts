@@ -25,7 +25,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
             request.params.tenantId,
             request.get("Authorization"),
             request.params[0],
-            request.query.ref);
+            utils.queryParamToString(request.query.ref));
         utils.handleResponse(
             contentP,
             response,
