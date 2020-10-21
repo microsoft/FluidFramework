@@ -5,9 +5,8 @@
 
 /* eslint-disable prefer-template */
 import * as url from "url";
-import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";

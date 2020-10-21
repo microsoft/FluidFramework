@@ -6,12 +6,11 @@
 import { parse } from "url";
 import { BaseTelemetryNullLogger } from "@fluidframework/common-utils";
 import {
-    IFluidCodeDetails,
     IFluidRunnable,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
-import { IContainer, ILoader } from "@fluidframework/container-definitions";
+import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
     IDocumentServiceFactory,
