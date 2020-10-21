@@ -22,7 +22,7 @@ import {
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import { IEventProvider, IEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import Comlink from "comlink";
+import * as Comlink from "comlink";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { debug } from "./debug";
 import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
@@ -33,20 +33,18 @@ const socketIOEvents = [
     "pong",
     "disconnect",
     "signal",
-    "connect_error",
-    "connect_timeout",
-    "connect_document_success",
 ];
 
-export interface IDocumentServiceFactoryProxy {
+export interface ICombinedDriver {
+    clientId: string;
+    stream: IOuterDocumentDeltaConnectionProxy;
+    deltaStorage: IDocumentDeltaStorageService;
+    storage: IDocumentStorageService;
+}
 
+export interface IDocumentServiceFactoryProxy {
     clients: {
-        [clientId: string]: {
-            clientId: string;
-            stream: IOuterDocumentDeltaConnectionProxy;
-            deltaStorage: IDocumentDeltaStorageService;
-            storage: IDocumentStorageService;
-        };
+        [clientId: string]: ICombinedDriver;
     };
     getFluidUrl(): Promise<IFluidResolvedUrl>;
     createDocumentService(): Promise<string>;
@@ -58,12 +56,7 @@ export interface IDocumentServiceFactoryProxy {
  */
 export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy {
     public clients: {
-        [clientId: string]: {
-            clientId: string;
-            stream: IOuterDocumentDeltaConnectionProxy;
-            deltaStorage: IDocumentDeltaStorageService;
-            storage: IDocumentStorageService;
-        },
+        [clientId: string]: ICombinedDriver,
     };
 
     constructor(
@@ -140,11 +133,11 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         const iframeContentWindow = frame.contentWindow!;
 
         const proxy: IDocumentServiceFactoryProxy = {
-            connected: async () => this.connected(),
-            clients: this.clients,
+            connected: Comlink.proxy(async () => this.connected()),
+            clients: Comlink.proxy(this.clients),
             // Continue investigation of scope after feature check in
-            createDocumentService: async () => this.createDocumentService(),
-            getFluidUrl: async () => this.getFluidUrl(),
+            createDocumentService: Comlink.proxy(async () => this.createDocumentService()),
+            getFluidUrl: Comlink.proxy(async () => this.getFluidUrl()),
         };
 
         iframeContentWindow.window.postMessage("EndpointExposed", "*");
@@ -185,7 +178,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     }
 
     private getDeltaStorage(deltaStorage: IDocumentDeltaStorageService): IDocumentDeltaStorageService {
-        const get = async (from?: number, to?: number) => deltaStorage.get(from, to);
+        const get = Comlink.proxy(async (from?: number, to?: number) => deltaStorage.get(from, to));
 
         return {
             get,
