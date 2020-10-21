@@ -11,6 +11,7 @@ import {
     IRequest,
     IResponse,
     IFluidRouter,
+    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     ICodeLoader,
@@ -18,7 +19,6 @@ import {
     ILoader,
     IProxyLoaderFactory,
     LoaderHeader,
-    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { Deferred, performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";

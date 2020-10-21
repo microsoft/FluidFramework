@@ -12,3 +12,4 @@ export * from "./fluidLoadable";
 export * from "./fluidRouter";
 export * from "./handles";
 export * from "./serializer";
+export * from "./fluidPackage";
