@@ -777,7 +777,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (legacyResolver.getAbsoluteUrl !== undefined) {
             return this.urlResolver.getAbsoluteUrl(
                 this.resolvedUrl,
-                relativeUrl);
+                relativeUrl,
+                this._context?.codeDetails);
         }
 
         if (legacyResolver.requestUrl !== undefined) {
