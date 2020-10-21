@@ -12,7 +12,6 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
-import { generateToken } from "@fluidframework/server-services-utils";
 import { SequencedLambda } from "../sequencedLambda";
 
 // TODO: Move this to config.
@@ -88,7 +87,9 @@ export class ForemanLambda extends SequencedLambda {
                         tasks,
                     },
                     tenantId,
-                    token: generateToken(tenantId, docId, key, scopes),
+
+                    // TODO: #4010 extract an interface for token signing
+                    token: JSON.stringify({tenantId, docId, key, scopes}),
                 };
                 this.messageSender.sendTask(
                     queueName,
