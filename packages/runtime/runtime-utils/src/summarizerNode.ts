@@ -333,7 +333,7 @@ export class SummarizerNode implements ISummarizerNode {
                 throw error;
             }
             this.logger.logException({
-                eventName: "SummaringWithBaseSummaryPlusOps",
+                eventName: "SummarizingWithBasePlusOps",
                 category: "error",
             },
             error);
