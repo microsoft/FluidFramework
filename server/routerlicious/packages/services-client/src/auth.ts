@@ -17,7 +17,9 @@ export function generateToken(
     documentId: string,
     key: string,
     scopes: ScopeType[],
-    user?: IUser): string {
+    user?: IUser,
+    lifetime: number = 60 * 60,
+    ver: string = "1.0"): string {
     // eslint-disable-next-line @typescript-eslint/no-use-before-define, no-param-reassign
     user = (user) ? user : generateUser();
     if (user.id === "" || user.id === undefined) {
@@ -35,8 +37,8 @@ export function generateToken(
         tenantId,
         user,
         iat: now,
-        exp: now + 5 * 60, // 5 minute expiration window
-        ver: "1.0",
+        exp: now + lifetime,
+        ver,
     };
 
     return jwt.sign(claims, key);

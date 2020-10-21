@@ -59,7 +59,7 @@ export class AlfredRunner implements utils.IRunner {
         const httpServer = this.server.httpServer;
 
         const maxNumberOfClientsPerDocument = this.config.get("alfred:maxNumberOfClientsPerDocument");
-        const maxTokenLifetime = this.config.get("alfred:maxTokenLifetime");
+        const maxTokenLifetime = this.config.get("auth:maxTokenLifetimeSec");
         const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
         // Register all the socket.io stuff
         configureWebSocketServices(

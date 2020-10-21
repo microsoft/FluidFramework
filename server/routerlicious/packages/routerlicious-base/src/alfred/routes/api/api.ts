@@ -52,7 +52,7 @@ export function create(
     });
 
     router.patch("/:tenantId/:id/root", async (request, response) => {
-        const maxTokenLifetime = config.get("auth:maxTokenLifetime") as number;
+        const maxTokenLifetime = config.get("auth:maxTokenLifetimeSec") as number;
         const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
         const validP = verifyRequest(request, tenantManager, storage, maxTokenLifetime, isTokenExpiryEnabled);
         returnResponse(validP, request, response, mapSetBuilder);
