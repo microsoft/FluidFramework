@@ -45,8 +45,6 @@ describe("LocalDeltaConnectionServer", () => {
          // eslint-disable-next-line no-null/no-null
         const token = jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, "key");
 
-        console.log(token);
-
         return deltaConnectionServer.connectWebSocket(
             "tenant",
             "document",
