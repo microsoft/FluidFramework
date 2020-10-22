@@ -80,6 +80,9 @@ export class BlobManager {
         if (blobsBlob) {
             const decoded = Buffer.from(blobsBlob, "base64").toString();
             const tree = JSON.parse(decoded) as ITree;
+            if (Array.isArray(tree)) {
+                return; // this is an old snapshot
+            }
             tree.entries.map((entry) => {
                 assert.strictEqual(entry.type, TreeEntry.Attachment);
                 this.addBlobId((entry.value as IAttachment).id);
