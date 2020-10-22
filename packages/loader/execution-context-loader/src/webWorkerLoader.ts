@@ -8,8 +8,9 @@ import {
     IFluidRunnable,
     IRequest,
     IResponse,
+    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
-import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IContainer, ILoader } from "@fluidframework/container-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import Comlink from "comlink";
 

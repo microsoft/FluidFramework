@@ -25,8 +25,8 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         const commitsP = getCommits(
             request.params.tenantId,
             request.get("Authorization"),
-            request.query.sha,
-            request.query.count);
+            utils.queryParamToString(request.query.sha),
+            utils.queryParamToNumber(request.query.count));
 
         utils.handleResponse(
             commitsP,

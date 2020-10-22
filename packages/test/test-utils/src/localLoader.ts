@@ -7,9 +7,9 @@ import {
     ICodeLoader,
     IContainer,
     ILoader,
-    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IUrlResolver, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IServiceConfiguration } from "@fluidframework/protocol-definitions";

@@ -9,9 +9,9 @@ import { UpgradeManager } from "@fluidframework/base-host";
 import {
     ICodeLoader,
     IContainer,
-    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";

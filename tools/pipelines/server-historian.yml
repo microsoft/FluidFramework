@@ -63,3 +63,4 @@ extends:
     containerName: fluidframework/routerlicious/historian
     test: test
     tagName: historian
+    pack: true

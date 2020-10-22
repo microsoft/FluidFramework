@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
@@ -34,6 +34,7 @@ export interface IUrlResolver {
     getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
+        codeDetails?: IFluidCodeDetails,
     ): Promise<string>;
 }
 

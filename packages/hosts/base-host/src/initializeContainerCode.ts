@@ -5,7 +5,7 @@
 
 import {
     IFluidCodeDetails,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/core-interfaces";
 import { Container } from "@fluidframework/container-loader";
 
 const currentCodeProposalKey = "code";
