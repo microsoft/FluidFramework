@@ -8,7 +8,7 @@
   "author": "Microsoft",
   "main": "dist/index.js",
   "browser": {
-    "moniker": "@fluidframework/server-services-client/dist/generateNames.js"
+    "moniker": "@fluidframework/server-services-utils/dist/generateNames.js"
   },
   "types": "dist/index.d.ts",
   "scripts": {
