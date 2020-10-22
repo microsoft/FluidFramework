@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
-import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IContainer, ILoader } from "@fluidframework/container-definitions";
+import { IFluidHandle, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IUrlResolver } from "@fluidframework/driver-definitions";

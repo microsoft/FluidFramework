@@ -10,6 +10,7 @@ import {
     IFluidConfiguration,
     IRequest,
     IResponse,
+    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -22,7 +23,6 @@ import {
     ICriticalContainerError,
     ContainerWarning,
     AttachState,
-    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {

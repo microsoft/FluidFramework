@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import {  IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { ILoader } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {

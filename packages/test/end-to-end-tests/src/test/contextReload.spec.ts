@@ -11,10 +11,10 @@ import {
 } from "@fluidframework/aqueduct";
 import {
     IContainer,
-    IFluidCodeDetails,
     ILoader,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";

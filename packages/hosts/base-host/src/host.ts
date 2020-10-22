@@ -2,11 +2,9 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import assert from "assert";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { IFluidObject, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
-    IFluidCodeDetails,
     IFluidModule,
 } from "@fluidframework/container-definitions";
 import { Loader, Container } from "@fluidframework/container-loader";
