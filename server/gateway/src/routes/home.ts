@@ -67,7 +67,7 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
         passport.authenticate("openidconnect", {
             scope: [
                 "offline_access",
-                "https://a830edad9050849829J20060320.sharepoint.com/AllSites.Write",
+                "https://microsoft-my.sharepoint-df.com/AllSites.Write",
             ],
         }),
     );
@@ -77,7 +77,27 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
         passport.authenticate("openidconnect", {
             scope: [
                 "offline_access",
-                "https://a830edad9050849829J20060320.sharepoint.com/AllSites.Write",
+                "https://microsoft.sharepoint.com/AllSites.Write",
+            ],
+        }),
+    );
+
+    router.get(
+        "/login_spo-custom",
+        passport.authenticate("openidconnect", {
+            scope: [
+                "offline_access",
+                `https://${process.env.SP_SITE}/AllSites.Write`,
+            ],
+        }),
+    );
+
+    router.get(
+        "/login_spo-custom-shared",
+        passport.authenticate("openidconnect", {
+            scope: [
+                "offline_access",
+                `https://${process.env.SP_SITE}/AllSites.Write`,
             ],
         }),
     );

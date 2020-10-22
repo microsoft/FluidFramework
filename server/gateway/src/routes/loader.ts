@@ -7,6 +7,8 @@ import { parse } from "url";
 import _ from "lodash";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { Router } from "express";
 import safeStringify from "json-stringify-safe";
 import jwt from "jsonwebtoken";
@@ -30,6 +32,7 @@ export function create(
     cache: IKeyValueWrapper): Router {
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
+    const codeResolver = new SemVerCdnCodeResolver();
 
     /**
      * Looks up the version of a chaincode in the cache.
@@ -83,91 +86,138 @@ export function create(
                     tenantId,
                     config.get("error:track"));
 
-                const scriptsP = resolvedP
-                    .then(async (resolved) => getSpfxFluidObjectData(resolved))
-                    .then((manifest) => {
-                        winston.info(JSON.stringify(manifest));
+                let scriptsP;
+                let pkgP;
 
-                        const baseUrl = manifest.loaderConfig.internalModuleBaseUrls[0] ?? "";
-                        const scriptResources = manifest.loaderConfig.scriptResources[
-                            `fluid.${manifest.loaderConfig.entryModuleId}`
-                        ] ?? "";
-                        const bundle = scriptResources.path;
+                if (request.url.indexOf("spo-custom") >= 0) {
+                    scriptsP = resolvedP
+                        .then(async (resolved) => getSpfxFluidObjectData(resolved))
+                        .then((manifest) => {
+                            const baseUrl = manifest.loaderConfig.internalModuleBaseUrls[0] ?? "";
+                            const scriptResources = manifest.loaderConfig.scriptResources[
+                                `fluid.${manifest.loaderConfig.entryModuleId}`
+                            ] ?? "";
+                            const bundle = scriptResources.path;
+                            return {
+                                entrypoint: manifest.loaderConfig.entryModuleId,
+                                scripts: [
+                                    {
+                                        id: baseUrl,
+                                        url: `${baseUrl}/${bundle}`,
+                                    },
+                                ],
+                            };
+                        });
+
+                    pkgP = scriptsP.then((scripts) => {
                         return {
-                            entrypoint: manifest.loaderConfig.entryModuleId,
-                            scripts: [
-                                {
-                                    id: baseUrl,
-                                    url: `${baseUrl}/${bundle}`,
+                            resolvedPackage: {
+                                fluid: {
+                                    browser: {
+                                        umd: {
+                                            files: [scripts.scripts[0].url],
+                                            library: "main",
+                                        },
+                                    },
                                 },
-                            ],
+                                name: `@gateway/${v4()}`,
+                                version: "0.0.0",
+                            },
+                            package: {
+                                fluid: {
+                                    browser: {
+                                        umd: {
+                                            files: [scripts.scripts[0].url],
+                                            library: "main",
+                                        },
+                                    },
+                                },
+                                name: `@gateway/${v4()}`,
+                                version: "0.0.0",
+                            },
+                            config: {
+                                [`@gateway:cdn`]: scripts.scripts[0].url,
+                            },
+                            fluid: {
+                                browser: {
+                                    umd: {
+                                        files: [scripts.scripts[0].url],
+                                        library: "main",
+                                    },
+                                },
+                            },
+                            name: `@gateway/${v4()}`,
+                            version: "0.0.0",
                         };
                     });
+                } else {
+                    pkgP = fullTreeP.then((fullTree) => {
+                        if (fullTree && fullTree.code) {
+                            return codeResolver.resolveCodeDetails(fullTree.code);
+                        }
 
-                const pkgP = scriptsP.then((scripts) => {
-                    return {
-                        resolvedPackage: {
-                            fluid: {
-                                browser: {
-                                    umd: {
-                                        files: [scripts.scripts[0].url],
-                                        library: "main",
+                        if (request.query.chaincode === undefined) {
+                            return;
+                        }
+
+                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                        const cdn = request.query.cdn ? request.query.cdn : config.get("worker:npm");
+                        const entryPoint = queryParamAsString(request.query.entrypoint);
+
+                        let codeDetails: IFluidCodeDetails;
+                        if (chaincode.startsWith("http")) {
+                            codeDetails = {
+                                config: {
+                                    [`@gateway:cdn`]: chaincode,
+                                },
+                                package: {
+                                    fluid: {
+                                        browser: {
+                                            umd: {
+                                                files: [chaincode],
+                                                library: entryPoint,
+                                            },
+                                        },
                                     },
+                                    name: `@gateway/${v4()}`,
+                                    version: "0.0.0",
                                 },
-                            },
-                            name: `@gateway/${v4()}`,
-                            version: "0.0.0",
-                        },
-                        package: {
-                            fluid: {
-                                browser: {
-                                    umd: {
-                                        files: [scripts.scripts[0].url],
-                                        library: "main",
-                                    },
+                            };
+                        } else {
+                            const details = extractPackageIdentifierDetails(chaincode);
+                            codeDetails = {
+                                config: {
+                                    [`@${details.scope}:cdn`]: cdn,
                                 },
-                            },
-                            name: `@gateway/${v4()}`,
-                            version: "0.0.0",
-                        },
-                        config: {
-                            [`@gateway:cdn`]: scripts.scripts[0].url,
-                        },
-                        fluid: {
-                            browser: {
-                                umd: {
-                                    files: [scripts.scripts[0].url],
-                                    library: "main",
-                                },
-                            },
-                        },
-                        name: `@gateway/${v4()}`,
-                        version: "0.0.0",
-                    };
-                });
+                                package: chaincode,
+                            };
+                        }
 
-                // const scriptsP = pkgP.then((pkg) => {
-                //     winston.info(JSON.stringify(pkg));
-                //     if (pkg === undefined) {
-                //         return [];
-                //     }
+                        return codeResolver.resolveCodeDetails(codeDetails);
+                    });
 
-                //     const umd = pkg.resolvedPackage.fluid?.browser?.umd;
-                //     if (umd === undefined) {
-                //         return [];
-                //     }
+                    scriptsP = pkgP.then((pkg) => {
+                        if (pkg === undefined) {
+                            return [];
+                        }
 
-                //     return {
-                //         entrypoint: umd.library,
-                //         scripts: umd.files.map(
-                //             (script, index) => {
-                //                 return {
-                //                     id: `${pkg.resolvedPackageCacheId}-${index}`,
-                //                     url: script,
-                //                 };
-                //             }),
-                //     };
-                // });
+                        const umd = pkg.resolvedPackage.fluid?.browser?.umd;
+                        if (umd === undefined) {
+                            return [];
+                        }
+
+                        return {
+                            entrypoint: umd.library,
+                            scripts: umd.files.map(
+                                (script, index) => {
+                                    return {
+                                        id: `${pkg.resolvedPackageCacheId}-${index}`,
+                                        url: script,
+                                    };
+                                }),
+                        };
+                    });
+                }
 
                 // Track timing
                 const treeTimeP = fullTreeP.then(() => Date.now() - start);
@@ -177,13 +227,11 @@ export function create(
                 Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
                     .then(([resolved, fullTree, pkg, scripts, timings]) => {
                         // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        resolved!.url += path + (search ?? "");
+                        resolved.url += path + (search ?? "");
                         winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
                         // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        timings!.push(Date.now() - start);
+                        timings.push(Date.now() - start);
                         const configClientId: string = config.get("login:microsoft").clientId;
                         response.render(
                             "loader",

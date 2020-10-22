@@ -157,7 +157,9 @@ export function create(
                     ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : microsoftConfiguration.clientId,
                 clientSecret: _.isEmpty(microsoftConfiguration.secret)
                     ? process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET : microsoftConfiguration.secret,
-                issuer: "https://login.microsoftonline.com/cd4cc5d7-113d-4bc6-911e-2802bdfb4df8/v2.0",
+                issuer: _.isEmpty(process.env.SP_ISSUER)
+                    ?  "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0"
+                    : `https://login.microsoftonline.com/${process.env.SP_ISSUER}/v2.0`,
                 passReqToCallback: true,
                 skipUserProfile: true,
                 tokenURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
@@ -192,7 +194,9 @@ export function create(
                         ? process.env.MSA_CONFIGURATION_CLIENT_ID : msaConfiguration.clientId,
                     clientSecret: _.isEmpty(msaConfiguration.secret)
                         ? process.env.MSA_CONFIGURATION_CLIENT_SECRET : msaConfiguration.secret,
-                    issuer: "https://login.microsoftonline.com/cd4cc5d7-113d-4bc6-911e-2802bdfb4df8/v2.0",
+                    issuer: _.isEmpty(process.env.SP_ISSUER)
+                        ?  "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0"
+                        : `https://login.microsoftonline.com/${process.env.SP_ISSUER}/v2.0`,
                     passReqToCallback: true,
                     skipUserProfile: true,
                     tokenURL: "https://login.microsoftonline.com/common/oauth2/v2.0/token",

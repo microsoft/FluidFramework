@@ -21,7 +21,6 @@ Prior to running locally, the .env file needs to be created and filled out. Plea
 NOTE: If you are using any gateway routers that use the ODSP driver, i.e. "spo-df", "spo", and "spo-shared", you will need the appropriate client IDs and secrets locally available in your .env file. Please add them in here and NOT in config.json.
 Config.json is a file that is pushed to git and we DO NOT want these secrets pushed with any changes. Please only set the client IDs and secrets in the .env file which has already been added to .gitignore.
 
-
 ## Testing changes under gateway
 
 In addition to the standard install/build, also:
@@ -54,6 +53,11 @@ npm start
 ````
 
 When making additional changes, stop both gateway and the other entry point and rerun these steps.
+
+## Test URLs for Gateway
+
+The following are example URLs that you can use to test different Gateway paths:
+
 
 ## Trademark
 

@@ -21,9 +21,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const spoTenants = new Map<string, string>([
-    ["spo", "a830edad9050849829j20060320.sharepoint.com"],
-    ["spo-df", "a830edad9050849829j20060320.sharepoint.com"],
-    ["spo-shared", "a830edad9050849829j20060320.sharepoint.com"],
+    ["spo", "microsoft-my.sharepoint.com"],
+    ["spo-df", "microsoft-my.sharepoint-df.com"],
+    ["spo-shared", "microsoft.sharepoint.com"],
+    ["spo-custom", `${process.env.SP_SITE}`],
+    ["spo-custom-shared", `${process.env.SP_SITE}`],
 ]);
 
 const pushSrv = "pushchannel.1drv.ms";
