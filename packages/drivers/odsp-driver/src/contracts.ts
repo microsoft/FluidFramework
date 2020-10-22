@@ -59,6 +59,14 @@ export interface ISocketStorageDiscovery {
      * The AFD URL for PushChannel
      */
     deltaStreamSocketUrl2?: string;
+
+    /**
+     * The access token for PushChannel. Optionally returned, depending on implementation.
+     * OneDrive for Consumer implementation returns it and OneDrive for Business implementation
+     * does not return it and instead expects token to be returned via `getWebsocketToken` callback
+     * passed as a parameter to `OdspDocumentService.create()` factory.
+     */
+    socketToken?: string;
 }
 
 /**
