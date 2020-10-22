@@ -12,7 +12,18 @@ parameters:
   default: none
   values:
     - none
+    - prerelease
     - release
+
+- name: releaseKind
+  displayName: Release Kind
+  type: string
+  default: both
+  values:
+    - both
+    - npm
+    - docker
+
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
   type: string
