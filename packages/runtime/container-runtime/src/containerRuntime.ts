@@ -765,8 +765,9 @@ export class ContainerRuntime extends EventEmitter
 
         if (typeof context.baseSnapshot === "object") {
             const baseSnapshot = context.baseSnapshot;
+            const notDataStores = [".protocol", ".logTail", ".serviceProtocol", blobsBlobName];
             Object.keys(baseSnapshot.trees).forEach((value) => {
-                if (value !== ".protocol" && value !== ".logTail" && value !== ".serviceProtocol") {
+                if (!notDataStores.includes(value)) {
                     const tree = baseSnapshot.trees[value];
                     fluidDataStores.set(value, tree);
                 }
@@ -1888,7 +1889,7 @@ export class ContainerRuntime extends EventEmitter
         }
 
         // Let the PendingStateManager know that a message was submitted.
-        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata);
+        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, opMetadata ?? localOpMetadata);
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }
@@ -1977,7 +1978,7 @@ export class ContainerRuntime extends EventEmitter
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
             case ContainerMessageType.BlobAttach:
-                this.submit(type, content, localOpMetadata);
+                this.submit(type, content, undefined, localOpMetadata);
                 break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
