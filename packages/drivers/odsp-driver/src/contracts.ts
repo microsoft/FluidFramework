@@ -36,6 +36,12 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
     summarizer: boolean;
 
     sharingLinkP?: Promise<string>;
+
+    codeHint?: {
+        // containerPackageName is used for adding the package name to the request headers.
+        // This may be used for preloading the container package when loading Fluid content.
+        containerPackageName?: string
+    }
 }
 
 /**
@@ -261,6 +267,7 @@ export interface OdspFluidDataStoreLocator {
     fileId: string;
     dataStorePath: string;
     appName?: string;
+    containerPackageName?: string;
 }
 
 export enum SharingLinkHeader {
