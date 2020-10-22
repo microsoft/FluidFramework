@@ -90,7 +90,7 @@ export async function loadDiv(divId: string) {
         getDocumentId(),
         TodoContainer,
         createNew,
-    )
+    );
 
     await getFluidObjectAndRender(container, div).catch(() => { });
     // Handle the code upgrade scenario (which fires contextChanged)
