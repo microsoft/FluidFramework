@@ -32,7 +32,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, GenericError } from "@fluidframework/container-utils";
 import {
-    CachingPolicy,
+    ServiceCachingPolicy,
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
@@ -1063,7 +1063,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Not attached");
         }
         let storageService = await this.service.connectToStorage();
-        if (this.service.servicePolicy?.serviceCachingImpl !== CachingPolicy.Prefetch) {
+        if (this.service.policies?.caching !== ServiceCachingPolicy.Prefetch) {
             storageService = new PrefetchDocumentStorageService(storageService);
         }
         return storageService;

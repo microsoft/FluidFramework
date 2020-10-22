@@ -221,7 +221,7 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     removeAllListeners(): void;
 }
 
-export enum CachingPolicy {
+export enum ServiceCachingPolicy {
     /**
      * Driver does not implement any prefetching or caching policy.
      */
@@ -233,8 +233,8 @@ export enum CachingPolicy {
     Prefetch,
 }
 
-export interface IDocumentServicePolicy {
-    readonly serviceCachingImpl: CachingPolicy;
+export interface IDocumentServicePolicies {
+    readonly caching: ServiceCachingPolicy;
 }
 
 export interface IDocumentService {
@@ -244,7 +244,7 @@ export interface IDocumentService {
     /**
      * Get policies implemented by driver.
      */
-    servicePolicy?: IDocumentServicePolicy;
+    policies?: IDocumentServicePolicies;
 
     /**
      * Access to storage associated with the document...
