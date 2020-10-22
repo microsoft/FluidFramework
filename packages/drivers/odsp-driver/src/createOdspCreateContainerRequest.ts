@@ -10,7 +10,6 @@ export function createOdspCreateContainerRequest(
     driveId: string,
     filePath: string,
     fileName: string,
-    containerPackageName?: string,
 ): IRequest {
     const createNewRequest: IRequest = {
         url: `${siteUrl}?driveId=${encodeURIComponent(
