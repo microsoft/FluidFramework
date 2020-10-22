@@ -120,6 +120,11 @@ export class DocumentDeltaConnection
     // Listen for ops sent before we receive a response to connect_document
     protected readonly queuedMessages: ISequencedDocumentMessage[] = [];
     protected readonly queuedSignals: ISignalMessage[] = [];
+    /**
+     * A flag to indicate whether we have our handler attached.  If it's attached, we're queueing incoming ops
+     * to later be retrieved via initialMessages.
+     */
+    private earlyOpHandlerAttached: boolean = false;
 
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
 
@@ -257,6 +262,9 @@ export class DocumentDeltaConnection
      * @returns messages sent during the connection
      */
     public get initialMessages(): ISequencedDocumentMessage[] {
+        // If we call this when the earlyOpHandler is not attached, then the queuedMessages may not include the
+        // latest ops.  This could possibly indicate that initialMessages was called twice.
+        assert(this.earlyOpHandlerAttached, "Potentially missed initial messages");
         // We will lose ops and perf will tank as we need to go to storage to become current!
         assert(this.listeners("op").length !== 0, "No op handler is setup!");
 
@@ -278,9 +286,9 @@ export class DocumentDeltaConnection
      * @returns signals sent during the connection
      */
     public get initialSignals(): ISignalMessage[] {
-        this.removeEarlySignalHandler();
-
         assert(this.listeners("signal").length !== 0, "No signal handler is setup!");
+
+        this.removeEarlySignalHandler();
 
         if (this.queuedSignals.length > 0) {
             // Some signals were queued.
@@ -353,6 +361,7 @@ export class DocumentDeltaConnection
     protected async initialize(connectMessage: IConnect, timeout: number) {
         this.socket.on("op", this.earlyOpHandler);
         this.socket.on("signal", this.earlySignalHandler);
+        this.earlyOpHandlerAttached = true;
 
         let success = false;
 
@@ -443,6 +452,7 @@ export class DocumentDeltaConnection
 
     private removeEarlyOpHandler() {
         this.socket.removeListener("op", this.earlyOpHandler);
+        this.earlyOpHandlerAttached = false;
     }
 
     private removeEarlySignalHandler() {
