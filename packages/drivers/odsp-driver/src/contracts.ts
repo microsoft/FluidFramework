@@ -200,13 +200,6 @@ export interface ISnapshotOptions {
      * if snapshot is bigger in size than specified limit.
      */
     mds?: number;
-
-    /*
-     * Maximum time limit to fetch snapshot (in seconds)
-     * If specified, client will timeout the fetch request if it exceeds the time limit and
-     * will try to fetch the snapshot without blobs.
-     */
-    timeout?: number;
 }
 
 export interface HostStoragePolicy {
