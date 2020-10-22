@@ -25,12 +25,14 @@ import { getContainer } from "./getContainer";
  * URL shape, so it expects the request url to have this format (as opposed to a more traditional URL):
  * documentId/containerRelativePathing
  */
-class InsecureTinyliciousUrlResolver implements IUrlResolver {
+export class InsecureTinyliciousUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const documentId = request.url.split("/")[0];
+        const url = request.url;
+        const documentId = url.split("/")[0];
         const encodedDocId = encodeURIComponent(documentId);
+        url.replace(documentId,encodedDocId);
 
-        const documentUrl = `fluid://localhost:3000/tinylicious/${encodedDocId}`;
+        const documentUrl = `fluid://localhost:3000/tinylicious/${url}`;
         const deltaStorageUrl = `http://localhost:3000/deltas/tinylicious/${encodedDocId}`;
         const storageUrl = `http://localhost:3000/repos/tinylicious`;
 
