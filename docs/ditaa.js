@@ -11,7 +11,6 @@ const glob_arg = args[0];
 
 try {
     const files = glob.sync(glob_arg);
-    console.log(files);
     for (const file of files) {
         const command = `java -jar ./bin/ditaa.jar ${file} -rov --background F2F2F2`;
         shell.echo(command);
