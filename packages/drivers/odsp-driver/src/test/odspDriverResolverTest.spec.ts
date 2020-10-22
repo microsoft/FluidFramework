@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidPackage, IRequest } from "@fluidframework/core-interfaces";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { getHashedDocumentId } from "../odspUtils";
 
@@ -58,10 +58,52 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(url, `${siteUrl}/datastore`, "Url should match");
     });
 
-    it("Should resolve url with container Package", async () => {
+    it("Should add codeHint if request contains containerPackageName", async () => {
+        const newRequest = request;
+        newRequest.url += `&containerPackageName=${encodeURIComponent(packageName)}`;
+        const resolvedUrl = await resolver.resolve(request);
+
+        assert.strictEqual(
+            resolvedUrl.codeHint?.containerPackageName, packageName , "containerPackageName should match");
+    });
+
+    it("Should resolve url with a string in the codeDetails package", async () => {
         const resolvedUrl = await resolver.resolve(request);
         const codeDetails = { package: packageName };
         const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails);
+
+        const [url, queryString] = response?.split("?") ?? [];
+        const searchParams = new URLSearchParams(queryString);
+        assert.strictEqual(searchParams.get("itemId"), resolvedUrl.itemId, "Item id should match");
+        assert.strictEqual(searchParams.get("driveId"), driveId, "Drive Id should match");
+        assert.strictEqual(searchParams.get("path"), "/", "Path should match");
+        assert.strictEqual(searchParams.get("containerPackageName"), packageName, "ContainerPackageName should match");
+        assert.strictEqual(url, `${siteUrl}/datastore`, "Url should match");
+    });
+
+    it("Should resolve url with a IFluidPackage in the codeDetails package", async () => {
+        const resolvedUrl = await resolver.resolve(request);
+        const fluidPackage: IFluidPackage = {
+            name: packageName,
+            fluid: {},
+        };
+        const codeDetails = { package: fluidPackage };
+        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails);
+
+        const [url, queryString] = response?.split("?") ?? [];
+        const searchParams = new URLSearchParams(queryString);
+        assert.strictEqual(searchParams.get("itemId"), resolvedUrl.itemId, "Item id should match");
+        assert.strictEqual(searchParams.get("driveId"), driveId, "Drive Id should match");
+        assert.strictEqual(searchParams.get("path"), "/", "Path should match");
+        assert.strictEqual(searchParams.get("containerPackageName"), packageName, "ContainerPackageName should match");
+        assert.strictEqual(url, `${siteUrl}/datastore`, "Url should match");
+    });
+
+    it("Should resolve url with a codeHint in the resolved url", async () => {
+        const newRequest = request;
+        newRequest.url += `&containerPackageName=${encodeURIComponent(packageName)}`;
+        const resolvedUrl = await resolver.resolve(request);
+        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore");
 
         const [url, queryString] = response?.split("?") ?? [];
         const searchParams = new URLSearchParams(queryString);
