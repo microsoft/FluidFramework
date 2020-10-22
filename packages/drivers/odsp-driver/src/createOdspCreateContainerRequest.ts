@@ -12,12 +12,10 @@ export function createOdspCreateContainerRequest(
     fileName: string,
     containerPackageName?: string,
 ): IRequest {
-    let odspUrl = `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(filePath)}`;
-    if (containerPackageName) {
-        odspUrl += `&containerPackageName=${encodeURIComponent(containerPackageName)}`;
-    }
     const createNewRequest: IRequest = {
-        url: odspUrl,
+        url: `${siteUrl}?driveId=${encodeURIComponent(
+            driveId,
+        )}&path=${encodeURIComponent(filePath)}`,
         headers: {
             [DriverHeader.createNew]: {
                 fileName,
