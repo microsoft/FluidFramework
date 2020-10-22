@@ -7,10 +7,7 @@
     "compilerOptions": {
         "strictNullChecks": false,
         "rootDir": "./src",
-        "outDir": "./dist",
-        "types": [
-            "mocha"
-        ]
+        "outDir": "./dist"
     },
     "include": [
         "src/**/*"

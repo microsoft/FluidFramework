@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getRandomName } from "@fluidframework/server-services-utils";
+import { getRandomName } from "@fluidframework/server-services-client";
 import {
     MongoManager,
     ISecretManager,
