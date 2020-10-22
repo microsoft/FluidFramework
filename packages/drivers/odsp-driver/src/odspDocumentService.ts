@@ -189,7 +189,7 @@ export class OdspDocumentService implements IDocumentService {
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
-            // For ODC, we just use the token from joinsession
+            // For ODC, we do not rely on getWebsocketToken callback and just use the token from joinsession
             const socketTokenPromise = this.isOdc ? Promise.resolve("") : this.getWebsocketToken(options);
             const [websocketEndpoint, webSocketToken, io] =
                 await Promise.all([this.joinSession(), socketTokenPromise, this.socketIoClientFactory()]);
@@ -212,7 +212,8 @@ export class OdspDocumentService implements IDocumentService {
                 const connection = await this.connectToDeltaStreamWithRetry(
                     websocketEndpoint.tenantId,
                     websocketEndpoint.id,
-                    webSocketToken,
+                    // Accounts for ODC where websocket token is returned as part of joinsession response payload
+                    webSocketToken ?? (websocketEndpoint.socketToken || null),
                     io,
                     client,
                     websocketEndpoint.deltaStreamSocketUrl,
