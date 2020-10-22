@@ -70,6 +70,7 @@ extends:
     releaseImage: true
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    releaseKind: ${{ parameters.releaseKind }}
     buildDirectory: server/historian
     containerName: fluidframework/routerlicious/historian
     test: test
