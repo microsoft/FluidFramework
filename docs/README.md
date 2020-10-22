@@ -201,12 +201,11 @@ Send PRs to [this repo](https://github.com/mattetti/custom-api-documenter).
 <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS) -->
 | Script | Description |
 |--------|-------------|
-| `prebuild` | `concurrently "npm:build:md-magic" "npm:build:api-documenter" "npm:build:images"` |
 | `build` | Build the site; outputs to `public/` by default. |
 | `build:api-documenter` | Convert API JSON into Markdown. |
 | `build:api-documenter:default` | -- |
 | `build:api-documenter:win32` | -- |
-| `build:images` | `java -jar bin/ditaa.jar content/docs/concepts/images/architecture.ditaa -rovT` |
+| `build:diagrams` | Generate the diagram images using ditaa; requires Java to run. |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `clean` | Remove all generated files. |
 | `download` | Download and extract the API JSON and Playground files locally. |
@@ -215,7 +214,7 @@ Send PRs to [this repo](https://github.com/mattetti/custom-api-documenter).
 | `hugo` | Run the local copy of Hugo. |
 | `hugo:default` | --- |
 | `hugo:win32` | --- |
-| `install:ditaa` | `download ` |
+| `install:ditaa` | Install ditaa to generate diagrams; requires Java to run. |
 | `install:hugo` | Install the version of Hugo used by the documentation. |
 | `postinstall` | -- |
 | `postinstall:default` | -- |
