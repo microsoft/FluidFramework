@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/dds-interceptions";
-export const pkgVersion = "0.27.3";
+export const pkgVersion = "0.27.4";
