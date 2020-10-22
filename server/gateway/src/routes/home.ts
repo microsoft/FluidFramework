@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import dotenv from "dotenv";
 import { Router } from "express";
 import { Provider } from "nconf";
 import passport from "passport";
 import { getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
+
+dotenv.config();
 
 const microsoftScopes = {
     scope: [

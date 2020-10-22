@@ -16,6 +16,9 @@ import {
     putAsync,
 } from "@fluidframework/odsp-utils";
 import winston from "winston";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const spoTenants = new Map<string, string>([
     ["spo", "a830edad9050849829j20060320.sharepoint.com"],

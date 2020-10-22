@@ -1,3 +1,4 @@
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -72,14 +73,14 @@ export const spoEnsureLoggedIn = () => {
     };
 };
 
-export async function getSpfxFluidObjectData(): Promise<any> {
-    const queryUrl = new URL(process.env.SP_SITE ?? "");
+export async function getSpfxFluidObjectData(resolved: IFluidResolvedUrl): Promise<any> {
+    const queryUrl = new URL(`https://${process.env.SP_SITE}`);
     queryUrl.pathname = `${queryUrl.pathname}/_api/web/getclientsidewebparts`;
     const response = await fetch(`${queryUrl}`, {
         method: "GET",
         headers: {
             Accept: "application/json;odata=verbose",
-            Authorization: `Bearer ${process.env.SP_AUTH_TOKEN}`,
+            Authorization: `Bearer ${resolved.tokens.storageToken}`,
         },
     });
     const responseJsonDataResults = (await response.json()).d.GetClientSideWebParts.results;

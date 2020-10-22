@@ -83,26 +83,27 @@ export function create(
                     tenantId,
                     config.get("error:track"));
 
-                const spPackageP = getSpfxFluidObjectData();
+                const scriptsP = resolvedP
+                    .then(async (resolved) => getSpfxFluidObjectData(resolved))
+                    .then((manifest) => {
+                        winston.info(JSON.stringify(manifest));
 
-                const scriptsP = spPackageP.then((manifest) => {
-                    winston.info(JSON.stringify(manifest));
+                        const baseUrl = manifest.loaderConfig.internalModuleBaseUrls[0] ?? "";
+                        const scriptResources = manifest.loaderConfig.scriptResources[
+                            `fluid.${manifest.loaderConfig.entryModuleId}`
+                        ] ?? "";
+                        const bundle = scriptResources.path;
+                        return {
+                            entrypoint: manifest.loaderConfig.entryModuleId,
+                            scripts: [
+                                {
+                                    id: baseUrl,
+                                    url: `${baseUrl}/${bundle}`,
+                                },
+                            ],
+                        };
+                    });
 
-                    const baseUrl = manifest.loaderConfig.internalModuleBaseUrls[0] ?? "";
-                    const scriptResources = manifest.loaderConfig.scriptResources[
-                        `fluid.${manifest.loaderConfig.entryModuleId}`
-                    ] ?? "";
-                    const bundle = scriptResources.path;
-                    return {
-                        entrypoint: manifest.loaderConfig.entryModuleId,
-                        scripts: [
-                            {
-                                id: baseUrl,
-                                url: `${baseUrl}/${bundle}`,
-                            },
-                        ],
-                    };
-                });
                 const pkgP = scriptsP.then((scripts) => {
                     return {
                         resolvedPackage: {
