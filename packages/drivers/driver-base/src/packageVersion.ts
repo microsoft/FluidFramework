@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/driver-base";
-export const pkgVersion = "0.26.5";
+export const pkgVersion = "0.26.6";
