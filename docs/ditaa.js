@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const glob = require("glob")
+const glob = require("glob");
 const shell = require("shelljs");
 
 const args = process.argv.slice(2);
