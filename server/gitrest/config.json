@@ -9,6 +9,7 @@
     "requestSizeLimit": "1gb",
     "storageDir": "/home/node/documents",
     "externalStorage": {
-        "endpoint": "http://externalStorage:3005"
+        "endpoint": "http://externalStorage:3005",
+        "enabled": false
     }
 }

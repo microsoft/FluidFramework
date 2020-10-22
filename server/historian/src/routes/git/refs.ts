@@ -32,7 +32,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         tenantId: string,
         authorization: string,
         ref: string,
-        params: git.IPatchRefParams): Promise<git.IRef> {
+        params: git.IPatchRefParamsExternal): Promise<git.IRef> {
         const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
         return service.updateRef(ref, params);
     }

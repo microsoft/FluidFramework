@@ -114,7 +114,7 @@ export class RestGitService {
         return this.post(`/repos/${this.getRepoPath()}/git/refs`, params);
     }
 
-    public async updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
+    public async updateRef(ref: string, params: git.IPatchRefParamsExternal): Promise<git.IRef> {
         return this.patch(`/repos/${this.getRepoPath()}/git/refs/${ref}`, params);
     }
 

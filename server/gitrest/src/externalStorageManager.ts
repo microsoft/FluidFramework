@@ -4,6 +4,7 @@
  */
 
 import Axios from "axios";
+import { config } from "process";
 import * as winston from "winston";
 
 export interface IExternalStorageManager {
@@ -20,7 +21,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
     }
 
     public async read(tenantId: string, documentId: string): Promise<boolean> {
-        if (process.env.external_storage_enabled != "true") {
+        if (config.get("externalStorage:enabled") != "true") {
             winston.info("External storage is not enabled");
             return false;
         }

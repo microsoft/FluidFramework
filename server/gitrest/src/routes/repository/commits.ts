@@ -53,20 +53,17 @@ export async function getCommits(
     } catch (err) {
         winston.info(`getCommits error: ${err}`);
         winston.info(`Commit# Ref not found: ${repo} : ${ref}`);
-        if (config.get("externalStorage:endpoint") != null)
-        {
-            try {
-                winston.info("Look up external storage if commit does not exist");
-                const resultP = await externalStorageManager.readAndSync(repo, ref);
-                if (resultP === false) {
-                    return;
-                }
-                return getCommits(repoManager, owner, repo, ref, count, externalStorageManager);
-            } catch (bridgeError) {
-                // If file does not exist or error trying to look up commit, return the original error.
-                winston.error(`BridgeError: ${bridgeError}`);
-                return Promise.reject(err);
+        try {
+            winston.info("Look up external storage if commit does not exist");
+            const result = await externalStorageManager.read(repo, ref);
+            if (result === false) {
+                return;
             }
+            return getCommits(repoManager, owner, repo, ref, count, externalStorageManager);
+        } catch (bridgeError) {
+            // If file does not exist or error trying to look up commit, return the original error.
+            winston.error(`BridgeError: ${bridgeError}`);
+            return Promise.reject(err);
         }
     }
 }

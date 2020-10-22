@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IPatchRefParams, IRef } from "@fluidframework/gitresources";
-import { ICreateRefParamsExternal } from "@fluidframework/server-services-core";
+import { IRef } from "@fluidframework/gitresources";
+import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-core";
 import { Response, Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";
@@ -48,9 +48,9 @@ async function getRef(
         const fileName = refId.substring(refId.lastIndexOf("/") + 1);
         // If file does not exist or error trying to look up commit, return the original error.
         try {
-            const resultP = await externalStorageManager.readAndSync(repo, fileName);
-            if (resultP === false) {
-                return;
+            const result = await externalStorageManager.read(repo, fileName);
+            if (result === false) {
+                return err;
             }
             winston.info("Rehydration completed. Getting ref");
             return getRef(repoManager, owner, repo, refId, externalStorageManager);
@@ -80,7 +80,7 @@ async function createRef(
 
     if (createParams.config.enabled) {
         try {
-            await externalStorageManager.writeFile(repo, createParams.ref, createParams.sha, false);
+            await externalStorageManager.write(repo, createParams.ref, createParams.sha, false);
         } catch (e) {
             winston.error(`Error writing to file ${e}`);
         }
@@ -104,7 +104,7 @@ async function patchRef(
     owner: string,
     repo: string,
     refId: string,
-    patchParams: IPatchRefParams,
+    patchParams: IPatchRefParamsExternal,
     externalStorageManager: IExternalStorageManager,
 ): Promise<IRef> {
     const repository = await repoManager.open(owner, repo);
@@ -117,11 +117,13 @@ async function patchRef(
 
     // tslint:disable-next-line
     winston.info(`Patch ref ${repo}`);
-    try {
-        await externalStorageManager.writeFile(repo, refId, patchParams.sha, true);
-    } catch (e) {
-        winston.error(`External storage write failed while trying to update file ${repo} / ${refId}`);
-        winston.error(e);
+    if (patchParams.config.enabled) {
+        try {
+            await externalStorageManager.write(repo, refId, patchParams.sha, true);
+        } catch (e) {
+            winston.error(`External storage write failed while trying to update file ${repo} / ${refId}`);
+            winston.error(e);
+        }
     }
     
     return refToIRef(ref);
@@ -184,7 +186,7 @@ export function create(
             request.params.owner,
             request.params.repo,
             getRefId(request.params[0]),
-            request.body as IPatchRefParams,
+            request.body as IPatchRefParamsExternal,
             externalStorageManager);
         handleResponse(resultP, response);
     });
