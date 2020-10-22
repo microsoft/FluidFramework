@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { getLocatorFromOdspUrl, storeLocatorInOdspUrl, encodeOdspFluidDataStoreLocator } from "./odspFluidFileLink";
@@ -24,7 +24,12 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
         private readonly appName?: string,
     ) { }
 
-    public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string) {
+    public createCreateNewRequest(
+        siteUrl: string,
+        driveId: string,
+        filePath: string,
+        fileName: string,
+    ) {
         return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     }
 
@@ -77,6 +82,7 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
                     odspFluidInfo.driveId,
                     odspFluidInfo.fileId,
                     odspFluidInfo.dataStorePath,
+                    odspFluidInfo.containerPackageName,
                 );
             }
         } catch {
@@ -133,12 +139,19 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
      * @param resolvedUrl - The driver resolved URL
      * @param request - The relative data store path URL. For requesting a driver URL, this value should always be '/'
      */
-    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(
+        resolvedUrl: IResolvedUrl,
+        relativeUrl: string,
+        codeDetails?: IFluidCodeDetails,
+    ): Promise<string> {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
 
         const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
 
         const shareLinkUrl = new URL(shareLink);
+
+        const packageName = isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
+        odspResolvedUrl.codeHint?.containerPackageName;
 
         storeLocatorInOdspUrl(shareLinkUrl, {
             siteUrl: odspResolvedUrl.siteUrl,
@@ -146,6 +159,7 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
             fileId: odspResolvedUrl.itemId,
             dataStorePath: relativeUrl,
             appName: this.appName,
+            containerPackageName: packageName,
         });
 
         return shareLinkUrl.href;
