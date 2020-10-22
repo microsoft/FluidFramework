@@ -898,6 +898,14 @@ export class ContainerRuntime extends EventEmitter
         }
         this._disposed = true;
 
+        this.logger.sendTelemetryEvent({
+            eventName: "ContainerRuntimeDisposed",
+            category: "generic",
+            isDirty: this.isDocumentDirty(),
+            lastSequenceNumber: this.deltaManager.lastSequenceNumber,
+            attachState: this.attachState,
+        });
+
         this.summaryManager.dispose();
         this.summarizer.dispose();
 
