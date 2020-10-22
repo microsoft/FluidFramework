@@ -79,13 +79,6 @@ No back-compat or mix version impact.
 
 DriverHeader is a driver concept, so move from core-interface to driver-definitions. CreateNewHeader is also a kind of driver header, merged it into DriverHeader.
 
-### Added isRootDataStore property to IFluidDataStoreContext
-"isRootDataStore" tells whether a data store is a root data store or not. A root data store is created via the "createRootDataStore" API on IContainerRuntime.
-
-Root data stores are never garbage collected. They can be found and loaded by name.
-
-Non-root data stores are garbage collected if they are not referenced. They can be referenced by setting their handle in a DDS.
-
 ## 0.27 Breaking Changes
 - [Local Web Host Removed](#Local-Web-Host-Removed)
 

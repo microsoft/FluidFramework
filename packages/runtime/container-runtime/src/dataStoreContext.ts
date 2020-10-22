@@ -170,10 +170,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._attachState;
     }
 
-    public get isRootDataStore(): boolean {
-        return this._isRootDataStore;
-    }
-
     public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
         return this.registry;
     }
@@ -201,8 +197,8 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         private bindState: BindState,
         public readonly isLocalDataStore: boolean,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        protected isRootDataStore: boolean,
         protected pkg?: readonly string[],
-        protected _isRootDataStore: boolean = false,
     ) {
         super();
 
@@ -601,8 +597,9 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             () => {
                 throw new Error("Already attached");
             },
+            true /* isRootDataStore */,
             pkg,
-            true /* isRootDataStore */);
+        );
     }
 
     public generateAttachMessage(): IAttachMessage {
@@ -656,7 +653,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                 // If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that
                 // data stores in older documents are not garbage collected incorrectly. This may lead to additional
                 // roots in the document but they won't break.
-                this._isRootDataStore = isRootDataStore ?? true;
+                this.isRootDataStore = isRootDataStore ?? true;
             }
 
             this.details = {
@@ -684,11 +681,11 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
+        isRootDataStore: boolean,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
         public readonly createProps?: any,
-        isRootDataStore: boolean = false,
     ) {
         super(
             runtime,
@@ -701,8 +698,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             snapshotTree ? BindState.Bound : BindState.NotBound,
             true,
             bindChannel,
-            pkg,
-            isRootDataStore);
+            isRootDataStore,
+            pkg);
         this.attachListeners();
     }
 
@@ -762,11 +759,11 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
+        isRootDataStore: boolean,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
         createProps?: any,
-        isRootDataStore: boolean = false,
     ) {
         super(
             id,
@@ -778,8 +775,8 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
             createSummarizerNode,
             bindChannel,
             snapshotTree,
-            createProps,
-            isRootDataStore);
+            isRootDataStore,
+            createProps);
     }
 }
 
@@ -802,7 +799,7 @@ export class LocalDetachedFluidDataStoreContext
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
-        isRootDataStore: boolean = false,
+        isRootDataStore: boolean,
     ) {
         super(
             id,
@@ -814,8 +811,8 @@ export class LocalDetachedFluidDataStoreContext
             createSummarizerNode,
             bindChannel,
             snapshotTree,
-            undefined,
-            isRootDataStore);
+            isRootDataStore,
+        );
         assert(this.pkg === undefined);
         this.detachedRuntimeCreation = true;
     }

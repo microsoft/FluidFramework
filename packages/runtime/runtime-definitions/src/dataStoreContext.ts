@@ -251,11 +251,6 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
      */
     readonly isLocalDataStore: boolean;
     /**
-     * A data store that is created via the "createRootDataStore" API. Root data stores are never garbage collected and
-     * can be found / loaded by name.
-     */
-    readonly isRootDataStore: boolean;
-    /**
      * The package path of the data store as per the package factory.
      */
     readonly packagePath: readonly string[];
