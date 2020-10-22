@@ -335,18 +335,17 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall", hasClaims: !!tokenFetchOptions.claims });
                 }
 
+                // Choose min of host specified limits or driver specified limits.
+                const maxSnapshotSizeLimit = 25000000; // 25 MB
+                const maxSnapshotFetchTimeout = 30000; // 30 sec
                 const snapshotOptions: ISnapshotOptions = {
                     deltas: 1,
                     channels: 1,
                     blobs: 2,
                     ...this.hostPolicy.snapshotOptions,
+                    mds: this.hostPolicy.snapshotOptions?.mds ? Math.min(this.hostPolicy.snapshotOptions.mds, maxSnapshotSizeLimit) : maxSnapshotSizeLimit,
+                    timeout: this.hostPolicy.snapshotOptions?.timeout ? Math.min(this.hostPolicy.snapshotOptions.timeout, maxSnapshotFetchTimeout) : maxSnapshotFetchTimeout;
                 };
-
-                const maxSnapshotSizeLimit = 25000000; // 25 MB
-                const maxSnapshotFetchTimeout = 30000; // 30 sec
-                // Choose min of host specified limits or driver specified limits.
-                snapshotOptions.mds = snapshotOptions.mds ? Math.min(snapshotOptions.mds, maxSnapshotSizeLimit) : maxSnapshotSizeLimit;
-                snapshotOptions.timeout = snapshotOptions.timeout ? Math.min(snapshotOptions.timeout, maxSnapshotFetchTimeout) : maxSnapshotFetchTimeout;
 
                 let cachedSnapshot: IOdspSnapshot | undefined;
 
@@ -541,8 +540,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             return odspSnapshot;
         } catch (error) {
             if (error.errorType === OdspErrorType.snapshotTooBig || error.errorType === OdspErrorType.fetchTimeout) {
-                snapshotOptions.blobs = undefined;
-                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost);
+                const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: undefined };
+                return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions, usePost);
             }
             throw error;
         }
