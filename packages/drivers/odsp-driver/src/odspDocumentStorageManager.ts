@@ -344,7 +344,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     blobs: 2,
                     ...this.hostPolicy.snapshotOptions,
                     mds: this.hostPolicy.snapshotOptions?.mds ? Math.min(this.hostPolicy.snapshotOptions.mds, maxSnapshotSizeLimit) : maxSnapshotSizeLimit,
-                    timeout: this.hostPolicy.snapshotOptions?.timeout ? Math.min(this.hostPolicy.snapshotOptions.timeout, maxSnapshotFetchTimeout) : maxSnapshotFetchTimeout;
+                    timeout: this.hostPolicy.snapshotOptions?.timeout ? Math.min(this.hostPolicy.snapshotOptions.timeout, maxSnapshotFetchTimeout) : maxSnapshotFetchTimeout,
                 };
 
                 let cachedSnapshot: IOdspSnapshot | undefined;
@@ -589,7 +589,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
 
         // This event measures only successful cases of getLatest call (no tokens, no retries).
-        const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest", fetchTimeout: snapshotOptions.timeout }, async (event) => {
+        const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest", fetchTimeout: snapshotOptions.timeout, maxSnapshotSize: snapshotOptions.mds }, async (event) => {
             const startTime = performance.now();
             let response: IOdspResponse<IOdspSnapshot>;
             if (usePost) {
