@@ -25,7 +25,7 @@ import { getContainer } from "./getContainer";
  * URL shape, so it expects the request url to have this format (as opposed to a more traditional URL):
  * documentId/containerRelativePathing
  */
-export class InsecureTinyliciousUrlResolver implements IUrlResolver {
+class InsecureTinyliciousUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const documentId = request.url.split("/")[0];
         const encodedDocId = encodeURIComponent(documentId);

@@ -5,7 +5,6 @@
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidObject } from "@fluidframework/core-interfaces";
-import { InsecureTinyliciousUrlResolver } from "@fluidframework/get-tinylicious-container";
 import { InnerDocumentServiceFactory } from "@fluidframework/iframe-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 
@@ -28,13 +27,12 @@ async function getFluidObjectAndRender(container: Container, div: HTMLDivElement
 export async function runInner(divId: string) {
     const div = document.getElementById(divId) as HTMLDivElement;
 
-    const urlResolver = new InsecureTinyliciousUrlResolver();
     const documentServiceFactory = await InnerDocumentServiceFactory.create();
     const module = { fluidExport: TodoContainer };
     const codeLoader = { load: async () => module };
 
     const loader = new Loader({
-        urlResolver,
+        urlResolver: documentServiceFactory.urlResolver,
         documentServiceFactory,
         codeLoader,
     });
