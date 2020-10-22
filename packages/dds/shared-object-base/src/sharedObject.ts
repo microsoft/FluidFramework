@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import {
@@ -17,6 +17,7 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { v4 as uuid } from "uuid";
 import { SharedObjectHandle } from "./handle";
+import { SnapshotSerializer } from "./snapshotSerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
 /**
@@ -180,7 +181,17 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * {@inheritDoc (ISharedObject:interface).snapshot}
      */
-    public abstract snapshot(): ITree;
+    public snapshot(): ITree {
+        const serializer = new SnapshotSerializer(this.runtime.IFluidHandleContext);
+        return this.snapshotCore(serializer);
+    }
+
+    /**
+     * Allows the distributed data type to take a snapshot of its data.
+     * @param serializer - The serializer to use to serialize handles in its data, if any.
+     * @returns A tree representing the snapshot of the shared object.
+     */
+    protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
 
     /**
      * Set the owner of the object if it is an OwnedSharedObject

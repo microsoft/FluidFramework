@@ -3,24 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
-    Serializable,
-    IFluidDataStoreRuntime,
-    IChannelStorageService,
-} from "@fluidframework/datastore-definitions";
+import { Serializable, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { FileMode, TreeEntry } from "@fluidframework/protocol-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 
-export function serializeBlob(
-    runtime: IFluidDataStoreRuntime,
+export const serializeBlob = (
     handle: IFluidHandle,
     path: string,
     snapshot: Serializable,
-) {
-    const serializer = runtime.IFluidSerializer;
-
-    return {
+    serializer?: IFluidSerializer,
+) => ({
         mode: FileMode.File,
         path,
         type: TreeEntry.Blob,
@@ -30,14 +23,11 @@ export function serializeBlob(
                 : JSON.stringify(snapshot),
             encoding: "utf-8",
         },
-    };
-}
+    });
 
-export async function deserializeBlob(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService, path: string) {
+export async function deserializeBlob(storage: IChannelStorageService, path: string, serializer?: IFluidSerializer) {
     const handleTableChunk = await storage.read(path);
     const utf8 = fromBase64ToUtf8(handleTableChunk);
-
-    const serializer = runtime.IFluidSerializer;
     const data = serializer !== undefined
         ? serializer.parse(utf8)
         : JSON.parse(utf8);

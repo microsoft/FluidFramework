@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -397,25 +398,29 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
     }
 
-    public snapshot(): ITree {
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
         return {
             entries: [
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.rows,
                     type: TreeEntry.Tree,
-                    value: this.rows.snapshot(this.runtime, this.handle),
+                    value: this.rows.snapshot(this.runtime, this.handle, serializer),
                 },
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.cols,
                     type: TreeEntry.Tree,
-                    value: this.cols.snapshot(this.runtime, this.handle),
+                    value: this.cols.snapshot(this.runtime, this.handle, serializer),
                 },
-                serializeBlob(this.runtime, this.handle, SnapshotPath.cells, [
-                    this.cells.snapshot(),
-                    this.pending.snapshot(),
-                ]),
+                serializeBlob(
+                    this.handle,
+                    SnapshotPath.cells,
+                    [
+                        this.cells.snapshot(),
+                        this.pending.snapshot(),
+                    ],
+                    serializer),
             ],
             id: null,   // eslint-disable-line no-null/no-null
         };
@@ -523,9 +528,16 @@ export class SharedMatrix<T extends Serializable = Serializable>
      */
     protected async loadCore(storage: IChannelStorageService) {
         try {
-            await this.rows.load(this.runtime, new ObjectStoragePartition(storage, SnapshotPath.rows));
-            await this.cols.load(this.runtime, new ObjectStoragePartition(storage, SnapshotPath.cols));
-            const [cellData, pendingCliSeqData] = await deserializeBlob(this.runtime, storage, SnapshotPath.cells);
+            const serializer = this.runtime.IFluidSerializer;
+            await this.rows.load(
+                this.runtime,
+                new ObjectStoragePartition(storage, SnapshotPath.rows),
+                serializer);
+            await this.cols.load(
+                this.runtime,
+                new ObjectStoragePartition(storage, SnapshotPath.cols),
+                serializer);
+            const [cellData, pendingCliSeqData] = await deserializeBlob(storage, SnapshotPath.cells, serializer);
 
             this.cells = SparseArray2D.load(cellData);
             this.annotations = new SparseArray2D();

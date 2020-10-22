@@ -4,6 +4,7 @@
  */
 
 import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
@@ -28,7 +29,8 @@ export class SnapshotLoader {
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly client: Client,
         private readonly mergeTree: MergeTree,
-        logger: ITelemetryLogger) {
+        logger: ITelemetryLogger,
+        private readonly serializer: IFluidSerializer) {
         this.logger = ChildLogger.create(logger, "SnapshotLoader");
     }
 
@@ -115,7 +117,7 @@ export class SnapshotLoader {
             header,
             this.logger,
             this.mergeTree.options,
-            this.runtime.IFluidSerializer);
+            this.serializer);
         const segs = chunk.segments.map(this.specToSegment);
         this.mergeTree.reloadFromSegments(segs);
 
@@ -165,7 +167,7 @@ export class SnapshotLoader {
                 chunk1.headerMetadata.orderedChunkMetadata[chunkIndex].id,
                 this.logger,
                 this.mergeTree.options,
-                this.runtime.IFluidSerializer);
+                this.serializer);
             lengthSofar += chunk.length;
             // Deserialize each chunk segment and append it to the end of the MergeTree.
             segs.push(...chunk.segments.map(this.specToSegment));

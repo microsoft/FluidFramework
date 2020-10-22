@@ -30,7 +30,7 @@ describe("snapshot", () => {
             logger: client2.logger,
             clientId: "1",
         };
-        await client2.load(runtime as IFluidDataStoreRuntime, services);
+        await client2.load(runtime as IFluidDataStoreRuntime, services, undefined);
 
         assert.equal(client2.getLength(), client1.getLength());
         assert.equal(client2.getText(), client1.getText());
@@ -59,7 +59,7 @@ describe("snapshot", () => {
                 logger: client2.logger,
                 clientId: (i + 1).toString(),
             };
-            await client2.load(runtime as IFluidDataStoreRuntime, services);
+            await client2.load(runtime as IFluidDataStoreRuntime, services, undefined);
 
             const client2Len = client2.getLength();
             assert.equal(

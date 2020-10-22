@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -898,7 +898,12 @@ export class Client {
 
     // TODO: Remove `catchUpMsgs` once new snapshot format is adopted as default.
     //       (See https://github.com/microsoft/FluidFramework/issues/84)
-    public snapshot(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
+    public snapshot(
+        runtime: IFluidDataStoreRuntime,
+        handle: IFluidHandle,
+        serializer: IFluidSerializer,
+        catchUpMsgs: ISequencedDocumentMessage[],
+    ) {
         const deltaManager = runtime.deltaManager;
         const minSeq = deltaManager.minimumSequenceNumber;
 
@@ -920,24 +925,20 @@ export class Client {
                 "New format should not emit catchup ops");
             const snap = new SnapshotV1(this.mergeTree, this.logger);
             snap.extractSync();
-            return snap.emit(
-                runtime.IFluidSerializer,
-                handle);
+            return snap.emit(serializer, handle);
         } else {
             const snap = new SnapshotLegacy(this.mergeTree, this.logger);
             snap.extractSync();
-            return snap.emit(
-                catchUpMsgs,
-                runtime.IFluidSerializer,
-                handle);
+            return snap.emit(catchUpMsgs, serializer, handle);
         }
     }
 
     public async load(
         runtime: IFluidDataStoreRuntime,
         storage: IChannelStorageService,
+        serializer: IFluidSerializer,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
-        const loader = new SnapshotLoader(runtime, this, this.mergeTree, this.logger);
+        const loader = new SnapshotLoader(runtime, this, this.mergeTree, this.logger, serializer);
 
         return loader.initialize(storage);
     }

@@ -20,7 +20,7 @@ async function loadSnapshot(tree: ITree) {
         clientId: "1",
     };
 
-    const { catchupOpsP } = await client2.load(runtime as IFluidDataStoreRuntime, services);
+    const { catchupOpsP } = await client2.load(runtime as IFluidDataStoreRuntime, services, undefined);
     await catchupOpsP;
     return client2;
 }

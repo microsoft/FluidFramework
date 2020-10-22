@@ -67,7 +67,8 @@ export class TestClient extends Client {
                 logger: client2.logger,
                 clientId: newLongClientId,
             } as IFluidDataStoreRuntime,
-            services);
+            services,
+            undefined);
         await catchupOpsP;
         return client2;
     }

@@ -4,6 +4,7 @@
  */
 
 import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
@@ -231,7 +232,7 @@ export interface IDirectoryNewStorageFormat {
     content: IDirectoryDataObject;
 }
 
-function serializeDirectory(root: SubDirectory): ITree {
+function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): ITree {
     const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
     const tree: ITree = { entries: [], id: null };
@@ -244,7 +245,7 @@ function serializeDirectory(root: SubDirectory): ITree {
 
     while (stack.length > 0) {
         const [currentSubDir, currentSubDirObject] = stack.pop();
-        for (const [key, value] of currentSubDir.getSerializedStorage()) {
+        for (const [key, value] of currentSubDir.getSerializedStorage(serializer)) {
             if (!currentSubDirObject.storage) {
                 currentSubDirObject.storage = {};
             }
@@ -579,10 +580,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
      */
-    public snapshot(): ITree {
-        return serializeDirectory(this.root);
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
+        return serializeDirectory(this.root, serializer);
     }
 
     /**
@@ -1387,14 +1388,13 @@ class SubDirectory implements IDirectory {
 
     /**
      * Get the storage of this subdirectory in a serializable format, to be used in snapshotting.
+     * @param serializer - The serializer to use to serialize handles in its values.
      * @returns The JSONable string representing the storage of this subdirectory
      * @internal
      */
-    public *getSerializedStorage() {
+    public *getSerializedStorage(serializer: IFluidSerializer) {
         for (const [key, localValue] of this._storage) {
-            const value = localValue.makeSerialized(
-                this.runtime.IFluidSerializer,
-                this.directory.handle);
+            const value = localValue.makeSerialized(serializer, this.directory.handle);
             const res: [string, ISerializedValue] = [key, value];
             yield res;
         }

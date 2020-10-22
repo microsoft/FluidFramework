@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
@@ -436,31 +436,27 @@ export class MapKernel implements IValueTypeCreator {
 
     /**
      * Serializes the data stored in the shared map to a JSON string
+     * @param serializer - The serializer to use to serialize handles in its values.
      * @returns A JSON string containing serialized map data
      */
-    public getSerializedStorage(): IMapDataObjectSerialized {
+    public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
         const serializableMapData: IMapDataObjectSerialized = {};
         this.data.forEach((localValue, key) => {
-            serializableMapData[key] = localValue.makeSerialized(
-                this.runtime.IFluidSerializer,
-                this.handle);
+            serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
         });
         return serializableMapData;
     }
 
-    public getSerializableStorage(): IMapDataObjectSerializable {
+    public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
         const serializableMapData: IMapDataObjectSerializable = {};
         this.data.forEach((localValue, key) => {
-            serializableMapData[key] = makeSerializable(
-                localValue,
-                this.runtime.IFluidSerializer,
-                this.handle);
+            serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
         });
         return serializableMapData;
     }
 
-    public serialize(): string {
-        return JSON.stringify(this.getSerializableStorage());
+    public serialize(serializer: IFluidSerializer): string {
+        return JSON.stringify(this.getSerializableStorage(serializer));
     }
 
     /**
