@@ -822,7 +822,7 @@ export class ContainerRuntime extends EventEmitter
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
             () => this.storage,
-            (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, { blobId }),
+            (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
         );
         this.blobManager.load(blobsBlob);
 
@@ -1847,7 +1847,8 @@ export class ContainerRuntime extends EventEmitter
     private submit(
         type: ContainerMessageType,
         content: any,
-        localOpMetadata: unknown = undefined): void {
+        localOpMetadata: unknown = undefined,
+        opMetadata: unknown = undefined): void {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
@@ -1880,7 +1881,7 @@ export class ContainerRuntime extends EventEmitter
                     type,
                     content,
                     this._flushMode === FlushMode.Manual,
-                    batchBegin ? { batch: true } : localOpMetadata);
+                    batchBegin ? { batch: true } : opMetadata);
             } else {
                 clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             }
