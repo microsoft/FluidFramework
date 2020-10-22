@@ -11,6 +11,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
+    CachingPolicy,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -87,6 +88,10 @@ function writeLocalStorage(key: string, value: string) {
  */
 export class OdspDocumentService implements IDocumentService {
     protected updateUsageOpFrequency = startingUpdateUsageOpFrequency;
+
+    readonly servicePolicy = {
+        serviceCachingImpl: CachingPolicy.Prefetch,
+    };
 
     /**
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
