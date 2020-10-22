@@ -17,6 +17,7 @@ import {
     IFluidRouter,
     IFluidCodeDetails,
     isFluidCodeDetails,
+    isFluidPackage,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -592,6 +593,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     [DriverHeader.createNew]: {},
                 };
             }
+            // Add container package name to the request url.
+            const codeDetails = this.context.codeDetails;
+            const packageName = isFluidPackage(codeDetails.package) ? codeDetails.package.name : codeDetails.package;
+            const [mainUrl, queryString] = request.url.split("?");
+            const searchParams = new URLSearchParams(queryString);
+            searchParams.append("containerPackageName", packageName);
+            request.url = `${mainUrl}?${searchParams.toString()}`;
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
