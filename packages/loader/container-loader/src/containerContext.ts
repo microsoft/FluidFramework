@@ -12,6 +12,7 @@ import {
     IRequest,
     IResponse,
     IFluidCodeDetails,
+    ICompatibilityChecker,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -289,17 +290,28 @@ export class ContainerContext implements IContainerContext {
     }
 
     public async isCompatible(codeDetails: IFluidCodeDetails) {
-        let foundChecker: boolean = false;
-        for (const obj of [this.scope, this.codeLoader, await this.fluidModuleP]) {
-            const maybeCompatible = (obj as Partial<IProvideCompatibilityChecker>).ICompatibilityChecker;
-            if (maybeCompatible !== undefined) {
-                foundChecker = true;
-                if (await maybeCompatible.isCompatible(this.codeDetails, codeDetails) === false) {
-                    return false;
-                }
+        const compatibilityCheckers: ICompatibilityChecker[] = [];
+
+        const maybeCompatibleCodeLoader = this.codeLoader as Partial<IProvideCompatibilityChecker>;
+        if (maybeCompatibleCodeLoader.ICompatibilityChecker !== undefined) {
+            compatibilityCheckers.push(maybeCompatibleCodeLoader.ICompatibilityChecker);
+        }
+
+        const maybeCompatibleModule = await this.fluidModuleP as Partial<IProvideCompatibilityChecker>;
+        if (maybeCompatibleModule.ICompatibilityChecker !== undefined) {
+            compatibilityCheckers.push(maybeCompatibleModule.ICompatibilityChecker);
+        }
+
+        if (compatibilityCheckers.length === 0) {
+            return false;
+        }
+
+        for (const checker of compatibilityCheckers) {
+            if (await checker.isCompatible(this.codeDetails, codeDetails) === false) {
+                return false;
             }
         }
-        return foundChecker;
+        return true;
     }
 
     private async load() {
