@@ -12,7 +12,6 @@ parameters:
   default: none
   values:
     - none
-    - prerelease
     - release
 
 - name: releaseKind
