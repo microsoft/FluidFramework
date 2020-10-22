@@ -25,6 +25,8 @@ export const fetchFailureStatusCode: number = 710;
 export const invalidFileNameStatusCode: number = 711;
 // no response, or can't parse response
 export const fetchIncorrectResponse = 712;
+// Fetch request took more time then limit.
+export const fetchTimeoutStatusCode = 713;
 
 export enum OdspErrorType {
     /**
@@ -43,6 +45,13 @@ export enum OdspErrorType {
      * such case.
      */
     snapshotTooBig = "snapshotTooBig",
+
+    /*
+     * Maximum time limit to fetch reached. Host application specified limit for fetching of snapshot, when
+     * that limit is reached, request fails. Hosting application is expected to have fall-back behavior for
+     * such case.
+     */
+    fetchTimeout = "fetchTimeout",
 
     /*
         * SPO admin toggle: fluid service is not enabled.
@@ -110,6 +119,9 @@ export function createOdspNetworkError(
             break;
         case fetchIncorrectResponse:
             error = new NetworkErrorBasic(errorMessage, DriverErrorType.incorrectServerResponse, false);
+            break;
+        case fetchTimeoutStatusCode:
+            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTimeout);
             break;
         default:
             error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, statusCode);

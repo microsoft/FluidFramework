@@ -22,6 +22,7 @@ import {
     fetchFailureStatusCode,
     fetchIncorrectResponse,
     throwOdspNetworkError,
+    fetchTimeoutStatusCode,
 } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 
@@ -111,6 +112,9 @@ export async function fetchHelper<T>(
         let online = isOnline();
         if (`${error}` === "TypeError: Failed to fetch") {
             online = OnlineStatus.Offline;
+        }
+        if (error.name === "AbortError") {
+            throwOdspNetworkError("Timeout during fetch", fetchTimeoutStatusCode);
         }
         throwOdspNetworkError(
             `Fetch error: ${error}`,
