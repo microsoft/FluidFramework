@@ -18,7 +18,6 @@ export interface IPatchRefParamsExternal extends IPatchRefParams {
     config?: IExternalWriterConfig
 }
 
-
 interface IExternalWriterConfig {
     enabled: boolean;
 }
