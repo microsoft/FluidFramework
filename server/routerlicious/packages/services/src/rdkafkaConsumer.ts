@@ -273,7 +273,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 		if (this.assignedPartitions.has(partition) && this.isRebalancing) {
 			/*
-				It is possible to receieve messages while we have not yet finished rebalancing
+				It is possible to receive messages while we have not yet finished rebalancing
 				due to how we wait for the fetchPartitionEpochs call to finish before emitting the rebalanced event.
 				This means that the PartitionManager has not yet created the partition,
 				so messages will be lost since they were sent to an "untracked partition".
