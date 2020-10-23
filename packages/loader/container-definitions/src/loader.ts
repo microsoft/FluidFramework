@@ -121,7 +121,9 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 
     /**
      * Propose new code details that define the code to be loaded
-     * for this container's runtime.
+     * for this container's runtime. The returned promise will
+     * resolve when the proposal is accepted, and reject if
+     * the proposal is rejected.
      */
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<void>
 
