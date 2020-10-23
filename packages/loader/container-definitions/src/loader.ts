@@ -7,6 +7,7 @@ import { IRequest, IResponse, IFluidRouter, IFluidCodeDetails, IFluidPackage } f
 import {
     IClientDetails,
     IDocumentMessage,
+    IPendingProposal,
     IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
@@ -78,6 +79,7 @@ export interface IContainerEvents extends IEvent {
      * @param opsBehind - number of ops this client is behind (if present).
      */
     (event: "connect", listener: (opsBehind?: number) => void);
+    (event: "codeDetailsProposed", codeDetails: IFluidCodeDetails, proposal: IPendingProposal);
     (event: "contextDisposed" | "contextChanged",
         listener: (codeDetails: IFluidCodeDetails, previousCodeDetails: IFluidCodeDetails | undefined) => void);
     (event: "disconnected" | "attaching" | "attached", listener: () => void);
@@ -111,6 +113,17 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * Indicates the attachment state of the container to a host service.
      */
     readonly attachState: AttachState;
+
+    /**
+     * The current code details for the container's runtime
+     */
+    readonly codeDetails: IFluidCodeDetails | undefined
+
+    /**
+     * Propose new code details that define the code to be loaded
+     * for this container's runtime.
+     */
+    proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<void>
 
     /**
      * Attaches the Container to the Container specified by the given Request.
