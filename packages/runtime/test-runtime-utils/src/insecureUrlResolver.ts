@@ -142,11 +142,20 @@ export class InsecureUrlResolver implements IUrlResolver {
     }
 
     private auth(tenantId: string, documentId: string) {
+        // Current time in seconds
+        const now = Math.round((new Date()).getTime() / 1000);
+
+        const lifetime = 60 * 60;
+        const ver = "1.0";
+
         const claims: ITokenClaims = {
             documentId,
             scopes: ["doc:read", "doc:write", "summary:write"],
             tenantId,
             user: this.user,
+            iat: now,
+            exp: now + lifetime,
+            ver,
         };
 
         return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, this.tenantKey);

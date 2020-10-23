@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import jwt from "jsonwebtoken";
+import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 import { getContainer } from "./getContainer";
 
@@ -64,10 +64,13 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
             scopes: ["doc:read", "doc:write", "summary:write"],
             tenantId: "tinylicious",
             user: { id: uuid() },
+            iat: 0,
+            exp: 0,
+            ver: "1.0",
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return jwt.sign(claims, "12345");
+        // eslint-disable-next-line no-null/no-null
+        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, "12345");
     }
 }
 

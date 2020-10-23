@@ -12,21 +12,30 @@ export function generateToken(
     documentId: string,
     key: string,
     scopes: ScopeType[],
-    user?: IUser): string {
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define, no-param-reassign
+    user?: IUser,
+    lifetime: number = 60 * 60,
+    ver: string = "1.0"): string {
+    // eslint-disable-next-line no-param-reassign
     user = (user) ? user : generateUser();
     if (user.id === "" || user.id === undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define, no-param-reassign
+        // eslint-disable-next-line no-param-reassign
         user = generateUser();
     }
+
+    // Current time in seconds
+    const now = Math.round((new Date()).getTime() / 1000);
 
     const claims: ITokenClaims = {
         documentId,
         scopes,
         tenantId,
         user,
+        iat: now,
+        exp: now + lifetime,
+        ver,
     };
 
+    // eslint-disable-next-line no-null/no-null
     return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, key);
 }
 

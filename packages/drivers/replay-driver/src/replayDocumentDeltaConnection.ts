@@ -236,6 +236,9 @@ export class ReplayDocumentDeltaConnection
         user: {
             id: "",
         },
+        iat: 0,
+        exp: 0,
+        ver: "1.0",
     };
 
     public get clientId(): string {

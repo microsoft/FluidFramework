@@ -13,7 +13,8 @@ import {
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { IUser, ScopeType } from "@fluidframework/protocol-definitions";
-import { generateToken, IAlfredTenant } from "@fluidframework/server-services-client";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { generateToken } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 
 const r11sServers = [

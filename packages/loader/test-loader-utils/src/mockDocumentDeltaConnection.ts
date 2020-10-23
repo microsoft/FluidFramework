@@ -28,6 +28,9 @@ const DefaultServiceConfiguration: IServiceConfiguration = {
     },
 };
 
+// Current time in seconds
+const now = Math.round((new Date()).getTime() / 1000);
+
 /**
  * Mock Document Delta Connection for testing
  */
@@ -41,6 +44,9 @@ export class MockDocumentDeltaConnection
         user: {
             id: "mockid",
         },
+        iat: now,
+        exp: now + 60 * 60,
+        ver: "1.0",
     };
 
     public readonly mode: ConnectionMode = "write";

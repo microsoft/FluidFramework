@@ -34,6 +34,9 @@ const Claims: ITokenClaims = {
     user: {
         id: "",
     },
+    iat: 0,
+    exp: 0,
+    ver: "1.0",
 };
 
 /**
