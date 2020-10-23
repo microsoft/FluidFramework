@@ -808,7 +808,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Provided codeDetails are not IFluidCodeDetails");
         }
 
-        return this.getQuorum().propose("code", codeDetails);
+        return this.getQuorum().propose("code", codeDetails)
+            .then(()=>true)
+            .catch(()=>false);
     }
 
     private async reloadContextCore(): Promise<void> {

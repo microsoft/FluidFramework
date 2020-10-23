@@ -835,6 +835,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.clearPartialChunks(clientId);
         });
 
+        this.context.quorum.on("addProposal",(proposal)=>{
+            if (proposal.key === "code" || proposal.key === "code2") {
+                this.emit("codeDetailsProposed", proposal.value, proposal);
+            }
+        });
+
         if (this.context.previousRuntimeState === undefined || this.context.previousRuntimeState.state === undefined) {
             this.previousState = {};
         } else {

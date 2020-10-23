@@ -79,7 +79,7 @@ export interface IContainerEvents extends IEvent {
      * @param opsBehind - number of ops this client is behind (if present).
      */
     (event: "connect", listener: (opsBehind?: number) => void);
-    (event: "codeDetailsProposed", codeDetails: IFluidCodeDetails, proposal: IPendingProposal);
+    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (event: "contextDisposed" | "contextChanged",
         listener: (codeDetails: IFluidCodeDetails, previousCodeDetails: IFluidCodeDetails | undefined) => void);
     (event: "disconnected" | "attaching" | "attached", listener: () => void);
@@ -120,12 +120,22 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly codeDetails: IFluidCodeDetails | undefined
 
     /**
+     * Returns true if the container has been closed, otherwise false
+     */
+    readonly closed: boolean;
+
+    /**
+     * Closes the container
+     */
+    close(error?: ICriticalContainerError): void;
+
+    /**
      * Propose new code details that define the code to be loaded
      * for this container's runtime. The returned promise will
-     * resolve when the proposal is accepted, and reject if
+     * be true when the proposal is accepted, and false if
      * the proposal is rejected.
      */
-    proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<void>
+    proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>
 
     /**
      * Attaches the Container to the Container specified by the given Request.
