@@ -224,7 +224,7 @@ export class OdspDocumentService implements IDocumentService {
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
             // For ODC, we do not rely on getWebsocketToken callback and just use the token from joinsession
-            const socketTokenPromise = this.isOdc ? Promise.resolve("") : this.getWebsocketToken(options);
+            const socketTokenPromise = this.isOdc ? Promise.resolve(null) : this.getWebsocketToken(options);
             const [websocketEndpoint, webSocketToken, io] =
                 await Promise.all([this.joinSession(), socketTokenPromise, this.socketIoClientFactory()]);
 
