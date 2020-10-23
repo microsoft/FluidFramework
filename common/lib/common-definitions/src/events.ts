@@ -183,7 +183,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> =
         (event: infer E14, listener: (...args: infer A14) => void),
         (event: infer E15, listener: (...args: infer A15) => void),
         (event: infer E16, listener: (...args: infer A16) => void),
-
         (event: string, listener: (...args: any[]) => void),
     }
     ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> &
