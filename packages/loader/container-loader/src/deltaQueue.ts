@@ -15,12 +15,12 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     /**
      * Tracks whether the system has requested the queue be paused.
      */
-    private sysPause = true;
+    private sysPause = 1;
 
     /**
      * Tracks whether the user of the container has requested the queue be paused.
      */
-    private userPause = false;
+    private userPause = 0;
 
     private error: any | undefined;
 
@@ -40,7 +40,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     public get paused(): boolean {
         // The queue can be paused by either the user or by the system (e.g. during snapshotting).  If either requests
         // a pause, then the queue will pause.
-        return this.sysPause || this.userPause;
+        return this.sysPause !== 0 || this.userPause !== 0;
     }
 
     public get length(): number {
@@ -85,12 +85,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public async pause(): Promise<void> {
-        const e = { stack: "" };
-        // eslint-disable-next-line dot-notation
-        const c = Error["captureStackTrace"];
-        c(e);
-        console.log("pause", e.stack);
-        this.userPause = true;
+        this.userPause++;
         // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
         if (this.processingDeferred !== undefined) {
@@ -99,19 +94,14 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public resume(): void {
-        const e = { stack: "" };
-        // eslint-disable-next-line dot-notation
-        const c = Error["captureStackTrace"];
-        c(e);
-        console.log("resume", e.stack);
-        this.userPause = false;
+        this.userPause--;
         if (!this.paused) {
             this.ensureProcessing();
         }
     }
 
     public async systemPause(): Promise<void> {
-        this.sysPause = true;
+        this.sysPause++;
         // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
         if (this.processingDeferred !== undefined) {
@@ -120,7 +110,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public systemResume(): void {
-        this.sysPause = false;
+        this.sysPause--;
         if (!this.paused) {
             this.ensureProcessing();
         }

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
+import { Container } from "@fluidframework/container-loader";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -12,7 +13,6 @@ import {
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
 import { generateTestWithCompat, ICompatLocalTestObjectProvider, ITestContainerConfig } from "./compatUtils";
-import { Container } from "@fluidframework/container-loader";
 
 const cellId = "cellKey";
 const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
@@ -25,7 +25,6 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
     const initialCellValue = "Initial cell value";
     const newCellValue = "A new cell value";
 
-    let container1: Container;
     let dataObject1: ITestFluidObject;
     let sharedCell1: ISharedCell;
     let sharedCell2: ISharedCell;
@@ -33,7 +32,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
     beforeEach(async () => {
         // Create a Container for the first client.
-        container1 = await args.makeTestContainer(testContainerConfig) as Container;
+        const container1 = await args.makeTestContainer(testContainerConfig);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedCell1 = await dataObject1.getSharedObject<SharedCell>(cellId);
 
@@ -159,31 +158,14 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
     });
 
     it("Simultaneous delete/set on same cell should reach eventual consistency with the same value", async () => {
-        container1.deltaManager.inbound.on("push", (msg) => {
-            console.log("push", msg);
-            console.log(container1.deltaManager.inbound.paused);
-        });
-        container1.deltaManager.inbound.on("op", (msg) => {
-            console.log("op", msg);
-            console.log(container1.deltaManager.inbound.paused);
-        });
-        container1.deltaManager.outbound.on("push", (msg) => {
-            console.log("out push", msg);
-            console.log(container1.deltaManager.outbound.paused);
-        });
-        container1.deltaManager.outbound.on("op", (msg) => {
-            console.log("out op", msg);
-            console.log(container1.deltaManager.outbound.paused);
-        });
         // delete and then set on the same cell
         sharedCell1.set("value2.1");
         sharedCell2.delete();
         sharedCell3.set("value2.3");
 
-        console.log(sharedCell1.get());
         // drain the outgoing so that the next set will come after
         await args.opProcessingController.processOutgoing();
-        console.log(sharedCell1.get());
+
         sharedCell2.set("value2.2");
         verifyCellValues("value2.1", "value2.2", "value2.3");
 

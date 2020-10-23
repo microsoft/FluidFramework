@@ -148,7 +148,12 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
         const loader = this.makeTestLoader(testContainerConfig);
         const container =
             await createAndAttachContainer(defaultDocumentId, defaultCodeDetails, loader, this.urlResolver);
-        this.opProcessingController.addDeltaManagers(container.deltaManager);
+
+        // TODO: the old version delta manager on the container doesn't do pause/resume count
+        // We can't use it to do pause/resume, or it will conflict with the call from the runtime's
+        // DeltaManagerProxy. Reach in to get in until > 0.28
+        const deltaManagerProxy = (container as any)._context.deltaManager;
+        this.opProcessingController.addDeltaManagers(deltaManagerProxy);
         return container;
     }
 
@@ -159,7 +164,12 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
     public async loadTestContainer(testContainerConfig?: TestContainerConfigType) {
         const loader = this.makeTestLoader(testContainerConfig);
         const container = await loader.resolve({ url: defaultDocumentLoadUrl });
-        this.opProcessingController.addDeltaManagers(container.deltaManager);
+
+        // TODO: the old version delta manager on the container doesn't do pause/resume count
+        // We can't use it to do pause/resume, or it will conflict with the call from the runtime's
+        // DeltaManagerProxy. Reach in to get in until > 0.28
+        const deltaManagerProxy = (container as any)._context.deltaManager;
+        this.opProcessingController.addDeltaManagers(deltaManagerProxy);
         return container;
     }
 

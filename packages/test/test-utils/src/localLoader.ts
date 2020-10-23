@@ -140,7 +140,8 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
     }
 
     /**
-     * Make a test loader
+     * Make a test loader.  Container created/loaded thru this loader will not be automatically added
+     * to the OpProcessingController, and will need to be added manually if needed.
      * @param testContainerConfig - optional configuring the test Container
      */
     public makeTestLoader(testContainerConfig?: TestContainerConfigType) {
@@ -149,6 +150,7 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
 
     /**
      * Make a container using a default document id and code details
+     * Container loaded is automatically added to the OpProcessingController to manage op flow
      * @param testContainerConfig - optional configuring the test Container
      */
     public async makeTestContainer(testContainerConfig?: TestContainerConfigType) {
@@ -160,7 +162,8 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
     }
 
     /**
-     * Load a container using a default document id and code details
+     * Load a container using a default document id and code details.
+     * Container loaded is automatically added to the OpProcessingController to manage op flow
      * @param testContainerConfig - optional configuring the test Container
      */
     public async loadTestContainer(testContainerConfig?: TestContainerConfigType) {
