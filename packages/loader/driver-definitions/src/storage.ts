@@ -234,7 +234,7 @@ export enum ServiceCachingPolicy {
 }
 
 export interface IDocumentServicePolicies {
-    readonly caching: ServiceCachingPolicy;
+    readonly caching?: ServiceCachingPolicy;
 }
 
 export interface IDocumentService {

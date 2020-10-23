@@ -1063,7 +1063,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Not attached");
         }
         let storageService = await this.service.connectToStorage();
-        if (this.service.policies?.caching === ServiceCachingPolicy.Prefetch) {
+        if (this.service.policies?.caching? === ServiceCachingPolicy.Prefetch) {
             storageService = new PrefetchDocumentStorageService(storageService);
         }
         return storageService;
