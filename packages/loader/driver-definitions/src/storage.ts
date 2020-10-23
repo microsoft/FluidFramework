@@ -189,11 +189,6 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
      * Disconnects the given delta connection
      */
     close();
-
-    /**
-     * Removes all listeners from all events
-     */
-    removeAllListeners(): void;
 }
 
 export interface IDocumentService {
