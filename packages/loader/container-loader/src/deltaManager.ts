@@ -989,7 +989,6 @@ export class DeltaManager
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.reconnectOnError(
-                connection,
                 "write",
                 reconnectInfo,
             );
@@ -1001,7 +1000,6 @@ export class DeltaManager
             // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.reconnectOnError(
-                connection,
                 this.defaultReconnectionMode,
                 createReconnectError("Disconnect", disconnectReason),
             );
@@ -1014,7 +1012,6 @@ export class DeltaManager
             logNetworkFailure(this.logger, { eventName: "DeltaConnectionError" }, error);
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.reconnectOnError(
-                connection,
                 this.defaultReconnectionMode,
                 createReconnectError("error", error),
             );
@@ -1071,10 +1068,16 @@ export class DeltaManager
      * @param reason - Text description of disconnect reason to emit with disconnect event
      */
     private disconnectFromDeltaStream(reason: string) {
-        const connection = this.connection;
-        if (connection === undefined) {
+        if (this.connection === undefined) {
             return;
         }
+
+        const connection = this.connection;
+        // Avoid any re-entrancy - clear object reference
+        this.connection = undefined;
+
+        // Remove listeners first so we don't try to retrigger this flow accidentally through reconnectOnError
+        connection.removeAllListeners();
 
         // We cancel all ops on lost of connectivity, and rely on DDSes to resubmit them.
         // Semantics are not well defined for batches (and they are broken right now on disconnects anyway),
@@ -1083,16 +1086,11 @@ export class DeltaManager
         // state. As requirements change, so should these checks.
         assert(this.messageBuffer.length === 0, "messageBuffer is not empty on disconnect");
 
-        // Avoid any re-entrancy - clear object reference
-        this.connection = undefined;
-
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._outbound.systemPause();
         this._outbound.clear();
         this.emit("disconnect", reason);
 
-        // Avoid re-entrancy - remove all listeners before closing!
-        connection.removeAllListeners();
         connection.close();
     }
 
@@ -1104,14 +1102,13 @@ export class DeltaManager
      * @returns A promise that resolves when the connection is reestablished or we stop trying
      */
     private async reconnectOnError(
-        connection: IDocumentDeltaConnection,
         requestedMode: ConnectionMode,
         error: ICriticalContainerError,
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
-        // We should correctly unregister all event listeners not to re-enter here again!
-        assert(connection === this.connection);
+        // If we're already disconnected/disconnecting it's not appropriate to call this again.
+        assert(this.connection !== undefined);
 
         this.disconnectFromDeltaStream(error.message);
 
