@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import AbortController from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
 import {
@@ -52,7 +51,7 @@ import {
     snapshotExpirySummarizerOps,
 } from "./odspCache";
 import { getWithRetryForTokenRefresh, fetchHelper, IOdspResponse } from "./odspUtils";
-import { OdspErrorType, throwOdspNetworkError } from "./odspError";
+import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { getQueryString } from "./getQueryString";
 
@@ -293,17 +292,17 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall", hasClaims: !!tokenFetchOptions.claims });
                 }
 
-                // Choose min of host specified limits or driver specified limits.
-                const maxSnapshotSizeLimit = 25000000; // 25 MB
-                const maxSnapshotFetchTimeout = 30000; // 30 sec
                 const snapshotOptions: ISnapshotOptions = {
                     deltas: 1,
                     channels: 1,
                     blobs: 2,
                     ...this.hostPolicy.snapshotOptions,
-                    mds: this.hostPolicy.snapshotOptions?.mds ? Math.min(this.hostPolicy.snapshotOptions.mds, maxSnapshotSizeLimit) : maxSnapshotSizeLimit,
-                    timeout: this.hostPolicy.snapshotOptions?.timeout ? Math.min(this.hostPolicy.snapshotOptions.timeout, maxSnapshotFetchTimeout) : maxSnapshotFetchTimeout,
                 };
+
+                // No limit on size of snapshot, as otherwise we fail all clients to summarize
+                if (this.hostPolicy.summarizerClient) {
+                    snapshotOptions.mds = undefined;
+                }
 
                 let cachedSnapshot: IOdspSnapshot | undefined;
 
@@ -470,39 +469,17 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // only if it is first failure, otherwise fallback to get call.
         if (usePost) {
             try {
-                const odspSnapshot = await this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, true);
-                return odspSnapshot;
+                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, true);
             } catch (error) {
                 const errorType = error.errorType;
                 if ((errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.incorrectServerResponse) && tokenFetchOptions.refresh === false) {
                     throw error;
                 }
                 this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
-                return this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, false);
+                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
             }
         } else {
-            return this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, false);
-        }
-    }
-
-    private async fetchSnapshotWithTimeout(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions, usePost: boolean) {
-        assert(snapshotOptions.timeout !== undefined, "Timeout should be provided for setting a limit");
-        const abortController = new AbortController();
-        setTimeout(
-            () => {
-                abortController.abort();
-            },
-            snapshotOptions.timeout,
-        );
-        try {
-            const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost, abortController);
-            return odspSnapshot;
-        } catch (error) {
-            if (error.errorType === OdspErrorType.snapshotTooBig || error.errorType === OdspErrorType.fetchTimeout) {
-                const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: undefined };
-                return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions, usePost);
-            }
-            throw error;
+            return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
         }
     }
 
@@ -510,11 +487,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         snapshotOptions: ISnapshotOptions,
         tokenFetchOptions: TokenFetchOptions,
         usePost: boolean,
-        controller?: AbortController,
     ) {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
         let url: string;
-        let headers: {[index: string]: any};
+        let headers: {[index: string]: string};
         let postBody: string;
         if (usePost) {
             url = `${this.snapshotUrl}/trees/latest?ump=1`;
@@ -548,7 +524,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
 
         // This event measures only successful cases of getLatest call (no tokens, no retries).
-        const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest", fetchTimeout: snapshotOptions.timeout, maxSnapshotSize: snapshotOptions.mds }, async (event) => {
+        const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest" }, async (event) => {
             const startTime = performance.now();
             let response: IOdspResponse<IOdspSnapshot>;
             if (usePost) {
@@ -557,11 +533,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     {
                         body: postBody,
                         headers,
-                        signal: controller?.signal,
                         method: "POST",
                     });
             } else {
-                response = await fetchHelper<IOdspSnapshot>(url, { headers, signal: controller?.signal });
+                response = await fetchHelper<IOdspSnapshot>(url, { headers });
             }
             const endTime = performance.now();
             const overallTime = endTime - startTime;
