@@ -380,6 +380,5 @@ describe("Document Dirty", () => {
 
     afterEach(async () => {
         await deltaConnectionServer.webSocketServer.close();
-        containerRuntime.removeAllListeners();
     });
 });
