@@ -44,6 +44,10 @@ class PendingProposal implements IPendingProposal, ISequencedProposal {
         this.sendReject(this.sequenceNumber);
     }
 
+    public get rejectionDisabled() {
+        return !this.canReject;
+    }
+
     public disableRejection() {
         this.canReject = false;
     }

@@ -22,7 +22,7 @@ import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-loc
 import { configureWebSocketServices, DefaultServiceConfiguration } from "@fluidframework/server-lambdas";
 import { PubSub } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
-import { generateToken } from "@fluidframework/server-services-client";
+import { generateToken } from "@fluidframework/server-services-utils";
 import {
     DefaultMetricClient,
     IClientManager,
