@@ -55,7 +55,8 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents{
     );
 }
 
-type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &  IEventProvider<IContainerRuntimeEvents>;
+export type IContainerRuntimeBaseWithCombinedEvents =
+    IContainerRuntimeBase &  IEventProvider<IContainerRuntimeEvents>;
 
 /*
  * Represents the runtime of the container. Contains helper functions/state of the container.
