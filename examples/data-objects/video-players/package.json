@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/video-players",
-  "version": "0.27.5",
+  "version": "0.27.6",
   "description": "Video player collection",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -28,14 +28,14 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@fluid-example/client-ui-lib": "^0.27.5",
-    "@fluid-example/fluid-object-interfaces": "^0.27.5",
-    "@fluidframework/core-interfaces": "^0.27.5",
-    "@fluidframework/data-object-base": "^0.27.5",
-    "@fluidframework/datastore": "^0.27.5",
-    "@fluidframework/map": "^0.27.5",
-    "@fluidframework/runtime-definitions": "^0.27.5",
-    "@fluidframework/view-interfaces": "^0.27.5",
+    "@fluid-example/client-ui-lib": "^0.27.6",
+    "@fluid-example/fluid-object-interfaces": "^0.27.6",
+    "@fluidframework/core-interfaces": "^0.27.6",
+    "@fluidframework/data-object-base": "^0.27.6",
+    "@fluidframework/datastore": "^0.27.6",
+    "@fluidframework/map": "^0.27.6",
+    "@fluidframework/runtime-definitions": "^0.27.6",
+    "@fluidframework/view-interfaces": "^0.27.6",
     "@types/node": "^10.17.24"
   },
   "devDependencies": {
