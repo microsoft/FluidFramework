@@ -41,13 +41,13 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
     BlobCacheStorageService,
-    buildSnapshotTree,
     readAndParse,
     OnlineStatus,
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
+    buildSnapshotTree,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -76,6 +76,7 @@ import {
     MessageType,
     TreeEntry,
     ISummaryTree,
+    IPendingProposal,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -397,8 +398,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager.clientDetails;
     }
 
+    /**
+     * @deprecated use codeDetails
+     */
     public get chaincodePackage(): IFluidCodeDetails | undefined {
-        return this._context?.codeDetails;
+        return this.codeDetails;
+    }
+
+    public get codeDetails(): IFluidCodeDetails | undefined {
+        return this._context?.codeDetails ?? this.getCodeDetailsFromQuorum();
     }
 
     /**
@@ -795,68 +803,79 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         throw new Error("Url Resolver does not support creating urls");
     }
 
+    public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
+        if (!isFluidCodeDetails(codeDetails)) {
+            throw new Error("Provided codeDetails are not IFluidCodeDetails");
+        }
+
+        return this.getQuorum().propose("code", codeDetails)
+            .then(()=>true)
+            .catch(()=>false);
+    }
+
     private async reloadContextCore(): Promise<void> {
         const codeDetails = this.getCodeDetailsFromQuorum();
 
         await Promise.all([
             this.deltaManager.inbound.systemPause(),
             this.deltaManager.inboundSignal.systemPause()]);
-        try {
-            if (await this.context.isCompatible(codeDetails)) {
-                return;
-            }
 
-            const previousContextState = await this.context.snapshotRuntimeState();
-            this.context.dispose();
-
-            // don't fire this event if we are transitioning from a null runtime to a real runtime
-            // with detached container we no longer need the null runtime, but for legacy
-            // reasons need to keep it around (old documents without summary before code proposal).
-            // client's shouldn't need to care about this transition, as it is a implementation detail.
-            // if we didn't do this check, the clients would need to do it themselves,
-            // which would futher spread the usage of the hasNullRuntime property
-            // making it harder to deprecate.
-            if (!this.hasNullRuntime()) {
-                this.emit("contextDisposed", codeDetails, this.context?.codeDetails);
-            }
-            if (this.closed) {
-                return;
-            }
-            let snapshot: ISnapshotTree | undefined;
-            const blobs = new Map();
-            if (previousContextState.snapshot !== undefined) {
-                snapshot = await buildSnapshotTree(previousContextState.snapshot.entries, blobs);
-
-                /**
-                 * Should be removed / updated after issue #2914 is fixed.
-                 * There are currently two scenarios where this is called:
-                 * 1. When a new code proposal is accepted - This should be set to true before `this.loadContext` is
-                 * called which creates and loads the ContainerRuntime. This is because for "read" mode clients this
-                 * flag is false which causes ContainerRuntime to create the internal components again.
-                 * 2. When the first client connects in "write" mode - This happens when a client does not create the
-                 * Container in detached mode. In this case, when the code proposal is accepted, we come here and we
-                 * need to create the internal data stores in ContainerRuntime.
-                 * Once we move to using detached container everywhere, this can move outside this block.
-                 */
-                this._existing = true;
-            }
-
-            if (blobs.size > 0) {
-                this.blobsCacheStorageService =
-                    new BlobCacheStorageService(this.storageService, Promise.resolve(blobs));
-            }
-            const attributes: IDocumentAttributes = {
-                branch: this.id,
-                minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
-                sequenceNumber: this._deltaManager.lastSequenceNumber,
-                term: this._deltaManager.referenceTerm,
-            };
-
-            await this.loadContext(codeDetails, attributes, snapshot, previousContextState);
-        } finally {
+        if (await this.context.isCompatible(codeDetails) === true) {
             this.deltaManager.inbound.systemResume();
             this.deltaManager.inboundSignal.systemResume();
+            return;
         }
+
+        const previousContextState = await this.context.snapshotRuntimeState();
+        this.context.dispose();
+
+        // don't fire this event if we are transitioning from a null runtime to a real runtime
+        // with detached container we no longer need the null runtime, but for legacy
+        // reasons need to keep it around (old documents without summary before code proposal).
+        // client's shouldn't need to care about this transition, as it is a implementation detail.
+        // if we didn't do this check, the clients would need to do it themselves,
+        // which would futher spread the usage of the hasNullRuntime property
+        // making it harder to deprecate.
+        if (!this.hasNullRuntime()) {
+            this.emit("contextDisposed", codeDetails, this.context?.codeDetails);
+        }
+        if (this.closed) {
+            return;
+        }
+        let snapshot: ISnapshotTree | undefined;
+        const blobs = new Map();
+        if (previousContextState.snapshot !== undefined) {
+            snapshot = await buildSnapshotTree(previousContextState.snapshot.entries, blobs);
+
+            /**
+             * Should be removed / updated after issue #2914 is fixed.
+             * There are currently two scenarios where this is called:
+             * 1. When a new code proposal is accepted - This should be set to true before `this.loadContext` is
+             * called which creates and loads the ContainerRuntime. This is because for "read" mode clients this
+             * flag is false which causes ContainerRuntime to create the internal components again.
+             * 2. When the first client connects in "write" mode - This happens when a client does not create the
+             * Container in detached mode. In this case, when the code proposal is accepted, we come here and we
+             * need to create the internal data stores in ContainerRuntime.
+             * Once we move to using detached container everywhere, this can move outside this block.
+             */
+            this._existing = true;
+        }
+
+        if (blobs.size > 0) {
+            this.blobsCacheStorageService =
+                new BlobCacheStorageService(this.storageService, Promise.resolve(blobs));
+        }
+        const attributes: IDocumentAttributes = {
+            branch: this.id,
+            minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
+            sequenceNumber: this._deltaManager.lastSequenceNumber,
+            term: this._deltaManager.referenceTerm,
+        };
+
+        await this.loadContext(codeDetails, attributes, snapshot, previousContextState);
+
+        this.deltaManager.inbound.systemResume();
+        this.deltaManager.inboundSignal.systemResume();
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -1235,13 +1254,24 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
+        protocol.quorum.on("addProposal",(proposal: IPendingProposal) => {
+            if (proposal.key === "code" || proposal.key === "code2") {
+                this.emit("codeDetailsProposed", proposal.value, proposal);
+            }
+        });
+
         protocol.quorum.on(
             "approveProposal",
             (sequenceNumber, key, value) => {
                 debug(`approved ${key}`);
                 if (key === "code" || key === "code2") {
-                    debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
-
+                    debug(`codeProposal ${JSON.stringify(value)}`);
+                    if (!isFluidCodeDetails(value)) {
+                        this.logger.send({
+                                eventName: "CodeProposalNotIFluidCodeDetails",
+                                category: "warning",
+                        });
+                    }
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.reloadContext();
                 }
@@ -1258,13 +1288,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Back compat
         if (pkg === undefined) {
             pkg = quorum.get("code2");
-        }
-
-        if (!isFluidCodeDetails(pkg)) {
-            this.logger.send({
-                    eventName: "CodeProposalNotIFluidCodeDetails",
-                    category: "warning",
-            });
         }
 
         return pkg as IFluidCodeDetails;
