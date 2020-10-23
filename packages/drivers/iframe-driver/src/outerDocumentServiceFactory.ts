@@ -193,14 +193,25 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     }
 
     private getOuterDocumentDeltaConnection(deltaStream: IDocumentDeltaConnection) {
-        const pendingOps: { type: string, args: any[] }[] = [];
+        // We'll buffer the events that we observe on the IDocumentDeltaConnection until the handshake completes
+        const bufferedEvents: { type: string, args: any[] }[] = [];
         // we downcast here to remove typing, which make generically
         // forwarding all events easier
         const deltaStreamEventProvider = deltaStream as IEventProvider<IEvent>;
 
-        for (const event of socketIOEvents) {
-            deltaStreamEventProvider.on(event, (...args: any[]) => pendingOps.push({ type: event, args }));
-        }
+        // To unregister the handler later, we need to retain a reference to the handler function.
+        const createBufferEventHandler = (eventName: string) => {
+            return (...args: any[]) => bufferedEvents.push({ type: eventName, args });
+        };
+        const bufferEventHandlers = socketIOEvents.map((eventName: string) => {
+            return {
+                eventName,
+                handler: createBufferEventHandler(eventName),
+            };
+        });
+        bufferEventHandlers.forEach((eventHandler) => {
+            deltaStreamEventProvider.on(eventHandler.eventName, eventHandler.handler);
+        });
 
         const connection = {
             claims: deltaStream.claims,
@@ -231,12 +242,14 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         handshake.promise
             .then((innerProxy: { forwardEvent(event: string, args: any[]): Promise<void> }) => {
-                for (const op of pendingOps) {
+                for (const op of bufferedEvents) {
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     innerProxy.forwardEvent(op.type, op.args);
                 }
 
-                deltaStream.removeAllListeners();
+                bufferEventHandlers.forEach((eventHandler) => {
+                    deltaStreamEventProvider.off(eventHandler.eventName, eventHandler.handler);
+                });
 
                 for (const event of socketIOEvents) {
                     deltaStreamEventProvider.on(
