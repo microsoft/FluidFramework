@@ -15,7 +15,6 @@ import { TelemetryLogger, ITelemetryPropertyGetters, MultiSinkLogger, ChildLogge
 /**
  * Implementation of debug logger
  */
-
 export class DebugLogger extends TelemetryLogger {
     /**
      * Create debug logger - all events are output to debug npm library
