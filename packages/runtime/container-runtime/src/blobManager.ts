@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { AttachmentTreeEntry } from "@fluidframework/protocol-base";
-import { IAttachment, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, ITree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
 /**
@@ -76,17 +75,23 @@ export class BlobManager {
         this.blobIds.add(blobId);
     }
 
-    public load(blobsBlob?: string) {
-        if (blobsBlob) {
-            const decoded = Buffer.from(blobsBlob, "base64").toString();
-            const tree = JSON.parse(decoded) as ITree;
-            if (Array.isArray(tree)) {
-                return; // this is an old snapshot
-            }
-            tree.entries.map((entry) => {
-                assert.strictEqual(entry.type, TreeEntry.Attachment);
-                this.addBlobId((entry.value as IAttachment).id);
-            });
+    /**
+     * Load a set of previously attached blob IDs from a previous snapshot. Note
+     * that BlobManager tracking and reporting attached blobs is a temporary
+     * solution since storage expects attached blobs to be reported and any that
+     * are not reported as attached may be GCed. In the future attached blob
+     * IDs will be collected at summarization time, and runtime will not care
+     * about the existence or specific formatting of this tree in returned
+     * snapshots.
+     *
+     * @param blobsTree - Tree containing IDs of previously attached blobs. This
+     * corresponds to snapshot() below. We look for the IDs in the blob entries
+     * of the tree since the both the r11s and SPO drivers replace the
+     * attachment types returned in snapshot() with blobs.
+     */
+    public load(blobsTree?: ISnapshotTree): void {
+        if (blobsTree) {
+            Object.values(blobsTree.blobs).map((entry) => this.addBlobId(entry));
         }
     }
 
