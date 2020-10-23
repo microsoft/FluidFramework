@@ -16,12 +16,14 @@ import {
     IResponse,
     IFluidObject,
     IFluidRouter,
+    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
+    IPendingProposal,
     IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
@@ -44,6 +46,7 @@ export interface IProvideContainerRuntime {
 }
 
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents{
+    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (
         event: "dirtyDocument" | "disconnected" | "dispose" | "savedDocument",
         listener: () => void);
