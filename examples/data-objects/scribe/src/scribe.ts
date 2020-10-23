@@ -11,11 +11,11 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
+    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
 import {
     IContainerContext,
-    IFluidCodeDetails,
     IRuntime,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";

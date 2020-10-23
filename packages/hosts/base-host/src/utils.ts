@@ -6,8 +6,8 @@
 import { EventEmitter } from "events";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Deferred, PromiseTimer, Timer } from "@fluidframework/common-utils";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IPendingProposal, IQuorum, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 // subset of IContainerRuntime used by UpgradeManager

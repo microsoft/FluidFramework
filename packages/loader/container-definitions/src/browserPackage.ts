@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidPackageEnvironment, IFluidPackage, isFluidPackage } from "./fluidPackage";
+import { IFluidPackage, isFluidPackage, IFluidPackageEnvironment } from "@fluidframework/core-interfaces";
 
 /**
  * A specific Fluid package environment for browsers

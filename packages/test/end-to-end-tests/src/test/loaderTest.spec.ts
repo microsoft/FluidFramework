@@ -9,11 +9,12 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { IContainer, ILoader } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {  createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
+import { createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 class TestSharedDataObject1 extends DataObject {

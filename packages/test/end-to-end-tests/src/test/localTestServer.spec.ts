@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { IContainer, ILoader } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { MessageType } from "@fluidframework/protocol-definitions";

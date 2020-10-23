@@ -892,11 +892,20 @@ export class ContainerRuntime extends EventEmitter
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
-    public dispose(): void {
+    public dispose(error?: Error): void {
         if (this._disposed) {
             return;
         }
         this._disposed = true;
+
+        this.logger.sendTelemetryEvent({
+            eventName: "ContainerRuntimeDisposed",
+            category: "generic",
+            isDirty: this.isDocumentDirty(),
+            lastSequenceNumber: this.deltaManager.lastSequenceNumber,
+            attachState: this.attachState,
+            message: error?.message,
+        });
 
         this.summaryManager.dispose();
         this.summarizer.dispose();
@@ -1063,7 +1072,7 @@ export class ContainerRuntime extends EventEmitter
             nextSummarizerD: this.nextSummarizerD,
         };
 
-        this.dispose();
+        this.dispose(new Error("ContainerRuntimeStopped"));
 
         return { snapshot, state };
     }
