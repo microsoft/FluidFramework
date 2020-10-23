@@ -53,22 +53,24 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         const path = reqUrl.pathname.split("/");
         let tenantId: string;
         let documentId: string;
-        let fullPath: string;
+        let relativePath: string;
         let provider: Provider | undefined;
         if (this.config) {
             tenantId = this.config.tenantId;
             documentId = this.config.documentId;
             provider = this.config.provider;
-            fullPath = encodeURIComponent(documentId);
         } else if (path.length >= 4) {
             tenantId = path[2];
             documentId = path[3];
-            fullPath = reqUrl.pathname.slice(tenantId.length + 1);
-            fullPath = fullPath.replace(documentId, encodeURIComponent(documentId));
         } else {
             tenantId = "fluid";
             documentId = path[2];
-            fullPath = encodeURIComponent(documentId);
+        }
+        if (path.length >= 5) {
+            relativePath = reqUrl.pathname.slice(path[1].length + tenantId.length + documentId.length + 3);
+        }
+        else {
+            relativePath = "";
         }
 
         let token: string;
@@ -87,7 +89,8 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         let fluidUrl = "fluid://" +
             `${this.config ? parse(this.config.provider.get("worker:serverUrl")).host : serverSuffix}/` +
             `${encodeURIComponent(tenantId)}/` +
-            `${fullPath}`;
+            `${encodeURIComponent(documentId)}`+
+            `${relativePath}`;
 
         // In case of any additional parameters add them back to the url
         if (reqUrl.search) {
