@@ -23,6 +23,7 @@ export class InnerDocumentService implements IDocumentService {
      * Create a new InnerDocumentService
      */
     public static async create(proxyObject: ICombinedDriver): Promise<InnerDocumentService> {
+        console.log(proxyObject.storage.getRawUrl("adsf"));
         return new InnerDocumentService(proxyObject, proxyObject.clientId);
     }
 

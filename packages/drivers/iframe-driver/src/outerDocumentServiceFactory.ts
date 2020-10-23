@@ -165,9 +165,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             readBlob: async (blobId) => {
                 return storage.readBlob(blobId);
             },
-            getRawUrl: (blobId) => {
-                return storage.getRawUrl(blobId);
-            },
             uploadSummaryWithContext: async (summary, context) => {
                 return storage.uploadSummaryWithContext(summary, context);
             },
