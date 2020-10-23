@@ -24,17 +24,16 @@ export interface IEventProvider<TEvent extends IEvent> {
  * Allow an interface to extend an interfaces that already extends an IEventProvider
  *
  * interface AEvents extends IEvent{
- * (event: "a-event",listener: (a: number)=>void);
+ *  (event: "a-event",listener: (a: number)=>void);
  * }
  * interface A extends IEventProvider<AEvents>{
  *  a: object;
  * }
  *
  * interface BEvents extends IEvent{
- * (event: "b-event",listener: (b: string)=>void);
+ *  (event: "b-event",listener: (b: string)=>void);
  * }
  * interface B extends ExtendEventProvider<AEvents, A, BEvents>{
- *
  *  b: boolean;
  * };
  *
@@ -72,7 +71,7 @@ export type TransformedEvent<TThis, E, A extends any[]> =
 
 // This type is a conditional type for transforming all the overloads provides in TEvent.
 // Due to limitations of the typescript typing system, we need to handle each number of overload individually.
-// It currently supports up to 10 events which is more than we use anywhere,
+// It currently supports up to 20 event overloads which is more than we use anywhere,
 // but could be easily extended to support more, by adding more layers.
 //
 export type IEventTransformer<TThis, TEvent extends IEvent> =
