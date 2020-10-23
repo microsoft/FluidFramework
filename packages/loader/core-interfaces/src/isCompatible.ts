@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidCodeDetails } from "./fluidPackage";
+
 export const ICompatibilityChecker: keyof IProvideCompatibilityChecker = "ICompatibilityChecker";
 
 export interface IProvideCompatibilityChecker {
@@ -11,5 +13,5 @@ export interface IProvideCompatibilityChecker {
 
 export interface ICompatibilityChecker extends IProvideCompatibilityChecker {
 
-    isCompatible(codeDetails: unknown, codeDetails2: unknown): Promise<boolean>
+    isCompatible(codeDetails: IFluidCodeDetails, codeDetails2: IFluidCodeDetails): Promise<boolean>
 }

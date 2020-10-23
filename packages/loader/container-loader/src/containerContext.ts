@@ -294,12 +294,14 @@ export class ContainerContext implements IContainerContext {
 
         const maybeCompatibleCodeLoader = this.codeLoader as Partial<IProvideCompatibilityChecker>;
         if (maybeCompatibleCodeLoader.ICompatibilityChecker !== undefined) {
-            compatibilityCheckers.push(maybeCompatibleCodeLoader.ICompatibilityChecker);
+            compatibilityCheckers.push(
+                maybeCompatibleCodeLoader.ICompatibilityChecker);
         }
 
         const maybeCompatibleModule = await this.fluidModuleP as Partial<IProvideCompatibilityChecker>;
         if (maybeCompatibleModule.ICompatibilityChecker !== undefined) {
-            compatibilityCheckers.push(maybeCompatibleModule.ICompatibilityChecker);
+            compatibilityCheckers.push(
+                maybeCompatibleModule.ICompatibilityChecker);
         }
 
         if (compatibilityCheckers.length === 0) {
