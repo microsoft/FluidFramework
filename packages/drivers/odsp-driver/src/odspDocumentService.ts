@@ -90,7 +90,8 @@ export class OdspDocumentService implements IDocumentService {
     protected updateUsageOpFrequency = startingUpdateUsageOpFrequency;
 
     readonly policies = {
-        caching: ServiceCachingPolicy.Prefetch,
+        // Disable prefetching when using ODSP by default.
+        caching: ServiceCachingPolicy.None,
     };
 
     /**
