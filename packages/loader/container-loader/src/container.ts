@@ -801,7 +801,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.deltaManager.inboundSignal.systemPause()]);
 
         const previousContextState = await this.context.snapshotRuntimeState();
-        this.context.dispose();
+        this.context.dispose(new Error("ContextDisposedForReload"));
 
         const codeDetails = this.getCodeDetailsFromQuorum();
 
