@@ -1,8 +1,11 @@
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
-export const blockSize = 256 as const;
+export const log2BlockSize = 11 as const;
+export const log2LeafSize = 10 as const;
+export const blockSize = 2048 as const;     // = 1 << log2BlockSize;
+export const leafSize = 1024 as const;      // = 1 << log2LeafSize;
 
-export interface ILeafNode<T = unknown> {
+export interface ILogNode<T = unknown> {
     /**
      * Handle to the blob contents containing the serialized children.  Undefined
      * if the blob has not been uploaded, a Promise if the upload is in progress,
@@ -10,15 +13,15 @@ export interface ILeafNode<T = unknown> {
      */
     h?: IFluidHandle<ArrayBufferLike> | Promise<IFluidHandle<ArrayBufferLike>>
 
+    /** Current ref count for the node (used for eviction) */
+    r: number;
+
     /**
      * Children
      */
     c?: T[];
 }
 
-export interface IInteriorNode<T = unknown> extends ILeafNode<LogNode<T>> {
-    /** Count of populated leaf nodes (used for eviction.) */
-    p: number;
-}
-
-export type LogNode<T = unknown> = IInteriorNode<T> | ILeafNode<T>;
+export type InteriorNode<T = unknown> = ILogNode<LogNode<T>>;
+export type LeafNode<T = unknown> = ILogNode<T>;
+export type LogNode<T = unknown> = InteriorNode<T> | LeafNode<T>;

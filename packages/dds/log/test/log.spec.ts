@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedLog } from "../src/log";
 import { SharedLogFactory } from "../src/factory";
+import { leafSize, blockSize } from "../src/types";
 
 describe("SharedLog", () => {
     describe("SharedLog in local state", () => {
@@ -48,28 +49,53 @@ describe("SharedLog", () => {
             assert.equal(log.length, 0);
         });
 
+        it("read after evict", async () => {
+            for (let i = 0; i < leafSize + 1; i++) {
+                // Append the entry
+                log.push(i);
+            }
+
+            containterRuntimeFactory.processAllMessages();
+
+            // Defer to allow the blob upload microtask to complete and evict
+            // the first leaf of the log.
+            await Promise.resolve();
+
+            // Ensure that attempting to read the item throws a promise.
+            assert.throws(() => {
+                log.getItem(0);
+            }, (error) => typeof error.then === "function");
+
+            // Await the completion of the blob fetch and vet that we get the
+            // original item back.
+            const actual = await log.awaitItem(0);
+
+            assert.equal(actual, 0);
+        });
+
         it("Works big", function () {
             this.timeout(150000);
 
-            for (let i = 0; i < ((2 ** 12) * (2 ** 10) + 1); i++) {
+            for (let i = 0; i < (blockSize * leafSize + 1); i++) {
                 // Append the entry
-                log.appendEntry(i);
+                log.push(i);
 
                 // Initially, the new entry is unacked
                 assert.equal(log.ackedLength, i);
                 assert.equal(log.length, i + 1);
 
                 // Ensure we can read the unacked entry (currenly stored in the pending list)
-                assert.equal(log.getEntry(i), i);
+                assert.equal(log.getItem(i), i);
 
                 // Processes the ack message
                 containterRuntimeFactory.processAllMessages();
 
                 // Entry should now be acked
                 assert.equal(log.ackedLength, i + 1);
+                assert.equal(log.length, i + 1);
 
                 // Ensure we can still read it (now stored in the B-Tree)
-                assert.equal(log.getEntry(i), i);
+                assert.equal(log.getItem(i), i);
             }
         });
     });

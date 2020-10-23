@@ -18,17 +18,23 @@ import {
     Serializable,
 } from "@fluidframework/datastore-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
+import { IVectorConsumer, IVectorProducer, IVectorReader } from "@tiny-calc/nano";
 import { SharedLogFactory } from "./factory";
 import { debug } from "./debug";
-import { IInteriorNode, ILeafNode, LogNode } from "./types";
+import {
+    log2BlockSize,
+    log2LeafSize,
+    blockSize,
+    leafSize,
+    InteriorNode,
+    LeafNode,
+    LogNode,
+} from "./types";
 
 /* eslint-disable no-bitwise */
-const blockSize = 2 ** 10;
-const leafSize = 2 ** 12;
-
-const k0 = (index: number) => index >>> 22;
-const k1 = (index: number) => (index << 10) >>> 22;
-const k2 = (index: number) => (index << 20) >>> 20;
+const k0 = (index: number) => index >>> (32 - log2BlockSize);
+const k1 = (index: number) => (index << log2BlockSize) >>> (32 - log2BlockSize);
+const k2 = (index: number) => (index << (32 - log2LeafSize)) >>> (32 - log2LeafSize);
 /* eslint-enable no-bitwise */
 
 /**
@@ -36,6 +42,7 @@ const k2 = (index: number) => (index << 20) >>> 20;
  */
 export class SharedLog<T extends Serializable = Serializable>
     extends SharedObject
+    implements IVectorProducer<T>, IVectorReader<T>
 {
     /**
      * Create a new shared cell
@@ -63,15 +70,18 @@ export class SharedLog<T extends Serializable = Serializable>
     /** Reference to the children of the current rightmost leaf for quickly adding ACKed entries. */
     private rightmostLeaf: T[] = [];
 
+    private readonly consumers = new Set<IVectorConsumer<T>>();
+
     /**
      * Virtualized B+Tree containing ACKed entries.  The tree height is fixed and the rightmost edge
      * is always loaded.  The children of other interior nodes and leaves may be evicted.
      */
-    public readonly root: IInteriorNode<T> = {
-        p: 1,
+    public readonly root: InteriorNode<T> = {
+        r: 1,
         c: [{
-            p: 1,
+            r: 1,
             c: [{
+                r: 1,
                 h: undefined,
                 c: this.rightmostLeaf,
             }],
@@ -81,6 +91,50 @@ export class SharedLog<T extends Serializable = Serializable>
     public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
     }
+
+    // #region IVectorProducer
+
+    public openVector(consumer: IVectorConsumer<T>): IVectorReader<T> {
+        this.consumers.add(consumer);
+        return this;
+    }
+
+    public closeVector(consumer: IVectorConsumer<T>): void {
+        this.consumers.delete(consumer);
+    }
+
+    // #endregion IVectorProducer
+
+    // #region IVectorReader
+
+    public getItem(index: number): T {
+        const ackedLength = this.ackedLength;
+
+        if (index < ackedLength) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const c1 = this.root.c![k0(index)] as InteriorNode<T>;
+            const c2 = this.getChild(c1, /* index: */ k1(index)) as InteriorNode<T>;
+            return this.getChild(c2,     /* index: */ k2(index)) as T;
+        } else {
+            return this.pending[index - ackedLength];
+        }
+    }
+
+    public async awaitItem(index: number): Promise<T> {
+        for (;;) {
+            try {
+                return this.getItem(index);
+            } catch (error) {
+                if (typeof error.then === "function") {
+                    await error;
+                }
+            }
+        }
+    }
+
+    public get vectorProducer(): IVectorProducer<T> { return this; }
+
+    // #endregion IVectorReader
 
     public get ackedLength(): number {
         /* eslint-disable no-bitwise */
@@ -93,11 +147,11 @@ export class SharedLog<T extends Serializable = Serializable>
 
         const c1 = this.root.c!;
         length |= c1.length - 1;
-        length <<= 10;
+        length <<= log2BlockSize;
 
-        const c2 = (c1[c1.length - 1] as IInteriorNode<T>).c!;
+        const c2 = (c1[c1.length - 1] as InteriorNode<T>).c!;
         length |= c2.length - 1;
-        length <<= 12;
+        length <<= log2LeafSize;
 
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
         /* eslint-enable no-bitwise */
@@ -126,54 +180,54 @@ export class SharedLog<T extends Serializable = Serializable>
             });
     }
 
-    public getEntry(index: number): T {
-        const ackedLength = this.ackedLength;
-
-        if (index < ackedLength) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const c1 = this.root.c![k0(index)] as IInteriorNode<T>;
-            const c2 = this.getChild(c1, /* index: */ k1(index)) as IInteriorNode<T>;
-            return this.getChild(c2,     /* index: */ k2(index)) as T;
-        } else {
-            return this.pending[index - ackedLength];
-        }
-    }
-
-    public appendEntry(entry: T) {
-        this.pending.push(entry);
+    public push(...items: T[]) {
+        this.pending.push(...items);
 
         if (this.isAttached()) {
-            this.submitLocalMessage({ e: entry });
+            this.submitLocalMessage(items);
         }
+
+        this.noteInsert(this.length - items.length, items.length);
     }
 
-    private insert(
-        node: IInteriorNode<T>,
-        height: number,
-        leaf: ILeafNode<T>,
-    ): LogNode<T> | undefined {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const children = node.c!;
-        let child: LogNode<T> | undefined;
+    private pushAcked(shouldUploadFullNodes: boolean, ...items: T[]) {
+        while (items.length > 0) {
+            const available = leafSize - this.rightmostLeaf.length;
+            if (available > items.length) {
+                this.rightmostLeaf.push(...items);
+                return;
+            } else if (available > 0) {
+                this.rightmostLeaf.push(...items.splice(0, /* deleteCount: */ available));
 
-        // eslint-disable-next-line no-param-reassign
-        if (--height > 0) {
-            child = this.insert(children[children.length - 1] as IInteriorNode<T>, height, leaf);
-            if (child === undefined) {
-                return undefined;
+                /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
+                const root = this.root;
+                const mid = (root.c![root.c!.length - 1] as InteriorNode<T>);
+                let leaf = mid.c![mid.c!.length - 1] as LeafNode<T>;
+                leaf.r--;
+
+                if (shouldUploadFullNodes) {
+                    this.upload(leaf).catch(console.error);
+                }
+
+                leaf = { r: 1, c: this.rightmostLeaf = [] };
+
+                if (mid.c!.length === blockSize) {
+                    mid.r--;
+
+                    if (shouldUploadFullNodes) {
+                        this.upload(mid)
+                            .catch(console.error);
+                    }
+
+                    root.c!.push({ r: 1, c: [ leaf ] });
+                } else {
+                    mid.c!.push(leaf);
+                }
+
+                /* eslint-enable @typescript-eslint/no-non-null-assertion */
             }
-        } else {
-            child = leaf;
         }
-
-        if (children.length === blockSize) {
-            return { p: 1, c: [child] };
-        }
-
-        node.p++;
-        children.push(child);
-
-        return undefined;
     }
 
     public snapshot(): ITree {
@@ -195,9 +249,9 @@ export class SharedLog<T extends Serializable = Serializable>
         debug(`'${this.id}' now disconnected.`);
     }
 
-    private async uploadLeaf(node: ILeafNode<T>) {
+    private async upload(node: LogNode<T>) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        assert.equal(node.c!.length, leafSize);
+        assert(node.c!.length === leafSize || node.c!.length === blockSize);
         assert.equal(node.h, undefined);
 
         node.h = this.runtime.uploadBlob(
@@ -206,16 +260,12 @@ export class SharedLog<T extends Serializable = Serializable>
 
         // When the promise resolves, replace 'node.h' with the resolved handle.
         node.h = await node.h;
-    }
 
-    private findRightMost(): ILeafNode<T> {
-        /* eslint-disable @typescript-eslint/no-non-null-assertion */
-
-        const c1 = this.root.c!;
-        const c2 = (c1[c1.length - 1] as IInteriorNode<T>).c!;
-        return c2[c2.length - 1] as ILeafNode<T>;
-
-        /* eslint-enable @typescript-eslint/no-non-null-assertion */
+        // If the node's ref count is zero after upload, evict it now.
+        if (node.r === 0) {
+            debug(`node evicted`);
+            node.c = undefined;
+        }
     }
 
     /**
@@ -228,22 +278,20 @@ export class SharedLog<T extends Serializable = Serializable>
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.rightmostLeaf.push(message.contents.e);
-            if (this.rightmostLeaf.length === leafSize) {
-                if (local) {
-                    this.uploadLeaf(this.findRightMost()).catch(console.error);
-                }
-
-                this.rightmostLeaf = [];
-                this.insert(this.root, /* height: */ 2, {
-                    h: undefined,
-                    c: this.rightmostLeaf,
-                });
-            }
+            const items: T[] = message.contents;
+            this.pushAcked(/* shouldUploadFullNodes: */ local, ...items);
 
             if (local) {
-                this.pending.shift();
+                this.pending.splice(0, /* deleteCount */ items.length);
+            } else {
+                this.noteInsert(this.ackedLength - items.length, /* insertedCount: */ items.length);
             }
+        }
+    }
+
+    private noteInsert(start: number, insertedCount: number) {
+        for (const consumer of this.consumers) {
+            consumer.itemsChanged(start, /* removedCount: */ 0, insertedCount, /* producer: */ this);
         }
     }
 }

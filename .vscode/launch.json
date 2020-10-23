@@ -28,7 +28,10 @@
                 // "fail",
                 "--exit"
             ],
-            "env": { "TS_NODE_PROJECT": "tsconfig.json", },
+            "env": {
+                "TS_NODE_PROJECT": "tsconfig.json",
+                "DEBUG": "fluid:log"
+            },
             // "skipFiles": ["<node_internals>/**"],
             "console": "integratedTerminal",
             "smartStep": true,
