@@ -277,7 +277,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				due to how we wait for the fetchPartitionEpochs call to finish before emitting the rebalanced event.
 				This means that the PartitionManager has not yet created the partition,
 				so messages will be lost since they were sent to an "untracked partition".
-				To fix this, we should temporarily store the messages and emit them once we finished rebalancing.
+				To fix this, we should temporarily store the messages and emit them once we finish rebalancing.
 			*/
 
 			let pendingMessages = this.pendingMessages.get(partition);
