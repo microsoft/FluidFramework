@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IContainer, ILoader } from "@fluidframework/container-definitions";
+import { IContainer, ILoader, LoaderHeader } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
+import { createAndAttachContainer, createLocalLoader, OpProcessingController } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 class TestSharedDataObject1 extends DataObject {
@@ -74,6 +75,7 @@ describe("Loader.request", () => {
     let dataStore2: TestSharedDataObject2;
     let loader: ILoader;
     let urlResolver: IUrlResolver;
+    let opProcessingController: OpProcessingController;
 
     async function createContainer(): Promise<IContainer> {
         const runtimeFactory =
@@ -98,7 +100,10 @@ describe("Loader.request", () => {
         dataStore2 = await testSharedDataObjectFactory2.createInstance(dataStore1._context.containerRuntime);
 
         // this binds dataStore2 to dataStore1
-        dataStore1._root.set("key",dataStore2.handle);
+        dataStore1._root.set("key", dataStore2.handle);
+
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(container.deltaManager);
     });
 
     it("can create the data objects with correct types", async () => {
@@ -123,12 +128,48 @@ describe("Loader.request", () => {
         const url = `${documentLoadUrl}/${dataStore2.id}`;
         const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, url);
 
-        dataStore1._root.set("color","purple");
-        dataStore2._root.set("color","pink");
+        dataStore1._root.set("color", "purple");
+        dataStore2._root.set("color", "pink");
 
         assert.equal(dataStore1._root.get("color"), "purple", "datastore1 value incorrect");
         assert.equal(await testDataStore._root.wait("color"), dataStore2._root.get("color"),
             "two instances of same dataStore have different values");
+    });
+
+    it("loaded container is paused using loader pause flags", async () => {
+        // load the container paused
+        const container2 = await loader.resolve({ url: documentLoadUrl, headers: { [LoaderHeader.pause]: true } });
+        opProcessingController.addDeltaManagers(container2.deltaManager);
+
+        // create a new data store using the original container
+        const newDataStore = await testSharedDataObjectFactory2.createInstance(dataStore1._context.containerRuntime);
+        // this binds newDataStore to dataStore1
+        dataStore1._root.set("key", newDataStore.handle);
+
+        // Flush all the ops
+        await opProcessingController.process();
+
+        // the dataStore3 shouldn't exist in container2 yet.
+        try {
+            await requestFluidObject(container2, {
+                url: newDataStore.id,
+                headers: { wait: false },   // data store load default wait to true currently
+            });
+            assert(false, "Loader pause flags doesn't pause container op processing");
+        } catch (e) {
+            assert.strictEqual(e.message, `DataStore ${newDataStore.id} does not exist`);
+        }
+
+        (container2 as Container).resume();
+
+        // Flush all the ops
+        await opProcessingController.process();
+
+        const newDataStore2 = await requestFluidObject(container2, {
+            url: newDataStore.id,
+            headers: { wait: false },   // data store load default wait to true currently
+        });
+        assert(newDataStore2 instanceof TestSharedDataObject2, "requestFromLoader returns the wrong type for object2");
     });
 
     afterEach(async () => {

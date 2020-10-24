@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { Container } from "@fluidframework/container-loader";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
