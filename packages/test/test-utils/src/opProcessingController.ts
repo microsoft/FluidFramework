@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -212,10 +213,7 @@ export class OpProcessingController {
 
         return deltaMgrs.map((deltaManager) => {
             const toggle = this.deltaManagerToggles.get(deltaManager);
-            if (!toggle) {
-                throw new Error(
-                    "All delta managers must be added to deterministically control processing");
-            }
+            assert(toggle, "All delta managers must be added to deterministically control processing");
             return toggle;
         });
     }

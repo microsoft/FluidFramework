@@ -94,6 +94,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public resume(): void {
+        assert(this.userPause > 0);
         this.userPause--;
         if (!this.paused) {
             this.ensureProcessing();
@@ -110,6 +111,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public systemResume(): void {
+        assert(this.sysPause > 0);
         this.sysPause--;
         if (!this.paused) {
             this.ensureProcessing();
