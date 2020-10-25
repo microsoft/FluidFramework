@@ -18,10 +18,11 @@ export function validateTokenClaims(
     isTokenExpiryEnabled: boolean): ITokenClaims {
     const claims = jwtDecode<ITokenClaims>(token);
 
-    if (!claims
-        || claims.documentId !== documentId
-        || claims.tenantId !== tenantId
-    ) {
+    if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
+        return undefined;
+    }
+
+    if (claims.scopes === undefined || claims.scopes.length === 0) {
         return undefined;
     }
 
