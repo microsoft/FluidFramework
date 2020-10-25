@@ -1227,7 +1227,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const deferredContext = this.ensureContextDeferred(id);
 
         if (!wait && !deferredContext.isCompleted) {
-            return Promise.reject(`Process ${id} does not exist`);
+            return Promise.reject(new Error(`DataStore ${id} does not exist`));
         }
 
         const context = await deferredContext.promise;
