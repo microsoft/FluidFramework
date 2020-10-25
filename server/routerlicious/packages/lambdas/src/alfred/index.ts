@@ -125,9 +125,6 @@ export function configureWebSocketServices(
         // Map from client Ids to scope.
         const scopeMap = new Map<string, string[]>();
 
-        // Back-compat map for storing clientIds with latest protocol versions.
-        const versionMap = new Set<string>();
-
         const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 
         function isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
@@ -136,22 +133,11 @@ export function configureWebSocketServices(
                 if (!existing) {
                     return true;
                 } else {
-                    // Back-compat for old client and new server.
-                    if (mode === undefined) {
-                        return true;
-                    } else {
-                        return mode === "write";
-                    }
+                    return mode === "write";
                 }
             } else {
                 return false;
             }
-        }
-
-        // Back-compat for old clients not having protocol version ^0.3.0
-        // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-        function canSendMessage(connectVersions: string[]) {
-            return connectVersions.includes("^0.3.0");
         }
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
@@ -169,7 +155,12 @@ export function configureWebSocketServices(
             if (!claims) {
                 return Promise.reject("Invalid claims");
             }
-            await tenantManager.verifyToken(claims.tenantId, token);
+
+            try {
+                await tenantManager.verifyToken(claims.tenantId, token);
+            } catch (err) {
+                return Promise.reject("Invalid token");
+            }
 
             const clientId = generateClientId();
             const room: IRoom = {
@@ -286,14 +277,10 @@ export function configureWebSocketServices(
             connectDocument(connectionMessage).then(
                 (message) => {
                     socket.emit("connect_document_success", message.connection);
-                    // Back-compat for old clients.
-                    if (canSendMessage(message.connectVersions)) {
-                        versionMap.add(message.connection.clientId);
-                        socket.emitToRoom(
-                            getRoomId(roomMap.get(message.connection.clientId)),
-                            "signal",
-                            createRoomJoinMessage(message.connection.clientId, message.details));
-                    }
+                    socket.emitToRoom(
+                        getRoomId(roomMap.get(message.connection.clientId)),
+                        "signal",
+                        createRoomJoinMessage(message.connection.clientId, message.details));
                 },
                 (error) => {
                     const messageMetaData = {
@@ -308,7 +295,7 @@ export function configureWebSocketServices(
         // Message sent when a new operation is submitted to the router
         socket.on(
             "submitOp",
-            (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[], response) => {
+            (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
                 // Verify the user has an orderer connection.
                 if (!connectionsMap.has(clientId)) {
                     let nackMessage: INack;
@@ -347,22 +334,17 @@ export function configureWebSocketServices(
                             connection.order(sanitized);
                         }
                     });
-
-                    // A response callback used to be used to verify the send. Newer drivers do not use this. Will be
-                    // removed in 0.9
-                    if (response) {
-                        response(null);
-                    }
                 }
             });
 
         // Message sent when a new signal is submitted to the router
         socket.on(
             "submitSignal",
-            (clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[], response) => {
+            (clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
                 // Verify the user has subscription to the room.
                 if (!roomMap.has(clientId)) {
-                    return response("Invalid client ID", null);
+                    const nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
+                    socket.emit("nack", "", [nackMessage]);
                 }
 
                 contentBatches.forEach((contentBatche) => {
@@ -377,12 +359,6 @@ export function configureWebSocketServices(
                         socket.emitToRoom(getRoomId(roomMap.get(clientId)), "signal", signalMessage);
                     }
                 });
-
-                // A response callback used to be used to verify the send. Newer drivers do not use this.
-                // Will be removed in 0.9
-                if (response) {
-                    response(null);
-                }
             });
 
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -406,10 +382,7 @@ export function configureWebSocketServices(
                 };
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
                 removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
-                // Back-compat check for older clients.
-                if (versionMap.has(clientId)) {
-                    socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
-                }
+                socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
             }
             await Promise.all(removeP);
         });
