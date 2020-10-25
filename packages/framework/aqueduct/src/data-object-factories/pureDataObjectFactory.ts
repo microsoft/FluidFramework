@@ -10,7 +10,8 @@ import {
     ISharedObjectRegistry,
     requestFluidDataStoreMixin,
  } from "@fluidframework/datastore";
-import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
+ import { IEvent } from "@fluidframework/common-definitions";
+ import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IContainerRuntimeBase,
@@ -58,10 +59,9 @@ export interface IFluidDataObjectFactory {
      * They get attached only when a handle to one of them is attached to already attached objects.
      */
     createChildInstance<
-        O,
-        S,
-        TObject extends PureDataObject<O,S>,
-        TFactory extends PureDataObjectFactory<TObject, O,S>>
+        TObject extends PureDataObject<O, S, E>,
+        TFactory extends PureDataObjectFactory<TObject, O, S, E>,
+        O, S, E extends IEvent = IEvent>
     (subFactory: TFactory, initialState?: S): Promise<TObject>;
 
     /**
@@ -82,10 +82,9 @@ class FluidDataObjectFactory {
     }
 
     public async createChildInstance<
-        O,
-        S,
-        TObject extends PureDataObject<O,S>,
-        TFactory extends PureDataObjectFactory<TObject,O,S>>(subFactory: TFactory, initialState?: S)
+        TObject extends PureDataObject<O, S, E>,
+        TFactory extends PureDataObjectFactory<TObject, O, S, E>,
+        O, S, E extends IEvent = IEvent>(subFactory: TFactory, initialState?: S)
     {
         return subFactory.createChildInstance(this.context, initialState);
     }
@@ -109,87 +108,53 @@ export const getFluidObjectFactoryFromInstance = (context: IFluidDataStoreContex
  * Proxy over PureDataObject
  * Does delayed creation & initialization of PureDataObject
 */
-class PureDataObjectProxy<TObj extends PureDataObject<O, S>, O, S>  {
-    protected instance: TObj;
-    protected instanceP: Promise<TObj> | undefined;
+async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E extends IEvent = IEvent>(
+    ctor: new (props: IDataObjectProps<O, S>) => TObj,
+    context: IFluidDataStoreContext,
+    sharedObjectRegistry: ISharedObjectRegistry,
+    optionalProviders: FluidObjectSymbolProvider<O>,
+    runtimeFactoryArg: typeof FluidDataStoreRuntime,
+    initProps?: S)
+{
+    // base
+    let runtimeFactory = runtimeFactoryArg;
 
-    public readonly runtime: FluidDataStoreRuntime;
+    // request mixin in
+    runtimeFactory = requestFluidDataStoreMixin(
+        runtimeFactory,
+        async (request: IRequest, runtimeArg: FluidDataStoreRuntime) =>
+            (await PureDataObject.getDataObject(runtimeArg)).request(request));
 
-    public static async create<TObj extends PureDataObject<O, S>, O, S>(
-        ctor: new (props: IDataObjectProps<O>) => TObj,
-        context: IFluidDataStoreContext,
-        sharedObjectRegistry: ISharedObjectRegistry,
-        optionalProviders: FluidObjectSymbolProvider<O>,
-        props: S,
-        runtimeCtor: typeof FluidDataStoreRuntime)
-    {
-        const instance = new PureDataObjectProxy(
-            ctor,
-            context,
-            sharedObjectRegistry,
-            optionalProviders,
-            props,
-            runtimeCtor);
+    // Create a new runtime for our data store
+    // The runtime is what Fluid uses to create DDS' and route to your data store
+    const runtime = new runtimeFactory(
+        context,
+        sharedObjectRegistry,
+    );
 
-        // if it's a newly created object, we need to wait for it to finish initialization
-        // as that results in creation of DDSs, before it gets attached, providing atomic
-        // guarantee of creation.
-        // WARNING: we can't do the same (yet) for already existing PureDataObject!
-        // This will result in deadlock, as it tries to resolve internal handles, but any
-        // handle resolution goes through root (container runtime), which can't route it back
-        // to this data store, as it's still not initialized and not known to container runtime yet.
-        // In the future, we should address it by using relative paths for handles and be able to resolve
-        // local DDSs while data store is not fully initialized.
-        if (!instance.runtime.existing) {
-            await instance.getInstance();
-        }
+    // Create object right away.
+    // This allows object to register various callbacks with runtime before runtime
+    // becomes globally available. But it's not full initialization - constructor can't
+    // access DDSs or other services of runtime as objects are not fully initialized.
+    // In order to use object, we need to go through full initialization by calling finishInitialization().
+    const dependencyContainer = new DependencyContainer(context.scope.IFluidDependencySynthesizer);
+    const providers = dependencyContainer.synthesize<O>(optionalProviders, {});
+    const instance = new ctor({ runtime, context, providers, initProps });
 
-        return instance;
+    // if it's a newly created object, we need to wait for it to finish initialization
+    // as that results in creation of DDSs, before it gets attached, providing atomic
+    // guarantee of creation.
+    // WARNING: we can't do the same (yet) for already existing PureDataObject!
+    // This will result in deadlock, as it tries to resolve internal handles, but any
+    // handle resolution goes through root (container runtime), which can't route it back
+    // to this data store, as it's still not initialized and not known to container runtime yet.
+    // In the future, we should address it by using relative paths for handles and be able to resolve
+    // local DDSs while data store is not fully initialized.
+    if (!runtime.existing) {
+        await instance.finishInitialization();
     }
 
-    protected constructor(
-        private readonly ctor: new (props: IDataObjectProps<O>) => TObj,
-        readonly context: IFluidDataStoreContext,
-        private readonly sharedObjectRegistry: ISharedObjectRegistry,
-        private readonly optionalProviders: FluidObjectSymbolProvider<O>,
-        private readonly props: S,
-        runtimeCtor: typeof FluidDataStoreRuntime)
-    {
-        // base
-        let runtime = runtimeCtor;
-
-        // request mixin in
-        runtime = requestFluidDataStoreMixin(
-            runtime,
-            async (request: IRequest) => (await this.getInstance()).request(request));
-
-        // Create a new runtime for our data store
-        // The runtime is what Fluid uses to create DDS' and route to your data store
-        this.runtime = new runtime(
-            context,
-            this.sharedObjectRegistry,
-        );
-
-        // Create object right away.
-        // This allows object to register various callbacks with runtime before runtime
-        // becomes globally available. But it's not full initialization - constructor can't
-        // access DDSs or other services of runtime as objects are not fully initialized.
-        // In order to use object, we need to go through full initialization by calling getInstance().
-        const dependencyContainer = new DependencyContainer(this.context.scope.IFluidDependencySynthesizer);
-        const providers = dependencyContainer.synthesize<O>(this.optionalProviders, {});
-        this.instance = new this.ctor({ runtime: this.runtime, context: this.context, providers });
-    }
-
-    public async getInstance() {
-        if (this.instanceP === undefined) {
-            const handler = async () => {
-                await this.instance.initializeInternal(this.props);
-                return this.instance;
-            };
-            this.instanceP = handler();
-    }
-        return this.instanceP;
-    }
+    return { instance, runtime };
 }
 
 /**
@@ -201,7 +166,7 @@ class PureDataObjectProxy<TObj extends PureDataObject<O, S>, O, S>  {
  * O - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced data store may take during creation
  */
-export class PureDataObjectFactory<TObj extends PureDataObject<O, S>, O, S>
+export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E extends IEvent = IEvent>
     implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
@@ -209,7 +174,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S>, O, S>
 
     constructor(
         public readonly type: string,
-        private readonly ctor: new (props: IDataObjectProps<O>) => TObj,
+        private readonly ctor: new (props: IDataObjectProps<O, S>) => TObj,
         sharedObjects: readonly IChannelFactory[],
         private readonly optionalProviders: FluidObjectSymbolProvider<O>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,
@@ -246,15 +211,14 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S>, O, S>
      * @param context - data store context used to load a data store runtime
      */
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        const instanceProxy = await PureDataObjectProxy.create(
+        const { runtime } = await createDataObject(
             this.ctor,
             context,
             this.sharedObjectRegistry,
             this.optionalProviders,
-            undefined, // props
             this.runtimeCtor);
 
-        return instanceProxy.runtime;
+        return runtime;
     }
 
    /**
@@ -336,16 +300,16 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S>, O, S>
     ): Promise<TObj> {
         const newContext = containerRuntime.createDetachedDataStore();
 
-        const instanceProxy = await PureDataObjectProxy.create(
+        const { instance, runtime } = await createDataObject(
             this.ctor,
             newContext,
             this.sharedObjectRegistry,
             this.optionalProviders,
-            initialState,
-            this.runtimeCtor);
+            this.runtimeCtor,
+            initialState);
 
-        await newContext.attachRuntime(packagePath, this, instanceProxy.runtime);
+        await newContext.attachRuntime(packagePath, this, runtime);
 
-        return instanceProxy.getInstance();
+        return instance;
     }
 }
