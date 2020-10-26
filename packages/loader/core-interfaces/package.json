@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/core-interfaces",
-  "version": "0.27.7",
+  "version": "0.27.8",
   "description": "Fluid object interfaces",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
