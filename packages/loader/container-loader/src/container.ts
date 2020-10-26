@@ -820,7 +820,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.deltaManager.inbound.systemPause(),
             this.deltaManager.inboundSignal.systemPause()]);
 
-        if (await this.context.isCompatible(codeDetails) === true) {
+        if (await this.context.satisfies(codeDetails) === true) {
             this.deltaManager.inbound.systemResume();
             this.deltaManager.inboundSignal.systemResume();
             return;

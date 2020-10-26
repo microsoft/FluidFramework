@@ -6,13 +6,13 @@
 import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IProvideCompatibilityChecker,
     IFluidObject,
     IFluidConfiguration,
     IRequest,
     IResponse,
     IFluidCodeDetails,
-    ICompatibilityChecker,
+    IProvideFluidCodeDetailsComparer,
+    IFluidCodeDetailsComparer,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -289,27 +289,26 @@ export class ContainerContext implements IContainerContext {
         return this.container.getAbsoluteUrl(relativeUrl);
     }
 
-    public async isCompatible(codeDetails: IFluidCodeDetails) {
-        const compatibilityCheckers: ICompatibilityChecker[] = [];
+    public async satisfies(codeDetails: IFluidCodeDetails) {
+        const comparers: IFluidCodeDetailsComparer[] = [];
 
-        const maybeCompatibleCodeLoader = this.codeLoader as Partial<IProvideCompatibilityChecker>;
-        if (maybeCompatibleCodeLoader.ICompatibilityChecker !== undefined) {
-            compatibilityCheckers.push(
-                maybeCompatibleCodeLoader.ICompatibilityChecker);
+        const maybeCompareCodeLoader = this.codeLoader as Partial<IProvideFluidCodeDetailsComparer>;
+        if (maybeCompareCodeLoader.IFluidCodeDetailsComparer !== undefined) {
+            comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
         }
 
-        const maybeCompatibleModule = await this.fluidModuleP as Partial<IProvideCompatibilityChecker>;
-        if (maybeCompatibleModule.ICompatibilityChecker !== undefined) {
-            compatibilityCheckers.push(
-                maybeCompatibleModule.ICompatibilityChecker);
+        const maybeCompareExport = (await this.fluidModuleP).fluidExport as Partial<IProvideFluidCodeDetailsComparer>;
+        if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
+            comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
         }
 
-        if (compatibilityCheckers.length === 0) {
+        if (comparers.length === 0) {
             return false;
         }
 
-        for (const checker of compatibilityCheckers) {
-            if (await checker.isCompatible(this.codeDetails, codeDetails) === false) {
+        for (const comparer of comparers) {
+            const satisfies = await comparer.satisfies(this.codeDetails, codeDetails);
+            if (satisfies === false) {
                 return false;
             }
         }

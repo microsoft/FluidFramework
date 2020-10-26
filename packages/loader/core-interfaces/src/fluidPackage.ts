@@ -96,3 +96,35 @@ export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluid
         && (typeof maybeCodeDetails?.package === "string" || isFluidPackage(maybeCodeDetails?.package))
         && (maybeCodeDetails?.config === undefined || typeof maybeCodeDetails?.config === "object");
 };
+
+export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer = "IFluidCodeDetailsComparer";
+
+export interface IProvideFluidCodeDetailsComparer {
+    readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer ;
+}
+
+/**
+ *
+ */
+export interface IFluidCodeDetailsComparer  extends IProvideFluidCodeDetailsComparer {
+
+    /**
+     * Determinis if the code details in `a` satisfy the constraints specified in the code details of `b`.
+     *
+     * Similar semantics to:
+     *      https://github.com/npm/node-semver#usage
+     */
+    satisfies(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<boolean>;
+
+    /**
+     * Return a number representing the ascending sort order of the `a` and `b` code details;
+     *      <0 if `a` is less than `b`
+     *      0 if `a` is equivalent to `b`
+     *      >0 if `a` is greater than `b`
+     *      undefined if `a` is not comparable to `b`
+     *
+     * Similar semantics to:
+     *      https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#Description
+     */
+    compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
+}

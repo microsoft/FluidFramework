@@ -7,7 +7,6 @@
 // IFluidObject as opposed to an export *
 export { IFluidObject } from "./fluidObject";
 
-export * from "./isCompatible";
 export * from "./fluidLoadable";
 export * from "./fluidRouter";
 export * from "./handles";
