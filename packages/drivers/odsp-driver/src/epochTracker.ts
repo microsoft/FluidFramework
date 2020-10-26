@@ -47,7 +47,6 @@ export class EpochTracker {
             }
             return value.value as T;
         }
-        return undefined;
     }
 
     /**
