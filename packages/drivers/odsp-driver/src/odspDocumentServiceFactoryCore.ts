@@ -21,6 +21,7 @@ import {
     createOdspCache,
     NonPersistentCache,
     IPersistedCache,
+    LocalPersistentCacheAdapter,
 } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
 import { INewFileInfo } from "./odspUtils";
@@ -33,6 +34,7 @@ import {
     tokenFromResponse,
     SharingLinkTokenFetcher,
 } from "./tokenFetch";
+import { EpochTracker } from "./epochTracker";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -69,6 +71,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         };
 
         const logger2 = ChildLogger.create(logger, "OdspDriver");
+        const epochTracker = new EpochTracker(new LocalPersistentCacheAdapter(this.persistedCache), logger2);
         return PerformanceEvent.timedExecAsync(
             logger2,
             {
@@ -81,9 +84,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     newFileParams,
                     logger2,
                     createNewSummary,
+                    epochTracker,
                     this.getSharingLinkToken ?
                         this.toInstrumentedSharingLinkTokenFetcher(logger2, this.getSharingLinkToken) : undefined);
-                const docService = this.createDocumentService(odspResolvedUrl, logger);
+                const docService = this.createDocumentService(odspResolvedUrl, logger, epochTracker);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
                 });
@@ -114,6 +118,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        epochTracker?: EpochTracker,
     ): Promise<IDocumentService> {
         const odspLogger = ChildLogger.create(logger, "OdspDriver");
         const cache = createOdspCache(
@@ -129,6 +134,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.getSocketIOClient,
             cache,
             this.hostPolicy,
+            epochTracker ?? new EpochTracker(new LocalPersistentCacheAdapter(this.persistedCache), odspLogger),
         );
     }
 

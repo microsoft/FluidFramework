@@ -29,10 +29,15 @@ import {
     ICriticalContainerError,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
+import {
+    IContainerRuntime,
+    IContainerRuntimeDirtyable,
+    IContainerRuntimeEvents,
+} from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
     Trace,
+    TypedEventEmitter,
     unreachableCase,
 } from "@fluidframework/common-utils";
 import {
@@ -461,7 +466,7 @@ class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
  */
-export class ContainerRuntime extends EventEmitter
+export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
     public get IContainerRuntime() { return this; }
     public get IContainerRuntimeDirtyable() { return this; }
@@ -838,6 +843,12 @@ export class ContainerRuntime extends EventEmitter
             this.clearPartialChunks(clientId);
         });
 
+        this.context.quorum.on("addProposal",(proposal)=>{
+            if (proposal.key === "code" || proposal.key === "code2") {
+                this.emit("codeDetailsProposed", proposal.value, proposal);
+            }
+        });
+
         if (this.context.previousRuntimeState === undefined || this.context.previousRuntimeState.state === undefined) {
             this.previousState = {};
         } else {
@@ -900,11 +911,20 @@ export class ContainerRuntime extends EventEmitter
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
-    public dispose(): void {
+    public dispose(error?: Error): void {
         if (this._disposed) {
             return;
         }
         this._disposed = true;
+
+        this.logger.sendTelemetryEvent({
+            eventName: "ContainerRuntimeDisposed",
+            category: "generic",
+            isDirty: this.isDocumentDirty(),
+            lastSequenceNumber: this.deltaManager.lastSequenceNumber,
+            attachState: this.attachState,
+            message: error?.message,
+        });
 
         this.summaryManager.dispose();
         this.summarizer.dispose();
@@ -1073,7 +1093,7 @@ export class ContainerRuntime extends EventEmitter
             nextSummarizerD: this.nextSummarizerD,
         };
 
-        this.dispose();
+        this.dispose(new Error("ContainerRuntimeStopped"));
 
         return { snapshot, state };
     }
@@ -1221,7 +1241,7 @@ export class ContainerRuntime extends EventEmitter
         const deferredContext = this.ensureContextDeferred(id);
 
         if (!wait && !deferredContext.isCompleted) {
-            return Promise.reject(`Process ${id} does not exist`);
+            return Promise.reject(new Error(`DataStore ${id} does not exist`));
         }
 
         const context = await deferredContext.promise;
@@ -1395,10 +1415,6 @@ export class ContainerRuntime extends EventEmitter
         if (this.leader) {
             this.runTaskAnalyzer();
         }
-    }
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
     }
 
     /**
