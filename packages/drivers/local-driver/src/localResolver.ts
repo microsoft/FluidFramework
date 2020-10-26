@@ -13,7 +13,7 @@ import {
     DriverHeader,
 } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { generateToken } from "@fluidframework/server-services-client";
+import { generateToken } from "./auth";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
