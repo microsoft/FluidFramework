@@ -6,13 +6,10 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISocketStorageDiscovery } from "./contracts";
-import {
-    fetchAndParseHelper,
-    getWithRetryForTokenRefresh,
-    getOrigin,
-} from "./odspUtils";
+import { getWithRetryForTokenRefresh, getOrigin } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
+import { EpochTracker } from "./epochTracker";
 
 /**
  * Makes join session call on SPO to get information about the web socket for a document
@@ -32,6 +29,7 @@ export async function fetchJoinSession(
     method: string,
     logger: ITelemetryLogger,
     getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+    epochTracker: EpochTracker,
 ): Promise<ISocketStorageDiscovery> {
     return getWithRetryForTokenRefresh(async (options) => {
         const token = await getStorageToken(options, "JoinSession");
@@ -47,7 +45,7 @@ export async function fetchJoinSession(
                 headers = { Authorization: `Bearer ${token}` };
             }
 
-            const response = await fetchAndParseHelper<ISocketStorageDiscovery>(
+            const response = await epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
                 `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
                 { method, headers },
             );

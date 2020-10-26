@@ -52,11 +52,14 @@ import {
     ICacheEntry,
     IFileEntry,
     snapshotExpirySummarizerOps,
+    IPersistedCacheValueWithEpoch,
+    persistedCacheValueVersion,
 } from "./odspCache";
-import { getWithRetryForTokenRefresh, fetchAndParseHelper, fetchHelper, IOdspResponse } from "./odspUtils";
+import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { getQueryString } from "./getQueryString";
+import { EpochTracker } from "./epochTracker";
 
 /* eslint-disable max-len */
 
@@ -136,6 +139,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
         private readonly hostPolicy: HostStoragePolicyInternal,
+        private readonly epochTracker: EpochTracker,
     ) {
         this.documentId = odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
@@ -167,7 +171,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     eventName: "createBlob",
                     size: file.length,
                 },
-                async () => fetchAndParseHelper<api.ICreateBlobResponse>(
+                async () => this.epochTracker.fetchAndParseAsJSON<api.ICreateBlobResponse>(
                     url,
                     {
                         body: file,
@@ -196,7 +200,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
                 async (event) => {
-                    const res = await fetchHelper(url, { headers });
+                    const res = await this.epochTracker.fetchResponse(url, { headers });
                     const content = await res.arrayBuffer();
                     event.end({ size: content.byteLength });
                     return content;
@@ -221,7 +225,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         eventName: "readBlob",
                         headers: Object.keys(headers).length !== 0 ? true : undefined,
                     },
-                    async () => fetchAndParseHelper<IBlob>(url, { headers }),
+                    async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }),
                 );
             });
             blob = response.content;
@@ -357,14 +361,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         this.logger,
                         { eventName: "ObtainSnapshot" },
                         async (event: PerformanceEvent) => {
-                            const cachedSnapshotP = this.cache.persistedCache.get(
+                            const cachedSnapshotP = this.epochTracker.fetchFromCache<IOdspSnapshot>(
                                 {
                                     file: this.fileEntry,
                                     type: "snapshot",
                                     key: "",
                                 },
                                 this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
-                            ) as Promise<IOdspSnapshot | undefined>;
+                            );
 
                             let method: string;
                             if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
@@ -475,7 +479,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     eventName: "getVersions",
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
-                async () => fetchAndParseHelper<IDocumentStorageGetVersionsResponse>(url, { headers }),
+                async () => this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }),
             );
             const versionsResponse = response.content;
             if (!versionsResponse) {
@@ -593,16 +597,17 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const startTime = performance.now();
             let response: IOdspResponse<IOdspSnapshot>;
             if (usePost) {
-                response = await fetchAndParseHelper<IOdspSnapshot>(
+                response = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(
                     url,
                     {
                         body: postBody,
                         headers,
                         signal: controller?.signal,
                         method: "POST",
-                    });
+                    },
+                    true);
             } else {
-                response = await fetchAndParseHelper<IOdspSnapshot>(url, { headers, signal: controller?.signal });
+                response = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers, signal: controller?.signal });
             }
             const endTime = performance.now();
             const overallTime = endTime - startTime;
@@ -686,7 +691,16 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!Number.isInteger(seqNumber) || seqNumberFromOps !== undefined && seqNumberFromOps !== seqNumber) {
             this.logger.sendErrorEvent({ eventName: "fetchSnapshotError", seqNumber, seqNumberFromOps });
         } else if (canCache) {
-            this.cache.persistedCache.put(this._snapshotCacheEntry, snapshot, seqNumber);
+            const cacheValue: IPersistedCacheValueWithEpoch = {
+                value: snapshot,
+                fluidEpoch: this.epochTracker.fluidEpoch,
+                version: persistedCacheValueVersion,
+            };
+            this.cache.persistedCache.put(
+                this._snapshotCacheEntry,
+                cacheValue,
+                seqNumber,
+            );
         }
 
         return snapshot;
@@ -764,7 +778,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             tree = await getWithRetryForTokenRefresh(async (options) => {
                 const storageToken = await this.getStorageToken(options, "ReadTree");
 
-                const response = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger);
+                const response = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, this.epochTracker);
                 const odspSnapshot: IOdspSnapshot = response.content;
                 let treeId = "";
                 if (odspSnapshot) {
@@ -897,7 +911,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     size: postBody.length,
                 },
                 async () => {
-                    const response = await fetchAndParseHelper<ISnapshotResponse>(
+                    const response = await this.epochTracker.fetchAndParseAsJSON<ISnapshotResponse>(
                         url,
                         {
                             body: postBody,
