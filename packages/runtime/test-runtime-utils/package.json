@@ -61,13 +61,14 @@
     "@fluidframework/runtime-utils": "^0.28.0",
     "@fluidframework/telemetry-utils": "^0.28.0",
     "axios": "^0.18.0",
-    "jsonwebtoken": "^8.4.0",
+    "jsrsasign": "^10.0.2",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.20.0-0",
     "@fluidframework/mocha-test-setup": "^0.28.0",
+    "@types/jsrsasign" : "^8.0.7",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
     "@types/uuid": "^3.4.4",
