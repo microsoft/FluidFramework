@@ -299,13 +299,25 @@ export function createOdspCache(
 export interface IPersistedCacheValueWithEpoch {
     value: any,
     fluidEpoch: string | undefined,
+    version: "0.1",
 }
+
+export const persistedCacheValueVersion = "0.1";
 
 export class LocalPersistentCacheAdapter implements IPersistedCache {
     constructor(private readonly cache: IPersistedCache) {}
 
     async get(entry: ICacheEntry, expiry?: number): Promise<IPersistedCacheValueWithEpoch> {
-        return this.cache.get(entry, expiry) as Promise<IPersistedCacheValueWithEpoch>;
+        const value = await this.cache.get(entry, expiry);
+        if (value.version !== persistedCacheValueVersion) {
+            const modifiedValue: IPersistedCacheValueWithEpoch = {
+                value,
+                fluidEpoch: undefined,
+                version: persistedCacheValueVersion,
+            };
+            return modifiedValue;
+        }
+        return value as Promise<IPersistedCacheValueWithEpoch>;
     }
 
     put(entry: ICacheEntry, value: IPersistedCacheValueWithEpoch, seqNumber: number) {

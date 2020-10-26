@@ -53,6 +53,7 @@ import {
     IFileEntry,
     snapshotExpirySummarizerOps,
     IPersistedCacheValueWithEpoch,
+    persistedCacheValueVersion,
 } from "./odspCache";
 import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
@@ -693,6 +694,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const cacheValue: IPersistedCacheValueWithEpoch = {
                 value: snapshot,
                 fluidEpoch: this.epochTracker.fluidEpoch,
+                version: persistedCacheValueVersion,
             };
             this.cache.persistedCache.put(
                 this._snapshotCacheEntry,
