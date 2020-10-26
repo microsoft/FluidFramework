@@ -19,6 +19,30 @@ import { ICachedPackage } from "./utils";
 
 dotenv.config();
 
+interface SPAppCatalogManifest {
+    id: string,
+    experimentalData: {
+        fluid: boolean
+    },
+    loaderConfig: {
+        entryModuleId: string,
+        internalModuleBaseUrls: string[],
+        scriptResources: {
+            [key: string]: {
+                path: string
+            },
+        }
+    },
+    preConfiguredEntries: {
+        title: {
+            default: string
+        },
+        description: {
+            default: string,
+        },
+    }[],
+}
+
 export function saveSpoTokens(
     req,
     params,
@@ -76,7 +100,10 @@ export const spoEnsureLoggedIn = () => {
     };
 };
 
-export async function getSpfxFluidObjectData(resolved: IFluidResolvedUrl, spScriptId: string): Promise<any> {
+export async function getSpfxFluidObjectData(
+    resolved: IFluidResolvedUrl,
+    spScriptId: string,
+): Promise<SPAppCatalogManifest> {
     const queryUrl = new URL(`https://${process.env.SP_SITE}`);
     queryUrl.pathname = `${queryUrl.pathname}/_api/web/getclientsidewebparts`;
     const response = await fetch(`${queryUrl}`, {
@@ -89,7 +116,7 @@ export async function getSpfxFluidObjectData(resolved: IFluidResolvedUrl, spScri
     const responseJsonDataResults = (await response.json()).d.GetClientSideWebParts.results;
     let fluidManifest;
     responseJsonDataResults.forEach((pkg) => {
-        const manifest = JSON.parse(pkg.Manifest);
+        const manifest: SPAppCatalogManifest = JSON.parse(pkg.Manifest);
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (manifest.experimentalData && manifest.experimentalData.fluid && manifest.id === spScriptId) {
             fluidManifest = manifest;

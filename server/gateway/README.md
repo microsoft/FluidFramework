@@ -80,7 +80,7 @@ Example: http://localhost:3000/loader/spo-custom/GatewayTest?spScriptId=928e48eb
 
 For Custom SP tenants w/ App Catalog & Shared Drive:
 Template: http://localhost:3000/loader/spo-custom-shared/{FILE-NAME}?driveId={SHARED-DRIVE-ID}&spScriptId={APP-CATALOG-FLUID-SCRIPT-ID}
-Example: http://localhost:3000/loader/spo-custom-shared/GatewayTestdasfdsa341212aasdfadsfas?driveId=b!KZqAXPgroUu9jVjD6ziInQBS3I7S-ktAiNToz4MV0-L7yguPDerSTZxNE6fOBuG1&spScriptId=928e48eb-c45e-4abe-8868-b87a0dcb4521
+Example: http://localhost:3000/loader/spo-custom-shared/GatewayTest?driveId=b!KZqAXPgroUu9jVjD6ziInQBS3I7S-ktAiNToz4MV0-L7yguPDerSTZxNE6fOBuG1&spScriptId=928e48eb-c45e-4abe-8868-b87a0dcb4521
 
 ## Trademark
 
