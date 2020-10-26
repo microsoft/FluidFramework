@@ -335,18 +335,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall", hasClaims: !!tokenFetchOptions.claims });
                 }
 
-                // Choose min of host specified limits or driver specified limits.
-                const maxSnapshotSizeLimit = 25000000; // 25 MB
-                const maxSnapshotFetchTimeout = 30000; // 30 sec
                 const snapshotOptions: ISnapshotOptions = {
                     deltas: 1,
                     channels: 1,
                     blobs: 2,
+                    mds: 25000000, // 25 MB
+                    timeout: 30000, // 30 sec
                     ...this.hostPolicy.snapshotOptions,
-                    mds: this.hostPolicy.snapshotOptions?.mds ? Math.min(this.hostPolicy.snapshotOptions.mds, maxSnapshotSizeLimit) : maxSnapshotSizeLimit,
-                    timeout: this.hostPolicy.snapshotOptions?.timeout ? Math.min(this.hostPolicy.snapshotOptions.timeout, maxSnapshotFetchTimeout) : maxSnapshotFetchTimeout,
                 };
 
+                // No limit on size of snapshot, as otherwise we fail all clients to summarize
+                if (this.hostPolicy.summarizerClient) {
+                    snapshotOptions.mds = undefined;
+                }
                 let cachedSnapshot: IOdspSnapshot | undefined;
 
                 // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
@@ -529,8 +530,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private async fetchSnapshotWithTimeout(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions, usePost: boolean) {
         assert(snapshotOptions.timeout !== undefined, "Timeout should be provided for setting a limit");
         const abortController = new AbortController();
-        setTimeout(
+        const timeout = setTimeout(
             () => {
+                clearTimeout(timeout);
                 abortController.abort();
             },
             snapshotOptions.timeout,
@@ -539,8 +541,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost, abortController);
             return odspSnapshot;
         } catch (error) {
-            if (error.errorType === OdspErrorType.snapshotTooBig || error.errorType === OdspErrorType.fetchTimeout) {
-                const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: undefined };
+            // If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
+            if ((error.errorType === OdspErrorType.snapshotTooBig || error.errorType === OdspErrorType.fetchTimeout) && snapshotOptions.blobs) {
+                const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: undefined, mds: undefined };
                 return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions, usePost);
             }
             throw error;
