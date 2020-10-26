@@ -276,6 +276,51 @@ export class SummarizerNode implements ISummarizerNode {
         this.wipReferenceSequenceNumber = referenceSequenceNumber;
     }
 
+    private simpleSummary(error: any = undefined): ISummarizeResult | false {
+        if (this.trackingSequenceNumber < this._changeSequenceNumber) {
+            return false;
+        }
+
+        const latestSummary = this.latestSummary;
+        const initialSummary = this.initialSummary;
+
+        let encodeParam: EncodeSummaryParam;
+        let localPath: EscapedPath;
+        if (latestSummary !== undefined) {
+            // Create using handle of latest acked summary
+            encodeParam = {
+                fromSummary: true,
+                summaryNode: latestSummary,
+            };
+            localPath = latestSummary.localPath;
+        } else if (initialSummary?.summary !== undefined) {
+            // Create using initial summary from attach op
+            encodeParam = {
+                fromSummary: false,
+                initialSummary: initialSummary.summary,
+            };
+            localPath = EscapedPath.create(initialSummary.id);
+        } else {
+            // No base summary to reference
+            return false;
+        }
+
+        if (error !== undefined) {
+            this.logger.logException({
+                eventName: "SummarizingWithBasePlusOps",
+                category: "error",
+            },
+            error);
+        }
+        const summary = encodeSummary(encodeParam, this.outstandingOps);
+        this.wipLocalPaths = {
+            localPath,
+            additionalPath: summary.additionalPath,
+        };
+        this.wipSkipRecursion = true;
+        return { summary: summary.summary, stats: summary.stats };
+    }
+
     public async summarize(fullTree: boolean, simple: boolean): Promise<ISummarizeResult> {
         assert(!this.disabled, "Unsupported: cannot call summarize on disabled SummarizerNode");
 
@@ -301,49 +346,27 @@ export class SummarizerNode implements ISummarizerNode {
             }
         }
 
+        if (simple) {
+            const result = this.simpleSummary();
+            assert(result !== false, "Cannot generate simple summary");
+            return result;
+        }
+
         try {
             const result = await this.summarizeInternalFn(fullTree);
             this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
             return { summary: result.summary, stats: result.stats };
         } catch (error) {
-            if (this.throwOnError || this.trackingSequenceNumber < this._changeSequenceNumber) {
+            if (this.throwOnError) {
                 throw error;
             }
-            const latestSummary = this.latestSummary;
-            const initialSummary = this.initialSummary;
 
-            let encodeParam: EncodeSummaryParam;
-            let localPath: EscapedPath;
-            if (latestSummary !== undefined) {
-                // Create using handle of latest acked summary
-                encodeParam = {
-                    fromSummary: true,
-                    summaryNode: latestSummary,
-                };
-                localPath = latestSummary.localPath;
-            } else if (initialSummary?.summary !== undefined) {
-                // Create using initial summary from attach op
-                encodeParam = {
-                    fromSummary: false,
-                    initialSummary: initialSummary.summary,
-                };
-                localPath = EscapedPath.create(initialSummary.id);
-            } else {
-                // No base summary to reference
+            const result = this.simpleSummary(error);
+
+            if (result === false) {
                 throw error;
             }
-            this.logger.logException({
-                eventName: "SummarizingWithBasePlusOps",
-                category: "error",
-            },
-            error);
-            const summary = encodeSummary(encodeParam, this.outstandingOps);
-            this.wipLocalPaths = {
-                localPath,
-                additionalPath: summary.additionalPath,
-            };
-            this.wipSkipRecursion = true;
-            return { summary: summary.summary, stats: summary.stats };
+            return result;
         }
     }
 
