@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/test-loader-utils",
-  "version": "0.27.7",
+  "version": "0.27.8",
   "private": true,
   "description": "Mocks and other test utilities for the Fluid Framework Loader",
   "homepage": "https://fluidframework.com",
@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.24.0",
-    "@fluidframework/driver-definitions": "^0.27.7",
+    "@fluidframework/driver-definitions": "^0.27.8",
     "@fluidframework/protocol-definitions": "^0.1013.0"
   },
   "devDependencies": {
