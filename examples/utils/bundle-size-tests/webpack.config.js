@@ -11,6 +11,7 @@ const DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack
 module.exports = {
   entry: {
     'container': './src/container',
+    'sharedString': './src/sharedString'
   },
   mode: 'production',
   module: {
@@ -33,6 +34,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist')
   },
+  node: false,
   plugins: [
     new DuplicatePackageCheckerPlugin({
       // Also show module that is requiring each duplicate package
