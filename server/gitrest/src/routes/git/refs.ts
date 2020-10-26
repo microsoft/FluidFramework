@@ -44,7 +44,6 @@ async function getRef(
     } catch (err) {
         winston.error(`getRef error: ${err}`);
         // Lookup external storage if commit does not exist.
-        winston.info(`Ref# Ref not found!: ${repo} : ${refId}`);
         const fileName = refId.substring(refId.lastIndexOf("/") + 1);
         // If file does not exist or error trying to look up commit, return the original error.
         try {
@@ -52,7 +51,6 @@ async function getRef(
             if (result === false) {
                 return err;
             }
-            winston.info("Rehydration completed. Getting ref");
             return getRef(repoManager, owner, repo, refId, externalStorageManager);
         } catch (bridgeError) {
             winston.error(`Giving up on creating ref. BridgeError: ${bridgeError}`);
@@ -75,8 +73,6 @@ async function createRef(
         git.Oid.fromString(createParams.sha),
         0,
         "");
-    // tslint:disable-next-line
-    winston.info(`Create ref ${repo}`);
 
     if (createParams.config.enabled) {
         try {
@@ -115,8 +111,6 @@ async function patchRef(
         patchParams.force ? 1 : 0,
         "");
 
-    // tslint:disable-next-line
-    winston.info(`Patch ref ${repo}`);
     if (patchParams.config.enabled) {
         try {
             await externalStorageManager.write(repo, refId, patchParams.sha, true);

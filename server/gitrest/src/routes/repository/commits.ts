@@ -52,9 +52,7 @@ export async function getCommits(
         return Promise.all(detailedCommits);
     } catch (err) {
         winston.info(`getCommits error: ${err}`);
-        winston.info(`Commit# Ref not found: ${repo} : ${ref}`);
         try {
-            winston.info("Look up external storage if commit does not exist");
             const result = await externalStorageManager.read(repo, ref);
             if (result === false) {
                 return;

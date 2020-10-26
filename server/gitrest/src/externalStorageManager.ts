@@ -25,7 +25,6 @@ export class ExternalStorageManager implements IExternalStorageManager {
             winston.info("External storage is not enabled");
             return false;
         }
-        winston.info(`Gitrest calling read from external storage on tenant ${tenantId} / ${documentId}`);
         await Axios.post<void>(
             `${this.endpoint}/file/${tenantId}/${documentId}`,
             {
@@ -38,12 +37,14 @@ export class ExternalStorageManager implements IExternalStorageManager {
                 throw error;
             });
 
-        winston.info("Read and sync successful");
         return true;
     }
 
     public async write(tenantId: string, ref: string, sha: string, update: boolean): Promise<void> {
-        winston.info(`Gitrest calling write to external storage on tenant ${tenantId}`);
+        if (config.get("externalStorage:enabled") != "true") {
+            winston.info("External storage is not enabled");
+            return;
+        }
         await Axios.post<void>(
             `${this.endpoint}/file/${tenantId}`,
             {
