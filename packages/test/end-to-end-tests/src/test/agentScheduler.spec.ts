@@ -9,13 +9,11 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { taskSchedulerId } from "@fluidframework/container-runtime";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { OpProcessingController, DeltaManager } from "@fluidframework/test-utils";
 import { generateTestWithCompat, ICompatLocalTestObjectProvider, TestDataObject } from "./compatUtils";
 import * as old from "./oldVersion";
 
 const tests = (args: ICompatLocalTestObjectProvider) => {
     const leader = "leader";
-    let opProcessingController: OpProcessingController;
 
     describe("Single client", () => {
         let scheduler: IAgentScheduler;
@@ -27,13 +25,10 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
             const dataObject = await requestFluidObject<TestDataObject>(container, "default");
 
-            opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-            opProcessingController.addDeltaManagers(container.deltaManager as DeltaManager);
-
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
             dataObject._root.set("tempKey", "tempValue");
-            await opProcessingController.process();
+            await args.opProcessingController.process();
         });
 
         it("No tasks initially", async () => {
@@ -42,7 +37,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
         it("Can pick tasks", async () => {
             await scheduler.pick("task1", async () => { });
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.deepStrictEqual(scheduler.pickedTasks(), [leader, "task1"]);
         });
 
@@ -103,13 +98,10 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 .then((taskManager) => taskManager.IAgentScheduler);
             const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
-            opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-            opProcessingController.addDeltaManagers(container1.deltaManager as DeltaManager);
-
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
             dataObject1._root.set("tempKey1", "tempValue1");
-            await opProcessingController.process();
+            await args.opProcessingController.process();
 
             // Load existing Container for the second document.
             container2 = await args.loadTestContainer();
@@ -117,12 +109,10 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 .then((taskManager) => taskManager.IAgentScheduler);
             const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
 
-            opProcessingController.addDeltaManagers(container2.deltaManager as DeltaManager);
-
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
             dataObject2._root.set("tempKey2", "tempValue2");
-            await opProcessingController.process();
+            await args.opProcessingController.process();
         });
 
         it("No tasks initially", async () => {
@@ -133,12 +123,12 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         it("Clients agree on picking tasks sequentially", async () => {
             await scheduler1.pick("task1", async () => { });
 
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), []);
             await scheduler2.pick("task2", async () => { });
 
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task2"]);
         });
@@ -151,7 +141,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             await scheduler2.pick("task3", async () => { });
             await scheduler2.pick("task4", async () => { });
 
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task3"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4"]);
         });
@@ -167,7 +157,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             await scheduler2.pick("task5", async () => { });
             await scheduler2.pick("task6", async () => { });
 
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task5"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4", "task6"]);
         });
@@ -183,7 +173,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             await scheduler2.pick("task5", async () => { });
             await scheduler2.pick("task6", async () => { });
 
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             await scheduler1.release("task4").catch((err) => {
                 assert.deepStrictEqual(err, "task4 was never picked");
             });
@@ -206,15 +196,15 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             await scheduler2.pick("task5", async () => { });
             await scheduler2.pick("task6", async () => { });
 
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task5"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4", "task6"]);
             await scheduler1.release("task2", "task1", "task5");
 
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader]);
 
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.deepStrictEqual(scheduler2.pickedTasks().sort(), ["task1", "task2", "task4", "task5", "task6"]);
             await scheduler1.pick("task1", async () => { });
             await scheduler1.pick("task2", async () => { });
@@ -222,7 +212,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             await scheduler1.pick("task6", async () => { });
             await scheduler2.release("task2", "task1", "task4", "task5", "task6");
 
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks().sort(),
                 [leader, "task1", "task2", "task4", "task5", "task6"]);
         });
@@ -230,7 +220,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         it("Releasing leadership should automatically elect a new leader", async () => {
             await scheduler1.release(leader);
 
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.deepStrictEqual(scheduler1.pickedTasks(), []);
             assert.deepStrictEqual(scheduler2.pickedTasks(), [leader]);
         });

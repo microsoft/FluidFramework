@@ -10,7 +10,6 @@ import { SharedString } from "@fluidframework/sequence";
 import {
     ChannelFactoryRegistry,
     ITestFluidObject,
-    OpProcessingController,
 } from "@fluidframework/test-utils";
 import { generateTestWithCompat, ICompatLocalTestObjectProvider, ITestContainerConfig } from "./compatUtils";
 
@@ -24,7 +23,6 @@ const testContainerConfig: ITestContainerConfig = {
 const tests = (args: ICompatLocalTestObjectProvider) => {
     let sharedString1: SharedString;
     let sharedString2: SharedString;
-    let opProcessingController: OpProcessingController;
 
     beforeEach(async () => {
         const container1 = await args.makeTestContainer(testContainerConfig) as Container;
@@ -34,9 +32,6 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         const container2 = await args.loadTestContainer(testContainerConfig) as Container;
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
-
-        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-        opProcessingController.addDeltaManagers(dataObject1.runtime.deltaManager, dataObject2.runtime.deltaManager);
     });
 
     it("can sync SharedString across multiple containers", async () => {
@@ -45,7 +40,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 
         // Wait for the ops to to be submitted and processed across the containers.
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         assert.equal(sharedString2.getText(), text, "The inserted text should have synced across the containers");
     });
@@ -56,7 +51,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 
         // Wait for the ops to to be submitted and processed across the containers.
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         // Create a initialize a new container with the same id.
         const newContainer = await args.loadTestContainer(testContainerConfig) as Container;
