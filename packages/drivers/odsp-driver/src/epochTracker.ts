@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { createOdspNetworkError, fluidEpochMismatchError, OdspErrorType } from "@fluidframework/odsp-doclib-utils";
+import { fluidEpochMismatchError, OdspErrorType, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, LocalPersistentCacheAdapter } from "./odspCache";
 
@@ -43,7 +43,8 @@ export class EpochTracker {
             try {
                 this.validateEpochFromResponse(value.fluidEpoch);
             } catch (error) {
-                this.checkForEpochError(createOdspNetworkError("Epoch Mismatch", fluidEpochMismatchError));
+                this.checkForEpochError(error);
+                throw error;
             }
             return value.value as T;
         }
@@ -135,9 +136,9 @@ export class EpochTracker {
         // If epoch is undefined, then don't compare it because initially for createNew or TreesLatest
         // initializes this value. Sometimes response does not contain epoch as it is still in
         // implementation phase at server side. In that case also, don't compare it with our epoch value.
-        assert(this.fluidEpoch === undefined
-            || epochFromResponse === undefined || epochFromResponse === null
-            || (this.fluidEpoch === epochFromResponse), "Fluid Epoch should match");
+        if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
+            throwOdspNetworkError("Epoch Mismatch", fluidEpochMismatchError);
+        }
         if (epochFromResponse !== undefined && epochFromResponse !== null) {
             this._fluidEpoch = epochFromResponse;
         }
