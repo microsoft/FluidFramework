@@ -7,7 +7,7 @@ import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { createOdspNetworkError, fluidEpochMismatchError, OdspErrorType } from "@fluidframework/odsp-doclib-utils";
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
-import { ICacheEntry, IPersistedCache, IPersistedCacheValue } from "./odspCache";
+import { ICacheEntry, LocalPersistentCacheAdapter } from "./odspCache";
 
 /**
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
@@ -19,7 +19,7 @@ export class EpochTracker {
     private _fluidEpoch: string | undefined;
     private _hashedDocumentId: string | undefined;
     constructor(
-        private readonly persistedCache: IPersistedCache,
+        private readonly persistedCache: LocalPersistentCacheAdapter,
         private readonly logger?: ITelemetryLogger) {
     }
 
@@ -38,7 +38,7 @@ export class EpochTracker {
     }
 
     public async fetchFromCache<T>(entry: ICacheEntry, maxOpCount: number | undefined): Promise<T | undefined> {
-        const value: IPersistedCacheValue = await this.persistedCache.get(entry, maxOpCount);
+        const value = await this.persistedCache.get(entry, maxOpCount);
         if (value !== undefined) {
             try {
                 this.validateEpochFromResponse(value.fluidEpoch);

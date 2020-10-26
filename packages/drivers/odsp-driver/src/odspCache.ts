@@ -101,7 +101,7 @@ export interface IPersistedCache {
      * @param seqNumber - (reference) sequence number of snapshot. Incoming Ops will start with this number
      * (see updateUsage API).
      */
-    put(entry: ICacheEntry, value: IPersistedCacheValue, seqNumber: number): void;
+    put(entry: ICacheEntry, value: any, seqNumber: number): void;
 
     /*
      * Driver will call this API periodically to tell hosts about changes in document.
@@ -176,7 +176,7 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
         });
     }
 
-    put(entry: ICacheEntry, value: IPersistedCacheValue, seqNumber: number) {
+    put(entry: ICacheEntry, value: any, seqNumber: number) {
         try {
             this.cache.put(entry, value, seqNumber);
         } catch (error) {
@@ -212,7 +212,7 @@ export const snapshotExpirySummarizerOps = 1000;
  */
 export class LocalPersistentCache implements IPersistedCache {
     private readonly snapshotExpiryPolicy = 30 * 1000;
-    private readonly cache = new Map<string, IPersistedCacheValue>();
+    private readonly cache = new Map<string, any>();
     private readonly gc = new GarbageCollector<string>((key) => this.cache.delete(key));
 
     async get(entry: ICacheEntry, expiry?: number): Promise<any> {
@@ -220,7 +220,7 @@ export class LocalPersistentCache implements IPersistedCache {
         return this.cache.get(key);
     }
 
-    put(entry: ICacheEntry, value: IPersistedCacheValue, seqNumber: number) {
+    put(entry: ICacheEntry, value: any, seqNumber: number) {
         const key = this.keyFromEntry(entry);
         this.cache.set(key, value);
 
@@ -295,7 +295,27 @@ export function createOdspCache(
     };
 }
 
-export interface IPersistedCacheValue {
+export interface IPersistedCacheValueWithEpoch {
     value: any,
     fluidEpoch: string | undefined,
+}
+
+export class LocalPersistentCacheAdapter implements IPersistedCache {
+    constructor(private readonly cache: IPersistedCache) {}
+
+    async get(entry: ICacheEntry, expiry?: number): Promise<IPersistedCacheValueWithEpoch> {
+        return this.cache.get(entry, expiry);
+    }
+
+    put(entry: ICacheEntry, value: IPersistedCacheValueWithEpoch, seqNumber: number) {
+        this.cache.put(entry, value, seqNumber);
+    }
+
+    updateUsage(entry: ICacheEntry, seqNumber: number): void {
+        this.cache.updateUsage(entry, seqNumber);
+    }
+
+    removeAllEntriesForDocId(docId: string): void {
+        this.cache.removeAllEntriesForDocId(docId);
+    }
 }

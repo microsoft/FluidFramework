@@ -21,6 +21,7 @@ import {
     createOdspCache,
     NonPersistentCache,
     IPersistedCache,
+    LocalPersistentCacheAdapter,
 } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
 import { INewFileInfo } from "./odspUtils";
@@ -70,7 +71,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         };
 
         const logger2 = ChildLogger.create(logger, "OdspDriver");
-        const epochTracker = new EpochTracker(this.persistedCache, logger2);
+        const epochTracker = new EpochTracker(new LocalPersistentCacheAdapter(this.persistedCache), logger2);
         return PerformanceEvent.timedExecAsync(
             logger2,
             {
@@ -133,7 +134,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.getSocketIOClient,
             cache,
             this.hostPolicy,
-            epochTracker ?? new EpochTracker(this.persistedCache, odspLogger),
+            epochTracker ?? new EpochTracker(new LocalPersistentCacheAdapter(this.persistedCache), odspLogger),
         );
     }
 

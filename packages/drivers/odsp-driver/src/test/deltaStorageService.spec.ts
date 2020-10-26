@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { EpochTracker } from "../epochTracker";
-import { LocalPersistentCache } from "../odspCache";
+import { LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
 import { OdspDeltaStorageService } from "../odspDeltaStorageService";
 import { mockFetch } from "./mockFetch";
 
@@ -21,7 +21,7 @@ describe("DeltaStorageService", () => {
     it("Should build the correct sharepoint delta url with auth", async () => {
         const deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
             undefined, async (_refresh) => "?access_token=123",
-            new EpochTracker(new LocalPersistentCache()));
+            new EpochTracker(new LocalPersistentCacheAdapter(new LocalPersistentCache())));
         const actualDeltaUrl = await deltaStorageService.buildUrl(2, 8);
         // eslint-disable-next-line max-len
         const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
@@ -67,7 +67,8 @@ describe("DeltaStorageService", () => {
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
             deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
-                undefined, async (_refresh) => "", new EpochTracker(new LocalPersistentCache()));
+                undefined, async (_refresh) => "",
+                new EpochTracker(new LocalPersistentCacheAdapter(new LocalPersistentCache())));
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
@@ -117,7 +118,8 @@ describe("DeltaStorageService", () => {
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
             deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
-                undefined, async (_refresh) => "", new EpochTracker(new LocalPersistentCache()));
+                undefined, async (_refresh) => "",
+                new EpochTracker(new LocalPersistentCacheAdapter(new LocalPersistentCache())));
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
