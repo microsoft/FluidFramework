@@ -1,11 +1,16 @@
 ## 0.28 Breaking Changes
 
+- [ODSP Driver IPersistedCache changes](#ODSP-Driver-IPersistedCache-Changes)
 - [IFluidPackage Changes](#IFluidPackage-Changes)
 - [DataObject changes](#DataObject-changes)
 - [RequestParser](#RequestParser)
 - [IFluidLodable.url is removed](#IFluidLodable.url-is-removed)
 - [Loader Constructor Changes](#Loader-Constructor-Changes)
 - [Moving DriverHeader and merge with CreateNewHeader](#moving-driverheader-and-merge-with-createnewheader)
+
+### ODSP Driver IPersistedCache-Changes
+Added api `removeAllEntriesForDocId` which allows removal of all entries for a given document id. Also the schema for entries stored inside odsp `IPersistedCache` has changed.
+It now stores/expect values as `IPersistedCacheValueWithEpoch`. So host needs to clear its cached entries in this version.
 
 ### Moving DriverHeader and merge with CreateNewHeader
 Compile time only API breaking change between runtime and driver.  Only impacts driver implementer.
