@@ -541,6 +541,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost, abortController);
             return odspSnapshot;
         } catch (error) {
+            // If the snapshot size is too big and the host specified the size limitation, then don't try to fetch the snapshot again.
+            if (error.errorType === OdspErrorType.snapshotTooBig && this.hostPolicy.snapshotOptions?.mds !== undefined) {
+                throw error;
+            }
             // If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
             if ((error.errorType === OdspErrorType.snapshotTooBig || error.errorType === OdspErrorType.fetchTimeout) && snapshotOptions.blobs) {
                 const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: undefined, mds: undefined };
