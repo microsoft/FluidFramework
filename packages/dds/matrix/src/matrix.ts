@@ -250,6 +250,10 @@ export class SharedMatrix<T extends Serializable = Serializable>
         this.cells.setCell(rowHandle, colHandle, value);
         this.annotations.setCell(rowHandle, colHandle, undefined);
 
+        this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+    }
+
+    private sendSetCellOp(row: number, col: number, value: T, rowHandle: Handle, colHandle: Handle) {
         // If the SharedMatrix is local, it will by synchronized via a Snapshot when initially connected.
         // Do not queue a message or track the pending op, as there will never be an ACK, etc.
         if (this.isAttached()) {
@@ -319,7 +323,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         // Do not queue a message or track the pending op, as there will never be an ACK, etc.
         if (this.isAttached()) {
             // Record whether this `op` targets rows or cols.  (See dispatch in `processCore()`)
-            (message).target = dimension;
+            message.target = dimension;
 
             this.submitLocalMessage(
                 message,
@@ -357,16 +361,22 @@ export class SharedMatrix<T extends Serializable = Serializable>
     /** @internal */ public _undoRemoveRows(segment: ISegment) {
         const original = segment as PermutationSegment;
 
-        // (Re)insert the removed number of columns at the original position.
-        const rowStart = this.rows.getPosition(original);
-        this.insertRows(rowStart, original.cachedLength);
+        // (Re)insert the removed number of rows at the original position.
+        const { op, inserted } = this.rows.insertRelative(original, original.cachedLength);
+        this.submitRowMessage(op);
 
-        // Transfer handles from the original segment to the newly inserted segment.
-        // (This allows us to use getCell(..) below to read the previous cell values)
-        const inserted = this.rows.getContainingSegment(rowStart).segment as PermutationSegment;
+        // Transfer handles from the original segment to the newly inserted empty segment.
         original.transferHandlesTo(inserted);
 
-        // Generate setCell ops for each populated cell in the reinserted cols.
+        // Invalidate the handleCache in case it was populated during the 'rowsChanged'
+        // callback, which occurs before the handle span is populated.
+        const rowStart = this.rows.getPosition(inserted);
+        this.rows.handleCache.itemsChanged(
+            rowStart,
+            /* removedCount: */ 0,
+            /* insertedCount: */ inserted.cachedLength);
+
+        // Generate setCell ops for each populated cell in the reinserted rows.
         let rowHandle = inserted.start;
         const rowCount = inserted.cachedLength;
         for (let row = rowStart; row < rowStart + rowCount; row++, rowHandle++) {
@@ -375,7 +385,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
                 if (value !== undefined && value !== null) {
-                    this.setCellCore(
+                    this.sendSetCellOp(
                         row,
                         col,
                         value,
@@ -395,13 +405,19 @@ export class SharedMatrix<T extends Serializable = Serializable>
         const original = segment as PermutationSegment;
 
         // (Re)insert the removed number of columns at the original position.
-        const colStart = this.cols.getPosition(original);
-        this.insertCols(colStart, original.cachedLength);
+        const { op, inserted } = this.cols.insertRelative(original, original.cachedLength);
+        this.submitColMessage(op);
 
-        // Transfer handles from the original segment to the newly inserted segment.
-        // (This allows us to use getCell(..) below to read the previous cell values)
-        const inserted = this.cols.getContainingSegment(colStart).segment as PermutationSegment;
+        // Transfer handles from the original segment to the newly inserted empty segment.
         original.transferHandlesTo(inserted);
+
+        // Invalidate the handleCache in case it was populated during the 'colsChanged'
+        // callback, which occurs before the handle span is populated.
+        const colStart = this.cols.getPosition(inserted);
+        this.cols.handleCache.itemsChanged(
+            colStart,
+            /* removedCount: */ 0,
+            /* insertedCount: */ inserted.cachedLength);
 
         // Generate setCell ops for each populated cell in the reinserted cols.
         let colHandle = inserted.start;
@@ -409,10 +425,10 @@ export class SharedMatrix<T extends Serializable = Serializable>
         for (let col = colStart; col < colStart + colCount; col++, colHandle++) {
             for (let row = 0; row < this.rowCount; row++) {
                 const rowHandle = this.rowHandles.getHandle(row);
-                const value = this.cells.getCell(colHandle, rowHandle);
+                const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
                 if (value !== undefined && value !== null) {
-                    this.setCellCore(
+                    this.sendSetCellOp(
                         row,
                         col,
                         value,
