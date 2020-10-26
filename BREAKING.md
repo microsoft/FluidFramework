@@ -1,6 +1,6 @@
 ## 0.28 Breaking Changes
 
-- [IPersistedCache changes](#IPersistedCache-Changes)
+- [ODSP IPersistedCache changes](#ODSP-IPersistedCache-Changes)
 - [IFluidPackage Changes](#IFluidPackage-Changes)
 - [DataObject changes](#DataObject-changes)
 - [RequestParser](#RequestParser)
@@ -8,7 +8,7 @@
 - [Loader Constructor Changes](#Loader-Constructor-Changes)
 - [Moving DriverHeader and merge with CreateNewHeader](#moving-driverheader-and-merge-with-createnewheader)
 
-### IPersistedCache-Changes
+### ODSP IPersistedCache-Changes
 Added api `removeAllEntriesForDocId` which allows removal of all entries for a given document id. Also the schema for entries stored inside odsp `IPersistedCache` has changed.
 It now stores/expect values as `IPersistedCacheValueWithEpoch`. So host needs to clear its cached entries in this version.
 
