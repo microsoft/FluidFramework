@@ -37,6 +37,8 @@ class ProxyRuntime implements IRuntime {
     }
     async setConnectionState(connected: boolean, clientId?: string) {
     }
+    async raceToSummarize() {
+    }
     async stop(): Promise<IRuntimeState> {
         throw new Error("Method not implemented.");
     }

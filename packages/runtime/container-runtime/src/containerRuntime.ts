@@ -656,6 +656,8 @@ export class ContainerRuntime extends EventEmitter
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
+    private racingToSummarize = false;
+
     // Stores tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private dirtyDocument = false;
@@ -1068,6 +1070,31 @@ export class ContainerRuntime extends EventEmitter
         return { snapshot, state };
     }
 
+    public async raceToSummarize(): Promise<void> {
+        this.verifyNotClosed();
+
+        // Stop ops from being processed by runtime
+        this.racingToSummarize = true;
+
+        const sequenceNumber = this.deltaManager.lastSequenceNumber;
+        const summaryCollection = this.summarizer.summaryCollection;
+
+        // Check for early completion
+        const latestAckSeq = summaryCollection.latestAck?.summaryOp.referenceSequenceNumber;
+        if (latestAckSeq && latestAckSeq >= sequenceNumber) {
+            return;
+        }
+
+        // Try to summarize only once and fail otherwise. In the future, may want
+        // to retry with back-off until success is reached.
+        this.generateSummary(false, false, true).catch((error) => {
+            this.logger.sendErrorEvent({ eventName: "RaceToSummarizeError" }, error);
+        });
+
+        // May wait forever if all summaries fail.
+        await summaryCollection.waitSummaryAck(sequenceNumber);
+    }
+
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
@@ -1110,6 +1137,9 @@ export class ContainerRuntime extends EventEmitter
 
     public process(messageArg: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
+        if (this.racingToSummarize) {
+            return;
+        }
 
         // If it's not message for runtime, bail out right away.
         if (!isRuntimeMessage(messageArg)) {
@@ -1444,9 +1474,9 @@ export class ContainerRuntime extends EventEmitter
     /**
      * Returns a summary of the runtime at the current sequence number.
      */
-    private async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {
+    private async summarize(fullTree = false, simple = false): Promise<ISummaryTreeWithStats> {
         return this.summarizerNode.enabled
-            ? await this.summarizerNode.node.summarize(fullTree) as ISummaryTreeWithStats
+            ? await this.summarizerNode.node.summarize(fullTree, simple) as ISummaryTreeWithStats
             : await this.summarizeInternal(fullTree ?? false) as ISummaryTreeWithStats;
     }
 
@@ -1654,6 +1684,7 @@ export class ContainerRuntime extends EventEmitter
     private async generateSummary(
         fullTree: boolean = false,
         safe: boolean = false,
+        simple: boolean = false,
     ): Promise<GenerateSummaryData | undefined> {
         const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
         const message =
@@ -1685,7 +1716,7 @@ export class ContainerRuntime extends EventEmitter
             }
 
             const trace = Trace.start();
-            const treeWithStats = await this.summarize(fullTree || safe);
+            const treeWithStats = await this.summarize(fullTree || safe, simple);
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: treeWithStats.stats,

@@ -276,7 +276,7 @@ export class SummarizerNode implements ISummarizerNode {
         this.wipReferenceSequenceNumber = referenceSequenceNumber;
     }
 
-    public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
+    public async summarize(fullTree: boolean, simple: boolean): Promise<ISummarizeResult> {
         assert(!this.disabled, "Unsupported: cannot call summarize on disabled SummarizerNode");
 
         // Try to reuse the tree if unchanged

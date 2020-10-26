@@ -80,6 +80,8 @@ export interface IRuntime extends IDisposable {
      */
     stop(): Promise<IRuntimeState>;
 
+    raceToSummarize(): Promise<void>;
+
     /**
      * Processes the given op (message)
      */

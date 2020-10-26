@@ -222,6 +222,10 @@ export class ContainerContext implements IContainerContext {
         return this.runtime.stop();
     }
 
+    public async raceToSummarize(): Promise<void> {
+        return this.runtime.raceToSummarize();
+    }
+
     public get attachState(): AttachState {
         return this.container.attachState;
     }
