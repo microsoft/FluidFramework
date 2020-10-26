@@ -372,20 +372,20 @@ export function configureWebSocketServices(
                 if (!roomMap.has(clientId)) {
                     const nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
                     socket.emit("nack", "", [nackMessage]);
+                } else {
+                    contentBatches.forEach((contentBatche) => {
+                        const contents = Array.isArray(contentBatche) ? contentBatche : [contentBatche];
+
+                        for (const content of contents) {
+                            const signalMessage: ISignalMessage = {
+                                clientId,
+                                content,
+                            };
+
+                            socket.emitToRoom(getRoomId(roomMap.get(clientId)), "signal", signalMessage);
+                        }
+                    });
                 }
-
-                contentBatches.forEach((contentBatche) => {
-                    const contents = Array.isArray(contentBatche) ? contentBatche : [contentBatche];
-
-                    for (const content of contents) {
-                        const signalMessage: ISignalMessage = {
-                            clientId,
-                            content,
-                        };
-
-                        socket.emitToRoom(getRoomId(roomMap.get(clientId)), "signal", signalMessage);
-                    }
-                });
             });
 
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
