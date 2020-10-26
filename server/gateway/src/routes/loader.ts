@@ -55,8 +55,10 @@ export function create(
      */
     router.get("/:tenantId/*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response) => {
         const start = Date.now();
-        const chaincode: string = queryParamAsString(request.query.chaincode);
+        const chaincode: string | undefined = queryParamAsString(request.query.chaincode);
         const driveId: string | undefined = queryParamAsString(request.query.driveId);
+        const entrypoint: string | undefined = queryParamAsString(request.query.entrypoint);
+        const spScriptId: string | undefined = queryParamAsString(request.query.spScriptId);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         getUrlWithVersion(chaincode).then((version: string) => {
             if (version) {
@@ -91,7 +93,8 @@ export function create(
                     codeResolver,
                     chaincode,
                     request.query.cdn === undefined ? request.query.cdn : config.get("worker:npm"),
-                    queryParamAsString(request.query.entrypoint),
+                    entrypoint,
+                    spScriptId,
                 );
 
                 // Track timing

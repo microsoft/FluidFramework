@@ -5,7 +5,6 @@
 
 import { v4 } from "uuid";
 import dotenv from "dotenv";
-import winston from "winston";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { IFluidCodeDetails, IResolvedFluidCodeDetails } from "@fluidframework/container-definitions";
 import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
@@ -77,7 +76,7 @@ export const spoEnsureLoggedIn = () => {
     };
 };
 
-export async function getSpfxFluidObjectData(resolved: IFluidResolvedUrl): Promise<any> {
+export async function getSpfxFluidObjectData(resolved: IFluidResolvedUrl, spScriptId: string): Promise<any> {
     const queryUrl = new URL(`https://${process.env.SP_SITE}`);
     queryUrl.pathname = `${queryUrl.pathname}/_api/web/getclientsidewebparts`;
     const response = await fetch(`${queryUrl}`, {
@@ -88,16 +87,18 @@ export async function getSpfxFluidObjectData(resolved: IFluidResolvedUrl): Promi
         },
     });
     const responseJsonDataResults = (await response.json()).d.GetClientSideWebParts.results;
-    let fluidManifest = {};
+    let fluidManifest;
     responseJsonDataResults.forEach((pkg) => {
         const manifest = JSON.parse(pkg.Manifest);
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (manifest.experimentalData && manifest.experimentalData.fluid) {
-            winston.info(JSON.stringify("woot"));
-            winston.info(JSON.stringify(manifest));
+        if (manifest.experimentalData && manifest.experimentalData.fluid && manifest.id === spScriptId) {
             fluidManifest = manifest;
         }
     });
+    if (fluidManifest === undefined) {
+        throw Error(`Failed to find Fluid script in tenant App Catalog with id: ${spScriptId}`);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return fluidManifest;
 }
 
@@ -106,15 +107,19 @@ export function getFluidObjectBundle(
     resolvedP: Promise<IFluidResolvedUrl>,
     fullTreeP: Promise<FullTree | undefined>,
     codeResolver: SemVerCdnCodeResolver,
-    chaincode: string,
     cdn: string,
-    entrypoint: string,
+    chaincode?: string,
+    entrypoint?: string,
+    spScriptId?: string,
 ): [Promise<IResolvedFluidCodeDetails | IFluidCodeDetails | undefined>, Promise<ICachedPackage>] {
     let scriptsP: Promise<ICachedPackage>;
     let pkgP: Promise<IResolvedFluidCodeDetails | IFluidCodeDetails>;
     if (requestUrl.indexOf("spo-custom") >= 0) {
+        if (spScriptId === undefined) {
+            throw Error("No SharePoint script ID provided to fetch from custom tenant App Catalog");
+        }
         scriptsP = resolvedP
-            .then(async (resolved) => getSpfxFluidObjectData(resolved))
+            .then(async (resolved) => getSpfxFluidObjectData(resolved, spScriptId))
             .then((manifest) => {
                 const baseUrl = manifest.loaderConfig.internalModuleBaseUrls[0] ?? "";
                 const scriptResources = manifest.loaderConfig.scriptResources[
@@ -179,7 +184,7 @@ export function getFluidObjectBundle(
                             browser: {
                                 umd: {
                                     files: [chaincode],
-                                    library: entrypoint,
+                                    library: entrypoint ?? "main",
                                 },
                             },
                         },
