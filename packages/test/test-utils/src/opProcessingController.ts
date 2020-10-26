@@ -3,12 +3,56 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 // An IDeltaManager alias to be used within this class.
 export type DeltaManager = IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+
+class DeltaManagerToggle {
+    private inboundPauseP: Promise<void> | undefined;
+    private outboundPauseP: Promise<void> | undefined;
+    constructor(public readonly deltaManager: DeltaManager) {
+    }
+
+    public async togglePauseAll() {
+        return Promise.all([this.togglePauseInbound(), this.togglePauseOutbound()]);
+    }
+
+    public toggleResumeAll() {
+        this.toggleResumeInbound();
+        this.toggleResumeOutbound();
+    }
+    public async togglePauseInbound() {
+        if (!this.inboundPauseP) {
+            this.inboundPauseP = this.deltaManager.inbound.pause();
+        }
+        return this.inboundPauseP;
+    }
+
+    public async togglePauseOutbound() {
+        if (!this.outboundPauseP) {
+            this.outboundPauseP = this.deltaManager.outbound.pause();
+        }
+        return this.outboundPauseP;
+    }
+
+    public toggleResumeInbound() {
+        if (this.inboundPauseP) {
+            this.inboundPauseP = undefined;
+            this.deltaManager.inbound.resume();
+        }
+    }
+
+    public toggleResumeOutbound() {
+        if (this.outboundPauseP) {
+            this.outboundPauseP = undefined;
+            this.deltaManager.outbound.resume();
+        }
+    }
+}
 
 /**
  * Class with access to the local delta connection server and delta managers that can control op processing.
@@ -23,7 +67,7 @@ export class OpProcessingController {
         });
     }
 
-    private readonly deltaManagers: Set<DeltaManager> = new Set<DeltaManager>();
+    private readonly deltaManagerToggles = new Map<DeltaManager, DeltaManagerToggle>();
 
     private isNormalProcessingPaused = false;
 
@@ -44,38 +88,32 @@ export class OpProcessingController {
      * @param deltaManagers - Array of deltaManagers to add
      */
     public addDeltaManagers(...deltaManagers: DeltaManager[]) {
-        deltaManagers.forEach((doc) => {
-            this.deltaManagers.add(doc);
+        deltaManagers.forEach((deltaManager) => {
+            this.deltaManagerToggles.set(deltaManager, new DeltaManagerToggle(deltaManager));
         });
     }
 
     /**
-     * Processes incoming and outgoing op) of the given delta managers.
-     * It validates the delta managers and resumes its inbound and outbound queues. It then keeps yielding
-     * the JS event loop until all the ops have been processed by the server and by the delta managers.
-     *
-     * @param deltaMgrs - Array of delta managers whose ops to process. If no delta manager is provided, it
-     * processes the ops for all the delta managers in our collection.
-     */
+      * Processes incoming and outgoing op) of the given delta managers.
+      * It validates the delta managers and resumes its inbound and outbound queues. It then keeps yielding
+      * the JS event loop until all the ops have been processed by the server and by the delta managers.
+      *
+      * @param deltaMgrs - Array of delta managers whose ops to process. If no delta manager is provided, it
+      * processes the ops for all the delta managers in our collection.
+      */
     public async process(...deltaMgrs: DeltaManager[]): Promise<void> {
-        this.validateDeltaManagers(deltaMgrs);
+        const toggles = this.mapDeltaManagerToggle(deltaMgrs);
 
         // Pause the queues of all the delta managers in our collection to make sure that we only process the ops of
         // the requested delta managers.
         await this.pauseAllDeltaManagerQueues();
 
-        // If no delta managers are provided, process all delta managers in our collection.
-        const deltaManagers = deltaMgrs.length === 0 ? Array.from(this.deltaManagers) : deltaMgrs;
-
         // Resume the delta queues so that we can process incoming and outgoing ops.
-        deltaManagers.forEach((deltaManager) => {
-            deltaManager.inbound.resume();
-            deltaManager.outbound.resume();
-        });
+        toggles.forEach((toggle) => toggle.toggleResumeAll());
 
         // Wait for all pending ops to be processed.
         await this.yieldWhileDeltaManagersHaveWork(
-            deltaManagers,
+            toggles,
             (deltaManager) => !deltaManager.inbound.idle || !deltaManager.outbound.idle);
     }
 
@@ -88,23 +126,20 @@ export class OpProcessingController {
      * processes the ops for all the delta managers in our collection.
      */
     public async processIncoming(...deltaMgrs: DeltaManager[]): Promise<void> {
-        this.validateDeltaManagers(deltaMgrs);
+        const toggles = this.mapDeltaManagerToggle(deltaMgrs);
 
         // Pause the queues of all the delta managers in our collection to make sure that we only process the incoming
         // ops of the requested delta managers.
         await this.pauseAllDeltaManagerQueues();
 
-        // If no delta managers are provided, process all delta managers in our collection.
-        const deltaManagers = deltaMgrs.length === 0 ? Array.from(this.deltaManagers) : deltaMgrs;
-
         // Resume the inbound delta queue so that we can process incoming ops.
-        deltaManagers.forEach((deltaManager) => {
-            deltaManager.inbound.resume();
+        toggles.forEach((toggle) => {
+            toggle.toggleResumeInbound();
         });
 
         // Wait for all pending incoming ops to be processed.
         await this.yieldWhileDeltaManagersHaveWork(
-            deltaManagers,
+            toggles,
             (deltaManager) => !deltaManager.inbound.idle);
     }
 
@@ -117,23 +152,20 @@ export class OpProcessingController {
      * processes the ops for all the delta managers in our collection.
      */
     public async processOutgoing(...deltaMgrs: DeltaManager[]): Promise<void> {
-        this.validateDeltaManagers(deltaMgrs);
+        const toggles = this.mapDeltaManagerToggle(deltaMgrs);
 
         // Pause the queues of all the delta managers in our collection to make sure that we only process the outgoing
         // ops of the requested delta managers.
         await this.pauseAllDeltaManagerQueues();
 
-        // If no delta managers are provided, process all delta managers in our collection.
-        const deltaManagers = deltaMgrs.length === 0 ? Array.from(this.deltaManagers) : deltaMgrs;
-
         // Resume the outbound delta queue so that we can process outgoing ops.
-        deltaManagers.forEach((deltaManager) => {
-            deltaManager.outbound.resume();
+        toggles.forEach((toggle) => {
+            toggle.toggleResumeOutbound();
         });
 
         // Wait for all pending outgoing ops to be processed.
         await this.yieldWhileDeltaManagersHaveWork(
-            deltaManagers,
+            toggles,
             (deltaManager) => !deltaManager.outbound.idle);
     }
 
@@ -145,16 +177,10 @@ export class OpProcessingController {
      * pauses the processing of all the delta managers in our collection.
      */
     public async pauseProcessing(...deltaMgrs: DeltaManager[]) {
-        this.validateDeltaManagers(deltaMgrs);
-
-        // If no delta managers are provided, pause the queues of all delta managers in our collection.
-        const deltaManagers = deltaMgrs.length === 0 ? Array.from(this.deltaManagers) : deltaMgrs;
+        const toggles = this.mapDeltaManagerToggle(deltaMgrs);
 
         // Pause the inbound and outbound delta queues.
-        for (const deltaManager of deltaManagers) {
-            await deltaManager.inbound.pause();
-            await deltaManager.outbound.pause();
-        }
+        await this.pauseDeltaManagerQueues(toggles);
 
         this.isNormalProcessingPaused = true;
     }
@@ -167,41 +193,39 @@ export class OpProcessingController {
      * resumes the processing of all the delta managers in our collection.
      */
     public resumeProcessing(...deltaMgrs: DeltaManager[]) {
-        this.validateDeltaManagers(deltaMgrs);
-
-        // If no delta managers are provided, resume the queues of all delta managers in our collection.
-        const deltaManagers = deltaMgrs.length === 0 ? Array.from(this.deltaManagers) : deltaMgrs;
+        const toggles = this.mapDeltaManagerToggle(deltaMgrs);
 
         // Resume the inbound and outbound delta queues.
-        deltaManagers.forEach((deltaManager) => {
-            deltaManager.inbound.resume();
-            deltaManager.outbound.resume();
-        });
+        toggles.forEach((toggle) => toggle.toggleResumeAll());
 
         this.isNormalProcessingPaused = false;
     }
 
     /**
-     * Validates that the passed delta managers are added.
-     * @param deltaManagers - The delta managers to be validated.
+     * Map a list of DeltaManager to its toggle.  Throw an error if the delta manager is not in our collection
+     * @param deltaMgrs - The delta managers to get the toggles for
      */
-    private validateDeltaManagers(deltaManagers: DeltaManager[]) {
-        deltaManagers.forEach((deltaManager) => {
-            if (!this.deltaManagers.has(deltaManager)) {
-                throw new Error(
-                    "All delta managers must be added to deterministically control processing");
-            }
+    private mapDeltaManagerToggle(deltaMgrs: DeltaManager[]) {
+        if (deltaMgrs.length === 0) {
+            // If no delta managers are provided, process all delta managers in our collection.
+            return Array.from(this.deltaManagerToggles.values());
+        }
+
+        return deltaMgrs.map((deltaManager) => {
+            const toggle = this.deltaManagerToggles.get(deltaManager);
+            assert(toggle, "All delta managers must be added to deterministically control processing");
+            return toggle;
         });
     }
 
     /**
      * It keeps yielding the JS event loop until  all the ops have been processed by the server and by the passed
      * delta managers.
-     * @param deltaManagers - The delta managers should ops have to be processed.
+     * @param toggles - The delta managers should ops have to be processed.
      * @param hasWork - Function that tells if the delta manager has pending work or not.
      */
     private async yieldWhileDeltaManagersHaveWork(
-        deltaManagers: Iterable<DeltaManager>,
+        toggles: Iterable<DeltaManagerToggle>,
         hasWork: (deltaManagers: DeltaManager) => boolean,
     ): Promise<void> {
         let working: boolean;
@@ -209,8 +233,8 @@ export class OpProcessingController {
             await OpProcessingController.yield();
             working = await this.localDeltaConnectionServer.hasPendingWork();
             if (!working) {
-                for (const deltaManager of deltaManagers) {
-                    if (hasWork(deltaManager)) {
+                for (const toggle of toggles) {
+                    if (hasWork(toggle.deltaManager)) {
                         working = true;
                         break;
                     }
@@ -220,20 +244,26 @@ export class OpProcessingController {
 
         // If deterministically controlling events, need to pause before continuing
         if (this.isNormalProcessingPaused) {
-            for (const deltaManager of deltaManagers) {
-                await deltaManager.inbound.pause();
-                await deltaManager.outbound.pause();
-            }
+            await this.pauseDeltaManagerQueues(toggles);
         }
+    }
+
+    /**
+     * Pauses the inbound and outbound queues of all the delta managers given
+     * @param toggles - The delta managers should ops have to be processed.
+     */
+    private async pauseDeltaManagerQueues(toggles: Iterable<DeltaManagerToggle>) {
+        const p: Promise<[void, void]>[] = [];
+        for (const toggle of toggles) {
+            p.push(toggle.togglePauseAll());
+        }
+        return Promise.all(p);
     }
 
     /**
      * Pauses the inbound and outbound queues of all the delta managers in our collection.
      */
     private async pauseAllDeltaManagerQueues() {
-        for (const deltaManager of this.deltaManagers) {
-            await deltaManager.inbound.pause();
-            await deltaManager.outbound.pause();
-        }
+        return this.pauseDeltaManagerQueues(this.deltaManagerToggles.values());
     }
 }
