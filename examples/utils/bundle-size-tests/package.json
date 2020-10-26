@@ -19,7 +19,8 @@
     "prepack": "npm run webpack",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
-    "webpack": "webpack"
+    "webpack": "webpack",
+    "webpack:profile": "npm run webpack"
   },
   "dependencies": {
     "@fluidframework/container-runtime": "^0.28.0",
