@@ -29,7 +29,7 @@ import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
-import { FetchWithEpochValidation } from "./fetchWithEpochValidation";
+import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 
 const isInvalidFileName = (fileName: string): boolean => {
@@ -46,7 +46,7 @@ export async function createNewFluidFile(
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,
-    fetchWithEpochValidation: FetchWithEpochValidation,
+    epochTracker: EpochTracker,
     getSharingLinkToken?: (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => Promise<string | null>,
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
@@ -73,7 +73,7 @@ export async function createNewFluidFile(
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
 
-                const fetchResponse = await fetchWithEpochValidation.fetchAndParseAsJSON<ICreateFileResponse>(
+                const fetchResponse = await epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
                     url,
                     {
                         body: JSON.stringify(containerSnapshot),

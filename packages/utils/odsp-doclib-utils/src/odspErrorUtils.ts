@@ -20,7 +20,10 @@ export const fetchFailureStatusCode: number = 710;
 export const invalidFileNameStatusCode: number = 711;
 // no response, or can't parse response
 export const fetchIncorrectResponse = 712;
-// Client and server epoch mismatch.
+// This status code is sent by the server when the client and server epoch mismatches.
+// The client sets its epoch version in the calls it makes to the server and if that mismatches
+// with the server epoch version, the server throws this error code.
+// This indicates that the file/container has been modified externally.
 export const fluidEpochMismatchError = 409;
 
 export enum OdspErrorType {

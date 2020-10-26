@@ -9,7 +9,7 @@ import { ISocketStorageDiscovery } from "./contracts";
 import { getWithRetryForTokenRefresh, getOrigin } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
-import { FetchWithEpochValidation } from "./fetchWithEpochValidation";
+import { EpochTracker } from "./epochTracker";
 
 /**
  * Makes join session call on SPO to get information about the web socket for a document
@@ -29,7 +29,7 @@ export async function fetchJoinSession(
     method: string,
     logger: ITelemetryLogger,
     getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
-    fetchWithEpochValidation: FetchWithEpochValidation,
+    epochTracker: EpochTracker,
 ): Promise<ISocketStorageDiscovery> {
     return getWithRetryForTokenRefresh(async (options) => {
         const token = await getStorageToken(options, "JoinSession");
@@ -45,7 +45,7 @@ export async function fetchJoinSession(
                 headers = { Authorization: `Bearer ${token}` };
             }
 
-            const response = await fetchWithEpochValidation.fetchAndParseAsJSON<ISocketStorageDiscovery>(
+            const response = await epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
                 `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
                 { method, headers },
             );

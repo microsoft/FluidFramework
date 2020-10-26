@@ -23,7 +23,7 @@ export * from "./odspError";
 export * from "./createOdspCreateContainerRequest";
 export * from "./tokenFetch";
 export * from "./parseAuthErrorClaims";
-export * from "./fetchWithEpochValidation";
+export * from "./epochTracker";
 export * from "./odspDriverUrlResolver2";
 export * from "./authorizedFetchWithRetry";
 export * from "./constants";

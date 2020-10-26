@@ -6,7 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IOdspSnapshot, ISnapshotOptions } from "./contracts";
-import { FetchWithEpochValidation } from "./fetchWithEpochValidation";
+import { EpochTracker } from "./epochTracker";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspResponse } from "./odspUtils";
@@ -26,7 +26,7 @@ export async function fetchSnapshot(
     versionId: string,
     fetchFullSnapshot: boolean,
     logger: ITelemetryLogger,
-    fetchWithEpochValidation: FetchWithEpochValidation,
+    epochTracker: EpochTracker,
 ): Promise<IOdspResponse<IOdspSnapshot>> {
     const path = `/trees/${versionId}`;
     let queryParams: ISnapshotOptions = {};
@@ -47,6 +47,6 @@ export async function fetchSnapshot(
             eventName: "fetchSnapshot",
             headers: Object.keys(headers).length !== 0 ? true : undefined,
         },
-        async () => fetchWithEpochValidation.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers }),
+        async () => epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers }),
     );
 }

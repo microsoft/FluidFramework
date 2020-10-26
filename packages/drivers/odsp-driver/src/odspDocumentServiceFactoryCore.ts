@@ -33,7 +33,7 @@ import {
     tokenFromResponse,
     SharingLinkTokenFetcher,
 } from "./tokenFetch";
-import { FetchWithEpochValidation } from "./fetchWithEpochValidation";
+import { EpochTracker } from "./epochTracker";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -70,7 +70,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         };
 
         const logger2 = ChildLogger.create(logger, "OdspDriver");
-        const fetchWithEpochValidation = new FetchWithEpochValidation(this.persistedCache, logger2);
+        const epochTracker = new EpochTracker(this.persistedCache, logger2);
         return PerformanceEvent.timedExecAsync(
             logger2,
             {
@@ -83,10 +83,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     newFileParams,
                     logger2,
                     createNewSummary,
-                    fetchWithEpochValidation,
+                    epochTracker,
                     this.getSharingLinkToken ?
                         this.toInstrumentedSharingLinkTokenFetcher(logger2, this.getSharingLinkToken) : undefined);
-                const docService = this.createDocumentService(odspResolvedUrl, logger, fetchWithEpochValidation);
+                const docService = this.createDocumentService(odspResolvedUrl, logger, epochTracker);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
                 });
@@ -117,7 +117,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
-        fetchWithEpochValidation?: FetchWithEpochValidation,
+        epochTracker?: EpochTracker,
     ): Promise<IDocumentService> {
         const odspLogger = ChildLogger.create(logger, "OdspDriver");
         const cache = createOdspCache(
@@ -133,7 +133,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.getSocketIOClient,
             cache,
             this.hostPolicy,
-            fetchWithEpochValidation ?? new FetchWithEpochValidation(this.persistedCache, odspLogger),
+            epochTracker ?? new EpochTracker(this.persistedCache, odspLogger),
         );
     }
 

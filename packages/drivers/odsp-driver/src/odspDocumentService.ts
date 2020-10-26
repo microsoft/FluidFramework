@@ -36,7 +36,7 @@ import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtil
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
-import { FetchWithEpochValidation } from "./fetchWithEpochValidation";
+import { EpochTracker } from "./epochTracker";
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -65,7 +65,7 @@ export class OdspDocumentService implements IDocumentService {
         socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
-        fetchWithEpochValidation: FetchWithEpochValidation,
+        epochTracker: EpochTracker,
     ): Promise<IDocumentService> {
         return new OdspDocumentService(
             resolvedUrl as IOdspResolvedUrl,
@@ -75,7 +75,7 @@ export class OdspDocumentService implements IDocumentService {
             socketIoClientFactory,
             cache,
             hostPolicy,
-            fetchWithEpochValidation,
+            epochTracker,
         );
     }
 
@@ -112,9 +112,9 @@ export class OdspDocumentService implements IDocumentService {
         private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
-        private readonly fetchWithEpochValidation: FetchWithEpochValidation,
+        private readonly epochTracker: EpochTracker,
     ) {
-        fetchWithEpochValidation.hashedDocumentId = odspResolvedUrl.hashedDocumentId;
+        epochTracker.hashedDocumentId = odspResolvedUrl.hashedDocumentId;
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
         this.logger = ChildLogger.create(logger,
@@ -150,7 +150,7 @@ export class OdspDocumentService implements IDocumentService {
                 true,
                 this.cache,
                 this.hostPolicy,
-                this.fetchWithEpochValidation,
+                this.epochTracker,
             );
         }
 
@@ -172,7 +172,7 @@ export class OdspDocumentService implements IDocumentService {
             urlProvider,
             this.storageManager?.ops,
             this.getStorageToken,
-            this.fetchWithEpochValidation,
+            this.epochTracker,
             this.logger,
         );
 
@@ -250,7 +250,7 @@ export class OdspDocumentService implements IDocumentService {
                 "POST",
                 this.logger,
                 this.getStorageToken,
-                this.fetchWithEpochValidation,
+                this.epochTracker,
             );
 
         // Note: The sessionCache is configured with a sliding expiry of 1 hour,
