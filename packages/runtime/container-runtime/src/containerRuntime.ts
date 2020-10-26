@@ -124,7 +124,8 @@ import { BlobManager } from "./blobManager";
 import { convertSnapshotToSummaryTree } from "./utils";
 
 const chunksBlobName = ".chunks";
-const blobsBlobName = ".blobs";
+const blobsTreeName = ".blobs";
+const nonDataStorePaths = [".protocol", ".logTail", ".serviceProtocol", blobsTreeName];
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -560,7 +561,12 @@ export class ContainerRuntime extends EventEmitter
         return this.context.snapshotFn;
     }
 
-    public get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown) => void {
+    public get reSubmitFn(): (
+        type: ContainerMessageType,
+        content: any,
+        localOpMetadata: unknown,
+        opMetaData: unknown,
+    ) => void {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.reSubmit;
     }
@@ -757,9 +763,8 @@ export class ContainerRuntime extends EventEmitter
 
         if (typeof context.baseSnapshot === "object") {
             const baseSnapshot = context.baseSnapshot;
-            const notDataStores = [".protocol", ".logTail", ".serviceProtocol", blobsBlobName];
             Object.keys(baseSnapshot.trees).forEach((value) => {
-                if (!notDataStores.includes(value)) {
+                if (!nonDataStorePaths.includes(value)) {
                     const tree = baseSnapshot.trees[value];
                     fluidDataStores.set(value, tree);
                 }
@@ -817,7 +822,7 @@ export class ContainerRuntime extends EventEmitter
             () => this.storage,
             (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
         );
-        this.blobManager.load(context.baseSnapshot?.trees[blobsBlobName]);
+        this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName]);
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
@@ -1881,7 +1886,7 @@ export class ContainerRuntime extends EventEmitter
         }
 
         // Let the PendingStateManager know that a message was submitted.
-        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, opMetadata ?? localOpMetadata);
+        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata, opMetadata);
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }
@@ -1957,7 +1962,7 @@ export class ContainerRuntime extends EventEmitter
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private reSubmit(type: ContainerMessageType, content: any, localOpMetadata: unknown) {
+    private reSubmit(type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetaData: unknown) {
         switch (type) {
             case ContainerMessageType.FluidDataStoreOp:
                 // For Operations, call resubmitDataStoreOp which will find the right store
@@ -1970,7 +1975,7 @@ export class ContainerRuntime extends EventEmitter
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
             case ContainerMessageType.BlobAttach:
-                this.submit(type, content, undefined, localOpMetadata);
+                this.submit(type, content, localOpMetadata, opMetaData);
                 break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);

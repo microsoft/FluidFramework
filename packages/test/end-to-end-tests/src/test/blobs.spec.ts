@@ -12,7 +12,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { generateTest, ICompatLocalTestObjectProvider, ITestContainerConfig, TestDataObject } from "./compatUtils";
 
 const testContainerConfig: ITestContainerConfig = {
-    runtimeOptions: { initialSummarizerDelayMs: 100 },
+    runtimeOptions: { initialSummarizerDelayMs: 20 },
 };
 
 const tests = (args: ICompatLocalTestObjectProvider) => {

@@ -991,7 +991,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     break;
                 }
                 case api.SummaryType.Attachment: {
-                    value = { id: summaryObject.id };
+                    id = summaryObject.id;
                     break;
                 }
                 default: {

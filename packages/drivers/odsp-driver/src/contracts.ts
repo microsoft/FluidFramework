@@ -164,8 +164,7 @@ export interface ISnapshotTree {
 export interface ISnapshotBlob {
     contents?: string;
     content?: string;
-    id?: string;
-    encoding?: string;
+    encoding: string;
 }
 
 export interface ISnapshotCommit {
