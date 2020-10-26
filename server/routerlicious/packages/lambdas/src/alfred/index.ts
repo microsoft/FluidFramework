@@ -125,6 +125,9 @@ export function configureWebSocketServices(
         // Map from client Ids to scope.
         const scopeMap = new Map<string, string[]>();
 
+        // Timer to check token expiry for this socket connection
+        let expirationTimer: NodeJS.Timer | undefined;
+
         const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 
         function isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
@@ -138,6 +141,20 @@ export function configureWebSocketServices(
             } else {
                 return false;
             }
+        }
+
+        function clearExpirationTimer() {
+            if (expirationTimer !== undefined) {
+                clearTimeout(expirationTimer);
+                expirationTimer = undefined;
+            }
+        }
+
+        function setExpirationTimer(mSecUntilExpiration: number) {
+            clearExpirationTimer();
+            expirationTimer = setTimeout(() => {
+                socket.disconnect(true);
+            }, mSecUntilExpiration);
         }
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
@@ -213,6 +230,15 @@ export function configureWebSocketServices(
                 clientId,
                 messageClient as IClient);
 
+            if (isTokenExpiryEnabled && claims.exp) {
+                const lifeTimeMSec = (claims.exp * 1000) - Math.round((new Date()).getTime());
+                if (lifeTimeMSec > 0) {
+                    setExpirationTimer(lifeTimeMSec);
+                } else {
+                    return Promise.reject("Invalid token expiry");
+                }
+            }
+
             let connectedMessage: IConnected;
             if (isWriter(messageClient.scopes, details.existing, message.mode)) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
@@ -230,6 +256,7 @@ export function configureWebSocketServices(
                     };
                     // eslint-disable-next-line max-len
                     logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
+                    clearExpirationTimer();
                     socket.disconnect(true);
                 });
 
@@ -345,24 +372,25 @@ export function configureWebSocketServices(
                 if (!roomMap.has(clientId)) {
                     const nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
                     socket.emit("nack", "", [nackMessage]);
+                } else {
+                    contentBatches.forEach((contentBatche) => {
+                        const contents = Array.isArray(contentBatche) ? contentBatche : [contentBatche];
+
+                        for (const content of contents) {
+                            const signalMessage: ISignalMessage = {
+                                clientId,
+                                content,
+                            };
+
+                            socket.emitToRoom(getRoomId(roomMap.get(clientId)), "signal", signalMessage);
+                        }
+                    });
                 }
-
-                contentBatches.forEach((contentBatche) => {
-                    const contents = Array.isArray(contentBatche) ? contentBatche : [contentBatche];
-
-                    for (const content of contents) {
-                        const signalMessage: ISignalMessage = {
-                            clientId,
-                            content,
-                        };
-
-                        socket.emitToRoom(getRoomId(roomMap.get(clientId)), "signal", signalMessage);
-                    }
-                });
             });
 
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("disconnect", async () => {
+            clearExpirationTimer();
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
                 const messageMetaData = {
