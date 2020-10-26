@@ -52,6 +52,7 @@ import {
     ICacheEntry,
     IFileEntry,
     snapshotExpirySummarizerOps,
+    IPersistedCacheValueWithEpoch,
 } from "./odspCache";
 import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
@@ -689,9 +690,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!Number.isInteger(seqNumber) || seqNumberFromOps !== undefined && seqNumberFromOps !== seqNumber) {
             this.logger.sendErrorEvent({ eventName: "fetchSnapshotError", seqNumber, seqNumberFromOps });
         } else if (canCache) {
+            const cacheValue: IPersistedCacheValueWithEpoch = {
+                value: snapshot,
+                fluidEpoch: this.epochTracker.fluidEpoch,
+            };
             this.cache.persistedCache.put(
                 this._snapshotCacheEntry,
-                { value: snapshot, fluidEpoch: this.epochTracker.fluidEpoch },
+                cacheValue,
                 seqNumber,
             );
         }

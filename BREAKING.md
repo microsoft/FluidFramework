@@ -1,11 +1,15 @@
 ## 0.28 Breaking Changes
 
+- [IPersistedCache changes](#IPersistedCache-Changes)
 - [IFluidPackage Changes](#IFluidPackage-Changes)
 - [DataObject changes](#DataObject-changes)
 - [RequestParser](#RequestParser)
 - [IFluidLodable.url is removed](#IFluidLodable.url-is-removed)
 - [Loader Constructor Changes](#Loader-Constructor-Changes)
 - [Moving DriverHeader and merge with CreateNewHeader](#moving-driverheader-and-merge-with-createnewheader)
+
+### IPersistedCache-Changes
+Added api `removeAllEntriesForDocId` which allows removal of all entries for a given document id.
 
 ### Moving DriverHeader and merge with CreateNewHeader
 Compile time only API breaking change between runtime and driver.  Only impacts driver implementer.

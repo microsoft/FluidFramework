@@ -217,6 +217,7 @@ export class LocalPersistentCache implements IPersistedCache {
 
     async get(entry: ICacheEntry, expiry?: number): Promise<any> {
         const key = this.keyFromEntry(entry);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.cache.get(key);
     }
 
@@ -304,7 +305,7 @@ export class LocalPersistentCacheAdapter implements IPersistedCache {
     constructor(private readonly cache: IPersistedCache) {}
 
     async get(entry: ICacheEntry, expiry?: number): Promise<IPersistedCacheValueWithEpoch> {
-        return this.cache.get(entry, expiry);
+        return this.cache.get(entry, expiry) as Promise<IPersistedCacheValueWithEpoch>;
     }
 
     put(entry: ICacheEntry, value: IPersistedCacheValueWithEpoch, seqNumber: number) {
