@@ -35,7 +35,13 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
 
     summarizer: boolean;
 
-    sharingLink?: string;
+    sharingLinkP?: Promise<string>;
+
+    codeHint?: {
+        // containerPackageName is used for adding the package name to the request headers.
+        // This may be used for preloading the container package when loading Fluid content.
+        containerPackageName?: string
+    }
 }
 
 /**
@@ -53,10 +59,23 @@ export interface ISocketStorageDiscovery {
     snapshotStorageUrl: string;
     deltaStorageUrl: string;
 
+    /**
+     * The non-AFD URL
+     */
     deltaStreamSocketUrl: string;
 
-    // The AFD URL for PushChannel
+    /**
+     * The AFD URL for PushChannel
+     */
     deltaStreamSocketUrl2?: string;
+
+    /**
+     * The access token for PushChannel. Optionally returned, depending on implementation.
+     * OneDrive for Consumer implementation returns it and OneDrive for Business implementation
+     * does not return it and instead expects token to be returned via `getWebsocketToken` callback
+     * passed as a parameter to `OdspDocumentService.create()` factory.
+     */
+    socketToken?: string;
 }
 
 /**
@@ -197,6 +216,13 @@ export interface ISnapshotOptions {
      * if snapshot is bigger in size than specified limit.
      */
     mds?: number;
+
+    /*
+     * Maximum time limit to fetch snapshot (in seconds)
+     * If specified, client will timeout the fetch request if it exceeds the time limit and
+     * will try to fetch the snapshot without blobs.
+     */
+    timeout?: number;
 }
 
 export interface HostStoragePolicy {
@@ -249,16 +275,15 @@ export interface OdspFluidDataStoreLocator {
     fileId: string;
     dataStorePath: string;
     appName?: string;
+    containerPackageName?: string;
 }
 
 export enum SharingLinkHeader {
     isSharingLink = "isSharingLink",
-    generateSharingLink = "generateSharingLink",
 }
 
 export interface ISharingLinkHeader {
     [SharingLinkHeader.isSharingLink]: boolean;
-    [SharingLinkHeader.generateSharingLink]: boolean;
 }
 
 declare module "@fluidframework/core-interfaces" {

@@ -103,3 +103,9 @@ export function createGenericNetworkError(
     }
     return new GenericNetworkError(errorMessage, canRetry, statusCode);
 }
+
+/**
+ * Check if a connection error can be retried.  Unless explicitly disallowed, retry is allowed.
+ * @param error - The error to inspect for ability to retry
+ */
+export const canRetryOnError = (error: any): boolean => error?.canRetry !== false;

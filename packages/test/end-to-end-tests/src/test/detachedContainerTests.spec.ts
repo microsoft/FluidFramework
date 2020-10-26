@@ -11,7 +11,7 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import {
     ChannelFactoryRegistry,
     ITestFluidObject,
- } from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { Deferred } from "@fluidframework/common-utils";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
@@ -25,7 +25,12 @@ import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ICompatLocalTestObjectProvider, generateTestWithCompat, generateTest } from "./compatUtils";
+import {
+    ICompatLocalTestObjectProvider,
+    generateTestWithCompat,
+    generateTest,
+    ITestContainerConfig,
+} from "./compatUtils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -53,6 +58,11 @@ const registry: ChannelFactoryRegistry = [
     [sparseMatrixId, SparseMatrix.getFactory()],
 ];
 
+const testContainerConfig: ITestContainerConfig = {
+    testFluidDataObject: true,
+    registry,
+};
+
 const tests = (args: ICompatLocalTestObjectProvider) => {
     let request: IRequest;
     let loader: Loader;
@@ -69,7 +79,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
     beforeEach(async () => {
         request = args.urlResolver.createCreateNewRequest(documentId);
-        loader = args.makeTestLoader(registry) as Loader;
+        loader = args.makeTestLoader(testContainerConfig) as Loader;
     });
 
     it("Create detached container", async () => {
@@ -153,7 +163,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         await container.attach(request);
 
         // Now load the container from another loader.
-        const loader2 = args.makeTestLoader(registry);
+        const loader2 = args.makeTestLoader(testContainerConfig);
         // Create a new request url from the resolvedUrl of the first container.
         assert(container.resolvedUrl);
         const requestUrl2 = await args.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
@@ -208,7 +218,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         await defP.promise;
 
         // Now load the container from another loader.
-        const loader2 = args.makeTestLoader(registry);
+        const loader2 = args.makeTestLoader(testContainerConfig);
         // Create a new request url from the resolvedUrl of the first container.
         assert(container.resolvedUrl);
         const requestUrl2 = await args.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
@@ -567,7 +577,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("Detached Container", () => {
-    generateTestWithCompat(tests, { testFluidDataObject: true });
+    generateTestWithCompat(tests);
 
     describe("Non-Compat Tests", () => {
         generateTest((args: ICompatLocalTestObjectProvider) => {
@@ -577,7 +587,7 @@ describe("Detached Container", () => {
 
             beforeEach(async () => {
                 request = args.urlResolver.createCreateNewRequest(documentId);
-                loader = args.makeTestLoader(registry) as Loader;
+                loader = args.makeTestLoader(testContainerConfig) as Loader;
             });
 
             it("Load attached container from cache and check if they are same", async () => {

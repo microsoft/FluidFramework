@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidRouter, IFluidCodeDetails, IFluidPackage } from "@fluidframework/core-interfaces";
 import {
     IClientDetails,
     IDocumentMessage,
+    IPendingProposal,
     IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
@@ -15,7 +16,6 @@ import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { IFluidModule } from "./fluidModule";
-import { IFluidCodeDetails, IFluidPackage } from "./fluidPackage";
 import { AttachState } from "./runtime";
 
 /**
@@ -79,7 +79,9 @@ export interface IContainerEvents extends IEvent {
      * @param opsBehind - number of ops this client is behind (if present).
      */
     (event: "connect", listener: (opsBehind?: number) => void);
-    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
+    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
+    (event: "contextDisposed" | "contextChanged",
+        listener: (codeDetails: IFluidCodeDetails, previousCodeDetails: IFluidCodeDetails | undefined) => void);
     (event: "disconnected" | "attaching" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
@@ -111,6 +113,29 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * Indicates the attachment state of the container to a host service.
      */
     readonly attachState: AttachState;
+
+    /**
+     * The current code details for the container's runtime
+     */
+    readonly codeDetails: IFluidCodeDetails | undefined
+
+    /**
+     * Returns true if the container has been closed, otherwise false
+     */
+    readonly closed: boolean;
+
+    /**
+     * Closes the container
+     */
+    close(error?: ICriticalContainerError): void;
+
+    /**
+     * Propose new code details that define the code to be loaded
+     * for this container's runtime. The returned promise will
+     * be true when the proposal is accepted, and false if
+     * the proposal is rejected.
+     */
+    proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>
 
     /**
      * Attaches the Container to the Container specified by the given Request.

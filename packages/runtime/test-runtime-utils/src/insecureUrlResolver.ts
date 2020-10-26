@@ -10,7 +10,7 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-    CreateNewHeader,
+    DriverHeader,
 } from "@fluidframework/driver-definitions";
 import {
     ITokenClaims,
@@ -48,7 +48,7 @@ export class InsecureUrlResolver implements IUrlResolver {
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (request.headers?.[CreateNewHeader.createNew]) {
+        if (request.headers?.[DriverHeader.createNew]) {
             const [, queryString] = request.url.split("?");
 
             const searchParams = new URLSearchParams(queryString);
@@ -135,7 +135,7 @@ export class InsecureUrlResolver implements IUrlResolver {
         const createNewRequest: IRequest = {
             url: `${this.hostUrl}?fileName=${fileName}`,
             headers: {
-                [CreateNewHeader.createNew]: true,
+                [DriverHeader.createNew]: true,
             },
         };
         return createNewRequest;

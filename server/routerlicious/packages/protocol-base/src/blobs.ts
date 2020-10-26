@@ -7,6 +7,7 @@ import * as git from "@fluidframework/gitresources";
 import {
     FileMode,
     IBlob,
+    IAttachment,
     ISnapshotTree,
     ITree,
     ITreeEntry,
@@ -51,6 +52,8 @@ export function getGitType(value: SummaryObject): string {
             return "commit";
         case SummaryType.Tree:
             return "tree";
+        case SummaryType.Attachment:
+            return "attachment";
         default:
             throw new Error();
     }
@@ -141,6 +144,24 @@ export class TreeTreeEntry implements ITreeEntry {
      * @param value - subtree
      */
     constructor(public readonly path: string, public readonly value: ITree) { }
+}
+
+/**
+ * Basic implementation of an attachment ITreeEntry
+ */
+export class AttachmentTreeEntry implements ITreeEntry {
+    public readonly mode = FileMode.File;
+    public readonly type = TreeEntry.Attachment;
+    public readonly value: IAttachment;
+
+    /**
+     * Creates an attachment ITreeEntry
+     * @param path - path of entry
+     * @param id - id of external blob attachment
+     */
+    constructor(public readonly path: string, public readonly id: string) {
+        this.value = { id };
+    }
 }
 
 export function addBlobToTree(tree: ITree, blobName: string, content: object) {

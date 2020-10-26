@@ -343,7 +343,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      */
     protected disconnect(socketProtocolError: boolean, reason: DriverError) {
         const key = this.socketReferenceKey;
-        assert(key !== undefined, "reetrancy not supported!");
+        assert(key !== undefined, "reentrancy not supported!");
         this.socketReferenceKey = undefined;
 
         if (!socketProtocolError && this.hasDetails) {

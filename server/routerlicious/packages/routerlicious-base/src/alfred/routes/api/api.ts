@@ -7,10 +7,10 @@
 
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
-import { IClient, IClientJoin, ITokenClaims, ScopeType } from "@fluidframework/protocol-definitions";
+import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
+import { validateTokenClaims } from "@fluidframework/server-services-client";
 import { Request, Response, Router } from "express";
-import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import requestAPI from "request";
@@ -52,7 +52,9 @@ export function create(
     });
 
     router.patch("/:tenantId/:id/root", async (request, response) => {
-        const validP = verifyRequest(request, tenantManager, storage);
+        const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
+        const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
+        const validP = verifyRequest(request, tenantManager, storage, maxTokenLifetimeSec, isTokenExpiryEnabled);
         returnResponse(validP, request, response, mapSetBuilder);
     });
 
@@ -135,21 +137,24 @@ function sendOp(
 const verifyRequest = async (
     request: Request,
     tenantManager: core.ITenantManager,
+    storage: core.IDocumentStorage,
+    maxTokenLifetimeSec: number,
     // eslint-disable-next-line max-len
-    storage: core.IDocumentStorage) => Promise.all([verifyToken(request, tenantManager), checkDocumentExistence(request, storage)]);
+    isTokenExpiryEnabled: boolean) => Promise.all([verifyToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled), checkDocumentExistence(request, storage)]);
 
-async function verifyToken(request: Request, tenantManager: core.ITenantManager): Promise<void> {
+// eslint-disable-next-line max-len
+async function verifyToken(request: Request, tenantManager: core.ITenantManager, maxTokenLifetimeSec: number, isTokenExpiryEnabled: boolean): Promise<void> {
     const token = request.headers["access-token"] as string;
     if (!token) {
         return Promise.reject("Missing access token");
     }
     const tenantId = getParam(request.params, "tenantId");
     const documentId = getParam(request.params, "id");
-    const claims = jwt.decode(token) as ITokenClaims;
-    if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
+    const claims = validateTokenClaims(token, documentId, tenantId, maxTokenLifetimeSec, isTokenExpiryEnabled);
+    if (!claims) {
         return Promise.reject("Invalid access token");
     }
-    return tenantManager.verifyToken(tenantId, token);
+    return tenantManager.verifyToken(claims.tenantId, token);
 }
 
 async function checkDocumentExistence(request: Request, storage: core.IDocumentStorage): Promise<any> {

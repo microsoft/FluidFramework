@@ -9,6 +9,7 @@ import {
     fetchIncorrectResponse,
     offlineFetchFailureStatusCode,
     fetchFailureStatusCode,
+    fetchTimeoutStatusCode,
 } from "@fluidframework/odsp-doclib-utils";
 import {
     default as fetch,
@@ -84,6 +85,9 @@ export async function fetchHelper(
         let online = isOnline();
         if (`${error}` === "TypeError: Failed to fetch") {
             online = OnlineStatus.Offline;
+        }
+        if (error.name === "AbortError") {
+            throwOdspNetworkError("Timeout during fetch", fetchTimeoutStatusCode);
         }
         throwOdspNetworkError(
             `Fetch error: ${error}`,

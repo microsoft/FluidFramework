@@ -7,7 +7,7 @@ import { IDocumentDeltaConnection, IResolvedUrl } from "@fluidframework/driver-d
 import * as api from "@fluidframework/protocol-definitions";
 import { ICredentials } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
-import { TokenProvider } from "./tokens";
+import { ITokenProvider } from "./tokens";
 import { WSDeltaConnection } from "./wsDeltaConnection";
 
 /**
@@ -23,7 +23,7 @@ export class DocumentService2 extends DocumentService {
         errorTracking: api.IErrorTrackingService,
         disableCache: boolean, historianApi: boolean,
         directCredentials: ICredentials | undefined,
-        tokenProvider: TokenProvider,
+        tokenProvider: ITokenProvider,
         tenantId: string,
         documentId: string) {
         super(
@@ -49,10 +49,11 @@ export class DocumentService2 extends DocumentService {
      */
     public async connectToDeltaStream(
         client: api.IClient): Promise<IDocumentDeltaConnection> {
+        const ordererToken = await this.tokenProvider.fetchOrdererToken();
         return WSDeltaConnection.create(
             this.tenantId,
             this.documentId,
-            this.tokenProvider.token,
+            ordererToken.jwt,
             client,
             this.ordererUrl);
     }
