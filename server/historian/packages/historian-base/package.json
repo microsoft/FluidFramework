@@ -22,7 +22,7 @@
     "tslint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.24.0-0",
+    "@fluidframework/common-utils": "^0.24.0",
     "@fluidframework/gitresources": "^0.1012.0",
     "@fluidframework/server-services": "^0.1012.2",
     "@fluidframework/server-services-core": "^0.1012.2",
