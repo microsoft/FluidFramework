@@ -13,9 +13,21 @@
  * @param driveId - The id of the drive with the container
  * @param itemId - The id of the container
  * @param path - A path that corresponds to a request that will be handled by the container
+ * @param containerPackageName - A string representing the container package name to be used for preloading scripts
  */
-export function createOdspUrl(siteUrl: string, driveId: string, itemId: string, path: string): string {
-    return `${siteUrl}?driveId=${encodeURIComponent(driveId)}&itemId=${encodeURIComponent(
+export function createOdspUrl(
+    siteUrl: string,
+    driveId: string,
+    itemId: string,
+    path: string,
+    containerPackageName?: string,
+): string {
+    let odspUrl = `${siteUrl}?driveId=${encodeURIComponent(driveId)}&itemId=${encodeURIComponent(
         itemId,
     )}&path=${encodeURIComponent(path)}`;
+    if (containerPackageName) {
+        odspUrl += `&containerPackageName=${encodeURIComponent(containerPackageName)}`;
+    }
+
+    return odspUrl;
 }

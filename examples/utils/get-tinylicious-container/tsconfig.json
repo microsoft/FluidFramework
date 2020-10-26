@@ -5,8 +5,11 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "module": "esnext",
-        "outDir": "dist"
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "types": [
+            "mocha"
+        ]
     },
     "include": [
         "src/**/*"

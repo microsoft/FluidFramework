@@ -12,11 +12,13 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
-import { generateToken } from "@fluidframework/server-services-client";
 import { SequencedLambda } from "../sequencedLambda";
 
 // TODO: Move this to config.
 const RequestWindowMS = 15000;
+
+const generateToken =
+    (_tenantId: string, _docId: string, _key: string, _scopes: ScopeType[]) => "TODO# 4010: Actually pass a token here";
 
 export class ForemanLambda extends SequencedLambda {
     private readonly taskQueueMap = new Map<string, string>();
@@ -88,6 +90,8 @@ export class ForemanLambda extends SequencedLambda {
                         tasks,
                     },
                     tenantId,
+
+                    // TODO: #4010 extract an interface for token signing that is isomorphic
                     token: generateToken(tenantId, docId, key, scopes),
                 };
                 this.messageSender.sendTask(
