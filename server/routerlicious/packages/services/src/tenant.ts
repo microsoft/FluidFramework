@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { generateToken, GitManager, Historian, ICredentials } from "@fluidframework/server-services-client";
+import { GitManager, Historian, ICredentials } from "@fluidframework/server-services-client";
+import { generateToken } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import Axios from "axios";
 

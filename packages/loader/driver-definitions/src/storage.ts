@@ -184,25 +184,6 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
      * Disconnects the given delta connection
      */
     close();
-
-    /**
-     * Emits an event from this document delta connection
-     * @param event - The event to emit
-     * @param args - The arguments for the event
-     */
-    emit(event: string, ...args: any[]): boolean;
-
-    /**
-     * Gets the listeners for an event
-     * @param event - The name of the event
-     */
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    listeners(event: string): Function[];
-
-    /**
-     * Removes all listeners from all events
-     */
-    removeAllListeners(): void;
 }
 
 export interface IDocumentService {
