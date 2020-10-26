@@ -5,8 +5,8 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "outDir": "./lib",
         "module": "esnext",
-        "outDir": "dist",
         "jsx": "react",
         "types": ["react", "react-dom", "jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"]
     },
