@@ -9,7 +9,8 @@
 - [Moving DriverHeader and merge with CreateNewHeader](#moving-driverheader-and-merge-with-createnewheader)
 
 ### IPersistedCache-Changes
-Added api `removeAllEntriesForDocId` which allows removal of all entries for a given document id.
+Added api `removeAllEntriesForDocId` which allows removal of all entries for a given document id. Also the schema for entries stored inside odsp `IPersistedCache` has changed.
+It now stores/expect values as `IPersistedCacheValueWithEpoch`. So host needs to clear its cached entries in this version.
 
 ### Moving DriverHeader and merge with CreateNewHeader
 Compile time only API breaking change between runtime and driver.  Only impacts driver implementer.
