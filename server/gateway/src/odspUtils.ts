@@ -129,7 +129,8 @@ export async function spoGetResolvedUrl(
     }
     // Only .b items can be fluid
     const encoded = encodeURIComponent(`${id}.fluid`);
-    const filePath = tenantId === "spo-shared" ? `/Gateway/${encoded}` : `/r11s/${encoded}`;
+    const filePath = tenantId === "spo-shared" ||  tenantId === "spo-custom-shared"
+         ? `/Gateway/${encoded}` : `/r11s/${encoded}`;
     const { drive, item } = await getDriveItemByRootFileName(
         server,
         "",

@@ -7,16 +7,14 @@ import { parse } from "url";
 import _ from "lodash";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
+import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { Router } from "express";
 import safeStringify from "json-stringify-safe";
 import jwt from "jsonwebtoken";
 import { Provider } from "nconf";
-import { v4 } from "uuid";
 import winston from "winston";
 import dotenv from "dotenv";
-import { getSpfxFluidObjectData, spoEnsureLoggedIn } from "../gatewayOdspUtils";
+import { getFluidObjectBundle, spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
 import { getConfig, getJWTClaims, getUserDetails, queryParamAsString } from "../utils";
@@ -86,138 +84,15 @@ export function create(
                     tenantId,
                     config.get("error:track"));
 
-                let scriptsP;
-                let pkgP;
-
-                if (request.url.indexOf("spo-custom") >= 0) {
-                    scriptsP = resolvedP
-                        .then(async (resolved) => getSpfxFluidObjectData(resolved))
-                        .then((manifest) => {
-                            const baseUrl = manifest.loaderConfig.internalModuleBaseUrls[0] ?? "";
-                            const scriptResources = manifest.loaderConfig.scriptResources[
-                                `fluid.${manifest.loaderConfig.entryModuleId}`
-                            ] ?? "";
-                            const bundle = scriptResources.path;
-                            return {
-                                entrypoint: manifest.loaderConfig.entryModuleId,
-                                scripts: [
-                                    {
-                                        id: baseUrl,
-                                        url: `${baseUrl}/${bundle}`,
-                                    },
-                                ],
-                            };
-                        });
-
-                    pkgP = scriptsP.then((scripts) => {
-                        return {
-                            resolvedPackage: {
-                                fluid: {
-                                    browser: {
-                                        umd: {
-                                            files: [scripts.scripts[0].url],
-                                            library: "main",
-                                        },
-                                    },
-                                },
-                                name: `@gateway/${v4()}`,
-                                version: "0.0.0",
-                            },
-                            package: {
-                                fluid: {
-                                    browser: {
-                                        umd: {
-                                            files: [scripts.scripts[0].url],
-                                            library: "main",
-                                        },
-                                    },
-                                },
-                                name: `@gateway/${v4()}`,
-                                version: "0.0.0",
-                            },
-                            config: {
-                                [`@gateway:cdn`]: scripts.scripts[0].url,
-                            },
-                            fluid: {
-                                browser: {
-                                    umd: {
-                                        files: [scripts.scripts[0].url],
-                                        library: "main",
-                                    },
-                                },
-                            },
-                            name: `@gateway/${v4()}`,
-                            version: "0.0.0",
-                        };
-                    });
-                } else {
-                    pkgP = fullTreeP.then((fullTree) => {
-                        if (fullTree && fullTree.code) {
-                            return codeResolver.resolveCodeDetails(fullTree.code);
-                        }
-
-                        if (request.query.chaincode === undefined) {
-                            return;
-                        }
-
-                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                        const cdn = request.query.cdn ? request.query.cdn : config.get("worker:npm");
-                        const entryPoint = queryParamAsString(request.query.entrypoint);
-
-                        let codeDetails: IFluidCodeDetails;
-                        if (chaincode.startsWith("http")) {
-                            codeDetails = {
-                                config: {
-                                    [`@gateway:cdn`]: chaincode,
-                                },
-                                package: {
-                                    fluid: {
-                                        browser: {
-                                            umd: {
-                                                files: [chaincode],
-                                                library: entryPoint,
-                                            },
-                                        },
-                                    },
-                                    name: `@gateway/${v4()}`,
-                                    version: "0.0.0",
-                                },
-                            };
-                        } else {
-                            const details = extractPackageIdentifierDetails(chaincode);
-                            codeDetails = {
-                                config: {
-                                    [`@${details.scope}:cdn`]: cdn,
-                                },
-                                package: chaincode,
-                            };
-                        }
-
-                        return codeResolver.resolveCodeDetails(codeDetails);
-                    });
-
-                    scriptsP = pkgP.then((pkg) => {
-                        if (pkg === undefined) {
-                            return [];
-                        }
-
-                        const umd = pkg.resolvedPackage.fluid?.browser?.umd;
-                        if (umd === undefined) {
-                            return [];
-                        }
-
-                        return {
-                            entrypoint: umd.library,
-                            scripts: umd.files.map(
-                                (script, index) => {
-                                    return {
-                                        id: `${pkg.resolvedPackageCacheId}-${index}`,
-                                        url: script,
-                                    };
-                                }),
-                        };
-                    });
-                }
+                const [pkgP, scriptsP] = getFluidObjectBundle(
+                    request.url,
+                    resolvedP,
+                    fullTreeP,
+                    codeResolver,
+                    chaincode,
+                    request.query.cdn === undefined ? request.query.cdn : config.get("worker:npm"),
+                    queryParamAsString(request.query.entrypoint),
+                );
 
                 // Track timing
                 const treeTimeP = fullTreeP.then(() => Date.now() - start);
@@ -227,28 +102,32 @@ export function create(
                 Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
                     .then(([resolved, fullTree, pkg, scripts, timings]) => {
                         // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
-                        resolved.url += path + (search ?? "");
-                        winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
-
-                        // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
-                        timings.push(Date.now() - start);
-                        const configClientId: string = config.get("login:microsoft").clientId;
-                        response.render(
-                            "loader",
-                            {
-                                cache: fullTree !== undefined ? JSON.stringify(fullTree.cache) : undefined,
-                                chaincode: JSON.stringify(pkg),
-                                clientId: _.isEmpty(configClientId)
-                                ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : configClientId,
-                                config: workerConfig,
-                                jwt: jwtToken,
-                                partials: defaultPartials,
-                                resolved: JSON.stringify(resolved),
-                                scripts,
-                                timings: JSON.stringify(timings),
-                                title: documentId,
-                                user: getUserDetails(request),
-                            });
+                        if (resolved !== undefined && timings !== undefined) {
+                            resolved.url += path + (search ?? "");
+                            winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
+                            winston.info(JSON.stringify(scripts));
+                            timings.push(Date.now() - start);
+                            const configClientId: string = config.get("login:microsoft").clientId;
+                            response.render(
+                                "loader",
+                                {
+                                    cache: fullTree !== undefined ? JSON.stringify(fullTree.cache) : undefined,
+                                    chaincode: JSON.stringify(pkg),
+                                    clientId: _.isEmpty(configClientId)
+                                    ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : configClientId,
+                                    config: workerConfig,
+                                    jwt: jwtToken,
+                                    partials: defaultPartials,
+                                    resolved: JSON.stringify(resolved),
+                                    scripts,
+                                    timings: JSON.stringify(timings),
+                                    title: documentId,
+                                    user: getUserDetails(request),
+                                },
+                            );
+                        } else {
+                            throw Error("Failed to render the Gateway loader");
+                        }
                     }, (error) => {
                         response.status(400).end(`ERROR: ${error.stack}\n${safeStringify(error, undefined, 2)}`);
                     }).catch((error) => {

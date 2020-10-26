@@ -21,7 +21,7 @@ import { isSpoTenant, spoGetResolvedUrl } from "./odspUtils";
 
 dotenv.config();
 
-interface FullTree {
+export interface FullTree {
     cache: IGitCache,
     code: IFluidCodeDetails | null,
 }
