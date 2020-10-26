@@ -10,7 +10,7 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-    CreateNewHeader,
+    DriverHeader,
 } from "@fluidframework/driver-definitions";
 import {
     ITokenClaims,
@@ -48,7 +48,7 @@ export class InsecureUrlResolver implements IUrlResolver {
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (request.headers?.[CreateNewHeader.createNew]) {
+        if (request.headers?.[DriverHeader.createNew]) {
             const [, queryString] = request.url.split("?");
 
             const searchParams = new URLSearchParams(queryString);
@@ -56,18 +56,19 @@ export class InsecureUrlResolver implements IUrlResolver {
             if (!fileName) {
                 throw new Error("FileName should be there!!");
             }
-            return this.resolveHelper(fileName);
+            return this.resolveHelper(fileName, "");
         }
         const parsedUrl = new URL(request.url);
-
         // If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
         // service using our bearer token.
         if (this.isForNodeTest) {
             const documentId = parsedUrl.pathname.substr(1).split("/")[1];
-            return this.resolveHelper(documentId);
+            return this.resolveHelper(documentId, "");
         } else if (parsedUrl.host === window.location.host) {
-            const documentId = parsedUrl.pathname.substr(1).split("/")[0];
-            return this.resolveHelper(documentId);
+            const fullPath = parsedUrl.pathname.substr(1);
+            const documentId = fullPath.split("/")[0];
+            const documentRelativePath = fullPath.slice(documentId.length);
+            return this.resolveHelper(documentId, documentRelativePath);
         } else {
             const maybeResolvedUrl = this.cache.get(request.url);
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -92,11 +93,12 @@ export class InsecureUrlResolver implements IUrlResolver {
         }
     }
 
-    private resolveHelper(documentId: string) {
+    private resolveHelper(documentId: string, documentRelativePath: string) {
         const encodedTenantId = encodeURIComponent(this.tenantId);
         const encodedDocId = encodeURIComponent(documentId);
+        const host = new URL(this.ordererUrl).host;
+        const documentUrl = `fluid://${host}/${encodedTenantId}/${encodedDocId}${documentRelativePath}`;
 
-        const documentUrl = `fluid://${new URL(this.ordererUrl).host}/${encodedTenantId}/${encodedDocId}`;
         const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
         const storageUrl = `${this.storageUrl}/repos/${encodedTenantId}`;
 
@@ -133,7 +135,7 @@ export class InsecureUrlResolver implements IUrlResolver {
         const createNewRequest: IRequest = {
             url: `${this.hostUrl}?fileName=${fileName}`,
             headers: {
-                [CreateNewHeader.createNew]: true,
+                [DriverHeader.createNew]: true,
             },
         };
         return createNewRequest;
@@ -147,6 +149,7 @@ export class InsecureUrlResolver implements IUrlResolver {
             user: this.user,
         };
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return jwt.sign(claims, this.tenantKey);
     }
 }

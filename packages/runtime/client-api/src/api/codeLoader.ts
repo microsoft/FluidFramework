@@ -8,11 +8,11 @@ import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     ICodeLoader,
     IContainerContext,
-    IFluidCodeDetails,
     IRuntime,
     IRuntimeFactory,
     IFluidModule,
 } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import * as ink from "@fluidframework/ink";
 import * as map from "@fluidframework/map";
@@ -24,7 +24,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import {
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
@@ -119,7 +119,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
             ],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(rootStoreId),
-                deprecated_innerRequestHandler,
+                innerRequestHandler,
             ),
             this.runtimeOptions);
 

@@ -3,44 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { debug } from "util";
-import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
-import * as jwt from "jsonwebtoken";
-import { v4 as uuid } from "uuid";
-import { getRandomName } from "./generateNames";
+import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import jwtDecode from "jwt-decode";
 
 /**
- * Generates a JWT token to authorize routerlicious
+ * Validates a JWT token to authorize routerlicious and returns decoded claims.
+ * An undefined return value indicates invalid claims.
  */
-export function generateToken(
-    tenantId: string,
+export function validateTokenClaims(
+    token: string,
     documentId: string,
-    key: string,
-    scopes: ScopeType[],
-    user?: IUser): string {
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define, no-param-reassign
-    user = (user) ? user : generateUser();
-    if (user.id === "" || user.id === undefined) {
-        debug("User with no id");
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define, no-param-reassign
-        user = generateUser();
+    tenantId: string,
+    maxTokenLifetimeSec: number,
+    isTokenExpiryEnabled: boolean): ITokenClaims {
+    const claims = jwtDecode<ITokenClaims>(token);
+
+    if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
+        return undefined;
     }
 
-    const claims: ITokenClaims = {
-        documentId,
-        scopes,
-        tenantId,
-        user,
-    };
+    if (claims.scopes === undefined || claims.scopes.length === 0) {
+        return undefined;
+    }
 
-    return jwt.sign(claims, key);
-}
+    if (isTokenExpiryEnabled && claims.exp && claims.iat) {
+        const now = Math.round((new Date()).getTime() / 1000);
+        if (now >= claims.exp || claims.exp - claims.iat > maxTokenLifetimeSec) {
+            return undefined;
+        }
+    }
 
-export function generateUser(): IUser {
-    const randomUser = {
-        id: uuid(),
-        name: getRandomName(" ", true),
-    };
-
-    return randomUser;
+    return claims;
 }

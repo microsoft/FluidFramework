@@ -13,7 +13,7 @@ import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
  * www-authenticate=Bearer realm="",
  * authorization_uri="https://login.microsoftonline.com/common/oauth2/authorize",
  * error="insufficient_claims",
- * claims="eyJhY2Nlc3NfdG9rZW4iOnsibmJmIjp7ImVzc2VudGlhbCI6ZmFsc2UsInZhbHVlIjoxNTM5Mjg0Mzc2fX19"
+ * claims="dummy"
  *
  * Note that claims value is base64 encoded inside header but this method will return unencoded value.
  */

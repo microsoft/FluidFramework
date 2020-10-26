@@ -6,7 +6,6 @@
 import { Deferred } from "@fluidframework/common-utils";
 import {
     IClientManager,
-    ICollection,
     IDocumentStorage,
     IOrdererManager,
     IProducer,
@@ -38,8 +37,7 @@ export class AlfredRunner implements utils.IRunner {
         private readonly appTenants: IAlfredTenant[],
         private readonly mongoManager: MongoManager,
         private readonly producer: IProducer,
-        private readonly metricClientConfig: any,
-        private readonly contentCollection: ICollection<any>) {
+        private readonly metricClientConfig: any) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -61,17 +59,20 @@ export class AlfredRunner implements utils.IRunner {
         const httpServer = this.server.httpServer;
 
         const maxNumberOfClientsPerDocument = this.config.get("alfred:maxNumberOfClientsPerDocument");
+        const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
+        const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
         // Register all the socket.io stuff
         configureWebSocketServices(
             this.server.webSocketServer,
             this.orderManager,
             this.tenantManager,
             this.storage,
-            this.contentCollection,
             this.clientManager,
             createMetricClient(this.metricClientConfig),
             winston,
-            maxNumberOfClientsPerDocument);
+            maxNumberOfClientsPerDocument,
+            maxTokenLifetimeSec,
+            isTokenExpiryEnabled);
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);

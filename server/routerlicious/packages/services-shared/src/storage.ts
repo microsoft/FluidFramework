@@ -151,16 +151,12 @@ export class DocumentStorage implements IDocumentStorage {
                 tenantId,
             },
             {
-                branchMap: undefined,
-                clients: undefined,
                 createTime: Date.now(),
                 deli: JSON.stringify(deli),
                 documentId,
                 forks: [],
-                logOffset: 0,
                 parent: null,
                 scribe: JSON.stringify(scribe),
-                sequenceNumber,
                 tenantId,
                 version: "0.1",
             });
@@ -282,13 +278,10 @@ export class DocumentStorage implements IDocumentStorage {
         // Insert the fork entry and update the parent to prep storage for both objects
         const insertFork = collection.insertOne(
             {
-                branchMap: undefined,
-                clients: undefined,
                 createTime: Date.now(),
                 deli: undefined,
                 documentId: name,
                 forks: [],
-                logOffset: 0,
                 parent: {
                     documentId: id,
                     minimumSequenceNumber,
@@ -296,7 +289,6 @@ export class DocumentStorage implements IDocumentStorage {
                     tenantId,
                 },
                 scribe: undefined,
-                sequenceNumber,
                 tenantId,
                 version: "0.1",
             });
@@ -330,16 +322,12 @@ export class DocumentStorage implements IDocumentStorage {
         deli?: string,
         scribe?: string): Promise<IDocument> {
         const value: IDocument = {
-            branchMap: undefined,
-            clients: undefined,
             createTime: Date.now(),
             deli,
             documentId,
             forks: [],
-            logOffset: 0,
             parent: null,
             scribe,
-            sequenceNumber: StartingSequenceNumber,
             tenantId,
             version: "0.1",
         };

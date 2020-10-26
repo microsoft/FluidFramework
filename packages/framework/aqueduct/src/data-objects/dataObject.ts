@@ -25,12 +25,13 @@ import { PureDataObject } from "./pureDataObject";
  * will automatically be registered.
  *
  * Generics:
- * P - represents a type that will define optional providers that will be injected
+ * O - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced data store may take during creation
  * E - represents events that will be available in the EventForwarder
  */
-export abstract class DataObject<P extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
-    extends PureDataObject<P, S, E>
+// eslint-disable-next-line @typescript-eslint/ban-types
+export abstract class DataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
+    extends PureDataObject<O, S, E>
 {
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
@@ -86,7 +87,7 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
         });
         const path = `${this.bigBlobs}${uuid()}`;
         this.root.set(path, blob);
-        return new BlobHandle(path, this.root, this.runtime.IFluidHandleContext);
+        return new BlobHandle(path, this.root, this.runtime.objectsRoutingContext);
     }
 
     /**

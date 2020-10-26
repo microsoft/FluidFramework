@@ -110,6 +110,7 @@ export class List<T> {
                 }
             }
         }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return rtn;
     }
 
@@ -625,6 +626,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return this.balance(node);
     }
     height() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.nodeHeight(this.root);
     }
     nodeHeight(node: RBNode<TKey, TData>) {
@@ -958,7 +960,6 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
                     red = "R ";
                 }
                 buf += MergeTree.internedSpaces(indentAmt);
-                // eslint-disable-next-line max-len
                 buf += `${red}key: ${integerRangeToString(n.key)} minmax: ${integerRangeToString(n.data.minmax)}\n`;
                 indentAmt += 2;
                 return true;

@@ -125,8 +125,7 @@ export class SnapshotLoader {
             header,
             this.logger,
             this.mergeTree.options,
-            this.runtime.IFluidSerializer,
-            this.runtime.IFluidHandleContext);
+            this.runtime.IFluidSerializer);
         const segs = chunk.segments.map(this.specToSegment);
         this.mergeTree.reloadFromSegments(segs);
         // TODO currently only assumes two levels of branching
@@ -178,8 +177,7 @@ export class SnapshotLoader {
                 chunk1.headerMetadata.orderedChunkMetadata[chunkIndex].id,
                 this.logger,
                 this.mergeTree.options,
-                this.runtime.IFluidSerializer,
-                this.runtime.IFluidHandleContext);
+                this.runtime.IFluidSerializer);
             lengthSofar += chunk.length;
             // Deserialize each chunk segment and append it to the end of the MergeTree.
             segs.push(...chunk.segments.map(this.specToSegment));

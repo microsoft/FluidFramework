@@ -159,10 +159,17 @@ stages:
               grep -e fluid.*-0 `find packages -name 'package.json'`
             else
               grep -e fluid.*-0 `find . -name 'package.json'`
-          fi
+            fi
 
             if [[ $? == 0 ]]; then
               echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
+              exit -1;
+            fi
+          fi
+
+          if [[ "$(release)" == "prerelease" ]]; then
+            if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
+              echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
               exit -1;
             fi
           fi

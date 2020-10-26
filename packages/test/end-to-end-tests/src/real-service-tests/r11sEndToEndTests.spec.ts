@@ -6,8 +6,8 @@
 import assert from "assert";
 import * as moniker from "moniker";
 import uuid from "uuid";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
+import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { AttachState } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import {
@@ -41,19 +41,18 @@ describe(`r11s End-To-End tests`, () => {
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const documentServiceFactory = new RouterliciousDocumentServiceFactory(
+            undefined,
             false,
             new DefaultErrorTracking(),
             false,
             true,
             undefined,
         );
-        return new Loader(
+        return new Loader({
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
     }
 
     const createFluidObject = (async (
@@ -74,6 +73,11 @@ describe(`r11s End-To-End tests`, () => {
         const tenantId = process.env.fluid__webpack__tenantId ?? "fluid";
         const tenantSecret = process.env.fluid__webpack__tenantSecret;
         const fluidHost = process.env.fluid__webpack__fluidHost;
+
+        assert(bearerSecret, "Missing bearer secret");
+        assert(tenantId, "Missing tenantId");
+        assert(tenantSecret, "Missing tenant secret");
+        assert(fluidHost, "Missing Fluid host");
 
         return new InsecureUrlResolver(
             fluidHost,
@@ -114,6 +118,7 @@ describe(`r11s End-To-End tests`, () => {
 
         // Now attach the container and get the sub component.
         await container.attach(request);
+        assert(container.resolvedUrl, "attached container should have resolved URL");
 
         // Now load the container from another loader.
         const urlResolver2 = getResolver();
@@ -125,7 +130,7 @@ describe(`r11s End-To-End tests`, () => {
         // Get the sub component and assert that it is attached.
         const response2 = await container2.request({ url: `/${subComponent1.context.id}` });
         const subComponent2 = response2.value as ITestFluidObject;
-        assert.strictEqual(subComponent2.runtime.IFluidHandleContext.isAttached, true,
+        assert(subComponent2.runtime.attachState !== AttachState.Detached,
             "Component should be attached!!");
 
         // Verify the attributes of the root channel of both sub components.
@@ -142,7 +147,6 @@ describe(`r11s End-To-End tests`, () => {
         const ops = { key: "1", type: "set", value: { type: "Plain", value: "b" } };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(codeDetails);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 mapId1, "Address should be shared map");

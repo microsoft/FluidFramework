@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { cloneDeep } from "lodash";
+// eslint-disable-next-line import/no-internal-modules
+import cloneDeep from "lodash/cloneDeep";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ISequencedDocumentMessage,

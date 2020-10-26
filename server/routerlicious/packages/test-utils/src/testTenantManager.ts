@@ -62,6 +62,7 @@ export class TestTenantManager implements ITenantManager {
             storage: this.tenant.storage,
             orderer: this.tenant.orderer,
             key: "test-tenant-key",
+            customData: {},
         });
     }
 

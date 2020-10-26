@@ -63,6 +63,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
             this.docTree = tree;
         }
         // Fill in this.commit right here?
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return tree;
     }
 
@@ -199,7 +200,6 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
 
             // Remove tree IDs for easier comparison of snapshots
             delete tree.id;
-            // eslint-disable-next-line @typescript-eslint/no-use-before-define
             removeNullTreIds(tree);
 
             if (ref) {

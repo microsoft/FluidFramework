@@ -11,7 +11,7 @@ import {
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
 import {
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
@@ -33,7 +33,7 @@ class SmdeContainerFactory implements IRuntimeFactory {
             registry,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
-                deprecated_innerRequestHandler,
+                innerRequestHandler,
             ),
             { generateSummaries: true });
 

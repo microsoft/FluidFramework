@@ -19,6 +19,9 @@ jobs:
       - uses: actions/setup-node@v2-beta
         with:
           node-version: "12"
+      - uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
 
       - name: Download JSON by SHA
         id: download-sha-json
@@ -69,6 +72,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/docs
           npm ci
+          npm run build:diagrams
           npm run build
       - name: Archive site artifact
         uses: actions/upload-artifact@v2
@@ -91,4 +95,5 @@ jobs:
           app_location: "/docs" # App source code path
           # api_location: "api" # Api source code path - optional
           app_artifact_location: "public" # Built app content directory - optional
+          routes_location: "/docs"
           ###### End of Repository/Build Configurations ######

@@ -9,8 +9,8 @@ import {
     ICodeLoader,
     IProvideRuntimeFactory,
     IFluidModule,
-    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IProvideFluidDataStoreFactory, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
 
 // Represents the entry point for a Fluid container.

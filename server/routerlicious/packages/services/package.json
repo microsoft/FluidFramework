@@ -31,6 +31,7 @@
     "@fluidframework/server-services-client": "^0.1014.0",
     "@fluidframework/server-services-core": "^0.1014.0",
     "@fluidframework/server-services-shared": "^0.1014.0",
+    "@fluidframework/server-services-utils": "^0.1014.0",
     "amqplib": "^0.5.5",
     "axios": "^0.18.0",
     "debug": "^4.1.1",

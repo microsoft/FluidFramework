@@ -4,14 +4,14 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { ITelemetryLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IFluidRouter,
     IProvideFluidHandleContext,
-    IProvideFluidSerializer,
     IFluidHandle,
+    IRequest,
+    IResponse,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -23,7 +23,6 @@ import {
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
-    ConnectionState,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -52,14 +51,21 @@ export enum FlushMode {
     Manual,
 }
 
+export interface IContainerRuntimeBaseEvents extends IEvent{
+
+    (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
+    (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
+    (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+    (event: "leader" | "notleader", listener: () => void);
+}
+
 /**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  */
 export interface IContainerRuntimeBase extends
-    EventEmitter,
+    IEventProvider<IContainerRuntimeBaseEvents>,
     IProvideFluidHandleContext,
-    IProvideFluidSerializer,
     /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
     IProvideFluidDataStoreRegistry {
 
@@ -78,17 +84,16 @@ export interface IContainerRuntimeBase extends
     setFlushMode(mode: FlushMode): void;
 
     /**
+     * Executes a request against the container runtime
+     */
+    request(request: IRequest): Promise<IResponse>;
+
+    /**
      * Submits a container runtime level signal to be sent to other clients.
      * @param type - Type of the signal.
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
-
-    on(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): this;
-    on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
-    on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
-    on(event: "leader" | "notleader", listener: () => void): this;
 
     /**
      * @deprecated 0.16 Issue #1537, #3631
@@ -120,7 +125,7 @@ export interface IContainerRuntimeBase extends
 
     getTaskManager(): Promise<ITaskManager>;
 
-    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 /**
@@ -182,9 +187,6 @@ export interface IFluidDataStoreChannel extends
      * it's new client ID when we are connecting or connected.
      */
     setConnectionState(connected: boolean, clientId?: string);
-
-    // Back-compat: supporting <= 0.16 data stores
-    changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
      * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.
@@ -354,7 +356,7 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
         createParam: CreateChildSummarizerNodeParam,
     ): CreateChildSummarizerNodeFn;
 
-    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
@@ -11,7 +10,6 @@ import {
     IClient,
     IConnect,
     IConnected,
-    IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -48,7 +46,6 @@ export class LocalDocumentDeltaConnection
         const connection = await new Promise<IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
-            const queuedContents: IContentMessage[] = [];
             const queuedSignals: ISignalMessage[] = [];
 
             const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
@@ -56,12 +53,6 @@ export class LocalDocumentDeltaConnection
                 queuedMessages.push(...msgs);
             };
             socket.on("op", earlyOpHandler);
-
-            const earlyContentHandler = (msg: IContentMessage) => {
-                debug("Queued early contents");
-                queuedContents.push(msg);
-            };
-            socket.on("op-content", earlyContentHandler);
 
             const earlySignalHandler = (msg: ISignalMessage) => {
                 debug("Queued early signals");
@@ -76,7 +67,6 @@ export class LocalDocumentDeltaConnection
 
             socket.on("connect_document_success", (response: IConnected) => {
                 socket.removeListener("op", earlyOpHandler);
-                socket.removeListener("op-content", earlyContentHandler);
                 socket.removeListener("signal", earlySignalHandler);
 
                 if (queuedMessages.length > 0) {
@@ -84,15 +74,6 @@ export class LocalDocumentDeltaConnection
                     // add them to the list of initialMessages to be processed
                     response.initialMessages.push(...queuedMessages);
                     response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-                }
-
-                if (queuedContents.length > 0) {
-                    // Some contents were queued.
-                    // add them to the list of initialContents to be processed
-                    response.initialContents.push(...queuedContents);
-
-                    // eslint-disable-next-line max-len
-                    response.initialContents.sort((a, b) => (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) || a.clientSequenceNumber - b.clientSequenceNumber);
                 }
 
                 if (queuedSignals.length > 0) {
@@ -114,8 +95,8 @@ export class LocalDocumentDeltaConnection
         return Promise.resolve(deltaConnection);
     }
 
-    private readonly emitter = new EventEmitter();
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
+    private readonly subscribedEvents = new Set<string>();
 
     public get clientId(): string {
         return this.details.clientId;
@@ -143,10 +124,6 @@ export class LocalDocumentDeltaConnection
 
     public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
-    }
-
-    public get initialContents(): IContentMessage[] {
-        return this.details.initialContents;
     }
 
     public get initialSignals(): ISignalMessage[] {
@@ -184,12 +161,14 @@ export class LocalDocumentDeltaConnection
         });
 
         this.on("newListener", (event, listener) => {
-            this.socket.on(
-                event,
-                (...args: any[]) => {
-                    this.emitter.emit(event, ...args);
-                });
-            this.emitter.on(event, listener);
+            if (!this.subscribedEvents.has(event)) {
+                this.subscribedEvents.add(event);
+                this.socket.on(
+                    event,
+                    (...args: any[]) => {
+                        this.emit(event, ...args);
+                    });
+                }
         });
     }
 
@@ -213,23 +192,7 @@ export class LocalDocumentDeltaConnection
         this.submitManager.drain();
     }
 
-    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.socket.emit(
-                "submitContent",
-                this.details.clientId,
-                messages,
-                (error) => {
-                    if (error) {
-                        reject();
-                    } else {
-                        resolve();
-                    }
-                });
-        });
-    }
-
-    public disconnect() {
+    public close() {
         // Do nothing
     }
 

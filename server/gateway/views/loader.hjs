@@ -36,7 +36,7 @@
         {{^scripts}}
         var scriptIds = [];
         {{/scripts}}
-  
+
         containerP = controllers.loader.initialize(
             window.location.href,
             resolved,
@@ -45,8 +45,7 @@
             scriptIds,
             jwt,
             config,
-            clientId,
-            user);
+        );
 
         const connectionDiv = document.getElementById("connection-state");
 

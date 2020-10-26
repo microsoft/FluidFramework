@@ -9,7 +9,6 @@ import {
     IClientJoin,
     IConnect,
     IConnected,
-    IDocumentMessage,
     ISequencedDocumentSystemMessage,
     MessageType,
     ScopeType,
@@ -22,10 +21,11 @@ import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-loc
 import { configureWebSocketServices, DefaultServiceConfiguration } from "@fluidframework/server-lambdas";
 import { PubSub } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
-import { generateToken } from "@fluidframework/server-services-client";
+import { generateToken } from "@fluidframework/server-services-utils";
 import {
     DefaultMetricClient,
     IClientManager,
+    IDeliState,
     IOrdererManager,
     IScribe,
     MongoDatabaseManager,
@@ -35,7 +35,6 @@ import {
 import {
     MessageFactory,
     TestClientManager,
-    TestCollection,
     TestDbFactory,
     TestKafka,
     TestTenantManager,
@@ -57,7 +56,6 @@ describe("Routerlicious", () => {
                 let testOrderer: IOrdererManager;
                 let testTenantManager: TestTenantManager;
                 let testClientManager: IClientManager;
-                let contentCollection: TestCollection;
 
                 beforeEach(() => {
                     const collectionNames = "test";
@@ -87,14 +85,12 @@ describe("Routerlicious", () => {
 
                     const pubsub = new PubSub();
                     webSocketServer = new LocalWebSocketServer(pubsub);
-                    contentCollection = new TestCollection([]);
 
                     configureWebSocketServices(
                         webSocketServer,
                         testOrderer,
                         testTenantManager,
                         testStorage,
-                        contentCollection,
                         testClientManager,
                         new DefaultMetricClient(),
                         DebugLogger.create("fluid-server:TestAlfredIO"));
@@ -141,22 +137,6 @@ describe("Routerlicious", () => {
                     return deferred.promise;
                 }
 
-                function sendMessage(
-                    socket: LocalWebSocket,
-                    clientId: string,
-                    message: IDocumentMessage): Promise<void> {
-
-                    const deferred = new Deferred<void>();
-                    socket.send("submitOp", clientId, [message], (error: any, response: any) => {
-                        if (error) {
-                            deferred.reject(error);
-                        } else {
-                            deferred.resolve(response);
-                        }
-                    });
-
-                    return deferred.promise;
-                }
 
                 describe("#connect_document", () => {
                     it("Should connect to and create a new interactive document on first connection", async () => {
@@ -219,7 +199,7 @@ describe("Routerlicious", () => {
                         const message = messageFactory.createDocumentMessage();
 
                         const beforeCount = deliKafka.getRawMessages().length;
-                        await sendMessage(socket, connectMessage.clientId, message);
+                        socket.send("submitOp", connectMessage.clientId, [message]);
                         assert.equal(deliKafka.getRawMessages().length, beforeCount + 1);
                         const lastMessage = deliKafka.getLastMessage();
                         assert.equal(lastMessage.documentId, testId);
@@ -272,7 +252,8 @@ describe("Routerlicious", () => {
             const docDetails = await testStorage.createDocument(testTenantId, testId, summaryTree, 10, 1, [["code", proposal]]);
             assert.equal(docDetails.existing, false, "Doc should not be existing!!");
             assert.equal(docDetails.value.documentId, testId, "Docid should be the provided one!!");
-            assert.equal(docDetails.value.sequenceNumber, 10, "Seq number should be 10 at which the summary was generated!!");
+            const deli: IDeliState = JSON.parse(docDetails.value.deli);
+            assert.equal(deli.sequenceNumber, 10, "Seq number should be 10 at which the summary was generated!!");
             const scribe: IScribe = JSON.parse(docDetails.value.scribe);
             assert.equal(scribe.protocolState.values[0][1]["value"], "empty", "Code proposal value should be equal!!");
         });

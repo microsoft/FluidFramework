@@ -252,6 +252,7 @@ function serializeDirectory(root: SubDirectory): ITree {
             }
             const result: ISerializableValue = {
                 type: value.type,
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 value: value.value && JSON.parse(value.value) as object,
             };
             if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
@@ -894,8 +895,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
-                    const translatedValue = this.runtime.IFluidSerializer.parse(
-                        JSON.stringify(op.value.value), this.runtime.IFluidHandleContext);
+                    const translatedValue = this.runtime.IFluidSerializer.parse(JSON.stringify(op.value.value));
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
                     this.emit("valueChanged", event, local, message);
@@ -1017,7 +1017,6 @@ class SubDirectory implements IDirectory {
         const serializableValue = makeSerializable(
             localValue,
             this.runtime.IFluidSerializer,
-            this.runtime.IFluidHandleContext,
             this.directory.handle);
 
         // Set the value locally.
@@ -1403,7 +1402,6 @@ class SubDirectory implements IDirectory {
         for (const [key, localValue] of this._storage) {
             const value = localValue.makeSerialized(
                 this.runtime.IFluidSerializer,
-                this.runtime.IFluidHandleContext,
                 this.directory.handle);
             const res: [string, ISerializedValue] = [key, value];
             yield res;

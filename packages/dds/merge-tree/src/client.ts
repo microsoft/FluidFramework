@@ -762,6 +762,7 @@ export class Client {
             }
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return opList;
     }
 
@@ -922,7 +923,6 @@ export class Client {
             snap.extractSync();
             return snap.emit(
                 runtime.IFluidSerializer,
-                runtime.IFluidHandleContext,
                 handle);
         } else {
             const snap = new SnapshotLegacy(this.mergeTree, this.logger);
@@ -930,7 +930,6 @@ export class Client {
             return snap.emit(
                 catchUpMsgs,
                 runtime.IFluidSerializer,
-                runtime.IFluidHandleContext,
                 handle);
         }
     }

@@ -7,6 +7,7 @@ import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "
 import { IGitCache, IGitManager } from "@fluidframework/server-services-client";
 import {
     IDatabaseManager,
+    IDeliState,
     IDocumentDetails,
     IDocumentStorage,
     IScribe,
@@ -28,8 +29,6 @@ import {
     getGitType,
 } from "@fluidframework/protocol-base";
 import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
-
-const StartingSequenceNumber = 0;
 
 // Forked from DocumentStorage to remove to server dependencies and enable testing of other data stores.
 export class TestDocumentStorage implements IDocumentStorage {
@@ -98,6 +97,16 @@ export class TestDocumentStorage implements IDocumentStorage {
         const commit = await gitManager.createCommit(commitParams);
         await gitManager.createRef(documentId, commit.sha);
 
+        const deli: IDeliState = {
+            branchMap: undefined,
+            clients: undefined,
+            durableSequenceNumber: sequenceNumber,
+            logOffset: -1,
+            sequenceNumber,
+            epoch: undefined,
+            term: 1,
+        };
+
         const scribe: IScribe = {
             logOffset: -1,
             minimumSequenceNumber: sequenceNumber,
@@ -119,16 +128,12 @@ export class TestDocumentStorage implements IDocumentStorage {
                 tenantId,
             },
             {
-                branchMap: undefined,
-                clients: undefined,
                 createTime: Date.now(),
-                deli: undefined,
+                deli: JSON.stringify(deli),
                 documentId,
                 forks: [],
-                logOffset: undefined,
                 parent: null,
                 scribe: JSON.stringify(scribe),
-                sequenceNumber,
                 tenantId,
                 version: "0.1",
             });
@@ -193,16 +198,12 @@ export class TestDocumentStorage implements IDocumentStorage {
                 tenantId,
             },
             {
-                branchMap: undefined,
-                clients: undefined,
                 createTime: Date.now(),
                 deli: undefined,
                 documentId,
                 forks: [],
-                logOffset: undefined,
                 parent: null,
                 scribe: undefined,
-                sequenceNumber: StartingSequenceNumber,
                 tenantId,
                 version: "0.1",
             });

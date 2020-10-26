@@ -27,7 +27,7 @@ export class TestCollection implements ICollection<any> {
     public async update(filter: any, set: any, addToSet: any): Promise<void> {
         const value = this.findOneInternal(filter);
         if (!value) {
-            return Promise.reject("Not found");
+            return Promise.reject(new Error("Not found"));
         }
         _.extend(value, set);
     }

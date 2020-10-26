@@ -263,6 +263,7 @@ export class Layout extends EventEmitter {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public pushTag<T extends {}>(tag: TagName, props?: T) {
         const element = this.elementForTag(tag);
         if (props) {
@@ -276,6 +277,7 @@ export class Layout extends EventEmitter {
         this.popNode(count);
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public emitTag<T extends {}>(tag: TagName, props?: T) {
         const element = this.elementForTag(tag);
         if (props) {

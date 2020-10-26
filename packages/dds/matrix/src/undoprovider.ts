@@ -12,6 +12,12 @@ import { PermutationSegment, PermutationVector } from "./permutationvector";
 import { IUndoConsumer } from "./types";
 
 export class VectorUndoProvider {
+    // 'currentGroup' and 'currentOp' are used while applying an IRevertable.revert() to coalesce
+    // the recorded into a single IRevertable / tracking group as they move between the undo <->
+    // redo stacks.
+    private currentGroup?: TrackingGroup;
+    private currentOp?: MergeTreeDeltaType;
+
     constructor (
         private readonly manager: IUndoConsumer,
         private readonly undoInsert: (segment: PermutationSegment) => void,
@@ -29,42 +35,75 @@ export class VectorUndoProvider {
             //
             // These properties allow us to rely on MergeTree.getPosition() to find the locations/lengths
             // of all content contained within the tracking group in the future.
-            const trackingGroup = new TrackingGroup();
+
+            // If we are in the process of reverting, the `IRevertible.revert()` will provide the tracking
+            // group so that we can preserve the original segment ranges as a single op/group as we move
+            // ops between the undo <-> redo stacks.
+            const trackingGroup = this.currentGroup ?? new TrackingGroup();
             for (const range of ranges) {
                 trackingGroup.link(range.segment);
             }
 
+            // For SharedMatrix, each IRevertibles always holds a single row/col operation.
+            // Therefore, 'currentOp' must either be undefined or equal to the current op.
+            assert(this.currentOp === undefined || this.currentOp === operation);
+
             switch (operation) {
                 case MergeTreeDeltaType.INSERT:
-                    this.pushRevertible(trackingGroup, this.undoInsert);
+                    if (this.currentOp !== MergeTreeDeltaType.INSERT) {
+                        this.pushRevertible(trackingGroup, this.undoInsert);
+                    }
                     break;
 
                 case MergeTreeDeltaType.REMOVE: {
-                    this.pushRevertible(trackingGroup, this.undoRemove);
+                    if (this.currentOp !== MergeTreeDeltaType.REMOVE) {
+                        this.pushRevertible(trackingGroup, this.undoRemove);
+                    }
                     break;
                 }
 
                 default:
                     assert.fail("operation type not revertible");
             }
+
+            // If we are in the process of reverting, set 'currentOp' to remind ourselves not to push
+            // another revertible until `IRevertable.revert()` finishes the current op and clears this
+            // field.
+            if (this.currentGroup !== undefined) {
+                this.currentOp = operation;
+            }
         }
     }
 
     private pushRevertible(trackingGroup: TrackingGroup, callback: (segment: PermutationSegment) => void) {
-        this.manager.pushToCurrentOperation({
+        const revertible = {
             revert: () => {
-                while (trackingGroup.size > 0) {
-                    const sg = trackingGroup.segments[0] as PermutationSegment;
-                    callback(sg);
-                    sg.trackingCollection.unlink(trackingGroup);
+                assert(this.currentGroup === undefined && this.currentOp === undefined,
+                    "Must not nest calls to IRevertible.revert()");
+
+                this.currentGroup = new TrackingGroup();
+
+                try {
+                    while (trackingGroup.size > 0) {
+                        const sg = trackingGroup.segments[0] as PermutationSegment;
+                        callback(sg);
+                        sg.trackingCollection.unlink(trackingGroup);
+                    }
+                } finally {
+                    this.currentOp = undefined;
+                    this.currentGroup = undefined;
                 }
             },
-            disgard: () => {    // [sic]
+            discard: () => {
                 while (trackingGroup.size > 0) {
                     trackingGroup.unlink(trackingGroup.segments[0]);
                 }
             },
-        });
+        };
+
+        this.manager.pushToCurrentOperation(revertible);
+
+        return revertible;
     }
 }
 
@@ -108,7 +147,7 @@ export class MatrixUndoProvider<T extends Serializable = Serializable> {
                         this.cols.handleToPosition(colHandle),
                         oldValue);
                 },
-                disgard: () => {},  // [sic]
+                discard: () => {},
             });
         }
     }

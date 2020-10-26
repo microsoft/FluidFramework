@@ -205,6 +205,7 @@ Send PRs to [this repo](https://github.com/mattetti/custom-api-documenter).
 | `build:api-documenter` | Convert API JSON into Markdown. |
 | `build:api-documenter:default` | -- |
 | `build:api-documenter:win32` | -- |
+| `build:diagrams` | Generate the diagram images using ditaa; requires Java to run. |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `clean` | Remove all generated files. |
 | `download` | Download and extract the API JSON and Playground files locally. |
@@ -213,6 +214,7 @@ Send PRs to [this repo](https://github.com/mattetti/custom-api-documenter).
 | `hugo` | Run the local copy of Hugo. |
 | `hugo:default` | --- |
 | `hugo:win32` | --- |
+| `install:ditaa` | Install ditaa to generate diagrams; requires Java to run. |
 | `install:hugo` | Install the version of Hugo used by the documentation. |
 | `postinstall` | -- |
 | `postinstall:default` | -- |

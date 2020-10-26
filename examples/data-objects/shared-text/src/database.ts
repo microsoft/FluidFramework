@@ -92,6 +92,7 @@ export class GraphQLService {
                         }
 
                         sharedString.walkSegments(leaf);
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         return pgs;
                     },
                     type: GraphQLList(paragraphType),

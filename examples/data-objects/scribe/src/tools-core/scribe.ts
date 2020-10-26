@@ -5,7 +5,6 @@
 
 import childProcess from "child_process";
 import path from "path";
-import { IFluidObject } from "@fluidframework/core-interfaces";
 import { ILoader } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -46,20 +45,12 @@ async function conductor(
     const docId = "";
     const chunks = author.normalizeText(text).split("\n");
 
-    const response = await loader.request({ url });
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        return Promise.reject("Invalid document");
-    }
-
-    const component = response.value as IFluidObject;
-    if (!component.ISharedString) {
-        return Promise.reject("Cannot type into document");
-    }
+    const sharedString = await author.requestSharedString(loader, url);
 
     const chunksMap = SharedMap.create(runtime);
     scribeMap.set("chunks", chunksMap.handle);
 
-    setParagraphs(chunks, component.ISharedString);
+    setParagraphs(chunks, sharedString);
 
     chunks.forEach((chunk, index) => {
         const chunkKey = `p-${index}`;
@@ -72,7 +63,7 @@ async function conductor(
             loader,
             url,
             runtime,
-            component.ISharedString,
+            sharedString,
             chunksMap,
             text,
             intervalTime,
