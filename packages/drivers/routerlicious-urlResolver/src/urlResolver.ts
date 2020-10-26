@@ -51,9 +51,13 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         }
 
         const path = reqUrl.pathname.split("/");
+        let relativePath = "";
+        if (path.length >= 5) {
+            relativePath = `/` + `${path.slice(4).join("/")}`;
+        }
+
         let tenantId: string;
         let documentId: string;
-        let relativePath: string;
         let provider: Provider | undefined;
         if (this.config) {
             tenantId = this.config.tenantId;
@@ -66,16 +70,9 @@ export class RouterliciousUrlResolver implements IUrlResolver {
             tenantId = "fluid";
             documentId = path[2];
         }
-        if (path.length >= 5) {
-            relativePath = reqUrl.pathname.slice(path[1].length + tenantId.length + documentId.length + 3);
-        }
-        else {
-            relativePath = "";
-        }
 
         let token: string;
         if (!this.getToken) {
-            // eslint-disable-next-line @typescript-eslint/no-use-before-define
             token = getR11sToken(tenantId, documentId, this.appTenants, this.scopes, this.user);
         } else {
             token = await this.getToken();
@@ -89,7 +86,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         let fluidUrl = "fluid://" +
             `${this.config ? parse(this.config.provider.get("worker:serverUrl")).host : serverSuffix}/` +
             `${encodeURIComponent(tenantId)}/` +
-            `${encodeURIComponent(documentId)}`+
+            `${encodeURIComponent(documentId)}` +
             `${relativePath}`;
 
         // In case of any additional parameters add them back to the url
