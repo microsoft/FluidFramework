@@ -139,7 +139,7 @@ export class EpochTracker {
         if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
             throwOdspNetworkError("Epoch Mismatch", fluidEpochMismatchError);
         }
-        if (epochFromResponse !== undefined && epochFromResponse !== null) {
+        if (epochFromResponse) {
             this._fluidEpoch = epochFromResponse;
         }
     }
