@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import AbortController from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
 import {
@@ -26,6 +27,7 @@ import {
     IDocumentStorageService,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
+import { OdspErrorType } from "@fluidframework/odsp-doclib-utils";
 import {
     IDocumentStorageGetVersionsResponse,
     IOdspResolvedUrl,
@@ -109,7 +111,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private readonly documentId: string;
     private readonly snapshotUrl: string | undefined;
-    private readonly sharingLink: string | undefined;
+    private readonly sharingLinkP: Promise<string> | undefined;
     private readonly attachmentPOSTUrl: string | undefined;
     private readonly attachmentGETUrl: string | undefined;
 
@@ -137,7 +139,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     ) {
         this.documentId = odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
-        this.sharingLink = odspResolvedUrl.sharingLink;
+        this.sharingLinkP = odspResolvedUrl.sharingLinkP;
         this.attachmentPOSTUrl = odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
         this.attachmentGETUrl = odspResolvedUrl.endpoints.attachmentGETStorageUrl;
 
@@ -333,17 +335,17 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall", hasClaims: !!tokenFetchOptions.claims });
                 }
 
+                // Choose min of host specified limits or driver specified limits.
+                const maxSnapshotSizeLimit = 25000000; // 25 MB
+                const maxSnapshotFetchTimeout = 30000; // 30 sec
                 const snapshotOptions: ISnapshotOptions = {
                     deltas: 1,
                     channels: 1,
                     blobs: 2,
                     ...this.hostPolicy.snapshotOptions,
+                    mds: this.hostPolicy.snapshotOptions?.mds ? Math.min(this.hostPolicy.snapshotOptions.mds, maxSnapshotSizeLimit) : maxSnapshotSizeLimit,
+                    timeout: this.hostPolicy.snapshotOptions?.timeout ? Math.min(this.hostPolicy.snapshotOptions.timeout, maxSnapshotFetchTimeout) : maxSnapshotFetchTimeout,
                 };
-
-                // No limit on size of snapshot, as otherwise we fail all clients to summarize
-                if (this.hostPolicy.summarizerClient) {
-                    snapshotOptions.mds = undefined;
-                }
 
                 let cachedSnapshot: IOdspSnapshot | undefined;
 
@@ -509,17 +511,39 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // only if it is first failure, otherwise fallback to get call.
         if (usePost) {
             try {
-                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, true);
+                const odspSnapshot = await this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, true);
+                return odspSnapshot;
             } catch (error) {
                 const errorType = error.errorType;
                 if ((errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.incorrectServerResponse) && tokenFetchOptions.refresh === false) {
                     throw error;
                 }
                 this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
-                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
+                return this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, false);
             }
         } else {
-            return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
+            return this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, false);
+        }
+    }
+
+    private async fetchSnapshotWithTimeout(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions, usePost: boolean) {
+        assert(snapshotOptions.timeout !== undefined, "Timeout should be provided for setting a limit");
+        const abortController = new AbortController();
+        setTimeout(
+            () => {
+                abortController.abort();
+            },
+            snapshotOptions.timeout,
+        );
+        try {
+            const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost, abortController);
+            return odspSnapshot;
+        } catch (error) {
+            if (error.errorType === OdspErrorType.snapshotTooBig || error.errorType === OdspErrorType.fetchTimeout) {
+                const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: undefined };
+                return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions, usePost);
+            }
+            throw error;
         }
     }
 
@@ -527,10 +551,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         snapshotOptions: ISnapshotOptions,
         tokenFetchOptions: TokenFetchOptions,
         usePost: boolean,
+        controller?: AbortController,
     ) {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
         let url: string;
-        let headers: {[index: string]: string};
+        let headers: {[index: string]: any};
         let postBody: string;
         if (usePost) {
             url = `${this.snapshotUrl}/trees/latest?ump=1`;
@@ -541,8 +566,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             Object.entries(snapshotOptions).forEach(([key, value]) => {
                 postBody += `${key}: ${value}\r\n`;
             });
-            if (this.sharingLink) {
-                postBody += `sl: ${this.sharingLink}\r\n`;
+            const sharingLink = await this.sharingLinkP;
+            if (sharingLink) {
+                postBody += `sl: ${sharingLink}\r\n`;
             }
             postBody += `_post: 1\r\n`;
             postBody += `\r\n--${formBoundary}--`;
@@ -563,7 +589,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
 
         // This event measures only successful cases of getLatest call (no tokens, no retries).
-        const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest" }, async (event) => {
+        const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest", fetchTimeout: snapshotOptions.timeout, maxSnapshotSize: snapshotOptions.mds }, async (event) => {
             const startTime = performance.now();
             let response: IOdspResponse<IOdspSnapshot>;
             if (usePost) {
@@ -572,10 +598,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     {
                         body: postBody,
                         headers,
+                        signal: controller?.signal,
                         method: "POST",
                     });
             } else {
-                response = await fetchAndParseHelper<IOdspSnapshot>(url, { headers });
+                response = await fetchAndParseHelper<IOdspSnapshot>(url, { headers, signal: controller?.signal });
             }
             const endTime = performance.now();
             const overallTime = endTime - startTime;

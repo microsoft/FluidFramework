@@ -5,13 +5,14 @@
 
 import { strict as assert } from "assert";
 import {
+    IFluidCodeDetails,
     IRequest,
-    DriverHeader,
+    isFluidPackage,
 } from "@fluidframework/core-interfaces";
 import {
     IUrlResolver,
     IResolvedUrl,
-    CreateNewHeader,
+    DriverHeader,
 } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
@@ -52,24 +53,44 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         return resolveRequest(request);
     }
 
-    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(
+        resolvedUrl: IResolvedUrl,
+        relativeUrl: string,
+        codeDetails?: IFluidCodeDetails,
+    ): Promise<string> {
         let url = relativeUrl;
         if (url.startsWith("/")) {
             url = url.substr(1);
         }
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        return `${odspResolvedUrl.siteUrl}/${url}?driveId=${encodeURIComponent(
-            odspResolvedUrl.driveId)}&itemId=${encodeURIComponent(
-                odspResolvedUrl.itemId,
-            )}&path=${encodeURIComponent("/")}`;
+        let odspUrl = `${odspResolvedUrl.siteUrl}/${url}?driveId=${encodeURIComponent(odspResolvedUrl.driveId,
+            )}&itemId=${encodeURIComponent(odspResolvedUrl.itemId)}&path=${encodeURIComponent("/")}`;
+        const packageName = isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
+             odspResolvedUrl.codeHint?.containerPackageName;
+        if (packageName) {
+            odspUrl += `&containerPackageName=${encodeURIComponent(packageName)}`;
+        }
+
+        return odspUrl;
     }
 
-    public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {
+    public createCreateNewRequest(
+        siteUrl: string,
+        driveId: string,
+        filePath: string,
+        fileName: string,
+    ): IRequest {
         return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     }
 }
 
-function decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId: string; path: string } {
+function decodeOdspUrl(url: string): {
+    siteUrl: string;
+    driveId: string;
+    itemId: string;
+    path: string;
+    containerPackageName?: string;
+} {
     const [siteUrl, queryString] = url.split("?");
 
     const searchParams = new URLSearchParams(queryString);
@@ -77,6 +98,7 @@ function decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId:
     const driveId = searchParams.get("driveId");
     const itemId = searchParams.get("itemId");
     const path = searchParams.get("path");
+    const containerPackageName = searchParams.get("containerPackageName");
 
     if (driveId === null) {
         throw new Error("ODSP URL did not contain a drive id");
@@ -95,17 +117,19 @@ function decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId:
         driveId: decodeURIComponent(driveId),
         itemId: decodeURIComponent(itemId),
         path: decodeURIComponent(path),
+        containerPackageName: containerPackageName ? decodeURIComponent(containerPackageName) : undefined,
     };
 }
 
 export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUrl> {
-    if (request.headers && request.headers[CreateNewHeader.createNew]) {
+    if (request.headers && request.headers[DriverHeader.createNew]) {
         const [siteURL, queryString] = request.url.split("?");
 
         const searchParams = new URLSearchParams(queryString);
-        const fileName = request.headers[CreateNewHeader.createNew].fileName;
+        const fileName = request.headers[DriverHeader.createNew].fileName;
         const driveID = searchParams.get("driveId");
         const filePath = searchParams.get("path");
+        const packageName = searchParams.get("containerPackageName");
         if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
             throw new Error("Proper new file params should be there!!");
         }
@@ -124,9 +148,12 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
             itemId: "",
             fileName,
             summarizer: false,
+            codeHint: {
+                containerPackageName: packageName ? packageName : undefined,
+            },
         };
     }
-    const { siteUrl, driveId, itemId, path } = decodeOdspUrl(request.url);
+    const { siteUrl, driveId, itemId, path, containerPackageName } = decodeOdspUrl(request.url);
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);
     assert.ok(!hashedDocumentId.includes("/"), "Docid should not contain slashes!!");
 
@@ -158,5 +185,8 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
         itemId,
         fileName: "",
         summarizer,
+        codeHint: {
+            containerPackageName,
+        },
     };
 }

@@ -10,6 +10,7 @@ import {
     IFluidConfiguration,
     IRequest,
     IResponse,
+    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -18,7 +19,6 @@ import {
     IDeltaManager,
     ILoader,
     IRuntime,
-    IRuntimeFactory,
     IRuntimeState,
     ICriticalContainerError,
     ContainerWarning,
@@ -39,15 +39,18 @@ import {
     ISummaryTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { Container } from "./container";
-import { NullRuntime } from "./nullRuntime";
+import { NullChaincode, NullRuntime } from "./nullRuntime";
+
+const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
         scope: IFluidObject,
         codeLoader: ICodeLoader,
-        runtimeFactory: IRuntimeFactory,
+        codeDetails: IFluidCodeDetails,
         baseSnapshot: ISnapshotTree | undefined,
         attributes: IDocumentAttributes,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -65,7 +68,7 @@ export class ContainerContext implements IContainerContext {
             container,
             scope,
             codeLoader,
-            runtimeFactory,
+            codeDetails,
             baseSnapshot,
             attributes,
             deltaManager,
@@ -166,7 +169,7 @@ export class ContainerContext implements IContainerContext {
         private readonly container: Container,
         public readonly scope: IFluidObject,
         public readonly codeLoader: ICodeLoader,
-        public readonly runtimeFactory: IRuntimeFactory,
+        public readonly codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
         private readonly attributes: IDocumentAttributes,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -268,6 +271,20 @@ export class ContainerContext implements IContainerContext {
     }
 
     private async load() {
-        this._runtime = await this.runtimeFactory.instantiateRuntime(this);
+        if (this.codeDetails === undefined) {
+            const nullChaincode =  new NullChaincode();
+            this._runtime = await nullChaincode.instantiateRuntime(this);
+            return;
+        }
+
+        const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
+            async () => this.codeLoader.load(this.codeDetails),
+        );
+
+        const maybeFactory = fluidModule?.fluidExport?.IRuntimeFactory;
+        if (maybeFactory === undefined) {
+            throw new Error(PackageNotFactoryError);
+        }
+        this._runtime = await maybeFactory.instantiateRuntime(this);
     }
 }

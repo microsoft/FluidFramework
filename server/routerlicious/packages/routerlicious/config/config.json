@@ -77,7 +77,9 @@
         }
     },
     "auth": {
-        "endpoint": "http://riddler:5000"
+        "endpoint": "http://riddler:5000",
+        "maxTokenLifetimeSec": 3600,
+        "enableTokenExpiration": false
     },
     "routemanager": {
         "topics": {

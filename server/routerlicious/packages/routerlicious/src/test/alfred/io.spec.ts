@@ -9,7 +9,6 @@ import {
     IClientJoin,
     IConnect,
     IConnected,
-    IDocumentMessage,
     ISequencedDocumentSystemMessage,
     MessageType,
     ScopeType,
@@ -22,7 +21,7 @@ import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-loc
 import { configureWebSocketServices, DefaultServiceConfiguration } from "@fluidframework/server-lambdas";
 import { PubSub } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
-import { generateToken } from "@fluidframework/server-services-client";
+import { generateToken } from "@fluidframework/server-services-utils";
 import {
     DefaultMetricClient,
     IClientManager,
@@ -138,22 +137,6 @@ describe("Routerlicious", () => {
                     return deferred.promise;
                 }
 
-                function sendMessage(
-                    socket: LocalWebSocket,
-                    clientId: string,
-                    message: IDocumentMessage): Promise<void> {
-
-                    const deferred = new Deferred<void>();
-                    socket.send("submitOp", clientId, [message], (error: any, response: any) => {
-                        if (error) {
-                            deferred.reject(error);
-                        } else {
-                            deferred.resolve(response);
-                        }
-                    });
-
-                    return deferred.promise;
-                }
 
                 describe("#connect_document", () => {
                     it("Should connect to and create a new interactive document on first connection", async () => {
@@ -216,7 +199,7 @@ describe("Routerlicious", () => {
                         const message = messageFactory.createDocumentMessage();
 
                         const beforeCount = deliKafka.getRawMessages().length;
-                        await sendMessage(socket, connectMessage.clientId, message);
+                        socket.send("submitOp", connectMessage.clientId, [message]);
                         assert.equal(deliKafka.getRawMessages().length, beforeCount + 1);
                         const lastMessage = deliKafka.getLastMessage();
                         assert.equal(lastMessage.documentId, testId);
