@@ -1,0 +1,20 @@
+packages:
+  # all packages in subdirs of packages/ and examples/
+#   - 'common/*/*'
+  - 'packages/*'
+#   - '../../common/*/*'
+  - '!packages/local-server'
+#   - 'examples/**'
+#   - 'server/routerlicious/packages/**'
+#   - 'server/routerlicious/packages/gitresources'
+#   - 'server/routerlicious/packages/localserver'
+#   - 'server/routerlicious/packages/protocol-*'
+  # exclude packages that are inside test/ directories
+  # - '!**/test/**'
+#   - '!**/routerlicious-urlResolver'
+#   - '!**/node_modules/**'
+
+link-workspace-packages: deep
+prefer-workspace-packages: true
+save-workspace-protocol: false
+shared-workspace-lockfile: true

@@ -1,0 +1,24 @@
+packages:
+  # all packages in subdirs of packages/ and examples/
+  - 'common/*/*'
+  - 'packages/*/*'
+  - 'examples/**'
+  - 'experimental/**'
+#   - 'server/routerlicious/packages/**'
+  - 'server/routerlicious/packages/gitresources'
+  - 'server/routerlicious/packages/localserver'
+  - 'server/routerlicious/packages/protocol-*'
+  # exclude packages that are inside test/ directories
+  - '!**/test/**'
+#   - '!**/routerlicious-urlResolver'
+#   - '!packages/*/*odsp*'
+#   - '!packages/*/end-to-end-tests'
+#   - '!packages/*/fetch-tool'
+#   - '!packages/*/tool-utils'
+#   - '!packages/*/webpack-fluid-loader'
+#   - '!packages\driversodsp-urlResolver'
+
+link-workspace-packages: deep
+prefer-workspace-packages: true
+save-workspace-protocol: true
+shared-workspace-lockfile: true

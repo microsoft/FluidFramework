@@ -26,7 +26,7 @@
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && npm run clean",
-    "postinstall": "npm run postinstall:lerna",
+    "postinstall-old": "npm run postinstall:lerna",
     "layer-check": "fluid-layer-check --info tools/build-tools/data/layerInfo.json",
     "lint": "lerna run lint --no-sort --stream -- -- -- --color",
     "lint:fix": "lerna run lint:fix --no-sort --stream -- -- -- --color",
@@ -61,7 +61,7 @@
     "test:realsvc:report": "lerna run test:realsvc:report --stream --no-bail --no-sort",
     "test:report": "npm run test:mocha:report && npm run test:jest:report && npm run test:realsvc:report",
     "test:types": "lerna run test:types --stream --no-bail --no-sort",
-    "tsc": "lerna run tsc --stream",
+    "tsc": "pnpm m run tsc --sort",
     "tsc:fast": "fluid-build  --root . -s tsc",
     "tsfmt": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "tsfmt:fix": "lerna run tsfmt:fix --no-sort --stream --no-bail",
@@ -70,7 +70,8 @@
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
     "webpack": "lerna run --no-sort webpack --stream",
-    "webpack:profile": "lerna run --no-sort webpack:profile --stream"
+    "webpack:profile": "lerna run --no-sort webpack:profile --stream",
+    "lage": "lage"
   },
   "nyc": {
     "all": true,
@@ -118,7 +119,8 @@
     "run-script-os": "^1.1.5",
     "start-server-and-test": "^1.11.7",
     "tinylicious": "^0.4.17169",
-    "typescript": "~4.1.3"
+    "typescript": "~4.1.3",
+    "lage": "0.24.0"
   },
   "fluidBuild": {
     "repoPackages": {
