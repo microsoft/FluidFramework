@@ -43,7 +43,7 @@ const snapshotFileName = "header";
  * A `SharedCounter` is a shared object which holds a number that can be incremented or decremented.
  *
  * @remarks
- * ## Creation
+ * ### Creation
  *
  * To create a `SharedCounter`, get the factory and call create with a runtime and string ID:
  *
@@ -52,7 +52,7 @@ const snapshotFileName = "header";
  * const counter = factory.create(this.runtime, id) as SharedCounter;
  * ```
  *
- * ## Usage
+ * ### Usage
  *
  * Once created, you can call `increment` to modify the value with either a positive or negative number:
  *

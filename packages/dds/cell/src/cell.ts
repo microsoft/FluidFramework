@@ -53,7 +53,7 @@ const snapshotFileName = "header";
  * The SharedCell distributed data structure can be used to store a single serializable value.
  *
  * @remarks
- * ## Creation
+ * ### Creation
  *
  * To create a `SharedCell`, call the static create method:
  *
@@ -61,7 +61,7 @@ const snapshotFileName = "header";
  * const myCell = SharedCell.create(this.runtime, id);
  * ```
  *
- * ## Usage
+ * ### Usage
  *
  * The value stored in the cell can be set with the `.set()` method and retrieved with the `.get()` method:
  *
@@ -90,7 +90,7 @@ const snapshotFileName = "header";
  * }
  * ```
  *
- * ## Eventing
+ * ### Eventing
  *
  * `SharedCell` is an `EventEmitter`, and will emit events when other clients make modifications. You should
  * register for these events and respond appropriately as the data is modified. `valueChanged` will be emitted

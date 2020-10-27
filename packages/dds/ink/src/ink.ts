@@ -41,7 +41,7 @@ const snapshotFileName = "header";
  * `Ink` is a shared object which holds a collection of ink strokes.
  *
  * @remarks
- * ## Creation and setup
+ * ### Creation and setup
  *
  * To create an `Ink` object, call the static `create` method:
  *
@@ -58,7 +58,7 @@ const snapshotFileName = "header";
  * };
  * ```
  *
- * ## Usage
+ * ### Usage
  *
  * Once the `Ink` object is created, you can add and update ink strokes using `createStroke` and
  * `appendPointToStroke`.  Most likely you'll want to do this in response to incoming Pointer Events:
