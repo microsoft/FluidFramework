@@ -808,6 +808,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Provided codeDetails are not IFluidCodeDetails");
         }
 
+        if (this.codeLoader.IFluidCodeDetailsComparer) {
+            const comparision = await this.codeLoader.IFluidCodeDetailsComparer.compare(
+                codeDetails,
+                this.getCodeDetailsFromQuorum());
+            if (comparision !== undefined && comparision <= 0) {
+                throw new Error("Proposed code details should be greater than the current");
+            }
+        }
+
         return this.getQuorum().propose("code", codeDetails)
             .then(()=>true)
             .catch(()=>false);

@@ -288,7 +288,11 @@ export class ContainerContext implements IContainerContext {
         return this.container.getAbsoluteUrl(relativeUrl);
     }
 
-    public async satisfies(codeDetails: IFluidCodeDetails) {
+    /**
+     * Determines if the current code details of the context
+     * satisfy the incoming constraint code details
+     */
+    public async satisfies(constraitCodeDetails: IFluidCodeDetails) {
         const comparers: IFluidCodeDetailsComparer[] = [];
 
         const maybeCompareCodeLoader = this.codeLoader;
@@ -301,12 +305,17 @@ export class ContainerContext implements IContainerContext {
             comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
         }
 
+        // if there are not comparers it is not possible to know
+        // if the current satisfy the incoming, so return false,
+        // as assuming they do not satisfy is safer .e.g we will
+        // reload, rather than potentially running with
+        // incompatible code
         if (comparers.length === 0) {
             return false;
         }
 
         for (const comparer of comparers) {
-            const satisfies = await comparer.satisfies(this.codeDetails, codeDetails);
+            const satisfies = await comparer.satisfies(this.codeDetails, constraitCodeDetails);
             if (satisfies === false) {
                 return false;
             }
