@@ -132,6 +132,7 @@
     "@types/jquery": "^3.3.6",
     "@types/json-stringify-safe": "^5.0.0",
     "@types/jsonwebtoken": "^8.3.0",
+    "@types/jsrsasign": "^8.0.7",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",
     "@types/morgan": "^1.7.35",
