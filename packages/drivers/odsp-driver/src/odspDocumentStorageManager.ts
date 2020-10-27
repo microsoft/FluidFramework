@@ -118,6 +118,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly attachmentPOSTUrl: string | undefined;
     private readonly attachmentGETUrl: string | undefined;
     // Driver specified limits for snapshot size and time.
+    /**
+     * NOTE: While commit cfff6e3 added restrictions to prevent large payloads, snapshot failures will continue to
+     * happen until blob request throttling is implemented. Until then, as a temporary fix we set arbitrarily large
+     * snapshot size and timeout limits so that such failures are unlikely to occur.
+     */
     private readonly maxSnapshotSizeLimit = 500000000; // 500 MB
     private readonly maxSnapshotFetchTimeout = 120000; // 2 min
 
