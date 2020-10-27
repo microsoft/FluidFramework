@@ -42,14 +42,14 @@ async function getRef(
         const ref = await git.Reference.lookup(repository, refId, undefined);
         return refToIRef(ref);
     } catch (err) {
-        winston.error(`getRef error: ${err}`);
         // Lookup external storage if commit does not exist.
         const fileName = refId.substring(refId.lastIndexOf("/") + 1);
         // If file does not exist or error trying to look up commit, return the original error.
         try {
             const result = await externalStorageManager.read(repo, fileName);
-            if (result === false) {
-                return err;
+            if (!result) {
+                winston.error(`getRef error: ${err} repo: ${repo} ref: ${refId}`);
+                return Promise.reject(err);
             }
             return getRef(repoManager, owner, repo, refId, externalStorageManager);
         } catch (bridgeError) {
@@ -65,7 +65,7 @@ async function createRef(
     repo: string,
     createParams: ICreateRefParamsExternal,
     externalStorageManager: IExternalStorageManager,
-): Promise<IRef> {{
+): Promise<IRef> {
     const repository = await repoManager.open(owner, repo);
     const ref = await git.Reference.create(
         repository,

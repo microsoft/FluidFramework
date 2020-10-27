@@ -54,8 +54,8 @@ export async function getCommits(
         winston.info(`getCommits error: ${err}`);
         try {
             const result = await externalStorageManager.read(repo, ref);
-            if (result === false) {
-                return;
+            if (!result) {
+                return Promise.reject(err);
             }
             return getCommits(repoManager, owner, repo, ref, count, externalStorageManager);
         } catch (bridgeError) {

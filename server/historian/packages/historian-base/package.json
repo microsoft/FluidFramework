@@ -25,7 +25,7 @@
     "@fluidframework/common-utils": "^0.24.0-0",
     "@fluidframework/gitresources": "^0.1012.0",
     "@fluidframework/server-services": "^0.1012.2",
-    "@fluidframework/server-services-core": "^0.1012.2",
+    "@fluidframework/server-services-core": "0.1014.0-7764",
     "@fluidframework/server-services-utils": "^0.1012.2",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",

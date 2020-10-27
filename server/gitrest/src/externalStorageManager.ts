@@ -4,7 +4,8 @@
  */
 
 import Axios from "axios";
-import { config } from "process";
+import safeStringify from "json-stringify-safe";
+import { Provider } from "nconf";
 import * as winston from "winston";
 
 export interface IExternalStorageManager {
@@ -17,11 +18,14 @@ export interface IExternalStorageManager {
  * Manages api calls to external storage
  */
 export class ExternalStorageManager implements IExternalStorageManager {
-    constructor(private endpoint: string) {
+    private readonly endpoint: string;
+
+    constructor(public readonly config: Provider) {
+        this.endpoint = config.get("externalStorage:endpoint");
     }
 
     public async read(tenantId: string, documentId: string): Promise<boolean> {
-        if (config.get("externalStorage:enabled") != "true") {
+        if (!this.config.get("externalStorage:enabled")) {
             winston.info("External storage is not enabled");
             return false;
         }
@@ -33,15 +37,16 @@ export class ExternalStorageManager implements IExternalStorageManager {
                     "Content-Type": "application/json",
                 },
             }).catch((error) => {
-                winston.error(`Axios error ${error} tenantId ${tenantId}`);
-                throw error;
+                const messageMetaData = { tenantId, documentId };
+                winston.error(`Failed to read document: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
+                return false;
             });
 
         return true;
     }
 
     public async write(tenantId: string, ref: string, sha: string, update: boolean): Promise<void> {
-        if (config.get("externalStorage:enabled") != "true") {
+        if (!this.config.get("externalStorage:enabled")) {
             winston.info("External storage is not enabled");
             return;
         }
@@ -57,6 +62,10 @@ export class ExternalStorageManager implements IExternalStorageManager {
                     "Accept": "application/json",
                     "Content-Type": "application/json",
                 },
+            }).catch((error) => {
+                const messageMetaData = { tenantId, ref };
+                winston.error(`Failed to write to file: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
+                throw error;
             });
     }
 }
