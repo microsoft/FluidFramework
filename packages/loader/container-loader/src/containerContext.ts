@@ -11,7 +11,6 @@ import {
     IRequest,
     IResponse,
     IFluidCodeDetails,
-    IProvideFluidCodeDetailsComparer,
     IFluidCodeDetailsComparer,
 } from "@fluidframework/core-interfaces";
 import {
@@ -292,12 +291,12 @@ export class ContainerContext implements IContainerContext {
     public async satisfies(codeDetails: IFluidCodeDetails) {
         const comparers: IFluidCodeDetailsComparer[] = [];
 
-        const maybeCompareCodeLoader = this.codeLoader as Partial<IProvideFluidCodeDetailsComparer>;
+        const maybeCompareCodeLoader = this.codeLoader;
         if (maybeCompareCodeLoader.IFluidCodeDetailsComparer !== undefined) {
             comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
         }
 
-        const maybeCompareExport = (await this.fluidModuleP).fluidExport as Partial<IProvideFluidCodeDetailsComparer>;
+        const maybeCompareExport = (await this.fluidModuleP).fluidExport;
         if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
             comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
         }

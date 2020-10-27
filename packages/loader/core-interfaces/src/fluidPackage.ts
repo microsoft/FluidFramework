@@ -104,17 +104,17 @@ export interface IProvideFluidCodeDetailsComparer {
 }
 
 /**
- *
+ * Provides capability to compare fluid code details.
  */
-export interface IFluidCodeDetailsComparer  extends IProvideFluidCodeDetailsComparer {
+export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
 
     /**
-     * Determinis if the code details in `a` satisfy the constraints specified in the code details of `b`.
+     * Determines if the `candidate` code details satisfy the constraints specified in `constraint` code details.
      *
      * Similar semantics to:
      *      https://github.com/npm/node-semver#usage
      */
-    satisfies(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<boolean>;
+    satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
 
     /**
      * Return a number representing the ascending sort order of the `a` and `b` code details;
