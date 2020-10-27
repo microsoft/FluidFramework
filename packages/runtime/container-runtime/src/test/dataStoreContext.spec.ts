@@ -274,6 +274,8 @@ describe("Data Store Context Tests", () => {
                 contents.snapshotFormatVersion,
                 "0.1",
                 "Remote DataStore snapshot version does not match.");
+            // Remote context without the isRootDataStore flag in the snapshot should default it to true.
+            assert.strictEqual(contents.isRootDataStore, true, "Remote DataStore isRootDataStore flag does not match.");
         });
 
         it("Check RemotedDataStore Attributes without isRootDataStore flag", async () => {

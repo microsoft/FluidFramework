@@ -83,6 +83,7 @@ export interface IFluidDataStoreAttributes {
 
 interface ISnapshotDetails {
     pkg: readonly string[];
+    isRootDataStore: boolean;
     snapshot?: ISnapshotTree;
 }
 
@@ -197,8 +198,8 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         private bindState: BindState,
         public readonly isLocalDataStore: boolean,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
-        protected isRootDataStore: boolean,
         protected pkg?: readonly string[],
+        protected isRootDataStore?: boolean,
     ) {
         super();
 
@@ -373,12 +374,12 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
         await this.realize();
 
-        const { pkg } = await this.getInitialSnapshotDetails();
+        const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const entries = await this.channel!.snapshotInternal(fullTree);
 
-        const attributesBlob = createAttributesBlob(pkg, this.isRootDataStore);
+        const attributesBlob = createAttributesBlob(pkg, isRootDataStore);
         entries.push(attributesBlob);
 
         return { entries, id: null };
@@ -391,19 +392,18 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
         await this.realize();
 
-        const { pkg } = await this.getInitialSnapshotDetails();
-
+        const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const channel = this.channel!;
         if (channel.summarize !== undefined) {
             const summary = await channel.summarize(fullTree);
-            const attributes: IFluidDataStoreAttributes = createAttributes(pkg, this.isRootDataStore);
+            const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
             addBlobToSummary(summary, attributesBlobKey, JSON.stringify(attributes));
             return { ...summary, id: this.id };
         } else {
             // back-compat summarizerNode - remove this case
             const entries = await channel.snapshotInternal(fullTree);
-            const attributesBlob = createAttributesBlob(pkg, this.isRootDataStore);
+            const attributesBlob = createAttributesBlob(pkg, isRootDataStore);
             entries.push(attributesBlob);
             const summary = convertToSummaryTree({ entries, id: null });
             return { ...summary, id: this.id };
@@ -579,11 +579,6 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         createSummarizerNode: CreateChildSummarizerNodeFn,
         pkg?: string[],
     ) {
-        // Default isRootDataStore to true. This will ensure that documents with old data stores that do not have
-        // isRootDataStore in the attributes blob are not garbage collected incorrectly. If it has isRootDataStore,
-        // it will get updated when the data store is realized. This may lead to additional roots in the document but
-        // they won't break.
-        // This covers the scenario where garbage collection runs on a data store which is not realized.
         super(
             runtime,
             id,
@@ -597,7 +592,6 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             () => {
                 throw new Error("Already attached");
             },
-            true /* isRootDataStore */,
             pkg,
         );
     }
@@ -656,9 +650,12 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                 this.isRootDataStore = isRootDataStore ?? true;
             }
 
+            assert(this.isRootDataStore, "isRootDataStore should be available after reading attributes blob");
+
             this.details = {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 pkg: this.pkg!,
+                isRootDataStore: this.isRootDataStore,
                 snapshot: tree ?? undefined,
             };
         }
@@ -698,8 +695,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             snapshotTree ? BindState.Bound : BindState.NotBound,
             true,
             bindChannel,
-            isRootDataStore,
-            pkg);
+            pkg,
+            isRootDataStore);
         this.attachListeners();
     }
 
@@ -720,7 +717,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
         const snapshot: ITree = { entries, id: null };
 
-        assert(this.pkg !== undefined);
+        assert(this.pkg !== undefined, "pkg should be available in local data store context");
+        assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store context");
         const attributesBlob = createAttributesBlob(this.pkg, this.isRootDataStore);
         snapshot.entries.push(attributesBlob);
 
@@ -734,9 +732,11 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     }
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
-        assert(this.pkg !== undefined);
+        assert(this.pkg !== undefined, "pkg should be available in local data store context");
+        assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store context");
         return {
             pkg: this.pkg,
+            isRootDataStore: this.isRootDataStore,
             snapshot: this.snapshotTree,
         };
     }
