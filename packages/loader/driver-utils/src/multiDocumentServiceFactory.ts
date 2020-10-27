@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
+// import { parse } from "url";
 import {
     IDocumentServiceFactory,
     IResolvedUrl,
@@ -44,7 +44,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "none:";
     async createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-        const urlObj = parse(resolvedUrl.url);
+        const urlObj = new URL(resolvedUrl.url);
         if (urlObj.protocol === undefined) {
             throw new Error("No protocol provided");
         }
@@ -62,7 +62,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
-        const urlObj = parse(createNewResolvedUrl.url);
+        const urlObj = new URL(createNewResolvedUrl.url);
         if (urlObj.protocol === undefined) {
             throw new Error("No protocol provided");
         }

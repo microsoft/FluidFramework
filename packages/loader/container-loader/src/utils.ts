@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
+import * as qs from "querystring-browser";
 import { fromUtf8ToBase64, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
@@ -21,7 +21,8 @@ export interface IParsedUrl {
 }
 
 export function parseUrl(url: string): IParsedUrl | undefined {
-    const parsed = parse(url, true);
+    const parsed = new URL(url);
+    const query = qs.parse(url);
     if (typeof parsed.pathname !== "string") {
         throw new Error("Failed to parse pathname");
     }

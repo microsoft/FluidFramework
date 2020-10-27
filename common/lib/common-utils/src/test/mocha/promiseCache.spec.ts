@@ -19,6 +19,7 @@ describe("PromiseCache", () => {
 
             const get_WhenAbsent = pc.get(1);
             assert.equal(get_WhenAbsent, undefined);
+            // eslint-disable-next-line @typescript-eslint/await-thenable
             assert.equal(await get_WhenAbsent, undefined);
 
             const remove_WhenAbsent = pc.remove(1);

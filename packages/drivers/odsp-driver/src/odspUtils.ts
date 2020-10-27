@@ -68,9 +68,7 @@ export async function fetchHelper(
     requestInit: RequestInit | undefined,
 ): Promise<Response> {
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
@@ -122,7 +120,7 @@ export async function fetchAndParseAsJSONHelper<T>(
             newHeaders.set(key, value);
         }
         const res = {
-            headers: newHeaders,
+            headers: newHeaders as unknown as Map<string, string>,
             content: JSON.parse(text),
         };
         return res;
