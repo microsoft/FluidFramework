@@ -309,7 +309,7 @@ export class LocalPersistentCacheAdapter implements IPersistedCache {
 
     async get(entry: ICacheEntry, expiry?: number): Promise<IPersistedCacheValueWithEpoch> {
         const value = await this.cache.get(entry, expiry);
-        if (value.version !== persistedCacheValueVersion) {
+        if (value && value.version !== persistedCacheValueVersion) {
             const modifiedValue: IPersistedCacheValueWithEpoch = {
                 value,
                 fluidEpoch: undefined,
