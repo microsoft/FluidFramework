@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { parse } from "url";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
