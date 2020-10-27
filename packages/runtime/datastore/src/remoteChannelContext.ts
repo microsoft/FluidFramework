@@ -119,8 +119,8 @@ export class RemoteChannelContext implements IChannelContext {
         return snapshotChannel(channel);
     }
 
-    public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(fullTree);
+    public async summarize(cannotReuseHandle: boolean = false): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(cannotReuseHandle, false);
     }
 
     private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {

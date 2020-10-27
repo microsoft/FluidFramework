@@ -188,6 +188,12 @@ export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedS
 
 export type GenerateSummaryData = IUnsubmittedSummaryData | ISubmittedSummaryData;
 
+export interface ISummarizeParams {
+    canReuseHandle: boolean;
+    refreshPreviousAck: boolean;
+    differential: boolean;
+}
+
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 const IdleDetectionTime = 5000;
 
@@ -868,11 +874,13 @@ export class ContainerRuntime extends EventEmitter
         // want to be on demand instead.
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
         // This will ensure we correctly convert old documents.
+        const generateSummaryFn = async (params: Omit<ISummarizeParams, "differential">) =>
+            this.generateSummary({ ...params, differential: false });
         this.summarizer = new Summarizer(
             "/_summarizer",
             this,
             () => this.summaryConfiguration,
-            async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
+            generateSummaryFn,
             async (propHandle, ackHandle, refSeq) => this.refreshLatestSummaryAck(propHandle, ackHandle, refSeq),
             this.IFluidHandleContext,
             this.previousState.summaryCollection);
@@ -1117,7 +1125,11 @@ export class ContainerRuntime extends EventEmitter
 
             // Try to summarize only once and fail otherwise. In the future, may want
             // to retry with back-off until success is reached.
-            this.generateSummary(false, false, true).catch((error) => {
+            this.generateSummary({
+                canReuseHandle: false,
+                refreshPreviousAck: false,
+                differential: true,
+            }).catch((error) => {
                 this.logger.sendErrorEvent({ eventName: "RaceToSummarizeError" }, error);
             });
 
@@ -1505,13 +1517,15 @@ export class ContainerRuntime extends EventEmitter
     /**
      * Returns a summary of the runtime at the current sequence number.
      */
-    private async summarize(fullTree = false, simple = false): Promise<ISummaryTreeWithStats> {
+    private async summarize(params: Omit<ISummarizeParams, "refreshPreviousAck">): Promise<ISummaryTreeWithStats> {
         return this.summarizerNode.enabled
-            ? await this.summarizerNode.node.summarize(fullTree, simple) as ISummaryTreeWithStats
-            : await this.summarizeInternal(fullTree ?? false) as ISummaryTreeWithStats;
+            ? await this.summarizerNode.node.summarize(
+                !params.canReuseHandle,
+                params.differential) as ISummaryTreeWithStats
+            : await this.summarizeInternal(!params.canReuseHandle) as ISummaryTreeWithStats;
     }
 
-    private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(cannotReuseHandle: boolean): Promise<ISummarizeInternalResult> {
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
@@ -1522,8 +1536,8 @@ export class ContainerRuntime extends EventEmitter
                 return value.attachState === AttachState.Attached;
             }).map(async ([key, value]) => {
                 const contextSummary = this.summarizerNode.enabled
-                    ? await value.summarize(fullTree)
-                    : convertToSummaryTree(await value.snapshot(fullTree), fullTree);
+                    ? await value.summarize({ canReuseHandle: !cannotReuseHandle })
+                    : convertToSummaryTree(await value.snapshot(cannotReuseHandle), cannotReuseHandle);
                 builder.addWithStats(key, contextSummary);
             }));
 
@@ -1713,9 +1727,11 @@ export class ContainerRuntime extends EventEmitter
     }
 
     private async generateSummary(
-        fullTree: boolean = false,
-        safe: boolean = false,
-        simple: boolean = false,
+        params: {
+            canReuseHandle: boolean,
+            refreshPreviousAck: boolean,
+            differential: boolean,
+        },
     ): Promise<GenerateSummaryData | undefined> {
         const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
         const message =
@@ -1747,7 +1763,7 @@ export class ContainerRuntime extends EventEmitter
             }
 
             const trace = Trace.start();
-            const treeWithStats = await this.summarize(fullTree || safe, simple);
+            const treeWithStats = await this.summarize(params);
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: treeWithStats.stats,
@@ -1770,7 +1786,7 @@ export class ContainerRuntime extends EventEmitter
                 this.latestSummaryAck);
 
             // safe mode refreshes the latest summary ack
-            if (safe) {
+            if (params.refreshPreviousAck) {
                 const version = await this.getVersionFromStorage(this.id);
                 await this.refreshLatestSummaryAck(
                     undefined,

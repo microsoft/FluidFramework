@@ -276,9 +276,10 @@ export class SummarizerNode implements ISummarizerNode {
         this.wipReferenceSequenceNumber = referenceSequenceNumber;
     }
 
-    private simpleSummary(error: any = undefined): ISummarizeResult | false {
+    private differentialSummary(error: Error | string): ISummarizeResult {
+        const throwError = () => { throw (typeof error === "string" ? Error(error) : error); };
         if (this.trackingSequenceNumber < this._changeSequenceNumber) {
-            return false;
+            return throwError();
         }
 
         const latestSummary = this.latestSummary;
@@ -302,16 +303,17 @@ export class SummarizerNode implements ISummarizerNode {
             localPath = EscapedPath.create(initialSummary.id);
         } else {
             // No base summary to reference
-            return false;
+            return throwError();
         }
 
-        if (error !== undefined) {
+        if (typeof error !== "string") {
             this.logger.logException({
                 eventName: "SummarizingWithBasePlusOps",
                 category: "error",
             },
             error);
         }
+
         const summary = encodeSummary(encodeParam, this.outstandingOps);
         this.wipLocalPaths = {
             localPath,
@@ -321,11 +323,11 @@ export class SummarizerNode implements ISummarizerNode {
         return { summary: summary.summary, stats: summary.stats };
     }
 
-    public async summarize(fullTree: boolean, simple: boolean): Promise<ISummarizeResult> {
+    public async summarize(cannotReuseHandle: boolean, differential: boolean | undefined): Promise<ISummarizeResult> {
         assert(!this.disabled, "Unsupported: cannot call summarize on disabled SummarizerNode");
 
         // Try to reuse the tree if unchanged
-        if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
+        if (this.canReuseHandle && !cannotReuseHandle && !this.hasChanged()) {
             const latestSummary = this.latestSummary;
             if (latestSummary !== undefined) {
                 this.wipLocalPaths = {
@@ -346,14 +348,12 @@ export class SummarizerNode implements ISummarizerNode {
             }
         }
 
-        if (simple) {
-            const result = this.simpleSummary();
-            assert(result !== false, "Cannot generate simple summary");
-            return result;
+        if (differential === true) {
+            return this.differentialSummary("Cannot generate differential summary");
         }
 
         try {
-            const result = await this.summarizeInternalFn(fullTree);
+            const result = await this.summarizeInternalFn(cannotReuseHandle);
             this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
             return { summary: result.summary, stats: result.stats };
         } catch (error) {
@@ -361,12 +361,7 @@ export class SummarizerNode implements ISummarizerNode {
                 throw error;
             }
 
-            const result = this.simpleSummary(error);
-
-            if (result === false) {
-                throw error;
-            }
-            return result;
+            return this.differentialSummary(error);
         }
     }
 

@@ -30,7 +30,7 @@ import {
     ISummaryConfiguration,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
+import { GenerateSummaryData, IPreviousState, ISummarizeParams } from "./containerRuntime";
 import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
@@ -129,6 +129,8 @@ const checkNotTimeout = <T>(something: T | IPromiseTimerResult | undefined): som
     }
     return (something as IPromiseTimerResult).timerResult === undefined;
 };
+
+type SummarizeFnType = (params: Omit<ISummarizeParams, "differential">) => Promise<GenerateSummaryData | undefined>;
 
 /**
  * This class contains the heuristics for when to summarize.
@@ -236,7 +238,7 @@ export class RunningSummarizer implements IDisposable {
         logger: ITelemetryLogger,
         summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
-        generateSummary: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
+        generateSummary: SummarizeFnType,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         immediateSummary: boolean,
@@ -282,7 +284,7 @@ export class RunningSummarizer implements IDisposable {
         private readonly logger: ITelemetryLogger,
         private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
-        private readonly generateSummary: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
+        private readonly generateSummary: SummarizeFnType,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         private immediateSummary: boolean = false,
@@ -511,7 +513,9 @@ export class RunningSummarizer implements IDisposable {
         // Wait for generate/send summary
         let summaryData: GenerateSummaryData | undefined;
         try {
-            summaryData = await this.generateSummary(this.immediateSummary, safe);
+            // Neither immediate summaries nor safe summaries should reuse handles
+            const canReuseHandle = !this.immediateSummary && !safe;
+            summaryData = await this.generateSummary({ canReuseHandle, refreshPreviousAck: safe });
         } catch (error) {
             summarizingEvent.cancel({ category: "error" }, error);
             return;
@@ -587,8 +591,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         url: string,
         private readonly runtime: ISummarizerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
-        // eslint-disable-next-line max-len
-        private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
+        private readonly generateSummaryCore: SummarizeFnType,
         private readonly refreshLatestAck: (
             proposalHandle: string,
             ackHandle: string,
@@ -728,7 +731,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.logger,
             this.summaryCollection.createWatcher(startResult.clientId),
             this.configurationGetter(),
-            async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
+            this.generateSummary,
             this.runtime.deltaManager.lastSequenceNumber,
             initialAttempt,
             this.immediateSummary,
@@ -789,7 +792,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         return this.runtime.nextSummarizerD.promise;
     }
 
-    private async generateSummary(full: boolean, safe: boolean): Promise<GenerateSummaryData | undefined> {
+    // As a property to capture this in closure and pass into RunningSummarizer
+    private readonly generateSummary: SummarizeFnType = async (params) => {
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId
             && this.runtime.clientId !== this.runtime.summarizerClientId) {
             // We are no longer the summarizer; a different client is, so we should stop ourself
@@ -797,8 +801,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             return undefined;
         }
 
-        return this.generateSummaryCore(full, safe);
-    }
+        return this.generateSummaryCore(params);
+    };
 
     private async handleSummaryAcks() {
         let refSequenceNumber = this.summaryCollection.initialSequenceNumber;

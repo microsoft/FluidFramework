@@ -32,7 +32,7 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
     id: string;
 }
 
-export type SummarizeInternalFn = (fullTree: boolean) => Promise<ISummarizeInternalResult>;
+export type SummarizeInternalFn = (cannotReuseHandle: boolean) => Promise<ISummarizeInternalResult>;
 export interface ISummarizerNodeConfig {
     /**
      * True to reuse previous handle when unchanged since last acked summary.
@@ -79,15 +79,16 @@ export interface ISummarizerNode {
     invalidate(sequenceNumber: number): void;
     /**
      * Calls the internal summarize function and handles internal state tracking.
-     * If unchanged and fullTree is false, it will reuse previous summary subtree.
+     * If unchanged and cannotReuseHandle is false, it will reuse previous summary subtree.
      * If an error is encountered and throwOnFailure is false, it will try to make
-     * a simple summary with a pointer to the previous summary + a blob of outstanding ops.
-     * @param fullTree - true to skip optimizations and always generate the full tree
-     * Setting fullTree to true will not reuse handles even if unchanged.
-     * @param simple - true to send handle of previous summary + blob of outstanding ops
+     * a differential summary with a pointer to the previous summary + a blob of outstanding ops.
+     * @param cannotReuseHandle - true to not allow reuse of previous handle if unchanged.
+     * @param differential - true to send handle of previous summary + blob of outstanding ops
      * Setting simple to true will not call summarizeInternalFn.
+     * If both differential is true and cannotReuseHandle is false, a handle pointing to the previous
+     * tree will be used, not a differential summary.
      */
-    summarize(fullTree: boolean, simple?: boolean): Promise<ISummarizeResult>;
+    summarize(cannotReuseHandle: boolean, differential: boolean): Promise<ISummarizeResult>;
     /**
      * Checks if the base snapshot was created as a failure summary. If it has
      * the base summary handle + outstanding ops blob, then this will return the

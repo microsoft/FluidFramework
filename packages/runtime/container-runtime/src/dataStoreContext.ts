@@ -50,7 +50,7 @@ import {
     IProvideFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
-import { ContainerRuntime } from "./containerRuntime";
+import { ContainerRuntime, ISummarizeParams } from "./containerRuntime";
 
 // Snapshot Format Version to be used in store attributes.
 export const currentSnapshotFormatVersion = "0.1";
@@ -381,8 +381,8 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return { entries, id: null };
     }
 
-    public async summarize(fullTree = false): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(fullTree);
+    public async summarize(params: Pick<ISummarizeParams, "canReuseHandle">): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(!params.canReuseHandle, false);
     }
 
     private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
