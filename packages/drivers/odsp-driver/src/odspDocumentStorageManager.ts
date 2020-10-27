@@ -1019,6 +1019,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                     break;
                 }
+                case api.SummaryType.Attachment: {
+                    id = summaryObject.id;
+                    break;
+                }
                 default: {
                     throw new Error(`Unknown tree type ${summaryObject.type}`);
                 }
@@ -1026,7 +1030,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             const baseEntry: ISnapshotTreeBaseEntry = {
                 path: encodeURIComponent(key),
-                type: getGitType(summaryObject),
+                type: getGitType(summaryObject) === "attachment" ? "blob" : getGitType(summaryObject),
             };
 
             let entry: SnapshotTreeEntry;
