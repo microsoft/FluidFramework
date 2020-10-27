@@ -17,11 +17,11 @@ import {
     createLocalLoader,
     ITestFluidObject,
     OpProcessingController,
+    SupportedExportInterfaces,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { LocalResolver } from "@fluidframework/local-driver";
-import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage{
@@ -45,15 +45,13 @@ describe("CodeProposal.EndToEnd", () => {
         schema: 1,
         fluid: {},
     };
+    const packageV1dot5: ICodeProposalTestPackage = {
+        ... packageV1,
+        version: 1.5,
+    };
     const packageV2: ICodeProposalTestPackage = {
         name: "test",
         version: 2,
-        schema: 2,
-        fluid: {},
-    };
-    const packageV2dot5: ICodeProposalTestPackage = {
-        name: "test",
-        version: 2.5,
         schema: 2,
         fluid: {},
     };
@@ -75,18 +73,16 @@ describe("CodeProposal.EndToEnd", () => {
                 && a.package.schema === b.package.schema,
         };
 
-        const factory = new TestFluidObjectFactory([["map", SharedMap.getFactory()]]);
+        const fluidExport: SupportedExportInterfaces = {
+            IFluidDataStoreFactory: new TestFluidObjectFactory([["map", SharedMap.getFactory()]]),
+            IFluidCodeDetailsComparer: codeDetailsComparer,
+
+        };
         return createLocalLoader(
             [
-                [{ package: packageV1 }, factory],
-                [{ package: packageV2 }, {
-                    IFluidDataStoreFactory: factory,
-                    IFluidCodeDetailsComparer: codeDetailsComparer,
-                }],
-                [{ package: packageV2dot5 }, {
-                    IFluidDataStoreFactory: factory,
-                    IFluidCodeDetailsComparer: codeDetailsComparer,
-                }],
+                [{ package: packageV1 }, fluidExport],
+                [{ package: packageV2 },fluidExport],
+                [{ package: packageV1dot5 }, fluidExport],
             ],
             deltaConnectionServer, urlResolver);
     }
@@ -120,7 +116,7 @@ describe("CodeProposal.EndToEnd", () => {
 
         // Load the Container that was created by the first client.
         containers.push(await loadContainer());
-        opProcessingController.addDeltaManagers(containers[0].deltaManager);
+        opProcessingController.addDeltaManagers(containers[1].deltaManager);
 
         assert.deepStrictEqual(
             containers[0].codeDetails,
@@ -132,18 +128,7 @@ describe("CodeProposal.EndToEnd", () => {
             codeDetails,
             "Code proposal in containers[1] doesn't match");
 
-        const dataObject1 = await requestFluidObject<ITestFluidObject>(containers[0], "default");
-        const map0 = await dataObject1.getSharedObject<ISharedMap>("map");
-
-        // BUG BUG quorum.propose doesn't handle readonly, so make sure connection is write
-        const container = containers[0] as unknown as Container;
-        do {
-            map0.set("foo","bar");
-            await Promise.all([
-                new Promise((resolve) => container.connected ? resolve() : container.once("connect", resolve)),
-                opProcessingController.process(),
-            ]);
-        } while (!container.connected);
+        await testRoundTrip();
     });
 
     it("Code Proposal", async () => {
@@ -249,24 +234,7 @@ describe("CodeProposal.EndToEnd", () => {
         assert.strictEqual(containers[1].closed, true, "containers[1] should be closed");
     });
 
-    it.skip("Compatible Code Proposal", async () => {
-        const proposal1: IFluidCodeDetails = { package: packageV2 };
-        const res = await Promise.all([
-            containers[0].proposeCodeDetails(proposal1),
-            opProcessingController.process(),
-            ... containers.map(async (c)=>new Promise((resolve)=> c.once("contextChanged", resolve))),
-        ]);
-
-        assert.strictEqual(res[0], true, "Code propsal should be accepted");
-
-        for (let i = 0; i < containers.length; i++) {
-            assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
-            assert.deepStrictEqual(
-                containers[i].codeDetails,
-                proposal1,
-                `containers[${i}] code details should update`);
-        }
-
+    it("Code Proposal With Compatible Existing", async () => {
         for (let i = 0; i < containers.length; i++) {
             containers[i].once("contextDisposed",(c)=>{
                 assert.fail(`Context Shouldn't dispose for containers[${i}]`);
@@ -276,24 +244,52 @@ describe("CodeProposal.EndToEnd", () => {
                 assert.fail(`Context Shouldn't Change for containers[${i}]`);
             });
         }
-        const proposal2: IFluidCodeDetails = { package: packageV2dot5 };
-        const res2 = await Promise.all([
-            containers[0].proposeCodeDetails(proposal2),
+        const proposal: IFluidCodeDetails = { package: packageV1dot5 };
+        const res = await Promise.all([
+            containers[0].proposeCodeDetails(proposal),
             opProcessingController.process(),
         ]);
 
-        assert.strictEqual(res2[0], true, "Code propsal should be accepted");
+        assert.strictEqual(res[0], true, "Code propsal should be accepted");
 
         for (let i = 0; i < containers.length; i++) {
             assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
             assert.deepStrictEqual(
                 containers[i].codeDetails,
-                proposal2,
+                { package: packageV1 },
                 `containers[${i}] code details should update`);
         }
     });
 
+    async function testRoundTrip() {
+        const keys: string[] = [];
+        const maps: ISharedMap[] = [];
+        for (const container of containers) {
+            if (!container.closed) {
+                const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+                const map = await dataObject.getSharedObject<ISharedMap>("map");
+                const key = Date.now().toString();
+                map.set(key, key);
+                keys.push(key);
+                maps.push(map);
+            }
+        }
+        const waiters: Promise<void>[] = [];
+        for (const map of maps) {
+            waiters.push(... keys.map(async (k)=>map.wait(k)));
+        }
+
+        await Promise.all([opProcessingController.process(), ...waiters]);
+
+        for (const map of maps) {
+            for (const key of keys) {
+                assert.strictEqual(map.get(key), key);
+            }
+        }
+    }
+
     afterEach(async () => {
+        await testRoundTrip();
         await deltaConnectionServer.webSocketServer.close();
     });
 });
