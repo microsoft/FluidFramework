@@ -117,6 +117,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly sharingLinkP: Promise<string> | undefined;
     private readonly attachmentPOSTUrl: string | undefined;
     private readonly attachmentGETUrl: string | undefined;
+    // Driver specified limits for snapshot size and time.
+    /**
+     * NOTE: While commit cfff6e3 added restrictions to prevent large payloads, snapshot failures will continue to
+     * happen until blob request throttling is implemented. Until then, as a temporary fix we set arbitrarily large
+     * snapshot size and timeout limits so that such failures are unlikely to occur.
+     */
+    private readonly maxSnapshotSizeLimit = 500000000; // 500 MB
+    private readonly maxSnapshotFetchTimeout = 120000; // 2 min
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
         assert(this._ops === undefined);
@@ -339,18 +347,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall", hasClaims: !!tokenFetchOptions.claims });
                 }
 
-                // Choose min of host specified limits or driver specified limits.
-                const maxSnapshotSizeLimit = 25000000; // 25 MB
-                const maxSnapshotFetchTimeout = 30000; // 30 sec
                 const snapshotOptions: ISnapshotOptions = {
                     deltas: 1,
                     channels: 1,
                     blobs: 2,
+                    mds: this.maxSnapshotSizeLimit,
                     ...this.hostPolicy.snapshotOptions,
-                    mds: this.hostPolicy.snapshotOptions?.mds ? Math.min(this.hostPolicy.snapshotOptions.mds, maxSnapshotSizeLimit) : maxSnapshotSizeLimit,
-                    timeout: this.hostPolicy.snapshotOptions?.timeout ? Math.min(this.hostPolicy.snapshotOptions.timeout, maxSnapshotFetchTimeout) : maxSnapshotFetchTimeout,
+                    timeout: this.hostPolicy.snapshotOptions?.timeout ? Math.min(this.hostPolicy.snapshotOptions.timeout, this.maxSnapshotFetchTimeout) : this.maxSnapshotFetchTimeout,
                 };
 
+                // No limit on size of snapshot, as otherwise we fail all clients to summarize
+                if (this.hostPolicy.summarizerClient) {
+                    snapshotOptions.mds = undefined;
+                }
                 let cachedSnapshot: IOdspSnapshot | undefined;
 
                 // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
@@ -533,8 +542,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private async fetchSnapshotWithTimeout(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions, usePost: boolean) {
         assert(snapshotOptions.timeout !== undefined, "Timeout should be provided for setting a limit");
         const abortController = new AbortController();
-        setTimeout(
+        const timeout = setTimeout(
             () => {
+                clearTimeout(timeout);
                 abortController.abort();
             },
             snapshotOptions.timeout,
@@ -543,8 +553,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost, abortController);
             return odspSnapshot;
         } catch (error) {
-            if (error.errorType === OdspErrorType.snapshotTooBig || error.errorType === OdspErrorType.fetchTimeout) {
-                const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: undefined };
+            // If the snapshot size is too big and the host specified the size limitation, then don't try to fetch the snapshot again.
+            if (error.errorType === OdspErrorType.snapshotTooBig && this.hostPolicy.snapshotOptions?.mds !== undefined) {
+                throw error;
+            }
+            // If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
+            if ((error.errorType === OdspErrorType.snapshotTooBig || error.errorType === OdspErrorType.fetchTimeout) && snapshotOptions.blobs) {
+                const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: undefined, mds: undefined };
                 return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions, usePost);
             }
             throw error;
@@ -1004,6 +1019,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                     break;
                 }
+                case api.SummaryType.Attachment: {
+                    id = summaryObject.id;
+                    break;
+                }
                 default: {
                     throw new Error(`Unknown tree type ${summaryObject.type}`);
                 }
@@ -1011,7 +1030,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             const baseEntry: ISnapshotTreeBaseEntry = {
                 path: encodeURIComponent(key),
-                type: getGitType(summaryObject),
+                type: getGitType(summaryObject) === "attachment" ? "blob" : getGitType(summaryObject),
             };
 
             let entry: SnapshotTreeEntry;
