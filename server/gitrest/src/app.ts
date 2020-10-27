@@ -4,11 +4,11 @@
  */
 
 import * as bodyParser from "body-parser";
-import * as cors from "cors";
-import * as express from "express";
+import cors from "cors";
+import express from "express";
 // eslint-disable-next-line no-duplicate-imports
 import { Express } from "express";
-import * as morgan from "morgan";
+import morgan from "morgan";
 import * as nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import split = require("split");

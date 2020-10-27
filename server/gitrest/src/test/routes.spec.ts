@@ -12,9 +12,9 @@ import {
     ICreateTreeParams,
 } from "@fluidframework/gitresources";
 import * as async from "async";
-import * as lorem from "lorem-ipsum";
+import lorem from "lorem-ipsum";
 import * as moniker from "moniker";
-import * as request from "supertest";
+import request from "supertest";
 import * as app from "../app";
 /* eslint-disable import/no-internal-modules */
 import { createBlob as createBlobInternal } from "../routes/git/blobs";
