@@ -583,7 +583,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             postBody += `Authorization: Bearer ${storageToken}\r\n`;
             postBody += `X-HTTP-Method-Override: GET\r\n`;
             Object.entries(snapshotOptions).forEach(([key, value]) => {
-                postBody += `${key}: ${value}\r\n`;
+                if (value !== undefined) {
+                    postBody += `${key}: ${value}\r\n`;
+                }
             });
             const sharingLink = await this.sharingLinkP;
             if (sharingLink) {
