@@ -252,12 +252,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return blob.content;
     }
 
-    public getRawUrl(blobid: string): string {
-        this.checkSnapshotUrl();
-
-        return `${this.snapshotUrl}/blobs/${blobid}`;
-    }
-
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
         if (!this.snapshotUrl) {
             return null;
