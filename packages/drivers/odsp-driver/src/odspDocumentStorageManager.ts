@@ -469,7 +469,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // only if it is first failure, otherwise fallback to get call.
         if (usePost) {
             try {
-                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, true);
+                const snapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, true);
+                return snapshot;
             } catch (error) {
                 const errorType = error.errorType;
                 if ((errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.incorrectServerResponse) && tokenFetchOptions.refresh === false) {
