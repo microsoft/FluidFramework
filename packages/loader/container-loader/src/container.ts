@@ -97,7 +97,7 @@ import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
 const detachedContainerRefSeqNumber = 0;
 // TODO: move and expose this
-const shouldRefresh = true;
+const shouldRefresh = false;
 
 interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;

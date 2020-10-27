@@ -84,7 +84,7 @@ export interface ISummarizerNode {
      * a differential summary with a pointer to the previous summary + a blob of outstanding ops.
      * @param cannotReuseHandle - true to not allow reuse of previous handle if unchanged.
      * @param differential - true to send handle of previous summary + blob of outstanding ops
-     * Setting simple to true will not call summarizeInternalFn.
+     * Setting differential to true will not call summarizeInternalFn.
      * If both differential is true and cannotReuseHandle is false, a handle pointing to the previous
      * tree will be used, not a differential summary.
      */
