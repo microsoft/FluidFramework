@@ -18,7 +18,7 @@ import dotenv from "dotenv";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
-import { generateToken, getConfig, getUserDetails, queryParamAsString } from "../utils";
+import { generateToken, getConfig, getUser, getUserDetails, queryParamAsString } from "../utils";
 import { defaultPartials } from "./partials";
 
 dotenv.config();
@@ -59,7 +59,8 @@ export function create(
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const [resolvedP, fullTreeP] =
             resolveUrl(config, alfred, appTenants, tenantId, documentId, scopes, request);
-        const jwtToken = generateToken(tenantId, documentId, jwtKey, scopes, request.user);
+        const user = getUser(request);
+        const jwtToken = generateToken(tenantId, documentId, jwtKey, scopes, user);
 
         const workerConfig = getConfig(
             config.get("worker"),

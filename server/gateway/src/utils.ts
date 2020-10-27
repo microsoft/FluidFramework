@@ -84,20 +84,6 @@ export const queryParamAsString = (value: any): string => {
     return typeof value === "string" ? value : "";
 };
 
-export function getR11SToken(
-    tenantId: string,
-    documentId: string,
-    appTenants: IAlfredTenant[],
-    scopes: ScopeType[],
-    user?: IUser,
-): string {
-    const tenantKey = appTenants.find((tenant) => tenant.id === tenantId)?.key;
-    if (tenantKey === undefined) {
-        throw Error(`Unable to find requested tenant ${tenantId}`);
-    }
-    return generateToken(tenantId, documentId, tenantKey, scopes, user);
-}
-
 // TODO: Remove this once the changes have been made in services-utils to use jrsassign instead of jwt,
 // and the updated package is released
 // Changes should be similar to the ones made here for local driver
@@ -132,6 +118,20 @@ export function generateToken(
 
     // eslint-disable-next-line no-null/no-null
     return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, key);
+}
+
+export function getR11SToken(
+    tenantId: string,
+    documentId: string,
+    appTenants: IAlfredTenant[],
+    scopes: ScopeType[],
+    user?: IUser,
+): string {
+    const tenantKey = appTenants.find((tenant) => tenant.id === tenantId)?.key;
+    if (tenantKey === undefined) {
+        throw Error(`Unable to find requested tenant ${tenantId}`);
+    }
+    return generateToken(tenantId, documentId, tenantKey, scopes, user);
 }
 
 export function generateUser(): IUser {
