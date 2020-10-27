@@ -492,10 +492,54 @@ export class ContainerRuntime extends EventEmitter
 
         const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
 
-        const chunkId = context.baseSnapshot?.blobs[chunksBlobName];
-        const chunks = context.baseSnapshot && chunkId ? context.storage ?
+        const logger = ChildLogger.create(context.logger, undefined, {
+            runtimeVersion: pkgVersion,
+        });
+
+        let summarizerInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult> = async () => {
+            assert.fail("Attempted to summarize before setting summarizeInternalFn");
+        };
+
+        const loadedFromSequenceNumber = context.deltaManager.initialSequenceNumber;
+        const isSummarizerClient = context.clientDetails.type === summarizerClientType;
+        // Use runtimeOptions if provided, otherwise default to true/enabled.
+        const enableSummarizerNode = runtimeOptions?.enableSummarizerNode ?? true;
+        const summarizerNode = SummarizerNode.createRoot(
+            logger,
+            // Summarize function to call when summarize is called
+            async (fullTree) => summarizerInternalFn(fullTree),
+            // Latest change sequence number, no changes since summary applied yet
+            loadedFromSequenceNumber,
+            // Summary reference sequence number, undefined if no summary yet
+            context.baseSnapshot ? loadedFromSequenceNumber : undefined,
+            // Disable calls to summarize if not summarizer client, or if runtimeOption is disabled
+            !isSummarizerClient || !enableSummarizerNode,
+            {
+                // Must set to false to prevent sending summary handle which would be pointing to
+                // a summary with an older protocol state.
+                canReuseHandle: false,
+                // Must set to true to throw on any data stores failure that was too severe to be handled.
+                // We also are not decoding the base summaries at the root.
+                throwOnFailure: true,
+            },
+        );
+
+        const localReadAndParse = async <T>(id: string) => {
+            assert(context.storage, "Expected context to have storage defined");
+            return readAndParse<T>(context.storage, id);
+        };
+        let baseSnapshot = context.baseSnapshot;
+        let outstandingOps: ISequencedDocumentMessage[] = [];
+        if (baseSnapshot) {
+            const loadedSummary = await summarizerNode.loadBaseSummary(baseSnapshot, localReadAndParse);
+            baseSnapshot = loadedSummary.baseSummary;
+            outstandingOps = loadedSummary.outstandingOps;
+        }
+
+        const chunkId = baseSnapshot?.blobs[chunksBlobName];
+        const chunks = baseSnapshot && chunkId ? context.storage ?
             await readAndParse<[string, string[]][]>(context.storage, chunkId) :
-            readAndParseFromBlobs<[string, string[]][]>(context.baseSnapshot.blobs, chunkId) : [];
+            readAndParseFromBlobs<[string, string[]][]>(baseSnapshot.blobs, chunkId) : [];
 
         const runtime = new ContainerRuntime(
             context,
@@ -503,12 +547,21 @@ export class ContainerRuntime extends EventEmitter
             chunks,
             runtimeOptions,
             containerScope,
+            summarizerNode,
+            baseSnapshot,
+            logger,
             requestHandler);
+
+        summarizerInternalFn = async (fullTree) => runtime.summarizeInternal(fullTree);
 
         // Create all internal data stores if not already existing on storage or loaded a detached
         // container from snapshot(ex. draft mode).
         if (!context.existing) {
             await runtime.createRootDataStore(TaskManagerFactory.type, taskSchedulerId);
+        }
+
+        for (const op of outstandingOps) {
+            runtime.process(op, false);
         }
 
         runtime.subscribeToLeadership();
@@ -602,8 +655,6 @@ export class ContainerRuntime extends EventEmitter
 
     // internal logger for ContainerRuntime
     private readonly _logger: ITelemetryLogger;
-    // publicly visible logger, to be used by stores, summarize, etc.
-    public readonly logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
     private latestSummaryAck: ISummaryContext;
@@ -685,6 +736,10 @@ export class ContainerRuntime extends EventEmitter
             enableWorker: false,
         },
         private readonly containerScope: IFluidObject,
+        summarizerNode: SummarizerNode,
+        private readonly baseSnapshot: ISnapshotTree | undefined,
+        // publicly visible logger, to be used by stores, summarize, etc.
+        public readonly logger: ITelemetryLogger,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
     ) {
         super();
@@ -694,10 +749,6 @@ export class ContainerRuntime extends EventEmitter
 
         this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
         this.IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
-
-        this.logger = ChildLogger.create(context.logger, undefined, {
-            runtimeVersion: pkgVersion,
-        });
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
@@ -711,34 +762,10 @@ export class ContainerRuntime extends EventEmitter
             this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
         );
 
-        const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
-        const isSummarizerClient = this.clientDetails.type === summarizerClientType;
-        // Use runtimeOptions if provided, otherwise default to true/enabled.
-        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode ?? true;
-        const summarizerNode = SummarizerNode.createRoot(
-            this.logger,
-            // Summarize function to call when summarize is called
-            async (fullTree: boolean) => this.summarizeInternal(fullTree),
-            // Latest change sequence number, no changes since summary applied yet
-            loadedFromSequenceNumber,
-            // Summary reference sequence number, undefined if no summary yet
-            context.baseSnapshot ? loadedFromSequenceNumber : undefined,
-            // Disable calls to summarize if not summarizer client, or if runtimeOption is disabled
-            !isSummarizerClient || !enableSummarizerNode,
-            {
-                // Must set to false to prevent sending summary handle which would be pointing to
-                // a summary with an older protocol state.
-                canReuseHandle: false,
-                // Must set to true to throw on any data stores failure that was too severe to be handled.
-                // We also are not decoding the base summaries at the root.
-                throwOnFailure: true,
-            },
-        );
-
         const getCreateChildFn = (id: string, createParam: CreateChildSummarizerNodeParam) =>
             (summarizeInternal: SummarizeInternalFn) =>
                 summarizerNode.createChild(summarizeInternal, id, createParam);
-        if (enableSummarizerNode) {
+        if (runtimeOptions?.enableSummarizerNode ?? true) {
             this.summarizerNode = {
                 enabled: true,
                 node: summarizerNode,
@@ -756,8 +783,7 @@ export class ContainerRuntime extends EventEmitter
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree | string>();
 
-        if (typeof context.baseSnapshot === "object") {
-            const baseSnapshot = context.baseSnapshot;
+        if (typeof baseSnapshot === "object") {
             Object.keys(baseSnapshot.trees).forEach((value) => {
                 if (value !== ".protocol" && value !== ".logTail" && value !== ".serviceProtocol") {
                     const tree = baseSnapshot.trees[value];
@@ -781,7 +807,7 @@ export class ContainerRuntime extends EventEmitter
                     this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
             } else {
                 let pkgFromSnapshot: string[];
-                if (typeof context.baseSnapshot !== "object") {
+                if (typeof this.baseSnapshot !== "object") {
                     throw new Error("Snapshot should be there to load from!!");
                 }
                 const snapshotTree = value as ISnapshotTree;
@@ -1071,28 +1097,33 @@ export class ContainerRuntime extends EventEmitter
     }
 
     public async raceToSummarize(): Promise<void> {
-        this.verifyNotClosed();
+        return PerformanceEvent.timedExecAsync(this._logger, { eventName: "RaceToSummarize" }, async () => {
+            this.verifyNotClosed();
 
-        // Stop ops from being processed by runtime
-        this.racingToSummarize = true;
+            // Stop ops from being processed by runtime
+            this.racingToSummarize = true;
 
-        const sequenceNumber = this.deltaManager.lastSequenceNumber;
-        const summaryCollection = this.summarizer.summaryCollection;
+            const sequenceNumber = this.deltaManager.lastSequenceNumber;
+            const summaryCollection = this.summarizer.summaryCollection;
 
-        // Check for early completion
-        const latestAckSeq = summaryCollection.latestAck?.summaryOp.referenceSequenceNumber;
-        if (latestAckSeq && latestAckSeq >= sequenceNumber) {
-            return;
-        }
+            // Check for early completion
+            const latestAckSeq = summaryCollection.latestAck?.summaryOp.referenceSequenceNumber;
+            if (latestAckSeq && latestAckSeq >= sequenceNumber) {
+                return;
+            }
 
-        // Try to summarize only once and fail otherwise. In the future, may want
-        // to retry with back-off until success is reached.
-        this.generateSummary(false, false, true).catch((error) => {
-            this.logger.sendErrorEvent({ eventName: "RaceToSummarizeError" }, error);
+            // Prevent summarizer from generating summaries
+            this.summarizer.dispose();
+
+            // Try to summarize only once and fail otherwise. In the future, may want
+            // to retry with back-off until success is reached.
+            this.generateSummary(false, false, true).catch((error) => {
+                this.logger.sendErrorEvent({ eventName: "RaceToSummarizeError" }, error);
+            });
+
+            // May wait forever if all summaries fail.
+            await summaryCollection.waitSummaryAck(sequenceNumber);
         });
-
-        // May wait forever if all summaries fail.
-        await summaryCollection.waitSummaryAck(sequenceNumber);
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
@@ -1658,9 +1689,9 @@ export class ContainerRuntime extends EventEmitter
                     } else {
                         // If this data store is not yet loaded, then there should be no changes in the snapshot from
                         // which it was created as it is detached container. So just use the previous snapshot.
-                        assert(this.context.baseSnapshot,
+                        assert(this.baseSnapshot,
                             "BaseSnapshot should be there as detached container loaded from snapshot");
-                        dataStoreSummary = convertSnapshotToSummaryTree(this.context.baseSnapshot.trees[key]);
+                        dataStoreSummary = convertSnapshotToSummaryTree(this.baseSnapshot.trees[key]);
                     }
                     builder.addWithStats(key, dataStoreSummary);
                 });
