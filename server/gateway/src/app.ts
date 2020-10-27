@@ -158,7 +158,7 @@ export function create(
                 clientSecret: _.isEmpty(microsoftConfiguration.secret)
                     ? process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET : microsoftConfiguration.secret,
                 issuer: _.isEmpty(process.env.SP_ISSUER)
-                    ?  "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0"
+                    ?  "https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0"
                     : `https://login.microsoftonline.com/${process.env.SP_ISSUER}/v2.0`,
                 passReqToCallback: true,
                 skipUserProfile: true,
@@ -195,7 +195,7 @@ export function create(
                     clientSecret: _.isEmpty(msaConfiguration.secret)
                         ? process.env.MSA_CONFIGURATION_CLIENT_SECRET : msaConfiguration.secret,
                     issuer: _.isEmpty(process.env.SP_ISSUER)
-                        ?  "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0"
+                        ?  "https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0"
                         : `https://login.microsoftonline.com/${process.env.SP_ISSUER}/v2.0`,
                     passReqToCallback: true,
                     skipUserProfile: true,
