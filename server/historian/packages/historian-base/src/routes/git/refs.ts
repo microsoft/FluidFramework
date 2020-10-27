@@ -23,7 +23,10 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         return service.getRef(ref);
     }
 
-    async function createRef(tenantId: string, authorization: string, params: ICreateRefParamsExternal): Promise<git.IRef> {
+    async function createRef(
+        tenantId: string,
+        authorization: string,
+        params: ICreateRefParamsExternal): Promise<git.IRef> {
         const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
         return service.createRef(params);
     }

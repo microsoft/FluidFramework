@@ -81,7 +81,7 @@ async function createRef(
             winston.error(`Error writing to file ${e}`);
         }
     }
-    
+
     return refToIRef(ref);
 }
 
@@ -119,7 +119,7 @@ async function patchRef(
             winston.error(e);
         }
     }
-    
+
     return refToIRef(ref);
 }
 
@@ -143,7 +143,7 @@ function getRefId(id): string {
 export function create(
     store: nconf.Provider,
     repoManager: utils.RepositoryManager,
-    externalStorageManager: IExternalStorageManager
+    externalStorageManager: IExternalStorageManager,
 ): Router {
     const router: Router = Router();
 
@@ -189,7 +189,5 @@ export function create(
         const deleteP = deleteRef(repoManager, request.params.owner, request.params.repo, getRefId(request.params[0]));
         deleteP.then(() => response.status(204).end(), (error) => response.status(400).json(error));
     });
-
     return router;
-
 }

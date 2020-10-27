@@ -8,7 +8,7 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";
 import * as winston from "winston";
-import { IExternalStorageManager } from "../../ExternalStorageManager";
+import { IExternalStorageManager } from "../../externalStorageManager";
 import * as utils from "../../utils";
 
 export async function getCommits(

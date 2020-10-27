@@ -5,7 +5,7 @@
 
 import Axios from "axios";
 import safeStringify from "json-stringify-safe";
-import { Provider } from "nconf";
+import * as nconf from "nconf";
 import * as winston from "winston";
 
 export interface IExternalStorageManager {
@@ -20,7 +20,7 @@ export interface IExternalStorageManager {
 export class ExternalStorageManager implements IExternalStorageManager {
     private readonly endpoint: string;
 
-    constructor(public readonly config: Provider) {
+    constructor(public readonly config: nconf.Provider) {
         this.endpoint = config.get("externalStorage:endpoint");
     }
 

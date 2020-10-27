@@ -142,7 +142,7 @@ describe("GitRest", () => {
         // Create the git repo before and after each test
         let supertest: request.SuperTest<request.Test>;
         beforeEach(() => {
-            const testApp = app.create(testUtils.defaultProvider, null);
+            const testApp = app.create(testUtils.defaultProvider, undefined);
             supertest = request(testApp);
         });
 
@@ -421,7 +421,13 @@ describe("GitRest", () => {
 
                     const parents: string[] = [];
                     if (lastCommit) {
-                        const commits = await getCommits(manager, testOwnerName, testRepoName, lastCommit, 1, null);
+                        const commits = await getCommits(
+                            manager,
+                            testOwnerName,
+                            testRepoName,
+                            lastCommit,
+                            1,
+                            undefined);
                         const parentCommit = commits[0];
                         assert.ok(parentCommit.commit);
                         parents.push(parentCommit.sha);

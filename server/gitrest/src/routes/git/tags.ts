@@ -11,7 +11,6 @@ import * as utils from "../../utils";
 
 async function tagToITag(tag: git.Tag): Promise<ITag> {
     const tagger = tag.tagger() as any;
-    // eslint-disable-next-line @typescript-eslint/await-thenable
     const target = await tag.target();
 
     return {

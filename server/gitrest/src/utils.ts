@@ -114,7 +114,7 @@ export class RepositoryManager {
 
             if (!await exists(directory)) {
                 winston.info(`Repo does not exist ${directory}`);
-                return Promise.reject("Repo does not exist" + directory);
+                return Promise.reject(`Repo does not exist ${directory}`);
             }
 
             this.repositoryCache[repoPath] = git.Repository.open(directory);

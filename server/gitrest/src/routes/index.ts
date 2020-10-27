@@ -34,7 +34,7 @@ export interface IRoutes {
 }
 
 export function create(
-    store: nconf.Provider, 
+    store: nconf.Provider,
     repoManager: utils.RepositoryManager,
     externalStorageManager: IExternalStorageManager,
 ): IRoutes {
