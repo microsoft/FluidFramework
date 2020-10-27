@@ -79,7 +79,7 @@ async function getInternalComponent(
     const orderer = internal ? config.get("worker:alfredUrl") : config.get("worker:serverUrl");
 
     const user: IAlfredUser = (request.user as IJWTClaims).user;
-    const token = getR11SToken(tenantId, appTenants, documentId, scopes, user);
+    const token = getR11SToken(tenantId, documentId, appTenants, scopes, user);
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const fluidUrl = `fluid://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`;
 

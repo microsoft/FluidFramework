@@ -59,7 +59,7 @@ export function create(
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const [resolvedP, fullTreeP] =
             resolveUrl(config, alfred, appTenants, tenantId, documentId, scopes, request);
-            const jwtToken = generateToken(tenantId, documentId, jwtKey, scopes, request.user);
+        const jwtToken = generateToken(tenantId, documentId, jwtKey, scopes, request.user);
 
         const workerConfig = getConfig(
             config.get("worker"),

@@ -86,8 +86,8 @@ export const queryParamAsString = (value: any): string => {
 
 export function getR11SToken(
     tenantId: string,
-    appTenants: IAlfredTenant[],
     documentId: string,
+    appTenants: IAlfredTenant[],
     scopes: ScopeType[],
     user?: IUser,
 ): string {
