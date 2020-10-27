@@ -63,7 +63,7 @@
     "@fluidframework/mocha-test-setup": "^0.28.0",
     "@fluidframework/test-runtime-utils": "^0.28.0",
     "@microsoft/api-extractor": "^7.7.2",
-    "@types/assert": "^1.5.2",
+    "@types/assert": "^1.5.1",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
     "@types/random-js": "^1.0.31",
