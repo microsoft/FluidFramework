@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { TrackingGroup, MergeTreeDeltaOperationType, MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { SharedMatrix } from "./matrix";

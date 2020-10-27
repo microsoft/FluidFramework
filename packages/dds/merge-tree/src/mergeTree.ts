@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise, no-param-reassign, no-shadow */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { Trace } from "@fluidframework/common-utils";
 import * as Base from "./base";
 import * as Collections from "./collections";

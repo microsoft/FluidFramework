@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import AbortController from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
