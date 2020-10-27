@@ -108,9 +108,6 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
         throw new Error("App and protocol summary required for create new path!!");
     }
     const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
-    // Currently for the scenarios we have we don't have ops in the detached container. So the
-    // sequence number would always be 0 here. However odsp requires to have at least 1 snapshot.
-    assert(documentAttributes.sequenceNumber === 0, "Sequence No for detached container snapshot should be 0");
     documentAttributes.sequenceNumber = 1;
     const attributesSummaryBlob: ISummaryBlob = {
         type: SummaryType.Blob,
