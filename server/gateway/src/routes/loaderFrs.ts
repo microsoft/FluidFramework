@@ -11,7 +11,6 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { Router } from "express";
 import safeStringify from "json-stringify-safe";
-import jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { v4 } from "uuid";
 import winston from "winston";
@@ -19,7 +18,7 @@ import dotenv from "dotenv";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
-import { getConfig, getJWTClaims, getUserDetails, queryParamAsString } from "../utils";
+import { generateToken, getConfig, getUserDetails, queryParamAsString } from "../utils";
 import { defaultPartials } from "./partials";
 
 dotenv.config();
@@ -48,8 +47,6 @@ export function create(
     router.get("/:tenantId/*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response) => {
         const start = Date.now();
         const chaincode: string = queryParamAsString(request.query.chaincode);
-        const claims = getJWTClaims(request);
-        const jwtToken = jwt.sign(claims, jwtKey);
 
         const rawPath = request.params[0];
         const slash = rawPath.indexOf("/");
@@ -62,6 +59,7 @@ export function create(
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const [resolvedP, fullTreeP] =
             resolveUrl(config, alfred, appTenants, tenantId, documentId, scopes, request);
+            const jwtToken = generateToken(tenantId, documentId, jwtKey, scopes, request.user);
 
         const workerConfig = getConfig(
             config.get("worker"),

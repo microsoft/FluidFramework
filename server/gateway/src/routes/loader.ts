@@ -11,7 +11,6 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { Router } from "express";
 import safeStringify from "json-stringify-safe";
-import jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { v4 } from "uuid";
 import winston from "winston";
@@ -19,7 +18,7 @@ import dotenv from "dotenv";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
-import { getConfig, getJWTClaims, getUserDetails, queryParamAsString } from "../utils";
+import { generateToken, getConfig, getUser, getUserDetails, queryParamAsString } from "../utils";
 import { defaultPartials } from "./partials";
 
 dotenv.config();
@@ -66,9 +65,6 @@ export function create(
                 winston.info(`Redirecting to ${redirectUrl}`);
                 response.redirect(redirectUrl);
             } else {
-                const claims = getJWTClaims(request);
-                const jwtToken = jwt.sign(claims, jwtKey);
-
                 const rawPath = request.params[0];
                 const slash = rawPath.indexOf("/");
                 const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
@@ -78,6 +74,9 @@ export function create(
 
                 const search = parse(request.url).search;
                 const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+                const user = getUser(request);
+                const jwtToken = generateToken(tenantId, documentId, jwtKey, scopes, user);
+
                 const [resolvedP, fullTreeP] =
                     resolveUrl(config, alfred, appTenants, tenantId, documentId, scopes, request, driveId);
 

@@ -97,6 +97,7 @@
     "gitgraph.js": "^1.11.4",
     "hjs": "^0.0.6",
     "jquery": "^3.3.1",
+    "jsrsasign": "^10.0.2",
     "json-stringify-safe": "^5.0.1",
     "jsonwebtoken": "^8.4.0",
     "lodash": "^4.17.19",

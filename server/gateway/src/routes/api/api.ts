@@ -8,7 +8,7 @@ import { IResolvedUrl, IWebResolvedUrl } from "@fluidframework/driver-definition
 import { ScopeType } from "@fluidframework/protocol-definitions";
 // TODO: getR11sToken is going to be removed from routerlicious-urlresolver.
 // When that happens we should instead use generateToken from @fluidframework/server-services-utils.
-import { getR11sToken, IAlfredUser } from "@fluidframework/routerlicious-urlresolver";
+import { IAlfredUser } from "@fluidframework/routerlicious-urlresolver";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import Axios from "axios";
 import { Request, Router } from "express";
@@ -17,7 +17,7 @@ import moniker from "moniker";
 import { Provider } from "nconf";
 import passport from "passport";
 import winston from "winston";
-import { IJWTClaims } from "../../utils";
+import { getR11SToken, IJWTClaims } from "../../utils";
 
 // Although probably the case we want a default behavior here. Maybe just the URL?
 async function getWebComponent(url: UrlWithStringQuery): Promise<IWebResolvedUrl> {
@@ -79,8 +79,7 @@ async function getInternalComponent(
     const orderer = internal ? config.get("worker:alfredUrl") : config.get("worker:serverUrl");
 
     const user: IAlfredUser = (request.user as IJWTClaims).user;
-
-    const token = getR11sToken(tenantId, documentId, appTenants, scopes, user);
+    const token = getR11SToken(tenantId, appTenants, documentId, scopes, user);
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const fluidUrl = `fluid://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`;
 
