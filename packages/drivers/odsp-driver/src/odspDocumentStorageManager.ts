@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import AbortController from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
@@ -118,8 +118,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly attachmentPOSTUrl: string | undefined;
     private readonly attachmentGETUrl: string | undefined;
     // Driver specified limits for snapshot size and time.
-    private readonly maxSnapshotSizeLimit = 25000000; // 25 MB
-    private readonly maxSnapshotFetchTimeout = 30000; // 30 sec
+    /**
+     * NOTE: While commit cfff6e3 added restrictions to prevent large payloads, snapshot failures will continue to
+     * happen until blob request throttling is implemented. Until then, as a temporary fix we set arbitrarily large
+     * snapshot size and timeout limits so that such failures are unlikely to occur.
+     */
+    private readonly maxSnapshotSizeLimit = 500000000; // 500 MB
+    private readonly maxSnapshotFetchTimeout = 120000; // 2 min
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
         assert(this._ops === undefined);
@@ -1014,6 +1019,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                     break;
                 }
+                case api.SummaryType.Attachment: {
+                    id = summaryObject.id;
+                    break;
+                }
                 default: {
                     throw new Error(`Unknown tree type ${summaryObject.type}`);
                 }
@@ -1021,7 +1030,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             const baseEntry: ISnapshotTreeBaseEntry = {
                 path: encodeURIComponent(key),
-                type: getGitType(summaryObject),
+                type: getGitType(summaryObject) === "attachment" ? "blob" : getGitType(summaryObject),
             };
 
             let entry: SnapshotTreeEntry;

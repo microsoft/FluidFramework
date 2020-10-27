@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     ITree,
@@ -13,6 +13,7 @@ import {
     IBlob,
     ISummaryBlob,
     TreeEntry,
+    IAttachment,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats, ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
@@ -84,6 +85,8 @@ export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, co
 }
 
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
+    private attachmentCounter: number = 0;
+
     public get summary(): ISummaryTree {
         return {
             type: SummaryType.Tree,
@@ -126,6 +129,10 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     public addWithStats(key: string, summarizeResult: ISummarizeResult): void {
         this.summaryTree[key] = summarizeResult.summary;
         this.summaryStats = mergeStats(this.summaryStats, summarizeResult.stats);
+    }
+
+    public addAttachment(id: string) {
+        this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
     }
 
     public getSummaryTree(): ISummaryTreeWithStats {
@@ -175,6 +182,13 @@ export function convertToSummaryTree(
                         entry.value as ITree,
                         fullTree);
                     builder.addWithStats(entry.path, subtree);
+
+                    break;
+                }
+
+                case TreeEntry.Attachment: {
+                    const id = (entry.value as IAttachment).id;
+                    builder.addAttachment(id);
 
                     break;
                 }

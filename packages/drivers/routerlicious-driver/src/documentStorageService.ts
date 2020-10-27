@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
@@ -151,6 +151,9 @@ export class DocumentStorageService implements IDocumentStorageService {
             case SummaryType.Tree: {
                 return this.writeSummaryTree(object, previousFullSnapshot);
             }
+            case SummaryType.Attachment: {
+                return object.id;
+            }
 
             default:
                 throw Error(`Unexpected summary object type: "${object.type}".`);
@@ -220,6 +223,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         const type = value.type === SummaryType.Handle ? value.handleType : value.type;
         switch (type) {
             case SummaryType.Blob:
+            case SummaryType.Attachment:
                 return FileMode.File;
             case SummaryType.Commit:
                 return FileMode.Commit;
@@ -235,6 +239,7 @@ export class DocumentStorageService implements IDocumentStorageService {
 
         switch (type) {
             case SummaryType.Blob:
+            case SummaryType.Attachment:
                 return "blob";
             case SummaryType.Commit:
                 return "commit";
