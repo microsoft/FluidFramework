@@ -228,13 +228,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/blobs/${blobid}`, storageToken);
 
                 return PerformanceEvent.timedExecAsync(
-                        this.logger,
-                        {
-                            eventName: "readBlob",
-                            headers: Object.keys(headers).length !== 0 ? true : undefined,
-                        },
-                        async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }),
-                    );
+                    this.logger,
+                    {
+                        eventName: "readBlob",
+                        headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    },
+                    async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }),
+                );
             });
             blob = response.content;
         }
