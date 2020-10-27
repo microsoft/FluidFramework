@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-const findRoot = require('find-root');
 const path = require('path');
 
 //@ts-check
@@ -27,30 +26,32 @@ class BannedModulesPlugin {
     apply(compiler) {
         // The banned modules that have been found. Maps the banned module name to an array of module paths that import the banned module
         const foundBannedModules = new Map();
-        // A set for quick lookup to see if a module is banned
-        const bannedModuleSet = new Set(this.options.bannedModules);
                 
-        compiler.hooks.emit.tapAsync(pluginName, (
-            compilation) => {
-                compilation.modules.forEach(mod=> {
-                    // mod.resource has the path to the module being requested, we use find root to get the nearest package.json folder
-                    const dir = findRoot(mod.resource);
-                    const pkg = require(path.join(dir, 'package.json'));
+        compiler.hooks.done.tapAsync(pluginName, (
+            stats) => {
+                stats.toJson().modules.forEach(mod=> {
+                    // Infer the name of the package from the path. This current implementation assumes the name has 'node_modules/<packageName>' in it somewhere
+                    // modulePath should contain the relative path to the module, where the first part of the path should be the module name (e.g. assert/build/assert.js)
+                    const modulePath = mod.name.substring(mod.name.indexOf('node_modules') + 'node_modules'.length + 1);
 
-                    if (bannedModuleSet.has(pkg.name)) {
-                        // Let's add the new issuer for this banned module to the banned modules map
-                        const bannedModuleIssuers = foundBannedModules.get(pkg.name) || [];
-                        bannedModuleIssuers.push(mod.issuerPath);
-                        foundBannedModules.set(pkg.name, bannedModuleIssuers);
-                        debugger;
+                    for (let bannedModule of this.options.bannedModules) {
+                        if (modulePath.startsWith(bannedModule)) {
+                            const bannedModuleIssuers = foundBannedModules.get(bannedModule) || [];
+                    
+                            bannedModuleIssuers.push(mod.issuerPath);
+                            foundBannedModules.set(bannedModule, bannedModuleIssuers);
+                            break;
+                        }
                     }
                 });
                 if (foundBannedModules.size > 0) {
                     let errorMessage = `Found ${foundBannedModules.size} banned modules\n`;
-                    foundBannedModules.forEach((issuers, pkgName)=> {
+                    foundBannedModules.forEach((issuerPaths, pkgName)=> {
                         errorMessage += `\tBanned module: ${pkgName}\n`;
-                        issuers.forEach(issuer => {
-                            errorMessage += `\t\tIssuer: ${issuer}\n`
+                          // Generate a string with a friendly issuer map path so that we can easily debug why a banned module is being included
+                        issuerPaths.forEach(issuerPath => {
+                            errorMessage += `\t\tIssuer: \n`;
+                            issuerPath.forEach(segment => errorMessage += `\t\t\t${segment.name}\n`);
                         })
                     })
                     throw new Error(errorMessage);

@@ -19,7 +19,7 @@
     "prepack": "npm run webpack",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
-    "webpack": "node --inspect-brk ../../../node_modules/webpack/bin/webpack.js",
+    "webpack": "webpack",
     "webpack:profile": "npm run webpack"
   },
   "dependencies": {
@@ -44,7 +44,6 @@
     "eslint-plugin-prefer-arrow": "~1.2.2",
     "eslint-plugin-react": "~7.21.2",
     "eslint-plugin-unicorn": "~22.0.0",
-    "find-root": "^1.1.0",
     "rimraf": "^2.6.2",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
