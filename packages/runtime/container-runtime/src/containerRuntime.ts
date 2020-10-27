@@ -1550,7 +1550,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     sequenceNumber: message.sequenceNumber,
                     snapshot: attachMessage.snapshot ?? {
                         id: null,
-                        entries: [createAttributesBlob(pkg, false /* isRootDataStore */)],
+                        entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
                     },
                 }),
             pkg);
