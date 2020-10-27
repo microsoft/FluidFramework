@@ -7,6 +7,7 @@ const path = require('path');
 const { BundleComparisonPlugin } = require('@mixer/webpack-bundle-compare/dist/plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin');
+const BannedModulesPlugin = require('./bannedModulesPlugin');
 
 module.exports = {
   entry: {
@@ -36,6 +37,12 @@ module.exports = {
   },
   node: false,
   plugins: [
+    new BannedModulesPlugin({ 
+      bannedModules: [
+        // Assert is banned because it has a very large bundle size impact on client JavaScript
+        'assert'
+      ]
+    }),
     new DuplicatePackageCheckerPlugin({
       // Also show module that is requiring each duplicate package
       verbose: true,
