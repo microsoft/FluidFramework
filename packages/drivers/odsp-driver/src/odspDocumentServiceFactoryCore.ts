@@ -66,7 +66,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             siteUrl: odspResolvedUrl.siteUrl,
             filePath,
             filename: odspResolvedUrl.fileName,
-            containerPackageName: odspResolvedUrl.codeHint?.containerPackageName,
         };
 
         const logger2 = ChildLogger.create(logger, "OdspDriver");
