@@ -82,37 +82,41 @@ async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJs
     const totalCount = totalDevCount;
     const topLevelTotalCount = topLevelDevCount;
 
-    const markNonDev = (name: string, item: any) => {
+    const markNonDev = (name: string, topRef: string, item: any, refStack: any[] = []) => {
         totalDevCount--;
         delete item.dev;
+        const currStack = [item, ...refStack];
         if (item.dependencies) {
             // mark unhoisted dependencies recursively
             for (const dep in item.dependencies) {
-                markNonDev(dep, item.dependencies[dep]);
+                markNonDev(dep, topRef, item.dependencies[dep], currStack);
             }
         }
         // Mark the hoisted dependencies
         for (const req in item.requires) {
-            if (!item.dependencies || !item.dependencies[req]) {
-                markTopLevelNonDev(req, name);
+            if (!currStack.some(scope => scope.dependencies && scope.dependencies[req] !== undefined)) {
+                markTopLevelNonDev(req, name, topRef);
             }
         }
     }
 
-    const markTopLevelNonDev = (dep: string, ref: string) => {
+    const markTopLevelNonDev = (dep: string, ref: string, topRef: string) => {
         const item = repoPackageLockJson.dependencies[dep];
         if (!item) {
-            throw new Error(`Missing ${dep} in lock file referenced by ${ref} in ${MonoRepoKind[monoRepo.kind].toLowerCase()}`);
+            throw new Error(`Missing ${dep} in lock file referenced by ${ref} from ${topRef} in ${MonoRepoKind[monoRepo.kind].toLowerCase()}`);
+        }
+        if (commonOptions.verbose) {
+            console.log(`NonDev Ref: ${topRef}..${ref} => ${dep}`);
         }
         if (item.dev) {
             topLevelDevCount--;
-            markNonDev(dep, item);
+            markNonDev(dep, dep, item);
         }
     }
 
     // Go thru the non-dev dependencies in the package.json file and recursively mark the dependency tree as non-dev
     for (const dep in repoPackageJson.dependencies) {
-        markTopLevelNonDev(dep, "<root>");
+        markTopLevelNonDev(dep, "<root>", "<root>");
     }
 
     console.log(`${MonoRepoKind[monoRepo.kind]}: ${format(totalDevCount)}/${format(totalCount)} locked devDependencies`);
