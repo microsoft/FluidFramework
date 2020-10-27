@@ -62,6 +62,7 @@
     "@fluidframework/server-services-client": "^0.1014.0-0",
     "@fluidframework/server-services-core": "^0.1014.0-0",
     "@fluidframework/server-test-utils": "^0.1014.0-0",
+    "assert": "^2.0.0",
     "debug": "^4.1.1",
     "jsrsasign": "^10.0.2",
     "uuid": "^3.3.2"
@@ -70,6 +71,7 @@
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.20.0-0",
     "@fluidframework/mocha-test-setup": "^0.28.0",
+    "@types/assert": "^1.5.2",
     "@types/jsrsasign" : "^8.0.7",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",

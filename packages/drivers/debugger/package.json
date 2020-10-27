@@ -31,12 +31,14 @@
     "@fluidframework/driver-definitions": "^0.28.0",
     "@fluidframework/driver-utils": "^0.28.0",
     "@fluidframework/protocol-definitions": "^0.1014.0-0",
-    "@fluidframework/replay-driver": "^0.28.0"
+    "@fluidframework/replay-driver": "^0.28.0",
+    "assert": "^2.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.20.0-0",
     "@microsoft/api-extractor": "^7.7.2",
+    "@types/assert": "^1.5.2",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~4.2.0",
