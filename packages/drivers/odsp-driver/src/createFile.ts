@@ -41,14 +41,8 @@ const isInvalidFileName = (fileName: string): boolean => {
     return !!fileName.match(invalidCharsRegex);
 };
 
-// This map represents mapping from container package name to file extension.
-// For the packages that are not in this list, we will use .fluid extension.
-const fileExtensionMap = new Map([
-    ["@ms/onenote-meetings", ".note"],
-]);
-
 /**
- * Creates a new Fluid file.
+ * Creates a new Fluid file. If no extension is supplied then use .fluid as extension.
  * Returns resolved url
  */
 export async function createNewFluidFile(
@@ -64,10 +58,8 @@ export async function createNewFluidFile(
     }
 
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
-    const containerPackageName = newFileInfo.containerPackageName;
-    assert(containerPackageName, "File Info should always contain container package name for create new flow");
-    const fileExtension = fileExtensionMap.get(containerPackageName) ?? ".fluid";
-    const encodedFilename = encodeURIComponent(`${newFileInfo.filename}${fileExtension}`);
+    const fileName = newFileInfo.filename.indexOf(".") === -1 ? `${newFileInfo.filename}.fluid` : newFileInfo.filename;
+    const encodedFilename = encodeURIComponent(fileName);
     const baseUrl =
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
         `${filePath}/${encodedFilename}`;

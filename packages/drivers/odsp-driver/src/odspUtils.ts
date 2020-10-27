@@ -141,5 +141,4 @@ export interface INewFileInfo {
     driveId: string;
     filename: string;
     filePath: string;
-    containerPackageName?: string;
 }
