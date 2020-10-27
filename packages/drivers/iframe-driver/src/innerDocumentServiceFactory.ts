@@ -29,7 +29,6 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
                 outerProxy = Comlink.wrap<IDocumentServiceFactoryProxy>(Comlink.windowEndpoint(window.parent));
             }
             if (outerProxy) {
-                console.log(outerProxy.connected.toString());
                 await outerProxy.connected();
                 return outerProxy;
             }

@@ -12,7 +12,7 @@ debug(`Package: ${pkgName} - Version: ${pkgVersion}`);
 
 export class IFrameDebugLogger implements ITelemetryBaseLogger {
     constructor(
-        private readonly namespace: string
+        private readonly namespace: string,
     ) {}
 
     public send(event: ITelemetryBaseEvent): void {
