@@ -59,7 +59,7 @@ export interface IFluidPackage {
 }
 
 /**
- * Check if the package.json defines a Fluid module, which requires a `fluid` entry
+ * Check if the package.json defines a Fluid package
  * @param pkg - the package json data to check if it is a Fluid package.
  */
 export const isFluidPackage = (pkg: any): pkg is Readonly<IFluidPackage> =>
@@ -104,7 +104,7 @@ export interface IProvideFluidCodeDetailsComparer {
 }
 
 /**
- * Provides capability to compare fluid code details.
+ * Provides capability to compare Fluid code details.
  */
 export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
 
@@ -118,10 +118,10 @@ export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsCompa
 
     /**
      * Return a number representing the ascending sort order of the `a` and `b` code details;
-     *      < 0 if `a < b`.
-     *      0 if `a === b`.
-     *      > 0 if `a > b`.
-     *      undefined if `a` is not comparable to `b`.
+     *      `< 0` if `a < b`.
+     *      `= 0` if `a === b`.
+     *      `> 0` if `a > b`.
+     *      `undefined` if `a` is not comparable to `b`.
      *
      * Similar semantics to:
      *      https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#Description
