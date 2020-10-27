@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -10,8 +11,10 @@ import {
     IDocumentStorageService,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import { IClient } from "@fluidframework/protocol-definitions";
 import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
+import { IClient } from "@fluidframework/protocol-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { IFrameDebugLogger } from "./debug";
 import { InnerDocumentDeltaConnection } from "./innerDocumentDeltaConnection";
 import { ICombinedDriver } from "./outerDocumentServiceFactory";
 
@@ -22,16 +25,32 @@ export class InnerDocumentService implements IDocumentService {
     /**
      * Create a new InnerDocumentService
      */
-    public static async create(proxyObject: ICombinedDriver): Promise<InnerDocumentService> {
-        return new InnerDocumentService(proxyObject, proxyObject.clientId);
+    public static async create(
+        proxyObject: ICombinedDriver,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<InnerDocumentService> {
+        return new InnerDocumentService(proxyObject, proxyObject.clientId, logger);
     }
+
+    private readonly logger: ITelemetryBaseLogger;
 
     private constructor(
         private readonly outerProxy: ICombinedDriver,
-        public clientId: string) { }
+        public clientId: string,
+        logger?: ITelemetryBaseLogger)
+    {
+        // outerProxy provides a logger as well, but we can create and use our own here
+        // for different functionality
+        this.logger = logger
+            ? ChildLogger.create(logger, "InnerIFrameDriver")
+            : new IFrameDebugLogger("InnerIFrameDriver");
+    }
 
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): IResolvedUrl {
+        const event = { category: "generic", eventName: "not implemented" };
+        this.outerProxy.logger.send(event);
+        this.logger.send(event);
         throw new Error("Not implemented");
     }
 

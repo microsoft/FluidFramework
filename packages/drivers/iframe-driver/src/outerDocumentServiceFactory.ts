@@ -3,8 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import * as Comlink from "comlink";
+import {
+    IEventProvider,
+    IEvent,
+    ITelemetryBaseLogger,
+    ITelemetryLogger,
+} from "@fluidframework/common-definitions";
 import { Deferred } from "@fluidframework/common-utils";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -15,15 +22,14 @@ import {
     IUrlResolver,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
     IClient,
     IDocumentMessage,
     IVersion,
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
-import { IEventProvider, IEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import * as Comlink from "comlink";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { debug } from "./debug";
 import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 
@@ -40,6 +46,7 @@ export interface ICombinedDriver {
     stream: IOuterDocumentDeltaConnectionProxy;
     deltaStorage: IDocumentDeltaStorageService;
     storage: IDocumentStorageService;
+    logger: ITelemetryBaseLogger;
 }
 
 export interface IDocumentServiceFactoryProxy {
@@ -69,9 +76,10 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         this.createProxy(frame);
     }
 
-    public async createDocumentService(): Promise<string> {
+    public async createDocumentService(logger?: ITelemetryBaseLogger): Promise<string> {
+        const outerProxyLogger = ChildLogger.create(logger, "OuterProxyIFrameDriver");
         const connectedDocumentService: IDocumentService =
-            await this.documentServiceFactory.createDocumentService(this.resolvedUrl);
+            await this.documentServiceFactory.createDocumentService(this.resolvedUrl, outerProxyLogger);
 
         const clientDetails: IClient = this.options?.client ?
             (this.options.client as IClient) :
@@ -97,6 +105,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             stream: this.getOuterDocumentDeltaConnection(deltaStream),
             deltaStorage: this.getDeltaStorage(deltaStorage),
             storage: this.getStorage(storage),
+            logger: this.getLogger(outerProxyLogger),
         };
 
         this.clients[clientId] = combinedDriver;
@@ -260,6 +269,12 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         };
 
         return outerMethodsToProxy;
+    }
+
+    private getLogger(logger: ITelemetryLogger): ITelemetryBaseLogger {
+        return {
+            send: (event) => logger.send(event),
+        };
     }
 }
 
