@@ -9,7 +9,7 @@
  * @param condition - The condition that should be truthy, if the condition is falsy an error will be thrown.
  * @param message - The message to include in the error when the condition does not hold
  */
- export function assert(condition: any, message?: string) {
+ export function assert(condition: boolean, message?: string): asserts condition {
      if (!condition) {
          throw new Error(message);
      }
