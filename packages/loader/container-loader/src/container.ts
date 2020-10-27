@@ -836,7 +836,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         const previousContextState = await this.context.snapshotRuntimeState();
-        this.context.dispose();
+        this.context.dispose(new Error("ContextDisposedForReload"));
 
         // don't fire this event if we are transitioning from a null runtime to a real runtime
         // with detached container we no longer need the null runtime, but for legacy
