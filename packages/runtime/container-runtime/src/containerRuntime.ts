@@ -29,10 +29,15 @@ import {
     ICriticalContainerError,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
+import {
+    IContainerRuntime,
+    IContainerRuntimeDirtyable,
+    IContainerRuntimeEvents,
+} from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
     Trace,
+    TypedEventEmitter,
     unreachableCase,
 } from "@fluidframework/common-utils";
 import {
@@ -124,6 +129,8 @@ import { BlobManager } from "./blobManager";
 import { convertSnapshotToSummaryTree } from "./utils";
 
 const chunksBlobName = ".chunks";
+const blobsTreeName = ".blobs";
+const nonDataStorePaths = [".protocol", ".logTail", ".serviceProtocol", blobsTreeName];
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -465,7 +472,7 @@ class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
  */
-export class ContainerRuntime extends EventEmitter
+export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
     public get IContainerRuntime() { return this; }
     public get IContainerRuntimeDirtyable() { return this; }
@@ -618,7 +625,12 @@ export class ContainerRuntime extends EventEmitter
         return this.context.snapshotFn;
     }
 
-    public get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown) => void {
+    public get reSubmitFn(): (
+        type: ContainerMessageType,
+        content: any,
+        localOpMetadata: unknown,
+        opMetaData: unknown,
+    ) => void {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.reSubmit;
     }
@@ -791,7 +803,7 @@ export class ContainerRuntime extends EventEmitter
 
         if (typeof baseSnapshot === "object") {
             Object.keys(baseSnapshot.trees).forEach((value) => {
-                if (value !== ".protocol" && value !== ".logTail" && value !== ".serviceProtocol") {
+                if (!nonDataStorePaths.includes(value)) {
                     const tree = baseSnapshot.trees[value];
                     fluidDataStores.set(value, tree);
                 }
@@ -847,8 +859,9 @@ export class ContainerRuntime extends EventEmitter
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
             () => this.storage,
-            (blobId) => this.submit(ContainerMessageType.BlobAttach, { blobId }),
+            (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
         );
+        this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName]);
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
@@ -862,6 +875,12 @@ export class ContainerRuntime extends EventEmitter
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);
+        });
+
+        this.context.quorum.on("addProposal",(proposal)=>{
+            if (proposal.key === "code" || proposal.key === "code2") {
+                this.emit("codeDetailsProposed", proposal.value, proposal);
+            }
         });
 
         if (this.context.previousRuntimeState === undefined || this.context.previousRuntimeState.state === undefined) {
@@ -928,11 +947,20 @@ export class ContainerRuntime extends EventEmitter
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
-    public dispose(): void {
+    public dispose(error?: Error): void {
         if (this._disposed) {
             return;
         }
         this._disposed = true;
+
+        this.logger.sendTelemetryEvent({
+            eventName: "ContainerRuntimeDisposed",
+            category: "generic",
+            isDirty: this.isDocumentDirty(),
+            lastSequenceNumber: this.deltaManager.lastSequenceNumber,
+            attachState: this.attachState,
+            message: error?.message,
+        });
 
         this.summaryManager.dispose();
         this.summarizer.dispose();
@@ -1082,6 +1110,8 @@ export class ContainerRuntime extends EventEmitter
             const content = JSON.stringify([...this.chunkMap]);
             summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
+        const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
+        summaryTreeBuilder.addWithStats(".blobs", blobsTree);
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
@@ -1099,7 +1129,7 @@ export class ContainerRuntime extends EventEmitter
             nextSummarizerD: this.nextSummarizerD,
         };
 
-        this.dispose();
+        this.dispose(new Error("ContainerRuntimeStopped"));
 
         return { snapshot, state };
     }
@@ -1231,6 +1261,10 @@ export class ContainerRuntime extends EventEmitter
                 case ContainerMessageType.FluidDataStoreOp:
                     this.processFluidDataStoreOp(message, local, localMessageMetadata);
                     break;
+                case ContainerMessageType.BlobAttach:
+                    assert(message?.metadata?.blobId);
+                    this.blobManager.addBlobId(message.metadata.blobId);
+                    break;
                 default:
             }
 
@@ -1280,7 +1314,7 @@ export class ContainerRuntime extends EventEmitter
         const deferredContext = this.ensureContextDeferred(id);
 
         if (!wait && !deferredContext.isCompleted) {
-            return Promise.reject(`Process ${id} does not exist`);
+            return Promise.reject(new Error(`DataStore ${id} does not exist`));
         }
 
         const context = await deferredContext.promise;
@@ -1454,10 +1488,6 @@ export class ContainerRuntime extends EventEmitter
         if (this.leader) {
             this.runTaskAnalyzer();
         }
-    }
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
     }
 
     /**
@@ -1909,7 +1939,8 @@ export class ContainerRuntime extends EventEmitter
     private submit(
         type: ContainerMessageType,
         content: any,
-        localOpMetadata: unknown = undefined): void {
+        localOpMetadata: unknown = undefined,
+        opMetadata: unknown = undefined): void {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
@@ -1937,19 +1968,19 @@ export class ContainerRuntime extends EventEmitter
             // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
             // there will be a lot of escape characters that can make it up to 2x bigger!
             // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
-            if (serializedContent.length <= maxOpSize) {
+            if (!serializedContent || serializedContent.length <= maxOpSize) {
                 clientSequenceNumber = this.submitRuntimeMessage(
                     type,
                     content,
                     this._flushMode === FlushMode.Manual,
-                    batchBegin ? { batch: true } : undefined);
+                    batchBegin ? { batch: true } : opMetadata);
             } else {
                 clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             }
         }
 
         // Let the PendingStateManager know that a message was submitted.
-        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata);
+        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata, opMetadata);
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }
@@ -2025,7 +2056,7 @@ export class ContainerRuntime extends EventEmitter
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private reSubmit(type: ContainerMessageType, content: any, localOpMetadata: unknown) {
+    private reSubmit(type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetaData: unknown) {
         switch (type) {
             case ContainerMessageType.FluidDataStoreOp:
                 // For Operations, call resubmitDataStoreOp which will find the right store
@@ -2038,7 +2069,7 @@ export class ContainerRuntime extends EventEmitter
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
             case ContainerMessageType.BlobAttach:
-                this.submit(type, content, localOpMetadata);
+                this.submit(type, content, localOpMetadata, opMetaData);
                 break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);

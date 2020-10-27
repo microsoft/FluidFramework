@@ -76,6 +76,7 @@ import {
     MessageType,
     TreeEntry,
     ISummaryTree,
+    IPendingProposal,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -399,8 +400,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager.clientDetails;
     }
 
+    /**
+     * @deprecated use codeDetails
+     */
     public get chaincodePackage(): IFluidCodeDetails | undefined {
-        return this._context?.codeDetails;
+        return this.codeDetails;
+    }
+
+    public get codeDetails(): IFluidCodeDetails | undefined {
+        return this._context?.codeDetails ?? this.getCodeDetailsFromQuorum();
     }
 
     /**
@@ -808,13 +816,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         throw new Error("Url Resolver does not support creating urls");
     }
 
+    public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
+        if (!isFluidCodeDetails(codeDetails)) {
+            throw new Error("Provided codeDetails are not IFluidCodeDetails");
+        }
+
+        return this.getQuorum().propose("code", codeDetails)
+            .then(()=>true)
+            .catch(()=>false);
+    }
+
     private async reloadContextCore(): Promise<void> {
         await Promise.all([
             this.deltaManager.inbound.systemPause(),
             this.deltaManager.inboundSignal.systemPause()]);
 
         const previousContextState = await this.context.snapshotRuntimeState();
-        this.context.dispose();
+        this.context.dispose(new Error("ContextDisposedForReload"));
 
         const codeDetails = this.getCodeDetailsFromQuorum();
 
@@ -1243,12 +1261,24 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
+        protocol.quorum.on("addProposal",(proposal: IPendingProposal) => {
+            if (proposal.key === "code" || proposal.key === "code2") {
+                this.emit("codeDetailsProposed", proposal.value, proposal);
+            }
+        });
+
         protocol.quorum.on(
             "approveProposal",
             (sequenceNumber, key, value) => {
                 debug(`approved ${key}`);
                 if (key === "code" || key === "code2") {
-                    debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
+                    debug(`codeProposal ${JSON.stringify(value)}`);
+                    if (!isFluidCodeDetails(value)) {
+                        this.logger.send({
+                                eventName: "CodeProposalNotIFluidCodeDetails",
+                                category: "warning",
+                        });
+                    }
 
                     if (shouldRefresh) {
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -1271,13 +1301,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Back compat
         if (pkg === undefined) {
             pkg = quorum.get("code2");
-        }
-
-        if (!isFluidCodeDetails(pkg)) {
-            this.logger.send({
-                    eventName: "CodeProposalNotIFluidCodeDetails",
-                    category: "warning",
-            });
         }
 
         return pkg as IFluidCodeDetails;

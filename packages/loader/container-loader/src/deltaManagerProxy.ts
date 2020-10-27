@@ -36,9 +36,6 @@ export class DeltaQueueProxy<T> extends EventForwarder<IDeltaQueueEvents<T>> imp
         return this.queue.idle;
     }
 
-    private systemPaused = false;
-    private localPaused = false;
-
     constructor(private readonly queue: IDeltaQueue<T>) {
         super(queue);
     }
@@ -52,29 +49,19 @@ export class DeltaQueueProxy<T> extends EventForwarder<IDeltaQueueEvents<T>> imp
     }
 
     public async systemPause(): Promise<void> {
-        this.systemPaused = true;
-        return this.queue.pause();
+        return this.pause();
     }
 
     public async pause(): Promise<void> {
-        this.localPaused = true;
         return this.queue.pause();
     }
 
     public async systemResume(): Promise<void> {
-        this.systemPaused = false;
-        return this.updateResume();
+        return this.resume();
     }
 
     public async resume(): Promise<void> {
-        this.localPaused = false;
-        return this.updateResume();
-    }
-
-    private async updateResume(): Promise<void> {
-        if (!this.systemPaused && !this.localPaused) {
-            return this.queue.resume();
-        }
+        this.queue.resume();
     }
 }
 

@@ -36,6 +36,7 @@ interface IPendingMessage {
     clientSequenceNumber: number;
     content: any;
     localOpMetadata: unknown;
+    opMetaData: unknown;
 }
 
 /**
@@ -107,13 +108,15 @@ export class PendingStateManager {
         type: ContainerMessageType,
         clientSequenceNumber: number,
         content: any,
-        localOpMetadata: unknown) {
+        localOpMetadata: unknown,
+        opMetaData: unknown) {
         const pendingMessage: IPendingMessage = {
             type: "message",
             messageType: type,
             clientSequenceNumber,
             content,
             localOpMetadata,
+            opMetaData,
         };
 
         this.pendingStates.push(pendingMessage);
@@ -328,7 +331,8 @@ export class PendingStateManager {
                         this.containerRuntime.reSubmitFn(
                             pendingState.messageType,
                             pendingState.content,
-                            pendingState.localOpMetadata);
+                            pendingState.localOpMetadata,
+                            pendingState.opMetaData);
                     }
                     break;
                 case "flushMode":

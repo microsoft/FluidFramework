@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IEventProvider } from "@fluidframework/common-definitions";
 import {
     AttachState,
     ContainerWarning,
@@ -15,16 +16,22 @@ import {
     IResponse,
     IFluidObject,
     IFluidRouter,
+    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
+    IPendingProposal,
     IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { FlushMode, IContainerRuntimeBase, IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import {
+    FlushMode,
+    IContainerRuntimeBase,
+    IContainerRuntimeBaseEvents,
+ } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
 declare module "@fluidframework/core-interfaces" {
@@ -38,13 +45,29 @@ export interface IProvideContainerRuntime {
     IContainerRuntime: IContainerRuntime;
 }
 
-/**
+export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents{
+    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
+    (
+        event: "dirtyDocument" | "disconnected" | "dispose" | "savedDocument",
+        listener: () => void);
+    (event: "connected", listener: (clientId: string) => void);
+    (event: "localHelp", listener: (message: IHelpMessage) => void);
+    (
+        event: "fluidDataStoreInstantiated",
+        listener: (dataStorePkgName: string, registryPath: string, createNew: boolean) => void,
+    );
+}
+
+export type IContainerRuntimeBaseWithCombinedEvents =
+    IContainerRuntimeBase &  IEventProvider<IContainerRuntimeEvents>;
+
+/*
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
 export interface IContainerRuntime extends
     IProvideContainerRuntime,
     Partial<IProvideContainerRuntimeDirtyable>,
-    IContainerRuntimeBase {
+    IContainerRuntimeBaseWithCombinedEvents {
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;
@@ -65,19 +88,6 @@ export interface IContainerRuntime extends
      */
     readonly attachState: AttachState;
 
-    on(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): this;
-    on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
-    on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
-    on(
-        event: "dirtyDocument" | "disconnected" | "dispose" | "savedDocument" | "leader" | "notleader",
-        listener: () => void): this;
-    on(event: "connected", listener: (clientId: string) => void): this;
-    on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
-    on(
-        event: "fluidDataStoreInstantiated",
-        listener: (dataStorePkgName: string, registryPath: string, createNew: boolean) => void,
-    ): this;
     /**
      * Returns the runtime of the data store.
      * @param id - Id supplied during creating the data store.
