@@ -29,8 +29,9 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
         driveId: string,
         filePath: string,
         fileName: string,
+        fileExtension?: string,
     ) {
-        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
+        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName, fileExtension);
     }
 
     /**

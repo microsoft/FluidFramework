@@ -149,4 +149,5 @@ export interface INewFileInfo {
     driveId: string;
     filename: string;
     filePath: string;
+    fileExtension: string;
 }

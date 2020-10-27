@@ -79,8 +79,9 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         driveId: string,
         filePath: string,
         fileName: string,
+        fileExtension?: string,
     ): IRequest {
-        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
+        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName, fileExtension);
     }
 }
 
@@ -127,6 +128,7 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
 
         const searchParams = new URLSearchParams(queryString);
         const fileName = request.headers[DriverHeader.createNew].fileName;
+        const fileExtension = request.headers[DriverHeader.createNew].fileExtension;
         const driveID = searchParams.get("driveId");
         const filePath = searchParams.get("path");
         const packageName = searchParams.get("containerPackageName");
@@ -147,6 +149,7 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
             driveId: driveID,
             itemId: "",
             fileName,
+            fileExtension,
             summarizer: false,
             codeHint: {
                 containerPackageName: packageName ? packageName : undefined,
@@ -184,6 +187,7 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
         driveId,
         itemId,
         fileName: "",
+        fileExtension: "",
         summarizer,
         codeHint: {
             containerPackageName,

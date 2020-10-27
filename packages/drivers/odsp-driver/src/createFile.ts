@@ -54,7 +54,8 @@ export async function createNewFluidFile(
     }
 
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
-    const fileName = newFileInfo.filename.indexOf(".") === -1 ? `${newFileInfo.filename}.fluid` : newFileInfo.filename;
+    const fileName = newFileInfo.fileExtension
+        ? `${newFileInfo.filename}${newFileInfo.fileExtension}` : `${newFileInfo.filename}.fluid`;
     const encodedFilename = encodeURIComponent(fileName);
     const baseUrl =
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
