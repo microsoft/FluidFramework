@@ -38,7 +38,67 @@ import { InkData, ISerializableInk } from "./snapshot";
 const snapshotFileName = "header";
 
 /**
- * Inking data structure.
+ * `Ink` is a shared object which holds a collection of ink strokes.
+ *
+ * @remarks
+ * ## Creation and setup
+ *
+ * To create an `Ink` object, call the static `create` method:
+ *
+ * ```typescript
+ * const ink = Ink.create(this.runtime, id);
+ * ```
+ *
+ * You'll also need an `IPen` that will describe the style of your stroke:
+ *
+ * ```typescript
+ * this.currentPen = {
+ *     color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
+ *     thickness: 7,
+ * };
+ * ```
+ *
+ * ## Usage
+ *
+ * Once the `Ink` object is created, you can add and update ink strokes using `createStroke` and
+ * `appendPointToStroke`.  Most likely you'll want to do this in response to incoming Pointer Events:
+ *
+ * ```typescript
+ * private handlePointerDown(e: PointerEvent) {
+ *     const newStroke = ink.createStroke(this.currentPen);
+ *     this.currentStrokeId = newStroke.id;
+ *     handlePointerMotion(e);
+ * }
+ *
+ * private handlePointerMotion(e: PointerEvent) {
+ *     const inkPoint = {
+ *         x: e.clientX,
+ *         y: e.clientY,
+ *         time: Date.now(),
+ *         pressure: e.pressure,
+ *     };
+ *     ink.appendPointToStroke(inkPoint, this.currentStrokeId);
+ * }
+ *
+ * canvas.addEventListener("pointerdown", this.handlePointerDown);
+ * canvas.addEventListener("pointermove", this.handlePointerMotion);
+ * canvas.addEventListener("pointerup", this.handlePointerMotion);
+ * ```
+ *
+ * You can also clear all the ink with `clear`:
+ *
+ * ```typescript
+ * ink.clear();
+ * ```
+ *
+ * To observe and react to changes to the ink from both your own modifications as well as remote participants,
+ * you can listen to the `"createStroke"`, `"stylus"` and `"clear"` events.  Since you don't need to render anything
+ * yet when a stroke is first created, registering for `"createStroke"` may not be necessary.
+ *
+ * ```typescript
+ * ink.on("stylus", this.renderStylusUpdate.bind(this));
+ * ink.on("clear", this.renderClear.bind(this));
+ * ```
  * @sealed
  */
 export class Ink extends SharedObject<IInkEvents> implements IInk {
