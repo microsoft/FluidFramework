@@ -17,7 +17,6 @@ import {
     IFluidRouter,
     IFluidCodeDetails,
     isFluidCodeDetails,
-    isFluidPackage,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -593,7 +592,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     [DriverHeader.createNew]: {},
                 };
             }
-            request.url = `${mainUrl}?${searchParams.toString()}`;
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
