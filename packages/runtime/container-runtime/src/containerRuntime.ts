@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import { TaskManagerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
