@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/react",
-  "version": "0.26.9",
+  "version": "0.26.10",
   "description": "Base views and hooks for building Fluid React views",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -27,15 +27,15 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.26.9",
+    "@fluidframework/aqueduct": "^0.26.10",
     "@fluidframework/common-definitions": "^0.19.1",
-    "@fluidframework/core-interfaces": "^0.26.9",
-    "@fluidframework/counter": "^0.26.9",
-    "@fluidframework/datastore-definitions": "^0.26.9",
-    "@fluidframework/map": "^0.26.9",
-    "@fluidframework/sequence": "^0.26.9",
-    "@fluidframework/shared-object-base": "^0.26.9",
-    "@fluidframework/view-interfaces": "^0.26.9",
+    "@fluidframework/core-interfaces": "^0.26.10",
+    "@fluidframework/counter": "^0.26.10",
+    "@fluidframework/datastore-definitions": "^0.26.10",
+    "@fluidframework/map": "^0.26.10",
+    "@fluidframework/sequence": "^0.26.10",
+    "@fluidframework/shared-object-base": "^0.26.10",
+    "@fluidframework/view-interfaces": "^0.26.10",
     "react": "^16.10.2"
   },
   "devDependencies": {
