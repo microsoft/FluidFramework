@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { readAndParse } from "@fluidframework/driver-utils";

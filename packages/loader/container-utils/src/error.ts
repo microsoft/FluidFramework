@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { ContainerErrorType, IGenericError, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
 

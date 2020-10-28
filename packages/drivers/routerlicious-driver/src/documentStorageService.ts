@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
@@ -105,10 +105,6 @@ export class DocumentStorageService implements IDocumentStorageService {
         return iso.byteLength === iso.buffer.byteLength
             ? iso.buffer
             : iso.buffer.slice(iso.byteOffset, iso.byteOffset + iso.byteLength);
-    }
-
-    public getRawUrl(blobId: string): string {
-        return this.manager.getRawUrl(blobId);
     }
 
     private async writeSummaryTree(
