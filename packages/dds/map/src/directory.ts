@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
