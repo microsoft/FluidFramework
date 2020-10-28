@@ -82,22 +82,23 @@ async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJs
     const totalCount = totalDevCount;
     const topLevelTotalCount = topLevelDevCount;
 
-    const markNonDev = (name: string, topRef: string, item: any, refStack: any[] = []) => {
+    const markNonDev = (name: string, topRef: string, item: any, refStack: any[]) => {
         totalDevCount--;
         delete item.dev;
-        const currStack = [item, ...refStack];
+        refStack.push(item);
         if (item.dependencies) {
             // mark unhoisted dependencies recursively
             for (const dep in item.dependencies) {
-                markNonDev(dep, topRef, item.dependencies[dep], currStack);
+                markNonDev(dep, topRef, item.dependencies[dep], refStack);
             }
         }
         // Mark the hoisted dependencies
         for (const req in item.requires) {
-            if (!currStack.some(scope => scope.dependencies && scope.dependencies[req] !== undefined)) {
+            if (!refStack.some(scope => scope.dependencies && scope.dependencies[req] !== undefined)) {
                 markTopLevelNonDev(req, name, topRef);
             }
         }
+        refStack.pop();
     }
 
     const markTopLevelNonDev = (dep: string, ref: string, topRef: string) => {
@@ -108,9 +109,10 @@ async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJs
         if (commonOptions.verbose) {
             console.log(`NonDev Ref: ${topRef}..${ref} => ${dep}`);
         }
+
         if (item.dev) {
             topLevelDevCount--;
-            markNonDev(dep, dep, item);
+            markNonDev(dep, dep, item, []);
         }
     }
 
