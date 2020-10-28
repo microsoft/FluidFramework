@@ -9,7 +9,6 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ChannelFactoryRegistry,
     ITestFluidObject,
-    OpProcessingController,
 } from "@fluidframework/test-utils";
 import { generateTestWithCompat, ICompatLocalTestObjectProvider, ITestContainerConfig } from "./compatUtils";
 
@@ -21,7 +20,6 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 const tests = (args: ICompatLocalTestObjectProvider) => {
-    let opProcessingController: OpProcessingController;
     let dataStore1: ITestFluidObject;
     let sharedCounter1: ISharedCounter;
     let sharedCounter2: ISharedCounter;
@@ -43,13 +41,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         sharedCounter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
-        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-        opProcessingController.addDeltaManagers(
-            dataStore1.runtime.deltaManager,
-            dataStore2.runtime.deltaManager,
-            dataStore3.runtime.deltaManager);
-
-        await opProcessingController.process();
+        await args.opProcessingController.process();
     });
 
     function verifyCounterValue(counter: ISharedCounter, expectedValue, index: number) {
@@ -81,12 +73,12 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
         it("can increment and decrement the value in 3 containers correctly", async () => {
             sharedCounter2.increment(7);
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.equal(sharedCounter1.value, 7);
             assert.equal(sharedCounter2.value, 7);
             assert.equal(sharedCounter3.value, 7);
             sharedCounter3.increment(-20);
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.equal(sharedCounter1.value, -13);
             assert.equal(sharedCounter2.value, -13);
             assert.equal(sharedCounter3.value, -13);
@@ -132,7 +124,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
                 // do the increment
                 incrementer.increment(incrementAmount);
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 // event count is correct
                 assert.equal(eventCount1, expectedEventCount);

@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IFluidRouter,
@@ -51,12 +51,20 @@ export enum FlushMode {
     Manual,
 }
 
+export interface IContainerRuntimeBaseEvents extends IEvent{
+
+    (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
+    (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
+    (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+    (event: "leader" | "notleader", listener: () => void);
+}
+
 /**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  */
 export interface IContainerRuntimeBase extends
-    EventEmitter,
+    IEventProvider<IContainerRuntimeBaseEvents>,
     IProvideFluidHandleContext,
     /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
     IProvideFluidDataStoreRegistry {
@@ -86,12 +94,6 @@ export interface IContainerRuntimeBase extends
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
-
-    on(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): this;
-    on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
-    on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
-    on(event: "leader" | "notleader", listener: () => void): this;
 
     /**
      * @deprecated 0.16 Issue #1537, #3631

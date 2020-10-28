@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { ITelemetryLogger, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IConnectionDetails,
@@ -917,6 +917,74 @@ export class DeltaManager
         }
     }
 
+    private readonly opHandler = (documentId: string, messages: ISequencedDocumentMessage[]) => {
+        if (messages instanceof Array) {
+            this.enqueueMessages(messages);
+        } else {
+            this.enqueueMessages([messages]);
+        }
+    };
+
+    private readonly signalHandler = (message: ISignalMessage) => {
+        this._inboundSignal.push(message);
+    };
+
+    // Always connect in write mode after getting nacked.
+    private readonly nackHandler = (documentId: string, messages: INack[]) => {
+        const message = messages[0];
+        // TODO: we should remove this check when service updates?
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (this._readonlyPermissions) {
+            this.close(createWriteError("WriteOnReadOnlyDocument"));
+        }
+
+        // check message.content for Back-compat with old service.
+        const reconnectInfo = message.content !== undefined
+            ? getNackReconnectInfo(message.content) :
+            createGenericNetworkError(`Nack: unknown reason`, true);
+
+        if (this.reconnectMode !== ReconnectMode.Enabled) {
+            this.logger.sendErrorEvent({
+                eventName: "NackWithNoReconnect",
+                reason: reconnectInfo.message,
+                mode: this.connectionMode,
+            });
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.reconnectOnError(
+            "write",
+            reconnectInfo,
+        );
+    };
+
+    // Connection mode is always read on disconnect/error unless the system mode was write.
+    private readonly disconnectHandler = (disconnectReason) => {
+        // Note: we might get multiple disconnect calls on same socket, as early disconnect notification
+        // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.reconnectOnError(
+            this.defaultReconnectionMode,
+            createReconnectError("Disconnect", disconnectReason),
+        );
+    };
+
+    private readonly errorHandler = (error) => {
+        // Observation based on early pre-production telemetry:
+        // We are getting transport errors from WebSocket here, right before or after "disconnect".
+        // This happens only in Firefox.
+        logNetworkFailure(this.logger, { eventName: "DeltaConnectionError" }, error);
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.reconnectOnError(
+            this.defaultReconnectionMode,
+            createReconnectError("error", error),
+        );
+    };
+
+    private readonly pongHandler = (latency: number) => {
+        this.emit("pong", latency);
+    };
+
     /**
      * Once we've successfully gotten a connection, we need to set up state, attach event listeners, and process
      * initial messages.
@@ -953,76 +1021,12 @@ export class DeltaManager
 
         this._outbound.systemResume();
 
-        connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
-            if (messages instanceof Array) {
-                this.enqueueMessages(messages);
-            } else {
-                this.enqueueMessages([messages]);
-            }
-        });
-
-        connection.on("signal", (message: ISignalMessage) => {
-            this._inboundSignal.push(message);
-        });
-
-        // Always connect in write mode after getting nacked.
-        connection.on("nack", (documentId: string, messages: INack[]) => {
-            const message = messages[0];
-            // TODO: we should remove this check when service updates?
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            if (this._readonlyPermissions) {
-                this.close(createWriteError("WriteOnReadOnlyDocument"));
-            }
-
-            // check message.content for Back-compat with old service.
-            const reconnectInfo = message.content !== undefined
-                ? getNackReconnectInfo(message.content) :
-                createGenericNetworkError(`Nack: unknown reason`, true);
-
-            if (this.reconnectMode !== ReconnectMode.Enabled) {
-                this.logger.sendErrorEvent({
-                    eventName: "NackWithNoReconnect",
-                    reason: reconnectInfo.message,
-                    mode: this.connectionMode,
-                });
-            }
-
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.reconnectOnError(
-                connection,
-                "write",
-                reconnectInfo,
-            );
-        });
-
-        // Connection mode is always read on disconnect/error unless the system mode was write.
-        connection.on("disconnect", (disconnectReason) => {
-            // Note: we might get multiple disconnect calls on same socket, as early disconnect notification
-            // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.reconnectOnError(
-                connection,
-                this.defaultReconnectionMode,
-                createReconnectError("Disconnect", disconnectReason),
-            );
-        });
-
-        connection.on("error", (error) => {
-            // Observation based on early pre-production telemetry:
-            // We are getting transport errors from WebSocket here, right before or after "disconnect".
-            // This happens only in Firefox.
-            logNetworkFailure(this.logger, { eventName: "DeltaConnectionError" }, error);
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.reconnectOnError(
-                connection,
-                this.defaultReconnectionMode,
-                createReconnectError("error", error),
-            );
-        });
-
-        connection.on("pong", (latency: number) => {
-            this.emit("pong", latency);
-        });
+        connection.on("op", this.opHandler);
+        connection.on("signal", this.signalHandler);
+        connection.on("nack", this.nackHandler);
+        connection.on("disconnect", this.disconnectHandler);
+        connection.on("error", this.errorHandler);
+        connection.on("pong", this.pongHandler);
 
         const initialMessages = connection.initialMessages;
 
@@ -1071,10 +1075,21 @@ export class DeltaManager
      * @param reason - Text description of disconnect reason to emit with disconnect event
      */
     private disconnectFromDeltaStream(reason: string) {
-        const connection = this.connection;
-        if (connection === undefined) {
+        if (this.connection === undefined) {
             return;
         }
+
+        const connection = this.connection;
+        // Avoid any re-entrancy - clear object reference
+        this.connection = undefined;
+
+        // Remove listeners first so we don't try to retrigger this flow accidentally through reconnectOnError
+        connection.off("op", this.opHandler);
+        connection.off("signal", this.signalHandler);
+        connection.off("nack", this.nackHandler);
+        connection.off("disconnect", this.disconnectHandler);
+        connection.off("error", this.errorHandler);
+        connection.off("pong", this.pongHandler);
 
         // We cancel all ops on lost of connectivity, and rely on DDSes to resubmit them.
         // Semantics are not well defined for batches (and they are broken right now on disconnects anyway),
@@ -1083,16 +1098,11 @@ export class DeltaManager
         // state. As requirements change, so should these checks.
         assert(this.messageBuffer.length === 0, "messageBuffer is not empty on disconnect");
 
-        // Avoid any re-entrancy - clear object reference
-        this.connection = undefined;
-
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._outbound.systemPause();
         this._outbound.clear();
         this.emit("disconnect", reason);
 
-        // Avoid re-entrancy - remove all listeners before closing!
-        connection.removeAllListeners();
         connection.close();
     }
 
@@ -1104,14 +1114,13 @@ export class DeltaManager
      * @returns A promise that resolves when the connection is reestablished or we stop trying
      */
     private async reconnectOnError(
-        connection: IDocumentDeltaConnection,
         requestedMode: ConnectionMode,
         error: ICriticalContainerError,
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
-        // We should correctly unregister all event listeners not to re-enter here again!
-        assert(connection === this.connection);
+        // If we're already disconnected/disconnecting it's not appropriate to call this again.
+        assert(this.connection !== undefined);
 
         this.disconnectFromDeltaStream(error.message);
 
