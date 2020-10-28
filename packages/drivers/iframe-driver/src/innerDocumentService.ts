@@ -13,8 +13,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { IFrameDebugLogger } from "./debug";
+import { MultiSinkLogger } from "@fluidframework/telemetry-utils";
 import { InnerDocumentDeltaConnection } from "./innerDocumentDeltaConnection";
 import { ICombinedDriver } from "./outerDocumentServiceFactory";
 
@@ -32,25 +31,22 @@ export class InnerDocumentService implements IDocumentService {
         return new InnerDocumentService(proxyObject, proxyObject.clientId, logger);
     }
 
-    private readonly logger: ITelemetryBaseLogger;
+    private readonly logger: MultiSinkLogger;
 
     private constructor(
         private readonly outerProxy: ICombinedDriver,
         public clientId: string,
         logger?: ITelemetryBaseLogger)
     {
-        // outerProxy provides a logger as well, but we can create and use our own here
-        // for different functionality
-        this.logger = logger
-            ? ChildLogger.create(logger, "InnerIFrameDriver")
-            : new IFrameDebugLogger("InnerIFrameDriver");
+        // Use a combined logger with the provided and the outer proxy's
+        this.logger = new MultiSinkLogger("InnerIFrameDriver");
+        this.logger.addLogger(logger);
+        this.logger.addLogger(outerProxy.logger);
     }
 
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): IResolvedUrl {
-        const event = { category: "generic", eventName: "not implemented" };
-        this.outerProxy.logger.send(event);
-        this.logger.send(event);
+        this.logger.send({ category: "generic", eventName: "not implemented" });
         throw new Error("Not implemented");
     }
 
