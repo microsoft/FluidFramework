@@ -18,8 +18,11 @@ function printUsage() {
 Usage: fluid-gen-pkg-lock <options>
 Options:
 ${commonOptionString}
+     --server         Generate package lock for server mono repo (default: client)
 `);
 }
+
+let genServer = false;
 
 function parseOptions(argv: string[]) {
     let error = false;
@@ -39,6 +42,11 @@ function parseOptions(argv: string[]) {
         if (arg === "-?" || arg === "--help") {
             printUsage();
             process.exit(0);
+        }
+
+        if (arg === "--server") {
+            genServer = true;
+            continue;
         }
 
         console.error(`ERROR: Invalid arguments ${arg}`);
@@ -208,8 +216,9 @@ async function main() {
     const repo = new FluidRepo(resolvedRoot, false);
     timer.time("Package scan completed");
 
-    await generateMonoRepoInstallPackageJson(repo.clientMonoRepo);
-    if (repo.serverMonoRepo) {
+    if (!genServer) {
+        await generateMonoRepoInstallPackageJson(repo.clientMonoRepo);
+    } else if (repo.serverMonoRepo) {
         await generateMonoRepoInstallPackageJson(repo.serverMonoRepo);
     }
 };
