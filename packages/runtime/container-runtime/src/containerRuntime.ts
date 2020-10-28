@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { EventEmitter } from "events";
 import { TaskManagerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -35,6 +34,7 @@ import {
     IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
 import {
+    assert,
     Deferred,
     Trace,
     TypedEventEmitter,
@@ -1131,7 +1131,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         raiseConnectedEvent(this._logger, this, connected, clientId);
 
         if (connected) {
-            assert(clientId);
+            assert(!!clientId);
             this.summaryManager.setConnected(clientId);
         } else {
             this.summaryManager.setDisconnected();
@@ -1594,12 +1594,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private getContextDeferred(id: string): Deferred<FluidDataStoreContext> {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const deferred = this.contextsDeferred.get(id)!;
-        assert(deferred);
+        assert(!!deferred);
         return deferred;
     }
 
     private setNewContext(id: string, context?: FluidDataStoreContext) {
-        assert(context);
+        assert(!!context);
         assert(!this.contexts.has(id));
         this.contexts.set(id, context);
         const deferred = this.ensureContextDeferred(id);
@@ -1609,7 +1609,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private getContext(id: string): FluidDataStoreContext {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const context = this.contexts.get(id)!;
-        assert(context);
+        assert(!!context);
         return context;
     }
 
@@ -1658,7 +1658,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     } else {
                         // If this data store is not yet loaded, then there should be no changes in the snapshot from
                         // which it was created as it is detached container. So just use the previous snapshot.
-                        assert(this.context.baseSnapshot,
+                        assert(!!this.context.baseSnapshot,
                             "BaseSnapshot should be there as detached container loaded from snapshot");
                         dataStoreSummary = convertSnapshotToSummaryTree(this.context.baseSnapshot.trees[key]);
                     }
@@ -2001,7 +2001,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
         const context = this.getContext(envelope.address);
-        assert(context, "There should be a store context for the op");
+        assert(!!context, "There should be a store context for the op");
         context.reSubmit(envelope.contents, localOpMetadata);
     }
 
@@ -2149,13 +2149,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private async getVersionFromStorage(versionId: string): Promise<IVersion> {
         const versions = await this.storage.getVersions(versionId, 1);
-        assert(versions && versions[0], "Failed to get version from storage");
+        assert(!!versions && !!versions[0], "Failed to get version from storage");
         return versions[0];
     }
 
     private async getSnapshotFromStorage(version: IVersion): Promise<ISnapshotTree> {
         const snapshot = await this.storage.getSnapshotTree(version);
-        assert(snapshot, "Failed to get snapshot from storage");
+        assert(!!snapshot, "Failed to get snapshot from storage");
         return snapshot;
     }
 }
