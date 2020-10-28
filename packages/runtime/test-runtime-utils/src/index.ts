@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./insecureTokenProvider";
 export * from "./insecureUrlResolver";
 export * from "./mocks";
 export * from "./mockDeltas";

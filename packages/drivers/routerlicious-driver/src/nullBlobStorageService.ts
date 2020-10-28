@@ -45,8 +45,4 @@ export class NullBlobStorageService implements IDocumentStorageService {
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         return Promise.reject("Null blob storage can not read blob");
     }
-
-    public getRawUrl(blobId: string): string {
-        throw new Error("Invalid operation");
-    }
 }

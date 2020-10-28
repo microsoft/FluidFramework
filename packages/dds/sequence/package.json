@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.19.1",
-    "@fluidframework/common-utils": "^0.24.0-0",
+    "@fluidframework/common-utils": "^0.25.0-0",
     "@fluidframework/core-interfaces": "^0.28.0",
     "@fluidframework/datastore-definitions": "^0.28.0",
     "@fluidframework/map": "^0.28.0",
@@ -64,6 +64,7 @@
     "@fluidframework/runtime-utils": "^0.28.0",
     "@fluidframework/shared-object-base": "^0.28.0",
     "@fluidframework/telemetry-utils": "^0.28.0",
+    "assert": "^2.0.0",
     "debug": "^4.1.1",
     "lodash": "^4.17.19"
   },
@@ -75,6 +76,7 @@
     "@fluidframework/server-services-client": "^0.1014.0-0",
     "@fluidframework/test-runtime-utils": "^0.28.0",
     "@microsoft/api-extractor": "^7.7.2",
+    "@types/assert": "^1.5.1",
     "@types/debug": "^4.1.5",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
