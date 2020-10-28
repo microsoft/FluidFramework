@@ -30,11 +30,14 @@ export class RedisTenantCache {
         return result >= 1;
     }
 
-    public async set(key: string, value: string = ""): Promise<void> {
+    public async set(
+        key: string,
+        value: string = "",
+        expiresInSeconds: number = this.expireAfterSeconds): Promise<void> {
         const result = await this.setAsync(this.getKey(key), value);
         return result !== "OK" ?
             Promise.reject(result) :
-            this.expire(this.getKey(key), this.expireAfterSeconds);
+            this.expire(this.getKey(key), expiresInSeconds);
     }
 
     public async get(key: string): Promise<string> {

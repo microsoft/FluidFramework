@@ -5,6 +5,7 @@
 
 import * as request from "request-promise-native";
 import * as winston from "winston";
+import { getTokenLifetimeInSec } from "../utils";
 import { ITenant, ITenantService } from "./definitions";
 import { RedisTenantCache } from "./redisTenantCache";
 
@@ -66,7 +67,7 @@ export class RiddlerService implements ITenantService {
                 json: true,
             });
 
-        this.cache.set(token).catch((error) => {
+        this.cache.set(token, "", getTokenLifetimeInSec(token)).catch((error) => {
             winston.error(`Error caching token to redis`, error);
         });
     }
