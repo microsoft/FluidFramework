@@ -24,6 +24,9 @@
   },
   "dependencies": {
     "@fluidframework/container-runtime": "^0.28.0",
+    "@fluidframework/map": "^0.28.0",
+    "@fluidframework/matrix": "^0.28.0",
+    "@fluidframework/odsp-driver": "^0.28.0",
     "@fluidframework/sequence" : "^0.28.0"
   },
   "devDependencies": {
