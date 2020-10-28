@@ -7,5 +7,9 @@
         "timestamp": true
     },
     "requestSizeLimit": "1gb",
-    "storageDir": "/home/node/documents"
+    "storageDir": "/home/node/documents",
+    "externalStorage": {
+        "enabled": false,
+        "endpoint": "http://externalStorage:3005"
+    }
 }
