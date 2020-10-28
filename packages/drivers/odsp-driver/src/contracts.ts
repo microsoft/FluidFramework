@@ -33,7 +33,7 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
 
     fileName: string;
 
-    fileExtension: string;
+    fileExtension: string | undefined;
 
     summarizer: boolean;
 

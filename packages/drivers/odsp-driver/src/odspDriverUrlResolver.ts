@@ -187,7 +187,7 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
         driveId,
         itemId,
         fileName: "",
-        fileExtension: "",
+        fileExtension: undefined,
         summarizer,
         codeHint: {
             containerPackageName,
