@@ -12,12 +12,6 @@
 Added api `removeAllEntriesForDocId` which allows removal of all entries for a given document id. Also the schema for entries stored inside odsp `IPersistedCache` has changed.
 It now stores/expect values as `IPersistedCacheValueWithEpoch`. So host needs to clear its cached entries in this version.
 
-### Moving DriverHeader and merge with CreateNewHeader
-Compile time only API breaking change between runtime and driver.  Only impacts driver implementer.
-No back-compat or mix version impact.
-
-DriverHeader is a driver concept, so move from core-interface to driver-definitions. CreateNewHeader is also a kind of driver header, merged it into DriverHeader.
-
 ### IFluidPackage Changes
 - Moving IFluidPackage and IFluidCodeDetails from "@fluidframework/container-definitions" to '@fluidframework/core-interfaces'
 - Remove npm specific IPackage interface
