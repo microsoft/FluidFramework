@@ -10,7 +10,6 @@ export function createOdspCreateContainerRequest(
     driveId: string,
     filePath: string,
     fileName: string,
-    fileExtension?: string,
 ): IRequest {
     const createNewRequest: IRequest = {
         url: `${siteUrl}?driveId=${encodeURIComponent(
@@ -19,7 +18,6 @@ export function createOdspCreateContainerRequest(
         headers: {
             [DriverHeader.createNew]: {
                 fileName,
-                fileExtension,
             },
         },
     };
