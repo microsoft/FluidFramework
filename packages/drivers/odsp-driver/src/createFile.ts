@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { Uint8ArrayToString } from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
@@ -57,7 +58,8 @@ export async function createNewFluidFile(
     }
 
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
-    const fileName = newFileInfo.filename.indexOf(".") === -1 ? `${newFileInfo.filename}.fluid` : newFileInfo.filename;
+    const fileName = newFileInfo.fileExtension !== undefined
+        ? `${newFileInfo.filename}${newFileInfo.fileExtension}` : `${newFileInfo.filename}.fluid`;
     const encodedFilename = encodeURIComponent(fileName);
     const baseUrl =
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +

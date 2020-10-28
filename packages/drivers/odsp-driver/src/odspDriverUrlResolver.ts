@@ -100,7 +100,7 @@ export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUr
 
         const searchParams = new URLSearchParams(queryString);
         const fileName = request.headers[CreateNewHeader.createNew].fileName;
-        const fileExtension = request.headers[DriverHeader.createNew].fileExtension;
+        const fileExtension = request.headers[CreateNewHeader.createNew].fileExtension;
         const driveID = searchParams.get("driveId");
         const filePath = searchParams.get("path");
         if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
