@@ -255,6 +255,7 @@ export class ConsensusRegisterCollection<T>
                         local);
                     if (local) {
                         assert(
+                            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                             !!(localOpMetadata as any),
                             "localOpMetadata is missing from the client's write operation");
                         // Resolve the pending promise for this operation now that we have received an ack for it.

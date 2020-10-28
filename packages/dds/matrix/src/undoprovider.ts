@@ -63,7 +63,7 @@ export class VectorUndoProvider {
                 }
 
                 default:
-                    assert.fail("operation type not revertible");
+                    throw new Error("operation type not revertible");
             }
 
             // If we are in the process of reverting, set 'currentOp' to remind ourselves not to push

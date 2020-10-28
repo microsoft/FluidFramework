@@ -96,7 +96,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     private undo?: MatrixUndoProvider;
 
     public openUndo(consumer: IUndoConsumer) {
-        assert.equal(this.undo, undefined);
+        assert(this.undo === undefined);
         this.undo = new MatrixUndoProvider(consumer, this, this.rows, this.cols);
     }
 
@@ -487,7 +487,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     protected submitLocalMessage(message: any, localOpMetadata?: any) {
         // TODO: Recommend moving this assertion into SharedObject
         //       (See https://github.com/microsoft/FluidFramework/issues/2559)
-        assert.equal(this.isAttached(), true);
+        assert(this.isAttached() === true);
 
         super.submitLocalMessage(
             makeHandlesSerializable(
@@ -499,9 +499,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
         );
 
         // Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
-        assert.equal(
-            this.rows.getCollabWindow().localSeq,
-            this.cols.getCollabWindow().localSeq,
+        assert(
+            this.rows.getCollabWindow().localSeq === this.cols.getCollabWindow().localSeq,
         );
     }
 
@@ -515,7 +514,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     protected onConnect() {
-        assert.equal(this.rows.getCollabWindow().collaborating, this.cols.getCollabWindow().collaborating);
+        assert(this.rows.getCollabWindow().collaborating === this.cols.getCollabWindow().collaborating);
 
         // Update merge tree collaboration information with new client ID and then resend pending ops
         this.rows.startOrUpdateCollaboration(this.runtime.clientId as string);

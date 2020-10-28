@@ -327,6 +327,7 @@ export class ConsensusOrderedCollection<T = any>
             }
             if (local) {
                 assert(
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     !!(localOpMetadata as any),
                     `localOpMetadata is missing from the local client's ${op.opName} operation`);
                 // Resolve the pending promise for this operation now that we have received an ack for it.

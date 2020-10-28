@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
- import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { LocalReference } from "@fluidframework/merge-tree";
 import { SequenceInterval } from "@fluidframework/sequence";
 
@@ -47,7 +47,7 @@ export class CellRange {
         private readonly resolve: (localRef: LocalReference) => { row: number; col: number },
     ) {
         // Ensure CellInterval was not created with a null/undefined interval.
-        assert(interval);
+        assert(!!interval);
     }
 
     public getRange() {

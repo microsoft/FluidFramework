@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { assert, gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy } from "@fluidframework/protocol-base";
@@ -210,7 +209,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         if (!this.blobsShaCache.has(hash)) {
             this.blobsShaCache.set(hash, "");
             const blob = await this.manager.createBlob(parsedContent, encoding);
-            assert.strictEqual(hash, blob.sha, "Blob.sha and hash do not match!!");
+            assert(hash === blob.sha, "Blob.sha and hash do not match!!");
         }
         return hash;
     }

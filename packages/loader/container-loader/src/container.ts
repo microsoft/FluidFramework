@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import merge from "lodash/merge";
 import uuid from "uuid";
 import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import {
     IRequest,
     IResponse,
@@ -509,7 +508,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
-        assert.strictEqual(this.connectionState, ConnectionState.Disconnected, "disconnect event was not raised!");
+        assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
         if (error !== undefined) {
             // Log current sequence number - useful if we have access to a file to understand better
@@ -538,7 +537,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public serialize(): string {
-        assert.strictEqual(this.attachState, AttachState.Detached, "Should only be called in detached container");
+        assert(this.attachState === AttachState.Detached, "Should only be called in detached container");
 
         const appSummary: ISummaryTree = this.context.createSummary();
         const protocolSummary = this.protocolHandler.captureSummary();
@@ -564,7 +563,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.attachInProgress = true;
         try {
-            assert.strictEqual(this.deltaManager.inbound.length, 0, "Inbound queue should be empty when attaching");
+            assert(this.deltaManager.inbound.length === 0, "Inbound queue should be empty when attaching");
             // Only take a summary if the container is in detached state, otherwise we could have local changes.
             // In failed attach call, we would already have a summary cached.
             if (this._attachState === AttachState.Detached) {
@@ -591,7 +590,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.emit("attaching");
                 }
             }
-            assert(this.cachedAttachSummary,
+            assert(!!this.cachedAttachSummary,
                 "Summary should be there either by this attach call or previous attach call!!");
 
             if (request.headers?.[DriverHeader.createNew] === undefined) {
@@ -1120,7 +1119,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async rehydrateDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
-        assert.strictEqual(attributes.sequenceNumber, 0, "Seq number in detached container should be 0!!");
+        assert(attributes.sequenceNumber === 0, "Seq number in detached container should be 0!!");
         this.attachDeltaManagerOpHandler(attributes);
 
         // We know this is create detached flow with snapshot.
