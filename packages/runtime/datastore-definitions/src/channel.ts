@@ -21,7 +21,7 @@ export interface IChannel extends IFluidLoadable {
     /**
      * Generates snapshot of the channel.
      */
-    snapshot(): ITree;
+    snapshot(): IChannelSnapshotDetails;
 
     /**
      * True if the data structure is attached to storage.
@@ -168,4 +168,32 @@ export interface IChannelFactory {
      * for consistency.
      */
     create(runtime: IFluidDataStoreRuntime, id: string): IChannel;
+}
+
+/**
+ * Represents the format of route details returned by a channel snapshot.
+ */
+export interface IRouteDetails {
+    /**
+     * The path to the object that contains the routes. This path is relative to its parent.
+     */
+    source: string;
+    /**
+     * A set of routes to fluid objects referenced by this object.
+     */
+    routes: string[];
+}
+
+/**
+ * Represents the format of the snapshot of a channel's data.
+ */
+export interface IChannelSnapshotDetails {
+    /**
+     * A tree representing the channel's data.
+     */
+    snapshot: ITree;
+    /**
+     * A list of routes to fluid objects referenced by this channel.
+     */
+    routeDetails: IRouteDetails;
 }

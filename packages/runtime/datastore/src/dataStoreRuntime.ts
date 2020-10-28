@@ -664,11 +664,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         // Get the object snapshot only if the data store is Bound and its graph is attached too,
         // because if the graph is attaching, then it would get included in the data store snapshot.
         if (this.bindState === BindState.Bound && this.graphAttachState === AttachState.Attached) {
-            const snapshot = snapshotChannel(channel);
+            const snapshotDetails = snapshotChannel(channel);
 
             const message: IAttachMessage = {
                 id: channel.id,
-                snapshot,
+                snapshot: snapshotDetails.snapshot,
                 type: channel.attributes.type,
             };
             this.pendingAttach.set(channel.id, message);

@@ -75,7 +75,7 @@ function generateSnapshotTree(
         containerRuntimeFactory.processAllMessages();
     }
     assert.equal(sharedString2.getText(), sharedString.getText());
-    const snapshotTree = sharedString2.snapshot();
+    const snapshotTree = sharedString2.snapshot().snapshot;
     assert(snapshotTree);
     return [sharedString2, snapshotTree];
 }

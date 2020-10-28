@@ -18,9 +18,10 @@ import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelFactory,
+    IChannelSnapshotDetails,
     Serializable,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import { SharedObject, SnapshotSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
 import { ISharedCell, ISharedCellEvents } from "./interfaces";
@@ -208,10 +209,14 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
 
     /**
      * Create a snapshot for the cell
-     * @param serializer - The serializer to use to serialize handles in its data, if any.
-     * @returns the snapshot of the current state of the cell
+     * @returns the snapshot of the current state of the cell and a set of routes to fluid objects referenced by it.
      */
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    public snapshot(): IChannelSnapshotDetails {
+        // Create a SnapshotSerializer that will be used to serialize any IFluidHandle in this cell. The IFluidHandle
+        // represents route to any referenced fluid object.
+        // SnapshotSerializer tracks the routes of all handles that it serializes.
+        const serializer = new SnapshotSerializer(this.runtime.IFluidHandleContext);
+
         // Get a serializable form of data
         const content: ICellValue = {
             type: ValueType[ValueType.Plain],
@@ -235,7 +240,14 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
             id: null,
         };
 
-        return tree;
+        // Return the snapshot tree and the list of routes tracked by the SnapshotSerializer.
+        return {
+            snapshot: tree,
+            routeDetails: {
+                source: this.id,
+                routes: serializer.serializedRoutes,
+            },
+        };
     }
 
     /**

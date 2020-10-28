@@ -208,7 +208,7 @@ describe("SharedString", () => {
             }
 
             // Get snapshot and verify its correct.
-            let tree = sharedString.snapshot();
+            let tree = sharedString.snapshot().snapshot;
             assert(tree.entries.length === 2);
             assert(tree.entries[0].path === "header");
             assert(tree.entries[1].path === "content");
@@ -228,7 +228,7 @@ describe("SharedString", () => {
             // Need to change test to include other types of segments (like marker) to exercise "body".
 
             // Get another snapshot.
-            tree = sharedString.snapshot();
+            tree = sharedString.snapshot().snapshot;
             assert(tree.entries.length === 2);
             assert(tree.entries[0].path === "header");
             assert(tree.entries[1].path === "content");
@@ -260,7 +260,7 @@ describe("SharedString", () => {
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
-                objectStorage: new MockStorage(sharedString.snapshot()),
+                objectStorage: new MockStorage(sharedString.snapshot().snapshot),
             };
 
             const sharedString2 =

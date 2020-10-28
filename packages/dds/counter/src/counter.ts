@@ -4,7 +4,6 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -16,6 +15,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelFactory,
+    IChannelSnapshotDetails,
 } from "@fluidframework/datastore-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { CounterFactory } from "./counterFactory";
@@ -127,9 +127,9 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     /**
      * Create a snapshot for the counter
      * @param serializer - The serializer to use to serialize handles in its data, if any.
-     * @returns the snapshot of the current state of the counter
+     * @returns the snapshot of the current state of the counter and a set of routes to fluid objects referenced by it.
      */
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    public snapshot(): IChannelSnapshotDetails {
         // Get a serializable form of data
         const content: ICounterSnapshotFormat = {
             value: this.value,
@@ -152,7 +152,13 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
             id: null,
         };
 
-        return tree;
+        return {
+            snapshot: tree,
+            routeDetails: {
+                source: this.id,
+                routes: [],
+            },
+        };
     }
 
     /**

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITree, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IChannel, IChannelServices, IChannelSnapshotDetails } from "@fluidframework/datastore-definitions";
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
 export interface ISharedObjectEvents extends IErrorEvent {
@@ -30,10 +30,11 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     isAttached(): boolean;
 
     /**
-     * Gets a form of the object that can be serialized.
-     * @returns A tree representing the snapshot of the shared object
+     * Generates snapshot of the shared object.
+     * @returns A tree representing the snapshot of the shared object and a set of routes
+     * to fluid objects referenced by this object.
      */
-    snapshot(): ITree;
+    snapshot(): IChannelSnapshotDetails;
 
     /**
      * Enables the channel to send and receive ops.

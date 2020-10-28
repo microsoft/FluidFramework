@@ -18,12 +18,14 @@ import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
+    IChannelSnapshotDetails,
 } from "@fluidframework/datastore-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     makeHandlesSerializable,
     parseHandles,
     SharedObject,
+    SnapshotSerializer,
     ISharedObjectEvents,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
@@ -408,7 +410,12 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return sharedCollection;
     }
 
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    public snapshot(): IChannelSnapshotDetails {
+        // Create a SnapshotSerializer that will be used to serialize any IFluidHandles in this sequence. The
+        // IFluidHandles represents route to any referenced fluid object.
+        // SnapshotSerializer tracks the routes of all handles that it serializes.
+        const serializer = new SnapshotSerializer(this.runtime.IFluidHandleContext);
+
         const tree: ITree = {
             entries: [
                 {
@@ -432,7 +439,14 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             id: null,
         };
 
-        return tree;
+        // Return the snapshot tree and the list of routes tracked by the SnapshotSerializer.
+        return {
+            snapshot: tree,
+            routeDetails: {
+                source: this.id,
+                routes: serializer.serializedRoutes,
+            },
+        };
     }
 
     /**

@@ -6,7 +6,7 @@
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IChannel } from "@fluidframework/datastore-definitions";
+import { IChannel, IChannelSnapshotDetails } from "@fluidframework/datastore-definitions";
 import { ISummarizeResult } from "@fluidframework/runtime-definitions";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
@@ -45,12 +45,12 @@ export function createServiceEndpoints(
     };
 }
 
-export function snapshotChannel(channel: IChannel) {
-    const snapshot = channel.snapshot();
+export function snapshotChannel(channel: IChannel): IChannelSnapshotDetails {
+    const snapshotDetails = channel.snapshot();
 
     // Add in the object attributes to the returned tree
     const objectAttributes = channel.attributes;
-    snapshot.entries.push(new BlobTreeEntry(".attributes", JSON.stringify(objectAttributes)));
+    snapshotDetails.snapshot.entries.push(new BlobTreeEntry(".attributes", JSON.stringify(objectAttributes)));
 
-    return snapshot;
+    return snapshotDetails;
 }

@@ -303,7 +303,8 @@ const tests = (args: ITestObjectProvider) => {
                 mapFrom3.get("nestedKey"), "nestedValue", "Incorrect value in interval collection's shared map");
 
             // SharedString snapshots as a blob
-            const snapshotBlob = outerString2.snapshot().entries[0].value as IBlob;
+            const snapshotTree = outerString2.snapshot().snapshot ?? outerString2.snapshot();
+            const snapshotBlob = snapshotTree.entries[0].value as IBlob;
             // Since it's based on a map kernel, its contents parse as
             // an IMapDataObjectSerializable with the "comments" member we set
             const parsedSnapshot = JSON.parse(snapshotBlob.contents);
