@@ -6,7 +6,7 @@
 import * as resources from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
-import * as git from "nodegit";
+import git from "nodegit";
 import * as winston from "winston";
 import { IExternalStorageManager } from "../../externalStorageManager";
 import * as utils from "../../utils";

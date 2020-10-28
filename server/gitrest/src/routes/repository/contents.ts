@@ -5,7 +5,7 @@
 
 import { Router } from "express";
 import * as nconf from "nconf";
-import * as git from "nodegit";
+import git from "nodegit";
 import * as utils from "../../utils";
 
 async function getContent(

@@ -17,6 +17,10 @@ export const defaultProvider = new nconf.Provider({}).defaults({
         timestamp: true,
     },
     storageDir: "/tmp/historian",
+    externalStorage: {
+        enabled: false,
+        endpoint: "http://localhost:3005",
+    },
 });
 
 const rimraf = util.promisify(rimrafCallback);

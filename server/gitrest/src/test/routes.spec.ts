@@ -11,6 +11,9 @@ import {
     ICreateRefParams,
     ICreateTreeParams,
 } from "@fluidframework/gitresources";
+import {
+    ICreateRefParamsExternal,
+} from "@fluidframework/server-services-core";
 import * as async from "async";
 import lorem from "lorem-ipsum";
 import * as moniker from "moniker";
@@ -22,6 +25,7 @@ import { createCommit as createCommitInternal } from "../routes/git/commits";
 import { createTree as createTreeInternal } from "../routes/git/trees";
 import { getCommits } from "../routes/repository/commits";
 /* eslint-enable import/no-internal-modules */
+import { ExternalStorageManager } from "../externalStorageManager";
 import * as utils from "../utils";
 import * as testUtils from "./utils";
 
@@ -30,6 +34,7 @@ const commitEmail = "kurtb@microsoft.com";
 const commitName = "Kurt Berglund";
 
 async function createRepo(supertest: request.SuperTest<request.Test>, owner: string, name: string) {
+    console.log("Entered create repo");
     return supertest
         .post(`/${owner}/repos`)
         .set("Accept", "application/json")
@@ -132,17 +137,20 @@ describe("GitRest", () => {
             parents: [],
             tree: "bf4db183cbd07f48546a5dde098b4510745d79a1",
         };
-        const testRef: ICreateRefParams = {
+        const testRef: ICreateRefParamsExternal = {
             ref: "refs/heads/main",
             sha: "cf0b592907d683143b28edd64d274ca70f68998e",
+            config: { enabled: true },
         };
+
+        const externalStorageManager = new ExternalStorageManager(testUtils.defaultProvider);
 
         testUtils.initializeBeforeAfterTestHooks(testUtils.defaultProvider);
 
         // Create the git repo before and after each test
         let supertest: request.SuperTest<request.Test>;
         beforeEach(() => {
-            const testApp = app.create(testUtils.defaultProvider, undefined);
+            const testApp = app.create(testUtils.defaultProvider, externalStorageManager);
             supertest = request(testApp);
         });
 
@@ -311,7 +319,11 @@ describe("GitRest", () => {
                         .patch(`/repos/${testOwnerName}/${testRepoName}/git/refs/heads/patch`)
                         .set("Accept", "application/json")
                         .set("Content-Type", "application/json")
-                        .send({ force: true, sha: "cf0b592907d683143b28edd64d274ca70f68998e" })
+                        .send({
+                            force: true,
+                            sha: "cf0b592907d683143b28edd64d274ca70f68998e",
+                            config : { enabled : true },
+                        })
                         .expect(200);
                 });
 
@@ -321,7 +333,11 @@ describe("GitRest", () => {
                         .patch(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
                         .set("Accept", "application/json")
                         .set("Content-Type", "application/json")
-                        .send({ force: false, sha: "cf0b592907d683143b28edd64d274ca70f68998e" })
+                        .send({
+                            force: false,
+                            sha: "cf0b592907d683143b28edd64d274ca70f68998e",
+                            config : { enabled : true },
+                        })
                         .expect(400);
                 });
 
@@ -331,7 +347,11 @@ describe("GitRest", () => {
                         .patch(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
                         .set("Accept", "application/json")
                         .set("Content-Type", "application/json")
-                        .send({ force: true, sha: "cf0b592907d683143b28edd64d274ca70f68998e" })
+                        .send({
+                            force: true,
+                            sha: "cf0b592907d683143b28edd64d274ca70f68998e",
+                            config : { enabled : true },
+                        })
                         .expect(200);
                 });
 
@@ -427,7 +447,7 @@ describe("GitRest", () => {
                             testRepoName,
                             lastCommit,
                             1,
-                            undefined);
+                            externalStorageManager);
                         const parentCommit = commits[0];
                         assert.ok(parentCommit.commit);
                         parents.push(parentCommit.sha);

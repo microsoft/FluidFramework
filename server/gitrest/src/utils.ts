@@ -6,7 +6,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as util from "util";
-import * as git from "nodegit";
+import git from "nodegit";
 import * as resources from "@fluidframework/gitresources";
 import * as winston from "winston";
 

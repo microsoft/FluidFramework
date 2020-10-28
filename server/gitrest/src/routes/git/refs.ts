@@ -7,7 +7,7 @@ import { IRef } from "@fluidframework/gitresources";
 import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-core";
 import { Response, Router } from "express";
 import * as nconf from "nconf";
-import * as git from "nodegit";
+import git from "nodegit";
 import * as winston from "winston";
 import { IExternalStorageManager } from "../../externalStorageManager";
 import * as utils from "../../utils";
