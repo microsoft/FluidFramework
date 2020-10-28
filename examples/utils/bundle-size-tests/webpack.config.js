@@ -37,7 +37,7 @@ module.exports = {
   },
   node: false,
   plugins: [
-    new BannedModulesPlugin({ 
+    new BannedModulesPlugin({
       bannedModules: [
         // Assert is banned because it has a very large bundle size impact on client JavaScript
         'assert'
@@ -54,7 +54,7 @@ module.exports = {
        */
       exclude: (instance) =>
         // object-is depends on es-abstract 1.18.0-next, which does not satisfy the semver of other packages. We should be able to remove this when es-abstract moves to 1.18.0
-        instance.name === 'es-abstract' 
+        instance.name === 'es-abstract'
     }),
     new BundleAnalyzerPlugin({
       analyzerMode: 'static',

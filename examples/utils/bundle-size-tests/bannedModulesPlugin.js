@@ -26,8 +26,8 @@ class BannedModulesPlugin {
     apply(compiler) {
         // The banned modules that have been found. Maps the banned module name to an array of module paths that import the banned module
         const foundBannedModules = new Map();
-                
-        compiler.hooks.done.tapAsync(pluginName, (
+
+        compiler.hooks.done.tap(pluginName, (
             stats) => {
                 stats.toJson().modules.forEach(mod=> {
                     // Infer the name of the package from the path. This current implementation assumes the name has 'node_modules/<packageName>' in it somewhere
@@ -37,7 +37,7 @@ class BannedModulesPlugin {
                     for (let bannedModule of this.options.bannedModules) {
                         if (modulePath.startsWith(bannedModule)) {
                             const bannedModuleIssuers = foundBannedModules.get(bannedModule) || [];
-                    
+
                             bannedModuleIssuers.push(mod.issuerPath);
                             foundBannedModules.set(bannedModule, bannedModuleIssuers);
                             break;
