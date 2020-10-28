@@ -6,7 +6,7 @@
 import * as util from "util";
 import * as nconf from "nconf";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import * as rimrafCallback from "rimraf";
+import rimrafCallback from "rimraf";
 
 export const defaultProvider = new nconf.Provider({}).defaults({
     logger: {
@@ -17,6 +17,10 @@ export const defaultProvider = new nconf.Provider({}).defaults({
         timestamp: true,
     },
     storageDir: "/tmp/historian",
+    externalStorage: {
+        enabled: false,
+        endpoint: "http://localhost:3005",
+    },
 });
 
 const rimraf = util.promisify(rimrafCallback);
