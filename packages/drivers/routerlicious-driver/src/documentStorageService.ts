@@ -107,10 +107,6 @@ export class DocumentStorageService implements IDocumentStorageService {
             : iso.buffer.slice(iso.byteOffset, iso.byteOffset + iso.byteLength);
     }
 
-    public getRawUrl(blobId: string): string {
-        return this.manager.getRawUrl(blobId);
-    }
-
     private async writeSummaryTree(
         summaryTree: ISummaryTree,
         /** Entire previous snapshot, not subtree */
