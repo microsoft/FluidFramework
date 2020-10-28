@@ -5,6 +5,7 @@
 
 import * as querystring from "querystring";
 import * as git from "@fluidframework/gitresources";
+import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-core";
 import request from "request";
 import * as winston from "winston";
 import { ICache, IStorage } from "./definitions";
@@ -108,11 +109,11 @@ export class RestGitService {
         return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}`);
     }
 
-    public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
+    public async createRef(params: ICreateRefParamsExternal): Promise<git.IRef> {
         return this.post(`/repos/${this.getRepoPath()}/git/refs`, params);
     }
 
-    public async updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
+    public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {
         return this.patch(`/repos/${this.getRepoPath()}/git/refs/${ref}`, params);
     }
 

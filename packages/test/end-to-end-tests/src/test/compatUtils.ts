@@ -31,6 +31,7 @@ import {
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
     LocalTestObjectProvider,
+    OpProcessingController,
 } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
@@ -51,6 +52,7 @@ export interface ICompatLocalTestObjectProvider {
     documentServiceFactory: IDocumentServiceFactory | old.IDocumentServiceFactory,
     urlResolver: LocalResolver | old.LocalResolver,
     defaultCodeDetails: IFluidCodeDetails | old.IFluidCodeDetails,
+    opProcessingController: OpProcessingController | old.OpProcessingController,
 }
 
 export interface ICompatTestOptions {

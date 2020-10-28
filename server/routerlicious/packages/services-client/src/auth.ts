@@ -18,14 +18,15 @@ export function validateTokenClaims(
     isTokenExpiryEnabled: boolean): ITokenClaims {
     const claims = jwtDecode<ITokenClaims>(token);
 
-    if (!claims
-        || claims.documentId !== documentId
-        || claims.tenantId !== tenantId
-    ) {
+    if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
         return undefined;
     }
 
-    if (isTokenExpiryEnabled === true) {
+    if (claims.scopes === undefined || claims.scopes.length === 0) {
+        return undefined;
+    }
+
+    if (isTokenExpiryEnabled && claims.exp && claims.iat) {
         const now = Math.round((new Date()).getTime() / 1000);
         if (now >= claims.exp || claims.exp - claims.iat > maxTokenLifetimeSec) {
             return undefined;

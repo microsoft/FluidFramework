@@ -10,7 +10,7 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import Comlink from "comlink";
+import * as Comlink from "comlink";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { InnerDocumentService } from "./innerDocumentService";
@@ -70,7 +70,8 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
     public async createDocumentService(): Promise<IDocumentService> {
         const outerDocumentServiceProxy = await this.outerProxy.createDocumentService();
 
-        return InnerDocumentService.create(this.outerProxy.clients[outerDocumentServiceProxy]);
+        const clients = await this.outerProxy.clients;
+        return InnerDocumentService.create(clients[outerDocumentServiceProxy]);
     }
 
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.

@@ -3,77 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import {
-    IFluidResolvedUrl,
-    IResolvedUrl,
-    IUrlResolver,
-} from "@fluidframework/driver-definitions";
-import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import jwt from "jsonwebtoken";
-import { v4 as uuid } from "uuid";
 import { getContainer } from "./getContainer";
-
-/**
- * InsecureTinyliciousUrlResolver knows how to get the URLs to the service (in this case Tinylicious) to use
- * for a given request.  This particular implementation has a goal to avoid imposing requirements on the app's
- * URL shape, so it expects the request url to have this format (as opposed to a more traditional URL):
- * documentId/containerRelativePathing
- */
-class InsecureTinyliciousUrlResolver implements IUrlResolver {
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const documentId = request.url.split("/")[0];
-        const encodedDocId = encodeURIComponent(documentId);
-
-        const documentUrl = `fluid://localhost:3000/tinylicious/${encodedDocId}`;
-        const deltaStorageUrl = `http://localhost:3000/deltas/tinylicious/${encodedDocId}`;
-        const storageUrl = `http://localhost:3000/repos/tinylicious`;
-
-        const response: IFluidResolvedUrl = {
-            endpoints: {
-                deltaStorageUrl,
-                ordererUrl: "http://localhost:3000",
-                storageUrl,
-            },
-            tokens: { jwt: this.auth(documentId) },
-            type: "fluid",
-            url: documentUrl,
-        };
-        return response;
-    }
-
-    public async getAbsoluteUrl(resolvedUrl: IFluidResolvedUrl, relativeUrl: string): Promise<string> {
-        const documentId = decodeURIComponent(resolvedUrl.url.replace("fluid://localhost:3000/tinylicious/", ""));
-        /*
-         * The detached container flow will ultimately call getAbsoluteUrl() with the resolved.url produced by
-         * resolve().  The container expects getAbsoluteUrl's return value to be a URL that can then be roundtripped
-         * back through resolve() again, and get the same result again.  So we'll return a "URL" with the same format
-         * described above.
-         */
-        return `${documentId}/${relativeUrl}`;
-    }
-
-    private auth(documentId: string) {
-        const claims: ITokenClaims = {
-            documentId,
-            scopes: ["doc:read", "doc:write", "summary:write"],
-            tenantId: "tinylicious",
-            user: { id: uuid() },
-            iat: Math.round(new Date().getTime() / 1000),
-            exp: Math.round(new Date().getTime() / 1000) + 5 * 60, // 5 minute expiration
-            ver: "1.0",
-        };
-
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return jwt.sign(claims, "12345");
-    }
-}
-
+import { InsecureTinyliciousTokenProvider } from "./insecureTinyliciousTokenProvider";
+import { InsecureTinyliciousUrlResolver } from "./insecureTinyliciousUrlResolver";
 /**
  * Connect to the Tinylicious service and retrieve a Container with the given ID running the given code.
  * @param documentId - The document id to retrieve or create
@@ -84,7 +21,8 @@ export async function getTinyliciousContainer(
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
 ): Promise<Container> {
-    const documentServiceFactory = new RouterliciousDocumentServiceFactory();
+    const tokenProvider = new InsecureTinyliciousTokenProvider(documentId);
+    const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
 
     const urlResolver = new InsecureTinyliciousUrlResolver();
 

@@ -17,7 +17,7 @@ import {
     IUser,
 } from "@fluidframework/protocol-definitions";
 import Axios from "axios";
-import jwt from "jsonwebtoken";
+import { KJUR as jsrsasign } from "jsrsasign";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
@@ -152,7 +152,6 @@ export class InsecureUrlResolver implements IUrlResolver {
             ver: "1.0",
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return jwt.sign(claims, this.tenantKey);
+        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, this.tenantKey);
     }
 }

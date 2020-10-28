@@ -82,11 +82,6 @@ export interface IDocumentStorageService {
     readBlob(id: string): Promise<ArrayBufferLike>;
 
     /**
-     * Fetch blob Data url
-     */
-    getRawUrl(blobId: string): string;
-
-    /**
      * Uploads a summary tree to storage using the given context for reference of previous summary handle.
      * The ISummaryHandles in the uploaded tree should have paths to indicate which summary object they are
      * referencing from the previously acked summary.
@@ -189,25 +184,6 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
      * Disconnects the given delta connection
      */
     close();
-
-    /**
-     * Emits an event from this document delta connection
-     * @param event - The event to emit
-     * @param args - The arguments for the event
-     */
-    emit(event: string, ...args: any[]): boolean;
-
-    /**
-     * Gets the listeners for an event
-     * @param event - The name of the event
-     */
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    listeners(event: string): Function[];
-
-    /**
-     * Removes all listeners from all events
-     */
-    removeAllListeners(): void;
 }
 
 export interface IDocumentService {

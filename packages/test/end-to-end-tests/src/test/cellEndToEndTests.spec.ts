@@ -8,7 +8,6 @@ import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    OpProcessingController,
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
@@ -25,7 +24,6 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
     const initialCellValue = "Initial cell value";
     const newCellValue = "A new cell value";
 
-    let opProcessingController: OpProcessingController;
     let dataObject1: ITestFluidObject;
     let sharedCell1: ISharedCell;
     let sharedCell2: ISharedCell;
@@ -47,16 +45,10 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         sharedCell3 = await dataObject3.getSharedObject<SharedCell>(cellId);
 
-        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-        opProcessingController.addDeltaManagers(
-            dataObject1.runtime.deltaManager,
-            dataObject2.runtime.deltaManager,
-            dataObject3.runtime.deltaManager);
-
         // Set a starting value in the cell
         sharedCell1.set(initialCellValue);
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
     });
 
     function verifyCellValue(cell: ISharedCell, expectedValue, index: number) {
@@ -95,7 +87,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
     it("can set and get cell data in 3 containers correctly", async () => {
         sharedCell2.set(newCellValue);
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         verifyCellValues(newCellValue, newCellValue, newCellValue);
     });
@@ -103,7 +95,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
     it("can delete cell data in 3 containers correctly", async () => {
         sharedCell3.delete();
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         verifyCellEmpty(true, true, true);
     });
@@ -129,7 +121,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
         sharedCell1.set(newCellValue);
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         assert.equal(user1ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 1");
         assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 2");
@@ -146,7 +138,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
         verifyCellValues("value1", "value2", "value3");
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         verifyCellValues("value3", "value3", "value3");
     });
@@ -159,7 +151,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
         verifyCellValues("value1.1", undefined, "value1.3");
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         verifyCellValues("value1.3", "value1.3", "value1.3");
     });
@@ -171,12 +163,12 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         sharedCell3.set("value2.3");
 
         // drain the outgoing so that the next set will come after
-        await opProcessingController.processOutgoing();
+        await args.opProcessingController.processOutgoing();
 
         sharedCell2.set("value2.2");
         verifyCellValues("value2.1", "value2.2", "value2.3");
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         verifyCellValues("value2.2", "value2.2", "value2.2");
     });
@@ -190,7 +182,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         verifyCellValues("value3.1", "value3.2", undefined);
         verifyCellEmpty(false, false, true);
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         verifyCellValues(undefined, undefined, undefined);
         verifyCellEmpty(true, true, true);
@@ -204,7 +196,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         detachedCell1.set(detachedCell2.handle);
         sharedCell1.set(detachedCell1.handle);
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         async function getCellDataStore(cellP: Promise<ISharedCell>): Promise<ISharedCell> {
             const cell = await cellP;

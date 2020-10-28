@@ -80,7 +80,7 @@ describe("RequestParser", () => {
             await assertRejected(responseP);
         });
 
-        it("Data store  request with wait", async () => {
+        it("Data store request with wait", async () => {
             const requestParser = RequestParser.create({ url: "/nonExistingUri", headers: { wait: true } });
             const responseP = innerRequestHandler(
                 requestParser,
@@ -88,14 +88,14 @@ describe("RequestParser", () => {
             await assertRejected(responseP);
         });
 
-        it("Data store  request with sub route", async () => {
+        it("Data store request with sub route", async () => {
             const requestParser = RequestParser.create({ url: "/objectId/route", headers: { wait: true } });
             const response = await innerRequestHandler(requestParser, runtime);
             assert.equal(response.status, 200);
             assert.equal(response.value.route, "route");
         });
 
-        it("Data store  request with non-existing sub route", async () => {
+        it("Data store request with non-existing sub route", async () => {
             const requestParser = RequestParser.create({ url: "/objectId/doesNotExist", headers: { wait: true } });
             const responseP = innerRequestHandler(requestParser, runtime);
             await assertRejected(responseP);

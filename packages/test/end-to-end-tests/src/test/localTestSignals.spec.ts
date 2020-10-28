@@ -8,7 +8,6 @@ import { Container } from "@fluidframework/container-loader";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    OpProcessingController,
     ITestFluidObject,
 } from "@fluidframework/test-utils";
 import { generateTestWithCompat, ICompatLocalTestObjectProvider, ITestContainerConfig } from "./compatUtils";
@@ -20,7 +19,6 @@ const testContainerConfig: ITestContainerConfig = {
 const tests = (args: ICompatLocalTestObjectProvider) => {
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
-    let opProcessingController: OpProcessingController;
 
     beforeEach(async () => {
         const container1 = await args.makeTestContainer(testContainerConfig) as Container;
@@ -28,9 +26,6 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
         const container2 = await args.loadTestContainer(testContainerConfig) as Container;
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-
-        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-        opProcessingController.addDeltaManagers(dataObject1.runtime.deltaManager, dataObject2.runtime.deltaManager);
     });
 
     describe("Attach signal Handlers on Both Clients", () => {
@@ -51,12 +46,12 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             });
 
             dataObject1.runtime.submitSignal("TestSignal", true);
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.equal(user1SignalReceivedCount, 1, "client 1 did not received signal");
             assert.equal(user2SignalReceivedCount, 1, "client 2 did not received signal");
 
             dataObject2.runtime.submitSignal("TestSignal", true);
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.equal(user1SignalReceivedCount, 2, "client 1 did not received signal");
             assert.equal(user2SignalReceivedCount, 2, "client 2 did not received signal");
         });
@@ -80,12 +75,12 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             });
 
             user1ContainerRuntime.submitSignal("TestSignal", true);
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
             assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
 
             user2ContainerRuntime.submitSignal("TestSignal", true);
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.equal(user1SignalReceivedCount, 2, "client 1 did not receive signal");
             assert.equal(user2SignalReceivedCount, 2, "client 2 did not receive signal");
         });
@@ -126,14 +121,14 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         });
 
         user1ContainerRuntime.submitSignal("TestSignal", true);
-        await opProcessingController.process();
+        await args.opProcessingController.process();
         assert.equal(user1HostSignalReceivedCount, 1, "client 1 did not receive signal on host runtime");
         assert.equal(user2HostSignalReceivedCount, 1, "client 2 did not receive signal on host runtime");
         assert.equal(user1CompSignalReceivedCount, 0, "client 1 should not receive signal on data store runtime");
         assert.equal(user2CompSignalReceivedCount, 0, "client 2 should not receive signal on data store runtime");
 
         user2DataStoreRuntime.submitSignal("TestSignal", true);
-        await opProcessingController.process();
+        await args.opProcessingController.process();
         assert.equal(user1HostSignalReceivedCount, 1, "client 1 should not receive signal on host runtime");
         assert.equal(user2HostSignalReceivedCount, 1, "client 2 should not receive signal on host runtime");
         assert.equal(user1CompSignalReceivedCount, 1, "client 1 did not receive signal on data store runtime");
