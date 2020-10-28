@@ -97,17 +97,12 @@ describe(`r11s End-To-End tests`, () => {
         };
     }
 
-    function getResolver(
-        params: ITestParameters,
-        user: IUser,
-    ): InsecureUrlResolver {
+    function getResolver(params: ITestParameters): InsecureUrlResolver {
         const urlResolver =  new InsecureUrlResolver(
             params.fluidHost,
             params.fluidHost.replace("www", "alfred"),
             params.fluidHost.replace("www", "historian"),
             params.tenantId,
-            params.tenantSecret,
-            user,
             params.bearerSecret,
             true);
         return urlResolver;
@@ -115,7 +110,7 @@ describe(`r11s End-To-End tests`, () => {
 
     beforeEach(async () => {
         const params = getParameters();
-        const urlResolver = getResolver(params, getUser());
+        const urlResolver = getResolver(params);
         const documentId = moniker.choose();
         request = urlResolver.createCreateNewRequest(documentId);
 
@@ -153,7 +148,7 @@ describe(`r11s End-To-End tests`, () => {
 
         // Now load the container from another loader.
         const params = getParameters();
-        const urlResolver2 = getResolver(params, getUser());
+        const urlResolver2 = getResolver(params);
         const tokenProvider2 = new InsecureTokenProvider(params.tenantId, container.id, params.tenantSecret, getUser());
         const loader2 = createTestLoader(urlResolver2, tokenProvider2);
         // Create a new request url from the resolvedUrl of the first container.
