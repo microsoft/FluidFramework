@@ -267,6 +267,7 @@ describe("Matrix", () => {
         let matrix2: SharedMatrix;
         let consumer1: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
         let consumer2: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
+        let dataStoreRuntime: MockFluidDataStoreRuntime;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
 
         const expect = async (expected?: readonly (readonly any[])[]) => {
@@ -290,11 +291,11 @@ describe("Matrix", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
 
             // Create and connect the first SharedMatrix.
-            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-            matrix1 = new SharedMatrix(dataStoreRuntime1, "matrix1", SharedMatrixFactory.Attributes);
+            dataStoreRuntime = new MockFluidDataStoreRuntime();
+            matrix1 = new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);
             matrix1.connect({
                 deltaConnection: containerRuntimeFactory
-                    .createContainerRuntime(dataStoreRuntime1)
+                    .createContainerRuntime(dataStoreRuntime)
                     .createDeltaConnection(),
                 objectStorage: new MockStorage(),
             });
@@ -312,14 +313,14 @@ describe("Matrix", () => {
             consumer2 = new TestConsumer(matrix2);
         });
 
-        afterEach(async () => {
-            await expect();
-
-            matrix1.closeMatrix(consumer1);
-            matrix2.closeMatrix(consumer2);
-        });
-
         describe("conflict", () => {
+            afterEach(async () => {
+                await expect();
+    
+                matrix1.closeMatrix(consumer1);
+                matrix2.closeMatrix(consumer2);
+            });
+
             it("setCell", async () => {
                 matrix1.insertCols(0, 1);
                 matrix1.insertRows(0, 1);
@@ -599,6 +600,84 @@ describe("Matrix", () => {
                 await expect([
                     ["B", "A", 2, 3]
                 ]);
+            });
+        });
+
+        describe("Referenced routes", () => {
+            it("can generate referenced routes for handles", () => {
+                const factory = new SharedMatrixFactory();
+                const submatrix = factory.create(dataStoreRuntime, "subMatrix");
+                const submatrix2 = factory.create(dataStoreRuntime, "subMatrix2");
+                matrix1.insertCols(0, 2);
+                matrix1.insertRows(0, 2);
+                matrix1.setCell(0, 0, submatrix.handle);
+                matrix1.setCell(1, 1, submatrix2.handle);
+    
+                containerRuntimeFactory.processAllMessages();
+    
+                // Verify the referenced routes returned by snapshot.
+                const routeDetails = matrix2.snapshot().routeDetails;
+                assert.strictEqual(routeDetails.source, matrix2.id, "Source of the referenced routes should be matrix's id");
+                assert.deepStrictEqual(
+                    routeDetails.routes,
+                    [submatrix.handle.absolutePath, submatrix2.handle.absolutePath],
+                    "Referenced routes is incorrect");
+            });
+
+            it("can generate referenced routes for nested handles", () => {
+                const factory = new SharedMatrixFactory();
+                const submatrix = factory.create(dataStoreRuntime, "subMatrix");
+                const submatrix2 = factory.create(dataStoreRuntime, "subMatrix2");
+                const containingObject = {
+                    subcellHandle: submatrix.handle,
+                    nestedObj: {
+                        subcell2Handle: submatrix2.handle,
+                    },
+                };
+                matrix1.insertCols(0, 1);
+                matrix1.insertRows(0, 1);
+                matrix1.setCell(0, 0, containingObject);
+
+                containerRuntimeFactory.processAllMessages();
+    
+                // Verify the referenced routes returned by snapshot.
+                const routeDetails = matrix2.snapshot().routeDetails;
+                assert.strictEqual(routeDetails.source, matrix2.id, "Source of the referenced routes should be matrix's id");
+                assert.deepStrictEqual(
+                    routeDetails.routes,
+                    [submatrix.handle.absolutePath, submatrix2.handle.absolutePath],
+                    "Referenced routes is incorrect");
+            });
+
+            it("can generate referenced routes for removed handles", () => {
+                const factory = new SharedMatrixFactory();
+                const submatrix = factory.create(dataStoreRuntime, "subMatrix");
+                const submatrix2 = factory.create(dataStoreRuntime, "subMatrix2");
+                matrix1.insertCols(0, 2);
+                matrix1.insertRows(0, 2);
+                matrix1.setCell(0, 0, submatrix.handle);
+                matrix1.setCell(1, 1, submatrix2.handle);
+    
+                containerRuntimeFactory.processAllMessages();
+    
+                // Verify the referenced routes returned by snapshot.
+                let routeDetails = matrix2.snapshot().routeDetails;
+                assert.strictEqual(routeDetails.source, matrix2.id, "Source of the referenced routes should be matrix's id");
+                assert.deepStrictEqual(
+                    routeDetails.routes,
+                    [submatrix.handle.absolutePath, submatrix2.handle.absolutePath],
+                    "Referenced routes is incorrect");
+
+                // Verify that removed handle updates referenced routes correctly.
+                matrix1.setCell(0, 0, undefined);
+                containerRuntimeFactory.processAllMessages();
+
+                routeDetails = matrix2.snapshot().routeDetails;
+                assert.strictEqual(routeDetails.source, matrix2.id, "Source of the referenced routes should be matrix's id");
+                assert.deepStrictEqual(
+                    routeDetails.routes,
+                    [submatrix2.handle.absolutePath],
+                    "Referenced routes is incorrect");
             });
         });
     });

@@ -51,7 +51,7 @@ describe("Cell", () => {
             cell.set("testValue");
             assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
 
-            const services = MockSharedObjectServices.createFromTree(cell.snapshot());
+            const services = MockSharedObjectServices.createFromTree(cell.snapshot().snapshot);
             const cell2 = new SharedCell("cell2", dataStoreRuntime, CellFactory.Attributes);
             await cell2.load(services);
 
@@ -72,7 +72,7 @@ describe("Cell", () => {
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-            const services2 = MockSharedObjectServices.createFromTree(cell.snapshot());
+            const services2 = MockSharedObjectServices.createFromTree(cell.snapshot().snapshot);
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const cell2 = new SharedCell("cell2", dataStoreRuntime2, CellFactory.Attributes);
@@ -155,6 +155,65 @@ describe("Cell", () => {
 
             assert.equal(cell.get(), undefined, "Could not delete cell value");
             assert.equal(cell2.get(), undefined, "Could not delete cell value from remote client");
+        });
+
+        it("can generate referenced routes for handles", () => {
+            const factory = new CellFactory();
+            const subCell = factory.create(dataStoreRuntime, "subCell");
+            cell.set(subCell.handle);
+
+            containerRuntimeFactory.processAllMessages();
+
+            // Verify the referenced routes returned by snapshot.
+            const routeDetails = cell2.snapshot().routeDetails;
+            assert.strictEqual(routeDetails.source, cell2.id, "Source of the referenced routes should be cell's id");
+            assert.deepStrictEqual(
+                routeDetails.routes, [subCell.handle.absolutePath], "Referenced routes is incorrect");
+        });
+
+        it("can generate referenced routes for nested handles", () => {
+            const factory = new CellFactory();
+            const subCell = factory.create(dataStoreRuntime, "subCell");
+            const subCell2 = factory.create(dataStoreRuntime, "subCell2");
+            const containingObject = {
+                subcellHandle: subCell.handle,
+                nestedObj: {
+                    subcell2Handle: subCell2.handle,
+                },
+            };
+            cell.set(containingObject);
+
+            containerRuntimeFactory.processAllMessages();
+
+            // Verify the referenced routes returned by snapshot.
+            const routeDetails = cell2.snapshot().routeDetails;
+            assert.strictEqual(routeDetails.source, cell2.id, "Source of the referenced routes should be cell's id");
+            assert.deepStrictEqual(
+                routeDetails.routes,
+                [subCell.handle.absolutePath, subCell2.handle.absolutePath],
+                "Referenced routes is incorrect");
+        });
+
+        it("can generate referenced routes for removed handles", () => {
+            const factory = new CellFactory();
+            const subCell = factory.create(dataStoreRuntime, "subCell");
+            cell.set(subCell.handle);
+
+            containerRuntimeFactory.processAllMessages();
+
+            // Verify the referenced routes returned by snapshot.
+            let routeDetails = cell2.snapshot().routeDetails;
+            assert.strictEqual(routeDetails.source, cell2.id, "Source of the referenced routes should be cell's id");
+            assert.deepStrictEqual(
+                routeDetails.routes, [subCell.handle.absolutePath], "Referenced routes is incorrect");
+
+            // Verify that removed handle updates referenced routes correctly.
+            cell.delete();
+            containerRuntimeFactory.processAllMessages();
+
+            routeDetails = cell2.snapshot().routeDetails;
+            assert.strictEqual(routeDetails.source, cell2.id, "Source of the referenced routes should be cell's id");
+            assert.deepStrictEqual(routeDetails.routes, [], "Referenced routes is incorrect");
         });
     });
 

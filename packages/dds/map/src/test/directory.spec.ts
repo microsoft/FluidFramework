@@ -27,7 +27,7 @@ async function populate(directory: SharedDirectory, content: object) {
 }
 
 function serialize(directory: SharedDirectory): string {
-    const tree = directory.snapshot();
+    const tree = directory.snapshot().snapshot;
     assert(tree.entries.length === 1);
     assert(tree.entries[0].path === "header");
     assert(tree.entries[0].type === TreeEntry.Blob);
@@ -114,6 +114,15 @@ describe("Directory", () => {
                 // eslint-disable-next-line max-len
                 const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`;
                 assert.equal(serialized, expected);
+
+                // Verify the referenced routes returned by snapshot.
+                const routeDetails = directory.snapshot().routeDetails;
+                assert.strictEqual(
+                    routeDetails.source, directory.id, "Source of the referenced routes should be directory's id");
+                assert.deepStrictEqual(
+                    routeDetails.routes,
+                    [subMap.handle.absolutePath],
+                    "Referenced routes is incorrect");
             });
 
             it("Should serialize a directory with subdirectories as a JSON object", () => {
@@ -288,7 +297,7 @@ describe("Directory", () => {
                 nestedDirectory.set("deepKey1", "deepValue1");
                 nestedDirectory.set("long2", logWord2);
 
-                const tree = directory.snapshot();
+                const tree = directory.snapshot().snapshot;
                 assert(tree.entries.length === 3);
                 assert(tree.entries[0].path === "blob0");
                 assert(tree.entries[1].path === "blob1");
@@ -335,7 +344,7 @@ describe("Directory", () => {
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-            const services2 = MockSharedObjectServices.createFromTree(directory.snapshot());
+            const services2 = MockSharedObjectServices.createFromTree(directory.snapshot().snapshot);
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);
@@ -378,7 +387,7 @@ describe("Directory", () => {
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-            const services2 = MockSharedObjectServices.createFromTree(directory.snapshot());
+            const services2 = MockSharedObjectServices.createFromTree(directory.snapshot().snapshot);
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);
@@ -1034,6 +1043,77 @@ describe("Directory", () => {
                     expectedDirectories2.delete(subDirName);
                 }
                 assert.ok(expectedDirectories2.size === 0);
+            });
+
+            it("can generate referenced routes for handles in subdirectories", () => {
+                const subMap = mapFactory.create(dataStoreRuntime, "subMap");
+                directory.set("object", subMap.handle);
+
+                const fooDirectory = directory.createSubDirectory("foo");
+                const subMap2 = mapFactory.create(dataStoreRuntime, "subMap2");
+                fooDirectory.set("object", subMap2.handle);
+
+                const barDirectory = fooDirectory.createSubDirectory("bar");
+                const subMap3 = mapFactory.create(dataStoreRuntime, "subMap3");
+                barDirectory.set("object", subMap3.handle);
+
+                const bazDirectory = barDirectory.createSubDirectory("baz");
+                const subMap4 = mapFactory.create(dataStoreRuntime, "subMap4");
+                bazDirectory.set("object", subMap4.handle);
+
+                // Verify the referenced routes returned by snapshot.
+                const routeDetails = directory.snapshot().routeDetails;
+                assert.strictEqual(
+                    routeDetails.source, directory.id, "Source of the referenced routes should be directory's id");
+                assert.deepStrictEqual(
+                    routeDetails.routes,
+                    [
+                        subMap.handle.absolutePath,
+                        subMap2.handle.absolutePath,
+                        subMap3.handle.absolutePath,
+                        subMap4.handle.absolutePath,
+                    ],
+                    "Referenced routes is incorrect");
+            });
+
+            it("can generate referenced routes for removed handles in subdirectories", () => {
+                const subMap = mapFactory.create(dataStoreRuntime, "subMap");
+                directory.set("object", subMap.handle);
+
+                const fooDirectory = directory.createSubDirectory("foo");
+                const subMap2 = mapFactory.create(dataStoreRuntime, "subMap2");
+                fooDirectory.set("object", subMap2.handle);
+
+                const barDirectory = fooDirectory.createSubDirectory("bar");
+                const subMap3 = mapFactory.create(dataStoreRuntime, "subMap3");
+                barDirectory.set("object", subMap3.handle);
+
+                // Verify the referenced routes returned by snapshot.
+                let routeDetails = directory.snapshot().routeDetails;
+                assert.strictEqual(
+                    routeDetails.source, directory.id, "Source of the referenced routes should be directory's id");
+                assert.deepStrictEqual(
+                    routeDetails.routes,
+                    [
+                        subMap.handle.absolutePath,
+                        subMap2.handle.absolutePath,
+                        subMap3.handle.absolutePath,
+                    ],
+                    "Referenced routes is incorrect");
+
+                // Verify that removed handle updates referenced routes correctly.
+                fooDirectory.delete("object");
+
+                routeDetails = directory.snapshot().routeDetails;
+                assert.strictEqual(
+                    routeDetails.source, directory.id, "Source of the referenced routes should be directory's id");
+                assert.deepStrictEqual(
+                    routeDetails.routes,
+                    [
+                        subMap.handle.absolutePath,
+                        subMap3.handle.absolutePath,
+                    ],
+                    "Referenced routes is incorrect");
             });
         });
     });
