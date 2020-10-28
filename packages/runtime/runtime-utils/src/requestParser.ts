@@ -13,6 +13,9 @@ export class RequestParser implements IRequest {
      * @param url - the url to get path parts of
      */
     public static getPathParts(url: string): readonly string[] {
+        if (url.split("/").length === 2) {
+            return [url];
+        }
         const queryStartIndex = url.indexOf("?");
         return url
             .substring(0, queryStartIndex < 0 ? url.length : queryStartIndex)
@@ -84,7 +87,7 @@ export class RequestParser implements IRequest {
         }
         const path = this.pathParts.slice(startingPathIndex).join("/");
         return {
-            url: path + this.query,
+            url: `/${path}` + `${this.query}`,
             headers: this.headers,
         };
     }
