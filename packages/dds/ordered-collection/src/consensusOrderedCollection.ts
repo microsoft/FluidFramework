@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import { fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
+import { assert , fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
+
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -119,7 +119,7 @@ export class ConsensusOrderedCollection<T = any>
         // Disconnect order matters because it defines the order items go back to the queue.
         // So we put items back to queue only when we process our own removeMember event.
         runtime.getQuorum().on("removeMember", (clientId: string) => {
-            assert(clientId);
+            assert(!!clientId);
             this.removeClient(clientId);
         });
     }
@@ -327,7 +327,8 @@ export class ConsensusOrderedCollection<T = any>
             }
             if (local) {
                 assert(
-                    localOpMetadata, `localOpMetadata is missing from the local client's ${op.opName} operation`);
+                    !!(localOpMetadata as any),
+                    `localOpMetadata is missing from the local client's ${op.opName} operation`);
                 // Resolve the pending promise for this operation now that we have received an ack for it.
                 const resolve = localOpMetadata as PendingResolve<T>;
                 resolve(value);

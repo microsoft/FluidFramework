@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+ import { assert } from "@fluidframework/common-utils";
 import { LocalReference } from "@fluidframework/merge-tree";
 import { SequenceInterval } from "@fluidframework/sequence";
 

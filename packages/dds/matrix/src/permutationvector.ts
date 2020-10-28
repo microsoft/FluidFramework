@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
@@ -54,7 +54,7 @@ export class PermutationSegment extends BaseSegment {
 
     public get start() { return this._start; }
     public set start(value: Handle) {
-        assert.equal(this._start, Handle.unallocated);
+        assert(this._start === Handle.unallocated);
         assert(isHandleValid(value));
 
         this._start = value;
@@ -346,7 +346,7 @@ export class PermutationVector extends Client {
             }
 
             default:
-                assert.fail();
+                throw new Error();
         }
     };
 
