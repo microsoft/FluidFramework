@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { assert } from "./assert";
 
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
@@ -189,6 +189,6 @@ export class RangeTracker {
         this.ranges = index - 1 > 0 ? this.ranges.slice(index - 1) : this.ranges;
 
         // Assert that the lowest value is now the input to this method
-        assert.equal(primary, this.ranges[0].primary);
+        assert(primary === this.ranges[0].primary);
     }
 }
