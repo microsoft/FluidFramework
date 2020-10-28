@@ -38,7 +38,7 @@ const isInvalidFileName = (fileName: string): boolean => {
 };
 
 /**
- * Creates a new Fluid file. If no extension is supplied then use .fluid as extension.
+ * Creates a new Fluid file.
  * Returns resolved url
  */
 export async function createNewFluidFile(
@@ -54,8 +54,7 @@ export async function createNewFluidFile(
     }
 
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
-    const fileName = newFileInfo.filename;
-    const encodedFilename = encodeURIComponent(fileName);
+    const encodedFilename = encodeURIComponent(newFileInfo.filename);
     const baseUrl =
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
         `${filePath}/${encodedFilename}`;
