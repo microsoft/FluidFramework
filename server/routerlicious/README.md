@@ -282,12 +282,15 @@ Routerlicious uses [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) li
 ```javascript
     jwt.sign(
         {
-            documentId: <document_id>,
+            documentId: "<document_id>",
             scopes: ["doc:read", "doc:write", "summary:write"],
-            tenantId: <tenant_id>,
-            user: <user_id>,
+            tenantId: "<tenant_id>",
+            user: "<user_id>",
+            iat: Math.round(new Date().getTime() / 1000),
+            exp: Math.round(new Date().getTime() / 1000) + 5 * 60, // 5 minute expiration
+            ver: "1.0",
         },
-        <secret_key>);
+        "<secret_key>");
 ```
 
 ### Passing auth token to the API
