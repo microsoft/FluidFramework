@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     ITree,
@@ -194,10 +193,10 @@ export function convertToSummaryTree(
                 }
 
                 case TreeEntry.Commit:
-                    assert.fail("Should not have Commit TreeEntry in summary");
+                    throw new Error("Should not have Commit TreeEntry in summary");
 
                 default:
-                    assert.fail("Unexpected TreeEntry type");
+                    throw new Error("Unexpected TreeEntry type");
             }
         }
 

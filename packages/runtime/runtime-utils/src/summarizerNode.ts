@@ -169,7 +169,7 @@ function decodeSummary(snapshot: ISnapshotTree, logger: Pick<ITelemetryLogger, "
         }
 
         assert(!!outstandingOpsBlob, "Outstanding ops blob missing, but base summary tree exists");
-        assert(!!newBaseSummary, "Base summary tree missing, but outstanding ops blob exists");
+        assert(newBaseSummary !== undefined, "Base summary tree missing, but outstanding ops blob exists");
         baseSummary = newBaseSummary;
         pathParts.push(baseSummaryTreeKey);
         opsBlobs.unshift(outstandingOpsBlob);
@@ -386,7 +386,7 @@ export class SummarizerNode implements ISummarizerNode {
         // This should come from wipLocalPaths in normal cases, or from the latestSummary
         // if parentIsFailure or parentIsReused is true.
         // If there is no latestSummary, clearSummary and return before reaching this code.
-        assert(localPathsToUse, "Tracked summary local paths not set");
+        assert(!!localPathsToUse, "Tracked summary local paths not set");
 
         const summary = new SummaryNode({
             ...localPathsToUse,
