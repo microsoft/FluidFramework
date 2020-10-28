@@ -199,7 +199,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         public readonly isLocalDataStore: boolean,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         protected pkg?: readonly string[],
-        protected isRootDataStore?: boolean,
     ) {
         super();
 
@@ -606,6 +605,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         if (!this.details) {
             let tree: ISnapshotTree | null;
+            let isRootStore: boolean | undefined;
 
             if (typeof this.initSnapshotValue === "string") {
                 const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
@@ -647,15 +647,17 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                 // If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that
                 // data stores in older documents are not garbage collected incorrectly. This may lead to additional
                 // roots in the document but they won't break.
-                this.isRootDataStore = isRootDataStore ?? true;
+                isRootStore = isRootDataStore ?? true;
             }
 
-            assert(this.isRootDataStore, "isRootDataStore should be available after reading attributes blob");
+            assert(
+                isRootStore !== undefined,
+                "isRootDataStore should be available after reading attributes blob");
 
             this.details = {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 pkg: this.pkg!,
-                isRootDataStore: this.isRootDataStore,
+                isRootDataStore: isRootStore,
                 snapshot: tree ?? undefined,
             };
         }
@@ -678,7 +680,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
-        isRootDataStore: boolean,
+        private readonly isRootDataStore: boolean,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -695,8 +697,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             snapshotTree ? BindState.Bound : BindState.NotBound,
             true,
             bindChannel,
-            pkg,
-            isRootDataStore);
+            pkg);
         this.attachListeners();
     }
 
