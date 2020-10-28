@@ -10,7 +10,7 @@ import {
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
-import jwt from "jsonwebtoken";
+import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 /**
  * InsecureTinyliciousUrlResolver knows how to get the URLs to the service (in this case Tinylicious) to use
@@ -58,9 +58,12 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
             scopes: ["doc:read", "doc:write", "summary:write"],
             tenantId: "tinylicious",
             user: { id: uuid() },
+            iat: Math.round(new Date().getTime() / 1000),
+            exp: Math.round(new Date().getTime() / 1000) + 5 * 60, // 5 minute expiration
+            ver: "1.0",
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return jwt.sign(claims, "12345");
+        // eslint-disable-next-line no-null/no-null
+        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, "12345");
     }
 }

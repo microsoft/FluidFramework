@@ -22,7 +22,6 @@ import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { OdspDriverUrlResolver2 } from "./odspDriverUrlResolver2";
 import {
     getWithRetryForTokenRefresh,
-    fetchAndParseHelper,
     INewFileInfo,
     getOrigin,
 } from "./odspUtils";
@@ -30,6 +29,7 @@ import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
+import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 
 const isInvalidFileName = (fileName: string): boolean => {
@@ -38,7 +38,7 @@ const isInvalidFileName = (fileName: string): boolean => {
 };
 
 /**
- * Creates a new Fluid file. '.fluid' is appended to the filename
+ * Creates a new Fluid file.
  * Returns resolved url
  */
 export async function createNewFluidFile(
@@ -46,6 +46,7 @@ export async function createNewFluidFile(
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,
+    epochTracker: EpochTracker,
     getSharingLinkToken?: (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => Promise<string | null>,
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
@@ -54,7 +55,7 @@ export async function createNewFluidFile(
     }
 
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
-    const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
+    const encodedFilename = encodeURIComponent(newFileInfo.filename);
     const baseUrl =
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
         `${filePath}/${encodedFilename}`;
@@ -72,7 +73,7 @@ export async function createNewFluidFile(
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
 
-                const fetchResponse = await fetchAndParseHelper<ICreateFileResponse>(
+                const fetchResponse = await epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
                     url,
                     {
                         body: JSON.stringify(containerSnapshot),

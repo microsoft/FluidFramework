@@ -26,7 +26,7 @@ export function validateTokenClaims(
         return undefined;
     }
 
-    if (isTokenExpiryEnabled === true) {
+    if (isTokenExpiryEnabled && claims.exp && claims.iat) {
         const now = Math.round((new Date()).getTime() / 1000);
         if (now >= claims.exp || claims.exp - claims.iat > maxTokenLifetimeSec) {
             return undefined;

@@ -41,6 +41,9 @@ export class MockDocumentDeltaConnection
         user: {
             id: "mockid",
         },
+        iat: Math.round(new Date().getTime() / 1000),
+        exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
+        ver: "1.0",
     };
 
     public readonly mode: ConnectionMode = "write";
