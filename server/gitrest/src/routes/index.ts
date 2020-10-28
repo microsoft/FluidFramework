@@ -5,6 +5,7 @@
 
 import { Router } from "express";
 import * as nconf from "nconf";
+import { IExternalStorageManager } from "../externalStorageManager";
 import * as utils from "../utils";
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
@@ -32,18 +33,22 @@ export interface IRoutes {
     };
 }
 
-export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): IRoutes {
+export function create(
+    store: nconf.Provider,
+    repoManager: utils.RepositoryManager,
+    externalStorageManager: IExternalStorageManager,
+): IRoutes {
     return {
         git: {
             blobs: blobs.create(store, repoManager),
             commits: commits.create(store, repoManager),
-            refs: refs.create(store, repoManager),
+            refs: refs.create(store, repoManager, externalStorageManager),
             repos: repos.create(store, repoManager),
             tags: tags.create(store, repoManager),
             trees: trees.create(store, repoManager),
         },
         repository: {
-            commits: repositoryCommits.create(store, repoManager),
+            commits: repositoryCommits.create(store, repoManager, externalStorageManager),
             contents: contents.create(store, repoManager),
         },
     };

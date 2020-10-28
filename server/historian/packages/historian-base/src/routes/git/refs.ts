@@ -4,6 +4,7 @@
  */
 
 import * as git from "@fluidframework/gitresources";
+import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import * as nconf from "nconf";
 import { ICache, ITenantService } from "../../services";
@@ -22,7 +23,10 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         return service.getRef(ref);
     }
 
-    async function createRef(tenantId: string, authorization: string, params: git.ICreateRefParams): Promise<git.IRef> {
+    async function createRef(
+        tenantId: string,
+        authorization: string,
+        params: ICreateRefParamsExternal): Promise<git.IRef> {
         const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
         return service.createRef(params);
     }
@@ -31,7 +35,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         tenantId: string,
         authorization: string,
         ref: string,
-        params: git.IPatchRefParams): Promise<git.IRef> {
+        params: IPatchRefParamsExternal): Promise<git.IRef> {
         const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
         return service.updateRef(ref, params);
     }
