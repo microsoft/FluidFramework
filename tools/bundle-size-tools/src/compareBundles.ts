@@ -43,11 +43,9 @@ export function compareBundles(baseline: BundleSummaries, compare: BundleSummari
  * @param comparisons
  */
 export function bundlesContainNoChanges(comparisons: BundleComparison[]): boolean {
-  for (let i = 0; i < comparisons.length; i++) {
-    const { commonBundleMetrics } = comparisons[i];
-    let metrics = Object.entries(commonBundleMetrics);
-    for (let j = 0; j < metrics.length; j++) {
-      const [ , { baseline, compare }] = metrics[j];
+  for (const { commonBundleMetrics } of comparisons) {
+    let metrics = Object.values(commonBundleMetrics);
+    for (const { baseline, compare } of metrics) {
       if (baseline.parsedSize !== compare.parsedSize) {
         return false;
       }
