@@ -41,13 +41,13 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
     BlobCacheStorageService,
-    buildSnapshotTree,
     readAndParse,
     OnlineStatus,
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
+    buildSnapshotTree,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -803,20 +803,35 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Provided codeDetails are not IFluidCodeDetails");
         }
 
+        if (this.codeLoader.IFluidCodeDetailsComparer) {
+            const comparision = await this.codeLoader.IFluidCodeDetailsComparer.compare(
+                codeDetails,
+                this.getCodeDetailsFromQuorum());
+            if (comparision !== undefined && comparision <= 0) {
+                throw new Error("Proposed code details should be greater than the current");
+            }
+        }
+
         return this.getQuorum().propose("code", codeDetails)
             .then(()=>true)
             .catch(()=>false);
     }
 
     private async reloadContextCore(): Promise<void> {
+        const codeDetails = this.getCodeDetailsFromQuorum();
+
         await Promise.all([
             this.deltaManager.inbound.systemPause(),
             this.deltaManager.inboundSignal.systemPause()]);
 
+        if (await this.context.satisfies(codeDetails) === true) {
+            this.deltaManager.inbound.systemResume();
+            this.deltaManager.inboundSignal.systemResume();
+            return;
+        }
+
         const previousContextState = await this.context.snapshotRuntimeState();
         this.context.dispose(new Error("ContextDisposedForReload"));
-
-        const codeDetails = this.getCodeDetailsFromQuorum();
 
         // don't fire this event if we are transitioning from a null runtime to a real runtime
         // with detached container we no longer need the null runtime, but for legacy
