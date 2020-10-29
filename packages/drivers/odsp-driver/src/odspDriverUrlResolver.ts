@@ -39,7 +39,65 @@ export class OdspDriverUrlResolver implements IUrlResolver {
     constructor() { }
 
     public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
-        return resolveRequest(request);
+        if (request.headers && request.headers[CreateNewHeader.createNew]) {
+            const [siteURL, queryString] = request.url.split("?");
+
+            const searchParams = new URLSearchParams(queryString);
+            const fileName = request.headers[CreateNewHeader.createNew].fileName;
+            const fileExtension = request.headers[CreateNewHeader.createNew].fileExtension;
+            const driveID = searchParams.get("driveId");
+            const filePath = searchParams.get("path");
+            if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
+                throw new Error("Proper new file params should be there!!");
+            }
+            return {
+                endpoints: {
+                    snapshotStorageUrl: "",
+                },
+                tokens: {},
+                type: "fluid",
+                url: `fluid-odsp://${siteURL}?${queryString}&version=null`,
+                siteUrl: siteURL,
+                hashedDocumentId: "",
+                driveId: driveID,
+                itemId: "",
+                fileName,
+                fileExtension,
+                summarizer: false,
+            };
+        }
+        const { siteUrl, driveId, itemId, path } = decodeOdspUrl(request.url);
+        const hashedDocumentId = getHashedDocumentId(driveId, itemId);
+        assert.ok(!hashedDocumentId.includes("/"), "Docid should not contain slashes!!");
+
+        let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
+
+        if (request.url.length > 0) {
+            // In case of any additional parameters add them back to the url
+            const requestURL = new URL(request.url);
+            const searchParams = requestURL.search;
+            if (searchParams) {
+                documentUrl += searchParams;
+            }
+        }
+
+        const summarizer = request.headers?.[DriverHeader.summarizingClient];
+
+        return {
+            type: "fluid",
+            endpoints: {
+                snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId),
+            },
+            tokens: {},
+            url: documentUrl,
+            hashedDocumentId,
+            siteUrl,
+            driveId,
+            itemId,
+            fileName: "",
+            fileExtension: undefined,
+            summarizer,
+        };
     }
 
     public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
@@ -91,67 +149,5 @@ function decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId:
         driveId: decodeURIComponent(driveId),
         itemId: decodeURIComponent(itemId),
         path: decodeURIComponent(path),
-    };
-}
-
-export async function resolveRequest(request: IRequest): Promise<IOdspResolvedUrl> {
-    if (request.headers && request.headers[CreateNewHeader.createNew]) {
-        const [siteURL, queryString] = request.url.split("?");
-
-        const searchParams = new URLSearchParams(queryString);
-        const fileName = request.headers[CreateNewHeader.createNew].fileName;
-        const fileExtension = request.headers[CreateNewHeader.createNew].fileExtension;
-        const driveID = searchParams.get("driveId");
-        const filePath = searchParams.get("path");
-        if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
-            throw new Error("Proper new file params should be there!!");
-        }
-        return {
-            endpoints: {
-                snapshotStorageUrl: "",
-            },
-            tokens: {},
-            type: "fluid",
-            url: `fluid-odsp://${siteURL}?${queryString}&version=null`,
-            siteUrl: siteURL,
-            hashedDocumentId: "",
-            driveId: driveID,
-            itemId: "",
-            fileName,
-            fileExtension,
-            summarizer: false,
-        };
-    }
-    const { siteUrl, driveId, itemId, path } = decodeOdspUrl(request.url);
-    const hashedDocumentId = getHashedDocumentId(driveId, itemId);
-    assert.ok(!hashedDocumentId.includes("/"), "Docid should not contain slashes!!");
-
-    let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
-
-    if (request.url.length > 0) {
-        // In case of any additional parameters add them back to the url
-        const requestURL = new URL(request.url);
-        const searchParams = requestURL.search;
-        if (searchParams) {
-            documentUrl += searchParams;
-        }
-    }
-
-    const summarizer = request.headers?.[DriverHeader.summarizingClient];
-
-    return {
-        type: "fluid",
-        endpoints: {
-            snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId),
-        },
-        tokens: {},
-        url: documentUrl,
-        hashedDocumentId,
-        siteUrl,
-        driveId,
-        itemId,
-        fileName: "",
-        fileExtension: undefined,
-        summarizer,
     };
 }

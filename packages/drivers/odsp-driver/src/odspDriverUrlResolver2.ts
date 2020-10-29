@@ -5,24 +5,37 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { getLocatorFromOdspUrl, storeLocatorInOdspUrl, encodeOdspFluidDataStoreLocator } from "./odspFluidFileLink";
 import { resolveDataStore } from "./resolveDataStore";
 import { IOdspResolvedUrl, OdspDocumentInfo, OdspFluidDataStoreLocator, SharingLinkHeader } from "./contracts";
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
-import { resolveRequest } from "./odspDriverUrlResolver";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { getShareLink } from "./graph";
-import { IdentityType, TokenFetchOptions } from "./tokenFetch";
+import {
+    IdentityType,
+    isTokenFromCache,
+    SharingLinkScopeFor,
+    SharingLinkTokenFetcher,
+    TokenFetchOptions,
+    tokenFromResponse,
+} from "./tokenFetch";
 
 export class OdspDriverUrlResolver2 implements IUrlResolver {
+    private readonly logger: ITelemetryLogger;
+    private readonly getSharingLinkToken:
+        (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => Promise<string | null>;
     public constructor(
-        private readonly getSharingLinkToken:
-            (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => Promise<string | null>,
+        tokenFetcher: SharingLinkTokenFetcher,
         private readonly identityType: IdentityType = "Enterprise",
-        private readonly logger?: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
-    ) { }
+    ) {
+        this.logger = ChildLogger.create(logger, "OdspDriver");
+        this.getSharingLinkToken = this.toInstrumentedSharingLinkTokenFetcher(this.logger, tokenFetcher);
+    }
 
     public createCreateNewRequest(
         siteUrl: string,
@@ -90,7 +103,7 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
             // If the locator throws some error, then try to resolve the request as it is.
         }
 
-        const odspResolvedUrl = await resolveRequest(requestToBeResolved);
+        const odspResolvedUrl = await new OdspDriverUrlResolver().resolve(requestToBeResolved);
 
         // Generate sharingLink only if main url is not sharing link.
         if (!isSharingLink) {
@@ -102,6 +115,23 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
             odspResolvedUrl.sharingLinkP = sharingLinkP;
         }
         return odspResolvedUrl;
+    }
+
+    private toInstrumentedSharingLinkTokenFetcher(
+        logger: ITelemetryLogger,
+        tokenFetcher: SharingLinkTokenFetcher,
+    ): (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => Promise<string | null> {
+        return async (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => {
+            return PerformanceEvent.timedExecAsync(
+                logger,
+                { eventName: "GetSharingLinkToken" },
+                async (event) =>
+                    tokenFetcher(siteUrl, scopeFor, options.refresh, options.claims)
+                .then((tokenResponse) => {
+                    event.end({ fromCache: isTokenFromCache(tokenResponse) });
+                    return tokenFromResponse(tokenResponse);
+                }));
+        };
     }
 
     private async getShareLinkPromise(resolvedUrl: IOdspResolvedUrl): Promise<string> {
