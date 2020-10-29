@@ -37,3 +37,22 @@ export function compareBundles(baseline: BundleSummaries, compare: BundleSummari
 
   return results;
 }
+
+/**
+ * Checks if a bundle comparison contains no size changes
+ * @param comparisons
+ */
+export function bundlesContainNoChanges(comparisons: BundleComparison[]): boolean {
+  for (let i = 0; i < comparisons.length; i++) {
+    const { commonBundleMetrics } = comparisons[i];
+    let metrics = Object.entries(commonBundleMetrics);
+    for (let j = 0; j < metrics.length; j++) {
+      const [ , { baseline, compare }] = metrics[j];
+      if (baseline.parsedSize !== compare.parsedSize) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
