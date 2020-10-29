@@ -265,6 +265,7 @@ export class OdspDocumentService implements IDocumentService {
                 return connection;
             } catch (error) {
                 this.cache.sessionJoinCache.remove(this.joinSessionKey);
+                error.socketDocumentId = websocketEndpoint.id;
                 throw error;
             }
         });
