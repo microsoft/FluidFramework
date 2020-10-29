@@ -16,7 +16,6 @@ import {
     SharedObject,
     ValueType,
 } from "@fluidframework/shared-object-base";
-import { CounterValueType } from "./counter";
 import {
     ISerializableValue,
     ISerializedValue,
@@ -61,13 +60,6 @@ export function makeSerializable(
         value: value.value && JSON.parse(value.value),
     };
 }
-
-/**
- * Supported value types.
- */
-export const valueTypes: readonly IValueType<any>[] = [
-    new CounterValueType(),
-];
 
 /**
  * Manages a contained plain value.  May also contain shared object handles.
@@ -242,9 +234,6 @@ export class LocalValueMaker {
 
             return new PlainLocalValue(translatedValue);
         } else if (this.valueTypes.has(serializable.type)) {
-            if (serializable.type === "counter") {
-                console.error("The Counter value type has been deprecated. Please use the SharedCounter DDS instead.");
-            }
             const valueType = this.valueTypes.get(serializable.type);
 
             serializable.value = parseHandles(
@@ -280,8 +269,6 @@ export class LocalValueMaker {
      * @alpha
      */
     public makeValueType(type: string, emitter: IValueOpEmitter, params: any): ILocalValue {
-        // params is the initialization information for the value type, e.g. initial count on a counter
-        // type is the value type Name to initialize, e.g. "counter"
         const valueType = this.loadValueType(params, type, emitter);
         return new ValueTypeLocalValue(valueType, this.valueTypes.get(type));
     }
