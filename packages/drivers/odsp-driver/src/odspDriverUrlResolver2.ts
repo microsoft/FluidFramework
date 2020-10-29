@@ -37,8 +37,15 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
         this.getSharingLinkToken = this.toInstrumentedSharingLinkTokenFetcher(this.logger, tokenFetcher);
     }
 
-    public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string) {
+    public createCreateNewRequest(
+        siteUrl: string,
+        driveId: string,
+        filePath: string,
+        fileName: string,
+        fileExtension?: string,
+    ) {
         return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
+        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName, fileExtension);
     }
 
     /**

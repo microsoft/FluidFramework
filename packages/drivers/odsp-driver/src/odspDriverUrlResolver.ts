@@ -44,6 +44,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 
             const searchParams = new URLSearchParams(queryString);
             const fileName = request.headers[CreateNewHeader.createNew].fileName;
+            const fileExtension = request.headers[CreateNewHeader.createNew].fileExtension;
             const driveID = searchParams.get("driveId");
             const filePath = searchParams.get("path");
             if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
@@ -61,6 +62,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 driveId: driveID,
                 itemId: "",
                 fileName,
+                fileExtension,
                 summarizer: false,
             };
         }
@@ -93,6 +95,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             driveId,
             itemId,
             fileName: "",
+            fileExtension: undefined,
             summarizer,
         };
     }
@@ -109,8 +112,14 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             )}&path=${encodeURIComponent("/")}`;
     }
 
-    public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {
-        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
+    public createCreateNewRequest(
+        siteUrl: string,
+        driveId: string,
+        filePath: string,
+        fileName: string,
+        fileExtension?: string,
+    ): IRequest {
+        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName, fileExtension);
     }
 }
 
