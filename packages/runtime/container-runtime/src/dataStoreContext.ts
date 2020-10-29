@@ -71,18 +71,27 @@ export function createAttributesBlob(pkg: readonly string[], isRootDataStore: bo
 }
 
 /**
- * Added IFluidDataStoreAttributes similar to IChannelAttributes which will tell
- * the attributes of a store like the package, snapshotFormatVersion to
- * take different decisions based on a particular snapshotFormatVersion.
+ * Added IFluidDataStoreAttributes similar to IChannelAttributes which will tell the attributes of a
+ * store like the package, snapshotFormatVersion to take different decisions based on a particular
+ * snapshotFormatVersion.
  */
 export interface IFluidDataStoreAttributes {
     pkg: string;
     readonly snapshotFormatVersion?: string;
+    /**
+     * This tells whether a data store is root. Root data stores are never collected.
+     * Non-root data stores may be collected if they are not used. If this is not present, default it to
+     * true. This will ensure that older data stores are incorrectly collected.
+     */
     readonly isRootDataStore?: boolean;
 }
 
 interface ISnapshotDetails {
     pkg: readonly string[];
+    /**
+     * This tells whether a data store is root. Root data stores are never collected.
+     * Non-root data stores may be collected if they are not used.
+     */
     isRootDataStore: boolean;
     snapshot?: ISnapshotTree;
 }
@@ -643,21 +652,18 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                     throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
                 }
                 this.pkg = pkgFromSnapshot;
-
-                // If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that
-                // data stores in older documents are not garbage collected incorrectly. This may lead to additional
-                // roots in the document but they won't break.
-                isRootStore = isRootDataStore ?? true;
+                isRootStore = isRootDataStore;
             }
 
-            assert(
-                isRootStore !== undefined,
-                "isRootDataStore should be available after reading attributes blob");
-
+            /**
+             * If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that
+             * data stores in older documents are not garbage collected incorrectly. This may lead to additional
+             * roots in the document but they won't break.
+             */
             this.details = {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 pkg: this.pkg!,
-                isRootDataStore: isRootStore,
+                isRootDataStore: isRootStore ?? true,
                 snapshot: tree ?? undefined,
             };
         }

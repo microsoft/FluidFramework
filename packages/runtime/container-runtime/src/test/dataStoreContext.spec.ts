@@ -278,7 +278,7 @@ describe("Data Store Context Tests", () => {
             assert.strictEqual(contents.isRootDataStore, true, "Remote DataStore isRootDataStore flag does not match.");
         });
 
-        it("Check RemotedDataStore Attributes without isRootDataStore flag", async () => {
+        it("can process RemotedDataStore Attributes without isRootDataStore flag", async () => {
             dataStoreAttributes = {
                 pkg: JSON.stringify(["TestDataStore1"]),
                 snapshotFormatVersion: "0.1",

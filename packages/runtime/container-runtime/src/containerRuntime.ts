@@ -810,9 +810,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
                 }
 
-                // If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that
-                // data stores in older documents are not garbage collected incorrectly. This may lead to additional
-                // roots in the document but they won't break.
+                /**
+                 * If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that data
+                 * stores in older documents are not garbage collected incorrectly. This may lead to additional roots
+                 * in the document but they won't break.
+                 */
                 dataStoreContext = new LocalFluidDataStoreContext(
                     key,
                     pkgFromSnapshot,
