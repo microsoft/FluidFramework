@@ -17,6 +17,7 @@ import { getShareLink } from "./graph";
 import {
     IdentityType,
     isTokenFromCache,
+    SharingLinkScopeFor,
     SharingLinkTokenFetcher,
     TokenFetchOptions,
     tokenFromResponse,
@@ -25,7 +26,7 @@ import {
 export class OdspDriverUrlResolver2 implements IUrlResolver {
     private readonly logger: ITelemetryLogger;
     private readonly getSharingLinkToken:
-        (options: TokenFetchOptions, isForFileDefaultUrl: boolean, siteUrl: string) => Promise<string | null>;
+        (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => Promise<string | null>;
     public constructor(
         tokenFetcher: SharingLinkTokenFetcher,
         private readonly identityType: IdentityType = "Enterprise",
@@ -118,13 +119,13 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
     private toInstrumentedSharingLinkTokenFetcher(
         logger: ITelemetryLogger,
         tokenFetcher: SharingLinkTokenFetcher,
-    ): (options: TokenFetchOptions, isForFileDefaultUrl: boolean, siteUrl: string) => Promise<string | null> {
-        return async (options: TokenFetchOptions, isForFileDefaultUrl: boolean, siteUrl: string) => {
+    ): (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => Promise<string | null> {
+        return async (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => {
             return PerformanceEvent.timedExecAsync(
                 logger,
                 { eventName: "GetSharingLinkToken" },
                 async (event) =>
-                    tokenFetcher(siteUrl, isForFileDefaultUrl, options.refresh, options.claims)
+                    tokenFetcher(siteUrl, scopeFor, options.refresh, options.claims)
                 .then((tokenResponse) => {
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
                     return tokenFromResponse(tokenResponse);
