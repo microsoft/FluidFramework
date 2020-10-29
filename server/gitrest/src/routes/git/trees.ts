@@ -6,7 +6,7 @@
 import { ICreateTreeParams, ITree, ITreeEntry } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
-import * as git from "nodegit";
+import git from "nodegit";
 import * as utils from "../../utils";
 
 /**

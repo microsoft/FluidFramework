@@ -1,5 +1,6 @@
 ## 0.28 Breaking Changes
 
+- [FileName should contain extension for ODSP driver create new path](#FileName-should-contain-extension-for-ODSP-driver-create-new-path)
 - [ODSP Driver IPersistedCache changes](#ODSP-Driver-IPersistedCache-Changes)
 - [IFluidPackage Changes](#IFluidPackage-Changes)
 - [DataObject changes](#DataObject-changes)
@@ -7,6 +8,9 @@
 - [IFluidLodable.url is removed](#IFluidLodable.url-is-removed)
 - [Loader Constructor Changes](#Loader-Constructor-Changes)
 - [Moving DriverHeader and merge with CreateNewHeader](#moving-driverheader-and-merge-with-createnewheader)
+
+### FileName should contain extension for ODSP driver create new path
+Now the ODSP driver expects file extension in the file name while creating a new detached container.
 
 ### ODSP Driver IPersistedCache-Changes
 Added api `removeAllEntriesForDocId` which allows removal of all entries for a given document id. Also the schema for entries stored inside odsp `IPersistedCache` has changed.
