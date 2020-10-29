@@ -5,6 +5,8 @@
 
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { AttachmentTreeEntry } from "@fluidframework/protocol-base";
+import { ISnapshotTree, ITree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
 /**
@@ -39,6 +41,7 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 
 export class BlobManager {
     public readonly basePath = "_blobs";
+    private readonly blobIds: Set<string> = new Set();
 
     constructor(
         private readonly routeContext: IFluidHandleContext,
@@ -66,5 +69,34 @@ export class BlobManager {
         );
 
         return handle;
+    }
+
+    public addBlobId(blobId: string) {
+        this.blobIds.add(blobId);
+    }
+
+    /**
+     * Load a set of previously attached blob IDs from a previous snapshot. Note
+     * that BlobManager tracking and reporting attached blobs is a temporary
+     * solution since storage expects attached blobs to be reported and any that
+     * are not reported as attached may be GCed. In the future attached blob
+     * IDs will be collected at summarization time, and runtime will not care
+     * about the existence or specific formatting of this tree in returned
+     * snapshots.
+     *
+     * @param blobsTree - Tree containing IDs of previously attached blobs. This
+     * corresponds to snapshot() below. We look for the IDs in the blob entries
+     * of the tree since the both the r11s and SPO drivers replace the
+     * attachment types returned in snapshot() with blobs.
+     */
+    public load(blobsTree?: ISnapshotTree): void {
+        if (blobsTree) {
+            Object.values(blobsTree.blobs).map((entry) => this.addBlobId(entry));
+        }
+    }
+
+    public snapshot(): ITree {
+        const entries = [...this.blobIds].map((id) => new AttachmentTreeEntry(id, id));
+        return { entries, id: null };
     }
 }

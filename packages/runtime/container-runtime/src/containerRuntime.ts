@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import { TaskManagerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -15,6 +15,7 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
+    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -129,6 +130,8 @@ import { BlobManager } from "./blobManager";
 import { convertSnapshotToSummaryTree } from "./utils";
 
 const chunksBlobName = ".chunks";
+const blobsTreeName = ".blobs";
+const nonDataStorePaths = [".protocol", ".logTail", ".serviceProtocol", blobsTreeName];
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -564,7 +567,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.snapshotFn;
     }
 
-    public get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown) => void {
+    public get reSubmitFn(): (
+        type: ContainerMessageType,
+        content: any,
+        localOpMetadata: unknown,
+        opMetaData: unknown,
+    ) => void {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.reSubmit;
     }
@@ -604,6 +612,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public readonly IFluidSerializer: IFluidSerializer;
 
     public readonly IFluidHandleContext: IFluidHandleContext;
+
+    public get codeDetails(): IFluidCodeDetails {
+        return this.context.codeDetails ?? this.getQuorum().get("code") as IFluidCodeDetails;
+    }
 
     // internal logger for ContainerRuntime
     private readonly _logger: ITelemetryLogger;
@@ -762,7 +774,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (typeof context.baseSnapshot === "object") {
             const baseSnapshot = context.baseSnapshot;
             Object.keys(baseSnapshot.trees).forEach((value) => {
-                if (value !== ".protocol" && value !== ".logTail" && value !== ".serviceProtocol") {
+                if (!nonDataStorePaths.includes(value)) {
                     const tree = baseSnapshot.trees[value];
                     fluidDataStores.set(value, tree);
                 }
@@ -818,8 +830,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
             () => this.storage,
-            (blobId) => this.submit(ContainerMessageType.BlobAttach, { blobId }),
+            (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
         );
+        this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName]);
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
@@ -1066,6 +1079,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const content = JSON.stringify([...this.chunkMap]);
             summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
+        const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
+        summaryTreeBuilder.addWithStats(".blobs", blobsTree);
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
@@ -1177,6 +1192,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
                     this.processFluidDataStoreOp(message, local, localMessageMetadata);
+                    break;
+                case ContainerMessageType.BlobAttach:
+                    assert(message?.metadata?.blobId);
+                    this.blobManager.addBlobId(message.metadata.blobId);
                     break;
                 default:
             }
@@ -1847,7 +1866,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private submit(
         type: ContainerMessageType,
         content: any,
-        localOpMetadata: unknown = undefined): void {
+        localOpMetadata: unknown = undefined,
+        opMetadata: unknown = undefined): void {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
@@ -1875,19 +1895,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
             // there will be a lot of escape characters that can make it up to 2x bigger!
             // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
-            if (serializedContent.length <= maxOpSize) {
+            if (!serializedContent || serializedContent.length <= maxOpSize) {
                 clientSequenceNumber = this.submitRuntimeMessage(
                     type,
                     content,
                     this._flushMode === FlushMode.Manual,
-                    batchBegin ? { batch: true } : undefined);
+                    batchBegin ? { batch: true } : opMetadata);
             } else {
                 clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             }
         }
 
         // Let the PendingStateManager know that a message was submitted.
-        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata);
+        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata, opMetadata);
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }
@@ -1963,7 +1983,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private reSubmit(type: ContainerMessageType, content: any, localOpMetadata: unknown) {
+    private reSubmit(type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetaData: unknown) {
         switch (type) {
             case ContainerMessageType.FluidDataStoreOp:
                 // For Operations, call resubmitDataStoreOp which will find the right store
@@ -1976,7 +1996,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
             case ContainerMessageType.BlobAttach:
-                this.submit(type, content, localOpMetadata);
+                this.submit(type, content, localOpMetadata, opMetaData);
                 break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);

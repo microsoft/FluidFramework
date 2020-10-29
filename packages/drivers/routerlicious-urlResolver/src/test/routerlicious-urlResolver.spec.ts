@@ -14,7 +14,7 @@ import { RouterliciousUrlResolver } from "../urlResolver";
 describe("Routerlicious Url Resolver", () => {
     const token = "dummy";
     it("Should resolve the Routerlicious urls correctly", async () => {
-        const urlResolver = new RouterliciousUrlResolver(undefined, async () => Promise.resolve(token), []);
+        const urlResolver = new RouterliciousUrlResolver(undefined, async () => Promise.resolve(token));
         const url: string = "https://www.wu2.prague.office-int.com/loader/fluid/thinkable-list?chaincode=@fluid-example/shared-text@0.11.14146";
         const resolved = (await urlResolver.resolve({ url })) as IFluidResolvedUrl;
         assert.equal(resolved.tokens.jwt, token, "Token does not match");
@@ -25,7 +25,7 @@ describe("Routerlicious Url Resolver", () => {
     });
 
     it("Should resolve the localhost urls correctly", async () => {
-        const urlResolver = new RouterliciousUrlResolver(undefined, async () => Promise.resolve(token), []);
+        const urlResolver = new RouterliciousUrlResolver(undefined, async () => Promise.resolve(token));
         const url: string = "http://localhost:3000/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0";
         const resolved = (await urlResolver.resolve({ url })) as IFluidResolvedUrl;
         assert.equal(resolved.tokens.jwt, token, "Token does not match");
@@ -55,7 +55,7 @@ describe("Routerlicious Url Resolver", () => {
             tenantId: "fluid",
             documentId: "damp-competition",
         };
-        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), []);
+        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token));
 
         const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
 
@@ -85,7 +85,7 @@ describe("Routerlicious Url Resolver", () => {
             documentId: "damp-competition",
         };
 
-        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), []);
+        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token));
         const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
 
         assert.equal(endpoints.storageUrl, "http://historian:3000/repos/fluid", "Improperly Formed storageUrl");
@@ -113,7 +113,7 @@ describe("Routerlicious Url Resolver", () => {
             documentId: "damp-competition",
         };
 
-        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), []);
+        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token));
         const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
 
         assert.equal(endpoints.storageUrl, "http://smelly-wolf-historian:3000/repos/fluid", "Improperly Formed storageUrl");
@@ -142,7 +142,7 @@ describe("Routerlicious Url Resolver", () => {
             documentId: "damp-competition",
         };
 
-        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), []);
+        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token));
         const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
 
         assert.equal(endpoints.storageUrl, "https://historian.wu2-ppe.prague.office-int.com/repos/fluid", "Storage url does not match");

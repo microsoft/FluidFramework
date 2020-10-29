@@ -11,7 +11,7 @@ import {
     RouterliciousDocumentServiceFactory,
 } from "@fluidframework/routerlicious-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
+import { InsecureTokenProvider, InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 import { IFrameOuterHost } from "./inframehost";
 
 let createNew = false;
@@ -22,23 +22,23 @@ const getDocumentId = () => {
     }
     return window.location.hash.substring(1);
 };
-const getDocumentUrl = () => `${window.location.origin}/${getDocumentId()}`;
+const getDocumentUrl = (documentId: string) => `${window.location.origin}/${documentId}`;
 const getTinyliciousUrlResolver =
     () => new InsecureUrlResolver(
         "http://localhost:3000",
         "http://localhost:3000",
         "http://localhost:3000",
         "tinylicious",
-        "12345",
-        { id: "userid0" },
         "bearer");
 
 export async function loadFrame(iframeId: string, logId: string) {
+    const documentId = getDocumentId();
     const iframe = document.getElementById(iframeId) as HTMLIFrameElement;
 
     const urlResolver = getTinyliciousUrlResolver();
 
-    const documentServiceFactory = new RouterliciousDocumentServiceFactory();
+    const tokenProvider = new InsecureTokenProvider("tinylicious", documentId, "12345", { id: "userid0" });
+    const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
 
     const host = new IFrameOuterHost({
         urlResolver,
@@ -46,7 +46,7 @@ export async function loadFrame(iframeId: string, logId: string) {
     });
 
     const proxyContainer = await host.load(
-        { url: getDocumentUrl() },
+        { url: getDocumentUrl(documentId) },
         iframe,
     );
 
