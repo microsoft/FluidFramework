@@ -41,9 +41,10 @@ module.exports = {
   node: false,
   plugins: [
     new BannedModulesPlugin({
-      bannedModules: [
-        // Assert is banned because it has a very large bundle size impact on client JavaScript
-        'assert'
+      bannedModules: [{
+            module: 'assert',
+            reason: 'The assert module is very large in a browser context, please use assert from @fluidframework/common-utils instead'
+        }
       ]
     }),
     new DuplicatePackageCheckerPlugin({
