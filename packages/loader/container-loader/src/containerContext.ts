@@ -315,7 +315,7 @@ export class ContainerContext implements IContainerContext {
         }
 
         for (const comparer of comparers) {
-            const satisfies = await comparer.satisfies(this.codeDetails, constraitCodeDetails);
+            const satisfies = await comparer.satisfies(this.codeDetails, constraintCodeDetails);
             if (satisfies === false) {
                 return false;
             }
