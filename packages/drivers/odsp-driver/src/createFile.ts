@@ -19,7 +19,6 @@ import {
     ICreateFileResponse,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { OdspDriverUrlResolver2 } from "./odspDriverUrlResolver2";
 import {
     getWithRetryForTokenRefresh,
     INewFileInfo,
@@ -47,7 +46,6 @@ export async function createNewFluidFile(
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,
     epochTracker: EpochTracker,
-    getSharingLinkToken?: (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => Promise<string | null>,
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
@@ -93,8 +91,7 @@ export async function createNewFluidFile(
     });
 
     const odspUrl = createOdspUrl(newFileInfo.siteUrl, newFileInfo.driveId, itemId, "/");
-    const resolver = getSharingLinkToken ?
-        new OdspDriverUrlResolver2(getSharingLinkToken) : new OdspDriverUrlResolver();
+    const resolver = new OdspDriverUrlResolver();
     return resolver.resolve({ url: odspUrl });
 }
 
