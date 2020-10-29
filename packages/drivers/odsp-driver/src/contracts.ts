@@ -30,6 +30,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
 
     fileName: string;
 
+    fileExtension: string | undefined;
+
     summarizer: boolean;
 
     sharingLinkP?: Promise<string>;

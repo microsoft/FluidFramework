@@ -42,7 +42,7 @@ const isInvalidFileName = (fileName: string): boolean => {
 };
 
 /**
- * Creates a new Fluid file. '.fluid' is appended to the filename
+ * Creates a new Fluid file. If no extension is supplied then use .fluid as extension.
  * Returns resolved url
  */
 export async function createNewFluidFile(
@@ -58,7 +58,9 @@ export async function createNewFluidFile(
     }
 
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
-    const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
+    const fileName = newFileInfo.fileExtension !== undefined
+        ? `${newFileInfo.filename}${newFileInfo.fileExtension}` : `${newFileInfo.filename}.fluid`;
+    const encodedFilename = encodeURIComponent(fileName);
     const baseUrl =
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
         `${filePath}/${encodedFilename}`;
