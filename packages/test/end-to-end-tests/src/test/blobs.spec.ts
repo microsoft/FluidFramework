@@ -9,10 +9,14 @@ import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { SharedString } from "@fluidframework/sequence";
+import uuid from "uuid";
+import { ReferenceType } from "@fluidframework/merge-tree";
 import { generateTest, ICompatLocalTestObjectProvider, ITestContainerConfig, TestDataObject } from "./compatUtils";
 
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: { initialSummarizerDelayMs: 20 },
+    registry: [["sharedString", SharedString.getFactory()]],
 };
 
 const tests = (args: ICompatLocalTestObjectProvider) => {
@@ -26,10 +30,10 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             }
         }));
 
-        const component = await requestFluidObject<TestDataObject>(container, "default");
-        const blob = await component._runtime.uploadBlob(IsoBuffer.from("some random text"));
+        const dataStore = await requestFluidObject<TestDataObject>(container, "default");
+        const blob = await dataStore._runtime.uploadBlob(IsoBuffer.from("some random text"));
 
-        component._root.set("my blob", blob);
+        dataStore._root.set("my blob", blob);
 
         await blobOpP;
     });
@@ -39,25 +43,25 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         const testKey = "a blob";
         const container1 = await args.makeTestContainer(testContainerConfig);
 
-        const component1 = await requestFluidObject<TestDataObject>(container1, "default");
+        const dataStore1 = await requestFluidObject<TestDataObject>(container1, "default");
 
-        const blob = await component1._runtime.uploadBlob(IsoBuffer.from(testString, "utf-8"));
-        component1._root.set(testKey, blob);
+        const blob = await dataStore1._runtime.uploadBlob(IsoBuffer.from(testString, "utf-8"));
+        dataStore1._root.set(testKey, blob);
 
         const container2 = await args.loadTestContainer(testContainerConfig);
-        const component2 = await requestFluidObject<TestDataObject>(container2, "default");
+        const dataStore2 = await requestFluidObject<TestDataObject>(container2, "default");
 
-        const blobHandle = await component2._root.wait<IFluidHandle<ArrayBufferLike>>(testKey);
+        const blobHandle = await dataStore2._root.wait<IFluidHandle<ArrayBufferLike>>(testKey);
         assert.strictEqual(IsoBuffer.from(await blobHandle.get()).toString("utf-8"), testString);
     });
 
     it("loads from snapshot", async function() {
         const container1 = await args.makeTestContainer(testContainerConfig);
-        const component = await requestFluidObject<TestDataObject>(container1, "default");
-        const blob = await component._runtime.uploadBlob(IsoBuffer.from("some random text"));
+        const dataStore = await requestFluidObject<TestDataObject>(container1, "default");
+        const blob = await dataStore._runtime.uploadBlob(IsoBuffer.from("some random text"));
 
         // attach blob, wait for blob attach op, then take BlobManager snapshot
-        component._root.set("my blob", blob);
+        dataStore._root.set("my blob", blob);
         await new Promise((res, rej) => container1.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -86,6 +90,50 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         const snapshot2 = (container2 as any).context.runtime.blobManager.snapshot();
         assert.strictEqual(snapshot2.entries.length, 1);
         assert.strictEqual(snapshot1.entries[0].id, snapshot2.entries[0].id);
+    });
+
+    it("round trip blob handle on shared string property", async function() {
+        const container1 = await args.makeTestContainer(testContainerConfig);
+        const container2 = await args.loadTestContainer(testContainerConfig);
+        const testString = "this is a test string";
+        // setup
+        {
+            const dataStore = await requestFluidObject<TestDataObject>(container2, "default");
+            const sharedString = SharedString.create(dataStore._runtime, uuid());
+            dataStore._root.set("sharedString", sharedString.handle);
+
+            const blob = await dataStore._runtime.uploadBlob(IsoBuffer.from(testString));
+
+            sharedString.insertMarker(0, ReferenceType.Simple, { blob });
+
+            // wait for summarize, then summary ack so the next container will load from snapshot
+            await new Promise((resolve, reject) => {
+                let summarized = false;
+                container1.on("op", (op) => {
+                    if (op.type === "summaryAck") {
+                        if (summarized) {
+                            resolve();
+                        }
+                    } else if (op.type === "summaryNack") {
+                        reject("summaryNack");
+                    } else if (op.type === "summarize") {
+                        summarized = true;
+                    }
+                });
+            });
+        }
+
+        // validate on remote container, local container, and container loaded from summary
+        for (const container of [container1, container2, await args.loadTestContainer(testContainerConfig)]) {
+            const dataStore2 = await requestFluidObject<TestDataObject>(container, "default");
+            const handle: IFluidHandle<SharedString> =
+                await dataStore2._root.wait("sharedString");
+            const sharedString2 = await handle.get();
+
+            const props = sharedString2.getPropertiesAtPosition(0);
+
+            assert.strictEqual(IsoBuffer.from(await props.blob.get()).toString("utf-8"), testString);
+        }
     });
 };
 
