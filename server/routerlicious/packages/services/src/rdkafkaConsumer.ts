@@ -312,11 +312,6 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			return;
 		}
 
-		if (this.closed) {
-			this.consumer.unassign();
-			return;
-		}
-
 		try {
 			if (err.code === kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
 				for (const assignment of assignments) {
