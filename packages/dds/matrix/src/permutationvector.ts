@@ -346,7 +346,7 @@ export class PermutationVector extends Client {
             }
 
             default:
-                throw new Error();
+                throw new Error("Unhandled MergeTreeDeltaType");
         }
     };
 
