@@ -43,8 +43,7 @@ export class BannedModulesPlugin {
                     const modulePath = mod.name.substring(mod.name.indexOf("node_modules") + "node_modules".length + 1);
 
                     for (const bannedModule of this.options.bannedModules) {
-                        const bannedModuleName = bannedModule.moduleName;
-                        if (modulePath.startsWith(bannedModuleName)) {
+                        if (modulePath.startsWith(bannedModule.moduleName)) {
                             // We store the issuers as a set to remove duplicates
                             const bannedModuleIssuers = foundBannedModules.get(bannedModule) || new Set();
                             bannedModuleIssuers.add(JSON.stringify(mod.issuerPath));
