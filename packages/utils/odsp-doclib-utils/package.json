@@ -26,8 +26,8 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/driver-definitions": "0.28.0",
-    "@fluidframework/driver-utils": "0.28.0",
+    "@fluidframework/driver-definitions": "^0.28.0",
+    "@fluidframework/driver-utils": "^0.28.0",
     "node-fetch": "^2.2.1"
   },
   "devDependencies": {

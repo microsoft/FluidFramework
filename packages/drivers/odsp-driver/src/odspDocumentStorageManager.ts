@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { default as AbortController } from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
 import {
+    assert,
     fromBase64ToUtf8,
     fromUtf8ToBase64,
     hashFile,
@@ -437,7 +437,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     break;
                                 }
                             }
-                            assert(appCommit || appTree); // .app commit or tree should be first entry in first entry.
+                            assert(!!appCommit || !!appTree); // .app commit or tree should be first entry in first entry.
                         }
                         for (const entry of treeVal.entries) {
                             if (entry.type === "blob") {
