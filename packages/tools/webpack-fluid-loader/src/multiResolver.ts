@@ -7,10 +7,7 @@ import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
-// eslint-disable-next-line import/no-internal-modules
-import uuid from "uuid/v4";
-import { getRandomName } from "@fluidframework/server-services-client";
-import { RouteOptions, IDevServerUser } from "./loader";
+import { RouteOptions } from "./loader";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 export const dockerUrls = {
@@ -33,8 +30,6 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
                 dockerUrls.ordererUrl,
                 dockerUrls.storageUrl,
                 options.tenantId,
-                options.tenantSecret,
-                getUser(),
                 options.bearerSecret);
 
         case "r11s":
@@ -43,8 +38,6 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
                 options.fluidHost.replace("www", "alfred"),
                 options.fluidHost.replace("www", "historian"),
                 options.tenantId,
-                options.tenantSecret,
-                getUser(),
                 options.bearerSecret);
         case "tinylicious":
             return new InsecureUrlResolver(
@@ -52,8 +45,6 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
                 tinyliciousUrls.ordererUrl,
                 tinyliciousUrls.storageUrl,
                 "tinylicious",
-                "12345",
-                getUser(),
                 options.bearerSecret);
 
         case "spo":
@@ -66,11 +57,6 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
             return new LocalResolver();
     }
 }
-
-const getUser = (): IDevServerUser => ({
-    id: uuid(),
-    name: getRandomName(),
-});
 
 export class MultiUrlResolver implements IUrlResolver {
     private readonly urlResolver: IUrlResolver;

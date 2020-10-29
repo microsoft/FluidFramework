@@ -1,5 +1,4 @@
 {
-    "extends": "@fluidframework/build-common/ts-common-config.json",
     "exclude": [
         "dist",
         "node_modules"
@@ -16,11 +15,9 @@
         "rootDir": "./src",
         "sourceMap": true,
         "inlineSources": true,
-        "skipLibCheck": true,
         "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "types": [
-            "mocha"
+        "typeRoots": [
+            "./node_modules/@types"
         ]
     },
     "include": [

@@ -50,8 +50,6 @@ export async function start(url: string, code: string, createNew: boolean): Prom
         ordererUrl,
         storageUrl,
         tenantId,
-        tenantKey,
-        user,
         bearerSecret);
 
     const parsedUrl = new URL(url);
