@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -42,7 +41,7 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { LazyPromise } from "@fluidframework/common-utils";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
 import { NullChaincode, NullRuntime } from "./nullRuntime";
 
