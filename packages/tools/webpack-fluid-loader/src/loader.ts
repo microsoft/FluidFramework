@@ -10,14 +10,11 @@ import { Deferred } from "@fluidframework/common-utils";
 import {
     AttachState,
     IFluidModule,
-    IFluidPackage,
-    IFluidCodeDetails,
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
     isFluidBrowserPackage,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
@@ -26,10 +23,17 @@ import {
     resolveFluidPackageEnvironment,
     WebCodeLoader,
 } from "@fluidframework/web-code-loader";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { IFluidObject, IFluidPackage, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { MultiUrlResolver } from "./multiResolver";
-import { getDocumentServiceFactory } from "./multiDocumentServiceFactory";
+import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
+
+// SetImmediate is needed by broadcaster/lambdas, but is not available in the browser.
+// Need a polyfill until this issue is resolved https://github.com/microsoft/FluidFramework/issues/4040
+// eslint-disable-next-line import/no-unassigned-import
+import "setimmediate";
 
 export interface IDevServerUser extends IUser {
     name: string;
@@ -149,10 +153,21 @@ async function createWebLoader(
     documentId: string,
     fluidModule: IFluidModule,
     options: RouteOptions,
-    urlResolver: IUrlResolver,
+    urlResolver: MultiUrlResolver,
     codeDetails: IFluidCodeDetails,
+    testOrderer: boolean = false,
 ): Promise<Loader> {
-    const documentServiceFactory = getDocumentServiceFactory(documentId, options);
+    let documentServiceFactory: IDocumentServiceFactory = getDocumentServiceFactory(documentId, options);
+    // Create the inner document service which will be wrapped inside local driver. The inner document service
+    // will be used for ops(like delta connection/delta ops) while for storage, local storage would be used.
+    if (testOrderer) {
+        const resolvedUrl = await urlResolver.resolve(await urlResolver.createRequestForCreateNew(documentId));
+        const innerDocumentService = await documentServiceFactory.createDocumentService(resolvedUrl);
+        documentServiceFactory = new LocalDocumentServiceFactory(
+            deltaConns.get(documentId),
+            innerDocumentService);
+    }
+
     const codeLoader = new WebCodeLoader(new WebpackCodeResolver(options));
 
     await codeLoader.seedModule(
@@ -161,7 +176,8 @@ async function createWebLoader(
     );
 
     return new Loader({
-        urlResolver,
+        urlResolver: testOrderer ?
+            new MultiUrlResolver(documentId, window.location.origin, options, true) : urlResolver,
         documentServiceFactory,
         codeLoader,
     });
@@ -182,8 +198,9 @@ export async function start(
      * So, we create a new `id` and use that as the `documentId`.
      * We will also replace the url in the browser with a new url of format - http://localhost:8080/doc/<documentId>.
      */
-    const autoAttach: boolean = id === "new";
+    const autoAttach: boolean = id === "new" || id === "testorderer";
     const manualAttach: boolean = id === "manualAttach";
+    const testOrderer = id === "testorderer";
     if (autoAttach || manualAttach) {
         documentId = moniker.choose();
         url = url.replace(id, `doc/${documentId}`);
@@ -197,7 +214,7 @@ export async function start(
     let urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
 
     // Create the loader that is used to load the Container.
-    let loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
+    let loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails, testOrderer);
 
     let container1: Container;
     if (autoAttach || manualAttach) {
@@ -220,7 +237,7 @@ export async function start(
             documentId = moniker.choose();
             url = url.replace(id, documentId);
             urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
-            loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
+            loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails, testOrderer);
             container1 = await loader1.createDetachedContainer(codeDetails);
         }
     }
@@ -228,8 +245,8 @@ export async function start(
     let leftDiv: HTMLDivElement = div;
     let rightDiv: HTMLDivElement | undefined;
 
-    // For side by side mode, create two divs.
-    if (options.mode === "local" && !options.single) {
+    // For side by side mode, create two divs. Use side by side mode to test orderer.
+    if ((options.mode === "local" && !options.single) || testOrderer) {
         div.style.display = "flex";
         leftDiv = makeSideBySideDiv("sbs-left");
         rightDiv = makeSideBySideDiv("sbs-right");
@@ -258,13 +275,14 @@ export async function start(
             leftDiv,
             rightDiv,
             manualAttach,
+            testOrderer,
         );
     }
 
     // For side by side mode, we need to create a second container and Fluid object.
     if (rightDiv) {
         // Create a new loader that is used to load the second container.
-        const loader2 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
+        const loader2 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails, testOrderer);
 
         // Create a new request url from the resolvedUrl of the first container.
         const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
@@ -330,6 +348,7 @@ async function attachContainer(
     leftDiv: HTMLDivElement,
     rightDiv: HTMLDivElement | undefined,
     manualAttach: boolean,
+    testOrderer: boolean,
 ) {
     // This is called once loading is complete to replace the url in the address bar with the new `url`.
     const replaceUrl = () => {
@@ -340,7 +359,10 @@ async function attachContainer(
     let currentContainer = container;
     let currentLeftDiv = leftDiv;
     const attached = new Deferred();
-    const attachUrl = await urlResolver.createRequestForCreateNew(documentId);
+    // To test orderer, we use local driver as wrapper for actual document service. So create request
+    // using local resolver.
+    const attachUrl = testOrderer ? new LocalResolver().createCreateNewRequest(documentId)
+        : await urlResolver.createRequestForCreateNew(documentId);
 
     if (manualAttach) {
         // Create an "Attach Container" button that the user can click when they want to attach the container.

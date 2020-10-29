@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise, no-param-reassign, no-shadow */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { Trace } from "@fluidframework/common-utils";
 import * as Base from "./base";
 import * as Collections from "./collections";
@@ -571,47 +571,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     abstract clone(): ISegment;
     abstract append(segment: ISegment): void;
     protected abstract createSplitSegmentAt(pos: number): BaseSegment;
-}
-
-interface IJSONExternalSegment extends ops.IJSONSegment {
-    sequenceIndex: number;
-    sequenceLength: number;
-}
-/**
- * A non-shared placeholder for external content.
- */
-export class ExternalSegment extends BaseSegment {
-    public static readonly type = "ExternalSegment";
-    public readonly type = ExternalSegment.type;
-
-    constructor(
-        public placeholderSeq,
-        public sequenceLength: number,
-        public sequenceIndex: number) {
-        super();
-    }
-
-    toJSONObject() {
-        const obj: IJSONExternalSegment = { sequenceIndex: this.sequenceIndex, sequenceLength: this.sequenceLength };
-        super.addSerializedProps(obj);
-        return obj;
-    }
-
-    mergeTreeInsert(mergeTree: MergeTree, pos: number, refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs) {
-        mergeTree.insertSegments(pos, [this], refSeq, clientId, seq, opArgs);
-    }
-
-    clone(): ISegment {
-        throw new Error("clone not implemented");
-    }
-
-    append() {
-        throw new Error("Can not append to external segment");
-    }
-
-    protected createSplitSegmentAt(pos: number): BaseSegment {
-        throw new Error("Method not implemented.");
-    }
 }
 
 export const reservedTileLabelsKey = "referenceTileLabels";

@@ -20,6 +20,13 @@ export const fetchFailureStatusCode: number = 710;
 export const invalidFileNameStatusCode: number = 711;
 // no response, or can't parse response
 export const fetchIncorrectResponse = 712;
+// Fetch request took more time then limit.
+export const fetchTimeoutStatusCode = 713;
+// This status code is sent by the server when the client and server epoch mismatches.
+// The client sets its epoch version in the calls it makes to the server and if that mismatches
+// with the server epoch version, the server throws this error code.
+// This indicates that the file/container has been modified externally.
+export const fluidEpochMismatchError = 409;
 
 export enum OdspErrorType {
     /**
@@ -40,9 +47,23 @@ export enum OdspErrorType {
     snapshotTooBig = "snapshotTooBig",
 
     /*
+     * Maximum time limit to fetch reached. Host application specified limit for fetching of snapshot, when
+     * that limit is reached, request fails. Hosting application is expected to have fall-back behavior for
+     * such case.
+     */
+    fetchTimeout = "fetchTimeout",
+
+    /*
         * SPO admin toggle: fluid service is not enabled.
         */
     fluidNotEnabled = "fluidNotEnabled",
+
+    /**
+     * Epoch version mismatch failures.
+     * This occurs when the file is modified externally. So the version at the client receiving this error
+     * does not match the one at the server.
+     */
+    epochVersionMismatch = "epochVersionMismatch",
 }
 
 /**
@@ -81,6 +102,9 @@ export function createOdspNetworkError(
         case 406:
             error = new NetworkErrorBasic(errorMessage, DriverErrorType.unsupportedClientProtocolVersion, false);
             break;
+        case fluidEpochMismatchError:
+            error = new NonRetryableError(errorMessage, OdspErrorType.epochVersionMismatch);
+            break;
         case 413:
             error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig);
             break;
@@ -105,6 +129,9 @@ export function createOdspNetworkError(
             break;
         case fetchIncorrectResponse:
             error = new NetworkErrorBasic(errorMessage, DriverErrorType.incorrectServerResponse, false);
+            break;
+        case fetchTimeoutStatusCode:
+            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTimeout);
             break;
         default:
             error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, statusCode);

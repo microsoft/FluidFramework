@@ -21,7 +21,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
     posFromRelativePos(relativePos: MergeTree.IRelativePosition);
 }
 
-export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker | MergeTree.ExternalSegment;
+export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker;
 
 /**
  * The Shared String is a specialized data structure for handling collaborative

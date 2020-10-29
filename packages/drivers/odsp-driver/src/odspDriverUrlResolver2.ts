@@ -3,28 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { getLocatorFromOdspUrl, storeLocatorInOdspUrl, encodeOdspFluidDataStoreLocator } from "./odspFluidFileLink";
 import { resolveDataStore } from "./resolveDataStore";
 import { IOdspResolvedUrl, OdspDocumentInfo, OdspFluidDataStoreLocator, SharingLinkHeader } from "./contracts";
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
-import { resolveRequest } from "./odspDriverUrlResolver";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { getShareLink } from "./graph";
-import { IdentityType, TokenFetchOptions } from "./tokenFetch";
+import {
+    IdentityType,
+    isTokenFromCache,
+    SharingLinkScopeFor,
+    SharingLinkTokenFetcher,
+    TokenFetchOptions,
+    tokenFromResponse,
+} from "./tokenFetch";
 
 export class OdspDriverUrlResolver2 implements IUrlResolver {
+    private readonly logger: ITelemetryLogger;
+    private readonly getSharingLinkToken:
+        (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => Promise<string | null>;
     public constructor(
-        private readonly getSharingLinkToken:
-            (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => Promise<string | null>,
+        tokenFetcher: SharingLinkTokenFetcher,
         private readonly identityType: IdentityType = "Enterprise",
-        private readonly logger?: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
-    ) { }
+    ) {
+        this.logger = ChildLogger.create(logger, "OdspDriver");
+        this.getSharingLinkToken = this.toInstrumentedSharingLinkTokenFetcher(this.logger, tokenFetcher);
+    }
 
-    public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string) {
+    public createCreateNewRequest(
+        siteUrl: string,
+        driveId: string,
+        filePath: string,
+        fileName: string,
+    ) {
         return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     }
 
@@ -62,12 +80,13 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
      */
     public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
         const requestToBeResolved = { headers: request.headers, url: request.url };
-        let sharingLink: string | undefined;
+        let sharingLinkP: Promise<string> | undefined;
+        const isSharingLink = requestToBeResolved.headers?.[SharingLinkHeader.isSharingLink];
         try {
             const url = new URL(request.url);
             // Check if the url is the sharing link.
-            if (request.headers?.[SharingLinkHeader.isSharingLink]) {
-                sharingLink = request.url.split("?")[0];
+            if (isSharingLink) {
+                sharingLinkP = Promise.resolve(request.url.split("?")[0]);
             }
             const odspFluidInfo = getLocatorFromOdspUrl(url);
             if (odspFluidInfo) {
@@ -76,24 +95,42 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
                     odspFluidInfo.driveId,
                     odspFluidInfo.fileId,
                     odspFluidInfo.dataStorePath,
+                    odspFluidInfo.containerPackageName,
                 );
             }
         } catch {
             // If the locator throws some error, then try to resolve the request as it is.
         }
 
-        const odspResolvedUrl = await resolveRequest(requestToBeResolved);
+        const odspResolvedUrl = await new OdspDriverUrlResolver().resolve(requestToBeResolved);
 
-        // Generate sharingLink only if specified in the request.
-        if (requestToBeResolved.headers?.[SharingLinkHeader.generateSharingLink]) {
-            await this.getShareLinkPromise(odspResolvedUrl)
-            .then((shareLink: string) => sharingLink = shareLink)
-            .catch(() => {});
+        // Generate sharingLink only if main url is not sharing link.
+        if (!isSharingLink) {
+            try {
+                sharingLinkP = this.getShareLinkPromise(odspResolvedUrl);
+            } catch (error) {}
         }
-        if (sharingLink) {
-            odspResolvedUrl.sharingLink = sharingLink;
+        if (sharingLinkP) {
+            odspResolvedUrl.sharingLinkP = sharingLinkP;
         }
         return odspResolvedUrl;
+    }
+
+    private toInstrumentedSharingLinkTokenFetcher(
+        logger: ITelemetryLogger,
+        tokenFetcher: SharingLinkTokenFetcher,
+    ): (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => Promise<string | null> {
+        return async (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => {
+            return PerformanceEvent.timedExecAsync(
+                logger,
+                { eventName: "GetSharingLinkToken" },
+                async (event) =>
+                    tokenFetcher(siteUrl, scopeFor, options.refresh, options.claims)
+                .then((tokenResponse) => {
+                    event.end({ fromCache: isTokenFromCache(tokenResponse) });
+                    return tokenFromResponse(tokenResponse);
+                }));
+        };
     }
 
     private async getShareLinkPromise(resolvedUrl: IOdspResolvedUrl): Promise<string> {
@@ -101,8 +138,8 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
             throw new Error("Failed to get share link because necessary information is missing " +
                 "(e.g. siteUrl, driveId or itemId)");
         }
-        if (resolvedUrl.sharingLink !== undefined) {
-            return resolvedUrl.sharingLink;
+        if (resolvedUrl.sharingLinkP !== undefined) {
+            return resolvedUrl.sharingLinkP;
         }
         const newLinkPromise = getShareLink(
             this.getSharingLinkToken,
@@ -132,12 +169,19 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
      * @param resolvedUrl - The driver resolved URL
      * @param request - The relative data store path URL. For requesting a driver URL, this value should always be '/'
      */
-    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(
+        resolvedUrl: IResolvedUrl,
+        relativeUrl: string,
+        codeDetails?: IFluidCodeDetails,
+    ): Promise<string> {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
 
         const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
 
         const shareLinkUrl = new URL(shareLink);
+
+        const packageName = isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
+        odspResolvedUrl.codeHint?.containerPackageName;
 
         storeLocatorInOdspUrl(shareLinkUrl, {
             siteUrl: odspResolvedUrl.siteUrl,
@@ -145,6 +189,7 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
             fileId: odspResolvedUrl.itemId,
             dataStorePath: relativeUrl,
             appName: this.appName,
+            containerPackageName: packageName,
         });
 
         return shareLinkUrl.href;

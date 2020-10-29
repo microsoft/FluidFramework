@@ -9,23 +9,25 @@ import {
     ICodeLoader,
     IProvideRuntimeFactory,
     IFluidModule,
-    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, IProvideFluidCodeDetailsComparer } from "@fluidframework/core-interfaces";
 import { IProvideFluidDataStoreFactory, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
 
-// Represents the entry point for a Fluid container.
-export type fluidEntryPoint = Partial<
+export type SupportedExportInterfaces = Partial<
     IProvideRuntimeFactory &
     IProvideFluidDataStoreFactory &
     IProvideFluidDataStoreRegistry &
-    IFluidModule>;
+    IProvideFluidCodeDetailsComparer>;
+
+// Represents the entry point for a Fluid container.
+export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
 
 /**
  * A simple code loader that caches a mapping of package name to a Fluid entry point.
  * On load, it retrieves the entry point matching the package name in the given code details.
  */
 export class LocalCodeLoader implements ICodeLoader {
-    private readonly fluidPackageCache = new Map<string, fluidEntryPoint>();
+    private readonly fluidPackageCache = new Map<string, IFluidModule>();
 
     constructor(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         for (const entry of packageEntries) {
@@ -40,8 +42,29 @@ export class LocalCodeLoader implements ICodeLoader {
             } else {
                 pkgId = `${source.package.name}@${source.package.version}`;
             }
+            let fluidModule = entry[1] as IFluidModule;
+            if (fluidModule?.fluidExport === undefined) {
+                const maybeExport = fluidModule as SupportedExportInterfaces;
 
-            this.fluidPackageCache.set(pkgId, entry[1]);
+                if (maybeExport.IRuntimeFactory !== undefined) {
+                    fluidModule = { fluidExport: maybeExport };
+                } else {
+                    assert(
+                        maybeExport.IFluidDataStoreFactory !== undefined
+                        || maybeExport.IFluidDataStoreRegistry !== undefined);
+                    fluidModule = {
+                        fluidExport: {
+                            ... maybeExport,
+                            IRuntimeFactory:
+                                new ContainerRuntimeFactoryWithDefaultDataStore(
+                                    "default",
+                                    [["default", Promise.resolve(maybeExport)]]),
+                        },
+                    };
+                }
+            }
+
+            this.fluidPackageCache.set(pkgId, fluidModule);
         }
     }
 
@@ -68,17 +91,6 @@ export class LocalCodeLoader implements ICodeLoader {
         if (entryPoint === undefined) {
             throw new Error(`Cannot find package ${pkdId}`);
         }
-
-        const factory = (entryPoint.fluidExport ?? entryPoint) as fluidEntryPoint;
-
-        if (factory.IRuntimeFactory !== undefined) {
-            return { fluidExport: factory.IRuntimeFactory };
-        }
-
-        assert(factory.IFluidDataStoreFactory !== undefined || factory.IFluidDataStoreRegistry !== undefined);
-        const fluidExport: IProvideRuntimeFactory =
-            new ContainerRuntimeFactoryWithDefaultDataStore("default", [["default", Promise.resolve(factory)]]);
-
-        return { fluidExport };
+        return entryPoint;
     }
 }

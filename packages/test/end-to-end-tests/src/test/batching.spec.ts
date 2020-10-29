@@ -11,11 +11,10 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { IEnvelope, FlushMode } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    OpProcessingController,
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { generateTestWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
+import { generateTestWithCompat, ICompatLocalTestObjectProvider, ITestContainerConfig } from "./compatUtils";
 
 const map1Id = "map1Key";
 const map2Id = "map2Key";
@@ -23,9 +22,12 @@ const registry: ChannelFactoryRegistry = [
     [map1Id, SharedMap.getFactory()],
     [map2Id, SharedMap.getFactory()],
 ];
+const testContainerConfig: ITestContainerConfig = {
+    testFluidDataObject: true,
+    registry,
+};
 
 const tests = (args: ICompatLocalTestObjectProvider) => {
-    let opProcessingController: OpProcessingController;
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
     let dataObject1map1: SharedMap;
@@ -33,7 +35,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
     let dataObject2map1: SharedMap;
     let dataObject2map2: SharedMap;
 
-    function setupBacthMessageListener(dataStore: ITestFluidObject, receivedMessages: ISequencedDocumentMessage[]) {
+    function setupBatchMessageListener(dataStore: ITestFluidObject, receivedMessages: ISequencedDocumentMessage[]) {
         dataStore.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
             if (message.type === ContainerMessageType.FluidDataStoreOp) {
                 const envelope = message.contents as IEnvelope;
@@ -61,21 +63,18 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
     beforeEach(async () => {
         // Create a Container for the first client.
-        const container1 = await args.makeTestContainer(registry);
+        const container1 = await args.makeTestContainer(testContainerConfig);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
         dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);
 
         // Load the Container that was created by the first client.
-        const container2 = await args.loadTestContainer(registry);
+        const container2 = await args.loadTestContainer(testContainerConfig);
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
         dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
 
-        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-        opProcessingController.addDeltaManagers(dataObject1.runtime.deltaManager, dataObject2.runtime.deltaManager);
-
-        await opProcessingController.process();
+        await args.opProcessingController.process();
     });
 
     describe("Local ops batch metadata verification", () => {
@@ -83,12 +82,12 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         let dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
 
         beforeEach(() => {
-            setupBacthMessageListener(dataObject1, dataObject1BatchMessages);
-            setupBacthMessageListener(dataObject2, dataObject2BatchMessages);
+            setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
+            setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
         });
 
         describe("Automatic batches via orderSequentially", () => {
-            it("can send and receive mulitple batch ops correctly", async () => {
+            it("can send and receive multiple batch ops correctly", async () => {
                 // Send messages in batch in the first dataStore.
                 dataObject1.context.containerRuntime.orderSequentially(() => {
                     dataObject1map1.set("key1", "value1");
@@ -98,7 +97,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -115,7 +114,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 1, "Incorrect number of messages received on local client");
@@ -142,7 +141,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -167,7 +166,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 0, "Incorrect number of messages received on local client");
@@ -192,7 +191,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -205,7 +204,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         });
 
         describe("Manually flushed batches", () => {
-            it("can send and receive mulitple batch ops that are manually flushed", async () => {
+            it("can send and receive multiple batch ops that are manually flushed", async () => {
                 // Set the FlushMode to Manual.
                 dataObject1.context.containerRuntime.setFlushMode(FlushMode.Manual);
 
@@ -219,7 +218,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 (dataObject1.context.containerRuntime as IContainerRuntime).flush();
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -240,7 +239,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 dataObject2.context.containerRuntime.setFlushMode(FlushMode.Automatic);
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 1, "Incorrect number of messages received on local client");
@@ -285,7 +284,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 dataObject2.context.containerRuntime.setFlushMode(FlushMode.Automatic);
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 6, "Incorrect number of messages received on local client");
@@ -328,7 +327,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -346,7 +345,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -368,7 +367,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 // Check that the document dirty state is cleaned after the ops are processed.
                 // Verify that the document dirty state is cleaned after the ops are processed.
@@ -397,7 +396,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -415,7 +414,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -434,7 +433,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -455,7 +454,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 // Check that the document dirty state is cleaned after the ops are processed.
                 // Verify that the document dirty state is cleaned after the ops are processed.
@@ -486,7 +485,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -496,5 +495,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("Batching", () => {
-    generateTestWithCompat(tests, { testFluidDataObject: true });
+    generateTestWithCompat(tests);
 });

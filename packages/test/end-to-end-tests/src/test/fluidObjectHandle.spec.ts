@@ -4,99 +4,36 @@
  */
 
 import assert from "assert";
-import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObject,
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-    createAndAttachContainer,
-    createLocalLoader,
-    OpProcessingController,
     TestFluidObject,
 } from "@fluidframework/test-utils";
+import {
+    generateTestWithCompat,
+    ICompatLocalTestObjectProvider,
+    TestDataObject,
+} from "./compatUtils";
 
-/**
- * Test data object that extends DataObject so that we can test the FluidOjectHandle created by PureDataObject.
- */
-class TestSharedDataObject extends DataObject {
-    public get _root() {
-        return this.root;
-    }
-
-    public get _runtime() {
-        return this.runtime;
-    }
-
-    public get _context() {
-        return this.context;
-    }
-}
-
-const testSharedDataObjectFactory = new DataObjectFactory(
-    "TestSharedDataObject",
-    TestSharedDataObject,
-    [SharedMap.getFactory()],
-    []);
-
-describe("FluidObjectHandle", () => {
-    const documentId = "componentHandleTest";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
-    const codeDetails: IFluidCodeDetails = {
-        package: "fluidObjectHandleTestPackage",
-        config: {},
-    };
-    const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-        "default",
-        [
-            ["default", Promise.resolve(testSharedDataObjectFactory)],
-            ["TestSharedDataObject", Promise.resolve(testSharedDataObjectFactory)],
-        ],
-    );
-
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: IUrlResolver;
-    let opProcessingController: OpProcessingController;
-    let firstContainerObject1: TestSharedDataObject;
-    let firstContainerObject2: TestSharedDataObject;
-    let secondContainerObject1: TestSharedDataObject;
-
-    async function createContainer(): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
-    }
-
-    async function loadContainer(): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
-        return loader.resolve({ url: documentLoadUrl });
-    }
+const tests = (args: ICompatLocalTestObjectProvider) => {
+    let firstContainerObject1: TestDataObject;
+    let firstContainerObject2: TestDataObject;
+    let secondContainerObject1: TestDataObject;
 
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
-        urlResolver = new LocalResolver();
-
         // Create a Container for the first client.
-        const firstContainer = await createContainer();
-        firstContainerObject1 = await requestFluidObject<TestSharedDataObject>(firstContainer, "default");
-        firstContainerObject2 = await testSharedDataObjectFactory.createInstance(
-            firstContainerObject1._context.containerRuntime);
+        const firstContainer = await args.makeTestContainer();
+        firstContainerObject1 = await requestFluidObject<TestDataObject>(firstContainer, "default");
+        const containerRuntime1 = firstContainerObject1._context.containerRuntime;
+        const dataStore = await containerRuntime1.createDataStore(TestDataObject.type);
+        firstContainerObject2 = await requestFluidObject<TestDataObject>(dataStore, "");
 
         // Load the Container that was created by the first client.
-        const secondContainer = await loadContainer();
-        secondContainerObject1 = await requestFluidObject<TestSharedDataObject>(secondContainer, "default");
+        const secondContainer = await args.loadTestContainer();
+        secondContainerObject1 = await requestFluidObject<TestDataObject>(secondContainer, "default");
 
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
-        opProcessingController.addDeltaManagers(
-            firstContainerObject1._runtime.deltaManager, secondContainerObject1._runtime.deltaManager);
-
-        await opProcessingController.process();
+        await args.opProcessingController.process();
     });
 
     it("should generate the absolute path for ContainerRuntime correctly", () => {
@@ -112,20 +49,26 @@ describe("FluidObjectHandle", () => {
         assert.equal(containerRuntime2.absolutePath, absolutePath, "The remote ContainerRuntime's path is incorrect");
     });
 
-    it("should generate the absolute path for FluidDataObjectRuntime correctly", () => {
+    it("should generate the absolute path for FluidDataObjectRuntime correctly", function() {
         // The expected absolute path for the FluidDataObjectRuntime.
         const absolutePath = `/${firstContainerObject1._runtime.id}`;
 
         // Verify that the local client's FluidDataObjectRuntime has the correct absolute path.
         const fluidHandleContext11 = firstContainerObject1._runtime.rootRoutingContext;
-        assert.equal(fluidHandleContext11.absolutePath, absolutePath, "The FluidDataObjectRuntime's path is incorrect");
+        // back-compat for N-2 <= 0.27, remove when N-2 >= 0.28
+        if (fluidHandleContext11) {
+            assert.equal(fluidHandleContext11.absolutePath, absolutePath,
+                "The FluidDataObjectRuntime's path is incorrect");
 
-        // Verify that the remote client's FluidDataObjectRuntime has the correct absolute path.
-        const fluidHandleContext12 = secondContainerObject1._runtime.rootRoutingContext;
-        assert.equal(
-            fluidHandleContext12.absolutePath,
-            absolutePath,
-            "The remote FluidDataObjectRuntime's path is incorrect");
+            // Verify that the remote client's FluidDataObjectRuntime has the correct absolute path.
+            const fluidHandleContext12 = secondContainerObject1._runtime.rootRoutingContext;
+            assert.equal(
+                fluidHandleContext12.absolutePath,
+                absolutePath,
+                "The remote FluidDataObjectRuntime's path is incorrect");
+        } else {
+            this.skip();
+        }
     });
 
     it("can store and retrieve a DDS from handle within same data store runtime", async () => {
@@ -144,7 +87,7 @@ describe("FluidObjectHandle", () => {
         // Add the handle to the root DDS of `firstContainerObject1`.
         firstContainerObject1._root.set("sharedMap", sharedMapHandle);
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
@@ -174,7 +117,7 @@ describe("FluidObjectHandle", () => {
         // Add the handle to the root DDS of `firstContainerObject1` so that the FluidDataObjectRuntime is different.
         firstContainerObject1._root.set("sharedMap", sharedMap.handle);
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
@@ -201,7 +144,7 @@ describe("FluidObjectHandle", () => {
         // FluidDataObjectRuntime is different.
         firstContainerObject1._root.set("dataObject2", firstContainerObject2.handle);
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         // Get the handle in the remote client.
         const remoteDataObjectHandle =
@@ -218,8 +161,8 @@ describe("FluidObjectHandle", () => {
             firstContainerObject2.handle.absolutePath,
             "The urls do not match");
     });
+};
 
-    afterEach(async () => {
-        await deltaConnectionServer.webSocketServer.close();
-    });
+describe("FluidObjectHandle", () => {
+    generateTestWithCompat(tests);
 });

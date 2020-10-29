@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import merge from "lodash/merge";
 import uuid from "uuid";
@@ -11,15 +11,19 @@ import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
-import {  IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import {
+    IRequest,
+    IResponse,
+    IFluidRouter,
+    IFluidCodeDetails,
+    isFluidCodeDetails,
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IConnectionDetails,
     IContainer,
     IContainerEvents,
     IDeltaManager,
-    IFluidCodeDetails,
-    IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
     ICriticalContainerError,
@@ -33,17 +37,17 @@ import {
     IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
-    CreateNewHeader,
+    DriverHeader,
 } from "@fluidframework/driver-definitions";
 import {
     BlobCacheStorageService,
-    buildSnapshotTree,
     readAndParse,
     OnlineStatus,
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
+    buildSnapshotTree,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -72,6 +76,7 @@ import {
     MessageType,
     TreeEntry,
     ISummaryTree,
+    IPendingProposal,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -86,12 +91,9 @@ import { debug } from "./debug";
 import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
-import { NullChaincode } from "./nullRuntime";
 import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
-
-const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -122,14 +124,6 @@ export enum ConnectionState {
      */
     Connected,
 }
-
-export type DetachedContainerSource = {
-    codeDetails: IFluidCodeDetails,
-    create: true,
-} | {
-    snapshot: ISnapshotTree,
-    create: false,
-};
 
 /**
  * Waits until container connects to delta storage and gets up-to-date
@@ -189,7 +183,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static version = "^0.1.0";
 
     /**
-     * Load container.
+     * Load an existing container.
      */
     public static async load(
         id: string,
@@ -238,20 +232,32 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
     }
 
-    public static async create(
+    /**
+     * Create a new container in a detached state.
+     */
+    public static async createDetached(
         loader: Loader,
-        source: DetachedContainerSource,
+        codeDetails: IFluidCodeDetails,
     ): Promise<Container> {
         const container = new Container(
             loader,
             {});
+        await container.createDetached(codeDetails);
+        return container;
+    }
 
-        if (source.create) {
-            await container.createDetached(source.codeDetails);
-        } else {
-            await container.rehydrateDetachedFromSnapshot(source.snapshot);
-        }
-
+    /**
+     * Create a new container in a detached state that is initialized with a
+     * snapshot from a previous detached container.
+     */
+    public static async rehydrateDetachedFromSnapshot(
+        loader: Loader,
+        snapshot: ISnapshotTree,
+    ): Promise<Container> {
+        const container = new Container(
+            loader,
+            {});
+        await container.rehydrateDetachedFromSnapshot(snapshot);
         return container;
     }
 
@@ -294,7 +300,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         return this._context;
     }
-    private pkg: IFluidCodeDetails | undefined;
     private _protocolHandler: ProtocolOpHandler | undefined;
     private get protocolHandler() {
         if (this._protocolHandler === undefined) {
@@ -393,8 +398,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager.clientDetails;
     }
 
+    /**
+     * @deprecated use codeDetails
+     */
     public get chaincodePackage(): IFluidCodeDetails | undefined {
-        return this.pkg;
+        return this.codeDetails;
+    }
+
+    public get codeDetails(): IFluidCodeDetails | undefined {
+        return this._context?.codeDetails ?? this.getCodeDetailsFromQuorum();
     }
 
     /**
@@ -582,10 +594,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             assert(this.cachedAttachSummary,
                 "Summary should be there either by this attach call or previous attach call!!");
 
-            if (request.headers?.[CreateNewHeader.createNew] === undefined) {
+            if (request.headers?.[DriverHeader.createNew] === undefined) {
                 request.headers = {
                     ...request.headers,
-                    [CreateNewHeader.createNew]: {},
+                    [DriverHeader.createNew]: {},
                 };
             }
 
@@ -657,18 +669,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Stop inbound message processing while we complete the snapshot
         try {
-            if (this.deltaManager !== undefined) {
-                await this.deltaManager.inbound.systemPause();
-            }
-
+            await this.deltaManager.inbound.systemPause();
             await this.snapshotCore(tagMessage, fullTree);
         } catch (ex) {
             this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
         } finally {
-            if (this.deltaManager !== undefined) {
-                this.deltaManager.inbound.systemResume();
-            }
+            this.deltaManager.inbound.systemResume();
         }
     }
 
@@ -773,7 +780,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (legacyResolver.getAbsoluteUrl !== undefined) {
             return this.urlResolver.getAbsoluteUrl(
                 this.resolvedUrl,
-                relativeUrl);
+                relativeUrl,
+                this._context?.codeDetails);
         }
 
         if (legacyResolver.requestUrl !== undefined) {
@@ -790,14 +798,54 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         throw new Error("Url Resolver does not support creating urls");
     }
 
+    public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
+        if (!isFluidCodeDetails(codeDetails)) {
+            throw new Error("Provided codeDetails are not IFluidCodeDetails");
+        }
+
+        if (this.codeLoader.IFluidCodeDetailsComparer) {
+            const comparision = await this.codeLoader.IFluidCodeDetailsComparer.compare(
+                codeDetails,
+                this.getCodeDetailsFromQuorum());
+            if (comparision !== undefined && comparision <= 0) {
+                throw new Error("Proposed code details should be greater than the current");
+            }
+        }
+
+        return this.getQuorum().propose("code", codeDetails)
+            .then(()=>true)
+            .catch(()=>false);
+    }
+
     private async reloadContextCore(): Promise<void> {
+        const codeDetails = this.getCodeDetailsFromQuorum();
+
         await Promise.all([
             this.deltaManager.inbound.systemPause(),
             this.deltaManager.inboundSignal.systemPause()]);
 
-        const previousContextState = await this.context.snapshotRuntimeState();
-        this.context.dispose();
+        if (await this.context.satisfies(codeDetails) === true) {
+            this.deltaManager.inbound.systemResume();
+            this.deltaManager.inboundSignal.systemResume();
+            return;
+        }
 
+        const previousContextState = await this.context.snapshotRuntimeState();
+        this.context.dispose(new Error("ContextDisposedForReload"));
+
+        // don't fire this event if we are transitioning from a null runtime to a real runtime
+        // with detached container we no longer need the null runtime, but for legacy
+        // reasons need to keep it around (old documents without summary before code proposal).
+        // client's shouldn't need to care about this transition, as it is a implementation detail.
+        // if we didn't do this check, the clients would need to do it themselves,
+        // which would futher spread the usage of the hasNullRuntime property
+        // making it harder to deprecate.
+        if (!this.hasNullRuntime()) {
+            this.emit("contextDisposed", codeDetails, this.context?.codeDetails);
+        }
+        if (this.closed) {
+            return;
+        }
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
         if (previousContextState.snapshot !== undefined) {
@@ -818,7 +866,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         if (blobs.size > 0) {
-            this.blobsCacheStorageService = new BlobCacheStorageService(this.storageService, Promise.resolve(blobs));
+            this.blobsCacheStorageService =
+                new BlobCacheStorageService(this.storageService, Promise.resolve(blobs));
         }
         const attributes: IDocumentAttributes = {
             branch: this.id,
@@ -827,7 +876,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             term: this._deltaManager.referenceTerm,
         };
 
-        await this.loadContext(attributes, snapshot, previousContextState);
+        await this.loadContext(codeDetails, attributes, snapshot, previousContextState);
 
         this.deltaManager.inbound.systemResume();
         this.deltaManager.inboundSignal.systemResume();
@@ -1012,7 +1061,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // instantiateRuntime which will want to know existing state.  Wait for these promises to finish.
         [this._protocolHandler] = await Promise.all([protocolHandlerP, loadDetailsP]);
 
-        await this.loadContext(attributes, maybeSnapshotTree);
+        const codeDetails = this.getCodeDetailsFromQuorum();
+        await this.loadContext(codeDetails, attributes, maybeSnapshotTree);
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -1032,6 +1082,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async createDetached(source: IFluidCodeDetails) {
+        if (!isFluidCodeDetails(source)) {
+            this.logger.send({
+                    eventName: "DetachCreateNotIFluidCodeDetails",
+                    category: "warning",
+            });
+        }
         const attributes: IDocumentAttributes = {
             branch: "",
             sequenceNumber: detachedContainerRefSeqNumber,
@@ -1202,17 +1258,24 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
+        protocol.quorum.on("addProposal",(proposal: IPendingProposal) => {
+            if (proposal.key === "code" || proposal.key === "code2") {
+                this.emit("codeDetailsProposed", proposal.value, proposal);
+            }
+        });
+
         protocol.quorum.on(
             "approveProposal",
             (sequenceNumber, key, value) => {
                 debug(`approved ${key}`);
                 if (key === "code" || key === "code2") {
-                    debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
-
-                    if (value === this.pkg) {
-                        return;
+                    debug(`codeProposal ${JSON.stringify(value)}`);
+                    if (!isFluidCodeDetails(value)) {
+                        this.logger.send({
+                                eventName: "CodeProposalNotIFluidCodeDetails",
+                                category: "warning",
+                        });
                     }
-
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.reloadContext();
                 }
@@ -1221,7 +1284,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return protocol;
     }
 
-    private getCodeDetailsFromQuorum(): IFluidCodeDetails | undefined {
+    private getCodeDetailsFromQuorum(): IFluidCodeDetails {
         const quorum = this.protocolHandler.quorum;
 
         let pkg = quorum.get("code");
@@ -1231,23 +1294,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             pkg = quorum.get("code2");
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return pkg;
-    }
-
-    /**
-     * Loads the runtime factory for the provided package
-     */
-    private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
-            async () => this.codeLoader.load(pkg),
-        );
-
-        const factory = fluidModule.fluidExport.IRuntimeFactory;
-        if (factory === undefined) {
-            throw new Error(PackageNotFactoryError);
-        }
-        return factory;
+        return pkg as IFluidCodeDetails;
     }
 
     private get client(): IClient {
@@ -1467,7 +1514,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         const state = this._connectionState === ConnectionState.Connected;
-        this.context.setConnectionState(state, this.clientId);
+        if (!this.context.disposed) {
+            this.context.setConnectionState(state, this.clientId);
+        }
         this.protocolHandler.quorum.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.logger, this, state, this.clientId);
 
@@ -1583,22 +1632,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async loadContext(
+        codeDetails: IFluidCodeDetails,
         attributes: IDocumentAttributes,
         snapshot?: ISnapshotTree,
         previousRuntimeState: IRuntimeState = {},
     ) {
-        this.pkg = this.getCodeDetailsFromQuorum();
-        const chaincode = this.pkg !== undefined ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
-
+        assert(this._context?.disposed !== false, "Existing context not disposed");
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
         const loader = new RelativeLoader(this.loader, () => this.originalRequest);
-
+        const previousCodeDetails = this._context?.codeDetails;
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
             this.codeLoader,
-            chaincode,
+            codeDetails,
             snapshot,
             attributes,
             new DeltaManagerProxy(this._deltaManager),
@@ -1614,44 +1662,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
 
         loader.resolveContainer(this);
-        this.emit("contextChanged", this.pkg);
+        this.emit("contextChanged", codeDetails, previousCodeDetails);
     }
 
     /**
      * Creates a new, unattached container context
      */
     private async createDetachedContext(attributes: IDocumentAttributes, snapshot?: ISnapshotTree) {
-        this.pkg = this.getCodeDetailsFromQuorum();
-        if (this.pkg === undefined) {
+        const codeDetails = this.getCodeDetailsFromQuorum();
+        if (codeDetails === undefined) {
             throw new Error("pkg should be provided in create flow!!");
         }
-        const runtimeFactory = await this.loadRuntimeFactory(this.pkg);
 
-        // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
-        // are set. Global requests will still go to this loader
-        const loader = new RelativeLoader(this.loader, () => this.originalRequest);
-
-        this._context = await ContainerContext.createOrLoad(
-            this,
-            this.scope,
-            this.codeLoader,
-            runtimeFactory,
-            snapshot,
-            attributes,
-            new DeltaManagerProxy(this._deltaManager),
-            new QuorumProxy(this.protocolHandler.quorum),
-            loader,
-            (warning: ContainerWarning) => this.raiseContainerWarning(warning),
-            (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
-            (message) => this.submitSignal(message),
-            async (message) => this.snapshot(message),
-            (error?: ICriticalContainerError) => this.close(error),
-            Container.version,
-            {},
-        );
-
-        loader.resolveContainer(this);
-        this.emit("contextChanged", this.pkg);
+        await this.loadContext(codeDetails, attributes, snapshot);
     }
 
     // Please avoid calling it directly.

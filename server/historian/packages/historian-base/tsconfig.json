@@ -1,0 +1,28 @@
+{
+    "extends": "@fluidframework/build-common/ts-common-config.json",
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "strictNullChecks": false,
+        "target": "es6",
+        "declaration": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noImplicitAny": false,
+        "noUnusedLocals": true,
+        "outDir": "dist",
+        "rootDir": "./src",
+        "sourceMap": true,
+        "inlineSources": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true ,
+        "types": [
+            "mocha"
+        ]
+    },
+    "include": [
+        "src/**/*"
+    ]
+}

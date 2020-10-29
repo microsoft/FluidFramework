@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IRequest } from "@fluidframework/core-interfaces";
-import { CreateNewHeader } from "@fluidframework/driver-definitions";
+import { DriverHeader } from "@fluidframework/driver-definitions";
 
 export function createOdspCreateContainerRequest(
     siteUrl: string,
@@ -16,7 +16,7 @@ export function createOdspCreateContainerRequest(
             driveId,
         )}&path=${encodeURIComponent(filePath)}`,
         headers: {
-            [CreateNewHeader.createNew]: {
+            [DriverHeader.createNew]: {
                 fileName,
             },
         },

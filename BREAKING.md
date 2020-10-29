@@ -1,12 +1,29 @@
 ## 0.28 Breaking Changes
 
+- [FileName should contain extension for ODSP driver create new path](#FileName-should-contain-extension-for-ODSP-driver-create-new-path)
+- [ODSP Driver IPersistedCache changes](#ODSP-Driver-IPersistedCache-Changes)
 - [IFluidPackage Changes](#IFluidPackage-Changes)
 - [DataObject changes](#DataObject-changes)
 - [RequestParser](#RequestParser)
 - [IFluidLodable.url is removed](#IFluidLodable.url-is-removed)
 - [Loader Constructor Changes](#Loader-Constructor-Changes)
+- [Moving DriverHeader and merge with CreateNewHeader](#moving-driverheader-and-merge-with-createnewheader)
+
+### FileName should contain extension for ODSP driver create new path
+Now the ODSP driver expects file extension in the file name while creating a new detached container.
+
+### ODSP Driver IPersistedCache-Changes
+Added api `removeAllEntriesForDocId` which allows removal of all entries for a given document id. Also the schema for entries stored inside odsp `IPersistedCache` has changed.
+It now stores/expect values as `IPersistedCacheValueWithEpoch`. So host needs to clear its cached entries in this version.
+
+### Moving DriverHeader and merge with CreateNewHeader
+Compile time only API breaking change between runtime and driver.  Only impacts driver implementer.
+No back-compat or mix version impact.
+
+DriverHeader is a driver concept, so move from core-interface to driver-definitions. CreateNewHeader is also a kind of driver header, merged it into DriverHeader.
 
 ### IFluidPackage Changes
+- Moving IFluidPackage and IFluidCodeDetails from "@fluidframework/container-definitions" to '@fluidframework/core-interfaces'
 - Remove npm specific IPackage interface
 - Simplify the IFluidPackage by removing browser and npm specific properties
 - Add new interface IFluidBrowserPackage, and isFluidBrowserPackage which defines browser specific properties
@@ -131,9 +148,9 @@ You can use handleFromLegacyUri() for creating handles from container-internal U
 
 ### Package Renames
 As a follow up to the changes in 0.24 we are updating a number of package names
-- `@fluidframework/core-interfaces` is renamed to `@fluidframework/core-interfaces`
-- `@fluidframework/datastore-definitions` is renamed to `@fluidframework/datastore-definitions`
-- `@fluidframework/datastore` is renamed to `@fluidframework/datastore`
+- `@fluidframework/component-core-interfaces` is renamed to `@fluidframework/core-interfaces`
+- `@fluidframework/component-runtime-definitions` is renamed to `@fluidframework/datastore-definitions`
+- `@fluidframework/component-runtime` is renamed to `@fluidframework/datastore`
 - `@fluidframework/webpack-component-loader` is renamed to `@fluidframework/webpack-fluid-loader`
 
 ### IComponent and IComponent Interfaces Removed

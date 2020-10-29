@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
@@ -50,7 +50,6 @@ function createErrorObject(handler: string, error?: any, canRetry = true): Drive
 
 interface IEventListener {
     event: string;
-    connectionListener: boolean; // True if this event listener only needed while connection is in progress
     listener(...args: any[]): void;
 }
 
@@ -121,11 +120,19 @@ export class DocumentDeltaConnection
     // Listen for ops sent before we receive a response to connect_document
     protected readonly queuedMessages: ISequencedDocumentMessage[] = [];
     protected readonly queuedSignals: ISignalMessage[] = [];
+    /**
+     * A flag to indicate whether we have our handler attached.  If it's attached, we're queueing incoming ops
+     * to later be retrieved via initialMessages.
+     */
+    private earlyOpHandlerAttached: boolean = false;
 
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
 
     private _details: IConnected | undefined;
 
+    // Listeners only needed while the connection is in progress
+    private connectionListeners: IEventListener[] = [];
+    // Listeners used throughout the lifetime of the DocumentDeltaConnection
     private trackedListeners: IEventListener[] = [];
 
     protected get hasDetails(): boolean {
@@ -148,11 +155,11 @@ export class DocumentDeltaConnection
     /**
      * @param socket - websocket to be used
      * @param documentId - ID of the document
-     * @param details - details of the websocket connection
      */
     protected constructor(
         protected readonly socket: SocketIOClient.Socket,
-        public documentId: string) {
+        public documentId: string,
+    ) {
         super();
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
@@ -255,8 +262,9 @@ export class DocumentDeltaConnection
      * @returns messages sent during the connection
      */
     public get initialMessages(): ISequencedDocumentMessage[] {
-        // Can't really calling initialMessages() twice - we do not keep ops after first call!
-        assert(this.earlyOpHandler !== undefined, "initialMessages called twice");
+        // If we call this when the earlyOpHandler is not attached, then the queuedMessages may not include the
+        // latest ops.  This could possibly indicate that initialMessages was called twice.
+        assert(this.earlyOpHandlerAttached, "Potentially missed initial messages");
         // We will lose ops and perf will tank as we need to go to storage to become current!
         assert(this.listeners("op").length !== 0, "No op handler is setup!");
 
@@ -278,9 +286,9 @@ export class DocumentDeltaConnection
      * @returns signals sent during the connection
      */
     public get initialSignals(): ISignalMessage[] {
-        this.removeEarlySignalHandler();
-
         assert(this.listeners("signal").length !== 0, "No signal handler is setup!");
+
+        this.removeEarlySignalHandler();
 
         if (this.queuedSignals.length > 0) {
             // Some signals were queued.
@@ -336,7 +344,7 @@ export class DocumentDeltaConnection
             "client closing connection",
             true, // canRetry
         );
-        this.removeTrackedListeners(false);
+        this.removeTrackedListeners();
         this.disconnect(false, reason);
     }
 
@@ -351,17 +359,16 @@ export class DocumentDeltaConnection
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.socket.on("op", this.earlyOpHandler!);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.socket.on("signal", this.earlySignalHandler!);
+        this.socket.on("op", this.earlyOpHandler);
+        this.socket.on("signal", this.earlySignalHandler);
+        this.earlyOpHandlerAttached = true;
 
         let success = false;
 
         this._details = await new Promise<IConnected>((resolve, reject) => {
             const fail = (socketProtocolError: boolean, err: DriverError) => {
                 this.closed = true;
-                this.removeTrackedListeners(false);
+                this.removeTrackedListeners();
                 this.disconnect(socketProtocolError, err);
                 reject(err);
             };
@@ -392,7 +399,7 @@ export class DocumentDeltaConnection
 
                 this.checkpointSequenceNumber = response.checkpointSequenceNumber;
 
-                this.removeTrackedListeners(true);
+                this.removeConnectionListeners();
                 resolve(response);
                 success = true;
             });
@@ -433,54 +440,52 @@ export class DocumentDeltaConnection
         });
     }
 
-    protected earlyOpHandler?= (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+    protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
         debug("Queued early ops", msgs.length);
         this.queuedMessages.push(...msgs);
     };
 
-    protected earlySignalHandler?= (msg: ISignalMessage) => {
+    protected earlySignalHandler = (msg: ISignalMessage) => {
         debug("Queued early signals");
         this.queuedSignals.push(msg);
     };
 
     private removeEarlyOpHandler() {
-        if (this.earlyOpHandler) {
-            this.socket.removeListener("op", this.earlyOpHandler);
-            this.earlyOpHandler = undefined;
-        }
+        this.socket.removeListener("op", this.earlyOpHandler);
+        this.earlyOpHandlerAttached = false;
     }
 
     private removeEarlySignalHandler() {
-        if (this.earlySignalHandler) {
-            this.socket.removeListener("signal", this.earlySignalHandler);
-            this.earlySignalHandler = undefined;
-        }
+        this.socket.removeListener("signal", this.earlySignalHandler);
     }
 
     private addConnectionListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({ event, connectionListener: true, listener });
+        this.connectionListeners.push({ event, listener });
     }
 
     protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({ event, connectionListener: false, listener });
+        this.trackedListeners.push({ event, listener });
     }
 
-    protected removeTrackedListeners(connectionListenerOnly: boolean) {
-        const remaining: IEventListener[] = [];
-        for (const { event, connectionListener, listener } of this.trackedListeners) {
-            if (!connectionListenerOnly || connectionListener) {
-                this.socket.off(event, listener);
-            } else {
-                remaining.push({ event, connectionListener, listener });
-            }
+    private removeTrackedListeners() {
+        for (const { event, listener } of this.trackedListeners) {
+            this.socket.off(event, listener);
         }
-        this.trackedListeners = remaining;
+        // removeTrackedListeners removes all listeners, including connection listeners
+        this.removeConnectionListeners();
 
-        if (!connectionListenerOnly) {
-            this.removeEarlyOpHandler();
-            this.removeEarlySignalHandler();
+        this.removeEarlyOpHandler();
+        this.removeEarlySignalHandler();
+
+        this.trackedListeners = [];
+    }
+
+    private removeConnectionListeners() {
+        for (const { event, listener } of this.connectionListeners) {
+            this.socket.off(event, listener);
         }
+        this.connectionListeners = [];
     }
 }

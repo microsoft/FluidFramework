@@ -35,6 +35,10 @@ footer {
     background: #404049;
 }
 
+.cta svg {
+    fill: inherit;
+}
+
 .cta-subtext {
     font-size: medium;
     margin: 1em 1em 1em 1em;
@@ -89,7 +93,7 @@ footer {
 }
 
 .cta-icon.github {
-    background-image: url("/images/GitHub-Mark.png");
+    background-image: url("/images/GitHub-Mark.svg");
     background-size: 64px 64px;
 }
 
@@ -222,3 +226,13 @@ where bootstrap caption color is too light for white background */
 .table caption {
     color: #767676
 }
+
+
+/* fixing https://github.com/microsoft/FluidFramework/issues/3601
+ Long words such as function names would not break in api docs causing layout overflow
+*/
+
+.table td:nth-child(2) {
+    word-break: break-word
+}
+

@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -27,7 +26,7 @@ import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { SharedCounter } from "@fluidframework/counter";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 const detachedContainerRefSeqNumber = 0;
@@ -110,8 +109,9 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             await createDetachedContainerAndGetRootDataStore();
         const snapshotTree = JSON.parse(container.serialize());
 
-        assert.strictEqual(Object.keys(snapshotTree.trees).length, 3,
-            "3 trees should be there(protocol, default dataStore, scheduler");
+        assert.ok(snapshotTree.trees[".protocol"], "protocol tree not present");
+        assert.ok(snapshotTree.trees.default, "default dataStore tree not present");
+        assert.ok(snapshotTree.trees._scheduler, "scheduler tree not present");
         assert.strictEqual(Object.keys(snapshotTree.trees[".protocol"].blobs).length, 8,
             "4 protocol blobs should be there(8 mappings)");
 
@@ -176,7 +176,15 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
         const snapshotTree = JSON.parse(container.serialize());
 
-        assert.strictEqual(Object.keys(snapshotTree.trees).length, 4, "4 trees should be there");
+        assert.ok(snapshotTree.trees[".protocol"], "protocol tree not present");
+        assert.ok(snapshotTree.trees.default, "default dataStore tree not present");
+        assert.ok(snapshotTree.trees._scheduler, "scheduler tree not present");
+        assert.ok(
+            // eslint-disable-next-line unicorn/no-unsafe-regex
+            Object.keys(snapshotTree.trees).some((key) => /^(?:\w+-){4}\w+$/.test(key)),
+            "peer data store tree not present",
+        );
+
         assert(snapshotTree.trees[dataStore2.runtime.id], "Handle Bounded dataStore should be in summary");
     });
 
@@ -523,8 +531,13 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
         const snapshotTree = JSON.parse(container.serialize());
 
-        assert.strictEqual(Object.keys(snapshotTree.trees).length, 3,
-            "3 trees should be there(protocol, default dataStore, scheduler). Not bounded/Unreferenced " +
-                "data store should not get serialized");
+        assert.ok(snapshotTree.trees[".protocol"], "protocol tree not present");
+        assert.ok(snapshotTree.trees.default, "default dataStore tree not present");
+        assert.ok(snapshotTree.trees._scheduler, "scheduler tree not present");
+        assert.ok(
+            // eslint-disable-next-line unicorn/no-unsafe-regex
+            !Object.keys(snapshotTree.trees).some((key) => /^(?:\w+-){4}\w+$/.test(key)),
+            "unbounded/unreferenced data store tree present",
+        );
     });
 });

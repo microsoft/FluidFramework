@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
+import { InsecureTokenProvider, InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 import {
     extractPackageIdentifierDetails,
     SemVerCdnCodeResolver,
@@ -50,12 +50,15 @@ export async function start(url: string, code: string, createNew: boolean): Prom
         ordererUrl,
         storageUrl,
         tenantId,
-        tenantKey,
-        user,
         bearerSecret);
 
+    const parsedUrl = new URL(url);
+    const documentId = parsedUrl.pathname.substr(1).split("/")[0];
+
+    const tokenProvider = new InsecureTokenProvider(tenantId, documentId, tenantKey, user);
+
     // The RouterliciousDocumentServiceFactory creates the driver that allows connections to the Routerlicious service.
-    const documentServiceFactory = new RouterliciousDocumentServiceFactory();
+    const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
 
     // The code loader provides the ability to load npm packages that have been quorumed on and that represent
     // the code for the document. The base WebCodeLoader supports both code on a CDN as well as those defined

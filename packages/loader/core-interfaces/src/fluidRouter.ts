@@ -19,14 +19,6 @@ export interface IResponse {
     headers?: { [key: string]: any };
 }
 
-export enum DriverHeader {
-    summarizingClient = "fluid-client-summarizer",
-}
-
-export interface IDriverHeader {
-    [DriverHeader.summarizingClient]: boolean;
-}
-
 export const IFluidRouter: keyof IProvideFluidRouter = "IFluidRouter";
 
 /**

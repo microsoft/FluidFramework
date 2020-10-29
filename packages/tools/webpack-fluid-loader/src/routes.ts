@@ -14,7 +14,7 @@ import {
     odspTokensCache,
     OdspTokenConfig,
 } from "@fluidframework/tool-utils";
-import { IFluidPackage } from "@fluidframework/container-definitions";
+import { IFluidPackage } from "@fluidframework/core-interfaces";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils";
 import Axios from "axios";
 import { RouteOptions } from "./loader";
@@ -238,7 +238,10 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         }
 
         const documentId = req.params.id;
-        if (documentId !== "new" && documentId !== "manualAttach") {
+        // For testing orderer, we use the path: http://localhost:8080/testorderer. This will use the local storage
+        // instead of using actual storage service to which the connection is made. This will enable testing
+        // orderer even if the blob storage services are down.
+        if (documentId !== "new" && documentId !== "manualAttach" && documentId !== "testorderer") {
             // The `id` is not for a new document. We assume the user is trying to load an existing document and
             // redirect them to - http://localhost:8080/doc/<id>.
             const reqUrl = req.url.replace(documentId, `doc/${documentId}`);

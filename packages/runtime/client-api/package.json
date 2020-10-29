@@ -48,7 +48,7 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.28.0",
     "@fluidframework/cell": "^0.28.0",
-    "@fluidframework/common-utils": "^0.24.0-0",
+    "@fluidframework/common-utils": "^0.25.0-0",
     "@fluidframework/container-definitions": "^0.28.0",
     "@fluidframework/container-loader": "^0.28.0",
     "@fluidframework/container-runtime": "^0.28.0",

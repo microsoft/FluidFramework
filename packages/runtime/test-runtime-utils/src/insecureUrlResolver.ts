@@ -10,14 +10,9 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-    CreateNewHeader,
+    DriverHeader,
 } from "@fluidframework/driver-definitions";
-import {
-    ITokenClaims,
-    IUser,
-} from "@fluidframework/protocol-definitions";
 import Axios from "axios";
-import jwt from "jsonwebtoken";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
@@ -41,14 +36,12 @@ export class InsecureUrlResolver implements IUrlResolver {
         private readonly ordererUrl: string,
         private readonly storageUrl: string,
         private readonly tenantId: string,
-        private readonly tenantKey: string,
-        private readonly user: IUser,
         private readonly bearer: string,
         private readonly isForNodeTest: boolean = false,
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (request.headers?.[CreateNewHeader.createNew]) {
+        if (request.headers?.[DriverHeader.createNew]) {
             const [, queryString] = request.url.split("?");
 
             const searchParams = new URLSearchParams(queryString);
@@ -108,7 +101,7 @@ export class InsecureUrlResolver implements IUrlResolver {
                 ordererUrl: this.ordererUrl,
                 storageUrl,
             },
-            tokens: { jwt: this.auth(this.tenantId, documentId) },
+            tokens: {},
             type: "fluid",
             url: documentUrl,
         };
@@ -135,21 +128,9 @@ export class InsecureUrlResolver implements IUrlResolver {
         const createNewRequest: IRequest = {
             url: `${this.hostUrl}?fileName=${fileName}`,
             headers: {
-                [CreateNewHeader.createNew]: true,
+                [DriverHeader.createNew]: true,
             },
         };
         return createNewRequest;
-    }
-
-    private auth(tenantId: string, documentId: string) {
-        const claims: ITokenClaims = {
-            documentId,
-            scopes: ["doc:read", "doc:write", "summary:write"],
-            tenantId,
-            user: this.user,
-        };
-
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return jwt.sign(claims, this.tenantKey);
     }
 }

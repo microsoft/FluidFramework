@@ -4,12 +4,13 @@
  */
 
 import * as url from "url";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import * as jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import { NodeCodeLoader } from "./nodeCodeloader";
@@ -83,10 +84,12 @@ export async function start(): Promise<void> {
     // Once installed, the loader returns an entry point to Fluid Container to invoke the code.
     const codeLoader = new NodeCodeLoader(installPath, timeoutMS);
 
+    const tokenProvider = new InsecureTokenProvider(tenantId, documentId, tenantKey, user);
+
     // Construct the loader
     const loader = new Loader({
         urlResolver,
-        documentServiceFactory: new RouterliciousDocumentServiceFactory(),
+        documentServiceFactory: new RouterliciousDocumentServiceFactory(tokenProvider),
         codeLoader,
     });
 

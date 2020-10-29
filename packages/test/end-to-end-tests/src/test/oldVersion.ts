@@ -22,6 +22,7 @@ export {
     TestContainerRuntimeFactory,
     LocalCodeLoader,
     ChannelFactoryRegistry,
+    OpProcessingController,
 } from "old-test-utils";
 export { SharedDirectory, SharedMap } from "old-map";
 export { SharedString, SparseMatrix } from "old-sequence";
@@ -41,8 +42,8 @@ import { Loader } from "old-container-loader";
 import { IDocumentServiceFactory } from "old-driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "old-local-driver";
 import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
+import { fluidEntryPoint, LocalCodeLoader, createAndAttachContainer, OpProcessingController } from "old-test-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { fluidEntryPoint, LocalCodeLoader, createAndAttachContainer } from "old-test-utils";
 
 const defaultDocumentId = "defaultDocumentId";
 const defaultDocumentLoadUrl = `fluid-test://localhost/${defaultDocumentId}`;
@@ -68,9 +69,10 @@ const defaultCodeDetails: IFluidCodeDetails = {
  *   IServiceConfiguration
  *   ILocalDeltaConnectionServer
  */
-export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
+export class LocalTestObjectProvider<TestContainerConfigType> {
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _defaultUrlResolver: LocalResolver | undefined;
+    private _opProcessingController: OpProcessingController | undefined;
 
     /**
      * Create a set of object to
@@ -80,7 +82,7 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
      * @param _deltaConnectionServer - optional deltaConnectionServer to share documents between different provider
      */
     constructor(
-        private readonly createFluidEntryPoint: (registry?: ChannelFactoryRegistryType) => fluidEntryPoint,
+        private readonly createFluidEntryPoint: (testContainerConfig?: TestContainerConfigType) => fluidEntryPoint,
         private readonly serviceConfiguration?: Partial<IServiceConfiguration>,
         private _deltaConnectionServer?: ILocalDeltaConnectionServer | undefined,
     ) {
@@ -112,6 +114,13 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
         return this._defaultUrlResolver;
     }
 
+    get opProcessingController() {
+        if (!this._opProcessingController) {
+            this._opProcessingController = new OpProcessingController(this.deltaConnectionServer as any);
+        }
+        return this._opProcessingController;
+    }
+
     private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         const codeLoader = new LocalCodeLoader(packageEntries);
         return new Loader(
@@ -125,28 +134,43 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
 
     /**
      * Make a test loader
-     * @param registry - optional channel to factory pair used create the TestfluidObject with
+     * @param testContainerConfig - optional configuring the test Container
      */
-    public makeTestLoader(registry?: ChannelFactoryRegistryType) {
-        return this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(registry) ]]);
+    public makeTestLoader(testContainerConfig?: TestContainerConfigType) {
+        return this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]]);
     }
 
     /**
      * Make a container using a default document id and code details
-     * @param registry - optional channel to factory pair used create the TestfluidObject with
+     * @param testContainerConfig - optional configuring the test Container
      */
-    public async makeTestContainer(registry?: ChannelFactoryRegistryType) {
-        const loader = this.makeTestLoader(registry);
-        return createAndAttachContainer(defaultDocumentId, defaultCodeDetails, loader, this.urlResolver);
+    public async makeTestContainer(testContainerConfig?: TestContainerConfigType) {
+        const loader = this.makeTestLoader(testContainerConfig);
+        const container =
+            await createAndAttachContainer(defaultDocumentId, defaultCodeDetails, loader, this.urlResolver);
+
+        // TODO: the old version delta manager on the container doesn't do pause/resume count
+        // We can't use it to do pause/resume, or it will conflict with the call from the runtime's
+        // DeltaManagerProxy. Reach in to get in until > 0.28
+        const deltaManagerProxy = (container as any)._context.deltaManager;
+        this.opProcessingController.addDeltaManagers(deltaManagerProxy);
+        return container;
     }
 
     /**
      * Load a container using a default document id and code details
-     * @param registry - optional channel to factory pair used create the TestfluidObject with
+     * @param testContainerConfig - optional configuring the test Container
      */
-    public async loadTestContainer(registry?: ChannelFactoryRegistryType) {
-        const loader = this.makeTestLoader(registry);
-        return loader.resolve({ url: defaultDocumentLoadUrl });
+    public async loadTestContainer(testContainerConfig?: TestContainerConfigType) {
+        const loader = this.makeTestLoader(testContainerConfig);
+        const container = await loader.resolve({ url: defaultDocumentLoadUrl });
+
+        // TODO: the old version delta manager on the container doesn't do pause/resume count
+        // We can't use it to do pause/resume, or it will conflict with the call from the runtime's
+        // DeltaManagerProxy. Reach in to get in until > 0.28
+        const deltaManagerProxy = (container as any)._context.deltaManager;
+        this.opProcessingController.addDeltaManagers(deltaManagerProxy);
+        return container;
     }
 
     /**
@@ -157,6 +181,7 @@ export class LocalTestObjectProvider<ChannelFactoryRegistryType> {
         await this._deltaConnectionServer?.webSocketServer.close();
         this._deltaConnectionServer = undefined;
         this._documentServiceFactory = undefined;
+        this._opProcessingController = undefined;
     }
 }
 

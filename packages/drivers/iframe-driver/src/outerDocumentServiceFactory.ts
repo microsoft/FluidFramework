@@ -3,8 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import * as Comlink from "comlink";
+import {
+    IEventProvider,
+    IEvent,
+    ITelemetryBaseLogger,
+    ITelemetryLogger,
+} from "@fluidframework/common-definitions";
 import { Deferred } from "@fluidframework/common-utils";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -15,15 +22,14 @@ import {
     IUrlResolver,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
     IClient,
     IDocumentMessage,
     IVersion,
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
-import { IEventProvider, IEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import Comlink from "comlink";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { debug } from "./debug";
 import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 
@@ -33,20 +39,19 @@ const socketIOEvents = [
     "pong",
     "disconnect",
     "signal",
-    "connect_error",
-    "connect_timeout",
-    "connect_document_success",
 ];
 
-export interface IDocumentServiceFactoryProxy {
+export interface ICombinedDriver {
+    clientId: string;
+    stream: IOuterDocumentDeltaConnectionProxy;
+    deltaStorage: IDocumentDeltaStorageService;
+    storage: IDocumentStorageService;
+    logger: ITelemetryBaseLogger;
+}
 
+export interface IDocumentServiceFactoryProxy {
     clients: {
-        [clientId: string]: {
-            clientId: string;
-            stream: IOuterDocumentDeltaConnectionProxy;
-            deltaStorage: IDocumentDeltaStorageService;
-            storage: IDocumentStorageService;
-        };
+        [clientId: string]: ICombinedDriver;
     };
     getFluidUrl(): Promise<IFluidResolvedUrl>;
     createDocumentService(): Promise<string>;
@@ -58,12 +63,7 @@ export interface IDocumentServiceFactoryProxy {
  */
 export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy {
     public clients: {
-        [clientId: string]: {
-            clientId: string;
-            stream: IOuterDocumentDeltaConnectionProxy;
-            deltaStorage: IDocumentDeltaStorageService;
-            storage: IDocumentStorageService;
-        },
+        [clientId: string]: ICombinedDriver,
     };
 
     constructor(
@@ -76,9 +76,10 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         this.createProxy(frame);
     }
 
-    public async createDocumentService(): Promise<string> {
+    public async createDocumentService(logger?: ITelemetryBaseLogger): Promise<string> {
+        const outerProxyLogger = ChildLogger.create(logger, "OuterProxyIFrameDriver");
         const connectedDocumentService: IDocumentService =
-            await this.documentServiceFactory.createDocumentService(this.resolvedUrl);
+            await this.documentServiceFactory.createDocumentService(this.resolvedUrl, outerProxyLogger);
 
         const clientDetails: IClient = this.options?.client ?
             (this.options.client as IClient) :
@@ -104,6 +105,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             stream: this.getOuterDocumentDeltaConnection(deltaStream),
             deltaStorage: this.getDeltaStorage(deltaStorage),
             storage: this.getStorage(storage),
+            logger: this.getLogger(outerProxyLogger),
         };
 
         this.clients[clientId] = combinedDriver;
@@ -140,11 +142,11 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         const iframeContentWindow = frame.contentWindow!;
 
         const proxy: IDocumentServiceFactoryProxy = {
-            connected: async () => this.connected(),
-            clients: this.clients,
+            connected: Comlink.proxy(async () => this.connected()),
+            clients: Comlink.proxy(this.clients),
             // Continue investigation of scope after feature check in
-            createDocumentService: async () => this.createDocumentService(),
-            getFluidUrl: async () => this.getFluidUrl(),
+            createDocumentService: Comlink.proxy(async () => this.createDocumentService()),
+            getFluidUrl: Comlink.proxy(async () => this.getFluidUrl()),
         };
 
         iframeContentWindow.window.postMessage("EndpointExposed", "*");
@@ -172,9 +174,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             readBlob: async (blobId) => {
                 return storage.readBlob(blobId);
             },
-            getRawUrl: (blobId) => {
-                return storage.getRawUrl(blobId);
-            },
             uploadSummaryWithContext: async (summary, context) => {
                 return storage.uploadSummaryWithContext(summary, context);
             },
@@ -185,7 +184,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     }
 
     private getDeltaStorage(deltaStorage: IDocumentDeltaStorageService): IDocumentDeltaStorageService {
-        const get = async (from?: number, to?: number) => deltaStorage.get(from, to);
+        const get = Comlink.proxy(async (from?: number, to?: number) => deltaStorage.get(from, to));
 
         return {
             get,
@@ -193,14 +192,25 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     }
 
     private getOuterDocumentDeltaConnection(deltaStream: IDocumentDeltaConnection) {
-        const pendingOps: { type: string, args: any[] }[] = [];
+        // We'll buffer the events that we observe on the IDocumentDeltaConnection until the handshake completes
+        const bufferedEvents: { type: string, args: any[] }[] = [];
         // we downcast here to remove typing, which make generically
         // forwarding all events easier
         const deltaStreamEventProvider = deltaStream as IEventProvider<IEvent>;
 
-        for (const event of socketIOEvents) {
-            deltaStreamEventProvider.on(event, (...args: any[]) => pendingOps.push({ type: event, args }));
-        }
+        // To unregister the handler later, we need to retain a reference to the handler function.
+        const createBufferEventHandler = (eventName: string) => {
+            return (...args: any[]) => bufferedEvents.push({ type: eventName, args });
+        };
+        const bufferEventHandlers = socketIOEvents.map((eventName: string) => {
+            return {
+                eventName,
+                handler: createBufferEventHandler(eventName),
+            };
+        });
+        bufferEventHandlers.forEach((eventHandler) => {
+            deltaStreamEventProvider.on(eventHandler.eventName, eventHandler.handler);
+        });
 
         const connection = {
             claims: deltaStream.claims,
@@ -231,12 +241,14 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         handshake.promise
             .then((innerProxy: { forwardEvent(event: string, args: any[]): Promise<void> }) => {
-                for (const op of pendingOps) {
+                for (const op of bufferedEvents) {
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     innerProxy.forwardEvent(op.type, op.args);
                 }
 
-                deltaStream.removeAllListeners();
+                bufferEventHandlers.forEach((eventHandler) => {
+                    deltaStreamEventProvider.off(eventHandler.eventName, eventHandler.handler);
+                });
 
                 for (const event of socketIOEvents) {
                     deltaStreamEventProvider.on(
@@ -254,6 +266,12 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         };
 
         return outerMethodsToProxy;
+    }
+
+    private getLogger(logger: ITelemetryLogger): ITelemetryBaseLogger {
+        return {
+            send: (event) => logger.send(event),
+        };
     }
 }
 
