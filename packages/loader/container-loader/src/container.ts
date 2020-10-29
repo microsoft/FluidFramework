@@ -669,18 +669,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Stop inbound message processing while we complete the snapshot
         try {
-            if (this.deltaManager !== undefined) {
-                await this.deltaManager.inbound.systemPause();
-            }
-
+            await this.deltaManager.inbound.systemPause();
             await this.snapshotCore(tagMessage, fullTree);
         } catch (ex) {
             this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
         } finally {
-            if (this.deltaManager !== undefined) {
-                this.deltaManager.inbound.systemResume();
-            }
+            this.deltaManager.inbound.systemResume();
         }
     }
 

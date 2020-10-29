@@ -23,8 +23,6 @@ import {
     IMatrixConsumer,
     IMatrixReader,
     IMatrixWriter,
-    IMatrixIterator,
-    MatrixIteratorSpec,
 } from "@tiny-calc/nano";
 import { MergeTreeDeltaType, IMergeTreeOp, SegmentGroup, ISegment } from "@fluidframework/merge-tree";
 import { debug } from "./debug";
@@ -57,12 +55,23 @@ interface ISetOpMetadata {
     localSeq: number,
 }
 
+/**
+ * A SharedMatrix holds a rectangular 2D array of values.  Supported operations
+ * include setting values and inserting/removing rows and columns.
+ *
+ * Matrix values may be any Fluid serializable type, which is the set of JSON
+ * serializable types extended to include IFluidHandles.
+ *
+ * Fluid's SharedMatrix implementation works equally well for dense and sparse
+ * matrix data and physically stores data in Z-order to leverage CPU caches and
+ * prefetching when reading in either row or column major order.  (See README.md
+ * for more details.)
+ */
 export class SharedMatrix<T extends Serializable = Serializable>
     extends SharedObject
     implements IMatrixProducer<T | undefined | null>,
     IMatrixReader<T | undefined | null>,
-    IMatrixWriter<T | undefined>,
-    IMatrixIterator<T | undefined | null>
+    IMatrixWriter<T | undefined>
 {
     private readonly consumers = new Set<IMatrixConsumer<T | undefined | null>>();
 
@@ -95,8 +104,13 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
     private undo?: MatrixUndoProvider;
 
+    /**
+     * Subscribes the given IUndoConsumer to the matrix.
+     */
     public openUndo(consumer: IUndoConsumer) {
-        assert.equal(this.undo, undefined);
+        assert.equal(this.undo, undefined,
+            "SharedMatrix.openUndo() supports at most a single IUndoConsumer.");
+
         this.undo = new MatrixUndoProvider(consumer, this, this.rows, this.cols);
     }
 
@@ -105,6 +119,9 @@ export class SharedMatrix<T extends Serializable = Serializable>
     private get rowHandles() { return this.rows.handleCache; }
     private get colHandles() { return this.cols.handleCache; }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
+     */
     public static create<T extends Serializable = Serializable>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix<T>;
     }
@@ -151,48 +168,6 @@ export class SharedMatrix<T extends Serializable = Serializable>
     public get matrixProducer(): IMatrixProducer<T | undefined | null> { return this; }
 
     // #endregion IMatrixReader
-
-    // #region IMatrixIterator
-
-    public forEachCell(
-        callback: (value: T | undefined | null, row: number, column: number) => void,
-        spec?: MatrixIteratorSpec,
-    ) {
-        const includeEmpty = spec?.includeEmpty ?? false;
-        const rowStart = spec?.rowStart ?? 0;
-        const colStart = spec?.colStart ?? 0;
-        const rowCount = spec?.rowCount ?? this.rowCount;
-        const colCount = spec?.colCount ?? this.colCount;
-        for (let i = 0; i < rowCount; i++) {
-            const row = rowStart + i;
-            const rowHandle = this.rows.getMaybeHandle(row);
-            if (!isHandleValid(rowHandle)) {
-                if (includeEmpty) {
-                    for (let j = 0; j < colCount; j++) {
-                        callback(undefined, row, colStart + j);
-                    }
-                }
-                continue;
-            }
-            for (let j = 0; j < colCount; j++) {
-                const col = colStart + j;
-                const colHandle = this.cols.getMaybeHandle(col);
-                if (!isHandleValid(colHandle)) {
-                    if (includeEmpty) {
-                        callback(undefined, row, col);
-                    }
-                }
-                else {
-                    const content = this.cells.getCell(rowHandle, colHandle);
-                    if (content !== undefined || includeEmpty) {
-                        callback(content, row, col);
-                    }
-                }
-            }
-        }
-    }
-
-    // #endregion IMatrixIterator
 
     public setCell(row: number, col: number, value: T) {
         assert(0 <= row && row < this.rowCount
@@ -275,28 +250,6 @@ export class SharedMatrix<T extends Serializable = Serializable>
             this.submitLocalMessage(op, metadata);
 
             this.pending.setCell(rowHandle, colHandle, localSeq);
-        }
-    }
-
-    public getAnnotation(row: number, col: number): T | undefined | null {
-        const rowHandle = this.rows.getMaybeHandle(row);
-        if (isHandleValid(rowHandle)) {
-            const colHandle = this.cols.getMaybeHandle(col);
-            if (isHandleValid(colHandle)) {
-                return this.annotations.getCell(rowHandle, colHandle);
-            }
-        }
-        return undefined;
-    }
-
-    public setAnnotation(row: number, col: number, value: T) {
-        assert(0 <= row && row < this.rowCount
-            && 0 <= col && col < this.colCount);
-        const rowHandle = this.rows.getAllocatedHandle(row);
-        const colHandle = this.cols.getAllocatedHandle(col);
-        this.annotations.setCell(rowHandle, colHandle, value);
-        for (const consumer of this.consumers.values()) {
-            consumer.cellsChanged(row, col, 1, 1, this);
         }
     }
 
