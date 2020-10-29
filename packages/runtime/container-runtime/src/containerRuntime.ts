@@ -15,6 +15,7 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
+    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -611,6 +612,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public readonly IFluidSerializer: IFluidSerializer;
 
     public readonly IFluidHandleContext: IFluidHandleContext;
+
+    public get codeDetails(): IFluidCodeDetails {
+        return this.context.codeDetails ?? this.getQuorum().get("code") as IFluidCodeDetails;
+    }
 
     // internal logger for ContainerRuntime
     private readonly _logger: ITelemetryLogger;
