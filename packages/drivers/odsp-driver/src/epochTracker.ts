@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fluidEpochMismatchError, OdspErrorType, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
@@ -145,7 +145,7 @@ export class EpochTracker {
     }
 
     private checkForEpochError(error) {
-        assert(this._hashedDocumentId, "DocId should be set to clear the cached entries!!");
+        assert(!!this._hashedDocumentId, "DocId should be set to clear the cached entries!!");
         if (error.errorType === OdspErrorType.epochVersionMismatch) {
             if (this.logger !== undefined) {
                 this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, error);

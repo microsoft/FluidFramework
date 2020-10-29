@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 
-import { Deferred, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { Deferred, fromBase64ToUtf8, assert } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IValueChanged, MapKernel } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -32,6 +30,7 @@ import {
     ISharedObjectEvents,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+
 import { debug } from "./debug";
 import {
     IntervalCollection,
@@ -512,7 +511,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                             || m.referenceSequenceNumber < collabWindow.minSeq
                             || m.sequenceNumber <= collabWindow.minSeq
                             || m.sequenceNumber <= collabWindow.currentSeq) {
-                            assert.fail(`Invalid catchup operations in snapshot: ${
+                            throw new Error(`Invalid catchup operations in snapshot: ${
                                 JSON.stringify({
                                     op:{
                                         seq: m.sequenceNumber,
@@ -585,7 +584,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     private snapshotMergeTree(): ITree {
         // Are we fully loaded? If not, things will go south
         assert(this.loadedDeferred.isCompleted, "Snapshot called when not fully loaded");
-        assert(this.runtime.deltaManager, "DeltaManager does not exit");
+        assert(!!this.runtime.deltaManager, "DeltaManager does not exit");
         const minSeq = this.runtime.deltaManager.minimumSequenceNumber;
 
         this.processMinSequenceNumberChanged(minSeq);

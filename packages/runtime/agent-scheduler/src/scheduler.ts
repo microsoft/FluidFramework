@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { EventEmitter } from "events";
+import { assert } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidHandle,
@@ -59,7 +59,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             return UnattachedClientId;
         }
         const clientId = this.runtime.clientId;
-        assert(clientId);
+        assert(!!clientId);
         return clientId;
     }
 

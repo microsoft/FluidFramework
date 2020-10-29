@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import {
     IFluidObject,
     IFluidRouter,
@@ -31,6 +30,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { assert } from "@fluidframework/common-utils";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -68,7 +68,7 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
     private _root: ISharedMap | undefined;
 
     public get root() {
-        assert(this._root);
+        assert(!!this._root);
         return this._root;
     }
 
