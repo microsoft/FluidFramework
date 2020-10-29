@@ -292,7 +292,7 @@ export class ContainerContext implements IContainerContext {
      * Determines if the current code details of the context
      * satisfy the incoming constraint code details
      */
-    public async satisfies(constraitCodeDetails: IFluidCodeDetails) {
+    public async satisfies(constraintCodeDetails: IFluidCodeDetails) {
         const comparers: IFluidCodeDetailsComparer[] = [];
 
         const maybeCompareCodeLoader = this.codeLoader;
