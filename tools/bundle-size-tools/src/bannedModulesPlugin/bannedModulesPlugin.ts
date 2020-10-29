@@ -3,34 +3,41 @@
  * Licensed under the MIT License.
  */
 
-// @ts-check
+import type Webpack from 'webpack';
+
 const pluginName = "BannedModulesPlugin";
 
+export interface BannedModule {
+    /** The package name of the module that should not appear in the bundle */
+    moduleName: string;
+
+    /** The reason to ban the module */
+    reason: string;
+}
+
+export interface BannedModulesPluginOptions {
+    bannedModules: BannedModule[];
+}
+
+
 /**
- * Webpack plugin that enforces that certain modules are not included in final bundles
+ * Webpack plugin that enforces that certain modules are not included in any chunk of a webpack bundle
  */
-class BannedModulesPlugin {
-    /**
-     * @typedef {{moduleName: string, reason: string}} BannedModule
-     * @param {{bannedModules: BannedModule[] }} options
-     */
-    constructor(options) {
+export class BannedModulesPlugin {
+
+    constructor(private readonly options: BannedModulesPluginOptions) {
         if (!options || !Array.isArray(options.bannedModules)) {
             throw new Error(`${pluginName} must have a config object with a bannedModules array as a property`);
         }
-        this.options = options;
     }
 
-    apply(compiler) {
-        /**
-         * The banned modules that have been found. Maps the banned module name to an array of module paths that import the banned module
-         * @type {Map<BannedModule, Set<string>>}
-         */
-        const foundBannedModules = new Map();
+    apply(compiler: Webpack.Compiler) {
+        // The banned modules that have been found. Maps the banned module name to an array of module paths that import the banned module
+        const foundBannedModules = new Map<BannedModule, Set<string>>();
 
         compiler.hooks.done.tap(pluginName, (
             stats) => {
-                stats.toJson().modules.forEach((mod)=> {
+                stats.toJson().modules?.forEach((mod)=> {
                     // Infer the name of the package from the path. This current implementation assumes the name has 'node_modules/<packageName>' in it somewhere
                     // modulePath should contain the relative path to the module, where the first part of the path should be the module name (e.g. assert/build/assert.js)
                     const modulePath = mod.name.substring(mod.name.indexOf("node_modules") + "node_modules".length + 1);
@@ -54,7 +61,8 @@ class BannedModulesPlugin {
                         // Generate a string with a friendly issuer map path so that we can easily debug why a banned module is being included
                         issuerPaths.forEach((issuerPathJson) => {
                             errorMessage += `\t\tIssuer: \n`;
-                            JSON.parse(issuerPathJson).forEach((segment) => errorMessage += `\t\t\t${segment.name}\n`);
+                            const pathSegments: { name: string }[] = JSON.parse(issuerPathJson);
+                            pathSegments.forEach((segment) => errorMessage += `\t\t\t${segment.name}\n`);
                         });
                     });
                     throw new Error(errorMessage);
@@ -62,5 +70,3 @@ class BannedModulesPlugin {
             });
     }
 }
-
-module.exports = BannedModulesPlugin;
