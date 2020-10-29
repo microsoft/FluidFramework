@@ -5,8 +5,7 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise, no-param-reassign, no-shadow */
 
-import assert from "assert";
-import { Trace } from "@fluidframework/common-utils";
+import { assert, Trace } from "@fluidframework/common-utils";
 import * as Base from "./base";
 import * as Collections from "./collections";
 import {
@@ -487,15 +486,15 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
     public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean {
         const currentSegmentGroup = this.segmentGroups.dequeue();
-        assert.equal(currentSegmentGroup, segmentGroup);
+        assert(currentSegmentGroup === segmentGroup);
         switch (opArgs.op.type) {
             case ops.MergeTreeDeltaType.ANNOTATE:
-                assert(this.propertyManager);
+                assert(!!this.propertyManager);
                 this.propertyManager.ackPendingProperties(opArgs.op);
                 return true;
 
             case ops.MergeTreeDeltaType.INSERT:
-                assert.equal(this.seq, UnassignedSequenceNumber);
+                assert(this.seq === UnassignedSequenceNumber);
                 this.seq = opArgs.sequencedMessage.sequenceNumber;
                 this.localSeq = undefined;
                 return true;
@@ -503,8 +502,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             case ops.MergeTreeDeltaType.REMOVE:
                 const segBranchId = mergeTree.getBranchId(this.clientId);
                 const removalInfo = mergeTree.getRemovalInfo(mergeTree.localBranchId, segBranchId, this);
-                assert(removalInfo);
-                assert(removalInfo.removedSeq);
+                assert(!!removalInfo);
+                assert(!!removalInfo.removedSeq);
                 this.localRemovedSeq = undefined;
                 if (removalInfo.removedSeq === UnassignedSequenceNumber) {
                     removalInfo.removedSeq = opArgs.sequencedMessage.sequenceNumber;
@@ -518,7 +517,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 return false;
 
             default:
-                assert.fail(`${opArgs.op.type} is in unrecognized operation type`);
+                throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
         }
     }
 
@@ -2047,7 +2046,7 @@ export class MergeTree {
         let startSeg = refSegment;
         if (refOffset !== 0 && refSegLen !== 0) {
             const splitSeg = this.splitLeafSegment(refSegment, refOffset);
-            assert(splitSeg.next);
+            assert(!!splitSeg.next);
             this.insertChildNode(refSegment.parent, splitSeg.next, refSegment.index + 1);
             rebalanceTree(splitSeg.next);
             startSeg = splitSeg.next;
@@ -2675,7 +2674,7 @@ export class MergeTree {
             if (start < length) {
                 const afterSegOff = this.getContainingSegment(start, refSeq, clientId);
                 refSegment = afterSegOff.segment;
-                assert(refSegment);
+                assert(!!refSegment);
                 if (!refSegment.localRefs) {
                     refSegment.localRefs = new LocalReferenceCollection(refSegment);
                 }
@@ -2683,7 +2682,7 @@ export class MergeTree {
             } else if (length > 0) {
                 const beforeSegOff = this.getContainingSegment(length - 1, refSeq, clientId);
                 refSegment = beforeSegOff.segment;
-                assert(refSegment);
+                assert(!!refSegment);
                 if (!refSegment.localRefs) {
                     refSegment.localRefs = new LocalReferenceCollection(refSegment);
                 }

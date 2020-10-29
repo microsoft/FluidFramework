@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
 import {
@@ -20,7 +19,7 @@ import {
     BindState,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred, assert } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
@@ -417,7 +416,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
         this.verifyNotClosed();
-        assert(this.channel);
+        assert(!!this.channel);
         const fluidDataStoreContent: FluidDataStoreMessage = {
             content,
             type,
@@ -460,7 +459,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        assert(this.channel);
+        assert(!!this.channel);
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
     }
 
@@ -537,7 +536,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
-        assert(this.channel, "Channel must exist when resubmitting ops");
+        assert(!!this.channel, "Channel must exist when resubmitting ops");
         const innerContents = contents as FluidDataStoreMessage;
         this.channel.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
@@ -688,11 +687,11 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
     private attachListeners(): void {
         this.once("attaching", () => {
-            assert.strictEqual(this.attachState, AttachState.Detached, "Should move from detached to attaching");
+            assert(this.attachState === AttachState.Detached, "Should move from detached to attaching");
             this._attachState = AttachState.Attaching;
         });
         this.once("attached", () => {
-            assert.strictEqual(this.attachState, AttachState.Attaching, "Should move from attaching to attached");
+            assert(this.attachState === AttachState.Attaching, "Should move from attaching to attached");
             this._attachState = AttachState.Attached;
         });
     }

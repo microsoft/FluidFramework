@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { IErrorBase } from "@fluidframework/container-definitions";
 import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
@@ -293,7 +293,7 @@ export class PendingStateManager {
      */
     private peekNextPendingState(): IPendingState {
         const nextPendingState = this.pendingStates.peekFront();
-        assert(nextPendingState, "No pending state found for the remote message");
+        assert(!!nextPendingState, "No pending state found for the remote message");
         return nextPendingState;
     }
 

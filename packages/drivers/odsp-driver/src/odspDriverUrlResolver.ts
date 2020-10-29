@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import {
     IFluidCodeDetails,
     IRequest,
@@ -83,7 +83,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         }
         const { siteUrl, driveId, itemId, path, containerPackageName } = decodeOdspUrl(request.url);
         const hashedDocumentId = getHashedDocumentId(driveId, itemId);
-        assert.ok(!hashedDocumentId.includes("/"), "Docid should not contain slashes!!");
+        assert(!hashedDocumentId.includes("/"), "Docid should not contain slashes!!");
 
         let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
 

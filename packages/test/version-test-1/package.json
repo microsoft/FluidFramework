@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/version-test-1",
-  "version": "0.28.0",
+  "version": "0.29.0",
   "private": true,
   "description": "Fluid object to test version conversion.",
   "homepage": "https://fluidframework.com",
@@ -36,17 +36,17 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.28.0",
-    "@fluidframework/base-host": "^0.28.0",
+    "@fluidframework/aqueduct": "^0.29.0",
+    "@fluidframework/base-host": "^0.29.0",
     "@fluidframework/common-utils": "^0.25.0-0",
-    "@fluidframework/view-interfaces": "^0.28.0",
+    "@fluidframework/view-interfaces": "^0.29.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.20.0-0",
     "@fluidframework/test-tools": "^0.2.3074",
-    "@fluidframework/webpack-fluid-loader": "^0.28.0",
+    "@fluidframework/webpack-fluid-loader": "^0.29.0",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
     "@types/node": "^10.17.24",

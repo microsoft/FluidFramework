@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { IDisposable } from "@fluidframework/common-definitions";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred, assert } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryAck,
@@ -299,7 +298,7 @@ export class SummaryCollection {
         const seq = op.contents.summaryProposal.summarySequenceNumber;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const summary = this.pendingSummaries.get(seq)!;
-        assert(summary); // We should never see an ack without an op
+        assert(!!summary); // We should never see an ack without an op
         summary.ackNack(op);
         this.pendingSummaries.delete(seq);
 

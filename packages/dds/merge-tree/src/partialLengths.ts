@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import assert from "assert";
+
+ import { assert } from "@fluidframework/common-utils";
 import { Property } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber } from "./constants";
@@ -719,7 +720,7 @@ export class PartialSequenceLengths {
             }
 
             // If we have client view, we should have the flat view
-            assert(this.partialLengths);
+            assert(!!this.partialLengths);
             const flatCount = this.verifyPartialLengths(this.partialLengths, false);
 
             // The number of partial lengths on the client view and flat view should be the same

@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IDocumentDeltaConnection, DriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-doclib-utils";
