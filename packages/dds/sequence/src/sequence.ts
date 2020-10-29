@@ -116,7 +116,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         [MergeTree.IMergeTreeOp, MergeTree.SegmentGroup | MergeTree.SegmentGroup[]][] = [];
     // cache incoming ops that arrive when partial loading
     private deferIncomingOps = true;
-    private readonly loadedDeferredIncommingOps: ISequencedDocumentMessage[] = [];
+    private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
 
     private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
     private readonly intervalMapKernel: MapKernel;
@@ -496,7 +496,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         try {
             // this will load the header, and return a promise
             // that will resolve when the body is loaded
-            // and the catchup ops are avaialible.
+            // and the catchup ops are available.
             const { catchupOpsP } = await this.client.load(
                 this.runtime,
                 new ObjectStoragePartition(storage, contentPath),
@@ -547,7 +547,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         // incoming ops to be applied after loading is complete
         if (this.deferIncomingOps) {
             assert(!local, "Unexpected local op when loading not finished");
-            this.loadedDeferredIncommingOps.push(message);
+            this.loadedDeferredIncomingOps.push(message);
         } else {
             assert(message.type === MessageType.Operation, "Sequence message not operation");
 
@@ -606,11 +606,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             ops.push(...SharedSegmentSequence.createOpsFromDelta(event));
         }
         const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
-        let stashMessage = message;
+        let stashMessage: Readonly<ISequencedDocumentMessage> = message;
         if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
             if (needsTransformation) {
-                stashMessage = cloneDeep(message);
-                stashMessage.referenceSequenceNumber = message.sequenceNumber - 1;
                 this.on("sequenceDelta", transfromOps);
             }
         }
@@ -620,7 +618,13 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
             if (needsTransformation) {
                 this.removeListener("sequenceDelta", transfromOps);
-                stashMessage.contents = ops.length !== 1 ? MergeTree.createGroupOp(...ops) : ops[0];
+                // shallow clone the message as we only overwrite top level properties,
+                // like referenceSequenceNumber and content only
+                stashMessage = {
+                    ... message,
+                    referenceSequenceNumber: stashMessage.sequenceNumber - 1,
+                    contents: ops.length !== 1 ? MergeTree.createGroupOp(...ops) : ops[0],
+                };
             }
 
             this.messagesSinceMSNChange.push(stashMessage);
@@ -657,14 +661,14 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
                 this.loadedDeferred.reject(error);
             } else {
-                // it is important this series remains sychronous
-                // first we stop defering incomming ops, and apply then all
+                // it is important this series remains synchronous
+                // first we stop defering incoming ops, and apply then all
                 this.deferIncomingOps = false;
-                while (this.loadedDeferredIncommingOps.length > 0) {
-                    this.processCore(this.loadedDeferredIncommingOps.shift(), false, undefined);
+                while (this.loadedDeferredIncomingOps.length > 0) {
+                    this.processCore(this.loadedDeferredIncomingOps.shift(), false, undefined);
                 }
                 // then resolve the loaded promise
-                // and resbumit all the outstanding ops, as the snapshot
+                // and resubmit all the outstanding ops, as the snapshot
                 // is fully loaded, and all outstanding ops are applied
                 this.loadedDeferred.resolve();
 
