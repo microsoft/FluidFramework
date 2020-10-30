@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/service-load-test",
-  "version": "0.28.1",
+  "version": "0.28.2",
   "private": true,
   "description": "End to end tests",
   "homepage": "https://fluidframework.com",
@@ -51,19 +51,19 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.28.1",
-    "@fluidframework/container-definitions": "^0.28.1",
-    "@fluidframework/container-loader": "^0.28.1",
-    "@fluidframework/core-interfaces": "^0.28.1",
-    "@fluidframework/odsp-driver": "^0.28.1",
-    "@fluidframework/test-utils": "^0.28.1",
-    "@fluidframework/tool-utils": "^0.28.1",
+    "@fluidframework/aqueduct": "^0.28.2",
+    "@fluidframework/container-definitions": "^0.28.2",
+    "@fluidframework/container-loader": "^0.28.2",
+    "@fluidframework/core-interfaces": "^0.28.2",
+    "@fluidframework/odsp-driver": "^0.28.2",
+    "@fluidframework/test-utils": "^0.28.2",
+    "@fluidframework/tool-utils": "^0.28.2",
     "commander": "^5.1.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.20.0",
-    "@fluidframework/mocha-test-setup": "^0.28.1",
+    "@fluidframework/mocha-test-setup": "^0.28.2",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~4.2.0",
