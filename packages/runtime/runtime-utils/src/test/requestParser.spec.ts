@@ -11,6 +11,7 @@ describe("RequestParser", () => {
         it("Parse Data Store Id", () => {
             const url = "dataStoreId";
             const pathParts = RequestParser.getPathParts(url);
+            console.log(RequestParser.getPathParts("hi/"));
             assert.strictEqual(pathParts.length, 1);
             assert.strictEqual(pathParts[0], "dataStoreId");
         });
@@ -62,9 +63,42 @@ describe("RequestParser", () => {
             assert.throws(() => requestParser.createSubRequest(4));
             assert.throws(() => requestParser.createSubRequest(-1));
         });
+    });
+    describe(".createSubRequest with query params", () => {
+        let requestParser2: RequestParser;
+        beforeEach(() => {
+            requestParser2 = RequestParser.create({ url: "/dataStoreId/some/route/?queryparams" });
+        });
+        it("Create request from part 0", () => {
+            assert.strictEqual(requestParser2.createSubRequest(0)?.url, "/dataStoreId/some/route/?queryparams");
+        });
         it("Create request from part 1", () => {
-            const testRequestParser = RequestParser.create({ url: "/id/id2" });
-            assert.strictEqual(testRequestParser.createSubRequest(1)?.url, "/id2");
+            assert.strictEqual(requestParser2.createSubRequest(1)?.url, "/some/route/?queryparams");
+        });
+        it("Create request from part 2", () => {
+            assert.strictEqual(requestParser2.createSubRequest(2)?.url, "/route/?queryparams");
+        });
+        it("Create request from parts length", () => {
+            assert.strictEqual(requestParser2.createSubRequest(3)?.url, "/?queryparams");
+        });
+        it("Create request from invalid part ", () => {
+            assert.throws(() => requestParser2.createSubRequest(4));
+            assert.throws(() => requestParser2.createSubRequest(-1));
+        });
+    });
+    describe(".createSubRequest with special urls", () => {
+        beforeEach(() => {
+        });
+        it("Create request for `/`", () => {
+            const testRequestParser = RequestParser.create({ url: "/" });
+            assert.strictEqual(testRequestParser.createSubRequest(1)?.url, "/");
+            assert.throws(() => testRequestParser.createSubRequest(2));
+            assert.throws(() => testRequestParser.createSubRequest(-1));
+        });
+        it("Create request from empty string", () => {
+            const testRequestParser = RequestParser.create({ url: "" });
+            assert.throws(() => testRequestParser.createSubRequest(2));
+            assert.throws(() => testRequestParser.createSubRequest(-1));
         });
     });
 });

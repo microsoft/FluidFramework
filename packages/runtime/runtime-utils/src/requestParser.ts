@@ -13,7 +13,7 @@ export class RequestParser implements IRequest {
      * @param url - the url to get path parts of
      */
     public static getPathParts(url: string): readonly string[] {
-        if (url.split("/").length === 2) {
+        if (url.split("/")[0] === "" && url.split("/").length === 2) {
             return [url];
         }
         const queryStartIndex = url.indexOf("?");
@@ -44,7 +44,7 @@ export class RequestParser implements IRequest {
     protected constructor(private readonly request: Readonly<IRequest>) {
         const queryStartIndex = this.request.url.indexOf("?");
         if (queryStartIndex >= 0) {
-            this.query = this.request.url.substring(queryStartIndex);
+            this.query = `/` + `${this.request.url.substring(queryStartIndex)}`;
         } else {
             this.query = "";
         }
@@ -82,12 +82,22 @@ export class RequestParser implements IRequest {
      * @param startingPathIndex - The index of the first path part of the sub request
      */
     public createSubRequest(startingPathIndex: number): IRequest {
-        if (startingPathIndex < 0 || startingPathIndex > this.pathParts.length) {
+        const pathLen = this.pathParts.length;
+        // if (this.url.includes("?")) {
+        //     len++;
+        // }
+        if (startingPathIndex < 0 || startingPathIndex > pathLen) {
             throw new Error("incorrect sub-request");
         }
-        const path = this.pathParts.slice(startingPathIndex).join("/");
+        if (startingPathIndex === pathLen && this.url.includes("?")) {
+            return {
+                url:`${this.query}`,
+                headers: this.headers,
+            };
+        }
+        const path = `/` + `${this.pathParts.slice(startingPathIndex).join("/")}`;
         return {
-            url: `/${path}` + `${this.query}`,
+            url: `${path}` + `${this.query}`,
             headers: this.headers,
         };
     }
