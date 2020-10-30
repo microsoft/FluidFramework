@@ -113,6 +113,7 @@ export class Context {
                 pendingDepCheck.push(this.templatePackage);
             }
             for (const { name: dep, version, dev } of pkg.combinedDependencies) {
+                // Find the package in the repo
                 const depBuildPackage = this.fullPackageMap.get(dep);
                 if (depBuildPackage) {
                     if (ReferenceVersionBag.checkPrivate(pkg, depBuildPackage, dev)) {
@@ -132,6 +133,7 @@ export class Context {
                     }
                     let depVersion = depBuildPackage.version;
                     const reference = `${pkg.name}@local`;
+                    // Check if the version in the repo is compatible with the version described in the dependency.
                     if (semver.satisfies(`${depVersion}-0`, version)) {
                         if (!depVersions.get(depBuildPackage)) {
                             logVerbose(`${depBuildPackage.nameColored}: Add from ${pkg.nameColored} ${version}`);
