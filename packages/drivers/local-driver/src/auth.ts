@@ -40,8 +40,10 @@ export function generateToken(
         ver,
     };
 
+    // The type definition of jsrsasign library is wrong. Remove the casting once fix is available.
+    const utf8Key: string = ({ utf8: key } as unknown) as string;
     // eslint-disable-next-line no-null/no-null
-    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, key);
+    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
 }
 
 export function generateUser(): IUser {
