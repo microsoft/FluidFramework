@@ -255,5 +255,5 @@ export async function getGraphItemLite(
         };
         graphItemLiteCache.add(cacheKey, valueGenerator);
     }
-    return graphItemLiteCache[cacheKey] as GraphItemLite;
+    return graphItemLiteCache.get(cacheKey);
 }
