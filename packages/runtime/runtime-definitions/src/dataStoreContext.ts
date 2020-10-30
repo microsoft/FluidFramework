@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -234,11 +233,15 @@ export interface ISummaryTracker {
 
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => ISummarizerNode;
 
+export interface IFluidDataStoreContextEvents extends IEvent {
+    (event: "leader" | "notleader" | "attaching" | "attached", listener: () => void);
+}
+
 /**
  * Represents the context for the data store. It is used by the data store runtime to
  * get information and call functionality to the container.
  */
-export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFluidDataStoreRegistry> {
+export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry> {
     readonly documentId: string;
     readonly id: string;
     /**
@@ -292,8 +295,6 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
     readonly scope: IFluidObject;
     readonly summaryTracker: ISummaryTracker;
 
-    on(event: "leader" | "notleader" | "attaching" | "attached", listener: () => void): this;
-
     /**
      * Returns the current quorum.
      */
@@ -340,7 +341,7 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
     setChannelDirty(address: string): void;
 
     /**
-     * Get an absolute url to the containe rbased on the provided relativeUrl.
+     * Get an absolute url to the container based on the provided relativeUrl.
      * Returns undefined if the container or data store isn't attached to storage.
      * @param relativeUrl - A relative request within the container
      */

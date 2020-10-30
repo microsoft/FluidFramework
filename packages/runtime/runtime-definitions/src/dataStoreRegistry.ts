@@ -22,7 +22,7 @@ export type FluidDataStoreRegistryEntry =
  */
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
 /**
- * An iterable itentifier/registry entry pair list
+ * An iterable identifier/registry entry pair list
  */
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
 
