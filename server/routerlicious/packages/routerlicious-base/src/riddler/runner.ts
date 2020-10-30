@@ -23,7 +23,7 @@ export class RiddlerRunner implements utils.IRunner {
         private readonly defaultHistorianUrl: string,
         private readonly defaultInternalHistorianUrl: string,
         private readonly secretManager: ISecretManager,
-        private readonly secretLength: number,
+        private readonly maxSecretLength: number,
     ) {
     }
 
@@ -40,7 +40,7 @@ export class RiddlerRunner implements utils.IRunner {
             this.defaultHistorianUrl,
             this.defaultInternalHistorianUrl,
             this.secretManager,
-            this.secretLength);
+            this.maxSecretLength);
         riddler.set("port", this.port);
 
         this.server = http.createServer(riddler);

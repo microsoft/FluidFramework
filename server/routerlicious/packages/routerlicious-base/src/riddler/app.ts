@@ -31,7 +31,7 @@ export function create(
     defaultHistorianUrl: string,
     defaultInternalHistorianUrl: string,
     secretManager: ISecretManager,
-    secretLength: number,
+    maxSecretLength: number,
 ) {
     // Express app configuration
     const app: express.Express = express();
@@ -70,7 +70,7 @@ export function create(
             defaultHistorianUrl,
             defaultInternalHistorianUrl,
             secretManager,
-            secretLength));
+            maxSecretLength));
 
     // Catch 404 and forward to error handler
     app.use((req, res, next) => {

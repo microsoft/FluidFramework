@@ -48,7 +48,7 @@ export class TenantManager {
         private readonly defaultHistorianUrl: string,
         private readonly defaultInternalHistorianUrl: string,
         private readonly secretManager: ISecretManager,
-        private readonly secretLength: number,
+        private readonly maxSecretLength: number,
     ) {
     }
 
@@ -120,7 +120,7 @@ export class TenantManager {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
-        const tenantKey = this.generateTenantKey().substr(0, this.secretLength);
+        const tenantKey = this.generateTenantKey().substr(0, this.maxSecretLength);
         const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
         if (encryptedTenantKey == null) {
             winston.error("Tenant key encryption failed.");

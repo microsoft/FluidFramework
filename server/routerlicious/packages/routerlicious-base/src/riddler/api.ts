@@ -22,7 +22,7 @@ export function create(
     defaultHistorianUrl: string,
     defaultInternalHistorianUrl: string,
     secretManager: ISecretManager,
-    secretLength: number,
+    maxSecretLength: number,
 ): Router {
     const router: Router = Router();
     const manager = new TenantManager(
@@ -32,7 +32,7 @@ export function create(
         defaultHistorianUrl,
         defaultInternalHistorianUrl,
         secretManager,
-        secretLength);
+        maxSecretLength);
 
     function returnResponse<T>(resultP: Promise<T>, response: Response) {
         resultP.then(
