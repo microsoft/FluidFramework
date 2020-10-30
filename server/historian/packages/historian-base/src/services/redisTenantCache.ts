@@ -17,7 +17,7 @@ export class RedisTenantCache {
 
     constructor(
         client: RedisClient,
-        private readonly expireAfterSeconds = 60 * 60 * 24,
+        private readonly expireInSeconds = 60 * 60 * 24,
         private readonly prefix = "tenant") {
         this.setAsync = util.promisify(client.set.bind(client));
         this.getAsync = util.promisify(client.get.bind(client));
@@ -33,7 +33,7 @@ export class RedisTenantCache {
     public async set(
         key: string,
         value: string = "",
-        expiresInSeconds: number = this.expireAfterSeconds): Promise<void> {
+        expiresInSeconds: number = this.expireInSeconds): Promise<void> {
         const result = await this.setAsync(this.getKey(key), value);
         return result !== "OK" ?
             Promise.reject(result) :

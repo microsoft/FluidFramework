@@ -25,7 +25,7 @@ export function normalizePort(val) {
 export function getTokenLifetimeInSec(token: string): number {
     const claims = jwt.decode(token) as ITokenClaims;
     if (claims && claims.exp) {
-        return ((claims.exp - Math.round((new Date()).getTime())) * 1000);
+        return (claims.exp - Math.round((new Date()).getTime()) / 1000);
     }
     return undefined;
 }
