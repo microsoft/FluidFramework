@@ -203,30 +203,30 @@ Send PRs to [this repo](https://github.com/mattetti/custom-api-documenter).
 |--------|-------------|
 | `build` | Build the site; outputs to `public/` by default. |
 | `build:api-documenter` | Convert API JSON into Markdown. |
-| `build:api-documenter:default` | -- |
-| `build:api-documenter:win32` | -- |
-| `build:diagrams` | Generate the diagram images using ditaa; requires Java to run. |
+| `build:api-documenter:default` | --- |
+| `build:api-documenter:win32` | --- |
+| `build:diagrams` | Generate the diagram images using ditaa. |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `clean` | Remove all generated files. |
-| `ditaa` | `run-script-os` |
-| `ditaa:default` | `"./bin/ditaa"` |
-| `ditaa:win32` | `call "bin/ditaa.exe"` |
+| `ditaa` | Run the local copy of ditaa. |
+| `ditaa:default` | --- |
+| `ditaa:win32` | --- |
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
 | `download:playground` | Download and extract the Playground files locally. |
 | `hugo` | Run the local copy of Hugo. |
 | `hugo:default` | --- |
 | `hugo:win32` | --- |
-| `install:ditaa` | Install ditaa to generate diagrams; requires Java to run. |
-| `install:ditaa:default` | `[ ! -f bin/ditaa ] && npm run install:ditaa:force ; exit 0` |
-| `install:ditaa:force` | `binstall install -n ditaa -d bin` |
-| `install:ditaa:win32` | `if not exist bin/ditaa.exe npm run install:ditaa:force` |
-| `install:hugo` | Install the version of Hugo used by the documentation. |
-| `install:hugo:default` | `[ ! -f bin/hugo ] && npm run install:hugo:force ; exit 0` |
-| `install:hugo:force` | `binstall install -n hugo -d bin` |
-| `install:hugo:win32` | `if not exist bin/hugo.exe npm run install:hugo:force` |
-| `postinstall` | -- |
+| `install:ditaa` | Install ditaa to generate diagrams unless it already exists. |
+| `install:ditaa:default` | --- |
+| `install:ditaa:force` | Install ditaa to generate diagrams. |
+| `install:ditaa:win32` | --- |
+| `install:hugo` | Install Hugo unless it already exists. |
+| `install:hugo:default` | --- |
+| `install:hugo:force` | Install the version of Hugo used by the documentation. |
+| `install:hugo:win32` | --- |
+| `postinstall` | --- |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
-| `start:default` | -- |
-| `start:win32` | -- |
+| `start:default` | --- |
+| `start:win32` | --- |
 <!-- AUTO-GENERATED-CONTENT:END -->
