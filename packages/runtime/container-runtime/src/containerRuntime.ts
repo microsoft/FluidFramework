@@ -571,7 +571,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         content: any,
         localOpMetadata: unknown,
-        opMetaData: Record<string, unknown> | undefined,
+        opMetadata: Record<string, unknown> | undefined,
     ) => void {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.reSubmit;
@@ -2003,7 +2003,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         content: any,
         localOpMetadata: unknown,
-        opMetaData: Record<string, unknown> | undefined,
+        opMetadata: Record<string, unknown> | undefined,
     ) {
         switch (type) {
             case ContainerMessageType.FluidDataStoreOp:
@@ -2017,7 +2017,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
             case ContainerMessageType.BlobAttach:
-                this.submit(type, content, localOpMetadata, opMetaData);
+                this.submit(type, content, localOpMetadata, opMetadata);
                 break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
