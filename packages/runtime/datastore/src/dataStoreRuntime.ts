@@ -288,11 +288,21 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
         // Check for a data type reference first
         if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const value = await this.contextsDeferred.get(id)!.promise;
-            const channel = await value.getChannel();
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const value = await this.contextsDeferred.get(id)!.promise;
+                const channel = await value.getChannel();
 
-            return { mimeType: "fluid/object", status: 200, value: channel };
+                return { mimeType: "fluid/object", status: 200, value: channel };
+            } catch (error) {
+                this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
+
+                return {
+                    status: 404,
+                    mimeType: "text/plain",
+                    value: `Failed to get Channel with id:[${id}] error:{${error}}`,
+                };
+            }
         }
 
         // Otherwise defer to an attached request handler
