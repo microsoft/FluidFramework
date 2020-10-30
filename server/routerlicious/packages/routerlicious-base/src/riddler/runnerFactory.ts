@@ -22,6 +22,7 @@ export class RiddlerResources implements utils.IResources {
         public readonly defaultHistorianUrl: string,
         public readonly defaultInternalHistorianUrl: string,
         public readonly secretManager: ISecretManager,
+        public readonly secretLength: number,
     ) {
     }
 
@@ -38,6 +39,13 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
         const mongoManager = new MongoManager(mongoFactory);
         const tenantsCollectionName = config.get("mongo:collectionNames:tenants");
         const secretManager = new services.SecretManager();
+
+        let secretLength: number = config.get("auth:secretLength");
+        if (!secretLength) {
+            secretLength = 31;
+        } else {
+            secretLength = Math.min(secretLength, 31);
+        }
 
         // Load configs for default tenants
         const db = await mongoManager.getDatabase();
@@ -74,7 +82,8 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
             serverUrl,
             defaultHistorianUrl,
             defaultInternalHistorianUrl,
-            secretManager);
+            secretManager,
+            secretLength);
     }
 }
 
@@ -88,6 +97,7 @@ export class RiddlerRunnerFactory implements utils.IRunnerFactory<RiddlerResourc
             resources.baseOrdererUrl,
             resources.defaultHistorianUrl,
             resources.defaultInternalHistorianUrl,
-            resources.secretManager);
+            resources.secretManager,
+            resources.secretLength);
     }
 }

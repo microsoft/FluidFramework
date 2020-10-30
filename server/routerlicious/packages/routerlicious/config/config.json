@@ -79,6 +79,7 @@
     "auth": {
         "endpoint": "http://riddler:5000",
         "maxTokenLifetimeSec": 3600,
+        "secretLength": 31,
         "enableTokenExpiration": false
     },
     "routemanager": {
