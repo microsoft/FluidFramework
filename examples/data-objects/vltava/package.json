@@ -47,7 +47,7 @@
     "@fluidframework/datastore-definitions": "^0.28.0",
     "@fluidframework/last-edited-experimental": "^0.28.0",
     "@fluidframework/map": "^0.28.0",
-    "@fluidframework/protocol-definitions": "^0.1014.0-0",
+    "@fluidframework/protocol-definitions": "^0.1014.0",
     "@fluidframework/request-handler": "^0.28.0",
     "@fluidframework/runtime-definitions": "^0.28.0",
     "@fluidframework/runtime-utils": "^0.28.0",
