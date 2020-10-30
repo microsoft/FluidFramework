@@ -163,8 +163,10 @@ async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E ex
  * another base data store factory.
  *
  * Generics:
+ * TObj - DataObject (concrete type)
  * O - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced data store may take during creation
+ * E - represents events that will be available in the EventForwarder
  */
 export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E extends IEvent = IEvent>
     implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>

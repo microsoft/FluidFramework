@@ -100,7 +100,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
         this.providers = props.providers;
         this.initProps = props.initProps;
 
-        assert(PureDataObject.getDataObject(this.runtime) === undefined);
+        assert((this.runtime as any)._dataObject === undefined);
         (this.runtime as any)._dataObject = this;
 
         // Create a FluidObjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
