@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { IErrorBase } from "@fluidframework/container-definitions";
 import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
@@ -36,6 +36,7 @@ interface IPendingMessage {
     clientSequenceNumber: number;
     content: any;
     localOpMetadata: unknown;
+    opMetadata: Record<string, unknown> | undefined;
 }
 
 /**
@@ -107,13 +108,16 @@ export class PendingStateManager {
         type: ContainerMessageType,
         clientSequenceNumber: number,
         content: any,
-        localOpMetadata: unknown) {
+        localOpMetadata: unknown,
+        opMetadata: Record<string, unknown> | undefined,
+    ) {
         const pendingMessage: IPendingMessage = {
             type: "message",
             messageType: type,
             clientSequenceNumber,
             content,
             localOpMetadata,
+            opMetadata,
         };
 
         this.pendingStates.push(pendingMessage);
@@ -290,7 +294,7 @@ export class PendingStateManager {
      */
     private peekNextPendingState(): IPendingState {
         const nextPendingState = this.pendingStates.peekFront();
-        assert(nextPendingState, "No pending state found for the remote message");
+        assert(!!nextPendingState, "No pending state found for the remote message");
         return nextPendingState;
     }
 
@@ -328,7 +332,8 @@ export class PendingStateManager {
                         this.containerRuntime.reSubmitFn(
                             pendingState.messageType,
                             pendingState.content,
-                            pendingState.localOpMetadata);
+                            pendingState.localOpMetadata,
+                            pendingState.opMetadata);
                     }
                     break;
                 case "flushMode":

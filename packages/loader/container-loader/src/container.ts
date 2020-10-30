@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import merge from "lodash/merge";
 import uuid from "uuid";
 import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import {
     IRequest,
     IResponse,
@@ -41,13 +40,13 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
     BlobCacheStorageService,
-    buildSnapshotTree,
     readAndParse,
     OnlineStatus,
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
+    buildSnapshotTree,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -76,6 +75,7 @@ import {
     MessageType,
     TreeEntry,
     ISummaryTree,
+    IPendingProposal,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -397,8 +397,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager.clientDetails;
     }
 
+    /**
+     * @deprecated use codeDetails
+     */
     public get chaincodePackage(): IFluidCodeDetails | undefined {
-        return this._context?.codeDetails;
+        return this.codeDetails;
+    }
+
+    public get codeDetails(): IFluidCodeDetails | undefined {
+        return this._context?.codeDetails ?? this.getCodeDetailsFromQuorum();
     }
 
     /**
@@ -501,7 +508,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
-        assert.strictEqual(this.connectionState, ConnectionState.Disconnected, "disconnect event was not raised!");
+        assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
         if (error !== undefined) {
             // Log current sequence number - useful if we have access to a file to understand better
@@ -530,7 +537,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public serialize(): string {
-        assert.strictEqual(this.attachState, AttachState.Detached, "Should only be called in detached container");
+        assert(this.attachState === AttachState.Detached, "Should only be called in detached container");
 
         const appSummary: ISummaryTree = this.context.createSummary();
         const protocolSummary = this.protocolHandler.captureSummary();
@@ -556,7 +563,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.attachInProgress = true;
         try {
-            assert.strictEqual(this.deltaManager.inbound.length, 0, "Inbound queue should be empty when attaching");
+            assert(this.deltaManager.inbound.length === 0, "Inbound queue should be empty when attaching");
             // Only take a summary if the container is in detached state, otherwise we could have local changes.
             // In failed attach call, we would already have a summary cached.
             if (this._attachState === AttachState.Detached) {
@@ -583,7 +590,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.emit("attaching");
                 }
             }
-            assert(this.cachedAttachSummary,
+            assert(!!this.cachedAttachSummary,
                 "Summary should be there either by this attach call or previous attach call!!");
 
             if (request.headers?.[DriverHeader.createNew] === undefined) {
@@ -661,18 +668,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Stop inbound message processing while we complete the snapshot
         try {
-            if (this.deltaManager !== undefined) {
-                await this.deltaManager.inbound.systemPause();
-            }
-
+            await this.deltaManager.inbound.systemPause();
             await this.snapshotCore(tagMessage, fullTree);
         } catch (ex) {
             this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
         } finally {
-            if (this.deltaManager !== undefined) {
-                this.deltaManager.inbound.systemResume();
-            }
+            this.deltaManager.inbound.systemResume();
         }
     }
 
@@ -795,15 +797,40 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         throw new Error("Url Resolver does not support creating urls");
     }
 
+    public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
+        if (!isFluidCodeDetails(codeDetails)) {
+            throw new Error("Provided codeDetails are not IFluidCodeDetails");
+        }
+
+        if (this.codeLoader.IFluidCodeDetailsComparer) {
+            const comparision = await this.codeLoader.IFluidCodeDetailsComparer.compare(
+                codeDetails,
+                this.getCodeDetailsFromQuorum());
+            if (comparision !== undefined && comparision <= 0) {
+                throw new Error("Proposed code details should be greater than the current");
+            }
+        }
+
+        return this.getQuorum().propose("code", codeDetails)
+            .then(()=>true)
+            .catch(()=>false);
+    }
+
     private async reloadContextCore(): Promise<void> {
+        const codeDetails = this.getCodeDetailsFromQuorum();
+
         await Promise.all([
             this.deltaManager.inbound.systemPause(),
             this.deltaManager.inboundSignal.systemPause()]);
 
-        const previousContextState = await this.context.snapshotRuntimeState();
-        this.context.dispose();
+        if (await this.context.satisfies(codeDetails) === true) {
+            this.deltaManager.inbound.systemResume();
+            this.deltaManager.inboundSignal.systemResume();
+            return;
+        }
 
-        const codeDetails = this.getCodeDetailsFromQuorum();
+        const previousContextState = await this.context.snapshotRuntimeState();
+        this.context.dispose(new Error("ContextDisposedForReload"));
 
         // don't fire this event if we are transitioning from a null runtime to a real runtime
         // with detached container we no longer need the null runtime, but for legacy
@@ -1102,7 +1129,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async rehydrateDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
-        assert.strictEqual(attributes.sequenceNumber, 0, "Seq number in detached container should be 0!!");
+        assert(attributes.sequenceNumber === 0, "Seq number in detached container should be 0!!");
         this.attachDeltaManagerOpHandler(attributes);
 
         // We know this is create detached flow with snapshot.
@@ -1230,13 +1257,24 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
+        protocol.quorum.on("addProposal",(proposal: IPendingProposal) => {
+            if (proposal.key === "code" || proposal.key === "code2") {
+                this.emit("codeDetailsProposed", proposal.value, proposal);
+            }
+        });
+
         protocol.quorum.on(
             "approveProposal",
             (sequenceNumber, key, value) => {
                 debug(`approved ${key}`);
                 if (key === "code" || key === "code2") {
-                    debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
-
+                    debug(`codeProposal ${JSON.stringify(value)}`);
+                    if (!isFluidCodeDetails(value)) {
+                        this.logger.send({
+                                eventName: "CodeProposalNotIFluidCodeDetails",
+                                category: "warning",
+                        });
+                    }
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.reloadContext();
                 }
@@ -1253,13 +1291,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Back compat
         if (pkg === undefined) {
             pkg = quorum.get("code2");
-        }
-
-        if (!isFluidCodeDetails(pkg)) {
-            this.logger.send({
-                    eventName: "CodeProposalNotIFluidCodeDetails",
-                    category: "warning",
-            });
         }
 
         return pkg as IFluidCodeDetails;

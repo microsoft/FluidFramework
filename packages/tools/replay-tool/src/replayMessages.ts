@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import child_process from "child_process";
 import fs from "fs";
+import { assert } from "@fluidframework/common-utils";
 import * as API from "@fluid-internal/client-api";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
@@ -242,7 +242,7 @@ class Document {
             await new Promise((resolve) => {
                 this.resolveC = resolve;
             });
-            assert.equal(this.documentSeqNumber, this.currentOp);
+            assert(this.documentSeqNumber === this.currentOp);
         }
     }
 

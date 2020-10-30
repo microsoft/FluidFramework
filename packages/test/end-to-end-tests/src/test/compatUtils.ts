@@ -31,6 +31,7 @@ import {
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
     LocalTestObjectProvider,
+    OpProcessingController,
 } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
@@ -51,6 +52,7 @@ export interface ICompatLocalTestObjectProvider {
     documentServiceFactory: IDocumentServiceFactory | old.IDocumentServiceFactory,
     urlResolver: LocalResolver | old.LocalResolver,
     defaultCodeDetails: IFluidCodeDetails | old.IFluidCodeDetails,
+    opProcessingController: OpProcessingController | old.OpProcessingController,
 }
 
 export interface ICompatTestOptions {
@@ -115,12 +117,21 @@ export class OldTestDataObject extends old.DataObject {
     public get _root() { return this.root; }
 }
 
-export const createPrimedDataStoreFactory = (): IFluidDataStoreFactory => {
-    return new DataObjectFactory(TestDataObject.type, TestDataObject, [], {});
+export const createPrimedDataStoreFactory = (registry?: ChannelFactoryRegistry): IFluidDataStoreFactory => {
+    return new DataObjectFactory(
+        TestDataObject.type,
+        TestDataObject,
+        [... registry ?? []].map((r)=>r[1]),
+        {});
 };
 
-export const createOldPrimedDataStoreFactory = (): old.IFluidDataStoreFactory => {
-    return new old.DataObjectFactory(OldTestDataObject.type, OldTestDataObject, [], {});
+export const createOldPrimedDataStoreFactory =
+    (registry?: ChannelFactoryRegistry): old.IFluidDataStoreFactory => {
+    return new old.DataObjectFactory(
+        OldTestDataObject.type,
+        OldTestDataObject,
+        [... convertRegistry(registry)].map((r)=>r[1]),
+        {});
 };
 
 export const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
@@ -161,7 +172,7 @@ export const generateTest = (
             TestDataObject.type,
             containerOptions?.testFluidDataObject
                 ? createTestFluidDataStoreFactory(containerOptions?.registry)
-                : createPrimedDataStoreFactory(),
+                : createPrimedDataStoreFactory(containerOptions?.registry),
             containerOptions?.runtimeOptions,
         );
 
@@ -186,7 +197,7 @@ export const generateCompatTest = (
             const dataStoreFactory = (containerOptions?: ITestContainerConfig) =>
                 containerOptions?.testFluidDataObject
                     ? createTestFluidDataStoreFactory(containerOptions?.registry)
-                    : createPrimedDataStoreFactory();
+                    : createPrimedDataStoreFactory(containerOptions?.registry);
             const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
                 createRuntimeFactory(
                     TestDataObject.type,
@@ -212,7 +223,7 @@ export const generateCompatTest = (
                     OldTestDataObject.type,
                     containerOptions?.testFluidDataObject
                         ? createOldTestFluidDataStoreFactory(containerOptions?.registry)
-                        : createOldPrimedDataStoreFactory(),
+                        : createOldPrimedDataStoreFactory(containerOptions?.registry),
                     containerOptions?.runtimeOptions,
                 ) as any as IRuntimeFactory;
 
@@ -234,7 +245,7 @@ export const generateCompatTest = (
                     OldTestDataObject.type,
                     containerOptions?.testFluidDataObject
                         ? createOldTestFluidDataStoreFactory(containerOptions?.registry)
-                        : createOldPrimedDataStoreFactory(),
+                        : createOldPrimedDataStoreFactory(containerOptions?.registry),
                     containerOptions?.runtimeOptions,
                 );
 

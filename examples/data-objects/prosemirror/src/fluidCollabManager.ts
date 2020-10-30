@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { EventEmitter } from "events";
+import { assert } from "@fluidframework/common-utils";
 import { ILoader } from "@fluidframework/container-definitions";
 import {
     createGroupOp,

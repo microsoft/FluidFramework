@@ -8,7 +8,7 @@ import { IContainer, IFluidModule } from "@fluidframework/container-definitions"
 import { IFluidRouter } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { OpProcessingController, LocalTestObjectProvider, ChannelFactoryRegistry } from "@fluidframework/test-utils";
+import { LocalTestObjectProvider, ChannelFactoryRegistry } from "@fluidframework/test-utils";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     generateCompatTest,
@@ -44,7 +44,6 @@ describe("loader/runtime compatibility", () => {
     const tests = function(args: ICompatLocalTestObjectProvider) {
         let container: IContainer | old.IContainer;
         let dataObject: TestDataObject | OldTestDataObject;
-        let opProcessingController: OpProcessingController;
         let containerError: boolean = false;
 
         beforeEach(async function() {
@@ -54,9 +53,6 @@ describe("loader/runtime compatibility", () => {
             container.on("closed", (error) => containerError = containerError || error !== undefined);
 
             dataObject = await requestFluidObject<TestDataObject>(container as IFluidRouter, "default");
-
-            opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-            opProcessingController.addDeltaManagers(dataObject._runtime.deltaManager);
         });
 
         afterEach(async function() {
@@ -64,7 +60,7 @@ describe("loader/runtime compatibility", () => {
         });
 
         it("loads", async function() {
-            await opProcessingController.process();
+            await args.opProcessingController.process();
         });
 
         it("can set/get on root directory", async function() {

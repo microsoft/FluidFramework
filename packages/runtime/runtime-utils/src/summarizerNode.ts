@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import {
     ISummarizerNode,
     ISummarizerNodeConfig,
@@ -20,7 +19,7 @@ import {
     IDocumentAttributes,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { mergeStats, SummaryTreeBuilder, convertToSummaryTree, calculateStats } from "./summaryUtils";
 
 const baseSummaryTreeKey = "_baseSummary";
@@ -169,8 +168,8 @@ function decodeSummary(snapshot: ISnapshotTree, logger: Pick<ITelemetryLogger, "
             };
         }
 
-        assert(outstandingOpsBlob, "Outstanding ops blob missing, but base summary tree exists");
-        assert(newBaseSummary, "Base summary tree missing, but outstanding ops blob exists");
+        assert(!!outstandingOpsBlob, "Outstanding ops blob missing, but base summary tree exists");
+        assert(newBaseSummary !== undefined, "Base summary tree missing, but outstanding ops blob exists");
         baseSummary = newBaseSummary;
         pathParts.push(baseSummaryTreeKey);
         opsBlobs.unshift(outstandingOpsBlob);
@@ -264,9 +263,8 @@ export class SummarizerNode implements ISummarizerNode {
     public startSummary(referenceSequenceNumber: number) {
         assert(!this.disabled, "Unsupported: cannot call startSummary on disabled SummarizerNode");
 
-        assert.strictEqual(
-            this.wipReferenceSequenceNumber,
-            undefined,
+        assert(
+            this.wipReferenceSequenceNumber === undefined,
             "Already tracking a summary",
         );
 
@@ -357,7 +355,7 @@ export class SummarizerNode implements ISummarizerNode {
         parentPath: EscapedPath | undefined,
         parentSkipRecursion: boolean,
     ) {
-        assert(this.wipReferenceSequenceNumber, "Not tracking a summary");
+        assert(this.wipReferenceSequenceNumber !== undefined, "Not tracking a summary");
         let localPathsToUse = this.wipLocalPaths;
 
         if (parentSkipRecursion) {
@@ -388,7 +386,7 @@ export class SummarizerNode implements ISummarizerNode {
         // This should come from wipLocalPaths in normal cases, or from the latestSummary
         // if parentIsFailure or parentIsReused is true.
         // If there is no latestSummary, clearSummary and return before reaching this code.
-        assert(localPathsToUse, "Tracked summary local paths not set");
+        assert(!!localPathsToUse, "Tracked summary local paths not set");
 
         const summary = new SummaryNode({
             ...localPathsToUse,
@@ -457,16 +455,14 @@ export class SummarizerNode implements ISummarizerNode {
         const summaryNode = this.pendingSummaries.get(proposalHandle);
         if (summaryNode === undefined) {
             // This should only happen if parent skipped recursion AND no prior summary existed.
-            assert.strictEqual(
-                this.latestSummary,
-                undefined,
+            assert(
+                this.latestSummary === undefined,
                 "Not found pending summary, but this node has previously completed a summary",
             );
             return;
         } else {
-            assert.strictEqual(
-                referenceSequenceNumber,
-                summaryNode.referenceSequenceNumber,
+            assert(
+                referenceSequenceNumber === summaryNode.referenceSequenceNumber,
                 // eslint-disable-next-line max-len
                 `Pending summary reference sequence number should be consistent: ${summaryNode.referenceSequenceNumber} != ${referenceSequenceNumber}`,
             );
@@ -545,7 +541,7 @@ export class SummarizerNode implements ISummarizerNode {
         const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 
         if (outstandingOps.length > 0) {
-            assert(this.latestSummary, "Should have latest summary defined if any outstanding ops found");
+            assert(!!this.latestSummary, "Should have latest summary defined if any outstanding ops found");
             this.latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
 
             // Defensive: tracking number should already exceed this number.
@@ -686,7 +682,7 @@ export class SummarizerNode implements ISummarizerNode {
             }
             case CreateSummarizerNodeSource.FromSummary: {
                 if (!this.disabled && this.initialSummary === undefined) {
-                    assert(latestSummary, "Cannot create child from summary if parent does not have latest summary");
+                    assert(!!latestSummary, "Cannot create child from summary if parent does not have latest summary");
                 }
                 // fallthrough to local
             }
@@ -697,7 +693,7 @@ export class SummarizerNode implements ISummarizerNode {
                     const childSummary = initialSummary.summary?.summary.tree[id];
                     if (createParam.type === CreateSummarizerNodeSource.FromSummary) {
                         // Locally created would not have subtree.
-                        assert(childSummary, "Missing child summary tree");
+                        assert(!!childSummary, "Missing child summary tree");
                     }
                     let childSummaryWithStats: ISummaryTreeWithStats | undefined;
                     if (childSummary !== undefined) {

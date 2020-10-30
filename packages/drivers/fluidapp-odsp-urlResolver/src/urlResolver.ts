@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert , fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { createOdspUrl, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
 
@@ -25,7 +24,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         } else if (server === "www.office.com") {
             const getRequiredParam = (name: string): string => {
                 const value = reqUrl.searchParams.get(name);
-                assert(value, `Missing ${name} from office.com URL parameter`);
+                assert(!!value, `Missing ${name} from office.com URL parameter`);
                 return value;
             };
             contents = {

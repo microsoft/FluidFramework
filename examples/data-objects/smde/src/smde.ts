@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { EventEmitter } from "events";
+import { assert } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidLoadable,
@@ -58,7 +58,7 @@ export class Smde extends EventEmitter implements
     private smde: SimpleMDE | undefined;
 
     private get text() {
-        assert(this._text);
+        assert(!!this._text);
         return this._text;
     }
     constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {

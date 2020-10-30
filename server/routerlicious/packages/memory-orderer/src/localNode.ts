@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import { IDocumentMessage, IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import {
@@ -16,6 +16,7 @@ import {
     ITenantManager,
     IWebSocketServer,
     ILogger,
+    TokenGenerator,
 } from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 import * as moniker from "moniker";
@@ -77,6 +78,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         tenantManager: ITenantManager,
         permission: any,
         maxMessageSize: number,
+        tokenGenerator: TokenGenerator,
         logger: ILogger) {
         // Look up any existing information for the node or create a new one
         const node = await LocalNode.create(
@@ -95,6 +97,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             tenantManager,
             permission,
             maxMessageSize,
+            tokenGenerator,
             logger);
     }
 
@@ -161,6 +164,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         private readonly tenantManager: ITenantManager,
         private readonly permission: any,
         private readonly maxMessageSize: number,
+        private readonly tokenGenerator: TokenGenerator,
         private readonly logger: ILogger) {
         super();
 
@@ -254,6 +258,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             this.tenantManager,
             this.permission,
             this.maxMessageSize,
+            this.tokenGenerator,
             this.logger);
         assert(!this.orderMap.has(fullId));
         this.orderMap.set(fullId, orderer);

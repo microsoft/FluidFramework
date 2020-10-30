@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -11,6 +10,7 @@ import {
     IRequest,
     IResponse,
     IFluidCodeDetails,
+    IFluidCodeDetailsComparer,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -23,6 +23,7 @@ import {
     ICriticalContainerError,
     ContainerWarning,
     AttachState,
+    IFluidModule,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -40,6 +41,7 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
 import { NullChaincode, NullRuntime } from "./nullRuntime";
 
@@ -165,6 +167,21 @@ export class ContainerContext implements IContainerContext {
         return this._disposed;
     }
 
+    private readonly fluidModuleP = new LazyPromise<IFluidModule>(async () => {
+        if (this.codeDetails === undefined) {
+            const fluidExport =  new NullChaincode();
+            return {
+                fluidExport,
+            };
+        }
+
+        const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
+            async () => this.codeLoader.load(this.codeDetails),
+        );
+
+        return fluidModule;
+    });
+
     constructor(
         private readonly container: Container,
         public readonly scope: IFluidObject,
@@ -233,7 +250,7 @@ export class ContainerContext implements IContainerContext {
     public setConnectionState(connected: boolean, clientId?: string) {
         const runtime = this.runtime;
 
-        assert.strictEqual(connected, this.connected, "Mismatch in connection state while setting");
+        assert(connected === this.connected, "Mismatch in connection state while setting");
 
         runtime.setConnectionState(connected, clientId);
     }
@@ -270,18 +287,43 @@ export class ContainerContext implements IContainerContext {
         return this.container.getAbsoluteUrl(relativeUrl);
     }
 
-    private async load() {
-        if (this.codeDetails === undefined) {
-            const nullChaincode =  new NullChaincode();
-            this._runtime = await nullChaincode.instantiateRuntime(this);
-            return;
+    /**
+     * Determines if the current code details of the context
+     * satisfy the incoming constraint code details
+     */
+    public async satisfies(constraintCodeDetails: IFluidCodeDetails) {
+        const comparers: IFluidCodeDetailsComparer[] = [];
+
+        const maybeCompareCodeLoader = this.codeLoader;
+        if (maybeCompareCodeLoader.IFluidCodeDetailsComparer !== undefined) {
+            comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
         }
 
-        const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
-            async () => this.codeLoader.load(this.codeDetails),
-        );
+        const maybeCompareExport = (await this.fluidModuleP).fluidExport;
+        if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
+            comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
+        }
 
-        const maybeFactory = fluidModule?.fluidExport?.IRuntimeFactory;
+        // if there are not comparers it is not possible to know
+        // if the current satisfy the incoming, so return false,
+        // as assuming they do not satisfy is safer .e.g we will
+        // reload, rather than potentially running with
+        // incompatible code
+        if (comparers.length === 0) {
+            return false;
+        }
+
+        for (const comparer of comparers) {
+            const satisfies = await comparer.satisfies(this.codeDetails, constraintCodeDetails);
+            if (satisfies === false) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private async load() {
+        const maybeFactory = (await this.fluidModuleP).fluidExport.IRuntimeFactory;
         if (maybeFactory === undefined) {
             throw new Error(PackageNotFactoryError);
         }

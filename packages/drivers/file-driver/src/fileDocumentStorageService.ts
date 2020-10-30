@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import fs from "fs";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert , fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
@@ -81,7 +80,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
             return [];
         } else if (this.versionName !== undefined) {
             // We loaded from snapshot - search for commit there.
-            assert(this.docTree);
+            assert(!!this.docTree);
             return [{
                 id: versionId,
                 treeId: FileStorageVersionTreeId,

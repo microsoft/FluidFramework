@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
@@ -44,7 +43,7 @@ export class SnapshotLoader {
             ? branchId : this.runtime.documentId;
         const headerLoadedP =
             services.read(SnapshotLegacy.header).then((header) => {
-                assert(header);
+                assert(!!header);
                 return this.loadHeader(header, branch);
             });
 

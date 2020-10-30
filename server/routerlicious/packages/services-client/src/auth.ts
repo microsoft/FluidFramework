@@ -3,15 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import { debug } from "util";
 import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
-import * as jwt from "jsonwebtoken";
+import { KJUR as jsrsasign } from "jsrsasign";
+import jwtDecode from "jwt-decode";
 import { v4 as uuid } from "uuid";
-import { getRandomName } from "./generateNames";
 
 /**
- * Generates a JWT token to authorize routerlicious
+ * Validates a JWT token to authorize routerlicious and returns decoded claims.
+ * An undefined return value indicates invalid claims.
  */
+export function validateTokenClaims(
+    token: string,
+    documentId: string,
+    tenantId: string,
+    maxTokenLifetimeSec: number,
+    isTokenExpiryEnabled: boolean): ITokenClaims {
+    const claims = jwtDecode<ITokenClaims>(token);
+
+    if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
+        return undefined;
+    }
+
+    if (claims.scopes === undefined || claims.scopes.length === 0) {
+        return undefined;
+    }
+
+    if (isTokenExpiryEnabled && claims.exp && claims.iat) {
+        const now = Math.round((new Date()).getTime() / 1000);
+        if (now >= claims.exp || claims.exp - claims.iat > maxTokenLifetimeSec) {
+            return undefined;
+        }
+    }
+
+    return claims;
+}
+
+/**
+ * Generates a JWT token to authorize routerlicious. This function uses a browser friendly auth library (jsrsasign)
+ * and should only be used in client context.
+ */
+// TODO: We should use this library in all client code rather than using jsrsasign directly.
 export function generateToken(
     tenantId: string,
     documentId: string,
@@ -23,7 +54,6 @@ export function generateToken(
     // eslint-disable-next-line @typescript-eslint/no-use-before-define, no-param-reassign
     user = (user) ? user : generateUser();
     if (user.id === "" || user.id === undefined) {
-        debug("User with no id");
         // eslint-disable-next-line @typescript-eslint/no-use-before-define, no-param-reassign
         user = generateUser();
     }
@@ -41,43 +71,17 @@ export function generateToken(
         ver,
     };
 
-    return jwt.sign(claims, key);
+    // The type definition of jsrsasign library is wrong. Remove the casting once fix is available.
+    const utf8Key: string = ({ utf8: key } as unknown) as string;
+    // eslint-disable-next-line no-null/no-null
+    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
 }
 
 export function generateUser(): IUser {
     const randomUser = {
         id: uuid(),
-        name: getRandomName(" ", true),
+        name: uuid(),
     };
 
     return randomUser;
-}
-
-/**
- * Validates a JWT token to authorize routerlicious and returns decoded claims.
- * An undefined return value indicates invalid claims.
- */
-export function validateTokenClaims(
-    token: string,
-    documentId: string,
-    tenantId: string,
-    maxTokenLifetimeSec: number,
-    isTokenExpiryEnabled: boolean): ITokenClaims {
-    const claims = jwt.decode(token) as ITokenClaims;
-
-    if (!claims
-        || claims.documentId !== documentId
-        || claims.tenantId !== tenantId
-    ) {
-        return undefined;
-    }
-
-    if (isTokenExpiryEnabled === true) {
-        const now = Math.round((new Date()).getTime() / 1000);
-        if (now >= claims.exp || claims.exp - claims.iat > maxTokenLifetimeSec) {
-            return undefined;
-        }
-    }
-
-    return claims;
 }

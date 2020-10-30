@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import querystring from "querystring";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { assert, fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { IDeltaStorageService, IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import Axios from "axios";
@@ -63,9 +62,9 @@ export class DeltaStorageService implements IDeltaStorageService {
         let contentIndex = 0;
         for (const op of ops) {
             if (op.contents === undefined) {
-                assert.ok(contentIndex < contents.length, "Delta content not found");
+                assert(contentIndex < contents.length, "Delta content not found");
                 const content = contents[contentIndex];
-                assert.equal(op.sequenceNumber, content.sequenceNumber, "Invalid delta content order");
+                assert(op.sequenceNumber === content.sequenceNumber, "Invalid delta content order");
                 op.contents = content.op.contents;
                 ++contentIndex;
             }

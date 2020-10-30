@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 
-import { Deferred, doIfNotDisposed, EventForwarder, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, Deferred, doIfNotDisposed, EventForwarder, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ICommittedProposal,
     IPendingProposal,
@@ -42,6 +41,10 @@ class PendingProposal implements IPendingProposal, ISequencedProposal {
         }
 
         this.sendReject(this.sequenceNumber);
+    }
+
+    public get rejectionDisabled() {
+        return !this.canReject;
     }
 
     public disableRejection() {
@@ -372,7 +375,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     }
 
     public dispose(): void {
-        assert.fail("Not implemented.");
+        throw new Error("Not implemented.");
         this.isDisposed = true;
     }
 }

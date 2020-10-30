@@ -12,7 +12,6 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
-import { generateToken } from "@fluidframework/server-services-client";
 import { SequencedLambda } from "../sequencedLambda";
 
 // TODO: Move this to config.
@@ -25,6 +24,7 @@ export class ForemanLambda extends SequencedLambda {
     constructor(
         private readonly messageSender: core.ITaskMessageSender,
         private readonly tenantManager: core.ITenantManager,
+        private readonly tokenGenerator: core.TokenGenerator,
         private readonly permissions: any,
         protected context: core.IContext,
         protected tenantId: string,
@@ -88,7 +88,8 @@ export class ForemanLambda extends SequencedLambda {
                         tasks,
                     },
                     tenantId,
-                    token: generateToken(tenantId, docId, key, scopes),
+
+                    token: this.tokenGenerator(tenantId, docId, key, scopes),
                 };
                 this.messageSender.sendTask(
                     queueName,

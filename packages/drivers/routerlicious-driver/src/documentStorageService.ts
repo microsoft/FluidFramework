@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { assert, gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy } from "@fluidframework/protocol-base";
@@ -107,10 +106,6 @@ export class DocumentStorageService implements IDocumentStorageService {
             : iso.buffer.slice(iso.byteOffset, iso.byteOffset + iso.byteLength);
     }
 
-    public getRawUrl(blobId: string): string {
-        return this.manager.getRawUrl(blobId);
-    }
-
     private async writeSummaryTree(
         summaryTree: ISummaryTree,
         /** Entire previous snapshot, not subtree */
@@ -150,6 +145,9 @@ export class DocumentStorageService implements IDocumentStorageService {
             }
             case SummaryType.Tree: {
                 return this.writeSummaryTree(object, previousFullSnapshot);
+            }
+            case SummaryType.Attachment: {
+                return object.id;
             }
 
             default:
@@ -211,7 +209,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         if (!this.blobsShaCache.has(hash)) {
             this.blobsShaCache.set(hash, "");
             const blob = await this.manager.createBlob(parsedContent, encoding);
-            assert.strictEqual(hash, blob.sha, "Blob.sha and hash do not match!!");
+            assert(hash === blob.sha, "Blob.sha and hash do not match!!");
         }
         return hash;
     }
@@ -220,6 +218,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         const type = value.type === SummaryType.Handle ? value.handleType : value.type;
         switch (type) {
             case SummaryType.Blob:
+            case SummaryType.Attachment:
                 return FileMode.File;
             case SummaryType.Commit:
                 return FileMode.Commit;
@@ -235,6 +234,7 @@ export class DocumentStorageService implements IDocumentStorageService {
 
         switch (type) {
             case SummaryType.Blob:
+            case SummaryType.Attachment:
                 return "blob";
             case SummaryType.Commit:
                 return "commit";

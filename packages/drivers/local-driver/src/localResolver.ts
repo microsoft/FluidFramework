@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { parse } from "url";
+import { assert } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IFluidResolvedUrl,
@@ -13,7 +13,7 @@ import {
     DriverHeader,
 } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { generateToken } from "@fluidframework/server-services-client";
+import { generateToken } from "./auth";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
@@ -62,7 +62,7 @@ export class LocalResolver implements IUrlResolver {
             throw new Error("Url should contain tenant and docId!!");
         }
         const [, , documentId] = parsedUrl.pathname.split("/");
-        assert(documentId, "The resolvedUrl must have a documentId");
+        assert(!!documentId, "The resolvedUrl must have a documentId");
 
         return `http://localhost:3000/${documentId}/${url}`;
     }

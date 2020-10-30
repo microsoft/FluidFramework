@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert , BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
+
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,

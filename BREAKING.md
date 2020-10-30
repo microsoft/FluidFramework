@@ -1,17 +1,21 @@
 ## 0.28 Breaking Changes
 
+- [FileName should contain extension for ODSP driver create new path](#FileName-should-contain-extension-for-ODSP-driver-create-new-path)
+- [ODSP Driver IPersistedCache changes](#ODSP-Driver-IPersistedCache-Changes)
 - [IFluidPackage Changes](#IFluidPackage-Changes)
 - [DataObject changes](#DataObject-changes)
 - [RequestParser](#RequestParser)
 - [IFluidLodable.url is removed](#IFluidLodable.url-is-removed)
 - [Loader Constructor Changes](#Loader-Constructor-Changes)
 - [Moving DriverHeader and merge with CreateNewHeader](#moving-driverheader-and-merge-with-createnewheader)
+- [ODSP status codes moved from odsp-driver to odsp-doclib-utils](#ODSP-status-codes-moved-modules-from-odsp-driver-to-odsp-doclib-utils)
 
-### Moving DriverHeader and merge with CreateNewHeader
-Compile time only API breaking change between runtime and driver.  Only impacts driver implementer.
-No back-compat or mix version impact.
+### FileName should contain extension for ODSP driver create new path
+Now the ODSP driver expects file extension in the file name while creating a new detached container.
 
-DriverHeader is a driver concept, so move from core-interface to driver-definitions. CreateNewHeader is also a kind of driver header, merged it into DriverHeader.
+### ODSP Driver IPersistedCache-Changes
+Added api `removeAllEntriesForDocId` which allows removal of all entries for a given document id. Also the schema for entries stored inside odsp `IPersistedCache` has changed.
+It now stores/expect values as `IPersistedCacheValueWithEpoch`. So host needs to clear its cached entries in this version.
 
 ### IFluidPackage Changes
 - Moving IFluidPackage and IFluidCodeDetails from "@fluidframework/container-definitions" to '@fluidframework/core-interfaces'
@@ -68,6 +72,14 @@ After:
 
 if for some reason this change causes you problems, we've added a deprecated `Loader._create` method that has the same parameters as the previous constructor which can be used in the interim.
 
+### Moving DriverHeader and merge with CreateNewHeader
+Compile time only API breaking change between runtime and driver.  Only impacts driver implementer.
+No back-compat or mix version impact.
+
+DriverHeader is a driver concept, so move from core-interface to driver-definitions. CreateNewHeader is also a kind of driver header, merged it into DriverHeader.
+
+### ODSP status codes moved modules from odsp-driver to odsp-doclib-utils
+Error/status codes like `offlineFetchFailureStatusCode` which used to be imported like `import { offlineFetchFailureStatusCode } from '@fluidframework/@odsp-driver';` have been moved to `odspErrorUtils.ts` in `odsp-doclib-utils`.
 
 ## 0.27 Breaking Changes
 - [Local Web Host Removed](#Local-Web-Host-Removed)
@@ -139,9 +151,9 @@ You can use handleFromLegacyUri() for creating handles from container-internal U
 
 ### Package Renames
 As a follow up to the changes in 0.24 we are updating a number of package names
-- `@fluidframework/core-interfaces` is renamed to `@fluidframework/core-interfaces`
-- `@fluidframework/datastore-definitions` is renamed to `@fluidframework/datastore-definitions`
-- `@fluidframework/datastore` is renamed to `@fluidframework/datastore`
+- `@fluidframework/component-core-interfaces` is renamed to `@fluidframework/core-interfaces`
+- `@fluidframework/component-runtime-definitions` is renamed to `@fluidframework/datastore-definitions`
+- `@fluidframework/component-runtime` is renamed to `@fluidframework/datastore`
 - `@fluidframework/webpack-component-loader` is renamed to `@fluidframework/webpack-fluid-loader`
 
 ### IComponent and IComponent Interfaces Removed

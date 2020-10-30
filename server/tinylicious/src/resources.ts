@@ -16,7 +16,6 @@ export class TinyliciousResources implements utils.IResources {
         public storage: core.IDocumentStorage,
         public mongoManager: core.MongoManager,
         public port: any,
-        public contentCollection: core.ICollection<any>,
         public webServerFactory: core.IWebServerFactory,
     ) {
     }

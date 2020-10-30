@@ -8,7 +8,6 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    OpProcessingController,
     TestFluidObject,
 } from "@fluidframework/test-utils";
 import {
@@ -18,7 +17,6 @@ import {
 } from "./compatUtils";
 
 const tests = (args: ICompatLocalTestObjectProvider) => {
-    let opProcessingController: OpProcessingController;
     let firstContainerObject1: TestDataObject;
     let firstContainerObject2: TestDataObject;
     let secondContainerObject1: TestDataObject;
@@ -35,11 +33,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         const secondContainer = await args.loadTestContainer();
         secondContainerObject1 = await requestFluidObject<TestDataObject>(secondContainer, "default");
 
-        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-        opProcessingController.addDeltaManagers(
-            firstContainerObject1._runtime.deltaManager, secondContainerObject1._runtime.deltaManager);
-
-        await opProcessingController.process();
+        await args.opProcessingController.process();
     });
 
     it("should generate the absolute path for ContainerRuntime correctly", () => {
@@ -93,7 +87,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         // Add the handle to the root DDS of `firstContainerObject1`.
         firstContainerObject1._root.set("sharedMap", sharedMapHandle);
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
@@ -123,7 +117,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         // Add the handle to the root DDS of `firstContainerObject1` so that the FluidDataObjectRuntime is different.
         firstContainerObject1._root.set("sharedMap", sharedMap.handle);
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
@@ -150,7 +144,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         // FluidDataObjectRuntime is different.
         firstContainerObject1._root.set("dataObject2", firstContainerObject2.handle);
 
-        await opProcessingController.process();
+        await args.opProcessingController.process();
 
         // Get the handle in the remote client.
         const remoteDataObjectHandle =

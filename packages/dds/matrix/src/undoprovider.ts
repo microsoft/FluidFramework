@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { TrackingGroup, MergeTreeDeltaOperationType, MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { SharedMatrix } from "./matrix";
@@ -63,7 +63,7 @@ export class VectorUndoProvider {
                 }
 
                 default:
-                    assert.fail("operation type not revertible");
+                    throw new Error("operation type not revertible");
             }
 
             // If we are in the process of reverting, set 'currentOp' to remind ourselves not to push

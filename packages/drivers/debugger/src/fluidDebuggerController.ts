@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { Deferred } from "@fluidframework/common-utils";
+import { assert , Deferred } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -203,7 +202,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
             return this.shouldUseController;
         }
 
-        assert(documentService);
+        assert(!!documentService);
         assert(!this.documentService);
         assert(!this.documentStorageService);
         this.documentService = documentService;
@@ -330,7 +329,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         storage: ReadDocumentStorageServiceBase,
         version: IVersion | string) {
         assert(!this.isSelectionMade());
-        assert(storage);
+        assert(!!storage);
         this.storage = storage;
         assert(this.isSelectionMade());
 

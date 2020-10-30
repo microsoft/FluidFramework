@@ -12,12 +12,13 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
+    ITokenClaims,
     IUser,
     MessageType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { generateToken } from "@fluidframework/server-services-client";
 import { IWebSocket } from "@fluidframework/server-services-core";
+import { KJUR as jsrsasign } from "jsrsasign";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "../localDeltaConnectionServer";
 
 describe("LocalDeltaConnectionServer", () => {
@@ -34,12 +35,22 @@ describe("LocalDeltaConnectionServer", () => {
             user,
         };
 
-        const token = generateToken(
-            "tenant",
-            "document",
-            "key",
-            [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-            user);
+        const now = Math.round((new Date()).getTime() / 1000);
+
+        const claims: ITokenClaims = {
+            documentId: "document",
+            scopes:  [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+            tenantId: "tenant",
+            user,
+            iat: now,
+            exp: now + 60 * 60,
+            ver: "1.0",
+        };
+
+        // The type definition of jsrsasign library is wrong. Remove the casting once fix is available.
+        const key: string = ({ utf8: "key" } as unknown) as string;
+         // eslint-disable-next-line no-null/no-null
+        const token = jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, key);
 
         return deltaConnectionServer.connectWebSocket(
             "tenant",

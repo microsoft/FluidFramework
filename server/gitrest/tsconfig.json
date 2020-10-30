@@ -4,6 +4,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "strictNullChecks": false,
         "target": "es6",
         "declaration": true,
         "module": "commonjs",
@@ -14,6 +15,7 @@
         "rootDir": "./src",
         "sourceMap": true,
         "inlineSources": true,
+        "esModuleInterop": true,
         "typeRoots": [
             "./node_modules/@types"
         ]

@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaConnection,
@@ -37,6 +36,7 @@ import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtil
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
+import { EpochTracker } from "./epochTracker";
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -105,6 +105,7 @@ export class OdspDocumentService implements IDocumentService {
         socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
+        epochTracker: EpochTracker,
     ): Promise<IDocumentService> {
         return new OdspDocumentService(
             resolvedUrl as IOdspResolvedUrl,
@@ -114,6 +115,7 @@ export class OdspDocumentService implements IDocumentService {
             socketIoClientFactory,
             cache,
             hostPolicy,
+            epochTracker,
         );
     }
 
@@ -148,7 +150,9 @@ export class OdspDocumentService implements IDocumentService {
         private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
+        private readonly epochTracker: EpochTracker,
     ) {
+        epochTracker.hashedDocumentId = odspResolvedUrl.hashedDocumentId;
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
         this.logger = ChildLogger.create(logger,
@@ -182,6 +186,7 @@ export class OdspDocumentService implements IDocumentService {
                 true,
                 this.cache,
                 this.hostPolicy,
+                this.epochTracker,
             );
         }
 
@@ -203,6 +208,7 @@ export class OdspDocumentService implements IDocumentService {
             urlProvider,
             this.storageManager?.ops,
             this.getStorageToken,
+            this.epochTracker,
             this.logger,
         );
 
@@ -224,7 +230,7 @@ export class OdspDocumentService implements IDocumentService {
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
             // For ODC, we do not rely on getWebsocketToken callback and just use the token from joinsession
-            const socketTokenPromise = this.isOdc ? Promise.resolve("") : this.getWebsocketToken(options);
+            const socketTokenPromise = this.isOdc ? Promise.resolve(null) : this.getWebsocketToken(options);
             const [websocketEndpoint, webSocketToken, io] =
                 await Promise.all([this.joinSession(), socketTokenPromise, this.socketIoClientFactory()]);
 
@@ -258,6 +264,9 @@ export class OdspDocumentService implements IDocumentService {
                 return connection;
             } catch (error) {
                 this.cache.sessionJoinCache.remove(this.joinSessionKey);
+                if (typeof error === "object" && error !== null) {
+                    error.socketDocumentId = websocketEndpoint.id;
+                }
                 throw error;
             }
         });
@@ -281,6 +290,7 @@ export class OdspDocumentService implements IDocumentService {
                 "POST",
                 this.logger,
                 this.getStorageToken,
+                this.epochTracker,
             );
 
         // Note: The sessionCache is configured with a sliding expiry of 1 hour,

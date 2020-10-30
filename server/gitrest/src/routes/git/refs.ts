@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ICreateRefParams, IPatchRefParams, IRef } from "@fluidframework/gitresources";
+import { IRef } from "@fluidframework/gitresources";
+import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-core";
 import { Response, Router } from "express";
 import * as nconf from "nconf";
-import * as git from "nodegit";
+import git from "nodegit";
+import * as winston from "winston";
+import { IExternalStorageManager } from "../../externalStorageManager";
 import * as utils from "../../utils";
 
 function refToIRef(ref: git.Reference): IRef {
@@ -28,17 +31,41 @@ async function getRefs(repoManager: utils.RepositoryManager, owner: string, repo
     return refsP.map((ref) => refToIRef(ref));
 }
 
-async function getRef(repoManager: utils.RepositoryManager, owner: string, repo: string, refId: string): Promise<IRef> {
+async function getRef(
+    repoManager: utils.RepositoryManager,
+    owner: string,
+    repo: string,
+    refId: string,
+    externalStorageManager: IExternalStorageManager): Promise<IRef> {
     const repository = await repoManager.open(owner, repo);
-    const ref = await git.Reference.lookup(repository, refId, undefined);
-    return refToIRef(ref);
+    try {
+        const ref = await git.Reference.lookup(repository, refId, undefined);
+        return refToIRef(ref);
+    } catch (err) {
+        // Lookup external storage if commit does not exist.
+        const fileName = refId.substring(refId.lastIndexOf("/") + 1);
+        // If file does not exist or error trying to look up commit, return the original error.
+        try {
+            const result = await externalStorageManager.read(repo, fileName);
+            if (!result) {
+                winston.error(`getRef error: ${err} repo: ${repo} ref: ${refId}`);
+                return Promise.reject(err);
+            }
+            return getRef(repoManager, owner, repo, refId, externalStorageManager);
+        } catch (bridgeError) {
+            winston.error(`Giving up on creating ref. BridgeError: ${bridgeError}`);
+            return Promise.reject(err);
+        }
+    }
 }
 
 async function createRef(
     repoManager: utils.RepositoryManager,
     owner: string,
     repo: string,
-    createParams: ICreateRefParams): Promise<IRef> {
+    createParams: ICreateRefParamsExternal,
+    externalStorageManager: IExternalStorageManager,
+): Promise<IRef> {
     const repository = await repoManager.open(owner, repo);
     const ref = await git.Reference.create(
         repository,
@@ -46,6 +73,15 @@ async function createRef(
         git.Oid.fromString(createParams.sha),
         0,
         "");
+
+    if (createParams.config?.enabled) {
+        try {
+            await externalStorageManager.write(repo, createParams.ref, createParams.sha, false);
+        } catch (e) {
+            winston.error(`Error writing to file ${e}`);
+        }
+    }
+
     return refToIRef(ref);
 }
 
@@ -64,7 +100,9 @@ async function patchRef(
     owner: string,
     repo: string,
     refId: string,
-    patchParams: IPatchRefParams): Promise<IRef> {
+    patchParams: IPatchRefParamsExternal,
+    externalStorageManager: IExternalStorageManager,
+): Promise<IRef> {
     const repository = await repoManager.open(owner, repo);
     const ref = await git.Reference.create(
         repository,
@@ -72,6 +110,16 @@ async function patchRef(
         git.Oid.fromString(patchParams.sha),
         patchParams.force ? 1 : 0,
         "");
+
+    if (patchParams.config?.enabled) {
+        try {
+            await externalStorageManager.write(repo, refId, patchParams.sha, true);
+        } catch (e) {
+            winston.error(`External storage write failed while trying to update file ${repo} / ${refId}`);
+            winston.error(e);
+        }
+    }
+
     return refToIRef(ref);
 }
 
@@ -92,7 +140,11 @@ function getRefId(id): string {
     return `refs/${id}`;
 }
 
-export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {
+export function create(
+    store: nconf.Provider,
+    repoManager: utils.RepositoryManager,
+    externalStorageManager: IExternalStorageManager,
+): Router {
     const router: Router = Router();
 
     // https://developer.github.com/v3/git/refs/
@@ -103,7 +155,12 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
     });
 
     router.get("/repos/:owner/:repo/git/refs/*", (request, response, next) => {
-        const resultP = getRef(repoManager, request.params.owner, request.params.repo, getRefId(request.params[0]));
+        const resultP = getRef(
+            repoManager,
+            request.params.owner,
+            request.params.repo,
+            getRefId(request.params[0]),
+            externalStorageManager);
         handleResponse(resultP, response);
     });
 
@@ -112,7 +169,8 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
             repoManager,
             request.params.owner,
             request.params.repo,
-            request.body as ICreateRefParams);
+            request.body as ICreateRefParamsExternal,
+            externalStorageManager);
         handleResponse(resultP, response, 201);
     });
 
@@ -122,7 +180,8 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
             request.params.owner,
             request.params.repo,
             getRefId(request.params[0]),
-            request.body as IPatchRefParams);
+            request.body as IPatchRefParamsExternal,
+            externalStorageManager);
         handleResponse(resultP, response);
     });
 
@@ -130,6 +189,5 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
         const deleteP = deleteRef(repoManager, request.params.owner, request.params.repo, getRefId(request.params[0]));
         deleteP.then(() => response.status(204).end(), (error) => response.status(400).json(error));
     });
-
     return router;
 }

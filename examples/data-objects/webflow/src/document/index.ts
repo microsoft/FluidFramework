@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -84,7 +84,7 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 
                 // Ensure that 'nestEnd' range label matches the 'beginTags' range label (otherwise it
                 // will not close the range.)
-                assert.equal(segment.getRangeLabels()[0], DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
+                assert(segment.getRangeLabels()[0] === DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
                 return DocSegmentKind.endTags;
         }
     }

@@ -54,7 +54,6 @@ export async function getSessionStorageContainer(
         container = await loader.createDetachedContainer({ package: "", config: {} });
         await container.attach({ url });
     } else {
-        // The InsecureTinyliciousUrlResolver expects the url of the request to be the documentId.
         container = await loader.resolve({ url });
         // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
         // new container here, where we expect this to be loading an existing container.

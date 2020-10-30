@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import fs from "fs";
+import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
