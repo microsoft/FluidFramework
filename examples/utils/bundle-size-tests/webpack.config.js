@@ -42,7 +42,7 @@ module.exports = {
   plugins: [
     new BannedModulesPlugin({
         bannedModules: [{
-                mode: 'assert',
+                moduleName: 'assert',
                 reason: 'This module is very large when bundled in browser facing Javascript, instead use the assert API in @fluidframework/common-utils'
             }
         ]
