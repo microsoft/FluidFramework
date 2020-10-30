@@ -31,7 +31,7 @@
     "@fluidframework/common-utils": "^0.25.0",
     "@fluidframework/driver-definitions": "^0.28.0",
     "@fluidframework/driver-utils": "^0.28.0",
-    "@fluidframework/protocol-definitions": "^0.1014.0-0",
+    "@fluidframework/protocol-definitions": "^0.1014.0",
     "assert": "^2.0.0",
     "debug": "^4.1.1"
   },
