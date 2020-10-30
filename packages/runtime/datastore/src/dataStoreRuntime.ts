@@ -295,7 +295,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
                 return { mimeType: "fluid/object", status: 200, value: channel };
             } catch (error) {
-                this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest", error: "error" }, error);
+                this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
 
                 return {
                     status: 404,
