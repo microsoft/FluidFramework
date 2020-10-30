@@ -301,15 +301,15 @@ export class ScheduleManager {
                 return;
             }
 
-            // If only length one then clear
+            // If the batch contains only a single op, clear the batch flag.
             if (messages.length === 1) {
-                delete messages[0].metadata;
+                delete firstMessageMetadata.batch;
                 return;
             }
 
             // Set the batch flag to false on the last message to indicate the end of the send batch
             const lastMessage = messages[messages.length - 1];
-            lastMessage.metadata = { ...lastMessage.metadata, ...{ batch: false } };
+            lastMessage.metadata = { ...lastMessage.metadata, batch: false };
         });
 
         // Listen for updates and peek at the inbound
@@ -571,7 +571,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         content: any,
         localOpMetadata: unknown,
-        opMetaData: unknown,
+        opMetadata: Record<string, unknown> | undefined,
     ) => void {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.reSubmit;
@@ -1882,7 +1882,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         content: any,
         localOpMetadata: unknown = undefined,
-        opMetadata: unknown = undefined): void {
+        opMetadata: Record<string, unknown> | undefined = undefined,
+    ): void {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
@@ -1892,9 +1893,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const maxOpSize = this.context.deltaManager.maxMessageSize;
 
             // If in manual flush mode we will trigger a flush at the next turn break
-            let batchBegin = false;
             if (this.flushMode === FlushMode.Manual && !this.needsFlush) {
-                batchBegin = true;
+                // eslint-disable-next-line no-param-reassign
+                opMetadata = { ...opMetadata, batch: true };
                 this.needsFlush = true;
 
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
@@ -1914,8 +1915,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 clientSequenceNumber = this.submitRuntimeMessage(
                     type,
                     content,
-                    this._flushMode === FlushMode.Manual,
-                    batchBegin ? { batch: true } : opMetadata);
+                    /* batch: */ this._flushMode === FlushMode.Manual,
+                    opMetadata);
             } else {
                 clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             }
@@ -1998,7 +1999,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private reSubmit(type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetaData: unknown) {
+    private reSubmit(
+        type: ContainerMessageType,
+        content: any,
+        localOpMetadata: unknown,
+        opMetadata: Record<string, unknown> | undefined,
+    ) {
         switch (type) {
             case ContainerMessageType.FluidDataStoreOp:
                 // For Operations, call resubmitDataStoreOp which will find the right store
@@ -2011,7 +2017,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
             case ContainerMessageType.BlobAttach:
-                this.submit(type, content, localOpMetadata, opMetaData);
+                this.submit(type, content, localOpMetadata, opMetadata);
                 break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
