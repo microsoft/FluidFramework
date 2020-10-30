@@ -56,6 +56,7 @@
     "@types/node": "^10.17.24",
     "axios": "^0.18.0",
     "debug": "^4.1.1",
+    "jsrsasign": "^10.0.2",
     "jwt-decode": "^3.0.0",
     "sillyname": "0.1.0",
     "uuid": "^3.3.2"
@@ -64,6 +65,7 @@
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.19.1",
     "@types/debug": "^4.1.5",
+    "@types/jsrsasign" : "^8.0.7",
     "@types/jwt-decode": "^2.2.1",
     "@types/mocha": "^5.2.5",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
