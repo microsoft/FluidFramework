@@ -25,7 +25,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.25.0-0",
+    "@fluidframework/common-utils": "^0.25.0",
     "@fluidframework/odsp-doclib-utils": "^0.28.0",
     "proper-lockfile": "^4.1.1"
   },
