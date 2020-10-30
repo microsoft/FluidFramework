@@ -32,8 +32,6 @@ import {
     ITestContainerConfig,
 } from "./compatUtils";
 
-const detachedContainerRefSeqNumber = 0;
-
 const documentId = "detachedContainerTest";
 
 const sharedStringId = "ss1Key";
@@ -354,12 +352,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
     });
 
     it("Fire ops during container attach for consensus register collection", async () => {
-        const op = {
-            key: "1",
-            type: "write",
-            serializedValue: JSON.stringify("b"),
-            refSeq: detachedContainerRefSeqNumber,
-        };
+        const op = { key: "1", type: "write", serializedValue: JSON.stringify("b"), refSeq: 0 };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
         container.deltaManager.submit = (type, contents, batch, metadata) => {

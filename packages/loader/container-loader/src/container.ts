@@ -94,8 +94,6 @@ import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
-const detachedContainerRefSeqNumber = 0;
-
 interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
@@ -1089,7 +1087,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         const attributes: IDocumentAttributes = {
             branch: "",
-            sequenceNumber: detachedContainerRefSeqNumber,
+            sequenceNumber: 0,
             term: 1,
             minimumSequenceNumber: 0,
         };

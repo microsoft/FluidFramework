@@ -7,7 +7,7 @@ import { Uint8ArrayToString } from "@fluidframework/common-utils";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import { fetchIncorrectResponse, invalidFileNameStatusCode } from "@fluidframework/odsp-doclib-utils";
 import { getGitType } from "@fluidframework/protocol-base";
-import { SummaryType, ISummaryTree, ISummaryBlob } from "@fluidframework/protocol-definitions";
+import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
@@ -102,6 +102,7 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
         throw new Error("App and protocol summary required for create new path!!");
     }
     const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+    documentAttributes.sequenceNumber = 1;
     const attributesSummaryBlob: ISummaryBlob = {
         type: SummaryType.Blob,
         content: JSON.stringify(documentAttributes),
@@ -118,8 +119,22 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
     const snapshot = {
         entries: snapshotTree.entries ?? [],
         message: "app",
-        sequenceNumber: documentAttributes.sequenceNumber,
+        sequenceNumber: 1,
         type: SnapshotType.Container,
+        ops: [{
+            op: {
+                clientId: null,
+                clientSequenceNumber: -1,
+                contents: null,
+                minimumSequenceNumber: 0,
+                referenceSequenceNumber: -1,
+                sequenceNumber: 1,
+                timestamp: Date.now(),
+                traces: [],
+                type: MessageType.NoOp,
+            },
+            sequenceNumber: 1,
+        }],
     };
     return snapshot;
 }

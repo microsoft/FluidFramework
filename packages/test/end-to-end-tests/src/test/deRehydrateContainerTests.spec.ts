@@ -29,8 +29,6 @@ import { SharedCounter } from "@fluidframework/counter";
 import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-const detachedContainerRefSeqNumber = 0;
-
 describe(`Dehydrate Rehydrate Container Test`, () => {
     const documentId = "deReHydrateContainerTest";
     const codeDetails: IFluidCodeDetails = {
@@ -119,10 +117,8 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
         const protocolAttributes: IDocumentAttributes =
             JSON.parse(fromBase64ToUtf8(snapshotTree.trees[".protocol"].blobs[protocolAttributesBlobId]));
-        assert.strictEqual(protocolAttributes.sequenceNumber, detachedContainerRefSeqNumber, "initial aeq #");
-        assert(
-            protocolAttributes.minimumSequenceNumber <= protocolAttributes.sequenceNumber,
-            "Min Seq # <= seq #");
+        assert.strictEqual(protocolAttributes.sequenceNumber, 0, "Seq number should be 0");
+        assert.strictEqual(protocolAttributes.minimumSequenceNumber, 0, "Min Seq number should be 0");
 
         // Check for default dataStore
         const defaultDataStoreBlobId = snapshotTree.trees.default.blobs[".component"];
