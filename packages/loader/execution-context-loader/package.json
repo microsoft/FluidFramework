@@ -31,7 +31,7 @@
     "@fluidframework/container-definitions": "^0.28.2",
     "@fluidframework/core-interfaces": "^0.28.2",
     "@fluidframework/driver-definitions": "^0.28.2",
-    "@fluidframework/protocol-definitions": "^0.1014.0",
+    "@fluidframework/protocol-definitions": "^0.1014.1",
     "comlink": "^4.0.2",
     "debug": "^4.1.1"
   },

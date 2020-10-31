@@ -28,7 +28,7 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.25.0",
     "@fluidframework/driver-definitions": "^0.28.2",
-    "@fluidframework/protocol-definitions": "^0.1014.0"
+    "@fluidframework/protocol-definitions": "^0.1014.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
