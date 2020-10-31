@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/ink";
-export const pkgVersion = "0.28.2";
+export const pkgVersion = "0.28.3";
