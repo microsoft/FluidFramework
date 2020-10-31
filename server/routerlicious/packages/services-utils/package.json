@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-utils",
-  "version": "0.1014.1",
+  "version": "0.1014.2",
   "description": "Fluid server services shared utilities",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -25,7 +25,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/protocol-definitions": "^0.1014.1",
+    "@fluidframework/protocol-definitions": "^0.1014.2",
     "@sentry/node": "^5.6.2",
     "debug": "^4.1.1",
     "jsonwebtoken": "^8.4.0",
