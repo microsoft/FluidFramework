@@ -294,11 +294,10 @@ export interface ISerializedValue {
 /**
  * ValueTypes handle ops slightly differently from SharedObjects or plain JS objects.  Since the Map/Directory doesn't
  * know how to handle the ValueType's ops, those ops are instead passed along to the ValueType for processing.
- * IValueTypeOperationValue is that passed-along op.  The opName on it is the ValueType-specific operation (e.g.
- * "increment" on Counter) and the value is whatever params the ValueType needs to complete that operation.
- * Similar to ISerializableValue, it is serializable via JSON.stringify/parse but differs in that it has no
- * equivalency with an in-memory value - rather it just describes an operation to be applied to an already-in-memory
- * value.
+ * IValueTypeOperationValue is that passed-along op.  The opName on it is the ValueType-specific operation and the
+ * value is whatever params the ValueType needs to complete that operation.  Similar to ISerializableValue, it is
+ * serializable via JSON.stringify/parse but differs in that it has no equivalency with an in-memory value - rather
+ * it just describes an operation to be applied to an already-in-memory value.
  * @alpha
  */
 export interface IValueTypeOperationValue {

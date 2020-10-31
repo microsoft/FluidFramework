@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import {
     IBlob,
     ISequencedDocumentMessage,
@@ -648,7 +648,7 @@ function processQuorumMessages(
         const clientId = JSON.parse(dataString);
         session = sessionsInProgress.get(clientId);
         sessionsInProgress.delete(clientId);
-        assert(session);
+        assert(!!session);
         if (session) {
             if (!skipMessage) {
                 session.reportOp(message.timestamp);
@@ -665,7 +665,7 @@ function processQuorumMessages(
         session = sessionsInProgress.get(message.clientId);
         if (session === undefined) {
             session = sessionsInProgress.get(noClientName);
-            assert(session);
+            assert(!!session);
         }
     }
     return session;

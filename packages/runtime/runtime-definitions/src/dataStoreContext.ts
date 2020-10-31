@@ -241,12 +241,14 @@ export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalF
 export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFluidDataStoreRegistry> {
     readonly documentId: string;
     readonly id: string;
-    // A data store created by a client, is a local data store for that client. Also, when a detached container loads
-    // from a snapshot, all the data stores are treated as local data stores because at that stage the container
-    // still doesn't exists in storage and so the data store couldn't have been created by any other client.
-    // Value of this never changes even after the data store is attached.
-    // As implementer of data store runtime, you can use this property to check that this data store belongs to this
-    // client and hence implement any scenario based on that.
+    /**
+     * A data store created by a client, is a local data store for that client. Also, when a detached container loads
+     * from a snapshot, all the data stores are treated as local data stores because at that stage the container
+     * still doesn't exists in storage and so the data store couldn't have been created by any other client.
+     * Value of this never changes even after the data store is attached.
+     * As implementer of data store runtime, you can use this property to check that this data store belongs to this
+     * client and hence implement any scenario based on that.
+     */
     readonly isLocalDataStore: boolean;
     /**
      * The package path of the data store as per the package factory.

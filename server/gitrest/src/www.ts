@@ -6,7 +6,7 @@
 import * as http from "http";
 import * as path from "path";
 import * as debug from "debug";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
 import { ExternalStorageManager } from "./externalStorageManager";

@@ -49,6 +49,8 @@ export class InsecureTokenProvider implements ITokenProvider {
             ver,
         };
 
-        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, this.tenantKey);
+        // The type definition of jsrsasign library is wrong. Remove the casting once fix is available.
+        const key: string = ({ utf8: this.tenantKey } as unknown) as string;
+        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, key);
     }
 }

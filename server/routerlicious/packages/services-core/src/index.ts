@@ -25,4 +25,5 @@ export * from "./secretManager";
 export * from "./storage";
 export * from "./taskMessages";
 export * from "./tenant";
+export * from "./token";
 export * from "./zookeeper";

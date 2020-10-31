@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -42,7 +41,7 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { LazyPromise } from "@fluidframework/common-utils";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
 import { NullChaincode, NullRuntime } from "./nullRuntime";
 
@@ -251,7 +250,7 @@ export class ContainerContext implements IContainerContext {
     public setConnectionState(connected: boolean, clientId?: string) {
         const runtime = this.runtime;
 
-        assert.strictEqual(connected, this.connected, "Mismatch in connection state while setting");
+        assert(connected === this.connected, "Mismatch in connection state while setting");
 
         runtime.setConnectionState(connected, clientId);
     }

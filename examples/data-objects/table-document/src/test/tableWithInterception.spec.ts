@@ -215,7 +215,8 @@ describe("Table Document with Interception", () => {
             try {
                 tableDocumentWithInterception.setCellValue(cell.row, cell.col, cell.value);
             } catch (error) {
-                assert(error instanceof assert.AssertionError,
+                assert.strictEqual(error.message,
+                    "Interception wrapper method called recursively from the interception callback",
                     "We should have caught an assert in setCellValue because it detects an infinite recursion");
                 asserted = true;
             }

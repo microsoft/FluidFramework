@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { EventEmitter } from "events";
 import { TaskManagerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -36,6 +35,7 @@ import {
     IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
 import {
+    assert,
     Deferred,
     Trace,
     TypedEventEmitter,
@@ -301,15 +301,15 @@ export class ScheduleManager {
                 return;
             }
 
-            // If only length one then clear
+            // If the batch contains only a single op, clear the batch flag.
             if (messages.length === 1) {
-                delete messages[0].metadata;
+                delete firstMessageMetadata.batch;
                 return;
             }
 
             // Set the batch flag to false on the last message to indicate the end of the send batch
             const lastMessage = messages[messages.length - 1];
-            lastMessage.metadata = { ...lastMessage.metadata, ...{ batch: false } };
+            lastMessage.metadata = { ...lastMessage.metadata, batch: false };
         });
 
         // Listen for updates and peek at the inbound
@@ -571,7 +571,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         content: any,
         localOpMetadata: unknown,
-        opMetaData: unknown,
+        opMetadata: Record<string, unknown> | undefined,
     ) => void {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.reSubmit;
@@ -801,7 +801,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
                 const snapshotTree = value as ISnapshotTree;
                 // Need to rip through snapshot.
-                const { pkg, snapshotFormatVersion } = readAndParseFromBlobs<IFluidDataStoreAttributes>(
+                const { pkg, snapshotFormatVersion, isRootDataStore }
+                    = readAndParseFromBlobs<IFluidDataStoreAttributes>(
                     snapshotTree.blobs,
                     snapshotTree.blobs[".component"]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
@@ -813,6 +814,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 } else {
                     throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
                 }
+
+                /**
+                 * If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that data
+                 * stores in older documents are not garbage collected incorrectly. This may lead to additional roots
+                 * in the document but they won't break.
+                 */
                 dataStoreContext = new LocalFluidDataStoreContext(
                     key,
                     pkgFromSnapshot,
@@ -822,7 +829,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.summaryTracker.createOrGetChild(key, this.deltaManager.lastSequenceNumber),
                     this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
                     (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
-                    snapshotTree);
+                    snapshotTree,
+                    isRootDataStore ?? true);
             }
             this.setNewContext(key, dataStoreContext);
         }
@@ -1136,7 +1144,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         raiseConnectedEvent(this._logger, this, connected, clientId);
 
         if (connected) {
-            assert(clientId);
+            assert(!!clientId);
             this.summaryManager.setConnected(clientId);
         } else {
             this.summaryManager.setDisconnected();
@@ -1328,12 +1336,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async createDataStore(pkg: string | string[]): Promise<IFluidRouter>
     {
-        return this._createDataStore(pkg);
+        return this._createDataStore(pkg, false /* isRoot */);
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>
     {
-        const fluidDataStore = await this._createDataStore(pkg, rootDataStoreId);
+        const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
         fluidDataStore.bindToContext();
         return fluidDataStore;
     }
@@ -1349,6 +1357,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
+            false /* isRootDataStore */,
         );
         this.setupNewContext(context);
         return context;
@@ -1356,19 +1365,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async _createDataStoreWithProps(pkg: string | string[], props?: any, id = uuid()):
         Promise<IFluidDataStoreChannel> {
-        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props).realize();
+        return this._createFluidDataStoreContext(
+            Array.isArray(pkg) ? pkg : [pkg], id, false /* isRoot */, props).realize();
     }
 
-    private async _createDataStore(pkg: string | string[], id = uuid()): Promise<IFluidDataStoreChannel>
+    private async _createDataStore(
+        pkg: string | string[],
+        isRoot: boolean,
+        id = uuid(),
+        ): Promise<IFluidDataStoreChannel>
     {
-        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id).realize();
+        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot).realize();
     }
 
     private canSendOps() {
         return this.connected && !this.deltaManager.readonly;
     }
 
-    private _createFluidDataStoreContext(pkg: string[], id: string, props?: any) {
+    private _createFluidDataStoreContext(pkg: string[], id: string, isRoot: boolean, props?: any) {
         const context = new LocalFluidDataStoreContext(
             id,
             pkg,
@@ -1379,6 +1393,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
+            isRoot,
             props,
         );
         this.setupNewContext(context);
@@ -1542,7 +1557,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     sequenceNumber: message.sequenceNumber,
                     snapshot: attachMessage.snapshot ?? {
                         id: null,
-                        entries: [createAttributesBlob(pkg)],
+                        entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
                     },
                 }),
             pkg);
@@ -1599,12 +1614,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private getContextDeferred(id: string): Deferred<FluidDataStoreContext> {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const deferred = this.contextsDeferred.get(id)!;
-        assert(deferred);
+        assert(!!deferred);
         return deferred;
     }
 
     private setNewContext(id: string, context?: FluidDataStoreContext) {
-        assert(context);
+        assert(!!context);
         assert(!this.contexts.has(id));
         this.contexts.set(id, context);
         const deferred = this.ensureContextDeferred(id);
@@ -1614,7 +1629,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private getContext(id: string): FluidDataStoreContext {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const context = this.contexts.get(id)!;
-        assert(context);
+        assert(!!context);
         return context;
     }
 
@@ -1663,7 +1678,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     } else {
                         // If this data store is not yet loaded, then there should be no changes in the snapshot from
                         // which it was created as it is detached container. So just use the previous snapshot.
-                        assert(this.context.baseSnapshot,
+                        assert(!!this.context.baseSnapshot,
                             "BaseSnapshot should be there as detached container loaded from snapshot");
                         dataStoreSummary = convertSnapshotToSummaryTree(this.context.baseSnapshot.trees[key]);
                     }
@@ -1867,7 +1882,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         content: any,
         localOpMetadata: unknown = undefined,
-        opMetadata: unknown = undefined): void {
+        opMetadata: Record<string, unknown> | undefined = undefined,
+    ): void {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
@@ -1877,9 +1893,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const maxOpSize = this.context.deltaManager.maxMessageSize;
 
             // If in manual flush mode we will trigger a flush at the next turn break
-            let batchBegin = false;
             if (this.flushMode === FlushMode.Manual && !this.needsFlush) {
-                batchBegin = true;
+                // eslint-disable-next-line no-param-reassign
+                opMetadata = { ...opMetadata, batch: true };
                 this.needsFlush = true;
 
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
@@ -1899,8 +1915,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 clientSequenceNumber = this.submitRuntimeMessage(
                     type,
                     content,
-                    this._flushMode === FlushMode.Manual,
-                    batchBegin ? { batch: true } : opMetadata);
+                    /* batch: */ this._flushMode === FlushMode.Manual,
+                    opMetadata);
             } else {
                 clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             }
@@ -1983,7 +1999,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private reSubmit(type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetaData: unknown) {
+    private reSubmit(
+        type: ContainerMessageType,
+        content: any,
+        localOpMetadata: unknown,
+        opMetadata: Record<string, unknown> | undefined,
+    ) {
         switch (type) {
             case ContainerMessageType.FluidDataStoreOp:
                 // For Operations, call resubmitDataStoreOp which will find the right store
@@ -1996,7 +2017,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
             case ContainerMessageType.BlobAttach:
-                this.submit(type, content, localOpMetadata, opMetaData);
+                this.submit(type, content, localOpMetadata, opMetadata);
                 break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
@@ -2006,7 +2027,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
         const context = this.getContext(envelope.address);
-        assert(context, "There should be a store context for the op");
+        assert(!!context, "There should be a store context for the op");
         context.reSubmit(envelope.contents, localOpMetadata);
     }
 
@@ -2154,13 +2175,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private async getVersionFromStorage(versionId: string): Promise<IVersion> {
         const versions = await this.storage.getVersions(versionId, 1);
-        assert(versions && versions[0], "Failed to get version from storage");
+        assert(!!versions && !!versions[0], "Failed to get version from storage");
         return versions[0];
     }
 
     private async getSnapshotFromStorage(version: IVersion): Promise<ISnapshotTree> {
         const snapshot = await this.storage.getSnapshotTree(version);
-        assert(snapshot, "Failed to get snapshot from storage");
+        assert(!!snapshot, "Failed to get snapshot from storage");
         return snapshot;
     }
 }

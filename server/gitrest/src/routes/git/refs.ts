@@ -74,7 +74,7 @@ async function createRef(
         0,
         "");
 
-    if (createParams.config.enabled) {
+    if (createParams.config?.enabled) {
         try {
             await externalStorageManager.write(repo, createParams.ref, createParams.sha, false);
         } catch (e) {
@@ -111,7 +111,7 @@ async function patchRef(
         patchParams.force ? 1 : 0,
         "");
 
-    if (patchParams.config.enabled) {
+    if (patchParams.config?.enabled) {
         try {
             await externalStorageManager.write(repo, refId, patchParams.sha, true);
         } catch (e) {

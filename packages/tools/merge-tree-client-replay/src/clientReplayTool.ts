@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import fs from "fs";
+import { assert } from "@fluidframework/common-utils";
 import { FileDeltaStorageService } from "@fluidframework/file-driver";
 import {
     createGroupOp,
@@ -246,12 +246,10 @@ export class ClientReplayTool {
             const readonlyClient = clients.get("readonly");
             for (const client of clients) {
                 for (const mergeTree of client[1]) {
-                    assert.equal(
-                        mergeTree[1].getLength(),
-                        readonlyClient.get(mergeTree[0]).getLength());
-                    assert.equal(
-                        mergeTree[1].getText(),
-                        readonlyClient.get(mergeTree[0]).getText());
+                    assert(
+                        mergeTree[1].getLength() === readonlyClient.get(mergeTree[0]).getLength());
+                    assert(
+                        mergeTree[1].getText() === readonlyClient.get(mergeTree[0]).getText());
                 }
             }
         }

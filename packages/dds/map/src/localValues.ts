@@ -10,13 +10,11 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
-    ISharedObject,
     parseHandles,
     serializeHandles,
     SharedObject,
     ValueType,
 } from "@fluidframework/shared-object-base";
-import { CounterValueType } from "./counter";
 import {
     ISerializableValue,
     ISerializedValue,
@@ -63,13 +61,6 @@ export function makeSerializable(
 }
 
 /**
- * Supported value types.
- */
-export const valueTypes: readonly IValueType<any>[] = [
-    new CounterValueType(),
-];
-
-/**
  * Manages a contained plain value.  May also contain shared object handles.
  */
 export class PlainLocalValue implements ILocalValue {
@@ -101,39 +92,6 @@ export class PlainLocalValue implements ILocalValue {
         return {
             type: this.type,
             value,
-        };
-    }
-}
-
-/**
- * SharedLocalValue exists for supporting older documents and is now deprecated.
- * @deprecated
- */
-export class SharedLocalValue implements ILocalValue {
-    /**
-     * Create a new SharedLocalValue.
-     * @param value - The shared object to store
-     * @deprecated
-     */
-    constructor(public readonly value: ISharedObject) {
-    }
-
-    /**
-     * {@inheritDoc ILocalValue."type"}
-     * @deprecated
-     */
-    public get type(): string {
-        return ValueType[ValueType.Shared];
-    }
-
-    /**
-     * {@inheritDoc ILocalValue.makeSerialized}
-     * @deprecated
-     */
-    public makeSerialized(): ISerializedValue {
-        return {
-            type: this.type,
-            value: this.value.id,
         };
     }
 }
@@ -242,9 +200,6 @@ export class LocalValueMaker {
 
             return new PlainLocalValue(translatedValue);
         } else if (this.valueTypes.has(serializable.type)) {
-            if (serializable.type === "counter") {
-                console.error("The Counter value type has been deprecated. Please use the SharedCounter DDS instead.");
-            }
             const valueType = this.valueTypes.get(serializable.type);
 
             serializable.value = parseHandles(
@@ -280,8 +235,6 @@ export class LocalValueMaker {
      * @alpha
      */
     public makeValueType(type: string, emitter: IValueOpEmitter, params: any): ILocalValue {
-        // params is the initialization information for the value type, e.g. initial count on a counter
-        // type is the value type Name to initialize, e.g. "counter"
         const valueType = this.loadValueType(params, type, emitter);
         return new ValueTypeLocalValue(valueType, this.valueTypes.get(type));
     }

@@ -47,8 +47,10 @@ describe("LocalDeltaConnectionServer", () => {
             ver: "1.0",
         };
 
+        // The type definition of jsrsasign library is wrong. Remove the casting once fix is available.
+        const key: string = ({ utf8: "key" } as unknown) as string;
          // eslint-disable-next-line no-null/no-null
-        const token = jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, "key");
+        const token = jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, key);
 
         return deltaConnectionServer.connectWebSocket(
             "tenant",
