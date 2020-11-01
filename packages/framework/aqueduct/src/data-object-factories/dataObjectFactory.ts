@@ -9,6 +9,7 @@ import {
     SharedDirectory,
     SharedMap,
 } from "@fluidframework/map";
+import { IEvent } from "@fluidframework/common-definitions";
 import {
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
@@ -28,15 +29,16 @@ import { PureDataObjectFactory } from "./pureDataObjectFactory";
  * O - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced data object may take during creation
  */
-export class DataObjectFactory<TObj extends DataObject<O, S>, O, S> extends PureDataObjectFactory<TObj, O, S>
+export class DataObjectFactory<TObj extends DataObject<O, S, E>, O, S, E extends IEvent = IEvent>
+    extends PureDataObjectFactory<TObj, O, S, E>
 {
     constructor(
         type: string,
-        ctor: new (props: IDataObjectProps<O>) => TObj,
+        ctor: new (props: IDataObjectProps<O, S>) => TObj,
         sharedObjects: readonly IChannelFactory[] = [],
         optionalProviders: FluidObjectSymbolProvider<O>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,
-        runtimeCtor: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
+        runtimeFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
     ) {
         const mergedObjects = [...sharedObjects];
 
@@ -57,7 +59,7 @@ export class DataObjectFactory<TObj extends DataObject<O, S>, O, S> extends Pure
             mergedObjects,
             optionalProviders,
             registryEntries,
-            runtimeCtor,
+            runtimeFactory,
         );
     }
 }
