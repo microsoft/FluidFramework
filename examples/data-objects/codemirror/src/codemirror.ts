@@ -11,7 +11,10 @@ import {
     IResponse,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { FluidObjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
+import {
+    FluidObjectHandle,
+    createDataStoreRuntimeWithRouter,
+} from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     MergeTreeDeltaType,
@@ -273,16 +276,11 @@ class SmdeFactory implements IFluidDataStoreFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(sequenceFactory.type, sequenceFactory);
 
-        const runtime = FluidDataStoreRuntime.load(
+        return createDataStoreRuntimeWithRouter(
             context,
-            dataTypes);
-
-        const progressCollectionP = CodeMirrorComponent.load(runtime, context);
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const progressCollection = await progressCollectionP;
-            return progressCollection.request(request);
-        });
-        return runtime;
+            dataTypes,
+            CodeMirrorComponent.load,
+        );
     }
 }
 
