@@ -5,7 +5,7 @@
 
 import { parse } from "url";
 import _ from "lodash";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
@@ -139,7 +139,6 @@ export function create(
 
                     const umd = pkg?.resolvedPackage?.fluid?.browser?.umd;
                     // TODO: possible bug?
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (!umd) {
                         return [];
                     }

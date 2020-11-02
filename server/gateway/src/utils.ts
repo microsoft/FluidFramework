@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient, ScopeType } from "@fluidframework/protocol-definitions";
+import { IAlfredUser } from "@fluidframework/routerlicious-urlresolver";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { generateToken } from "@fluidframework/server-services-utils";
 import { Request } from "express";
 import _ from "lodash";
 
@@ -18,6 +21,24 @@ export interface IJWTClaims {
         id: string;
         name: string;
     };
+}
+
+/**
+ * Helper function to generate r11s token for given tenants
+ */
+export function getR11sToken(
+    tenantId: string,
+    documentId: string,
+    tenants: IAlfredTenant[],
+    scopes: ScopeType[],
+    user?: IAlfredUser): string {
+    for (const tenant of tenants) {
+        if (tenantId === tenant.id) {
+            return generateToken(tenantId, documentId, tenant.key, scopes, user);
+        }
+    }
+
+    throw new Error("Invalid tenant");
 }
 
 /**

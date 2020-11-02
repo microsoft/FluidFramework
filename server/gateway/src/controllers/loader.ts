@@ -9,9 +9,13 @@ import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
 } from "@fluidframework/driver-definitions";
+import { MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
 import { WebWorkerLoaderFactory } from "@fluidframework/execution-context-loader";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import {
+    DefaultErrorTracking,
+    DefaultTokenProvider,
+    RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { IGitCache } from "@fluidframework/server-services-client";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
@@ -53,7 +57,10 @@ export async function initialize(
         async () => Promise.resolve(resolved.tokens.storageToken),
         async () => Promise.resolve(resolved.tokens.socketToken)));
 
+    // Remove default token provider
+    const tokenProvider = new DefaultTokenProvider(resolved.tokens.jwt);
     documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
+        tokenProvider,
         false,
         new DefaultErrorTracking(),
         false,
@@ -65,10 +72,11 @@ export async function initialize(
         jwt,
         new Map<string, IFluidResolvedUrl>([[url, resolved]]));
 
+    const multiDocumentFactory = MultiDocumentServiceFactory.create(documentServiceFactories);
     const hostConfig: IBaseHostConfig = {
-        documentServiceFactory: documentServiceFactories,
+        documentServiceFactory: multiDocumentFactory,
         urlResolver: resolver,
-        config,
+        options: config,
         codeResolver: new SemVerCdnCodeResolver(),
         scope: services,
         proxyLoaderFactories: new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]),
