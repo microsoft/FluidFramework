@@ -13,7 +13,11 @@ import {
     IFrameDocumentServiceProxyFactory,
 } from "@fluidframework/iframe-driver";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import {
+    DefaultErrorTracking,
+    RouterliciousDocumentServiceFactory,
+    DefaultTokenProvider,
+} from "@fluidframework/routerlicious-driver";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { IGitCache } from "@fluidframework/server-services-client";
 import Axios from "axios";
@@ -41,7 +45,10 @@ export async function initialize(
         async () => Promise.resolve(resolved.tokens.storageToken),
         async () => Promise.resolve(resolved.tokens.socketToken)));
 
+    // TODO: Remove default token provider
+    const defaultTokenProvider = new DefaultTokenProvider(resolved.tokens.jwt);
     documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
+        defaultTokenProvider,
         false,
         new DefaultErrorTracking(),
         false,

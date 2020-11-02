@@ -4,7 +4,7 @@
  */
 
 import _ from "lodash";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";
 import { IClientConfig } from "@fluidframework/odsp-doclib-utils";
@@ -18,6 +18,7 @@ import { v4 as uuid } from "uuid";
 import dotenv from "dotenv";
 import { IAlfred } from "./interfaces";
 import { isSpoTenant, spoGetResolvedUrl } from "./odspUtils";
+import { getR11sToken } from "./utils";
 
 dotenv.config();
 
@@ -74,7 +75,8 @@ export function resolveUrl(
             documentId,
         };
 
-        const resolverList = [new RouterliciousUrlResolver(endPointConfig, undefined, appTenants, scopes, user)];
+        const token = getR11sToken(tenantId, documentId, appTenants, scopes, user);
+        const resolverList = [new RouterliciousUrlResolver(endPointConfig, async () => Promise.resolve(token))];
         const resolvedP = configurableUrlResolver(resolverList, request);
         const fullTreeP = alfred.getFullTree(tenantId, documentId);
         // RouterliciousUrlResolver only resolves as IFluidResolvedUrl
