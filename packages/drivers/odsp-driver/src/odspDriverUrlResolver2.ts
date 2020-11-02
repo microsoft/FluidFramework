@@ -104,11 +104,10 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
 
         const odspResolvedUrl = await new OdspDriverUrlResolver().resolve(requestToBeResolved);
 
-        // Generate sharingLink only if main url is not sharing link.
-        if (!isSharingLink) {
-            try {
-                sharingLinkP = this.getShareLinkPromise(odspResolvedUrl);
-            } catch (error) {}
+        // Kick start the sharing link request if we don't already have it already as a performance optimization.
+        // For detached create new, we don't have an item id yet and therefore cannot generate a share link
+        if (!isSharingLink && odspResolvedUrl.itemId) {
+            sharingLinkP = this.getShareLinkPromise(odspResolvedUrl);
         }
         if (sharingLinkP) {
             odspResolvedUrl.sharingLinkP = sharingLinkP;
