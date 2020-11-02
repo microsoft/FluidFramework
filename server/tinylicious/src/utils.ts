@@ -9,7 +9,8 @@ import { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-unresolved
 import { Params } from "express-serve-static-core";
 import * as _ from "lodash";
-import { IAlfredTenant, generateToken } from "@fluidframework/server-services-client";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { generateToken } from "@fluidframework/server-services-utils";
 
 /**
  * Helper function to return tenant specific configuration

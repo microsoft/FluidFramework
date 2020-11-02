@@ -22,7 +22,7 @@
     "postinstall:lerna:win32": "npm run pre-lerna-install:win32 && (lerna bootstrap --strict --hoist & npm run post-lerna-install:win32)",
     "pre-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json package-lock.json.bak; [ -f lerna-package-lock.json ] && mv lerna-package-lock.json package-lock.json; exit 0",
     "pre-lerna-install:win32": "if exist package-lock.json move package-lock.json package-lock.json.bak && if exist lerna-package-lock.json move lerna-package-lock.json package-lock.json",
-    "start": "node dist/www.js",
+    "start": "node packages/historian/dist/www.js",
     "test": "lerna run test --stream --no-bail --no-sort",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'"

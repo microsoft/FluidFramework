@@ -29,8 +29,6 @@ const getTinyliciousUrlResolver =
         "http://localhost:3000",
         "http://localhost:3000",
         "tinylicious",
-        "12345",
-        { id: "userid0" },
         "bearer");
 
 export async function loadFrame(iframeId: string, logId: string) {

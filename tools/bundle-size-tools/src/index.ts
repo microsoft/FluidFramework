@@ -4,6 +4,7 @@
  */
 
 export * from './ADO';
+export * from './bannedModulesPlugin/bannedModulesPlugin';
 export * from './BundleBuddyTypes';
 export * from './BundleBuddyConfigWebpackPlugin';
 export * from './compareBundles';

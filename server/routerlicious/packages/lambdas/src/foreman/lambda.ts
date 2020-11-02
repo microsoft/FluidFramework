@@ -17,9 +17,6 @@ import { SequencedLambda } from "../sequencedLambda";
 // TODO: Move this to config.
 const RequestWindowMS = 15000;
 
-const generateToken =
-    (_tenantId: string, _docId: string, _key: string, _scopes: ScopeType[]) => "TODO# 4010: Actually pass a token here";
-
 export class ForemanLambda extends SequencedLambda {
     private readonly taskQueueMap = new Map<string, string>();
     private readonly rateLimiter = new RateLimiter(RequestWindowMS);
@@ -27,6 +24,7 @@ export class ForemanLambda extends SequencedLambda {
     constructor(
         private readonly messageSender: core.ITaskMessageSender,
         private readonly tenantManager: core.ITenantManager,
+        private readonly tokenGenerator: core.TokenGenerator,
         private readonly permissions: any,
         protected context: core.IContext,
         protected tenantId: string,
@@ -91,8 +89,7 @@ export class ForemanLambda extends SequencedLambda {
                     },
                     tenantId,
 
-                    // TODO: #4010 extract an interface for token signing that is isomorphic
-                    token: generateToken(tenantId, docId, key, scopes),
+                    token: this.tokenGenerator(tenantId, docId, key, scopes),
                 };
                 this.messageSender.sendTask(
                     queueName,

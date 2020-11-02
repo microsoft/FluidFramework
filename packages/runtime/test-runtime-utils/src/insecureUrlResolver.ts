@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { parse } from "url";
+import { assert } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IFluidResolvedUrl,
@@ -12,12 +12,7 @@ import {
     IUrlResolver,
     DriverHeader,
 } from "@fluidframework/driver-definitions";
-import {
-    ITokenClaims,
-    IUser,
-} from "@fluidframework/protocol-definitions";
 import Axios from "axios";
-import { KJUR as jsrsasign } from "jsrsasign";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
@@ -41,8 +36,6 @@ export class InsecureUrlResolver implements IUrlResolver {
         private readonly ordererUrl: string,
         private readonly storageUrl: string,
         private readonly tenantId: string,
-        private readonly tenantKey: string,
-        private readonly user: IUser,
         private readonly bearer: string,
         private readonly isForNodeTest: boolean = false,
     ) { }
@@ -108,7 +101,7 @@ export class InsecureUrlResolver implements IUrlResolver {
                 ordererUrl: this.ordererUrl,
                 storageUrl,
             },
-            tokens: { jwt: this.auth(this.tenantId, documentId) },
+            tokens: {},
             type: "fluid",
             url: documentUrl,
         };
@@ -120,7 +113,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 
         const parsedUrl = parse(fluidResolvedUrl.url);
         const [, , documentId] = parsedUrl.pathname?.split("/");
-        assert(documentId);
+        assert(!!documentId);
 
         let url = relativeUrl;
         if (url.startsWith("/")) {
@@ -139,19 +132,5 @@ export class InsecureUrlResolver implements IUrlResolver {
             },
         };
         return createNewRequest;
-    }
-
-    private auth(tenantId: string, documentId: string) {
-        const claims: ITokenClaims = {
-            documentId,
-            scopes: ["doc:read", "doc:write", "summary:write"],
-            tenantId,
-            user: this.user,
-            iat: Math.round(new Date().getTime() / 1000),
-            exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
-            ver: "1.0",
-        };
-
-        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, this.tenantKey);
     }
 }

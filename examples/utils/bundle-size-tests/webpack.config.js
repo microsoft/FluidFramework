@@ -7,6 +7,7 @@ const path = require('path');
 const { BundleComparisonPlugin } = require('@mixer/webpack-bundle-compare/dist/plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin');
+const { BannedModulesPlugin } = require('@fluidframework/bundle-size-tools')
 
 module.exports = {
   entry: {
@@ -39,6 +40,13 @@ module.exports = {
   },
   node: false,
   plugins: [
+    new BannedModulesPlugin({
+        bannedModules: [{
+                moduleName: 'assert',
+                reason: 'This module is very large when bundled in browser facing Javascript, instead use the assert API in @fluidframework/common-utils'
+            }
+        ]
+    }),
     new DuplicatePackageCheckerPlugin({
       // Also show module that is requiring each duplicate package
       verbose: true,

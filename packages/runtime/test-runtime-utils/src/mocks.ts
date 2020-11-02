@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { EventEmitter } from "events";
+import { assert ,
+    Deferred,
+    fromUtf8ToBase64,
+} from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
@@ -18,10 +21,7 @@ import {
     ILoader,
     AttachState,
 } from "@fluidframework/container-definitions";
-import {
-    Deferred,
-    fromUtf8ToBase64,
-} from "@fluidframework/common-utils";
+
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     IBlob,
@@ -250,7 +250,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
 
     async propose(key: string, value: any) {
         if (this.map.has(key)) {
-            assert.fail(`${key} exists`);
+            throw new Error(`${key} exists`);
         }
         this.map.set(key, value);
         this.eventEmitter.emit("approveProposal", 0, key, value);

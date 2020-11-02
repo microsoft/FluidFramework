@@ -10,6 +10,7 @@ import {
     ITenantManager,
     IWebSocketServer,
     ILogger,
+    TokenGenerator,
 } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
 import { IConcreteNodeFactory } from "./interfaces";
@@ -27,6 +28,7 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
         private readonly tenantManager: ITenantManager,
         private readonly permission: any,
         private readonly maxMessageSize: number,
+        private readonly tokenGenerator: TokenGenerator,
         private readonly logger: ILogger) {
     }
 
@@ -42,6 +44,7 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
             this.tenantManager,
             this.permission,
             this.maxMessageSize,
+            this.tokenGenerator,
             this.logger);
 
         return node;

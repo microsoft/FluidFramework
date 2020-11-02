@@ -32,7 +32,6 @@ import {
     TokenFetchOptions,
     isTokenFromCache,
     tokenFromResponse,
-    SharingLinkTokenFetcher,
 } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
 
@@ -85,8 +84,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     logger2,
                     createNewSummary,
                     epochTracker,
-                    this.getSharingLinkToken ?
-                        this.toInstrumentedSharingLinkTokenFetcher(logger2, this.getSharingLinkToken) : undefined);
+                );
                 const docService = this.createDocumentService(odspResolvedUrl, logger, epochTracker);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
@@ -103,7 +101,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
    * @param persistedCache - PersistedCache provided by host for use in this session.
-   * @param getSharingLinkToken - function that can provide token used to fetch share link for a container.
    */
     constructor(
         private readonly getStorageToken: StorageTokenFetcher,
@@ -111,7 +108,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         private readonly getSocketIOClient: () => Promise<SocketIOClientStatic>,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
-        private readonly getSharingLinkToken?: SharingLinkTokenFetcher,
     ) {
     }
 
@@ -173,22 +169,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 logger,
                 { eventName: "GetWebsocketToken" },
                 async (event) => tokenFetcher(options.refresh, options.claims).then((tokenResponse) => {
-                    event.end({ fromCache: isTokenFromCache(tokenResponse) });
-                    return tokenFromResponse(tokenResponse);
-                }));
-        };
-    }
-
-    private toInstrumentedSharingLinkTokenFetcher(
-        logger: ITelemetryLogger,
-        tokenFetcher: SharingLinkTokenFetcher,
-    ): (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => Promise<string | null> {
-        return async (options: TokenFetchOptions, isForFileDefaultUrl: boolean) => {
-            return PerformanceEvent.timedExecAsync(
-                logger,
-                { eventName: "GetSharingLinkToken" },
-                async (event) => tokenFetcher(isForFileDefaultUrl, options.refresh, options.claims)
-                .then((tokenResponse) => {
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
                     return tokenFromResponse(tokenResponse);
                 }));

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import {
     IFluidObject,
     IFluidHandle,
@@ -18,18 +17,19 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { IDirectory } from "@fluidframework/map";
-import { EventForwarder } from "@fluidframework/common-utils";
+import { assert, EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { serviceRoutePathRoot } from "../container-services";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export interface IDataObjectProps<O extends IFluidObject = object> {
-    readonly runtime: IFluidDataStoreRuntime,
-    readonly context: IFluidDataStoreContext,
+export interface IDataObjectProps<O = object, S = undefined> {
+    readonly runtime: IFluidDataStoreRuntime;
+    readonly context: IFluidDataStoreContext;
     // eslint-disable-next-line @typescript-eslint/ban-types
-    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>,
+    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>;
+    readonly initProps?: S;
 }
 
 /**
@@ -69,6 +69,10 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     // eslint-disable-next-line @typescript-eslint/ban-types
     protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>;
 
+    protected initProps?: S;
+
+    protected initializeP: Promise<void> | undefined;
+
     public get disposed() { return this._disposed; }
 
     public get id() { return this.runtime.id; }
@@ -81,11 +85,22 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
      */
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
-    public constructor(props: IDataObjectProps<O>) {
+    public static async getDataObject(runtime: IFluidDataStoreRuntime) {
+        const obj = (runtime as any)._dataObject as PureDataObject;
+        assert(obj !== undefined, "Runtime has no DataObject!");
+        await obj.finishInitialization();
+        return obj;
+    }
+
+    public constructor(props: IDataObjectProps<O, S>) {
         super();
         this.runtime = props.runtime;
         this.context = props.context;
         this.providers = props.providers;
+        this.initProps = props.initProps;
+
+        assert((this.runtime as any)._dataObject === undefined);
+        (this.runtime as any)._dataObject = this;
 
         // Create a FluidObjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
         // same as reaching its routeContext (FluidDataStoreRuntime) so there is so the relative path to it from the
@@ -131,19 +146,34 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     // #endregion IFluidLoadable
 
     /**
+     * Call this API to ensure PureDataObject is fully initialized
+     * initialization happens on demand, only on as-needed bases.
+     * In most cases you should allow factory/object to decide when to finish initialization.
+     * But if you are supplying your own implementation of DataStoreRuntime factory and overriding some methods
+     * and need fully initialized object, then you can call this API to ensure object is fully initialized.
+     */
+    public async finishInitialization(): Promise<void> {
+        if (this.initializeP !== undefined) {
+            return this.initializeP;
+        }
+        this.initializeP = this.initializeInternal();
+        return this.initializeP;
+    }
+
+    /**
      * Internal initialize implementation. Overwriting this will change the flow of the PureDataObject and should
      * generally not be done.
      *
      * Calls initializingFirstTime, initializingFromExisting, and hasInitialized. Caller is
      * responsible for ensuring this is only invoked once.
      */
-    public async initializeInternal(props?: S): Promise<void> {
+    public async initializeInternal(): Promise<void> {
         await this.preInitialize();
         if (this.runtime.existing) {
-            assert(props === undefined);
+            assert(this.initProps === undefined);
             await this.initializingFromExisting();
         } else {
-            await this.initializingFirstTime(this.context.createProps as S ?? props);
+            await this.initializingFirstTime(this.context.createProps as S ?? this.initProps);
         }
         await this.hasInitialized();
     }

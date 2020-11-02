@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { IVectorConsumer } from "@tiny-calc/nano";
 import { Handle, isHandleValid } from "./handletable";
 import { PermutationVector, PermutationSegment } from "./permutationvector";

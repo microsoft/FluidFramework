@@ -59,7 +59,7 @@ export interface IFluidPackage {
 }
 
 /**
- * Check if the package.json defines a Fluid module, which requires a `fluid` entry
+ * Check if the package.json defines a Fluid package
  * @param pkg - the package json data to check if it is a Fluid package.
  */
 export const isFluidPackage = (pkg: any): pkg is Readonly<IFluidPackage> =>
@@ -96,3 +96,35 @@ export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluid
         && (typeof maybeCodeDetails?.package === "string" || isFluidPackage(maybeCodeDetails?.package))
         && (maybeCodeDetails?.config === undefined || typeof maybeCodeDetails?.config === "object");
 };
+
+export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer = "IFluidCodeDetailsComparer";
+
+export interface IProvideFluidCodeDetailsComparer {
+    readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer ;
+}
+
+/**
+ * Provides capability to compare Fluid code details.
+ */
+export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
+
+    /**
+     * Determines if the `candidate` code details satisfy the constraints specified in `constraint` code details.
+     *
+     * Similar semantics to:
+     *      https://github.com/npm/node-semver#usage
+     */
+    satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
+
+    /**
+     * Return a number representing the ascending sort order of the `a` and `b` code details;
+     *      `< 0` if `a < b`.
+     *      `= 0` if `a === b`.
+     *      `> 0` if `a > b`.
+     *      `undefined` if `a` is not comparable to `b`.
+     *
+     * Similar semantics to:
+     *      https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#Description
+     */
+    compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
+}
