@@ -204,7 +204,7 @@ Markdown formatting _goes_ **here.**
 ### Diagrams
 
 We prefer text-based diagrams that are converted to images at build time. You can create inline diagrams with
-[Mermaid](https://mermaid-js.github.io/), or you can crerate ASCII art diagrams that will be converted to PNGs at build
+[Mermaid](https://mermaid-js.github.io/), or you can create ASCII art diagrams that will be converted to PNGs at build
 time.
 
 #### Mermaid diagrams
@@ -255,8 +255,11 @@ Class08 <--> C2: Cool label
 
 #### ASCII art diagrams with ditaa
 
-[ditaa]() is a tool to convert ASCII art block diagrams to PNGs. Any file in the `/docs/content` folder with a
-`.ditaa` file extension will be converted to a PNG file in the same folder at build time.
+[ditaa](https://github.com/stathissideris/ditaa) is a tool to convert ASCII art block diagrams to PNGs. Any file
+in the `/docs/content` folder with a `.ditaa` file extension will be converted to a PNG file in the same folder at
+build time.
+
+[asciiflow](http://asciiflow.com/) is an in-browser editor that makes it easier to create ASCII art block diagrams.
 
 **Input**
 
