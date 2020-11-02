@@ -239,7 +239,7 @@ export interface ILoaderHeader {
     [LoaderHeader.executionContext]: string;
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
-    [LoaderHeader.version]: string | undefined | null;
+    [LoaderHeader.version]: string | undefined;
 }
 
 declare module "@fluidframework/core-interfaces" {

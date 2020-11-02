@@ -989,12 +989,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Load container.
      *
      * @param specifiedVersion - one of the following
-     *   - null: use ops, no snapshots
      *   - undefined - fetch latest snapshot
      *   - otherwise, version sha to load snapshot
      * @param pause - start the container in a paused state
      */
-    private async load(specifiedVersion: string | null | undefined, pause: boolean) {
+    private async load(specifiedVersion: string | undefined, pause: boolean) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
         }
@@ -1023,45 +1022,26 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._storageService = await this.getDocumentStorageService();
         this._attachState = AttachState.Attached;
 
-        // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
-        const maybeSnapshotTree = specifiedVersion === null ? undefined
-            : await this.fetchSnapshotTree(specifiedVersion);
+        // Fetch specified snapshot
+        const snapshotTree = await this.fetchSnapshotTree(specifiedVersion);
+        assert(snapshotTree !== undefined, "Snapshot should be there to load from in load case!!");
 
-        const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
+        const attributes = await this.getDocumentAttributes(this.storageService, snapshotTree);
+        // Initialize document details
+        this._existing = true;
+        this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
 
         // Attach op handlers to start processing ops
         this.attachDeltaManagerOpHandler(attributes);
 
-        // ...load in the existing quorum
-        // Initialize the protocol handler
-        const protocolHandlerP =
-            this.loadAndInitializeProtocolState(attributes, this.storageService, maybeSnapshotTree);
-
-        let loadDetailsP: Promise<void>;
-
-        // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
-        // the initial details
-        if (maybeSnapshotTree !== undefined) {
-            this._existing = true;
-            this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
-            loadDetailsP = Promise.resolve();
-        } else {
-            if (startConnectionP === undefined) {
-                startConnectionP = this.connectToDeltaStream(connectionArgs);
-            }
-            // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
-            loadDetailsP = startConnectionP.then((details) => {
-                this._existing = details.existing;
-                this._parentBranch = details.parentBranch;
-            });
-        }
-
+        // Load in the existing quorum. Initialize the protocol handler.
         // LoadContext directly requires protocolHandler to be ready, and eventually calls
-        // instantiateRuntime which will want to know existing state.  Wait for these promises to finish.
-        [this._protocolHandler] = await Promise.all([protocolHandlerP, loadDetailsP]);
+        // instantiateRuntime which will want to know existing state.
+        this._protocolHandler = await
+            this.loadAndInitializeProtocolState(attributes, this.storageService, snapshotTree);
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.loadContext(codeDetails, attributes, maybeSnapshotTree);
+        await this.loadContext(codeDetails, attributes, snapshotTree);
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -1076,7 +1056,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return {
             existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
-            version: maybeSnapshotTree?.id ?? undefined,
+            version: snapshotTree?.id ?? undefined,
         };
     }
 

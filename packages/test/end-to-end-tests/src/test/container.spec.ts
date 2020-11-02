@@ -4,29 +4,34 @@
  */
 
 import { strict as assert } from "assert";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import {
     IGenericError,
     ContainerErrorType,
+    IContainer,
 } from "@fluidframework/container-definitions";
-import { Container, ConnectionState, Loader, ILoaderProps } from "@fluidframework/container-loader";
+import { ConnectionState, Loader, ILoaderProps } from "@fluidframework/container-loader";
 import {
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
-import { LocalCodeLoader } from "@fluidframework/test-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-
-const id = "fluid-test://localhost/containerTest";
-const testRequest: IRequest = { url: id };
+import { createAndAttachContainer, LocalCodeLoader, TestFluidObjectFactory } from "@fluidframework/test-utils";
 
 describe("Container", () => {
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
+    const documentId = "deReHydrateContainerTest";
+    const testRequest: IRequest = { url: `fluid-test://localhost/${documentId}` };
+    const codeDetails: IFluidCodeDetails = {
+        package: "detachedContainerTestPackage",
+        config: {},
+    };
     beforeEach(()=>{
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
     });
+
+    const factory: TestFluidObjectFactory = new TestFluidObjectFactory([]);
 
     async function loadContainer(props?: Partial<ILoaderProps>) {
         const loader =  new Loader({
@@ -34,21 +39,31 @@ describe("Container", () => {
             urlResolver: props?.urlResolver ?? new LocalResolver(),
             documentServiceFactory :
                 props?.documentServiceFactory ?? new LocalDocumentServiceFactory(testDeltaConnectionServer),
-            codeLoader: props?.codeLoader ?? new LocalCodeLoader([]),
+            codeLoader: props?.codeLoader ?? new LocalCodeLoader([
+                [codeDetails, factory],
+            ]),
         });
+        return loader.resolve(testRequest);
+    }
 
-        const testResolved = await loader.services.urlResolver.resolve(testRequest);
-        ensureFluidResolvedUrl(testResolved);
-        return Container.load(
-            "tenantId/documentId",
-            loader,
-            testRequest,
-            testResolved);
+    async function createContainer(props?: Partial<ILoaderProps>): Promise<IContainer> {
+        const urlResolver = props?.urlResolver ?? new LocalResolver();
+        const loader =  new Loader({
+            ... props,
+            urlResolver,
+            documentServiceFactory :
+                props?.documentServiceFactory ?? new LocalDocumentServiceFactory(testDeltaConnectionServer),
+            codeLoader: props?.codeLoader ?? new LocalCodeLoader([
+                [codeDetails, factory],
+            ]),
+        });
+        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
     }
 
     it("Load container successfully", async () => {
+        await createContainer();
         const container = await loadContainer();
-        assert.strictEqual(container.id, "documentId", "Container's id should be set");
+        assert.strictEqual(container.id, documentId, "Container's id should be set");
         assert.strictEqual(container.clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");
     });
@@ -65,7 +80,7 @@ describe("Container", () => {
                 service.connectToStorage = async () => Promise.reject(false);
                 return service;
             };
-
+            await createContainer();
             await loadContainer({ documentServiceFactory: mockFactory });
             assert.fail("Error expected");
         } catch (error) {
@@ -87,6 +102,7 @@ describe("Container", () => {
                 service.connectToDeltaStorage = async () => Promise.reject(false);
                 return service;
             };
+            await createContainer();
             await loadContainer({ documentServiceFactory: mockFactory });
             assert.fail("Error expected");
         } catch (error) {
@@ -111,6 +127,7 @@ describe("Container", () => {
             return service;
         };
 
+        await createContainer();
         const container = await loadContainer({ documentServiceFactory: mockFactory });
         assert.strictEqual(container.connectionState, ConnectionState.Connecting,
             "Container should be in Connecting state");
@@ -134,6 +151,7 @@ describe("Container", () => {
             return service;
         };
         let errorRaised = false;
+        await createContainer();
         const container = await loadContainer({ documentServiceFactory: mockFactory });
         container.on("error", () => {
             errorRaised = true;
@@ -166,6 +184,7 @@ describe("Container", () => {
             service.connectToDeltaStream = async () => deltaConnection;
             return service;
         };
+        await createContainer();
         const container = await loadContainer({ documentServiceFactory: mockFactory });
         container.on("error", () => {
             assert.ok(false, "Error event should not be raised.");

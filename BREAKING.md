@@ -1,3 +1,15 @@
+## 0.29 Breaking Changes
+
+- [Remove creating new container in loader.resolve()](#Remove-creating-new-container-in-loader.resolve())
+- [LoaderHeader.version could not be null](#LoaderHeader.version-could-not-be-null)
+
+### - Remove creating new container in loader.resolve()
+Support for creating a new container in `loader.resolve()` if it doesn't exist has been removed. In order to create container,
+use detached new flow which is `loader.createDetached()`.
+
+### LoaderHeader.version could not be null
+`LoaderHeader.version` in ILoader cann't be null as we always load from existing snapshot in `container.load()`;
+
 ## 0.28 Breaking Changes
 
 - [FileName should contain extension for ODSP driver create new path](#FileName-should-contain-extension-for-ODSP-driver-create-new-path)
