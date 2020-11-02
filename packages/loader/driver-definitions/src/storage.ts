@@ -82,11 +82,6 @@ export interface IDocumentStorageService {
     readBlob(id: string): Promise<ArrayBufferLike>;
 
     /**
-     * Fetch blob Data url
-     */
-    getRawUrl(blobId: string): string;
-
-    /**
      * Uploads a summary tree to storage using the given context for reference of previous summary handle.
      * The ISummaryHandles in the uploaded tree should have paths to indicate which summary object they are
      * referencing from the previously acked summary.

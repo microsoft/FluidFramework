@@ -5,7 +5,7 @@
 
 /* eslint-disable no-null/no-null */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import {
     IDocumentMessage,

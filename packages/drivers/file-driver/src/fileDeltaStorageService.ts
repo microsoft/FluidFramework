@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import fs from "fs";
+import { assert } from "@fluidframework/common-utils";
 import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 
@@ -16,8 +16,21 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
     private lastOps: api.ISequencedDocumentMessage[] = [];
 
     constructor(private readonly path: string) {
-        const data = fs.readFileSync(`${this.path}//messages.json`);
-        this.messages = JSON.parse(data.toString("utf-8"));
+        this.messages = [];
+        let counter = 0;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const filename = `${this.path}//messages${counter === 0 ? "" : counter}.json`;
+            if (!fs.existsSync(filename)) {
+                if (counter === 0) {
+                    throw new Error(`file ${filename} not found`);
+                }
+                break;
+            }
+            const data = fs.readFileSync(filename);
+            this.messages = this.messages.concat(JSON.parse(data.toString("utf-8")));
+            counter++;
+        }
     }
 
     public async get(

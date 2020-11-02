@@ -8,7 +8,7 @@ import { HostStoragePolicy } from "./contracts";
 import { IPersistedCache } from "./odspCache";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 import { getSocketIo } from "./getSocketIo";
-import { StorageTokenFetcher, PushTokenFetcher, SharingLinkTokenFetcher } from "./tokenFetch";
+import { StorageTokenFetcher, PushTokenFetcher } from "./tokenFetch";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -22,7 +22,6 @@ export class OdspDocumentServiceFactory
         getWebsocketToken: PushTokenFetcher,
         persistedCache?: IPersistedCache,
         hostPolicy?: HostStoragePolicy,
-        getSharingLinkToken?: SharingLinkTokenFetcher,
     ) {
         super(
             getStorageToken,
@@ -30,7 +29,6 @@ export class OdspDocumentServiceFactory
             async () => getSocketIo(),
             persistedCache,
             hostPolicy,
-            getSharingLinkToken,
         );
     }
 }

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
@@ -21,7 +19,9 @@ import {
     AttachState,
 } from "@fluidframework/container-definitions";
 import {
+    assert,
     Deferred,
+    TypedEventEmitter,
     unreachableCase,
 } from "@fluidframework/common-utils";
 import {
@@ -56,6 +56,7 @@ import {
 import {
     IChannel,
     IFluidDataStoreRuntime,
+    IFluidDataStoreRuntimeEvents,
     IChannelFactory,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
@@ -80,8 +81,9 @@ export interface ISharedObjectRegistry {
 /**
  * Base data store class
  */
-export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreChannel,
-    IFluidDataStoreRuntime, IFluidHandleContext {
+export class FluidDataStoreRuntime extends
+TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
+IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
      * Loads the data store runtime
      * @param context - The data store context
@@ -288,11 +290,21 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
         // Check for a data type reference first
         if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const value = await this.contextsDeferred.get(id)!.promise;
-            const channel = await value.getChannel();
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const value = await this.contextsDeferred.get(id)!.promise;
+                const channel = await value.getChannel();
 
-            return { mimeType: "fluid/object", status: 200, value: channel };
+                return { mimeType: "fluid/object", status: 200, value: channel };
+            } catch (error) {
+                this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
+
+                return {
+                    status: 404,
+                    mimeType: "text/plain",
+                    value: `Failed to get Channel with id:[${id}] error:{${error}}`,
+                };
+            }
         }
 
         // Otherwise defer to an attached request handler
@@ -350,7 +362,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             this.contextsDeferred.set(id, deferred);
         }
 
-        assert(context.channel, "Channel should be loaded when created!!");
+        assert(!!context.channel, "Channel should be loaded when created!!");
         return context.channel;
     }
 
@@ -608,7 +620,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                 } else {
                     // If this channel is not yet loaded, then there should be no changes in the snapshot from which
                     // it was created as it is detached container. So just use the previous snapshot.
-                    assert(this.dataStoreContext.baseSnapshot,
+                    assert(!!this.dataStoreContext.baseSnapshot,
                         "BaseSnapshot should be there as detached container loaded from snapshot");
                     snapshot = convertSnapshotToITree(this.dataStoreContext.baseSnapshot.trees[objectId]);
                 }
@@ -701,7 +713,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                     // For Operations, find the right channel and trigger resubmission on it.
                     const envelope = content as IEnvelope;
                     const channelContext = this.contexts.get(envelope.address);
-                    assert(channelContext, "There should be a channel context for the op");
+                    assert(!!channelContext, "There should be a channel context for the op");
                     channelContext.reSubmit(envelope.contents, localOpMetadata);
                     break;
                 }
@@ -730,7 +742,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         };
 
         const channelContext = this.contexts.get(envelope.address);
-        assert(channelContext, "Channel not found");
+        assert(!!channelContext, "Channel not found");
         channelContext.processOp(transformed, local, localOpMetadata);
 
         return channelContext;

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
@@ -36,7 +35,6 @@ import {
     LocalValueMaker,
     makeSerializable,
     ValueTypeLocalValue,
-    valueTypes,
 } from "./localValues";
 import { pkgVersion } from "./packageVersion";
 
@@ -430,9 +428,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         super(id, runtime, attributes);
         this.localValueMaker = new LocalValueMaker(runtime);
         this.setMessageHandlers();
-        for (const type of valueTypes) {
-            this.localValueMaker.registerValueType(type);
-        }
     }
 
     /**

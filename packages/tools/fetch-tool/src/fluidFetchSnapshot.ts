@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import fs from "fs";
 import util from "util";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -87,7 +86,7 @@ async function fetchBlobsFromSnapshotTree(
     let result = fetchBlobs(prefix, tree, storage);
 
     if (commit) {
-        assert(tree.id);
+        assert(!!tree.id);
         const blobId = prefix === "/" ? "tree" : tree.id === null ? "no id" : tree.id;
         const content = JSON.stringify(tree, undefined, 2);
         const path = `${prefix}tree.json`;

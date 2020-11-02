@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { parse } from "url";
+import { assert } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IFluidResolvedUrl,
@@ -62,7 +62,7 @@ export class LocalResolver implements IUrlResolver {
             throw new Error("Url should contain tenant and docId!!");
         }
         const [, , documentId] = parsedUrl.pathname.split("/");
-        assert(documentId, "The resolvedUrl must have a documentId");
+        assert(!!documentId, "The resolvedUrl must have a documentId");
 
         return `http://localhost:3000/${documentId}/${url}`;
     }

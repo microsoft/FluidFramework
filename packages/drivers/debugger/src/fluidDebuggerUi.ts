@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, IVersion } from "@fluidframework/protocol-definitions";
 
 export interface IDebuggerUI {
@@ -277,7 +277,7 @@ export class DebuggerUI {
     }
 
     public disableNextOpButton(disable: boolean) {
-        assert(this.buttonOps);
+        assert(!!this.buttonOps);
         this.buttonOps.disabled = disable;
     }
 

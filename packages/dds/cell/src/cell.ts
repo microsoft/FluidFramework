@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert , fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ISerializedHandle } from "@fluidframework/core-interfaces";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+
 import {
     FileMode,
     ISequencedDocumentMessage,

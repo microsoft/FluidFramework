@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -22,7 +21,7 @@ import { IFluidDataStoreContext, ISummarizeResult } from "@fluidframework/runtim
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { convertToSummaryTree } from "@fluidframework/runtime-utils";
-import { Lazy } from "@fluidframework/common-utils";
+import { assert, Lazy } from "@fluidframework/common-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
@@ -108,7 +107,7 @@ export class LocalChannelContext implements IChannelContext {
         if (this.isLoaded) {
             this.services.value.deltaConnection.process(message, local, localOpMetadata);
         } else {
-            assert.strictEqual(local, false,
+            assert(local === false,
                 "Should always be remote because a local dds shouldn't generate ops before loading");
             this.pending.push(message);
         }
@@ -137,14 +136,14 @@ export class LocalChannelContext implements IChannelContext {
 
     private async loadChannel(): Promise<IChannel> {
         assert(!this.isLoaded, "Channel must not already be loaded when loading");
-        assert(this.snapshotTree, "Snapshot should be provided to load from!!");
+        assert(!!this.snapshotTree, "Snapshot should be provided to load from!!");
 
         assert(await this.services.value.objectStorage.contains(".attributes"), ".attributes blob should be present");
         const attributes = await readAndParse<IChannelAttributes>(
             this.services.value.objectStorage,
             ".attributes");
 
-        assert(this.factory, "Factory should be there for local channel");
+        assert(!!this.factory, "Factory should be there for local channel");
         // Services will be assigned during this load.
         const channel = await this.factory.load(
             this.runtime,
@@ -176,7 +175,7 @@ export class LocalChannelContext implements IChannelContext {
         }
 
         if (this.isLoaded) {
-            assert(this.channel, "Channel should be there if loaded!!");
+            assert(!!this.channel, "Channel should be there if loaded!!");
             this.channel.connect(this.services.value);
         }
         this.attached = true;

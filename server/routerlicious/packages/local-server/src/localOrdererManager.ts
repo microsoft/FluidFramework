@@ -14,6 +14,7 @@ import {
     IOrdererManager,
     ITaskMessageSender,
     ITenantManager,
+    TokenGenerator,
 } from "@fluidframework/server-services-core";
 
 export class LocalOrdererManager implements IOrdererManager {
@@ -26,6 +27,7 @@ export class LocalOrdererManager implements IOrdererManager {
         private readonly taskMessageSender: ITaskMessageSender,
         private readonly permission: any, // Can probably remove
         private readonly maxMessageSize: number,
+        private readonly tokenGenerator: TokenGenerator,
         private readonly createHistorian: (tenant: string) => Promise<IHistorian>,
         private readonly logger: ILogger,
         private readonly serviceConfiguration?: Partial<IServiceConfiguration>,
@@ -72,6 +74,7 @@ export class LocalOrdererManager implements IOrdererManager {
             this.tenantManager,
             this.permission,
             this.maxMessageSize,
+            this.tokenGenerator,
             this.logger,
             gitManager,
             undefined /* ILocalOrdererSetup */,

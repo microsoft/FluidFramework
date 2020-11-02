@@ -13,6 +13,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import { IPubSub, PubSub } from "@fluidframework/server-memory-orderer";
+import { generateToken } from "@fluidframework/server-services-client";
 import {
     DefaultMetricClient,
     EmptyTaskMessageSender,
@@ -93,6 +94,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             new EmptyTaskMessageSender(),
             {},
             16 * 1024,
+            generateToken,
             async () => new TestHistorian(testDbFactory.testDatabase),
             logger,
             serviceConfiguration,

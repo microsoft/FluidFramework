@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import AbortController from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
 import {
+    assert,
     fromBase64ToUtf8,
     fromUtf8ToBase64,
     hashFile,
@@ -252,12 +252,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return blob.content;
     }
 
-    public getRawUrl(blobid: string): string {
-        this.checkSnapshotUrl();
-
-        return `${this.snapshotUrl}/blobs/${blobid}`;
-    }
-
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
         if (!this.snapshotUrl) {
             return null;
@@ -443,7 +437,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     break;
                                 }
                             }
-                            assert(appCommit || appTree); // .app commit or tree should be first entry in first entry.
+                            assert(!!appCommit || !!appTree); // .app commit or tree should be first entry in first entry.
                         }
                         for (const entry of treeVal.entries) {
                             if (entry.type === "blob") {
@@ -559,7 +553,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             }
             // If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
             if ((error.errorType === OdspErrorType.snapshotTooBig || error.errorType === OdspErrorType.fetchTimeout) && snapshotOptions.blobs) {
-                const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: undefined, mds: undefined };
+                const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined };
                 return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions, usePost);
             }
             throw error;
@@ -583,7 +577,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             postBody += `Authorization: Bearer ${storageToken}\r\n`;
             postBody += `X-HTTP-Method-Override: GET\r\n`;
             Object.entries(snapshotOptions).forEach(([key, value]) => {
-                postBody += `${key}: ${value}\r\n`;
+                if (value !== undefined) {
+                    postBody += `${key}: ${value}\r\n`;
+                }
             });
             const sharingLink = await this.sharingLinkP;
             if (sharingLink) {

@@ -16,8 +16,11 @@ import {
     ITestFluidObject,
 } from "@fluidframework/test-utils";
 import { SharedMap } from "@fluidframework/map";
-import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
-import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
+import {
+    RouterliciousDocumentServiceFactory,
+    DefaultErrorTracking,
+    ITokenProvider } from "@fluidframework/routerlicious-driver";
+import { InsecureTokenProvider, InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { Deferred } from "@fluidframework/common-utils";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
@@ -34,14 +37,21 @@ describe(`r11s End-To-End tests`, () => {
     let request: IRequest;
     let loader: Loader;
 
-    function createTestLoader(urlResolver: IUrlResolver): Loader {
+    interface ITestParameters {
+        fluidHost: string;
+        bearerSecret: string
+        tenantId: string;
+        tenantSecret: string;
+    }
+
+    function createTestLoader(urlResolver: IUrlResolver, tokenProvider: ITokenProvider): Loader {
         const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
             [mapId1, SharedMap.getFactory()],
             [mapId2, SharedMap.getFactory()],
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            undefined,
+            tokenProvider,
             false,
             new DefaultErrorTracking(),
             false,
@@ -68,7 +78,7 @@ describe(`r11s End-To-End tests`, () => {
         id: uuid(),
     });
 
-    function getResolver(): InsecureUrlResolver {
+    function getParameters(): ITestParameters {
         const bearerSecret = process.env.fluid__webpack__bearerSecret;
         const tenantId = process.env.fluid__webpack__tenantId ?? "fluid";
         const tenantSecret = process.env.fluid__webpack__tenantSecret;
@@ -79,22 +89,38 @@ describe(`r11s End-To-End tests`, () => {
         assert(tenantSecret, "Missing tenant secret");
         assert(fluidHost, "Missing Fluid host");
 
-        return new InsecureUrlResolver(
+        return {
             fluidHost,
-            fluidHost.replace("www", "alfred"),
-            fluidHost.replace("www", "historian"),
+            bearerSecret,
             tenantId,
             tenantSecret,
-            getUser(),
-            bearerSecret,
+        };
+    }
+
+    function getResolver(params: ITestParameters): InsecureUrlResolver {
+        const urlResolver =  new InsecureUrlResolver(
+            params.fluidHost,
+            params.fluidHost.replace("www", "alfred"),
+            params.fluidHost.replace("www", "historian"),
+            params.tenantId,
+            params.bearerSecret,
             true);
+        return urlResolver;
     }
 
     beforeEach(async () => {
-        const urlResolver = getResolver();
+        const params = getParameters();
+        const urlResolver = getResolver(params);
         const documentId = moniker.choose();
         request = urlResolver.createCreateNewRequest(documentId);
-        loader = createTestLoader(urlResolver);
+
+        const tokenProvider = new InsecureTokenProvider(
+            params.tenantId,
+            documentId,
+            params.tenantSecret,
+            getUser(),
+        );
+        loader = createTestLoader(urlResolver, tokenProvider);
     });
 
     it("Container creation in r11s", async () => {
@@ -121,8 +147,10 @@ describe(`r11s End-To-End tests`, () => {
         assert(container.resolvedUrl, "attached container should have resolved URL");
 
         // Now load the container from another loader.
-        const urlResolver2 = getResolver();
-        const loader2 = createTestLoader(urlResolver2);
+        const params = getParameters();
+        const urlResolver2 = getResolver(params);
+        const tokenProvider2 = new InsecureTokenProvider(params.tenantId, container.id, params.tenantSecret, getUser());
+        const loader2 = createTestLoader(urlResolver2, tokenProvider2);
         // Create a new request url from the resolvedUrl of the first container.
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(container.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
