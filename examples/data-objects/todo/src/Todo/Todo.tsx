@@ -85,7 +85,6 @@ export class Todo extends DataObject implements IFluidHTMLView {
         // Store the handle to the component in the sequence
         this.todoItems.insert(this.todoItems.getLength(), [component.handle]);
 
-        this.emit("todoItemsChanged");
     }
 
     public async getTodoItemComponents() {
