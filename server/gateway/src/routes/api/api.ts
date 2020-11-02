@@ -6,9 +6,7 @@
 import { parse, UrlWithStringQuery } from "url";
 import { IResolvedUrl, IWebResolvedUrl } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-// TODO: getR11sToken is going to be removed from routerlicious-urlresolver.
-// When that happens we should instead use generateToken from @fluidframework/server-services-utils.
-import { getR11sToken, IAlfredUser } from "@fluidframework/routerlicious-urlresolver";
+import { IAlfredUser } from "@fluidframework/routerlicious-urlresolver";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import Axios from "axios";
 import { Request, Router } from "express";
@@ -17,7 +15,7 @@ import moniker from "moniker";
 import { Provider } from "nconf";
 import passport from "passport";
 import winston from "winston";
-import { IJWTClaims } from "../../utils";
+import { getR11sToken, IJWTClaims } from "../../utils";
 
 // Although probably the case we want a default behavior here. Maybe just the URL?
 async function getWebComponent(url: UrlWithStringQuery): Promise<IWebResolvedUrl> {

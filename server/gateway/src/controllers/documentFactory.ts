@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { ILoader } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/common-utils";
 import Axios from "axios";
 

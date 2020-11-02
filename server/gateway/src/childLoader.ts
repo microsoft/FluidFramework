@@ -4,17 +4,11 @@
  */
 import { parse } from "url";
 import { IFluidObject } from "@fluidframework/core-interfaces";
-import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { Container, ILoaderProps, Loader } from "@fluidframework/container-loader";
 import { Deferred } from "@fluidframework/common-utils";
-import {
-    IDocumentServiceFactory,
-    IFluidResolvedUrl,
-    IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
+import { IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { DefaultTokenProvider, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { NodeCodeLoader, NodeAllowList } from "@fluidframework/server-services";
 import { promiseTimeout } from "@fluidframework/server-services-client";
@@ -74,29 +68,24 @@ class KeyValueLoader {
                 headers,
             });
 
-        const documentServiceFactories: IDocumentServiceFactory[] = [];
-        // TODO: figure out how to pass clientId and token here
-        documentServiceFactories.push(new OdspDocumentServiceFactory(
-            async () => Promise.resolve("fake token"),
-            async () => Promise.resolve("fake token")));
+        const resolvedUrl = result.data as IFluidResolvedUrl;
 
-        documentServiceFactories.push(new RouterliciousDocumentServiceFactory());
-
+        // Remove default token provider
+        const tokenProvider = new DefaultTokenProvider(resolvedUrl.tokens.jwt);
         const resolver = new ContainerUrlResolver(
             config.gatewayUrl,
             hostToken,
-            new Map<string, IResolvedUrl>([[documentUrl, result.data]]));
+            new Map<string, IResolvedUrl>([[documentUrl, resolvedUrl]]));
 
-        config.tokens = (result.data as IFluidResolvedUrl).tokens;
+        config.tokens = resolvedUrl.tokens;
 
-        const loader = new Loader(
-            resolver,
-            documentServiceFactories,
-            new NodeCodeLoader(installLocation, waitTimeoutMS, new NodeAllowList()),
-            config,
-            {},
-            new Map<string, IProxyLoaderFactory>(),
-        );
+        const loaderProps: ILoaderProps = {
+            urlResolver: resolver,
+            documentServiceFactory: new RouterliciousDocumentServiceFactory(tokenProvider),
+            codeLoader: new NodeCodeLoader(installLocation, waitTimeoutMS, new NodeAllowList()),
+            options: config,
+        };
+        const loader = new Loader(loaderProps);
 
         const container = await loader.resolve({ url: documentUrl });
         winston.info(`Loaded key value container from ${documentUrl}`);
