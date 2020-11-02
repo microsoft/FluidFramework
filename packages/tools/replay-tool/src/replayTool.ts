@@ -17,6 +17,7 @@ const optionsArray = [
     "Processing:",
     ["--snapfreq <N>", "A snapshot will be taken after every <N>th op"],
     ["--stressTest", "Run stress tests. Adds --quiet --snapfreq 50",
+        "Runs 4 overlapping containers to detect summary consistency issues",
         "Writes out only snapshots with consistency issues"],
     ["--storageSnapshots", "Validate storage (FluidFetch) snapshots"],
     ["--incremental", "Allow incremental snapshots (to closer simulate reality). Diff will be noisy"],
@@ -100,6 +101,7 @@ class ReplayProcessArgs extends ReplayArgs {
                     this.validateStorageSnapshots = true;
                     break;
                 case "--stressTest":
+                    this.overlappingContainers = 4;
                     this.verbose = false;
                     if (this.snapFreq === undefined) {
                         this.snapFreq = 50;

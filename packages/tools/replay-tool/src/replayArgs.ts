@@ -14,7 +14,7 @@ export class ReplayArgs {
     public snapFreq: number | undefined;
     public version?: string;
     public verbose = true;
-    public overlappingContainers = 4;
+    public overlappingContainers = 1;
     public validateStorageSnapshots = false;
     public initalizeFromSnapshotsDir: string | undefined;
     public windiff = false;

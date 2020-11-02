@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -19,7 +18,7 @@ import {
     BindState,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { Deferred, assert } from "@fluidframework/common-utils";
+import { Deferred, assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
@@ -47,6 +46,7 @@ import {
     SummarizeInternalFn,
     CreateChildSummarizerNodeParam,
     IProvideFluidDataStoreFactory,
+    IFluidDataStoreContextEvents,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
@@ -103,7 +103,7 @@ interface FluidDataStoreMessage {
 /**
  * Represents the context for the store. This context is passed to the store runtime.
  */
-export abstract class FluidDataStoreContext extends EventEmitter implements
+export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidDataStoreContextEvents> implements
     IFluidDataStoreContext,
     IDisposable {
     public get documentId(): string {

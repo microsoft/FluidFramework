@@ -8,6 +8,7 @@
 - [IFluidLodable.url is removed](#IFluidLodable.url-is-removed)
 - [Loader Constructor Changes](#Loader-Constructor-Changes)
 - [Moving DriverHeader and merge with CreateNewHeader](#moving-driverheader-and-merge-with-createnewheader)
+- [ODSP status codes moved from odsp-driver to odsp-doclib-utils](#ODSP-status-codes-moved-modules-from-odsp-driver-to-odsp-doclib-utils)
 
 ### FileName should contain extension for ODSP driver create new path
 Now the ODSP driver expects file extension in the file name while creating a new detached container.
@@ -76,6 +77,9 @@ Compile time only API breaking change between runtime and driver.  Only impacts 
 No back-compat or mix version impact.
 
 DriverHeader is a driver concept, so move from core-interface to driver-definitions. CreateNewHeader is also a kind of driver header, merged it into DriverHeader.
+
+### ODSP status codes moved modules from odsp-driver to odsp-doclib-utils
+Error/status codes like `offlineFetchFailureStatusCode` which used to be imported like `import { offlineFetchFailureStatusCode } from '@fluidframework/@odsp-driver';` have been moved to `odspErrorUtils.ts` in `odsp-doclib-utils`.
 
 ## 0.27 Breaking Changes
 - [Local Web Host Removed](#Local-Web-Host-Removed)

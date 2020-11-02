@@ -63,10 +63,6 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
             undefined /* serviceConfiguration */,
             pubsub);
 
-        // TODO would be nicer to just pass the mongoManager down
-        const db = await mongoManager.getDatabase();
-        const contentCollection = db.collection(collectionNames.content);
-
         return new TinyliciousResources(
             config,
             orderManager,
@@ -74,7 +70,6 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
             storage,
             mongoManager,
             port,
-            contentCollection,
             webServerFactory);
     }
 }

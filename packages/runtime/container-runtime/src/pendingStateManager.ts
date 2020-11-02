@@ -36,7 +36,7 @@ interface IPendingMessage {
     clientSequenceNumber: number;
     content: any;
     localOpMetadata: unknown;
-    opMetaData: unknown;
+    opMetadata: Record<string, unknown> | undefined;
 }
 
 /**
@@ -109,14 +109,15 @@ export class PendingStateManager {
         clientSequenceNumber: number,
         content: any,
         localOpMetadata: unknown,
-        opMetaData: unknown) {
+        opMetadata: Record<string, unknown> | undefined,
+    ) {
         const pendingMessage: IPendingMessage = {
             type: "message",
             messageType: type,
             clientSequenceNumber,
             content,
             localOpMetadata,
-            opMetaData,
+            opMetadata,
         };
 
         this.pendingStates.push(pendingMessage);
@@ -332,7 +333,7 @@ export class PendingStateManager {
                             pendingState.messageType,
                             pendingState.content,
                             pendingState.localOpMetadata,
-                            pendingState.opMetaData);
+                            pendingState.opMetadata);
                     }
                     break;
                 case "flushMode":
