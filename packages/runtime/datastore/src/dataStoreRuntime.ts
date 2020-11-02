@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
@@ -22,6 +21,7 @@ import {
 import {
     assert,
     Deferred,
+    TypedEventEmitter,
     unreachableCase,
 } from "@fluidframework/common-utils";
 import {
@@ -56,6 +56,7 @@ import {
 import {
     IChannel,
     IFluidDataStoreRuntime,
+    IFluidDataStoreRuntimeEvents,
     IChannelFactory,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
@@ -80,8 +81,9 @@ export interface ISharedObjectRegistry {
 /**
  * Base data store class
  */
-export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreChannel,
-    IFluidDataStoreRuntime, IFluidHandleContext {
+export class FluidDataStoreRuntime extends
+TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
+IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
      * Loads the data store runtime
      * @param context - The data store context
