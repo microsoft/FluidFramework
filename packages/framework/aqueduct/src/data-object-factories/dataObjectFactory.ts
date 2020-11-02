@@ -15,7 +15,10 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { FluidObjectSymbolProvider } from "@fluidframework/synthesize";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import {
+    FluidDataStoreRuntime,
+    summaryFluidDataStoreMixin,
+ } from "@fluidframework/datastore";
 
 import { DataObject, IDataObjectProps } from "../data-objects";
 import { PureDataObjectFactory } from "./pureDataObjectFactory";
@@ -61,5 +64,53 @@ export class DataObjectFactory<TObj extends DataObject<O, S, E>, O, S, E extends
             registryEntries,
             runtimeFactory,
         );
+    }
+}
+
+// This is just an example!
+// This code will not be here, it needs to be in FCL, as this is contract between SPO and
+// Office Fluid container / components.
+// For time being, this code will be in Office Bohemia code base.
+export interface SearchableDataObject
+{
+    searchHandler(): Promise<string>;
+}
+
+export function createSearchDataObjectFactory<
+    TObj extends DataObject<O, S, E> & SearchableDataObject,
+    O, S, E extends IEvent = IEvent>(
+        type: string,
+        ctor: new (props: IDataObjectProps<O, S>) => TObj,
+        sharedObjects: readonly IChannelFactory[] = [],
+        optionalProviders: FluidObjectSymbolProvider<O>,
+        registryEntries?: NamedFluidDataStoreRegistryEntries,
+        runtimeFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime) {
+    const runtimeFactory2 = summaryFluidDataStoreMixin(async (runtime: FluidDataStoreRuntime) => {
+        const obj = await DataObject.getDataObject(runtime) as any as SearchableDataObject;
+        const content = await obj.searchHandler();
+        return {
+            path: ["_search", "01"],
+            content,
+        };
+    }, runtimeFactory);
+
+    return new DataObjectFactory(type, ctor, sharedObjects, optionalProviders, registryEntries, runtimeFactory2);
+}
+
+//
+// Usage example
+//
+export class SearchableDataObjectExample extends DataObject implements SearchableDataObject {
+    private static readonly factory = createSearchDataObjectFactory(
+        "SearchableSample",
+        SearchableDataObjectExample,
+        [],
+        {},
+    );
+
+    public static getFactory() { return this.factory; }
+
+    public async searchHandler(): Promise<string> {
+        return "some content to be indexed";
     }
 }
