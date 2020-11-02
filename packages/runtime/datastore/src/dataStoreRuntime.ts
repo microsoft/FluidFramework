@@ -81,8 +81,9 @@ export interface ISharedObjectRegistry {
 /**
  * Base data store class
  */
-export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel,
-    IFluidDataStoreRuntime, IFluidHandleContext {
+export class FluidDataStoreRuntime extends
+TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
+IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
      * Loads the data store runtime
      * @param context - The data store context

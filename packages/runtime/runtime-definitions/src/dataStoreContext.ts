@@ -241,7 +241,7 @@ export interface IFluidDataStoreContextEvents extends IEvent {
  * Represents the context for the data store. It is used by the data store runtime to
  * get information and call functionality to the container.
  */
-export interface IFluidDataStoreContext extends 
+export interface IFluidDataStoreContext extends
 IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry> {
     readonly documentId: string;
     readonly id: string;
