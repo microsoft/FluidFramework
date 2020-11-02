@@ -65,8 +65,7 @@
     "@fluidframework/shared-object-base": "^0.29.0",
     "@fluidframework/telemetry-utils": "^0.29.0",
     "assert": "^2.0.0",
-    "debug": "^4.1.1",
-    "lodash": "^4.17.19"
+    "debug": "^4.1.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
