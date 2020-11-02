@@ -7,7 +7,7 @@ import _ from "lodash";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";
-import { IClientConfig } from "@fluidframework/odsp-utils";
+import { IClientConfig } from "@fluidframework/odsp-doclib-utils";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredUser, RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
 import { IAlfredTenant, IGitCache } from "@fluidframework/server-services-client";

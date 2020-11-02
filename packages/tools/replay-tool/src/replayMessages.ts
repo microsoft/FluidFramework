@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import child_process from "child_process";
 import fs from "fs";
+import { assert } from "@fluidframework/common-utils";
 import * as API from "@fluid-internal/client-api";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
@@ -242,7 +242,7 @@ class Document {
             await new Promise((resolve) => {
                 this.resolveC = resolve;
             });
-            assert.equal(this.documentSeqNumber, this.currentOp);
+            assert(this.documentSeqNumber === this.currentOp);
         }
     }
 
@@ -309,6 +309,8 @@ class Document {
                 ["@ms/tablero/TableroView", Promise.resolve(chaincode)],
                 ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
                 ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
+                ["LastEditedComponent", Promise.resolve(chaincode)],
+                ["OfficeRootComponent", Promise.resolve(chaincode)],
             ]);
         const options = {};
 
@@ -590,7 +592,6 @@ export class ReplayTool {
 
         const content = this.mainDocument.extractContent();
 
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         this.storage.onSnapshotHandler = (snapshot: IFileSnapshot) => {
             content.snapshot = snapshot;
             if (this.args.compare) {
@@ -740,7 +741,6 @@ export class ReplayTool {
         const name1 = this.mainDocument.getFileName();
         const name2 = document2.getFileName();
 
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         document2.storage.onSnapshotHandler = (snapshot: IFileSnapshot) => {
             content2.snapshot = snapshot;
         };

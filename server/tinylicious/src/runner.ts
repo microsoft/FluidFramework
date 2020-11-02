@@ -4,7 +4,6 @@
  */
 
 import {
-    ICollection,
     IDocumentStorage,
     IOrdererManager,
     ITenantManager,
@@ -34,7 +33,6 @@ export class TinyliciousRunner implements utils.IRunner {
         private readonly tenantManager: ITenantManager,
         private readonly storage: IDocumentStorage,
         private readonly mongoManager: MongoManager,
-        private readonly contentCollection: ICollection<any>,
     ) {}
 
     public async start(): Promise<void> {
@@ -54,7 +52,6 @@ export class TinyliciousRunner implements utils.IRunner {
             this.orderManager,
             this.tenantManager,
             this.storage,
-            this.contentCollection,
             new TestClientManager(),
             new DefaultMetricClient(),
             winston,

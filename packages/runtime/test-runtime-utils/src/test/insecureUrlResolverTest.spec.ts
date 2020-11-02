@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { DriverHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { IUser } from "@fluidframework/protocol-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { InsecureUrlResolver } from "../insecureUrlResolver";
 
@@ -15,17 +14,13 @@ describe("Insecure Url Resolver Test", () => {
     const ordererUrl = "https://localhost.orderer";
     const storageUrl = "https://localhost.storage";
     const tenantId = "tenantId";
-    const tenantKey = "tenantKey";
     const bearer = "bearer";
-    const user: IUser = {
-        id: "userId",
-    };
     const fileName = "fileName";
     let resolver: InsecureUrlResolver;
     let request: IRequest;
 
     beforeEach(() => {
-        resolver = new InsecureUrlResolver(hostUrl, ordererUrl, storageUrl, tenantId, tenantKey, user, bearer);
+        resolver = new InsecureUrlResolver(hostUrl, ordererUrl, storageUrl, tenantId, bearer);
         request = resolver.createCreateNewRequest(fileName);
     });
 

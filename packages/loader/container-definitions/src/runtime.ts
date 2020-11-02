@@ -9,6 +9,7 @@ import {
     IFluidConfiguration,
     IRequest,
     IResponse,
+    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -117,6 +118,7 @@ export interface IContainerContext extends IDisposable {
     readonly configuration: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
+    readonly codeDetails: IFluidCodeDetails;
     readonly parentBranch: string | null;
     readonly storage: IDocumentStorageService | undefined | null;
     readonly connected: boolean;

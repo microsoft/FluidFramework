@@ -3,18 +3,29 @@
  * Licensed under the MIT License.
  */
 
+import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import * as jwt from "jsonwebtoken";
+
 export function normalizePort(val) {
     const normalizedPort = parseInt(val, 10);
 
     if (isNaN(normalizedPort)) {
-    // named pipe
+        // named pipe
         return val;
     }
 
     if (normalizedPort >= 0) {
-    // port number
+        // port number
         return normalizedPort;
     }
 
     return false;
+}
+
+export function getTokenLifetimeInSec(token: string): number {
+    const claims = jwt.decode(token) as ITokenClaims;
+    if (claims && claims.exp) {
+        return (claims.exp - Math.round((new Date()).getTime()) / 1000);
+    }
+    return undefined;
 }

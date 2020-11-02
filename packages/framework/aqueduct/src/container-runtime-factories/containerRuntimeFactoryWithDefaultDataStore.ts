@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { DependencyContainerRegistry } from "@fluidframework/synthesize";
@@ -29,6 +30,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
         registryEntries: NamedFluidDataStoreRegistryEntries,
         providerEntries: DependencyContainerRegistry = [],
         requestHandlers: RuntimeRequestHandler[] = [],
+        runtimeOptions?: IContainerRuntimeOptions,
     ) {
         super(
             registryEntries,
@@ -38,6 +40,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
                 defaultRouteRequestHandler(defaultDataStoreId),
                 innerRequestHandler,
             ],
+            runtimeOptions,
         );
     }
 

@@ -37,6 +37,7 @@ import {
     ITopic,
     IWebSocket,
     ILogger,
+    TokenGenerator,
 } from "@fluidframework/server-services-core";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
@@ -95,6 +96,7 @@ export class LocalOrderer implements IOrderer {
         tenantManager: ITenantManager,
         permission: any,
         maxMessageSize: number,
+        tokenGenerator: TokenGenerator,
         logger: ILogger,
         gitManager?: IGitManager,
         setup: ILocalOrdererSetup = new LocalOrdererSetup(
@@ -125,6 +127,7 @@ export class LocalOrderer implements IOrderer {
             gitManager,
             permission,
             maxMessageSize,
+            tokenGenerator,
             pubSub,
             broadcasterContext,
             scriptoriumContext,
@@ -159,6 +162,7 @@ export class LocalOrderer implements IOrderer {
         private readonly gitManager: IGitManager | undefined,
         private readonly permission: any,
         private readonly maxMessageSize: number,
+        private readonly foremanTokenGenrator: TokenGenerator,
         private readonly pubSub: IPubSub,
         private readonly broadcasterContext: IContext,
         private readonly scriptoriumContext: IContext,
@@ -254,6 +258,7 @@ export class LocalOrderer implements IOrderer {
             async (_, context) => new ForemanLambda(
                 this.taskMessageSender,
                 this.tenantManager,
+                this.foremanTokenGenrator,
                 this.permission,
                 context,
                 this.tenantId,

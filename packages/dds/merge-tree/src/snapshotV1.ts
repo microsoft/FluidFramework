@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidSerializer,
 } from "@fluidframework/core-interfaces";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     FileMode,

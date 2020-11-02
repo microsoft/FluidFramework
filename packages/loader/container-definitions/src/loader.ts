@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidRouter, IFluidCodeDetails, IFluidPackage } from "@fluidframework/core-interfaces";
+import {
+    IRequest,
+    IResponse,
+    IFluidRouter,
+    IFluidCodeDetails,
+    IFluidPackage,
+    IProvideFluidCodeDetailsComparer,
+} from "@fluidframework/core-interfaces";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -21,7 +28,7 @@ import { AttachState } from "./runtime";
 /**
  * Code loading interface
  */
-export interface ICodeLoader {
+export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     /**
      * Loads the package specified by code details and returns a promise to its entry point exports.
      */

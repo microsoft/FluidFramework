@@ -38,9 +38,6 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
         return Promise.reject("Invalid operation");
     }
 
-    public getRawUrl(blobId: string): string {
-        throw new Error("Invalid operation");
-    }
     public get repositoryUrl(): string {
         throw new Error("Invalid operation");
     }

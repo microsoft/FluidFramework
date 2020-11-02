@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/protocol-base",
-  "version": "0.1014.0",
+  "version": "0.1015.0",
   "description": "Fluid protocol base",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -52,8 +52,8 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.25.0-0",
-    "@fluidframework/gitresources": "^0.1014.0",
-    "@fluidframework/protocol-definitions": "^0.1014.0",
+    "@fluidframework/gitresources": "^0.1015.0",
+    "@fluidframework/protocol-definitions": "^0.1015.0",
     "assert": "^2.0.0",
     "lodash": "^4.17.19"
   },

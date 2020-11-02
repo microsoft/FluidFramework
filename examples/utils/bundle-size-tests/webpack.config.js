@@ -7,10 +7,14 @@ const path = require('path');
 const { BundleComparisonPlugin } = require('@mixer/webpack-bundle-compare/dist/plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin');
+const { BannedModulesPlugin } = require('@fluidframework/bundle-size-tools')
 
 module.exports = {
   entry: {
     'container': './src/container',
+    'map': './src/map',
+    'matrix': './src/matrix',
+    'odspDriver': './src/odspDriver',
     'sharedString': './src/sharedString'
   },
   mode: 'production',
@@ -36,6 +40,13 @@ module.exports = {
   },
   node: false,
   plugins: [
+    new BannedModulesPlugin({
+        bannedModules: [{
+                moduleName: 'assert',
+                reason: 'This module is very large when bundled in browser facing Javascript, instead use the assert API in @fluidframework/common-utils'
+            }
+        ]
+    }),
     new DuplicatePackageCheckerPlugin({
       // Also show module that is requiring each duplicate package
       verbose: true,
@@ -47,7 +58,13 @@ module.exports = {
        */
       exclude: (instance) =>
         // object-is depends on es-abstract 1.18.0-next, which does not satisfy the semver of other packages. We should be able to remove this when es-abstract moves to 1.18.0
-        instance.name === 'es-abstract' 
+        instance.name === 'es-abstract' ||
+        // socket.io and Fluid Framework do not use compatible versions of debug
+        instance.name === 'debug' ||
+        // socket.io and Fluid Framework do not use compatible versions of isarray
+        instance.name === 'isarray' ||
+        // socket.io and Fluid Framework do not use compatible versions of ms
+        instance.name === 'ms'
     }),
     new BundleAnalyzerPlugin({
       analyzerMode: 'static',

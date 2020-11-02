@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import { fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -255,7 +254,6 @@ export class ConsensusRegisterCollection<T>
                         message.sequenceNumber,
                         local);
                     if (local) {
-                        assert(localOpMetadata, "localOpMetadata is missing from the client's write operation");
                         // Resolve the pending promise for this operation now that we have received an ack for it.
                         const resolve = localOpMetadata as PendingResolve;
                         resolve(winner);
@@ -307,7 +305,7 @@ export class ConsensusRegisterCollection<T>
             }
         }
         else {
-            assert(data);
+            assert(!!data);
         }
 
         // Remove versions that were known to the remote client at the time of write
