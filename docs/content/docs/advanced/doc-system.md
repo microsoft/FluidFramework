@@ -211,7 +211,7 @@ time.
 
 Mermaid diagrams can be put inline in a Markdown file using the `{{</* mermaid */>}}` shortcode.
 
-[Mermaid examples and syntax reference](https://mermaid-js.github.io/mermaid/)
+[Mermaid examples and syntax reference.](https://mermaid-js.github.io/mermaid/)
 
 **Input**
 
