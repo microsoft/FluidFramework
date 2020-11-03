@@ -11,7 +11,11 @@ export class RateLimiter {
     constructor(private maxRequests: number) {}
 
     public get waitQueueLength(): number {
-        return this.tasks.length;
+        const diff = this.tasks.length - this.maxRequests;
+        if (diff > 0) {
+            return diff;
+        }
+        return 0;
     }
 
     private sched() {
