@@ -325,8 +325,8 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
         scope: IFluidDependencyProvider | undefined = undefined,
         initialState?: S,
     ): Promise<TObj> {
-        const context = runtime.createRootDetachedDataStore();
-        return this.createInstanceCore(context, [this.type], initialState, scope);
+        const context = runtime.createRootDetachedDataStore([this.type]);
+        return this.createInstanceCore(context, initialState, scope);
     }
 
     protected async createNonRootInstanceCore(
@@ -335,13 +335,12 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
         initialState?: S,
         scope: IFluidDependencyProvider | undefined = undefined,
     ): Promise<TObj> {
-        const context = containerRuntime.createDetachedDataStore();
-        return this.createInstanceCore(context, packagePath, initialState, scope);
+        const context = containerRuntime.createDetachedDataStore(packagePath);
+        return this.createInstanceCore(context, initialState, scope);
     }
 
     protected async createInstanceCore(
         context: IFluidDataStoreContextDetached,
-        packagePath: Readonly<string[]>,
         initialState?: S,
         scope: IFluidDependencyProvider | undefined = undefined,
     ): Promise<TObj> {
@@ -354,7 +353,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
             scope,
             initialState);
 
-        await context.attachRuntime(packagePath, this, runtime);
+        await context.attachRuntime(this, runtime);
 
         return instance;
     }

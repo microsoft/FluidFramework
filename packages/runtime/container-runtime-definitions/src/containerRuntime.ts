@@ -99,7 +99,7 @@ export interface IContainerRuntime extends
      * Creates detached data store context. only after context.attachRuntime() is called,
      * data store initialization is considered compete.
      */
-    createRootDetachedDataStore(): IFluidDataStoreContextDetached;
+    createRootDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
 
     /**
      * Used to raise an unrecoverable error on the runtime.

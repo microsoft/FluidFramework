@@ -124,7 +124,7 @@ export interface IContainerRuntimeBase extends
      * Creates detached data store context. only after context.attachRuntime() is called,
      * data store initialization is considered compete.
      */
-    createDetachedDataStore(): IFluidDataStoreContextDetached;
+    createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
 
     /**
      * Get an absolute url for a provided container-relative request.
@@ -389,7 +389,6 @@ export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
      * Binds a runtime to the context.
      */
     attachRuntime(
-        packagePath: Readonly<string[]>,
         factory: IProvideFluidDataStoreFactory,
         dataStoreRuntime: IFluidDataStoreChannel,
     ): Promise<void>;

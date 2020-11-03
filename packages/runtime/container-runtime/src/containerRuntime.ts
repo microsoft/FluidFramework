@@ -1346,18 +1346,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return fluidDataStore;
     }
 
-    public createRootDetachedDataStore(): IFluidDataStoreContextDetached {
-        return this.createDetachedDataStoreCore(true);
+    public createRootDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached {
+        return this.createDetachedDataStoreCore(pkg, true);
     }
 
-    public createDetachedDataStore(): IFluidDataStoreContextDetached {
-        return this.createDetachedDataStoreCore(false);
+    public createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached {
+        return this.createDetachedDataStoreCore(pkg, false);
     }
 
-    private createDetachedDataStoreCore(isRoot: boolean): IFluidDataStoreContextDetached {
+    private createDetachedDataStoreCore(pkg: Readonly<string[]>, isRoot: boolean): IFluidDataStoreContextDetached {
         const id = uuid();
         const context = new LocalDetachedFluidDataStoreContext(
             id,
+            pkg,
             this,
             this.storage,
             this.containerScope,
