@@ -1341,21 +1341,31 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>
     {
+        // URIs use slashes as delimiters. Handles use URIs.
+        // Thus having slashes in types almost guarantees trouble down the road!
+        assert(rootDataStoreId.indexOf("/") === -1, `Data store ID contains slash: ${rootDataStoreId}`);
+
         const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
         fluidDataStore.bindToContext();
         return fluidDataStore;
     }
 
-    public createRootDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached {
-        return this.createDetachedDataStoreCore(pkg, true);
+    public createRootDetachedDataStore(
+        pkg: Readonly<string[]>,
+        rootDataStoreId: string): IFluidDataStoreContextDetached
+    {
+        return this.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
     }
 
     public createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached {
         return this.createDetachedDataStoreCore(pkg, false);
     }
 
-    private createDetachedDataStoreCore(pkg: Readonly<string[]>, isRoot: boolean): IFluidDataStoreContextDetached {
-        const id = uuid();
+    private createDetachedDataStoreCore(
+        pkg: Readonly<string[]>,
+        isRoot: boolean,
+        id = uuid()): IFluidDataStoreContextDetached
+    {
         const context = new LocalDetachedFluidDataStoreContext(
             id,
             pkg,

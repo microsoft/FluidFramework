@@ -82,8 +82,8 @@ describe("Loader.request", () => {
             new ContainerRuntimeFactoryWithScope(
                 testSharedDataObjectFactory1,
                 [
-                    ["default", Promise.resolve(testSharedDataObjectFactory1)],
-                    ["TestSharedDataObject2", Promise.resolve(testSharedDataObjectFactory2)],
+                    [testSharedDataObjectFactory1.type, Promise.resolve(testSharedDataObjectFactory1)],
+                    [testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
                 ],
             );
         loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);

@@ -41,6 +41,7 @@ import {
  */
 export interface RootDataObjectFactory extends IFluidDataStoreFactory {
     createRootInstance(
+        rootDataStoreId: string,
         runtime: IContainerRuntime,
         scope: IFluidDependencyProvider | undefined): Promise<IFluidRouter>;
 }
@@ -321,11 +322,12 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
      * They get attached only when a handle to one of them is attached to already attached objects.
      */
     public async createRootInstance(
+        rootDataStoreId: string,
         runtime: IContainerRuntime,
         scope: IFluidDependencyProvider | undefined = undefined,
         initialState?: S,
     ): Promise<TObj> {
-        const context = runtime.createRootDetachedDataStore([this.type]);
+        const context = runtime.createRootDetachedDataStore([this.type], rootDataStoreId);
         return this.createInstanceCore(context, initialState, scope);
     }
 

@@ -677,7 +677,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     constructor(
         id: string,
-        pkg: Readonly<string[]> | undefined,
+        pkg: Readonly<string[]>,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject,
@@ -820,7 +820,6 @@ export class LocalDetachedFluidDataStoreContext
             snapshotTree,
             isRootDataStore,
         );
-        assert(this.pkg === undefined);
         this.detachedRuntimeCreation = true;
     }
 

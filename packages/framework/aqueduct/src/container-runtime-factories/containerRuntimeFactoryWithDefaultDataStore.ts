@@ -12,6 +12,8 @@ import { RootDataObjectFactory } from "../data-object-factories";
 import { defaultRouteRequestHandler } from "../request-handlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
+const defaultDataStoreId = "default";
+
 /**
  * A ContainerRuntimeFactory that initializes Containers with a single default data store, which can be requested from
  * the container with an empty URL.
@@ -20,6 +22,8 @@ import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
  */
 export class ContainerRuntimeFactoryWithDefaultDataStore<T extends IFluidDataStoreFactory>
         extends BaseContainerRuntimeFactory {
+    public static readonly defaultDataStoreId = defaultDataStoreId;
+
     constructor(
         protected readonly defaultFactory: T,
         registryEntries: NamedFluidDataStoreRegistryEntries,
@@ -31,7 +35,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore<T extends IFluidDataSto
             registryEntries,
             [
                 ...requestHandlers,
-                defaultRouteRequestHandler(defaultFactory.type),
+                defaultRouteRequestHandler(defaultDataStoreId),
             ],
             runtimeOptions,
             providerEntries,
@@ -43,8 +47,8 @@ export class ContainerRuntimeFactoryWithDefaultDataStore<T extends IFluidDataSto
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         await runtime.createRootDataStore(
-            this.defaultFactory.type, // pkg
-            this.defaultFactory.type, // id
+            this.defaultFactory.type,
+            defaultDataStoreId,
         );
     }
 }
@@ -61,6 +65,9 @@ export class ContainerRuntimeFactoryWithScope
      * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        await this.defaultFactory.createRootInstance(runtime, runtime.scope.IFluidDependencyProvider);
+        await this.defaultFactory.createRootInstance(
+            defaultDataStoreId,
+            runtime,
+            runtime.scope.IFluidDependencyProvider);
     }
 }
