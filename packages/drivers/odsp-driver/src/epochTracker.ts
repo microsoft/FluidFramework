@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import Bottleneck from "bottleneck";
+import { Semaphore } from "await-semaphore";
 import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fluidEpochMismatchError, OdspErrorType, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
@@ -19,14 +19,13 @@ import { ICacheEntry, LocalPersistentCacheAdapter } from "./odspCache";
 export class EpochTracker {
     private _fluidEpoch: string | undefined;
     private _hashedDocumentId: string | undefined;
-    private readonly rateLimiter: Bottleneck;
+    private readonly rateLimiter: Semaphore;
     constructor(
         private readonly persistedCache: LocalPersistentCacheAdapter,
         private readonly logger?: ITelemetryLogger,
     ) {
-        this.rateLimiter = new Bottleneck({
-            maxConcurrent: 12, // Limits the max number of concurrent requests to 12.
-        });
+        // Limits the max number of concurrent requests to 24.
+        this.rateLimiter = new Semaphore(24);
     }
 
     public set hashedDocumentId(docId: string | undefined) {
@@ -70,7 +69,7 @@ export class EpochTracker {
         // Add epoch in fetch request.
         const request = this.addEpochInRequest(url, fetchOptions, addInBody);
         try {
-            const response = await this.rateLimiter.schedule(
+            const response = await this.rateLimiter.use(
                 async () => fetchAndParseAsJSONHelper<T>(request.url, request.fetchOptions),
             );
             this.validateEpochFromResponse(response.headers.get("x-fluid-epoch"));
@@ -95,7 +94,7 @@ export class EpochTracker {
         // Add epoch in fetch request.
         const request = this.addEpochInRequest(url, fetchOptions, addInBody);
         try {
-            const response = await this.rateLimiter.schedule(
+            const response = await this.rateLimiter.use(
                 async () => fetchHelper(request.url, request.fetchOptions),
             );
             this.validateEpochFromResponse(response.headers.get("x-fluid-epoch"));
