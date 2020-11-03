@@ -3,23 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import process from "process";
 import { assert } from "@fluidframework/common-utils";
 
 export class RateLimiter {
     private readonly tasks: (() => void)[] = [];
-    private count: number;
-
-    constructor(count: number) {
-        this.count = count;
-    }
+    constructor(private maxRequests: number) {}
 
     public get waitQueueLength(): number {
         return this.tasks.length;
     }
 
     private sched() {
-        if (this.count > 0 && this.tasks.length > 0) {
-            this.count--;
+        if (this.maxRequests > 0 && this.tasks.length > 0) {
+            this.maxRequests--;
             const task = this.tasks.shift();
             assert(task !== undefined, "Unexpected task value in tasks list");
             task();
@@ -33,31 +30,27 @@ export class RateLimiter {
                 res(() => {
                     if (!released) {
                         released = true;
-                        this.count++;
+                        this.maxRequests++;
                         this.sched();
                     }
                 });
             };
             this.tasks.push(task);
-            if (process && process.nextTick) {
-                process.nextTick(this.sched.bind(this));
-            } else {
-                setImmediate(this.sched.bind(this));
-            }
+            process.nextTick(this.sched.bind(this));
         });
     }
 
-    public async schedule<T>(f: () => Promise<T>) {
+    public async schedule<T>(work: () => Promise<T>) {
         return this.acquire()
         .then(async (release) => {
-            return f()
+            return work()
             .then((res) => {
                 release();
                 return res;
             })
-            .catch((err) => {
+            .catch((error) => {
                 release();
-                throw err;
+                throw error;
             });
         });
     }
