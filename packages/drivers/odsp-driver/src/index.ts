@@ -31,3 +31,4 @@ export * from "./fetchWithRetry";
 export * from "./graph";
 export * from "./odspFluidFileLink";
 export * from "./resolveDataStore";
+export * from "./rateLimiter";

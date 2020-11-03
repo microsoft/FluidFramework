@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import AbortController from "abort-controller";
+import { default as AbortController } from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
 import {
@@ -232,6 +232,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     {
                         eventName: "readBlob",
                         headers: Object.keys(headers).length !== 0 ? true : undefined,
+                        waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
                     },
                     async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }),
                 );
