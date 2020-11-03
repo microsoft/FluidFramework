@@ -29,14 +29,12 @@ import {
     raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils";
 import { buildSnapshotTree, readAndParseFromBlobs } from "@fluidframework/driver-utils";
-import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
     ITreeEntry,
-    ITree,
 } from "@fluidframework/protocol-definitions";
 import {
     IAttachMessage,
@@ -48,10 +46,12 @@ import {
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
 import {
+    convertSnapshotTreeToSummaryTree,
     generateHandleContextPath,
     RequestParser,
     SummaryTreeBuilder,
     FluidSerializer,
+    convertSummaryTreeToITree,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -63,7 +63,6 @@ import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
-import { convertSnapshotToITree } from "./utils";
 
 export enum DataStoreMessageType {
     // Creates a new channel
@@ -174,7 +173,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly quorum: IQuorum;
     private readonly audience: IAudience;
-    private readonly snapshotFn: (message: string) => Promise<void>;
     public readonly logger: ITelemetryLogger;
 
     public constructor(
@@ -192,7 +190,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         this.deltaManager = dataStoreContext.deltaManager;
         this.quorum = dataStoreContext.getQuorum();
         this.audience = dataStoreContext.getAudience();
-        this.snapshotFn = dataStoreContext.snapshotFn;
 
         const tree = dataStoreContext.baseSnapshot;
 
@@ -459,12 +456,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return this.audience;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public snapshot(message: string): Promise<void> {
-        this.verifyNotClosed();
-        return this.snapshotFn(message);
-    }
-
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         this.verifyNotClosed();
 
@@ -561,27 +552,12 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         );
     }
 
-    public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
-        // Craft the .attributes file for each shared object
-        const entries = await Promise.all(Array.from(this.contexts)
-            .filter(([key, _]) => {
-                const isAttached = this.isChannelAttached(key);
-                // We are not expecting local dds! Summary may not capture local state.
-                assert(isAttached, "Not expecting detached channels during summarize");
-                // If the object is registered - and we have received the sequenced op creating the object
-                // (i.e. it has a base mapping) - then we go ahead and snapshot
-                return isAttached;
-            }).map(async ([key, value]) => {
-                const snapshot = await value.snapshot(fullTree);
-
-                // And then store the tree
-                return new TreeTreeEntry(key, snapshot);
-            }));
-
-        return entries;
-    }
-
-    public async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {
+    /**
+     * Returns a summary at the current sequence number.
+     * @param fullTree - true to bypass optimizations and force a full summary tree
+     * @param trackState - This tells whether we should track state from this summary.
+     */
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each data store and ask it to snapshot
@@ -594,16 +570,26 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                 // (i.e. it has a base mapping) - then we go ahead and snapshot
                 return isAttached;
             }).map(async ([key, value]) => {
-                const channelSummary = await value.summarize(fullTree);
+                const channelSummary = await value.summarize(fullTree, trackState);
                 builder.addWithStats(key, channelSummary);
             }));
 
         return builder.getSummaryTree();
     }
 
+    /**
+     * back-compat 0.28
+     */
     public getAttachSnapshot(): ITreeEntry[] {
-        const entries: ITreeEntry[] = [];
+        const summaryTree = this.getAttachSummary();
+        const tree = convertSummaryTreeToITree(summaryTree.summary);
+        return tree.entries;
+    }
+
+    public getAttachSummary(): ISummaryTreeWithStats {
         this.attachGraph();
+
+        const builder = new SummaryTreeBuilder();
 
         // Craft the .attributes file for each shared object
         for (const [objectId, value] of this.contexts) {
@@ -612,23 +598,22 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             }
 
             if (!this.notBoundedChannelContextSet.has(objectId)) {
-                let snapshot: ITree;
+                let summary: ISummaryTreeWithStats;
                 if (value.isLoaded) {
-                    snapshot = value.getAttachSnapshot();
+                    summary = value.getAttachSummary();
                 } else {
                     // If this channel is not yet loaded, then there should be no changes in the snapshot from which
                     // it was created as it is detached container. So just use the previous snapshot.
                     assert(!!this.dataStoreContext.baseSnapshot,
                         "BaseSnapshot should be there as detached container loaded from snapshot");
-                    snapshot = convertSnapshotToITree(this.dataStoreContext.baseSnapshot.trees[objectId]);
+                    summary = convertSnapshotTreeToSummaryTree(this.dataStoreContext.baseSnapshot.trees[objectId]);
                 }
 
-                // And then store the tree
-                entries.push(new TreeTreeEntry(objectId, snapshot));
+                builder.addWithStats(objectId, summary);
             }
         }
 
-        return entries;
+        return builder.getSummaryTree();
     }
 
     public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {

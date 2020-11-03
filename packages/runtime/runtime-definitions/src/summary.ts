@@ -32,7 +32,7 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
     id: string;
 }
 
-export type SummarizeInternalFn = (fullTree: boolean) => Promise<ISummarizeInternalResult>;
+export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
 export interface ISummarizerNodeConfig {
     /**
      * True to reuse previous handle when unchanged since last acked summary.
@@ -105,7 +105,7 @@ export interface ISummarizerNode {
 
     createChild(
         /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+        summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
         /** Initial id or path part of this node */
         id: string,
         /**

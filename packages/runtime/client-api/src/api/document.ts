@@ -177,14 +177,6 @@ export class Document extends EventEmitter {
     }
 
     /**
-     * Called to snapshot the given document
-     */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public snapshot(tagMessage: string = ""): Promise<void> {
-        return this.runtime.snapshot(tagMessage);
-    }
-
-    /**
      * Closes the document and detaches all listeners
      */
     public close() {

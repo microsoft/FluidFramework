@@ -48,7 +48,7 @@ import {
     CreateChildSummarizerNodeParam,
     IProvideFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
+import { SummaryTracker, addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in store attributes.
@@ -220,7 +220,8 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             this.bindState = BindState.Bound;
         };
 
-        const thisSummarizeInternal = async (fullTree: boolean) => this.summarizeInternal(fullTree);
+        const thisSummarizeInternal =
+            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
         this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
     }
 
@@ -368,53 +369,28 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 
     /**
-     * Notifies the object to take snapshot of a store.
-     * @deprecated in 0.22 summarizerNode
+     * Returns a summary at the current sequence number.
+     * @param fullTree - true to bypass optimizations and force a full summary tree
+     * @param trackState - This tells whether we should track state from this summary.
      */
-    public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        if (!fullTree) {
-            const id = await this.summaryTracker.getId();
-            if (id !== undefined) {
-                return { id, entries: [] };
-            }
-        }
-
-        await this.realize();
-
-        const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const entries = await this.channel!.snapshotInternal(fullTree);
-
-        const attributesBlob = createAttributesBlob(pkg, isRootDataStore);
-        entries.push(attributesBlob);
-
-        return { entries, id: null };
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
+        // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
+        // the summary. Else, get the summary tree directly.
+        return trackState
+            ? this.summarizerNode.summarize(fullTree)
+            : this.summarizeInternal(fullTree, false /* trackState */);
     }
 
-    public async summarize(fullTree = false): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(fullTree);
-    }
-
-    private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         await this.realize();
 
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const channel = this.channel!;
-        if (channel.summarize !== undefined) {
-            const summary = await channel.summarize(fullTree);
-            const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
-            addBlobToSummary(summary, attributesBlobKey, JSON.stringify(attributes));
-            return { ...summary, id: this.id };
-        } else {
-            // back-compat summarizerNode - remove this case
-            const entries = await channel.snapshotInternal(fullTree);
-            const attributesBlob = createAttributesBlob(pkg, isRootDataStore);
-            entries.push(attributesBlob);
-            const summary = convertToSummaryTree({ entries, id: null });
-            return { ...summary, id: this.id };
-        }
+        const summary = await channel.summarize(fullTree, trackState);
+        const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
+        addBlobToSummary(summary, attributesBlobKey, JSON.stringify(attributes));
+        return { ...summary, id: this.id };
     }
 
     /**
@@ -718,10 +694,17 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     }
 
     public generateAttachMessage(): IAttachMessage {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const entries = this.channel!.getAttachSnapshot();
+        assert(this.channel !== undefined, "There should be a channel when generating attach message");
 
-        const snapshot: ITree = { entries, id: null };
+        let snapshot: ITree;
+        if (this.channel.getAttachSummary !== undefined) {
+            const summaryTree = this.channel.getAttachSummary();
+            snapshot = convertSummaryTreeToITree(summaryTree.summary);
+        } else {
+            // back-compat 0.28
+            const entries = this.channel.getAttachSnapshot();
+            snapshot = { entries, id: null };
+        }
 
         assert(this.pkg !== undefined, "pkg should be available in local data store context");
         assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store context");
