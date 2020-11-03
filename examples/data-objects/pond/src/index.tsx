@@ -4,7 +4,7 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
+    ContainerRuntimeFactoryWithScope,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -19,10 +19,6 @@ import {
 } from "./data-objects";
 import { IFluidUserInformation } from "./interfaces";
 import { userInfoFactory } from "./providers";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const PondName = pkg.name as string;
 
 /**
  * Basic Pond example using stock component classes.
@@ -46,7 +42,7 @@ export class Pond extends DataObject implements IFluidHTMLView {
         this.root.set(Clicker.ComponentName, clickerComponent.handle);
 
         const clickerComponentUsingProvider =
-            await ExampleUsingProviders.getFactory().createChildInstance(this.context);
+            await ExampleUsingProviders.getFactory().createChildInstance(this.context, undefined, this.scope);
         this.root.set(ExampleUsingProviders.ComponentName, clickerComponentUsingProvider.handle);
     }
 
@@ -101,7 +97,7 @@ export class Pond extends DataObject implements IFluidHTMLView {
     public static getFactory() { return Pond.factory; }
 
     private static readonly factory = new DataObjectFactory(
-        PondName,
+        "Pond",
         Pond,
         [SharedDirectory.getFactory()],
         {},
@@ -114,8 +110,8 @@ export class Pond extends DataObject implements IFluidHTMLView {
 
 // ----- CONTAINER SETUP STUFF -----
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    Pond.getFactory().type,
+export const fluidExport = new ContainerRuntimeFactoryWithScope(
+    Pond.getFactory(),
     new Map([
         Pond.getFactory().registryEntry,
     ]),

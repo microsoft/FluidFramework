@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithScope } from "@fluidframework/aqueduct";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
@@ -66,8 +66,8 @@ describe("Table Document with Interception", () => {
         }
 
         beforeEach(async () => {
-            const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
-                TableDocumentType,
+            const factory = new ContainerRuntimeFactoryWithScope(
+                TableDocument.getFactory(),
                 new Map([
                     [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
                 ]),

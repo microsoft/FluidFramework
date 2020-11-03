@@ -5,6 +5,7 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidLastEditedTracker } from "@fluidframework/last-edited-experimental";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -16,10 +17,10 @@ import { VltavaView } from "./view";
 /**
  * Vltava is an application experience
  */
-export class Vltava extends DataObject implements IFluidHTMLView {
+export class Vltava extends DataObject<IFluidLastEditedTracker> implements IFluidHTMLView {
     private dataModelInternal: IVltavaDataModel | undefined;
 
-    private static readonly factory = new DataObjectFactory("vltava", Vltava, [], {});
+    private static readonly factory = new DataObjectFactory("vltava", Vltava, [], { IFluidLastEditedTracker });
 
     public static getFactory() {
         return Vltava.factory;
@@ -45,7 +46,8 @@ export class Vltava extends DataObject implements IFluidHTMLView {
             new VltavaDataModel(
                 this.root,
                 this.context,
-                this.runtime);
+                this.runtime,
+                await this.providers.IFluidLastEditedTracker);
     }
 
     /**

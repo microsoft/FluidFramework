@@ -7,7 +7,6 @@ import { IEventProvider } from "@fluidframework/common-definitions";
 import {
     AttachState,
     ContainerWarning,
-    IAudience,
     IDeltaManager,
     ILoader,
 } from "@fluidframework/container-definitions";
@@ -24,26 +23,15 @@ import {
     IDocumentMessage,
     IHelpMessage,
     IPendingProposal,
-    IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
+    IFluidDataStoreContextDetached,
  } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
-
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideContainerRuntime>> { }
-}
-
-export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
-
-export interface IProvideContainerRuntime {
-    IContainerRuntime: IContainerRuntime;
-}
 
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents{
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
@@ -65,7 +53,6 @@ export type IContainerRuntimeBaseWithCombinedEvents =
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
 export interface IContainerRuntime extends
-    IProvideContainerRuntime,
     Partial<IProvideContainerRuntimeDirtyable>,
     IContainerRuntimeBaseWithCombinedEvents {
     readonly id: string;
@@ -109,14 +96,10 @@ export interface IContainerRuntime extends
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
 
     /**
-     * Returns the current quorum.
+     * Creates detached data store context. only after context.attachRuntime() is called,
+     * data store initialization is considered compete.
      */
-    getQuorum(): IQuorum;
-
-    /**
-     * Returns the current audience.
-     */
-    getAudience(): IAudience;
+    createRootDetachedDataStore(): IFluidDataStoreContextDetached;
 
     /**
      * Used to raise an unrecoverable error on the runtime.

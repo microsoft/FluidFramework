@@ -13,14 +13,28 @@ import {
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideFluidDependencySynthesizer>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideFluidDependencyProvider>> { }
 }
 
-export const IFluidDependencySynthesizer: keyof IProvideFluidDependencySynthesizer
-    = "IFluidDependencySynthesizer";
+export const IFluidDependencyProvider: keyof IProvideFluidDependencyProvider
+    = "IFluidDependencyProvider";
 
-export interface IProvideFluidDependencySynthesizer {
-    IFluidDependencySynthesizer: IFluidDependencySynthesizer;
+export interface IProvideFluidDependencyProvider {
+    IFluidDependencyProvider: IFluidDependencyProvider;
+}
+
+export interface IFluidDependencyProvider {
+    /**
+     * Check if a given type is registered
+     * @param types - Type to check
+     */
+    has(...types: (keyof IFluidObject)[]): boolean;
+
+    /**
+     * Get a provider. undefined if not available.
+     * @param type - Type to get
+     */
+    getProvider<T extends keyof IFluidObject>(type: T): FluidObjectProvider<T> | undefined;
 }
 
 /**
@@ -28,7 +42,7 @@ export interface IProvideFluidDependencySynthesizer {
  * It allow for registering providers and uses synthesize to generate a new object with the optional
  * and required types.
  */
-export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
+export interface IFluidDependencySynthesizer extends IFluidDependencyProvider {
     /**
      * All the registered types available
      */
@@ -56,21 +70,10 @@ export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynt
      * @param requiredTypes - required types that need to be in the Scope object
      */
     synthesize<
-        O extends IFluidObject,
-        R extends IFluidObject,>(
+        O extends IFluidObject = IFluidObject,
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        R extends IFluidObject = {}>(
             optionalTypes: FluidObjectSymbolProvider<O>,
             requiredTypes: FluidObjectSymbolProvider<R>,
     ): AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>>;
-
-    /**
-     * Check if a given type is registered
-     * @param types - Type to check
-     */
-    has(...types: (keyof IFluidObject)[]): boolean;
-
-    /**
-     * Get a provider. undefined if not available.
-     * @param type - Type to get
-     */
-    getProvider<T extends keyof IFluidObject>(type: T): FluidObjectProvider<T> | undefined;
 }

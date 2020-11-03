@@ -4,17 +4,13 @@
  */
 
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { DependencyContainerRegistry } from "@fluidframework/synthesize";
-import {
-    RuntimeRequestHandler,
-    innerRequestHandler,
-} from "@fluidframework/request-handler";
+import { RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { RootDataObjectFactory } from "../data-object-factories";
 import { defaultRouteRequestHandler } from "../request-handlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
-
-const defaultDataStoreId = "default";
 
 /**
  * A ContainerRuntimeFactory that initializes Containers with a single default data store, which can be requested from
@@ -22,11 +18,10 @@ const defaultDataStoreId = "default";
  *
  * This factory should be exposed as fluidExport off the entry point to your module.
  */
-export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
-    public static readonly defaultDataStoreId = defaultDataStoreId;
-
+export class ContainerRuntimeFactoryWithDefaultDataStore<T extends IFluidDataStoreFactory>
+        extends BaseContainerRuntimeFactory {
     constructor(
-        private readonly defaultDataStoreName: string,
+        protected readonly defaultFactory: T,
         registryEntries: NamedFluidDataStoreRegistryEntries,
         providerEntries: DependencyContainerRegistry = [],
         requestHandlers: RuntimeRequestHandler[] = [],
@@ -34,13 +29,12 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
     ) {
         super(
             registryEntries,
-            providerEntries,
             [
                 ...requestHandlers,
-                defaultRouteRequestHandler(defaultDataStoreId),
-                innerRequestHandler,
+                defaultRouteRequestHandler(defaultFactory.type),
             ],
             runtimeOptions,
+            providerEntries,
         );
     }
 
@@ -48,12 +42,25 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
      * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const router = await runtime.createRootDataStore(
-            this.defaultDataStoreName,
-            ContainerRuntimeFactoryWithDefaultDataStore.defaultDataStoreId,
+        await runtime.createRootDataStore(
+            this.defaultFactory.type, // pkg
+            this.defaultFactory.type, // id
         );
-        // We need to request the data store before attaching to ensure it
-        // runs through its entire instantiation flow.
-        await router.request({ url: "/" });
+    }
+}
+
+/**
+ * A ContainerRuntimeFactory that initializes Containers with a single default data store, which can be requested from
+ * the container with an empty URL.
+ *
+ * This factory should be exposed as fluidExport off the entry point to your module.
+ */
+export class ContainerRuntimeFactoryWithScope
+        extends ContainerRuntimeFactoryWithDefaultDataStore<RootDataObjectFactory> {
+    /**
+     * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
+     */
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+        await this.defaultFactory.createRootInstance(runtime, runtime.scope.IFluidDependencyProvider);
     }
 }

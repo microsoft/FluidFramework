@@ -4,7 +4,7 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
+    ContainerRuntimeFactoryWithScope,
 } from "@fluidframework/aqueduct";
 
 import { DiceRoller, DiceRollerInstantiationFactory } from "./model";
@@ -19,8 +19,8 @@ import { DiceRoller, DiceRollerInstantiationFactory } from "./model";
  * In this example, we are only registering a single Fluid objects, but more complex examples will register multiple
  * Fluid objects.
  */
-export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRoller.Name,
+export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithScope(
+    DiceRollerInstantiationFactory,
     new Map([
         [DiceRoller.Name, Promise.resolve(DiceRollerInstantiationFactory)],
     ]),

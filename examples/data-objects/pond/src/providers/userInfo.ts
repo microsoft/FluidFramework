@@ -7,9 +7,8 @@ import { EventEmitter } from "events";
 
 import { IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IQuorum } from "@fluidframework/protocol-definitions";
-import { DependencyContainer } from "@fluidframework/synthesize";
-import { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
-import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
+import { IFluidDependencySynthesizer } from "@fluidframework/synthesize";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 import { IFluidUserInformation } from "../interfaces";
 
@@ -21,7 +20,7 @@ export class UserInfo extends EventEmitter implements IFluidUserInformation {
         return super.on(event, listener);
     }
 
-    public constructor(containerRuntime: IContainerRuntime) {
+    public constructor(containerRuntime: IContainerRuntimeBase) {
         super();
         this.quorum = containerRuntime.getQuorum();
 
@@ -62,14 +61,11 @@ export class UserInfo extends EventEmitter implements IFluidUserInformation {
     }
 }
 
-export const userInfoFactory = async (dc: DependencyContainer) => {
-    const s = dc.synthesize<IContainerRuntime>({
-        IContainerRuntime,
-        IContainerRuntimeDirtyable,
-        IFluidHandleContext,
-        IFluidDataStoreRegistry,
-    }, {});
-    const containerRuntime = await s.IContainerRuntime;
+export const userInfoFactory = async (dc: IFluidDependencySynthesizer) => {
+    const s = dc.synthesize<IContainerRuntimeBase>(
+        { IContainerRuntimeBase, IFluidHandleContext },
+        {});
+    const containerRuntime = await s.IContainerRuntimeBase;
     if (containerRuntime !== undefined) {
         return new UserInfo(containerRuntime);
     }

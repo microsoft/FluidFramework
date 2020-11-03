@@ -4,7 +4,7 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
+    ContainerRuntimeFactoryWithScope,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -134,7 +134,7 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
     {},
 );
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    LoadTestDataStore.DataStoreName,
+export const fluidExport = new ContainerRuntimeFactoryWithScope(
+    LoadTestDataStoreInstantiationFactory,
     new Map([[LoadTestDataStore.DataStoreName, Promise.resolve(LoadTestDataStoreInstantiationFactory)]]),
 );

@@ -4,18 +4,14 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
+    ContainerRuntimeFactoryWithScope,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { Ink } from "@fluidframework/ink";
 import { Canvas } from "./canvas";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const CanvasName = pkg.name as string;
-
 export const CanvasInstantiationFactory = new DataObjectFactory(
-    CanvasName,
+    "Canvas",
     Canvas,
     [
         Ink.getFactory(),
@@ -23,9 +19,9 @@ export const CanvasInstantiationFactory = new DataObjectFactory(
     {},
 );
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    CanvasName,
+export const fluidExport = new ContainerRuntimeFactoryWithScope(
+    CanvasInstantiationFactory,
     new Map([
-        [CanvasName, Promise.resolve(CanvasInstantiationFactory)],
+        [CanvasInstantiationFactory.type, Promise.resolve(CanvasInstantiationFactory)],
     ]),
 );

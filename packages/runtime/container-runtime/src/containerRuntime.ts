@@ -469,7 +469,7 @@ class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
  */
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
-    public get IContainerRuntime() { return this; }
+    public get IContainerRuntimeBase() { return this; }
     public get IContainerRuntimeDirtyable() { return this; }
     public get IFluidRouter() { return this; }
 
@@ -1346,7 +1346,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return fluidDataStore;
     }
 
+    public createRootDetachedDataStore(): IFluidDataStoreContextDetached {
+        return this.createDetachedDataStoreCore(true);
+    }
+
     public createDetachedDataStore(): IFluidDataStoreContextDetached {
+        return this.createDetachedDataStoreCore(false);
+    }
+
+    private createDetachedDataStoreCore(isRoot: boolean): IFluidDataStoreContextDetached {
         const id = uuid();
         const context = new LocalDetachedFluidDataStoreContext(
             id,
@@ -1357,7 +1365,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
-            false /* isRootDataStore */,
+            isRoot,
         );
         this.setupNewContext(context);
         return context;

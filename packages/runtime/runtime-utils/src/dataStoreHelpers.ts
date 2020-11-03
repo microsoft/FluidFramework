@@ -9,6 +9,10 @@ import {
     IFluidRouter,
     IRequest,
 } from "@fluidframework/core-interfaces";
+import {
+    IFluidDataStoreFactory,
+    FluidDataStoreRegistryEntry,
+} from "@fluidframework/runtime-definitions";
 
 export async function requestFluidObject<T = IFluidObject>(
     router: IFluidRouter, url: string | IRequest): Promise<T> {
@@ -21,4 +25,29 @@ export async function requestFluidObject<T = IFluidObject>(
 
     assert(response.value);
     return response.value as T;
+}
+
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export function createNamedDataStore<T extends FluidDataStoreRegistryEntry>(
+    type: string,
+    factory: T)
+{
+    return Object.create(factory, { type: { value: type, writable: false } }) as
+        T & { type: string };
+}
+
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export function createNamedDelayedDataStore(
+    type: string,
+    factory: Promise<IFluidDataStoreFactory>): IFluidDataStoreFactory
+{
+    return {
+        type,
+        get IFluidDataStoreFactory() { return this; },
+        instantiateDataStore: async (context) => {
+            const f = await factory;
+            assert(f.type === type, "Type mismatch");
+            return f.instantiateDataStore(context);
+        },
+    };
 }

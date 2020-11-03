@@ -6,14 +6,13 @@
 import { DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { TodoItem } from "../TodoItem";
 
 import { TodoName } from "./Todo";
 import { Todo } from "./index";
 
-export const TodoInstantiationFactory: IFluidDataStoreFactory = new DataObjectFactory(
+export const TodoInstantiationFactory = new DataObjectFactory(
     TodoName,
     Todo,
     [

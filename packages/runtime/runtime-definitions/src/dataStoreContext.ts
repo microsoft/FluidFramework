@@ -58,15 +58,26 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
     (event: "leader" | "notleader", listener: () => void);
 }
 
+declare module "@fluidframework/core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideContainerRuntimeBase>> { }
+}
+
+export const IContainerRuntimeBase: keyof IProvideContainerRuntimeBase = "IContainerRuntimeBase";
+
+export interface IProvideContainerRuntimeBase {
+    IContainerRuntimeBase: IContainerRuntimeBase;
+}
+
 /**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  */
 export interface IContainerRuntimeBase extends
+    IProvideContainerRuntimeBase,
     IEventProvider<IContainerRuntimeBaseEvents>,
-    IProvideFluidHandleContext,
-    /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
-    IProvideFluidDataStoreRegistry {
+    IProvideFluidHandleContext
+{
 
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
@@ -125,6 +136,16 @@ export interface IContainerRuntimeBase extends
     getTaskManager(): Promise<ITaskManager>;
 
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+
+    /**
+     * Returns the current quorum.
+     */
+    getQuorum(): IQuorum;
+
+    /**
+     * Returns the current audience.
+     */
+    getAudience(): IAudience;
 }
 
 /**

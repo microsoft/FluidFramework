@@ -123,9 +123,6 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
  *      sharedDir = testFluidObject.getSharedObject<SharedDirectory>("sharedDirectory");
  */
 export class TestFluidObjectFactory implements IFluidDataStoreFactory {
-    public static readonly type = "TestFluidObjectFactory";
-    public readonly type = TestFluidObjectFactory.type;
-
     public get IFluidDataStoreFactory() { return this; }
 
     /**
@@ -134,7 +131,10 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
      * IChannelFactory. Entries with string ids are passed to the Fluid object so that it can create a shared object
      * for it.
      */
-    constructor(private readonly factoryEntries: ChannelFactoryRegistry) { }
+    constructor(
+        private readonly factoryEntries: ChannelFactoryRegistry,
+        public readonly type = "TestFluidObjectFactory")
+    { }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
         const dataTypes = new Map<string, IChannelFactory>();

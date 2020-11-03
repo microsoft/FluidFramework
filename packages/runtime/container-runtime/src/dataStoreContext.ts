@@ -685,7 +685,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
-        private readonly isRootDataStore: boolean,
+        protected readonly isRootDataStore: boolean,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -845,6 +845,10 @@ export class LocalDetachedFluidDataStoreContext
         this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
 
         super.bindRuntime(dataStoreRuntime);
+
+        if (this.isRootDataStore) {
+            dataStoreRuntime.bindToContext();
+        }
     }
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {

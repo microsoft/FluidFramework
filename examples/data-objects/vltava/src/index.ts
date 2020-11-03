@@ -7,7 +7,7 @@ import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { Spaces } from "@fluid-example/spaces";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithScope, RootDataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -65,12 +65,12 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectIn
     }
 }
 
-export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultDataStore {
+export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithScope {
     constructor(
-        defaultFluidObjectName: string,
+        defaultFactory: RootDataObjectFactory,
         registryEntries: NamedFluidDataStoreRegistryEntries,
     ) {
-        super(defaultFluidObjectName, registryEntries);
+        super(defaultFactory, registryEntries);
     }
 
     /**
@@ -80,7 +80,7 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultData
         // Load the last edited tracker fluidObject (done by the setup method below). This fluidObject
         // provides container level tracking of last edit and has to be loaded before any other fluidObject.
         const tracker = await requestFluidObject<IFluidLastEditedTracker>(
-            await runtime.getRootDataStore(ContainerRuntimeFactoryWithDefaultDataStore.defaultDataStoreId),
+            await runtime.getRootDataStore(this.defaultFactory.type),
             "");
 
         setupLastEditedTrackerForContainer(tracker.IFluidLastEditedTracker, runtime);
@@ -129,7 +129,7 @@ const generateFactory = () => {
     // TODO: You should be able to specify the default registry instead of just a list of fluidObjects
     // and the default registry is already determined Issue:#1138
     return new VltavaRuntimeFactory(
-        Anchor.getFactory().type,
+        Anchor.getFactory(),
         [
             ...containerFluidObjects,
             LastEditedTrackerDataObject.getFactory().registryEntry,

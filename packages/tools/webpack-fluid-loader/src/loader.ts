@@ -26,7 +26,7 @@ import {
 import { IFluidObject, IFluidPackage, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { RequestParser } from "@fluidframework/runtime-utils";
+import { RequestParser, createNamedDataStore } from "@fluidframework/runtime-utils";
 import { MultiUrlResolver } from "./multiResolver";
 import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 
@@ -89,10 +89,12 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
     if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
         const dataStoreFactory = fluidModule.fluidExport.IFluidDataStoreFactory;
 
+        const defaultFactory = createNamedDataStore(packageJson.name, dataStoreFactory);
+
         const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-            packageJson.name,
+            defaultFactory,
             new Map([
-                [packageJson.name, Promise.resolve(dataStoreFactory)],
+                [defaultFactory.type, Promise.resolve(defaultFactory)],
             ]),
         );
         return {

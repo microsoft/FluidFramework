@@ -4,14 +4,14 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IRequest, IFluidObject } from "@fluidframework/core-interfaces";
+import { IRequest, IFluidObject, IFluidRouter } from "@fluidframework/core-interfaces";
 import {
     FluidDataStoreRuntime,
     ISharedObjectRegistry,
     requestFluidDataStoreMixin,
  } from "@fluidframework/datastore";
- import { IEvent } from "@fluidframework/common-definitions";
- import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
+import { IEvent } from "@fluidframework/common-definitions";
+import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IContainerRuntimeBase,
@@ -20,18 +20,30 @@ import {
     IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
     NamedFluidDataStoreRegistryEntry,
+    IFluidDataStoreContextDetached,
 } from "@fluidframework/runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     FluidObjectSymbolProvider,
     DependencyContainer,
+    IFluidDependencyProvider,
 } from "@fluidframework/synthesize";
 
 import {
     IDataObjectProps,
     PureDataObject,
 } from "../data-objects";
+
+/*
+ * Useful interface in places where it's useful to do type erasure for PureDataObject generic
+ */
+export interface RootDataObjectFactory extends IFluidDataStoreFactory {
+    createRootInstance(
+        runtime: IContainerRuntime,
+        scope: IFluidDependencyProvider | undefined): Promise<IFluidRouter>;
+}
 
 function buildRegistryPath(
     context: IFluidDataStoreContext,
@@ -62,7 +74,10 @@ export interface IFluidDataObjectFactory {
         TObject extends PureDataObject<O, S, E>,
         TFactory extends PureDataObjectFactory<TObject, O, S, E>,
         O, S, E extends IEvent = IEvent>
-    (subFactory: TFactory, initialState?: S): Promise<TObject>;
+    (
+        subFactory: TFactory,
+        initialState: S | undefined,
+        scope: IFluidDependencyProvider | undefined): Promise<TObject>;
 
     /**
      * Similar to above, but uses any data store factory. Given that there is no type information about such factory
@@ -84,9 +99,12 @@ class FluidDataObjectFactory {
     public async createChildInstance<
         TObject extends PureDataObject<O, S, E>,
         TFactory extends PureDataObjectFactory<TObject, O, S, E>,
-        O, S, E extends IEvent = IEvent>(subFactory: TFactory, initialState?: S)
+        O, S, E extends IEvent = IEvent>(
+            subFactory: TFactory,
+            initialState?: S,
+            scope: IFluidDependencyProvider | undefined = undefined)
     {
-        return subFactory.createChildInstance(this.context, initialState);
+        return subFactory.createChildInstance(this.context, initialState, scope);
     }
 
     public async createAnonymousChildInstance<T = IFluidObject>(
@@ -114,6 +132,7 @@ async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E ex
     sharedObjectRegistry: ISharedObjectRegistry,
     optionalProviders: FluidObjectSymbolProvider<O>,
     runtimeFactoryArg: typeof FluidDataStoreRuntime,
+    scope: IFluidDependencyProvider | undefined = undefined,
     initProps?: S)
 {
     // base
@@ -137,9 +156,9 @@ async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E ex
     // becomes globally available. But it's not full initialization - constructor can't
     // access DDSs or other services of runtime as objects are not fully initialized.
     // In order to use object, we need to go through full initialization by calling finishInitialization().
-    const dependencyContainer = new DependencyContainer(context.scope.IFluidDependencySynthesizer);
+    const dependencyContainer = new DependencyContainer(scope);
     const providers = dependencyContainer.synthesize<O>(optionalProviders, {});
-    const instance = new ctor({ runtime, context, providers, initProps });
+    const instance = new ctor({ runtime, context, providers, initProps, scope });
 
     // if it's a newly created object, we need to wait for it to finish initialization
     // as that results in creation of DDSs, before it gets attached, providing atomic
@@ -169,7 +188,7 @@ async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E ex
  * E - represents events that will be available in the EventForwarder
  */
 export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E extends IEvent = IEvent>
-    implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
+    implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>, RootDataObjectFactory
 {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IFluidDataStoreRegistry | undefined;
@@ -223,25 +242,6 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
         return runtime;
     }
 
-   /**
-    * Takes context, and creates package path for a sub-entry (represented by factory in context registry).
-    * Package path returned is used to reach given factory from root (container runtime) registry, and thus
-    * is used to serialize and de-serialize data store that this factory would create.
-    * Function validates that given factory is present in registry, otherwise it throws.
-    */
-   protected buildRegistryPath(
-       context: IFluidDataStoreContext | IContainerRuntimeBase)
-   {
-       let packagePath: string[];
-       if ("containerRuntime" in context) {
-           packagePath = buildRegistryPath(context, this);
-       } else {
-           packagePath = [this.type];
-       }
-
-       return packagePath;
-   }
-
     /**
      * Creates a new instance of the object. Uses parent context's registry to build package path to this factory.
      * In other words, registry of context passed in has to contain this factory, with the name that matches
@@ -256,9 +256,14 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
     public async createChildInstance(
         parentContext: IFluidDataStoreContext,
         initialState?: S,
+        scope: IFluidDependencyProvider | undefined = undefined,
     ): Promise<TObj> {
         const packagePath = buildRegistryPath(parentContext, this);
-        return this.createInstanceCore(parentContext.containerRuntime, packagePath, initialState);
+        return this.createNonRootInstanceCore(
+            parentContext.containerRuntime,
+            packagePath,
+            initialState,
+            scope);
     }
 
     /**
@@ -274,8 +279,13 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
     public async createPeerInstance(
         peerContext: IFluidDataStoreContext,
         initialState?: S,
+        scope: IFluidDependencyProvider | undefined = undefined,
     ): Promise<TObj> {
-        return this.createInstanceCore(peerContext.containerRuntime, peerContext.packagePath, initialState);
+        return this.createNonRootInstanceCore(
+            peerContext.containerRuntime,
+            peerContext.packagePath,
+            initialState,
+            scope);
     }
 
     /**
@@ -291,26 +301,60 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
     public async createInstance(
         runtime: IContainerRuntimeBase,
         initialState?: S,
+        scope: IFluidDependencyProvider | undefined = undefined,
     ): Promise<TObj> {
-        return this.createInstanceCore(runtime, [this.type], initialState);
+        return this.createNonRootInstanceCore(
+            runtime,
+            [this.type],
+            initialState,
+            scope);
     }
 
-    protected async createInstanceCore(
+    /**
+     * Creates a new root instance of the object. Uses container's registry to find this factory.
+     * It's expected that only container owners would use this functionality, as only such developers
+     * have knowledge of entries in container registry.
+     * The name in this registry for such record should match type of this factory.
+     * @param runtime - container runtime. It's registry is used to create an object.
+     * @param initialState - The initial state to provide to the created component.
+     * @returns an object created by this factory. Data store and objects created are not attached to container.
+     * They get attached only when a handle to one of them is attached to already attached objects.
+     */
+    public async createRootInstance(
+        runtime: IContainerRuntime,
+        scope: IFluidDependencyProvider | undefined = undefined,
+        initialState?: S,
+    ): Promise<TObj> {
+        const context = runtime.createRootDetachedDataStore();
+        return this.createInstanceCore(context, [this.type], initialState, scope);
+    }
+
+    protected async createNonRootInstanceCore(
         containerRuntime: IContainerRuntimeBase,
         packagePath: Readonly<string[]>,
         initialState?: S,
+        scope: IFluidDependencyProvider | undefined = undefined,
     ): Promise<TObj> {
-        const newContext = containerRuntime.createDetachedDataStore();
+        const context = containerRuntime.createDetachedDataStore();
+        return this.createInstanceCore(context, packagePath, initialState, scope);
+    }
 
+    protected async createInstanceCore(
+        context: IFluidDataStoreContextDetached,
+        packagePath: Readonly<string[]>,
+        initialState?: S,
+        scope: IFluidDependencyProvider | undefined = undefined,
+    ): Promise<TObj> {
         const { instance, runtime } = await createDataObject(
             this.ctor,
-            newContext,
+            context,
             this.sharedObjectRegistry,
             this.optionalProviders,
             this.runtimeCtor,
+            scope,
             initialState);
 
-        await newContext.attachRuntime(packagePath, this, runtime);
+        await context.attachRuntime(packagePath, this, runtime);
 
         return instance;
     }

@@ -11,6 +11,7 @@ import {
     LastEditedTrackerDataObject,
 } from "@fluidframework/last-edited-experimental";
 import { IFluidHTMLView, IProvideFluidHTMLView } from "@fluidframework/view-interfaces";
+import { DependencyContainer } from "@fluidframework/synthesize";
 import { Vltava } from "../vltava";
 
 /**
@@ -47,11 +48,17 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
     }
 
     protected async initializingFirstTime() {
-        const defaultFluidObject = await Vltava.getFactory().createInstance(this.context.containerRuntime);
-        this.root.set(this.defaultFluidObjectId, defaultFluidObject.handle);
-
         const lastEditedFluidObject = await LastEditedTrackerDataObject.getFactory().createChildInstance(this.context);
         this.root.set(this.lastEditedFluidObjectId, lastEditedFluidObject.handle);
+
+        const dc = new DependencyContainer(this.scope);
+        dc.register(IFluidLastEditedTracker, lastEditedFluidObject.IFluidLastEditedTracker);
+
+        const defaultFluidObject = await Vltava.getFactory().createInstance(
+            this.context.containerRuntime,
+            undefined,
+            dc);
+        this.root.set(this.defaultFluidObjectId, defaultFluidObject.handle);
     }
 
     protected async hasInitialized() {

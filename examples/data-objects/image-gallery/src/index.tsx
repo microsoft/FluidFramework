@@ -4,7 +4,7 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
+    ContainerRuntimeFactoryWithScope,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -105,8 +105,8 @@ export const ImageGalleryInstantiationFactory = new DataObjectFactory(
     {},
 );
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    imageGalleryName,
+export const fluidExport = new ContainerRuntimeFactoryWithScope(
+    ImageGalleryInstantiationFactory,
     new Map([
         [imageGalleryName, Promise.resolve(ImageGalleryInstantiationFactory)],
     ]),

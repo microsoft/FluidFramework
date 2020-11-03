@@ -5,7 +5,7 @@
 
 // Fluid
 import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
+    ContainerRuntimeFactoryWithScope,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -107,8 +107,8 @@ export const MusicaInstantiationFactory = new DataObjectFactory(
     {},
 );
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    musicaName,
+export const fluidExport = new ContainerRuntimeFactoryWithScope(
+    MusicaInstantiationFactory,
     new Map([
         [musicaName, Promise.resolve(MusicaInstantiationFactory)],
     ]),

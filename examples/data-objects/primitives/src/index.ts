@@ -4,14 +4,14 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
+    ContainerRuntimeFactoryWithScope,
 } from "@fluidframework/aqueduct";
 
 import { PrimitivesName } from "./main";
 import { PrimitivesInstantiationFactory } from "./primitivesInstantiationFactory";
 
 /**
- * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading in
+ * This does setup for the Container. The ContainerRuntimeFactoryWithScope also enables dynamic loading in
  * the EmbeddedComponentLoader.
  *
  * There are two important things here:
@@ -21,8 +21,8 @@ import { PrimitivesInstantiationFactory } from "./primitivesInstantiationFactory
  * In this example, we are only registering a single component, but more complex examples will register multiple
  * components.
  */
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    PrimitivesName,
+export const fluidExport = new ContainerRuntimeFactoryWithScope(
+    PrimitivesInstantiationFactory,
     new Map([
         [PrimitivesName, Promise.resolve(PrimitivesInstantiationFactory)],
     ]),

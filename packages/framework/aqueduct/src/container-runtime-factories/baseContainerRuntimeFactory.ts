@@ -21,6 +21,7 @@ import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
+    IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions";
 import { DependencyContainer, DependencyContainerRegistry } from "@fluidframework/synthesize";
 
@@ -44,9 +45,9 @@ export class BaseContainerRuntimeFactory implements
      */
     constructor(
         private readonly registryEntries: NamedFluidDataStoreRegistryEntries,
-        private readonly providerEntries: DependencyContainerRegistry = [],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
         private readonly runtimeOptions?: IContainerRuntimeOptions,
+        private readonly providerEntries: DependencyContainerRegistry = [],
     ) {
         this.registry = new FluidDataStoreRegistry(registryEntries);
     }
@@ -57,7 +58,7 @@ export class BaseContainerRuntimeFactory implements
     public async instantiateRuntime(
         context: IContainerContext,
     ): Promise<IRuntime> {
-        const parentDependencyContainer = context.scope.IFluidDependencySynthesizer;
+        const parentDependencyContainer = context.scope.IFluidDependencyProvider;
         const dc = new DependencyContainer(parentDependencyContainer);
         for (const entry of Array.from(this.providerEntries)) {
             dc.register(entry.type, entry.provider);
@@ -66,7 +67,7 @@ export class BaseContainerRuntimeFactory implements
         // Create a scope object that passes through everything except for IFluidDependencySynthesizer
         // which we will replace with the new one we just created.
         const scope: any = context.scope;
-        scope.IFluidDependencySynthesizer = dc;
+        scope.IFluidDependencyProvider = dc;
 
         const runtime = await ContainerRuntime.load(
             context,
@@ -78,7 +79,7 @@ export class BaseContainerRuntimeFactory implements
             scope);
 
         // we register the runtime so developers of providers can use it in the factory pattern.
-        dc.register(IContainerRuntime, runtime);
+        dc.register(IContainerRuntimeBase, runtime);
 
         if (!runtime.existing) {
             // If it's the first time through.

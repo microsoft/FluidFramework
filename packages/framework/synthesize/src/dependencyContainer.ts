@@ -10,9 +10,11 @@ import {
     FluidObjectSymbolProvider,
     FluidObjectProvider,
     FluidObjectKey,
+    NonNullableFluidObject,
 } from "./types";
 import {
     IFluidDependencySynthesizer,
+    IFluidDependencyProvider,
 } from "./IFluidDependencySynthesizer";
 
 /**
@@ -31,7 +33,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         return this.providers.keys();
     }
 
-    public constructor(public parent: IFluidDependencySynthesizer | undefined = undefined) { }
+    public constructor(public parent: IFluidDependencyProvider | undefined = undefined) { }
 
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).register}
@@ -57,7 +59,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
      * {@inheritDoc (IFluidDependencySynthesizer:interface).synthesize}
      */
     public synthesize<
-        O extends IFluidObject,
+        O extends IFluidObject = IFluidObject,
         // eslint-disable-next-line @typescript-eslint/ban-types
         R extends IFluidObject = {}>(
             optionalTypes: FluidObjectSymbolProvider<O>,
@@ -133,31 +135,28 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     private resolveProvider<T extends keyof IFluidObject>(provider: FluidObjectProvider<T>, t: keyof IFluidObject) {
         // The double nested gets are required for lazy loading the provider resolution
         if (typeof provider === "function") {
+            const provider2 = provider as ((dc: IFluidDependencySynthesizer) => Promise<NonNullableFluidObject<T>>);
             // eslint-disable-next-line @typescript-eslint/no-this-alias
             const self = this;
             return {
                 get [t]() {
-                    if (provider && typeof provider === "function") {
-                        return Promise.resolve(provider(self)).then((p) => {
-                            if (p) {
-                                return p[t];
-                            }
-                        });
-                    }
+                    return provider2(self).then((p) => {
+                        if (p) {
+                            return p[t];
+                        }
+                    });
                 },
             };
-        }
-
-        return {
-            get [t]() {
-                if (provider) {
+        } else {
+            return {
+                get [t]() {
                     return Promise.resolve(provider).then((p) => {
                         if (p) {
                             return p[t];
                         }
                     });
-                }
-            },
-        };
+                },
+            };
+        }
     }
 }

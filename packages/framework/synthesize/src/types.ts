@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IFluidObject } from "@fluidframework/core-interfaces";
-import { DependencyContainer } from "./dependencyContainer";
+import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer";
 
 export type FluidObjectKey<T extends IFluidObject> = keyof T & keyof IFluidObject;
 
@@ -51,10 +51,10 @@ export type NonNullableFluidObject<T extends keyof IFluidObject> = NonNullable<I
  * Multiple ways to provide a Fluid object.
  */
 export type FluidObjectProvider<T extends keyof IFluidObject> =
-    NonNullableFluidObject<T>
+    | NonNullableFluidObject<T>
     | Promise<NonNullableFluidObject<T>>
-    | ((dependencyContainer: DependencyContainer) => NonNullableFluidObject<T>)
-    | ((dependencyContainer: DependencyContainer) => Promise<NonNullableFluidObject<T>>);
+    | ((dependencyContainer: IFluidDependencySynthesizer) => NonNullableFluidObject<T>)
+    | ((dependencyContainer: IFluidDependencySynthesizer) => Promise<NonNullableFluidObject<T>>);
 
 /**
  * ProviderEntry is a mapping of the type to the Provider

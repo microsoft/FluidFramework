@@ -11,8 +11,6 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
 import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { handleFromLegacyUri } from "@fluidframework/request-handler";
 
 export interface IVltavaUserDetails {
     name: string,
@@ -34,7 +32,6 @@ export interface IVltavaDataModel extends EventEmitter {
 export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     private readonly quorum: IQuorum;
     private users: IVltavaUserDetails[] = [];
-    private lastEditedTracker: IFluidLastEditedTracker | undefined;
 
     public on(event: "membersChanged", listener: (users: Map<string, ISequencedClient>) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -45,6 +42,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
         private readonly root: ISharedDirectory,
         private readonly context: IFluidDataStoreContext,
         runtime: IFluidDataStoreRuntime,
+        private readonly lastEditedTracker: IFluidLastEditedTracker | undefined,
     ) {
         super();
 
@@ -87,10 +85,6 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
 
     public async getLastEditedState(): Promise<IVltavaLastEditedState | undefined> {
         // Set up the tracker the first time last edited state is requested.
-        if (this.lastEditedTracker === undefined) {
-            await this.setupLastEditedTracker();
-        }
-
         const lastEditedDetails = this.lastEditedTracker?.getLastEditDetails();
         if (lastEditedDetails === undefined) {
             return;
@@ -116,12 +110,5 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
         };
 
         return lastEditedState;
-    }
-
-    private async setupLastEditedTracker() {
-        const handle = handleFromLegacyUri(
-            ContainerRuntimeFactoryWithDefaultDataStore.defaultDataStoreId,
-            this.context.containerRuntime);
-        this.lastEditedTracker = (await handle.get()).IFluidLastEditedTracker;
     }
 }
