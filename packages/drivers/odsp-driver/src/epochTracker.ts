@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Semaphore } from "await-semaphore";
 import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fluidEpochMismatchError, OdspErrorType, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, LocalPersistentCacheAdapter } from "./odspCache";
+import { RateLimiter } from "./rateLimiter";
 
 /**
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
@@ -19,13 +19,13 @@ import { ICacheEntry, LocalPersistentCacheAdapter } from "./odspCache";
 export class EpochTracker {
     private _fluidEpoch: string | undefined;
     private _hashedDocumentId: string | undefined;
-    public readonly rateLimiter: Semaphore;
+    public readonly rateLimiter: RateLimiter;
     constructor(
         private readonly persistedCache: LocalPersistentCacheAdapter,
         private readonly logger: ITelemetryLogger,
     ) {
         // Limits the max number of concurrent requests to 24.
-        this.rateLimiter = new Semaphore(24);
+        this.rateLimiter = new RateLimiter(24);
     }
 
     public set hashedDocumentId(docId: string | undefined) {
@@ -69,7 +69,7 @@ export class EpochTracker {
         // Add epoch in fetch request.
         const request = this.addEpochInRequest(url, fetchOptions, addInBody);
         try {
-            const response = await this.rateLimiter.use(
+            const response = await this.rateLimiter.schedule(
                 async () => fetchAndParseAsJSONHelper<T>(request.url, request.fetchOptions),
             );
             this.validateEpochFromResponse(response.headers.get("x-fluid-epoch"));
@@ -94,7 +94,7 @@ export class EpochTracker {
         // Add epoch in fetch request.
         const request = this.addEpochInRequest(url, fetchOptions, addInBody);
         try {
-            const response = await this.rateLimiter.use(
+            const response = await this.rateLimiter.schedule(
                 async () => fetchHelper(request.url, request.fetchOptions),
             );
             this.validateEpochFromResponse(response.headers.get("x-fluid-epoch"));

@@ -232,6 +232,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     {
                         eventName: "readBlob",
                         headers: Object.keys(headers).length !== 0 ? true : undefined,
+                        waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
                     },
                     async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }),
                 );
