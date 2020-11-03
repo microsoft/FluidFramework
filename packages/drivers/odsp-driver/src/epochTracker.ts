@@ -19,10 +19,10 @@ import { ICacheEntry, LocalPersistentCacheAdapter } from "./odspCache";
 export class EpochTracker {
     private _fluidEpoch: string | undefined;
     private _hashedDocumentId: string | undefined;
-    private readonly rateLimiter: Semaphore;
+    public readonly rateLimiter: Semaphore;
     constructor(
         private readonly persistedCache: LocalPersistentCacheAdapter,
-        private readonly logger?: ITelemetryLogger,
+        private readonly logger: ITelemetryLogger,
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new Semaphore(24);
@@ -156,9 +156,7 @@ export class EpochTracker {
     private checkForEpochError(error) {
         assert(!!this._hashedDocumentId, "DocId should be set to clear the cached entries!!");
         if (error.errorType === OdspErrorType.epochVersionMismatch) {
-            if (this.logger !== undefined) {
-                this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, error);
-            }
+            this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, error);
             // If the epoch mismatches, then clear all entries for such document from cache.
             this.persistedCache.removeAllEntriesForDocId(this._hashedDocumentId);
         }
