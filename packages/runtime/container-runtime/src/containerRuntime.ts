@@ -1534,7 +1534,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          // If a non-local operation then go and create the object, otherwise mark it as officially attached.
         if (this.contexts.has(attachMessage.id)) {
             const error = new Error("DataCorruption: Duplicate data store created with existing ID");
-            this.logger.sendErrorEvent({ eventName: "DuplicateDataStoreId", sequenceNumber: message.sequenceNumber }, error);
+            this.logger.sendErrorEvent({
+                eventName: "DuplicateDataStoreId",
+                sequenceNumber: message.sequenceNumber,
+                clientId: message.clientId,
+                referenceSequenceNumber: message.referenceSequenceNumber
+            }, error);
             throw error;
         }
 
