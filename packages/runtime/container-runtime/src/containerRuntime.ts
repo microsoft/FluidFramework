@@ -511,7 +511,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         let summarizerInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult> = async () => {
-            assert.fail("Attempted to summarize before setting summarizeInternalFn");
+            throw Error("Attempted to summarize before setting summarizeInternalFn");
         };
 
         const loadedFromSequenceNumber = context.deltaManager.initialSequenceNumber;
@@ -539,7 +539,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         const localReadAndParse = async <T>(id: string) => {
-            assert(context.storage, "Expected context to have storage defined");
+            assert(!!context.storage, "Expected context to have storage defined");
             return readAndParse<T>(context.storage, id);
         };
         let baseSnapshot = context.baseSnapshot;

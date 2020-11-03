@@ -167,7 +167,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         }
         if (path.length === 0) {
             const tryId = previousFullSnapshot.id;
-            assert(tryId, "Parent summary does not have blob handle for specified path.");
+            assert(!!tryId && tryId.length > 0, "Parent summary does not have blob handle for specified path.");
             return tryId;
         }
 
@@ -186,12 +186,12 @@ export class DocumentStorageService implements IDocumentStorageService {
             switch (handleType) {
                 case SummaryType.Blob: {
                     const tryId = previousSnapshot.blobs[key];
-                    assert(tryId, "Parent summary does not have blob handle for specified path.");
+                    assert(!!tryId && tryId.length > 0, "Parent summary does not have blob handle for specified path.");
                     return tryId;
                 }
                 case SummaryType.Tree: {
                     const tryId = previousSnapshot.trees[key]?.id;
-                    assert(tryId, "Parent summary does not have blob handle for specified path.");
+                    assert(!!tryId && tryId.length > 0, "Parent summary does not have blob handle for specified path.");
                     return tryId;
                 }
                 default:
