@@ -145,11 +145,11 @@ export class EpochTracker {
     }
 
     private checkForEpochError(error) {
-        assert(!!this._hashedDocumentId, "DocId should be set to clear the cached entries!!");
         if (error.errorType === OdspErrorType.epochVersionMismatch) {
             if (this.logger !== undefined) {
                 this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, error);
             }
+            assert(!!this._hashedDocumentId, "DocId should be set to clear the cached entries!!");
             // If the epoch mismatches, then clear all entries for such document from cache.
             this.persistedCache.removeAllEntriesForDocId(this._hashedDocumentId);
         }
