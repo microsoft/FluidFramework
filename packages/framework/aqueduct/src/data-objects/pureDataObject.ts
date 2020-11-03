@@ -12,7 +12,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
-import { AsyncFluidObjectProvider, FluidObjectKey, IFluidDependencyProvider } from "@fluidframework/synthesize";
+import { AsyncFluidObjectProvider, FluidObjectKey } from "@fluidframework/synthesize";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidObjectHandle } from "@fluidframework/datastore";
@@ -30,7 +30,6 @@ export interface IDataObjectProps<O = object, S = undefined> {
     // eslint-disable-next-line @typescript-eslint/ban-types
     readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>;
     readonly initProps?: S;
-    readonly scope: IFluidDependencyProvider | undefined;
 }
 
 /**
@@ -70,8 +69,6 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     // eslint-disable-next-line @typescript-eslint/ban-types
     protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>;
 
-    protected readonly scope: IFluidDependencyProvider | undefined;
-
     protected initProps?: S;
 
     protected initializeP: Promise<void> | undefined;
@@ -101,7 +98,6 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
         this.context = props.context;
         this.providers = props.providers;
         this.initProps = props.initProps;
-        this.scope = props.scope;
 
         assert((this.runtime as any)._dataObject === undefined);
         (this.runtime as any)._dataObject = this;

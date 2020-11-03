@@ -62,13 +62,7 @@ export class UserInfo extends EventEmitter implements IFluidUserInformation {
 }
 
 export const userInfoFactory = async (dc: IFluidDependencySynthesizer) => {
-    const s = dc.synthesize<IContainerRuntimeBase>(
-        { IContainerRuntimeBase, IFluidHandleContext },
-        {});
+    const s = dc.synthesizeRequired<IContainerRuntimeBase>({ IContainerRuntimeBase, IFluidHandleContext });
     const containerRuntime = await s.IContainerRuntimeBase;
-    if (containerRuntime !== undefined) {
-        return new UserInfo(containerRuntime);
-    }
-
-    return undefined;
+    return new UserInfo(containerRuntime);
 };

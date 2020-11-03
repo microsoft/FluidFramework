@@ -4,6 +4,7 @@
  */
 
 import { IUser } from "@fluidframework/protocol-definitions";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -16,7 +17,7 @@ export interface IProvideFluidLastEditedTracker {
     readonly IFluidLastEditedTracker: IFluidLastEditedTracker;
 }
 
-export interface IFluidLastEditedTracker extends IProvideFluidLastEditedTracker {
+export interface IFluidLastEditedTracker extends IProvideFluidLastEditedTracker, IFluidLoadable {
     /**
      * Returns the details of the last edit to the container.
      */

@@ -43,7 +43,7 @@ export interface RootDataObjectFactory extends IFluidDataStoreFactory {
     createRootInstance(
         rootDataStoreId: string,
         runtime: IContainerRuntime,
-        scope: IFluidDependencyProvider | undefined): Promise<IFluidRouter>;
+        dependencies?: IFluidDependencyProvider): Promise<IFluidRouter>;
 }
 
 function buildRegistryPath(
@@ -78,7 +78,7 @@ export interface IFluidDataObjectFactory {
     (
         subFactory: TFactory,
         initialState: S | undefined,
-        scope: IFluidDependencyProvider | undefined): Promise<TObject>;
+        dependencies?: IFluidDependencyProvider): Promise<TObject>;
 
     /**
      * Similar to above, but uses any data store factory. Given that there is no type information about such factory
@@ -103,9 +103,9 @@ class FluidDataObjectFactory {
         O, S, E extends IEvent = IEvent>(
             subFactory: TFactory,
             initialState?: S,
-            scope: IFluidDependencyProvider | undefined = undefined)
+            dependencies?: IFluidDependencyProvider)
     {
-        return subFactory.createChildInstance(this.context, initialState, scope);
+        return subFactory.createChildInstance(this.context, initialState, dependencies);
     }
 
     public async createAnonymousChildInstance<T = IFluidObject>(
@@ -133,7 +133,7 @@ async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E ex
     sharedObjectRegistry: ISharedObjectRegistry,
     optionalProviders: FluidObjectSymbolProvider<O>,
     runtimeFactoryArg: typeof FluidDataStoreRuntime,
-    scope: IFluidDependencyProvider | undefined = undefined,
+    dependencies?: IFluidDependencyProvider,
     initProps?: S)
 {
     // base
@@ -157,9 +157,9 @@ async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E ex
     // becomes globally available. But it's not full initialization - constructor can't
     // access DDSs or other services of runtime as objects are not fully initialized.
     // In order to use object, we need to go through full initialization by calling finishInitialization().
-    const dependencyContainer = new DependencyContainer(scope);
+    const dependencyContainer = new DependencyContainer(dependencies);
     const providers = dependencyContainer.synthesize<O>(optionalProviders, {});
-    const instance = new ctor({ runtime, context, providers, initProps, scope });
+    const instance = new ctor({ runtime, context, providers, initProps });
 
     // if it's a newly created object, we need to wait for it to finish initialization
     // as that results in creation of DDSs, before it gets attached, providing atomic
@@ -257,14 +257,14 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
     public async createChildInstance(
         parentContext: IFluidDataStoreContext,
         initialState?: S,
-        scope: IFluidDependencyProvider | undefined = undefined,
+        dependencies?: IFluidDependencyProvider,
     ): Promise<TObj> {
         const packagePath = buildRegistryPath(parentContext, this);
         return this.createNonRootInstanceCore(
             parentContext.containerRuntime,
             packagePath,
             initialState,
-            scope);
+            dependencies);
     }
 
     /**
@@ -280,13 +280,13 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
     public async createPeerInstance(
         peerContext: IFluidDataStoreContext,
         initialState?: S,
-        scope: IFluidDependencyProvider | undefined = undefined,
+        dependencies?: IFluidDependencyProvider,
     ): Promise<TObj> {
         return this.createNonRootInstanceCore(
             peerContext.containerRuntime,
             peerContext.packagePath,
             initialState,
-            scope);
+            dependencies);
     }
 
     /**
@@ -302,13 +302,13 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
     public async createInstance(
         runtime: IContainerRuntimeBase,
         initialState?: S,
-        scope: IFluidDependencyProvider | undefined = undefined,
+        dependencies?: IFluidDependencyProvider,
     ): Promise<TObj> {
         return this.createNonRootInstanceCore(
             runtime,
             [this.type],
             initialState,
-            scope);
+            dependencies);
     }
 
     /**
@@ -324,27 +324,27 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
     public async createRootInstance(
         rootDataStoreId: string,
         runtime: IContainerRuntime,
-        scope: IFluidDependencyProvider | undefined = undefined,
+        dependencies?: IFluidDependencyProvider,
         initialState?: S,
     ): Promise<TObj> {
         const context = runtime.createRootDetachedDataStore([this.type], rootDataStoreId);
-        return this.createInstanceCore(context, initialState, scope);
+        return this.createInstanceCore(context, initialState, dependencies);
     }
 
     protected async createNonRootInstanceCore(
         containerRuntime: IContainerRuntimeBase,
         packagePath: Readonly<string[]>,
         initialState?: S,
-        scope: IFluidDependencyProvider | undefined = undefined,
+        dependencies?: IFluidDependencyProvider,
     ): Promise<TObj> {
         const context = containerRuntime.createDetachedDataStore(packagePath);
-        return this.createInstanceCore(context, initialState, scope);
+        return this.createInstanceCore(context, initialState, dependencies);
     }
 
     protected async createInstanceCore(
         context: IFluidDataStoreContextDetached,
         initialState?: S,
-        scope: IFluidDependencyProvider | undefined = undefined,
+        dependencies?: IFluidDependencyProvider,
     ): Promise<TObj> {
         const { instance, runtime } = await createDataObject(
             this.ctor,
@@ -352,7 +352,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
             this.sharedObjectRegistry,
             this.optionalProviders,
             this.runtimeCtor,
-            scope,
+            dependencies,
             initialState);
 
         await context.attachRuntime(this, runtime);

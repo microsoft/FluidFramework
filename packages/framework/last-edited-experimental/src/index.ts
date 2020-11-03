@@ -3,6 +3,5 @@
  * Licensed under the MIT License.
  */
 export * from "./interfaces";
-export * from "./lastEditedTracker";
 export * from "./lastEditedTrackerDataObject";
 export * from "./setup";

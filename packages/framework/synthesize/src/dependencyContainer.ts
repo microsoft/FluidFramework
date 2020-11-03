@@ -46,6 +46,17 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         this.providers.set(type, provider);
     }
 
+    public registerOptional<T extends keyof IFluidObject>(type: T, provider: FluidObjectProvider<T> | undefined): void {
+        if (this.has(type)) {
+            throw new Error(`Attempting to register a provider of type ${type} that already exists`);
+        }
+        if (provider === undefined) {
+            this.providers.delete(type);
+        } else {
+            this.providers.set(type, provider);
+        }
+    }
+
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).unregister}
      */
@@ -76,6 +87,13 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         const required = this.generateRequired<R>(requiredTypes);
         const optional = this.generateOptional<O>(optionalTypes);
         return { ...required, ...optional };
+    }
+
+    public synthesizeRequired<R extends IFluidObject>(requiredTypes: FluidObjectSymbolProvider<R>):
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        AsyncFluidObjectProvider<FluidObjectKey<{}>, FluidObjectKey<R>>
+    {
+        return this.generateRequired<R>(requiredTypes);
     }
 
     /**

@@ -41,8 +41,8 @@ export class Pond extends DataObject implements IFluidHTMLView {
         const clickerComponent = await Clicker.getFactory().createChildInstance(this.context);
         this.root.set(Clicker.ComponentName, clickerComponent.handle);
 
-        const clickerComponentUsingProvider =
-            await ExampleUsingProviders.getFactory().createChildInstance(this.context, undefined, this.scope);
+        const clickerComponentUsingProvider = await ExampleUsingProviders.getFactory().createChildInstance(
+            this.context);
         this.root.set(ExampleUsingProviders.ComponentName, clickerComponentUsingProvider.handle);
     }
 

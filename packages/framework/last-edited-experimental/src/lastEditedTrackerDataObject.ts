@@ -6,11 +6,11 @@
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { LastEditedTracker } from "./lastEditedTracker";
-import { IProvideFluidLastEditedTracker } from "./interfaces";
+import { assert } from "@fluidframework/common-utils";
+import { IProvideFluidLastEditedTracker, ILastEditDetails } from "./interfaces";
 
 /**
- * LastEditedTrackerDataObject creates a LastEditedTracker that keeps track of the latest edits to the document.
+ * LastEditedTrackerDataObject keeps track of the latest edits to the document.
  */
 export class LastEditedTrackerDataObject extends DataObject
     implements IProvideFluidLastEditedTracker {
@@ -27,17 +27,33 @@ export class LastEditedTrackerDataObject extends DataObject
     }
 
     private readonly sharedSummaryBlockId = "shared-summary-block-id";
-    private _lastEditedTracker: LastEditedTracker | undefined;
 
-    private get lastEditedTracker() {
-        if (this._lastEditedTracker === undefined) {
-            throw new Error("Last Edited tracker was not initialized properly");
-        }
+    private readonly lastEditedDetailsKey = "lastEditDetailsKey";
 
-        return this._lastEditedTracker;
+    private _sharedSummaryBlock?: SharedSummaryBlock;
+
+    public get IFluidLastEditedTracker() {
+        return this;
     }
 
-    public get IFluidLastEditedTracker() { return this.lastEditedTracker; }
+    private get sharedSummaryBlock(): SharedSummaryBlock {
+        assert(this._sharedSummaryBlock !== undefined, "not initialized");
+        return this._sharedSummaryBlock;
+    }
+
+    /**
+     * {@inheritDoc (IFluidLastEditedTracker:interface).getLastEditDetails}
+     */
+    public getLastEditDetails(): ILastEditDetails | undefined {
+        return this.sharedSummaryBlock.get<ILastEditDetails>(this.lastEditedDetailsKey);
+    }
+
+    /**
+     * {@inheritDoc (IFluidLastEditedTracker:interface).updateLastEditDetails}
+     */
+    public updateLastEditDetails(lastEditDetails: ILastEditDetails) {
+        this.sharedSummaryBlock.set(this.lastEditedDetailsKey, lastEditDetails);
+    }
 
     protected async initializingFirstTime() {
         const sharedSummaryBlock = SharedSummaryBlock.create(this.runtime);
@@ -45,8 +61,7 @@ export class LastEditedTrackerDataObject extends DataObject
     }
 
     protected async hasInitialized() { // hasInitialized
-        const sharedSummaryBlock =
+        this._sharedSummaryBlock =
             await this.root.get<IFluidHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId).get();
-        this._lastEditedTracker = new LastEditedTracker(sharedSummaryBlock);
     }
 }

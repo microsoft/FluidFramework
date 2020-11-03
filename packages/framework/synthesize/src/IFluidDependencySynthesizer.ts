@@ -70,10 +70,17 @@ export interface IFluidDependencySynthesizer extends IFluidDependencyProvider {
      * @param requiredTypes - required types that need to be in the Scope object
      */
     synthesize<
-        O extends IFluidObject = IFluidObject,
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        O extends IFluidObject = {},
         // eslint-disable-next-line @typescript-eslint/ban-types
         R extends IFluidObject = {}>(
             optionalTypes: FluidObjectSymbolProvider<O>,
             requiredTypes: FluidObjectSymbolProvider<R>,
     ): AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>>;
+
+    synthesizeRequired<
+        R extends IFluidObject>(
+            requiredTypes: FluidObjectSymbolProvider<R>,
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    ): AsyncFluidObjectProvider<FluidObjectKey<{}>, FluidObjectKey<R>>;
 }

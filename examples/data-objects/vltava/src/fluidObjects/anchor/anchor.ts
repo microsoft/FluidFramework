@@ -17,7 +17,9 @@ import { Vltava } from "../vltava";
 /**
  * Anchor is a Data Object responsible for managing creation and the default Fluid Object
  */
-export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvideFluidLastEditedTracker {
+export class Anchor extends DataObject
+    implements IProvideFluidHTMLView, IProvideFluidLastEditedTracker
+{
     private readonly defaultFluidObjectId = "default-fluid-object-id";
     private defaultFluidObjectInternal: IFluidHTMLView | undefined;
     private readonly lastEditedFluidObjectId = "last-edited-fluid-object-id";
@@ -51,13 +53,13 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
         const lastEditedFluidObject = await LastEditedTrackerDataObject.getFactory().createChildInstance(this.context);
         this.root.set(this.lastEditedFluidObjectId, lastEditedFluidObject.handle);
 
-        const dc = new DependencyContainer(this.scope);
-        dc.register(IFluidLastEditedTracker, lastEditedFluidObject.IFluidLastEditedTracker);
+        const dependencies = new DependencyContainer();
+        dependencies.register(IFluidLastEditedTracker, this.IFluidLastEditedTracker);
 
         const defaultFluidObject = await Vltava.getFactory().createInstance(
             this.context.containerRuntime,
             undefined,
-            dc);
+            dependencies);
         this.root.set(this.defaultFluidObjectId, defaultFluidObject.handle);
     }
 
