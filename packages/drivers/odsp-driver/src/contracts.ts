@@ -34,7 +34,9 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
 
     summarizer: boolean;
 
-    sharingLinkP?: Promise<string>;
+    // This is used to save the network calls while doing trees/latest call as if the client does not have permission
+    // then this link can be redeemed for the permissions in the same network call.
+    sharingLinkToRedeem?: string;
 }
 
 /**
@@ -264,11 +266,13 @@ export interface OdspFluidDataStoreLocator {
 }
 
 export enum SharingLinkHeader {
-    isSharingLink = "isSharingLink",
+    // Can be used in request made to resolver, to tell the resolver that the passed in URL is a sharing link
+    // which can be redeemed at server to get permissions.
+    isSharingLinkToRedeem = "isSharingLinkToRedeem",
 }
 
 export interface ISharingLinkHeader {
-    [SharingLinkHeader.isSharingLink]: boolean;
+    [SharingLinkHeader.isSharingLinkToRedeem]: boolean;
 }
 
 declare module "@fluidframework/core-interfaces" {
