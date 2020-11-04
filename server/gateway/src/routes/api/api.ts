@@ -17,6 +17,32 @@ import passport from "passport";
 import winston from "winston";
 import { getR11sToken, IJWTClaims } from "../../utils";
 
+interface IFluidUrlParts {
+    tenantId: string;
+    documentId: string;
+    path: string;
+}
+
+function extractFluidUrlParts(url: UrlWithStringQuery): IFluidUrlParts | undefined {
+    const regex = url.protocol === "fluid:"
+        ? /^\/([^/]*)\/([^/]*)(\/?.*)$/
+        : /^\/loader\/([^/]*)\/([^/]*)(\/?.*)$/;
+    // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec, @typescript-eslint/no-non-null-assertion
+    const match = url.path!.match(regex);
+
+    if (!match) {
+        return undefined;
+    }
+
+    const marker = match[2].indexOf("?");
+    const documentId = match[2].substring(0, marker !== -1 ? marker : match[2].length);
+    return {
+        tenantId: match[1],
+        documentId,
+        path: match[3],
+    };
+}
+
 // Although probably the case we want a default behavior here. Maybe just the URL?
 async function getWebComponent(url: UrlWithStringQuery): Promise<IWebResolvedUrl> {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -57,22 +83,18 @@ async function getInternalComponent(
     appTenants: IAlfredTenant[],
     scopes: ScopeType[],
 ): Promise<IResolvedUrl> {
-    const regex = url.protocol === "fluid:"
-        ? /^\/([^/]*)\/([^/]*)(\/?.*)$/
-        : /^\/loader\/([^/]*)\/([^/]*)(\/?.*)$/;
-    // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec, @typescript-eslint/no-non-null-assertion
-    const match = url.path!.match(regex);
+    const urlParts = extractFluidUrlParts(url);
 
-    if (!match) {
+    if (!urlParts) {
         return getWebComponent(url);
     }
     const internalGateway = parse(config.get("worker:gatewayUrl"));
     const internal = internalGateway.host === url.host;
 
-    const tenantId = match[1];
+    const tenantId = urlParts.tenantId;
     const safeTenantId = encodeURIComponent(tenantId);
-    const documentId = match[2];
-    const path = match[3];
+    const documentId = urlParts.documentId;
+    const path = urlParts.path;
 
     const orderer = internal ? config.get("worker:alfredUrl") : config.get("worker:serverUrl");
 
@@ -136,6 +158,24 @@ export function create(
         resultP.then(
             (result) => response.status(200).json(result),
             (error) => response.status(400).end(safeStringify(error)));
+    });
+
+    router.post("/token", passport.authenticate("jwt", { session: false }), (request, response) => {
+        const user: IAlfredUser = (request.user as IJWTClaims).user;
+        const url = parse(request.body.url);
+
+        const urlParts = extractFluidUrlParts(url);
+        if (!urlParts) {
+            response.status(400).end(`Invalid Fluid Url`);
+        } else {
+            const token = getR11sToken(
+                urlParts.tenantId,
+                urlParts.documentId,
+                appTenants,
+                [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+                user);
+            response.status(200).json(token);
+        }
     });
 
     router.get("/moniker", (request, response) => {

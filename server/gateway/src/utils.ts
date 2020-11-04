@@ -31,10 +31,11 @@ export function getR11sToken(
     documentId: string,
     tenants: IAlfredTenant[],
     scopes: ScopeType[],
-    user?: IAlfredUser): string {
+    user: IAlfredUser,
+    lifetimeSec: number = 60 * 60): string {
     for (const tenant of tenants) {
         if (tenantId === tenant.id) {
-            return generateToken(tenantId, documentId, tenant.key, scopes, user);
+            return generateToken(tenantId, documentId, tenant.key, scopes, user, lifetimeSec);
         }
     }
 

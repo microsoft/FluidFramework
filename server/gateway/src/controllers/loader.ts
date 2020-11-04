@@ -12,15 +12,13 @@ import {
 import { MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
 import { WebWorkerLoaderFactory } from "@fluidframework/execution-context-loader";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
-import {
-    DefaultErrorTracking,
-    DefaultTokenProvider,
-    RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { IGitCache } from "@fluidframework/server-services-client";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { DocumentFactory } from "./documentFactory";
+import { GatewayTokenProvider } from "./gatewayTokenProvider";
 import { IHostServices } from "./services";
 import { seedFromScriptIds } from "./helpers";
 import { debug } from "./debug";
@@ -57,8 +55,7 @@ export async function initialize(
         async () => Promise.resolve(resolved.tokens.storageToken),
         async () => Promise.resolve(resolved.tokens.socketToken)));
 
-    // Remove default token provider
-    const tokenProvider = new DefaultTokenProvider(resolved.tokens.jwt);
+    const tokenProvider = new GatewayTokenProvider(document.location.origin, jwt, resolved.url);
     documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
         tokenProvider,
         false,

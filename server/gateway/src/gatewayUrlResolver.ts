@@ -75,7 +75,7 @@ export function resolveUrl(
             documentId,
         };
 
-        const token = getR11sToken(tenantId, documentId, appTenants, scopes, user);
+        const token = getR11sToken(tenantId, documentId, appTenants, scopes, user as IAlfredUser);
         const resolverList = [new RouterliciousUrlResolver(endPointConfig, async () => Promise.resolve(token))];
         const resolvedP = configurableUrlResolver(resolverList, request);
         const fullTreeP = alfred.getFullTree(tenantId, documentId);
