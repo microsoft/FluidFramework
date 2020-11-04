@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/primitives",
-  "version": "0.28.3",
+  "version": "0.28.4",
   "description": "Minimal Fluid container sample to showcase some of the distributed data structures.",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -33,17 +33,17 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.28.3",
-    "@fluidframework/core-interfaces": "^0.28.3",
-    "@fluidframework/map": "^0.28.3",
-    "@fluidframework/view-interfaces": "^0.28.3",
+    "@fluidframework/aqueduct": "^0.28.4",
+    "@fluidframework/core-interfaces": "^0.28.4",
+    "@fluidframework/map": "^0.28.4",
+    "@fluidframework/view-interfaces": "^0.28.4",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.20.0",
-    "@fluidframework/webpack-fluid-loader": "^0.28.3",
+    "@fluidframework/webpack-fluid-loader": "^0.28.4",
     "@types/node": "^10.17.24",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",
