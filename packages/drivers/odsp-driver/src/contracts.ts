@@ -35,6 +35,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
 
     summarizer: boolean;
 
+    // This is used to save the network calls while doing trees/latest call as if the client does not have permission
+    // then this link can be redeemed for the permissions in the same network call.
     redeemSharingLink?: string;
 
     codeHint?: {
