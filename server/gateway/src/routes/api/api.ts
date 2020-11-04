@@ -164,6 +164,14 @@ export function create(
         const user: IAlfredUser = (request.user as IJWTClaims).user;
         const url = parse(request.body.url);
 
+        let scopes: ScopeType[];
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (request.body.scopes) {
+            scopes = request.body.scopes;
+        } else {
+            scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+        }
+
         const urlParts = extractFluidUrlParts(url);
         if (!urlParts) {
             response.status(400).end(`Invalid Fluid Url`);
@@ -172,7 +180,7 @@ export function create(
                 urlParts.tenantId,
                 urlParts.documentId,
                 appTenants,
-                [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+                scopes,
                 user);
             response.status(200).json(token);
         }

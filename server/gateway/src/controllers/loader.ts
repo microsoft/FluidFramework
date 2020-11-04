@@ -17,8 +17,8 @@ import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { IGitCache } from "@fluidframework/server-services-client";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
+import { GatewayTokenProvider } from "../shared";
 import { DocumentFactory } from "./documentFactory";
-import { GatewayTokenProvider } from "./gatewayTokenProvider";
 import { IHostServices } from "./services";
 import { seedFromScriptIds } from "./helpers";
 import { debug } from "./debug";
@@ -40,7 +40,8 @@ export async function initialize(
     cache: IGitCache,
     pkg: IResolvedFluidCodeDetails | undefined,
     scriptIds: string[],
-    jwt: string,
+    hostToken: string,
+    accessToken: string,
     config: any,
 ) {
     const documentFactory = new DocumentFactory(config.tenantId);
@@ -55,7 +56,7 @@ export async function initialize(
         async () => Promise.resolve(resolved.tokens.storageToken),
         async () => Promise.resolve(resolved.tokens.socketToken)));
 
-    const tokenProvider = new GatewayTokenProvider(document.location.origin, jwt, resolved.url);
+    const tokenProvider = new GatewayTokenProvider(document.location.origin, resolved.url, hostToken, accessToken);
     documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
         tokenProvider,
         false,
@@ -66,7 +67,7 @@ export async function initialize(
 
     const resolver = new ContainerUrlResolver(
         document.location.origin,
-        jwt,
+        hostToken,
         new Map<string, IFluidResolvedUrl>([[url, resolved]]));
 
     const multiDocumentFactory = MultiDocumentServiceFactory.create(documentServiceFactories);
