@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedDirectory } from "@fluidframework/map";
+import { DependencyContainer } from "@fluidframework/synthesize";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
@@ -17,8 +18,8 @@ import {
     Clicker,
     ExampleUsingProviders,
 } from "./data-objects";
-import { IFluidUserInformation } from "./interfaces";
-import { userInfoFactory } from "./providers";
+import { IFluidUserInformation, IFluidUserInformationLoadable } from "./interfaces";
+import { UserInfo } from "./providers";
 
 /**
  * Basic Pond example using stock component classes.
@@ -31,18 +32,29 @@ import { userInfoFactory } from "./providers";
 export class Pond extends DataObject implements IFluidHTMLView {
     private clickerView: HTMLViewAdapter | undefined;
     private clickerUsingProvidersView: HTMLViewAdapter | undefined;
+    private userInfo?: IFluidUserInformationLoadable;
 
     public get IFluidHTMLView() { return this; }
 
+    public async preInitialize() {
+        this.userInfo = this.createLoadableObject(
+            "userInfo",
+            new UserInfo(this.context.containerRuntime));
+    }
     /**
-   * Do setup work here
-   */
+     * Do setup work here
+     */
     protected async initializingFirstTime() {
         const clickerComponent = await Clicker.getFactory().createChildInstance(this.context);
         this.root.set(Clicker.ComponentName, clickerComponent.handle);
 
+        const dependencies = new DependencyContainer();
+        dependencies.registerOptional(IFluidUserInformation, this.userInfo);
+
         const clickerComponentUsingProvider = await ExampleUsingProviders.getFactory().createChildInstance(
-            this.context);
+            this.context,
+            undefined,
+            dependencies);
         this.root.set(ExampleUsingProviders.ComponentName, clickerComponentUsingProvider.handle);
     }
 
@@ -115,9 +127,4 @@ export const fluidExport = new ContainerRuntimeFactoryWithScope(
     new Map([
         Pond.getFactory().registryEntry,
     ]),
-    [
-        {
-            type: IFluidUserInformation,
-            provider: async (dc) => userInfoFactory(dc),
-        },
-    ]);
+);

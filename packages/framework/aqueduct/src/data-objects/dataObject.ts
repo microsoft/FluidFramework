@@ -3,16 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidHandle,
     IRequest,
     IResponse,
+    IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
 import { ITaskManager } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IEvent } from "@fluidframework/common-definitions";
+import { RequestParser } from "@fluidframework/runtime-utils";
+import { FluidObjectHandle } from "@fluidframework/datastore";
+
 import { BlobHandle } from "./blobHandle";
 import { PureDataObject } from "./pureDataObject";
 
@@ -36,19 +41,53 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
     private readonly rootDirectoryId = "root";
-    private readonly bigBlobs = "bigBlobs/";
+    private readonly bigBlobs = "bigBlobs";
+
+    private readonly routes: Map<string, IFluidLoadable> = new Map();
 
     public async request(request: IRequest): Promise<IResponse> {
+        const parser = RequestParser.create(request);
         const url = request.url;
-        if (url.startsWith(this.bigBlobs)) {
+        const id = parser.pathParts[0];
+        if (id === this.bigBlobs) {
             const value = this.root.get<string>(url);
             if (value === undefined) {
                 return { mimeType: "fluid/object", status: 404, value: `request ${url} not found` };
             }
             return { mimeType: "fluid/object", status: 200, value };
-        } else {
-            return super.request(request);
         }
+
+        if (parser.pathParts.length === 1) {
+            const object = this.routes.get(id);
+            if (object !== undefined) {
+                return { mimeType: "fluid/object", status: 200, value: object };
+            }
+        }
+
+        return super.request(request);
+    }
+
+    /**
+     * Constructs loadable objects out of non-loadable objects and exposes them on request routing.
+     * Can be called only from preInitialize() method, and calling pattern on subsequent loads has to match
+     * calling pattern on data object creation. Failure to follow that rule will result in handles failing to
+     * be de-serialized.
+     * @param path - path name to use. Can be any string without forward slash ("/"), has to be unique for this object
+     * @param object - object to convert to loadable. It's assumed that same object would be recreated on each
+     *                 data object load.
+     */
+    public createLoadableObject<T extends IFluidObject>(path: string, object: T): T & IFluidLoadable {
+        assert(object.IFluidLoadable === undefined);
+        assert((object as any).handle === undefined);
+        assert(path.indexOf("/") === -1);
+        assert(!this.routes.has(path));
+
+        // Construct loadable object out of it.
+        const object2 = Object.create(object) as T & { IFluidLoadable: IFluidLoadable, handle: IFluidHandle };
+        (object2 as any).IFluidLoadable = object2;
+        object2.handle = new FluidObjectHandle(object2, path, this.runtime.objectsRoutingContext);
+        this.routes.set(path, object2);
+        return object2;
     }
 
     /**
@@ -85,7 +124,7 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
             eventName: "WriteBlob",
             size: blob.length,
         });
-        const path = `${this.bigBlobs}${uuid()}`;
+        const path = `${this.bigBlobs}/${uuid()}`;
         this.root.set(path, blob);
         return new BlobHandle(path, this.root, this.runtime.objectsRoutingContext);
     }
@@ -116,9 +155,31 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
                     message: "Legacy document, SharedMap is masquerading as SharedDirectory in DataObject",
                 });
             }
+
+            // Initialize providers from storage.
+            const dir = this.internalRoot.getSubDirectory("_providers");
+            if (dir !== undefined) { // back compat - old files without providers
+                for (const key of dir.keys()) {
+                    const value = await dir.get<IFluidHandle>(key).get();
+                    this.providers[key] = value;
+                }
+            }
         }
 
         await super.initializeInternal();
+
+        // Serialize providers only after full initialization cycle is over
+        // This allows data objects to synthesize and add new providers as part of initialization
+        // Or vise versa - remove some of them not to be serialized.
+        if (!this.runtime.existing) {
+            const dir = this.internalRoot.createSubDirectory("_providers");
+            for (const key of Object.keys(this.providers)) {
+                const value = await this.providers[key];
+                if (value !== undefined && value.IFluidLoadable) {
+                    dir.set(key, value.IFluidLoadable.handle);
+                }
+            }
+        }
     }
 
     protected getUninitializedErrorString(item: string) {

@@ -5,9 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IQuorum } from "@fluidframework/protocol-definitions";
-import { IFluidDependencySynthesizer } from "@fluidframework/synthesize";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 import { IFluidUserInformation } from "../interfaces";
@@ -60,9 +58,3 @@ export class UserInfo extends EventEmitter implements IFluidUserInformation {
         return names;
     }
 }
-
-export const userInfoFactory = async (dc: IFluidDependencySynthesizer) => {
-    const s = dc.synthesizeRequired<IContainerRuntimeBase>({ IContainerRuntimeBase, IFluidHandleContext });
-    const containerRuntime = await s.IContainerRuntimeBase;
-    return new UserInfo(containerRuntime);
-};

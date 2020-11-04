@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -22,4 +23,7 @@ export interface IFluidUserInformation extends IProvideFluidUserInformation {
     readonly userCount: number;
     readonly getUsers: () => string[];
     on(event: "membersChanged", listener: () => void): this;
+}
+
+export interface IFluidUserInformationLoadable extends IFluidUserInformation, IFluidLoadable {
 }

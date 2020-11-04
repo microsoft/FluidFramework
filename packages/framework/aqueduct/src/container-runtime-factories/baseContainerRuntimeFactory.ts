@@ -21,9 +21,7 @@ import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
-    IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions";
-import { DependencyContainer, DependencyContainerRegistry } from "@fluidframework/synthesize";
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with a given data store and service registry, as well as
@@ -47,7 +45,6 @@ export class BaseContainerRuntimeFactory implements
         private readonly registryEntries: NamedFluidDataStoreRegistryEntries,
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
         private readonly runtimeOptions?: IContainerRuntimeOptions,
-        private readonly providerEntries: DependencyContainerRegistry = [],
     ) {
         this.registry = new FluidDataStoreRegistry(registryEntries);
     }
@@ -58,17 +55,6 @@ export class BaseContainerRuntimeFactory implements
     public async instantiateRuntime(
         context: IContainerContext,
     ): Promise<IRuntime> {
-        const parentDependencyContainer = context.scope.IFluidDependencyProvider;
-        const dc = new DependencyContainer(parentDependencyContainer);
-        for (const entry of Array.from(this.providerEntries)) {
-            dc.register(entry.type, entry.provider);
-        }
-
-        // Create a scope object that passes through everything except for IFluidDependencySynthesizer
-        // which we will replace with the new one we just created.
-        const scope: any = context.scope;
-        scope.IFluidDependencyProvider = dc;
-
         const runtime = await ContainerRuntime.load(
             context,
             this.registryEntries,
@@ -76,10 +62,7 @@ export class BaseContainerRuntimeFactory implements
                 ...this.requestHandlers,
                 innerRequestHandler),
             this.runtimeOptions,
-            scope);
-
-        // we register the runtime so developers of providers can use it in the factory pattern.
-        dc.register(IContainerRuntimeBase, runtime);
+            context.scope);
 
         if (!runtime.existing) {
             // If it's the first time through.

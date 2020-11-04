@@ -38,7 +38,6 @@ export class ContainerRuntimeFactoryWithDefaultDataStore<T extends IFluidDataSto
                 defaultRouteRequestHandler(defaultDataStoreId),
             ],
             runtimeOptions,
-            providerEntries,
         );
     }
 
