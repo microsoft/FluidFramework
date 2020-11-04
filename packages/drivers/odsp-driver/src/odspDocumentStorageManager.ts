@@ -151,7 +151,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     ) {
         this.documentId = odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
-        this.redeemSharingLink = odspResolvedUrl.redeemSharingLink;
+        this.redeemSharingLink = odspResolvedUrl.sharingLinkToRedeem;
         this.attachmentPOSTUrl = odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
         this.attachmentGETUrl = odspResolvedUrl.endpoints.attachmentGETStorageUrl;
 

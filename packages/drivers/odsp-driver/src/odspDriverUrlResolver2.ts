@@ -86,7 +86,7 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
      */
     public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
         const requestToBeResolved = { headers: request.headers, url: request.url };
-        const isRedeemSharingLink = requestToBeResolved.headers?.[SharingLinkHeader.isRedeemSharingLink];
+        const isSharingLinkToRedeem = requestToBeResolved.headers?.[SharingLinkHeader.isSharingLinkToRedeem];
         try {
             const url = new URL(request.url);
 
@@ -106,14 +106,13 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
 
         const odspResolvedUrl = await new OdspDriverUrlResolver().resolve(requestToBeResolved);
 
-        if (isRedeemSharingLink) {
-            odspResolvedUrl.redeemSharingLink = request.url.split("?")[0];
+        if (isSharingLinkToRedeem) {
+            odspResolvedUrl.sharingLinkToRedeem = request.url.split("?")[0];
         }
         if (odspResolvedUrl.itemId) {
             // Kick start the sharing link request if we don't already have it already as a performance optimization.
             // For detached create new, we don't have an item id yet and therefore cannot generate a share link
-            const key = this.getKey(odspResolvedUrl);
-            this.sharingLinkCache.add(key, async () => this.getShareLinkPromise(odspResolvedUrl));
+            this.getShareLinkPromise(odspResolvedUrl);
         }
         return odspResolvedUrl;
     }
