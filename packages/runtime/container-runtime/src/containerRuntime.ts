@@ -690,6 +690,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // List of pending contexts (for the case where a client knows a store will exist and is waiting
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<FluidDataStoreContext>>();
+    private readonly activeDataStoreRaces = new Map<string, Deferred<IAttachMessage>>();
 
     private constructor(
         private readonly context: IContainerContext,
@@ -1369,6 +1370,46 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             Array.isArray(pkg) ? pkg : [pkg], id, false /* isRoot */, props).realize();
     }
 
+    public raceDataStore(pkg: string | string[], snapshot: ITree, rootId?: string) {
+        const id = rootId ?? uuid();
+
+        const maybeContext = this.contextsDeferred.get(id);
+        if (maybeContext?.isCompleted === true) {
+            this.resolveDatastoreRace(id);
+            return;
+        }
+
+        if (this.activeDataStoreRaces.has(id)) {
+            return;
+        }
+
+        const isRoot = rootId !== undefined;
+        const pkgPath = Array.isArray(pkg) ? pkg : [pkg];
+
+        const attributesBlob = createAttributesBlob(
+            pkgPath,
+            isRoot);
+
+        snapshot.entries.push(attributesBlob);
+
+        const message: IAttachMessage = {
+            id,
+            snapshot,
+            type: pkgPath[pkgPath.length - 1],
+            race: true,
+        };
+
+        this.submit(ContainerMessageType.Attach, message);
+        this.activeDataStoreRaces.set(id, new Deferred<IAttachMessage>());
+        this.ensureContextDeferred(id);
+    }
+
+    private resolveDatastoreRace(id: string) {
+        const context = this.getContext(id);
+        this.activeDataStoreRaces.delete(id);
+        this.emit("dataStoreRaceResolved", id, context);
+    }
+
     private async _createDataStore(
         pkg: string | string[],
         isRoot: boolean,
@@ -1523,10 +1564,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private processAttachMessage(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {
         const attachMessage = message.contents as InboundAttachMessage;
-        // The local object has already been attached
-        if (local) {
+
+        if (attachMessage.race === true) {
+            if (this.contexts.has(attachMessage.id)) {
+                this.resolveDatastoreRace(attachMessage.id);
+                return;
+            }
+        } else if (local) {
             assert(this.pendingAttach.has(attachMessage.id));
-            this.contexts.get(attachMessage.id)?.emit("attached");
+            this.contexts.get(attachMessage.id)?.emit("attached", message);
             this.pendingAttach.delete(attachMessage.id);
             return;
         }
@@ -1580,6 +1626,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Equivalent of nextTick() - Prefetch once all current ops have completed
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.resolve().then(async () => remotedFluidDataStoreContext.realize());
+
+        if (attachMessage.race === true) {
+            this.resolveDatastoreRace(attachMessage.id);
+        }
     }
 
     private processFluidDataStoreOp(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {

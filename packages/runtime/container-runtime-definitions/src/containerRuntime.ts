@@ -26,11 +26,13 @@ import {
     IPendingProposal,
     IQuorum,
     ISequencedDocumentMessage,
+    ITree,
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
+    IFluidDataStoreContext,
  } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
@@ -56,6 +58,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents{
         event: "fluidDataStoreInstantiated",
         listener: (dataStorePkgName: string, registryPath: string, createNew: boolean) => void,
     );
+    (event: "dataStoreRaceResolved", listener: (id: string, context: IFluidDataStoreContext) => void);
 }
 
 export type IContainerRuntimeBaseWithCombinedEvents =
@@ -95,6 +98,8 @@ export interface IContainerRuntime extends
      * @param wait - True if you want to wait for it.
      */
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
+
+    raceDataStore(pkg: string | string[], snapshot: ITree, rootId?: string)
 
     /**
      * Creates root data store in container. Such store is automatically bound to container, and thus is

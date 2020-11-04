@@ -61,6 +61,8 @@ export interface IAttachMessage {
      * Initial snapshot of the document (contains ownership)
      */
     snapshot: ITree;
+
+    race?: boolean;
 }
 
 /**

@@ -234,7 +234,8 @@ export interface ISummaryTracker {
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => ISummarizerNode;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
-    (event: "leader" | "notleader" | "attaching" | "attached", listener: () => void);
+    (event: "leader" | "notleader" | "attaching", listener: () => void);
+    (event: "attached", listener: (mesage: ISequencedDocumentMessage) => void);
 }
 
 /**
