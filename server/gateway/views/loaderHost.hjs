@@ -22,18 +22,20 @@
         {{/chaincode}}
         var url = "{{ url }}";
         var resolved = {{{ resolved }}};
-        var jwt = "{{ jwt }}";
+        var hostToken = "{{ hostToken }}";
+        var accessToken = "{{ accessToken }}";
         var npm = "{{ npm }}";
         var config = {{{ config }}};
         var clientId = "{{ clientId }}";
 
         var scriptIds = [];
-  
+
         loaderHost.initialize(
             window.location.href,
             resolved,
             cache,
-            jwt,
+            hostToken,
+            accessToken,
             config,
             clientId);
     </script>
