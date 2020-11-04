@@ -1538,7 +1538,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 eventName: "DuplicateDataStoreId",
                 sequenceNumber: message.sequenceNumber,
                 clientId: message.clientId,
-                referenceSequenceNumber: message.referenceSequenceNumber
+                referenceSequenceNumber: message.referenceSequenceNumber,
             }, error);
             throw error;
         }
