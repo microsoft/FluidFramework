@@ -1531,6 +1531,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
+         // If a non-local operation then go and create the object, otherwise mark it as officially attached.
+        if (this.contexts.has(attachMessage.id)) {
+            const error = new Error("DataCorruption: Duplicate data store created with existing ID");
+            this.logger.sendErrorEvent({
+                eventName: "DuplicateDataStoreId",
+                sequenceNumber: message.sequenceNumber,
+                clientId: message.clientId,
+                referenceSequenceNumber: message.referenceSequenceNumber,
+            }, error);
+            throw error;
+        }
+
         const flatBlobs = new Map<string, string>();
         let flatBlobsP = Promise.resolve(flatBlobs);
         let snapshotTreeP: Promise<ISnapshotTree> | null = null;
@@ -1561,9 +1573,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     },
                 }),
             pkg);
-
-        // If a non-local operation then go and create the object, otherwise mark it as officially attached.
-        assert(!this.contexts.has(attachMessage.id), "Store attached with existing ID");
 
         // Resolve pending gets and store off any new ones
         this.setNewContext(attachMessage.id, remotedFluidDataStoreContext);
