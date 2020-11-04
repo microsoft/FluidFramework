@@ -44,7 +44,13 @@ describe("Document Dirty", () => {
      */
     async function waitForContainerReconnection(c: Container): Promise<void> {
         assert.equal(c.connected, false);
-        await new Promise((resolve) => c.once("connected", () => resolve()));
+        return new Promise((resolve) => c.once("connected", () => resolve()));
+    }
+
+    async function ensureForContainerConnected(c: Container): Promise<void> {
+        if (!c.connected) {
+            return waitForContainerReconnection(c);
+        }
     }
 
     /**
@@ -194,18 +200,13 @@ describe("Document Dirty", () => {
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container);
 
-            // Document will have been marked clean on reconnection and then marked dirty after to
-            // overwrite the clean value, so that the final state is dirty
-            // TODO: These counts should be 0 once #2724 is closed
-            checkDirtyState("after reconnect and replayed ops", true, 1);
+            // Document should still be dirty right after reconnection
+            checkDirtyState("after reconnect and replayed ops", true, 0);
 
             await opProcessingController.process();
 
             // Document will have been marked clean after process
-            // TODO: This counts should be 1 once #2724 is closed
-            // The reason this is 3 instead of 2 is because when we reconnect, it is in "read" mode
-            // because the document got dirty after disconnect
-            checkDirtyState("after processing replayed ops", false, 3);
+            checkDirtyState("after processing replayed ops", false, 1);
         });
 
         it(`sets ops while connected, but disconnects before sending ops, then reconnects to process them`,
@@ -225,16 +226,14 @@ describe("Document Dirty", () => {
                 // Wait for the Container to get reconnected.
                 await waitForContainerReconnection(container);
 
-                // Document will have been marked clean on reconnection and then marked dirty after to
-                // overwrite the clean value, so that the final state is dirty
-                // TODO: These counts should be 0 once #2724 is closed
-                checkDirtyState("after reconnect and replayed ops", true, 1);
+                // Document should still be dirty right after reconnection
+                checkDirtyState("after reconnect and replayed ops", true, 0);
 
                 // Wait for the ops to get processed.
                 await opProcessingController.process();
 
                 // Document will have been marked clean after process
-                checkDirtyState("after processing replayed ops", false, 2);
+                checkDirtyState("after processing replayed ops", false, 1);
             });
     });
 
@@ -255,19 +254,14 @@ describe("Document Dirty", () => {
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container);
 
-            // Document will have been marked clean on reconnection and then marked dirty after to
-            // overwrite the clean value, so that the final state is dirty
-            // TODO: These counts should be 0 once #2724 is closed
-            checkDirtyState("after reconnect and replayed ops", true, 1);
+            // Document should still be dirty right after reconnection
+            checkDirtyState("after reconnect and replayed ops", true, 0);
 
             // Wait for the ops to get processed.
             await opProcessingController.process();
 
             // Document will have been marked clean after process
-            // TODO: This counts should be 1 once #2724 is closed
-            // The reason this is 3 instead of 2 is because when we reconnect, it is in "read" mode
-            // because the document got dirty after disconnect
-            checkDirtyState("after processing replayed ops", false, 3);
+            checkDirtyState("after processing replayed ops", false, 1);
         });
 
         it(`sets ops while connected, but disconnects before sending ops, then reconnects to process them`,
@@ -291,16 +285,67 @@ describe("Document Dirty", () => {
                 // Wait for the Container to get reconnected.
                 await waitForContainerReconnection(container);
 
-                // Document will have been marked clean on reconnection and then marked dirty after to
-                // overwrite the clean value, so that the final state is dirty
-                // TODO: These counts should be 0 once #2724 is closed
-                checkDirtyState("after reconnect and replayed ops", true, 1);
+                // Document should still be dirty right after reconnection
+                checkDirtyState("after reconnect and replayed ops", true, 0);
 
                 // Wait for the ops to get processed.
                 await opProcessingController.process();
 
                 // Document will have been marked clean after process
-                checkDirtyState("after processing replayed ops", false, 2);
+                checkDirtyState("after processing replayed ops", false, 1);
+            });
+    });
+
+    describe("Force readonly", () => {
+        it(`sets operations when force readonly and then turn off force readonly to process them`, async () => {
+            container.forceReadonly(true);
+            await ensureForContainerConnected(container);
+
+            // Set values in DDSes in disconnected state.
+            sharedMap.set("key", "value");
+
+            await opProcessingController.process();
+
+            // Document should have been marked dirty again due to pending DDS ops
+            checkDirtyState("after value set while force readonly", true, 0);
+
+            container.forceReadonly(false);
+            await ensureForContainerConnected(container);
+
+            // Document should still be dirty right after turning off force readonly
+            checkDirtyState("after clear readonly and replayed ops", true, 0);
+
+            await opProcessingController.process();
+
+            // Document will have been marked clean after process
+            checkDirtyState("after processing replayed ops", false, 1);
+        });
+
+        it(`sets ops then force readonly before sending ops, then turn off force readonly to process them`,
+            async () => {
+                // Set values in DDSes in disconnected state.
+                sharedMap.set("key", "value");
+
+                checkDirtyState("after value set", true, 0);
+
+                container.forceReadonly(true);
+                await ensureForContainerConnected(container);
+
+                await opProcessingController.process();
+
+                // Document should have been marked dirty again due to pending DDS ops
+                checkDirtyState("after value set while force readonly", true, 0);
+
+                container.forceReadonly(false);
+                await ensureForContainerConnected(container);
+
+                // Document should still be dirty right after turning off force readonly
+                checkDirtyState("after reconnect and replayed ops", true, 0);
+
+                await opProcessingController.process();
+
+                // Document will have been marked clean after process
+                checkDirtyState("after processing replayed ops", false, 1);
             });
     });
 

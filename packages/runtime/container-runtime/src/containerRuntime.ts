@@ -676,6 +676,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Stores tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private dirtyDocument = false;
+    private emitDirtyDocumentEvent = true;
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
@@ -916,9 +917,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // but it's an extra requirement for Container.forceReadonly() API
             assert(!readonly || !this.connected, "Unsafe to transition to read-only state!");
 
-            if (this.canSendOps()) {
-                this.pendingStateManager.replayPendingStates();
-            }
+            this.replayPendingStates();
         });
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
@@ -1111,6 +1110,27 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return { snapshot, state };
     }
 
+    private replayPendingStates() {
+        // We need to be able to send ops to replay states
+        if (!this.canSendOps()) { return; }
+
+        // Save the old state, reset to false, disable event emit
+        const oldState = this.dirtyDocument;
+        this.dirtyDocument = false;
+        this.emitDirtyDocumentEvent = false;
+
+        // replay the ops
+        this.pendingStateManager.replayPendingStates();
+
+        // Save the new start and restore the old state, re-enable event emit
+        const newState = this.dirtyDocument;
+        this.dirtyDocument = oldState;
+        this.emitDirtyDocumentEvent = true;
+
+        // Officially transition from the old state to the new state.
+        this.updateDocumentDirtyState(newState);
+    }
+
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
@@ -1118,15 +1138,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const changeOfState = this._connected !== connected;
         this._connected = connected;
 
-        if (connected) {
-            // Once we are connected, all acks are accounted.
-            // If there are any pending ops, DDSes will resubmit them right away (below) and
-            // we will switch back to dirty state in such case.
-            this.updateDocumentDirtyState(false);
-        }
-
-        if (changeOfState && this.canSendOps()) {
-            this.pendingStateManager.replayPendingStates();
+        if (changeOfState) {
+           this.replayPendingStates();
         }
 
         for (const [fluidDataStore, context] of this.contexts) {
@@ -1857,7 +1870,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         this.dirtyDocument = dirty;
-        this.emit(dirty ? "dirtyDocument" : "savedDocument");
+        if (this.emitDirtyDocumentEvent) {
+            this.emit(dirty ? "dirtyDocument" : "savedDocument");
+        }
     }
 
     public submitDataStoreOp(

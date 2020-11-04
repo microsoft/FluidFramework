@@ -330,7 +330,20 @@ export class DeltaManager
         const oldValue = this.readonly;
         this._forceReadonly = readonly;
         if (oldValue !== this.readonly) {
+            let reconnect = false;
+            if (this.readonly === true) {
+                reconnect = this.disconnectFromDeltaStream("Force readonly");
+            }
             safeRaiseEvent(this, this.logger, "readonly", this.readonly);
+            if (reconnect) {
+                this.connect({ mode: "read", fetchOpsFromStorage: false }).catch((err) => {
+                    // Errors are raised as "error" event and close container.
+                    // Have a catch-all case in case we missed something
+                    if (!this.closed) {
+                        this.logger.sendErrorEvent({ eventName: "ConnectException" }, err);
+                    }
+                });
+            }
         }
     }
 
@@ -1076,7 +1089,7 @@ export class DeltaManager
      */
     private disconnectFromDeltaStream(reason: string) {
         if (this.connection === undefined) {
-            return;
+            return false;
         }
 
         const connection = this.connection;
@@ -1104,6 +1117,8 @@ export class DeltaManager
         this.emit("disconnect", reason);
 
         connection.close();
+
+        return true;
     }
 
     /**
