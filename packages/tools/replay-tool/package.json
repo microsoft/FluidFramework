@@ -7,7 +7,7 @@
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
-  "sideEffects": "false",
+  "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {

@@ -7,7 +7,7 @@
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
-  "sideEffects": "false",
+  "sideEffects": false,
   "main": "dist/generateSnapshotFiles.js",
   "types": "dist/generateSnapshotFiles.js",
   "scripts": {

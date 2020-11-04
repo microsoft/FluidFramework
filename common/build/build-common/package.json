@@ -6,7 +6,7 @@
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
-  "sideEffects": "false",
+  "sideEffects": false,
   "bin": {
     "gen-version": "bin/gen-version"
   },
