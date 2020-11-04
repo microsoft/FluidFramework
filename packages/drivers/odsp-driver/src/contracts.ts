@@ -35,7 +35,10 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
 
     summarizer: boolean;
 
-    sharingLinkP?: Promise<string>;
+    sharingLinkOptions?: {
+        sharingLinkP: Promise<string>;
+        appGeneratedSharingLink: boolean;
+    };
 
     codeHint?: {
         // containerPackageName is used for adding the package name to the request headers.

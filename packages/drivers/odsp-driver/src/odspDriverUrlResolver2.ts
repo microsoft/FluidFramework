@@ -110,7 +110,10 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
             sharingLinkP = this.getShareLinkPromise(odspResolvedUrl);
         }
         if (sharingLinkP) {
-            odspResolvedUrl.sharingLinkP = sharingLinkP;
+            odspResolvedUrl.sharingLinkOptions = {
+                sharingLinkP,
+                appGeneratedSharingLink: isSharingLink,
+            };
         }
         return odspResolvedUrl;
     }
@@ -137,8 +140,8 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
             throw new Error("Failed to get share link because necessary information is missing " +
                 "(e.g. siteUrl, driveId or itemId)");
         }
-        if (resolvedUrl.sharingLinkP !== undefined) {
-            return resolvedUrl.sharingLinkP;
+        if (resolvedUrl.sharingLinkOptions !== undefined) {
+            return resolvedUrl.sharingLinkOptions.sharingLinkP;
         }
         const newLinkPromise = getShareLink(
             this.getSharingLinkToken,
