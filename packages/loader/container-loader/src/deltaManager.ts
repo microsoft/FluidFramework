@@ -472,7 +472,7 @@ export class DeltaManager
         return DeltaManager.detailsFromConnection(connection);
     }
 
-    public async connectCore(args: IConnectionArgs = {}): Promise<IDocumentDeltaConnection> {
+    private async connectCore(args: IConnectionArgs = {}): Promise<IDocumentDeltaConnection> {
         if (this.connection !== undefined) {
             return this.connection;
         }
