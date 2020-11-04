@@ -114,7 +114,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private readonly documentId: string;
     private readonly snapshotUrl: string | undefined;
-    private readonly appSharingLinkP: Promise<string> | undefined;
+    private readonly redeemSharingLink: string | undefined;
     private readonly attachmentPOSTUrl: string | undefined;
     private readonly attachmentGETUrl: string | undefined;
     // Driver specified limits for snapshot size and time.
@@ -151,10 +151,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     ) {
         this.documentId = odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
-        if (odspResolvedUrl.sharingLinkOptions?.appGeneratedSharingLink)
-        {
-            this.appSharingLinkP = odspResolvedUrl.sharingLinkOptions?.sharingLinkP;
-        }
+        this.redeemSharingLink = odspResolvedUrl.redeemSharingLink;
         this.attachmentPOSTUrl = odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
         this.attachmentGETUrl = odspResolvedUrl.endpoints.attachmentGETStorageUrl;
 
@@ -585,9 +582,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     postBody += `${key}: ${value}\r\n`;
                 }
             });
-            const sharingLink = await this.appSharingLinkP;
-            if (sharingLink) {
-                postBody += `sl: ${sharingLink}\r\n`;
+            if (this.redeemSharingLink) {
+                postBody += `sl: ${this.redeemSharingLink}\r\n`;
             }
             postBody += `_post: 1\r\n`;
             postBody += `\r\n--${formBoundary}--`;

@@ -35,10 +35,7 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
 
     summarizer: boolean;
 
-    sharingLinkOptions?: {
-        sharingLinkP: Promise<string>;
-        appGeneratedSharingLink: boolean;
-    };
+    redeemSharingLink?: string;
 
     codeHint?: {
         // containerPackageName is used for adding the package name to the request headers.
@@ -282,11 +279,11 @@ export interface OdspFluidDataStoreLocator {
 }
 
 export enum SharingLinkHeader {
-    isSharingLink = "isSharingLink",
+    isRedeemSharingLink = "isRedeemSharingLink",
 }
 
 export interface ISharingLinkHeader {
-    [SharingLinkHeader.isSharingLink]: boolean;
+    [SharingLinkHeader.isRedeemSharingLink]: boolean;
 }
 
 declare module "@fluidframework/core-interfaces" {
