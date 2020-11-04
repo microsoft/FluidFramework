@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import AbortController from "abort-controller";
+import { default as AbortController } from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
 import {
