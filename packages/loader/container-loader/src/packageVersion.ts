@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/container-loader";
-export const pkgVersion = "0.28.3";
+export const pkgVersion = "0.28.4";
