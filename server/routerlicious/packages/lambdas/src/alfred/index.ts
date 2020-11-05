@@ -18,8 +18,7 @@ import {
     MessageType,
     NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { canSummarize, canWrite } from "@fluidframework/server-services-client";
-import { validateTokenClaims } from "@fluidframework/server-services-utils";
+import { canSummarize, canWrite, validateTokenClaims } from "@fluidframework/server-services-client";
 
 import safeStringify from "json-stringify-safe";
 import * as semver from "semver";

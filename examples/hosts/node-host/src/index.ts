@@ -53,7 +53,7 @@ export async function start(): Promise<void> {
         tenantId,
         user,
         iat: Math.round(new Date().getTime() / 1000),
-        exp: Math.round(new Date().getTime() / 1000) + 5 * 60, // 5 minute expiration
+        exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
         ver: "1.0",
     };
     const token = jwt.sign(claims, tenantKey);
