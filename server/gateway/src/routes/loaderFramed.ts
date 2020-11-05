@@ -19,7 +19,8 @@ import dotenv from "dotenv";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
-import { getConfig, getUserDetails, queryParamAsString } from "../utils";
+import { getConfig, getUserDetails, queryParamAsString, getR11sToken } from "../utils";
+import { getUser, IExtendedUser } from "./utils";
 
 dotenv.config();
 
@@ -64,7 +65,7 @@ export function create(
                 winston.info(`Redirecting to ${redirectUrl}`);
                 response.redirect(redirectUrl);
             } else {
-                const jwtToken = jwt.sign(
+                const hostToken = jwt.sign(
                     {
                         user: request.user,
                     },
@@ -79,8 +80,10 @@ export function create(
 
                 const search = parse(request.url).search;
                 const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+                const user = getUser(request);
+                const accessToken = getR11sToken(tenantId, documentId, appTenants, scopes, user as IExtendedUser);
                 const [resolvedP, fullTreeP] =
-                    resolveUrl(config, alfred, appTenants, tenantId, documentId, scopes, request);
+                    resolveUrl(config, alfred, tenantId, documentId, accessToken, request);
 
                 const workerConfig = getConfig(
                     config.get("worker"),
@@ -179,7 +182,8 @@ export function create(
                                 clientId: _.isEmpty(configClientId)
                                     ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : configClientId,
                                 config: workerConfig,
-                                jwt: jwtToken,
+                                hostToken,
+                                accessToken,
                                 npm: config.get("worker:npm"),
                                 partials: {
                                     layoutFramed: "layoutFramed",

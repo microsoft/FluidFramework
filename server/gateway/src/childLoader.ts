@@ -8,13 +8,14 @@ import { Container, ILoaderProps, Loader } from "@fluidframework/container-loade
 import { Deferred } from "@fluidframework/common-utils";
 import { IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { DefaultTokenProvider, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { NodeCodeLoader, NodeAllowList } from "@fluidframework/server-services";
 import { promiseTimeout } from "@fluidframework/server-services-client";
 import Axios from "axios";
 import jwt from "jsonwebtoken";
 import winston from "winston";
+import { GatewayTokenProvider } from "./shared";
 
 const installLocation = "/tmp/chaincode";
 const waitTimeoutMS = 60000;
@@ -57,9 +58,9 @@ class KeyValueLoader {
         };
 
         const parsedUrl = parse(documentUrl);
-        const loadUrl = `${parsedUrl.protocol}//${parsedUrl.host}/api/v1/load`;
-        const result = await Axios.post<IResolvedUrl>(
-            loadUrl,
+        const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
+        const resolvedData = await Axios.post<IResolvedUrl>(
+            `${baseUrl}/api/v1/load`,
             {
                 scopes: [ScopeType.DocRead],
                 url: documentUrl,
@@ -68,10 +69,19 @@ class KeyValueLoader {
                 headers,
             });
 
-        const resolvedUrl = result.data as IFluidResolvedUrl;
+        const resolvedUrl = resolvedData.data as IFluidResolvedUrl;
 
-        // Remove default token provider
-        const tokenProvider = new DefaultTokenProvider(resolvedUrl.tokens.jwt);
+        const tokenData = await Axios.post<string>(
+            `${baseUrl}/api/v1/token`,
+            {
+                scopes: [ScopeType.DocRead],
+                url: documentUrl,
+            },
+            {
+                headers,
+            });
+        const accessToken = tokenData.data;
+        const tokenProvider = new GatewayTokenProvider(config.gatewayUrl, resolvedUrl.url, hostToken, accessToken);
         const resolver = new ContainerUrlResolver(
             config.gatewayUrl,
             hostToken,

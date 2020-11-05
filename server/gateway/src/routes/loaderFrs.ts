@@ -19,8 +19,9 @@ import dotenv from "dotenv";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
-import { getConfig, getJWTClaims, getUserDetails, queryParamAsString } from "../utils";
+import { getConfig, getJWTClaims, getUserDetails, queryParamAsString, getR11sToken } from "../utils";
 import { defaultPartials } from "./partials";
+import { getUser, IExtendedUser } from "./utils";
 
 dotenv.config();
 
@@ -60,8 +61,10 @@ export function create(
 
         const search = parse(request.url).search;
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+        const user = getUser(request);
+        const accessToken = getR11sToken(tenantId, documentId, appTenants, scopes, user as IExtendedUser);
         const [resolvedP, fullTreeP] =
-            resolveUrl(config, alfred, appTenants, tenantId, documentId, scopes, request);
+            resolveUrl(config, alfred, tenantId, documentId, accessToken, request);
 
         const workerConfig = getConfig(
             config.get("worker"),

@@ -2,10 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
-
 import { Deferred, fromBase64ToUtf8, assert } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IValueChanged, MapKernel } from "@fluidframework/map";
@@ -86,7 +82,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 case MergeTree.MergeTreeDeltaType.INSERT:
                     ops.push(MergeTree.createInsertOp(
                         r.position,
-                        cloneDeep(r.segment.toJSONObject())));
+                        r.segment.clone().toJSONObject()));
                     break;
 
                 case MergeTree.MergeTreeDeltaType.REMOVE: {
