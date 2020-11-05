@@ -9,12 +9,10 @@ alfred:
   externalUrl: alfred_external_url
   tenants:
   - id: fluid
-    key: 
+    key:
   - id: prague
     key:
   - id: github
-    key:
-  - id: cobalt
     key:
   - id: local
     key:
