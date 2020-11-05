@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/image-collection",
-  "version": "0.27.12",
+  "version": "0.27.13",
   "description": "Collection of images",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -28,14 +28,14 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@fluid-example/client-ui-lib": "^0.27.12",
-    "@fluid-example/fluid-object-interfaces": "^0.27.12",
-    "@fluidframework/core-interfaces": "^0.27.12",
-    "@fluidframework/data-object-base": "^0.27.12",
-    "@fluidframework/datastore": "^0.27.12",
-    "@fluidframework/map": "^0.27.12",
-    "@fluidframework/runtime-definitions": "^0.27.12",
-    "@fluidframework/view-interfaces": "^0.27.12",
+    "@fluid-example/client-ui-lib": "^0.27.13",
+    "@fluid-example/fluid-object-interfaces": "^0.27.13",
+    "@fluidframework/core-interfaces": "^0.27.13",
+    "@fluidframework/data-object-base": "^0.27.13",
+    "@fluidframework/datastore": "^0.27.13",
+    "@fluidframework/map": "^0.27.13",
+    "@fluidframework/runtime-definitions": "^0.27.13",
+    "@fluidframework/view-interfaces": "^0.27.13",
     "@types/node": "^10.17.24"
   },
   "devDependencies": {
