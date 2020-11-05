@@ -329,7 +329,7 @@ export class OdspDocumentService implements IDocumentService {
                     io,
                     client,
                     nonAfdUrl,
-                    20000,
+                    60000,
                     this.logger,
                 );
                 const endTime = performance.now();
@@ -366,7 +366,7 @@ export class OdspDocumentService implements IDocumentService {
                     io,
                     client,
                     afdUrl,
-                    20000,
+                    60000,
                     this.logger,
                 );
                 const endTime = performance.now();
