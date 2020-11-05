@@ -8,6 +8,7 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 export interface ITestConfig {
     opRatePerMin: number,
@@ -136,5 +137,7 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     LoadTestDataStore.DataStoreName,
-    new Map([[LoadTestDataStore.DataStoreName, Promise.resolve(LoadTestDataStoreInstantiationFactory)]]),
+    new FluidDataStoreRegistry([
+        [LoadTestDataStore.DataStoreName, Promise.resolve(LoadTestDataStoreInstantiationFactory)],
+    ]),
 );

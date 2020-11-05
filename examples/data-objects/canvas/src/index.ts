@@ -7,6 +7,7 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { Ink } from "@fluidframework/ink";
 import { Canvas } from "./canvas";
 
@@ -25,7 +26,7 @@ export const CanvasInstantiationFactory = new DataObjectFactory(
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     CanvasName,
-    new Map([
+    new FluidDataStoreRegistry([
         [CanvasName, Promise.resolve(CanvasInstantiationFactory)],
     ]),
 );

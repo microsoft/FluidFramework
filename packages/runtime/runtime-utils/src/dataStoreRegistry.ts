@@ -5,24 +5,29 @@
 import {
     FluidDataStoreRegistryEntry,
     IFluidDataStoreRegistry,
-    NamedFluidDataStoreRegistryEntries,
+    IProvideFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 
 export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
-    private readonly map: Map<string, Promise<FluidDataStoreRegistryEntry>>;
+    private readonly map: Map<string, FluidDataStoreRegistryEntry | Promise<FluidDataStoreRegistryEntry>> = new Map();
 
     public get IFluidDataStoreRegistry() { return this; }
 
-    constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
-        this.map = new Map(namedEntries);
+    constructor(namedEntries: Iterable<
+        [string, FluidDataStoreRegistryEntry | Promise<FluidDataStoreRegistryEntry>] |
+        IProvideFluidDataStoreFactory
+        >) {
+        for (const entry of namedEntries) {
+            if (Array.isArray(entry)) {
+                this.map.set(entry[0], entry[1]);
+            } else {
+                this.map.set(entry.IFluidDataStoreFactory.type, entry);
+            }
+        }
     }
 
     public async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
-        if (this.map.has(name)) {
-            return this.map.get(name);
-        }
-
-        return undefined;
+        return this.map.get(name);
     }
 }
 

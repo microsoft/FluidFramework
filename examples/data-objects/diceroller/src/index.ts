@@ -6,6 +6,7 @@
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
+import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 import { DiceRoller, DiceRollerInstantiationFactory } from "./main";
 
@@ -24,7 +25,7 @@ export { DiceRoller, DiceRollerInstantiationFactory } from "./main";
  */
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     DiceRoller.Name,
-    new Map([
+    new FluidDataStoreRegistry([
         [DiceRoller.Name, Promise.resolve(DiceRollerInstantiationFactory)],
     ]),
 );

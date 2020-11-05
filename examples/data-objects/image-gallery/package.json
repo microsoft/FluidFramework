@@ -35,6 +35,7 @@
     "@fluidframework/aqueduct": "^0.29.0",
     "@fluidframework/map": "^0.29.0",
     "@fluidframework/view-interfaces": "^0.29.0",
+    "@fluidframework/runtime-utils": "^0.29.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "react-image-gallery": "^0.9.1"

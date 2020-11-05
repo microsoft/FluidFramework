@@ -4,14 +4,13 @@
  */
 
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { DependencyContainerRegistry } from "@fluidframework/synthesize";
 import {
     RuntimeRequestHandler,
     innerRequestHandler,
 } from "@fluidframework/request-handler";
-import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { defaultRouteRequestHandler } from "../request-handlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
@@ -28,13 +27,13 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 
     constructor(
         private readonly defaultDataStoreName: string,
-        registryEntries: NamedFluidDataStoreRegistryEntries,
+        registryEntries: IFluidDataStoreRegistry,
         providerEntries: DependencyContainerRegistry = [],
         requestHandlers: RuntimeRequestHandler[] = [],
         runtimeOptions?: IContainerRuntimeOptions,
     ) {
         super(
-            new FluidDataStoreRegistry(registryEntries),
+            registryEntries,
             providerEntries,
             [
                 ...requestHandlers,

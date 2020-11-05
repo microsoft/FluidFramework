@@ -9,6 +9,7 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { ClickerInstantiationFactory, Clicker } from "@fluid-example/clicker";
+import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 const simpleFluidObjectEmbedName = "@fluid-example/simple-fluidobject-embed";
@@ -59,7 +60,7 @@ export const SimpleFluidObjectEmbedInstantiationFactory = new DataObjectFactory(
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     SimpleFluidObjectEmbedInstantiationFactory.type,
-    new Map([
+    new FluidDataStoreRegistry([
         SimpleFluidObjectEmbedInstantiationFactory.registryEntry,
         ClickerInstantiationFactory.registryEntry,
     ]),

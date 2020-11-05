@@ -20,7 +20,7 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IEnvelope, FlushMode } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject, FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { SharedString } from "@fluidframework/sequence";
 import {
@@ -75,10 +75,10 @@ describe("Ops on Reconnect", () => {
         const runtimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
-                [
+                new FluidDataStoreRegistry([
                     ["default", Promise.resolve(factory)],
                     ["dataObject2", Promise.resolve(factory)],
-                ],
+                ]),
             );
 
         const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);

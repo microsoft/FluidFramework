@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 import { PrimitivesName } from "./main";
 import { PrimitivesInstantiationFactory } from "./primitivesInstantiationFactory";
@@ -23,7 +22,7 @@ import { PrimitivesInstantiationFactory } from "./primitivesInstantiationFactory
  */
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     PrimitivesName,
-    new Map([
+    new FluidDataStoreRegistry([
         [PrimitivesName, Promise.resolve(PrimitivesInstantiationFactory)],
     ]),
 );

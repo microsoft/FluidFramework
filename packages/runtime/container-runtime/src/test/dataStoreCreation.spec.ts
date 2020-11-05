@@ -17,7 +17,7 @@ import {
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";
+import { SummaryTracker, SummarizerNode, FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { LocalFluidDataStoreContext } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
@@ -59,11 +59,7 @@ describe("Data Store Creation Tests", () => {
                 get IFluidDataStoreFactory() { return factory; },
                 instantiateDataStore: async (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime(),
             };
-            const registry: IFluidDataStoreRegistry = {
-                get IFluidDataStoreRegistry() { return registry; },
-                // Returns the registry entry as per the entries provided in the param.
-                get: async (pkg) => registryEntries.get(pkg),
-            };
+            const registry = new FluidDataStoreRegistry(registryEntries);
 
             const entry: FluidDataStoreRegistryEntry = {
                 get IFluidDataStoreFactory() { return factory; },

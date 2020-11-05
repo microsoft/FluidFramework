@@ -4,6 +4,7 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { CollaborativeText } from "./fluid-object/";
 
 /**
@@ -19,5 +20,5 @@ import { CollaborativeText } from "./fluid-object/";
 
 export const CollaborativeTextContainer = new ContainerRuntimeFactoryWithDefaultDataStore(
     CollaborativeText.Name,
-    [[CollaborativeText.Name, Promise.resolve(CollaborativeText.getFactory())]],
+    new FluidDataStoreRegistry([[CollaborativeText.Name, Promise.resolve(CollaborativeText.getFactory())]]),
 );

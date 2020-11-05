@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalResolver } from "@fluidframework/local-driver";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject, FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createAndAttachContainer,
@@ -116,7 +116,7 @@ describe("context reload", function() {
         const type = TestDataStore.type;
         return new ContainerRuntimeFactoryWithDefaultDataStore(
             type,
-            [[type, Promise.resolve(new DataObjectFactory(type, dataStore, [], {}))]],
+            new FluidDataStoreRegistry([[type, Promise.resolve(new DataObjectFactory(type, dataStore, [], {}))]]),
         );
     };
 

@@ -8,7 +8,7 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { LocalResolver } from "@fluidframework/local-driver";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject, FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
 import { ITable } from "../table";
@@ -68,7 +68,7 @@ describe("Table Document with Interception", () => {
         beforeEach(async () => {
             const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
                 TableDocumentType,
-                new Map([
+                new FluidDataStoreRegistry([
                     [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
                 ]),
             );

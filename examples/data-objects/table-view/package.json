@@ -41,6 +41,7 @@
     "@fluid-example/table-document": "^0.29.0",
     "@fluidframework/aqueduct": "^0.29.0",
     "@fluidframework/core-interfaces": "^0.29.0",
+    "@fluidframework/runtime-utils": "^0.29.0",
     "@fluidframework/view-interfaces": "^0.29.0",
     "@tiny-calc/micro": "0.0.0-alpha.5"
   },

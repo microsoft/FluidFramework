@@ -40,6 +40,7 @@
     "@fluidframework/protocol-definitions": "^0.1014.0-0",
     "@fluidframework/react": "^0.29.0",
     "@fluidframework/react-inputs": "^0.29.0",
+    "@fluidframework/runtime-utils": "^0.29.0",
     "@fluidframework/sequence": "^0.29.0",
     "@fluidframework/shared-object-base": "^0.29.0",
     "@fluidframework/view-interfaces": "^0.29.0",

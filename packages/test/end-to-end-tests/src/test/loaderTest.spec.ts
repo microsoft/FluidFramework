@@ -16,7 +16,7 @@ import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createAndAttachContainer, createLocalLoader, OpProcessingController } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject, FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 class TestSharedDataObject1 extends DataObject {
     public get _root() {
@@ -81,10 +81,10 @@ describe("Loader.request", () => {
         const runtimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
-                [
+                new FluidDataStoreRegistry([
                     ["default", Promise.resolve(testSharedDataObjectFactory1)],
                     ["TestSharedDataObject2", Promise.resolve(testSharedDataObjectFactory2)],
-                ],
+                ]),
             );
         loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
         return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);

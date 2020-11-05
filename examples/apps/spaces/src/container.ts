@@ -4,6 +4,7 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { Spaces } from "./fluid-object/";
 
 /**
@@ -19,5 +20,5 @@ import { Spaces } from "./fluid-object/";
 
 export const SpacesContainer = new ContainerRuntimeFactoryWithDefaultDataStore(
     Spaces.ComponentName,
-    [[Spaces.ComponentName, Promise.resolve(Spaces.getFactory())]],
+    new FluidDataStoreRegistry([[Spaces.ComponentName, Promise.resolve(Spaces.getFactory())]]),
 );

@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 import { VersiontestInstantiationFactory } from "./main";
 
@@ -15,7 +14,7 @@ const fluidPackageName = pkg.name as string;
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     fluidPackageName,
-    new Map([
+    new FluidDataStoreRegistry([
         [fluidPackageName, Promise.resolve(VersiontestInstantiationFactory)],
         ["@fluid-internal/version-test-1", Promise.resolve(VersiontestInstantiationFactory)],
     ]),

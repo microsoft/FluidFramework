@@ -40,6 +40,7 @@
     "@fluidframework/aqueduct": "^0.29.0",
     "@fluidframework/core-interfaces": "^0.29.0",
     "@fluidframework/ink": "^0.29.0",
+    "@fluidframework/runtime-utils": "^0.29.0",
     "@fluidframework/view-interfaces": "^0.29.0"
   },
   "devDependencies": {
