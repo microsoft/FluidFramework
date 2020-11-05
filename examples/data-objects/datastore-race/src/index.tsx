@@ -219,6 +219,10 @@ export const RaceContainerFactory: IRuntimeFactory = {
             [["default", Promise.resolve(MerableClickerInstantiationFactory)]],
             async (req)=> {
                 return  { status: 200, mimeType: "fluid/object", value: viewProxy };
+            },
+            {
+                generateSummaries:false,
+                enableSummarizerNode:false,
             });
 
         const local = current = await MerableClickerInstantiationFactory.createLocal(runtime);
