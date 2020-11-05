@@ -1,3 +1,18 @@
+## 0.29 Breaking changes
+
+- [NamedFluidDataStoreRegistryEntries](#NamedFluidDataStoreRegistryEntries)
+
+### NamedFluidDataStoreRegistryEntries 
+NamedFluidDataStoreRegistryEntries usage across repo is reduced substantially. Specifically, `ContainerRuntime.load()` is changed. Instead many interfaces are changed to accept IFluidDataStoreRegistry
+The following two classes are added to assist in conversion:
+`FluidDataStoreRegistry` class can be used to wrap input in many formats, including NamedFluidDataStoreRegistryEntries format into IFluidDataStoreRegistry. It takes Iterable<> of:
+1. old [name, Promise<factory>] format.
+2. [name, factory]
+3. factory
+
+`MultipleDataStoreRegistries` - can be used to combine  multiple IFluidDataStoreRegistry objects into one.
+
+
 ## 0.28 Breaking Changes
 
 - [FileName should contain extension for ODSP driver create new path](#FileName-should-contain-extension-for-ODSP-driver-create-new-path)
