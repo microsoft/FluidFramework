@@ -332,17 +332,15 @@ export class DeltaManager
         if (oldValue !== this.readonly) {
             let reconnect = false;
             if (this.readonly === true) {
+                // If we switch to readonly while connected, we should disconnect first
+                // See comment in the "readonly" event handler to deltaManager set up by
+                // the ContainerRuntime constructor
                 reconnect = this.disconnectFromDeltaStream("Force readonly");
             }
             safeRaiseEvent(this, this.logger, "readonly", this.readonly);
             if (reconnect) {
-                this.connect({ mode: "read", fetchOpsFromStorage: false }).catch((err) => {
-                    // Errors are raised as "error" event and close container.
-                    // Have a catch-all case in case we missed something
-                    if (!this.closed) {
-                        this.logger.sendErrorEvent({ eventName: "ConnectException" }, err);
-                    }
-                });
+                // reconnect if we disconnected from before.
+                this.triggerConnect({ mode: "read", fetchOpsFromStorage: false });
             }
         }
     }
@@ -483,6 +481,21 @@ export class DeltaManager
     public async connect(args: IConnectionArgs = {}): Promise<IConnectionDetails> {
         const connection = await this.connectCore(args);
         return DeltaManager.detailsFromConnection(connection);
+    }
+
+    /**
+     * Start the connection. Any error should result in container being close.
+     * And report the error if it excape for any reason.
+     * @param args - The connection arguments
+     */
+    private triggerConnect(args: IConnectionArgs) {
+        this.connectCore(args).catch((err) => {
+            // Errors are raised as "error" event and close container.
+            // Have a catch-all case in case we missed something
+            if (!this.closed) {
+                this.logger.sendErrorEvent({ eventName: "ConnectException" }, err);
+            }
+        });
     }
 
     private async connectCore(args: IConnectionArgs = {}): Promise<IDocumentDeltaConnection> {
@@ -1160,13 +1173,7 @@ export class DeltaManager
                 await waitForConnectedState(delay * 1000);
             }
 
-            this.connect({ mode: requestedMode, fetchOpsFromStorage: false }).catch((err) => {
-                // Errors are raised as "error" event and close container.
-                // Have a catch-all case in case we missed something
-                if (!this.closed) {
-                    this.logger.sendErrorEvent({ eventName: "ConnectException" }, err);
-                }
-            });
+            this.triggerConnect({ mode: requestedMode, fetchOpsFromStorage: false });
         }
     }
 
