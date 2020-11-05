@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/image-gallery",
-  "version": "0.28.5",
+  "version": "0.28.6",
   "description": "Image Gallery with pretty layout",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -32,16 +32,16 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.28.5",
-    "@fluidframework/map": "^0.28.5",
-    "@fluidframework/view-interfaces": "^0.28.5",
+    "@fluidframework/aqueduct": "^0.28.6",
+    "@fluidframework/map": "^0.28.6",
+    "@fluidframework/view-interfaces": "^0.28.6",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "react-image-gallery": "^0.9.1"
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.20.0",
-    "@fluidframework/webpack-fluid-loader": "^0.28.5",
+    "@fluidframework/webpack-fluid-loader": "^0.28.6",
     "@types/node": "^10.17.24",
     "@types/react-dom": "^16.9.4",
     "@types/react-image-gallery": "^0.8.4",
