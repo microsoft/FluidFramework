@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.19.1",
-    "@fluidframework/common-utils": "^0.25.0-0",
+    "@fluidframework/common-utils": "^0.25.0",
     "@fluidframework/core-interfaces": "^0.29.0",
     "@fluidframework/datastore-definitions": "^0.29.0",
     "@fluidframework/protocol-base": "^0.1014.0-0",
