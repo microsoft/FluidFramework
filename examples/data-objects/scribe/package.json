@@ -56,7 +56,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
-    "@fluidframework/eslint-config-fluid": "^0.20.0",
+    "@fluidframework/eslint-config-fluid": "^0.21.0-0",
     "@fluidframework/webpack-fluid-loader": "^0.29.0",
     "@types/async": "^2.0.50",
     "@types/lodash": "^4.14.118",

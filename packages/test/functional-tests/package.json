@@ -57,7 +57,7 @@
     "@fluidframework/common-utils": "^0.25.0",
     "@fluidframework/container-loader": "^0.29.0",
     "@fluidframework/container-runtime": "^0.29.0",
-    "@fluidframework/eslint-config-fluid": "^0.20.0",
+    "@fluidframework/eslint-config-fluid": "^0.21.0-0",
     "@fluidframework/mocha-test-setup": "^0.29.0",
     "@fluidframework/protocol-definitions": "^0.1014.0",
     "@fluidframework/sequence": "^0.29.0",

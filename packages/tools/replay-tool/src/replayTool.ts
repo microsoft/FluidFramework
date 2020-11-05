@@ -199,7 +199,7 @@ new ReplayTool(new ReplayProcessArgs())
         }
         finished = true;
     })
-    .catch((error: string) => {
+    .catch((error: Error) => {
         console.error(`ERROR: ${error}`);
         process.exit(2);
     });

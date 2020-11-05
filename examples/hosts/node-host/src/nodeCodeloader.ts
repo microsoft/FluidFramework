@@ -42,7 +42,7 @@ export class NodeCodeLoader {
         const fluidObjects = pkg.match(/(.*)\/(.*)@(.*)/);
         // eslint-disable-next-line no-null/no-null
         if (fluidObjects === null) {
-            return Promise.reject("Invalid package");
+            return Promise.reject(new Error("Invalid package"));
         }
         const [, scope, name] = fluidObjects;
 
@@ -86,7 +86,7 @@ export class NodeCodeLoader {
             const waitTimer = setTimeout(() => {
                 watcher.close();
                 clearTimeout(waitTimer);
-                reject(`${fileName} in ${targetDirectory} was not generated within ${waitTimeout} msecs`);
+                reject(new Error(`${fileName} in ${targetDirectory} was not generated within ${waitTimeout} msecs`));
             }, waitTimeout);
 
             if (fs.existsSync(`${targetDirectory}/${fileName}`)) {

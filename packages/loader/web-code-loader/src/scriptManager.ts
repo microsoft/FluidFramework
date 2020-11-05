@@ -95,6 +95,7 @@ export class ScriptManager {
                     }
                     const loadP = new Promise<void>((resolve, reject) => {
                         cacheLink.onload = () => resolve();
+                        // eslint-disable-next-line prefer-promise-reject-errors
                         cacheLink.onerror = (...args: any[]) => reject({ ...args });
                     });
                     docfrag.appendChild(docfrag);

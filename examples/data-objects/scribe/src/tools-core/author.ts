@@ -96,7 +96,7 @@ export declare type QueueCallback = (metrics: IScribeMetrics, author: IAuthor) =
 export async function requestSharedString(loader: ILoader, urlBase: string): Promise<ISharedString> {
     const response = await loader.request({ url: `${urlBase}/sharedstring` });
     if (response.status !== 200 || response.mimeType !== "fluid/sharedstring") {
-        return Promise.reject("Invalid document");
+        return Promise.reject(new Error("Invalid document"));
     }
 
     return response.value as ISharedString;
