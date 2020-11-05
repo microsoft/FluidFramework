@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions";
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import Deque from "double-ended-queue";
 
 export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> implements IDeltaQueue<T> {
@@ -62,7 +61,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public dispose() {
-        assert.fail("Not implemented.");
+        throw new Error("Not implemented.");
         this.isDisposed = true;
     }
 

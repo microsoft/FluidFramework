@@ -18,8 +18,11 @@ function printUsage() {
 Usage: fluid-gen-pkg-lock <options>
 Options:
 ${commonOptionString}
+     --server         Generate package lock for server mono repo (default: client)
 `);
 }
+
+let genServer = false;
 
 function parseOptions(argv: string[]) {
     let error = false;
@@ -39,6 +42,11 @@ function parseOptions(argv: string[]) {
         if (arg === "-?" || arg === "--help") {
             printUsage();
             process.exit(0);
+        }
+
+        if (arg === "--server") {
+            genServer = true;
+            continue;
         }
 
         console.error(`ERROR: Invalid arguments ${arg}`);
@@ -82,37 +90,43 @@ async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJs
     const totalCount = totalDevCount;
     const topLevelTotalCount = topLevelDevCount;
 
-    const markNonDev = (name: string, item: any) => {
+    const markNonDev = (name: string, topRef: string, item: any, refStack: any[]) => {
         totalDevCount--;
         delete item.dev;
+        refStack.push(item);
         if (item.dependencies) {
             // mark unhoisted dependencies recursively
             for (const dep in item.dependencies) {
-                markNonDev(dep, item.dependencies[dep]);
+                markNonDev(dep, topRef, item.dependencies[dep], refStack);
             }
         }
         // Mark the hoisted dependencies
         for (const req in item.requires) {
-            if (!item.dependencies || !item.dependencies[req]) {
-                markTopLevelNonDev(req, name);
+            if (!refStack.some(scope => scope.dependencies && scope.dependencies[req] !== undefined)) {
+                markTopLevelNonDev(req, name, topRef);
             }
         }
+        refStack.pop();
     }
 
-    const markTopLevelNonDev = (dep: string, ref: string) => {
+    const markTopLevelNonDev = (dep: string, ref: string, topRef: string) => {
         const item = repoPackageLockJson.dependencies[dep];
         if (!item) {
-            throw new Error(`Missing ${dep} in lock file referenced by ${ref} in ${MonoRepoKind[monoRepo.kind].toLowerCase()}`);
+            throw new Error(`Missing ${dep} in lock file referenced by ${ref} from ${topRef} in ${MonoRepoKind[monoRepo.kind].toLowerCase()}`);
         }
+        if (commonOptions.verbose) {
+            console.log(`NonDev Ref: ${topRef}..${ref} => ${dep}`);
+        }
+
         if (item.dev) {
             topLevelDevCount--;
-            markNonDev(dep, item);
+            markNonDev(dep, dep, item, []);
         }
     }
 
     // Go thru the non-dev dependencies in the package.json file and recursively mark the dependency tree as non-dev
     for (const dep in repoPackageJson.dependencies) {
-        markTopLevelNonDev(dep, "<root>");
+        markTopLevelNonDev(dep, "<root>", "<root>");
     }
 
     console.log(`${MonoRepoKind[monoRepo.kind]}: ${format(totalDevCount)}/${format(totalCount)} locked devDependencies`);
@@ -202,8 +216,9 @@ async function main() {
     const repo = new FluidRepo(resolvedRoot, false);
     timer.time("Package scan completed");
 
-    await generateMonoRepoInstallPackageJson(repo.clientMonoRepo);
-    if (repo.serverMonoRepo) {
+    if (!genServer) {
+        await generateMonoRepoInstallPackageJson(repo.clientMonoRepo);
+    } else if (repo.serverMonoRepo) {
         await generateMonoRepoInstallPackageJson(repo.serverMonoRepo);
     }
 };

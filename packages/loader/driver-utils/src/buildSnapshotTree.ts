@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import { gitHashFile, IsoBuffer } from "@fluidframework/common-utils";
+import { assert, gitHashFile, IsoBuffer } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import {
     FileMode,

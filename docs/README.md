@@ -2,13 +2,7 @@
 
 This is the code and content for <https://fluidframework.com>.
 
-## Contributing documentation
-
-### Setup
-
-The Fluid website is a generated static website based on content found in this
-repository. To contribute new content, or to preview the site, you need to
-use Hugo. It will automatically be downloaded as part of the setup steps below.
+## Previewing the documentation site locally
 
 Open the docs folder in a terminal and install the dependencies using npm.
 
@@ -17,44 +11,92 @@ cd docs
 npm install
 ```
 
-This will download all dependencies, including Hugo.
-
-#### Using Hugo manually (optional)
-
-You can install Hugo manually if you want. Use the [instructions on the Hugo
-site](https://gohugo.io/getting-started/installing/) to download it.
-
-### Previewing the site
-
-Once you have Hugo installed you can then start the
-developer preview site like so:
+Then, start the server.
 
 ```bash
 npm start
 ```
 
-Open `http://localhost:1313` to preview the site. Any changes to the source
-content will automatically force an HTML re-render allowing you to preview your
-modifications in quasi real time.
+Open <http://localhost:1313> to preview the site.
 
-If you want to debug the generated content, you can build the site and see the
-output in the `public/` folder:
+### API documentation and Playground
+
+The steps above won't include API documentation (the TSDoc JSON files) or the Playground by default.  You can
+download the latest API docs and Playground files with the `download` script.
+
+```bash
+npm run download
+```
+
+Note that this script will **overwrite any locally built API docs.**
+
+## Building the documentation
+
+Run the `build` script to build the site. The output will be in the `public/` folder.
 
 ```bash
 npm run build
 ```
 
-Note that content with a published date in the future or draft flag on won't be
-rendered, you can pass two extra flags to preview this content.
+### Drafts and future content
+
+By default the `build` script won't build content with a future published date or draft flag.
+To build this content, use the `--buildDrafts` and `--buildFuture` flags.
 
 ```bash
 npm run build -- --buildDrafts --buildFuture
 ```
 
-If you create a content with a future published date, it won't be automatically
-published at that time; you need to trigger the build process.
+Content with a future published date won't automatically publish on that date.  You'll
+need to run the build process.
 
-## New content
+### API documentation
+
+Building API documentation locally requires an extra step to generate the content from the source.
+
+From the root of the repository:
+
+```bash
+npm install
+npm run build:fast -- --symlink:full --install --all
+npm run build:fast -- -s build -s build:docs --nolint --all
+```
+
+You can then build or preview the docs using the steps described earlier.
+
+Note that this will leave the fluid-build tool in full-symlink mode.  To return to the default isolated
+mode (e.g. for typical development) run:
+
+```bash
+npm run build:fast -- --symlink
+```
+
+### Understanding the API documentation build pipeline
+
+If you encounter problems updating or building the API docs, it can be helpful to have a high-level
+understanding of how it gets built. The steps are as follows:
+
+1. Root: `build:fast`
+    1. Compile the code, generating TypeScript definitions, etc.
+1. Root: `build:docs`
+    1. Run the @microsoft/api-extractor (using Lerna) in each package to extract documentation info in a JSON format.
+       The output is placed in a folder `_api-extractor-temp` in each package's directory.
+    1. The JSON is also copied from each package up to a shared `_api-extractor-temp` directory under the repository
+       root.
+1. `/docs`: `build`
+    1. Run markdown-magic to update some shared content in the source Markdown files.
+    1. Run the @mattetti/api-extractor tool to transform the JSON format into Markdown.  The generated Markdown is
+       placed at `/docs/content/apis`. We maintain this fork of @microsoft/api-extractor
+       [here](https://github.com/mattetti/custom-api-documenter).
+    1. Run ditaa to build some of the diagrams in the site.
+    1. Run hugo to build the site itself. The generated output is placed at `/docs/public/apis`.
+1. `/docs`: `start`
+    1. Run the hugo server to host the site at <http://localhost:1313>.
+
+To investigate incorrect output, you can check the intermediate outputs (JSON, Markdown, HTML) at these locations
+to narrow down where the error is occurring.
+
+## Creating new content
 
 You need to generate new content manually by creating new files by hand or by
 generating them using the `hugo` command as shown below:
@@ -137,7 +179,7 @@ allows the template to link pages and load the right information.
 
 ### Table of Contents
 
-Some template pages include a TOC of the page, this is generated on the fly by reading the
+Some template pages include a TOC of the page. This is generated on the fly by reading the
 headers.
 
 ### Social action
@@ -151,50 +193,9 @@ be in the config.
 [Shortcodes](https://gohugo.io/content-management/shortcodes/) are custom functions that
 can be called from within the Markdown to insert specific content.
 
-
 ## Working on the template
 
-The template lives in `themes/thxvscode`.
-
-
-The API docs comes from the FluidFramework repo where the code is compiled and the API is extracted using api-extractor.
-The JSON output is then converted into Markdown via [a fork of the api-documenter
-tool](https://github.com/mattetti/custom-api-documenter).
-
-## Generating API documentation
-
-_Note: you only need to do this if you want to preview the API documentation (that is,
-everything in the API section of the docs). Otherwise skip this._
-
-### Download the latest
-
-You can download the latest API docs and Playground content using the `download` script:
-
-```bash
-npm run download
-```
-
-This is faster and simpler than building them yourself, especially if you're not making
-changes to the API docs themselves.
-
-
-### Build it yourself
-
-To build the API documentation from your local repo, do the following from the root of the repository:
-
-```bash
-npm install
-npm run build:fast -- --symlink:full --install --all
-npm run build:fast -- -s build -s build:docs --nolint --all
-```
-
-_Note that this can take 5-10 minutes for all the steps combined._
-
-You can then build or preview the docs using the steps described earlier.
-
-### Updating the API generator code
-
-Send PRs to [this repo](https://github.com/mattetti/custom-api-documenter).
+The site theme/template lives in `themes/thxvscode`.
 
 ## Scripts
 
@@ -203,23 +204,30 @@ Send PRs to [this repo](https://github.com/mattetti/custom-api-documenter).
 |--------|-------------|
 | `build` | Build the site; outputs to `public/` by default. |
 | `build:api-documenter` | Convert API JSON into Markdown. |
-| `build:api-documenter:default` | -- |
-| `build:api-documenter:win32` | -- |
-| `build:diagrams` | Generate the diagram images using ditaa; requires Java to run. |
+| `build:api-documenter:default` | --- |
+| `build:api-documenter:win32` | --- |
+| `build:diagrams` | Generate the diagram images using ditaa. |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `clean` | Remove all generated files. |
+| `ditaa` | Run the local copy of ditaa. |
+| `ditaa:default` | --- |
+| `ditaa:win32` | --- |
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
 | `download:playground` | Download and extract the Playground files locally. |
 | `hugo` | Run the local copy of Hugo. |
 | `hugo:default` | --- |
 | `hugo:win32` | --- |
-| `install:ditaa` | Install ditaa to generate diagrams; requires Java to run. |
-| `install:hugo` | Install the version of Hugo used by the documentation. |
-| `postinstall` | -- |
-| `postinstall:default` | -- |
-| `postinstall:win32` | -- |
+| `install:ditaa` | Install ditaa to generate diagrams unless it already exists. |
+| `install:ditaa:default` | --- |
+| `install:ditaa:force` | Install ditaa to generate diagrams. |
+| `install:ditaa:win32` | --- |
+| `install:hugo` | Install Hugo unless it already exists. |
+| `install:hugo:default` | --- |
+| `install:hugo:force` | Install the version of Hugo used by the documentation. |
+| `install:hugo:win32` | --- |
+| `postinstall` | --- |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
-| `start:default` | -- |
-| `start:win32` | -- |
+| `start:default` | --- |
+| `start:win32` | --- |
 <!-- AUTO-GENERATED-CONTENT:END -->

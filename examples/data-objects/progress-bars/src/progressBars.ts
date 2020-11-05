@@ -19,8 +19,8 @@ import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datasto
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports,import/no-internal-modules,import/no-unassigned-import
-require("bootstrap/dist/css/bootstrap.min.css");
+// eslint-disable-next-line import/no-internal-modules,import/no-unassigned-import
+import "bootstrap/dist/css/bootstrap.min.css";
 
 class ProgressBarView implements IFluidHTMLView {
     public parent: HTMLElement;

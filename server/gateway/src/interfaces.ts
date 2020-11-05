@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
 import { IGitCache } from "@fluidframework/server-services-client";
 import { ITenantManager } from "@fluidframework/server-services-core";

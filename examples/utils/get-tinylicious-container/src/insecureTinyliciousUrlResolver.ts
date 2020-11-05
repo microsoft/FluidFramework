@@ -63,7 +63,8 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
             ver: "1.0",
         };
 
+        const utf8Key = { utf8: "12345" };
         // eslint-disable-next-line no-null/no-null
-        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, "12345");
+        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
     }
 }

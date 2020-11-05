@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { ITelemetryLogger, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IConnectionDetails,
@@ -15,7 +14,7 @@ import {
     IThrottlingWarning,
     ContainerErrorType,
 } from "@fluidframework/container-definitions";
-import { performance, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import { PerformanceEvent, TelemetryLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -403,7 +402,7 @@ export class DeltaManager
     }
 
     public dispose() {
-        assert.fail("Not implemented.");
+        throw new Error("Not implemented.");
         this.isDisposed = true;
     }
 
@@ -428,7 +427,8 @@ export class DeltaManager
         // We will use same check in other places to make sure all the seq number above are set properly.
         assert(this.handler === undefined);
         this.handler = handler;
-        assert(this.handler);
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        assert(!!(this.handler as any));
 
         this._inbound.systemResume();
         this._inboundSignal.systemResume();
@@ -625,7 +625,7 @@ export class DeltaManager
         // reset clientSequenceNumber if we are using new clientId.
         // we keep info about old connection as long as possible to be able to account for all non-acked ops
         // that we pick up on next connection.
-        assert(this.connection);
+        assert(!!this.connection);
         if (this.lastSubmittedClientId !== this.connection?.clientId) {
             this.lastSubmittedClientId = this.connection?.clientId;
             this.clientSequenceNumber = 0;
@@ -1305,7 +1305,7 @@ export class DeltaManager
         assert(this.minSequenceNumber <= message.minimumSequenceNumber, "msn moves backwards");
         this.minSequenceNumber = message.minimumSequenceNumber;
 
-        assert.equal(message.sequenceNumber, this.lastProcessedSequenceNumber + 1, "non-seq seq#");
+        assert(message.sequenceNumber === this.lastProcessedSequenceNumber + 1, "non-seq seq#");
         this.lastProcessedSequenceNumber = message.sequenceNumber;
 
         // Back-compat for older server with no term

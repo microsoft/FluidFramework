@@ -25,9 +25,6 @@ import {
     ISharedMap,
     ISharedMapEvents,
 } from "./interfaces";
-import {
-    valueTypes,
-} from "./localValues";
 import { IMapDataObjectSerializable, MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
@@ -158,7 +155,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             () => this.isAttached(),
-            valueTypes,
+            [],
             this,
         );
     }

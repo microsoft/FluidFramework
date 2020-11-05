@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/get-tinylicious-container",
-  "version": "0.28.0",
+  "version": "0.29.0",
   "description": "Tool for getting a Tinylicious-configured container for testing app scenarios",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -25,13 +25,13 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.28.0",
-    "@fluidframework/container-loader": "^0.28.0",
-    "@fluidframework/core-interfaces": "^0.28.0",
-    "@fluidframework/driver-definitions": "^0.28.0",
-    "@fluidframework/driver-utils": "^0.28.0",
+    "@fluidframework/container-definitions": "^0.29.0",
+    "@fluidframework/container-loader": "^0.29.0",
+    "@fluidframework/core-interfaces": "^0.29.0",
+    "@fluidframework/driver-definitions": "^0.29.0",
+    "@fluidframework/driver-utils": "^0.29.0",
     "@fluidframework/protocol-definitions": "^0.1014.0-0",
-    "@fluidframework/routerlicious-driver": "^0.28.0",
+    "@fluidframework/routerlicious-driver": "^0.29.0",
     "jsrsasign": "^10.0.2",
     "uuid": "^3.3.2"
   },
@@ -39,7 +39,7 @@
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.20.0-0",
     "@fluidframework/test-tools": "^0.2.3074",
-    "@types/jsrsasign" : "^8.0.7",
+    "@types/jsrsasign": "^8.0.8",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~4.2.0",

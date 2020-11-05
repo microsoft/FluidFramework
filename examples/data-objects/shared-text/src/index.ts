@@ -7,7 +7,7 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {

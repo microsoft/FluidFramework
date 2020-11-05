@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { Caret as CaretUtil, Direction, Rect, TagName } from "@fluid-example/flow-util-lib";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
@@ -56,12 +56,12 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
             case DocSegmentKind.endTags: {
                 // If the DocumentFormatter encounters an 'endRange', presumably this is because the 'beginTag'
                 // has not yet been inserted.  Ignore it.
-                assert.strictEqual(layout.doc.getStart(segment as Marker), undefined);
+                assert(layout.doc.getStart(segment as Marker) === undefined);
                 return { state, consumed: true };
             }
 
             default:
-                assert.fail(`Unhandled DocSegmentKind '${kind}' @${layout.position}`);
+                throw new Error(`Unhandled DocSegmentKind '${kind}' @${layout.position}`);
         }
     }
 
@@ -111,7 +111,7 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
     }
 
     public visit(layout: Layout, state: Readonly<IInclusionState>) {
-        assert.strictEqual(getDocSegmentKind(layout.segment), DocSegmentKind.inclusion);
+        assert(getDocSegmentKind(layout.segment) === DocSegmentKind.inclusion);
         layout.popFormat();
         return { state, consumed: true };
     }
