@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/app-integration-external-views",
-  "version": "0.27.13",
+  "version": "0.27.14",
   "description": "Minimal Fluid Container & Data Object sample to implement a collaborative dice roller as a standalone app.",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -33,9 +33,9 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.27.13",
-    "@fluidframework/get-session-storage-container": "^0.27.13",
-    "@fluidframework/get-tinylicious-container": "^0.27.13"
+    "@fluidframework/aqueduct": "^0.27.14",
+    "@fluidframework/get-session-storage-container": "^0.27.14",
+    "@fluidframework/get-tinylicious-container": "^0.27.14"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",

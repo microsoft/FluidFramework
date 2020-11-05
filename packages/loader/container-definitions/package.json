@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/container-definitions",
-  "version": "0.27.13",
+  "version": "0.27.14",
   "description": "Fluid container definitions",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -29,8 +29,8 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.19.1",
-    "@fluidframework/core-interfaces": "^0.27.13",
-    "@fluidframework/driver-definitions": "^0.27.13",
+    "@fluidframework/core-interfaces": "^0.27.14",
+    "@fluidframework/driver-definitions": "^0.27.14",
     "@fluidframework/protocol-definitions": "^0.1013.0"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/get-tinylicious-container",
-  "version": "0.27.13",
+  "version": "0.27.14",
   "description": "Tool for getting a Tinylicious-configured container for testing app scenarios",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -25,12 +25,12 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.27.13",
-    "@fluidframework/container-loader": "^0.27.13",
-    "@fluidframework/core-interfaces": "^0.27.13",
-    "@fluidframework/driver-definitions": "^0.27.13",
+    "@fluidframework/container-definitions": "^0.27.14",
+    "@fluidframework/container-loader": "^0.27.14",
+    "@fluidframework/core-interfaces": "^0.27.14",
+    "@fluidframework/driver-definitions": "^0.27.14",
     "@fluidframework/protocol-definitions": "^0.1013.0",
-    "@fluidframework/routerlicious-driver": "^0.27.13",
+    "@fluidframework/routerlicious-driver": "^0.27.14",
     "jsonwebtoken": "^8.4.0",
     "uuid": "^3.3.2"
   },
