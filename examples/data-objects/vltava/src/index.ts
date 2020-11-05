@@ -7,7 +7,7 @@ import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { Spaces } from "@fluid-example/spaces";
-import { ContainerRuntimeFactoryWithScope, RootDataObjectFactory } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore, RootDataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -65,7 +65,7 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectIn
     }
 }
 
-export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithScope {
+export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultDataStore {
     constructor(
         defaultFactory: RootDataObjectFactory,
         registryEntries: NamedFluidDataStoreRegistryEntries,

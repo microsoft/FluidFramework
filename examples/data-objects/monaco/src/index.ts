@@ -4,7 +4,7 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithScope,
+    ContainerRuntimeFactoryWithDefaultDataStore,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IProvideRuntimeFactory } from "@fluidframework/container-definitions";
@@ -25,7 +25,7 @@ const componentFactory = new DataObjectFactory(
     {},
 );
 
-const runtimeFactory = new ContainerRuntimeFactoryWithScope(
+const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
     componentFactory,
     new Map([
         [monacoName, Promise.resolve(componentFactory)],

@@ -4,7 +4,7 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithScope,
+    ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
 
 import { DiceRoller, DiceRollerInstantiationFactory } from "./main";
@@ -12,7 +12,7 @@ import { DiceRoller, DiceRollerInstantiationFactory } from "./main";
 export { DiceRoller, DiceRollerInstantiationFactory } from "./main";
 
 /**
- * This does setup for the Container. The ContainerRuntimeFactoryWithScope also enables dynamic loading by
+ * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading by
  * providing the fluidExport constant.
  *
  * There are two important things here:
@@ -22,7 +22,7 @@ export { DiceRoller, DiceRollerInstantiationFactory } from "./main";
  * In this example, we are only registering a single Fluid object, but more complex examples will register multiple
  * Fluid objects.
  */
-export const fluidExport = new ContainerRuntimeFactoryWithScope(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     DiceRollerInstantiationFactory,
     new Map([
         [DiceRoller.Name, Promise.resolve(DiceRollerInstantiationFactory)],

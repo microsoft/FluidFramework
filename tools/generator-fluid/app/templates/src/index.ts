@@ -1,4 +1,4 @@
-import { ContainerRuntimeFactoryWithScope } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { DiceRoller } from "./dataObject";
 
 export { DiceRoller };
@@ -7,7 +7,7 @@ export { DiceRoller };
  * fluidExport is the entry point of the fluid package. We define our DataObject
  * as a DataObject that can be created in the container.
  */
-export const fluidExport = new ContainerRuntimeFactoryWithScope(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     DiceRoller.factory,
     new Map([
         DiceRoller.factory.registryEntry,

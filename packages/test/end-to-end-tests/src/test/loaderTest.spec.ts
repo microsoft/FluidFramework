@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
-    ContainerRuntimeFactoryWithScope,
+    ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -79,7 +79,7 @@ describe("Loader.request", () => {
 
     async function createContainer(): Promise<IContainer> {
         const runtimeFactory =
-            new ContainerRuntimeFactoryWithScope(
+            new ContainerRuntimeFactoryWithDefaultDataStore(
                 testSharedDataObjectFactory1,
                 [
                     [testSharedDataObjectFactory1.type, Promise.resolve(testSharedDataObjectFactory1)],

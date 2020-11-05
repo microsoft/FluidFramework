@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithScope } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { TodoInstantiationFactory, TodoName } from "./Todo";
 
-export const fluidExport = new ContainerRuntimeFactoryWithScope(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     TodoInstantiationFactory,
     new Map([
         [TodoName, Promise.resolve(TodoInstantiationFactory)],

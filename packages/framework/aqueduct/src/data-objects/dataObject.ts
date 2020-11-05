@@ -83,7 +83,7 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
         assert(!this.routes.has(path));
 
         // Construct loadable object out of it.
-        const object2 = Object.create(object) as T & { IFluidLoadable: IFluidLoadable, handle: IFluidHandle };
+        const object2 = object as T & { IFluidLoadable: IFluidLoadable, handle: IFluidHandle };
         (object2 as any).IFluidLoadable = object2;
         object2.handle = new FluidObjectHandle(object2, path, this.runtime.objectsRoutingContext);
         this.routes.set(path, object2);

@@ -4,7 +4,7 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithScope,
+    ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -122,7 +122,7 @@ export class Pond extends DataObject implements IFluidHTMLView {
 
 // ----- CONTAINER SETUP STUFF -----
 
-export const fluidExport = new ContainerRuntimeFactoryWithScope(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     Pond.getFactory(),
     new Map([
         Pond.getFactory().registryEntry,

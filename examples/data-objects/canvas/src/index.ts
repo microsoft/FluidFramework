@@ -4,7 +4,7 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithScope,
+    ContainerRuntimeFactoryWithDefaultDataStore,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { Ink } from "@fluidframework/ink";
@@ -19,7 +19,7 @@ export const CanvasInstantiationFactory = new DataObjectFactory(
     {},
 );
 
-export const fluidExport = new ContainerRuntimeFactoryWithScope(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     CanvasInstantiationFactory,
     new Map([
         [CanvasInstantiationFactory.type, Promise.resolve(CanvasInstantiationFactory)],

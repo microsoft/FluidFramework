@@ -4,7 +4,7 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithScope,
+    ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -57,7 +57,7 @@ export const SimpleFluidObjectEmbedInstantiationFactory = new DataObjectFactory(
     {},
 );
 
-export const fluidExport = new ContainerRuntimeFactoryWithScope(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     SimpleFluidObjectEmbedInstantiationFactory,
     new Map([
         SimpleFluidObjectEmbedInstantiationFactory.registryEntry,

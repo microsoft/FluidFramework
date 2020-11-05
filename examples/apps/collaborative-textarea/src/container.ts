@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithScope } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { CollaborativeText } from "./fluid-object/";
 
 /**
@@ -17,7 +17,7 @@ import { CollaborativeText } from "./fluid-object/";
  * FluidObjects.
  */
 
-export const CollaborativeTextContainer = new ContainerRuntimeFactoryWithScope(
+export const CollaborativeTextContainer = new ContainerRuntimeFactoryWithDefaultDataStore(
     CollaborativeText.getFactory(),
     [[CollaborativeText.Name, Promise.resolve(CollaborativeText.getFactory())]],
 );

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithScope } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { Spaces } from "./fluid-object/";
 
 /**
@@ -17,7 +17,7 @@ import { Spaces } from "./fluid-object/";
  * FluidObjects.
  */
 
-export const SpacesContainer = new ContainerRuntimeFactoryWithScope(
+export const SpacesContainer = new ContainerRuntimeFactoryWithDefaultDataStore(
     Spaces.getFactory(),
     [[Spaces.ComponentName, Promise.resolve(Spaces.getFactory())]],
 );
