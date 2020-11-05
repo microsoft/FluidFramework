@@ -325,6 +325,13 @@ export class DeltaManager
      * as in read-only permissions.
      * But this.active can be used by some DDSes to figure out if ops can be sent
      * (for example, read-only view still participates in code proposals / upgrades decisions)
+     *
+     * Forcing Readonly does not prevent DDS from generating ops. It is up to user code to honour
+     * the readonly flag. If ops are generated, they will accumulate locally and not be sent. If
+     * there are pending in the outbound queue, it will stop sending until force readonly is
+     * cleared.
+     *
+     * @param readonly - set or clear force readonly.
      */
     public forceReadonly(readonly: boolean) {
         const oldValue = this.readonly;
