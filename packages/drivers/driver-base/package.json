@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-base",
-  "version": "0.28.4",
+  "version": "0.28.5",
   "description": "Shared driver code for Fluid driver implementations",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -29,8 +29,8 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.25.0",
-    "@fluidframework/driver-definitions": "^0.28.4",
-    "@fluidframework/driver-utils": "^0.28.4",
+    "@fluidframework/driver-definitions": "^0.28.5",
+    "@fluidframework/driver-utils": "^0.28.5",
     "@fluidframework/protocol-definitions": "^0.1014.1",
     "assert": "^2.0.0",
     "debug": "^4.1.1"
