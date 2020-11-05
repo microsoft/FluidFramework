@@ -13,9 +13,6 @@ export class RequestParser implements IRequest {
      * @param url - the url to get path parts of
      */
     public static getPathParts(url: string): readonly string[] {
-        if (url.split("/")[0] === "" && url.split("/").length === 2) {
-            return [url];
-        }
         const queryStartIndex = url.indexOf("?");
         return url
             .substring(0, queryStartIndex < 0 ? url.length : queryStartIndex)
@@ -83,9 +80,6 @@ export class RequestParser implements IRequest {
      */
     public createSubRequest(startingPathIndex: number): IRequest {
         const pathLen = this.pathParts.length;
-        // if (this.url.includes("?")) {
-        //     len++;
-        // }
         if (startingPathIndex < 0 || startingPathIndex > pathLen) {
             throw new Error("incorrect sub-request");
         }

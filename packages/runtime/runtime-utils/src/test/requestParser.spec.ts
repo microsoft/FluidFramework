@@ -91,13 +91,14 @@ describe("RequestParser", () => {
         });
         it("Create request for `/`", () => {
             const testRequestParser = RequestParser.create({ url: "/" });
-            assert.strictEqual(testRequestParser.createSubRequest(1)?.url, "/");
-            assert.throws(() => testRequestParser.createSubRequest(2));
+            assert.strictEqual(testRequestParser.createSubRequest(0)?.url, "/");
+            assert.throws(() => testRequestParser.createSubRequest(1));
             assert.throws(() => testRequestParser.createSubRequest(-1));
         });
         it("Create request from empty string", () => {
             const testRequestParser = RequestParser.create({ url: "" });
-            assert.throws(() => testRequestParser.createSubRequest(2));
+            assert.strictEqual(testRequestParser.createSubRequest(0)?.url, "/");
+            assert.throws(() => testRequestParser.createSubRequest(1));
             assert.throws(() => testRequestParser.createSubRequest(-1));
         });
     });
