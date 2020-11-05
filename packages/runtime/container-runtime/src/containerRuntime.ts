@@ -1373,8 +1373,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public raceDataStore(pkg: string | string[], snapshot: ITree, rootId?: string) {
         const id = rootId ?? uuid();
 
-        const maybeContext = this.contextsDeferred.get(id);
-        if (maybeContext?.isCompleted === true) {
+        if (this.contexts.has(id) || this.pendingAttach.has(id)) {
             this.resolveDatastoreRace(id);
             return;
         }
@@ -1406,8 +1405,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private resolveDatastoreRace(id: string) {
         const context = this.getContext(id);
-        this.activeDataStoreRaces.delete(id);
-        this.emit("dataStoreRaceResolved", id, context);
+        context.realize().then((channel) => {
+            this.activeDataStoreRaces.delete(id);
+            this.emit("dataStoreRaceResolved", id, channel);
+        })
+        .catch((e)=>this.closeFn(e));
     }
 
     private async _createDataStore(

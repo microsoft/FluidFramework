@@ -32,7 +32,7 @@ import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
-    IFluidDataStoreContext,
+    IFluidDataStoreChannel,
  } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
@@ -58,7 +58,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents{
         event: "fluidDataStoreInstantiated",
         listener: (dataStorePkgName: string, registryPath: string, createNew: boolean) => void,
     );
-    (event: "dataStoreRaceResolved", listener: (id: string, context: IFluidDataStoreContext) => void);
+    (event: "dataStoreRaceResolved", listener: (id: string, channel: IFluidDataStoreChannel) => void);
 }
 
 export type IContainerRuntimeBaseWithCombinedEvents =
