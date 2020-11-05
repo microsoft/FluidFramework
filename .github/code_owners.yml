@@ -37,6 +37,8 @@ packages/dds/shared-summary-block/**:
 packages/driver/**:
 - vladsud
 - jatgarg
+- tanviraumi
+- GaryWilber
 
 packages/framework/**:
 - skylerjokiel
@@ -75,6 +77,7 @@ packages/utils/tools-utils/**:
 server/**:
 - tanviraumi
 - anthony-murphy
+- GaryWilber
 
 # examples
 examples/**:
