@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/routerlicious-driver";
-export const pkgVersion = "0.28.4";
+export const pkgVersion = "0.28.5";
