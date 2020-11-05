@@ -17,6 +17,7 @@ import {
     IFluidDataStoreFactory,
     FlushMode,
 } from "@fluidframework/runtime-definitions";
+import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 const defaultStoreId = "" as const;
 
@@ -42,7 +43,7 @@ export class RuntimeFactory implements IRuntimeFactory {
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const runtime = await ContainerRuntime.load(
             context,
-            this.registry,
+            new FluidDataStoreRegistry(this.registry),
             buildRuntimeRequestHandler(
                 ...this.requestHandlers,
                 innerRequestHandler),

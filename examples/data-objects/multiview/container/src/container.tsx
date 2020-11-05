@@ -5,7 +5,7 @@
 
 import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { RequestParser, requestFluidObject } from "@fluidframework/runtime-utils";
+import { RequestParser, requestFluidObject, FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
 import { Constellation } from "@fluid-example/multiview-constellation-model";
@@ -24,11 +24,6 @@ const triangleCoordinateComponentId1 = "triangle1";
 const triangleCoordinateComponentId2 = "triangle2";
 const triangleCoordinateComponentId3 = "triangle3";
 const constellationComponentId = "constellation";
-
-const registryEntries = new Map([
-    Coordinate.getFactory().registryEntry,
-    Constellation.getFactory().registryEntry,
-]);
 
 // Just a little helper, since we're going to create multiple coordinates.
 const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string) => {
@@ -82,7 +77,13 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
     constructor() {
         // We'll use a MountableView so webpack-fluid-loader can display us,
         // and add our default view request handler.
-        super(registryEntries, [], [mountableViewRequestHandler(MountableView, [defaultViewRequestHandler])]);
+        super(
+            new FluidDataStoreRegistry([
+                Coordinate.getFactory().registryEntry,
+                Constellation.getFactory().registryEntry,
+                ]),
+            [],
+            [mountableViewRequestHandler(MountableView, [defaultViewRequestHandler])]);
     }
 
     /**

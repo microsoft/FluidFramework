@@ -11,8 +11,7 @@ import {
     requestFluidDataStoreMixin,
  } from "@fluidframework/datastore";
  import { IEvent } from "@fluidframework/common-definitions";
- import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
-import {
+ import {
     IFluidDataStoreContext,
     IContainerRuntimeBase,
     IFluidDataStoreFactory,
@@ -22,7 +21,7 @@ import {
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject, FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import {
     FluidObjectSymbolProvider,
     DependencyContainer,

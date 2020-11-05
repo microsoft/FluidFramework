@@ -35,6 +35,7 @@ import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
+import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import Axios from "axios";
 
@@ -456,15 +457,13 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
-            [ScribeFactory.type, Promise.resolve(this)],
-        ]);
-
         const defaultComponentId = "default";
 
         const runtime = await ContainerRuntime.load(
             context,
-            registry,
+            new FluidDataStoreRegistry([
+                [ScribeFactory.type, Promise.resolve(this)],
+            ]),
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
                 innerRequestHandler,

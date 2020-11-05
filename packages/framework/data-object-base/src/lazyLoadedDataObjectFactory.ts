@@ -5,7 +5,6 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
-import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
@@ -18,7 +17,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { LazyPromise } from "@fluidframework/common-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject, FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { LazyLoadedDataObject } from "./lazyLoadedDataObject";
 
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> implements IFluidDataStoreFactory {

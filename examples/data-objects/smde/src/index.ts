@@ -9,28 +9,27 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { fluidExport as smde } from "./smde";
 
 class SmdeContainerFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
-            ["@fluid-example/smde", Promise.resolve(smde)],
-        ]);
-
         const defaultComponentId = "default";
         const defaultComponent = "@fluid-example/smde";
 
         const runtime = await ContainerRuntime.load(
             context,
-            registry,
+            new FluidDataStoreRegistry([
+                ["@fluid-example/smde", Promise.resolve(smde)],
+            ]),
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
                 innerRequestHandler,

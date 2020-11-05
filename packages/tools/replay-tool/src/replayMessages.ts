@@ -38,6 +38,7 @@ import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
+import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
@@ -292,7 +293,7 @@ class Document {
             throw new Error("Can't close Document");
         });
         const codeLoader = new API.CodeLoader({ generateSummaries: false },
-            [
+            new FluidDataStoreRegistry([
                 ["@ms/atmentions", Promise.resolve(chaincode)],
                 ["@ms/augloop", Promise.resolve(chaincode)],
                 ["@ms/catalog", Promise.resolve(chaincode)],
@@ -311,7 +312,7 @@ class Document {
                 ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
                 ["LastEditedComponent", Promise.resolve(chaincode)],
                 ["OfficeRootComponent", Promise.resolve(chaincode)],
-            ]);
+            ]));
         const options = {};
 
         // Load the Fluid document

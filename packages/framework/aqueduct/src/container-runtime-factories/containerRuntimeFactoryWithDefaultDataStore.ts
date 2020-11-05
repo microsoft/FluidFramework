@@ -11,6 +11,7 @@ import {
     RuntimeRequestHandler,
     innerRequestHandler,
 } from "@fluidframework/request-handler";
+import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { defaultRouteRequestHandler } from "../request-handlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
@@ -33,7 +34,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
         runtimeOptions?: IContainerRuntimeOptions,
     ) {
         super(
-            registryEntries,
+            new FluidDataStoreRegistry(registryEntries),
             providerEntries,
             [
                 ...requestHandlers,

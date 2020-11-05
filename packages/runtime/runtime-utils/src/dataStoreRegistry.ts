@@ -25,3 +25,22 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
         return undefined;
     }
 }
+
+export class MultipleDataStoreRegistries implements IFluidDataStoreRegistry {
+    private readonly registries: IFluidDataStoreRegistry[];
+
+    get IFluidDataStoreRegistry() { return this; }
+
+    constructor(...registries: IFluidDataStoreRegistry[]) {
+        this.registries = registries;
+    }
+    public async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
+        for (const reg of this.registries) {
+            const res = await reg.get(name);
+            if (res !== undefined) {
+                return res;
+            }
+        }
+        return undefined;
+    }
+}

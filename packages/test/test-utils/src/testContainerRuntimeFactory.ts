@@ -8,6 +8,7 @@ import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/co
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { innerRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 /**
  * A container runtime factory that allows you to set runtime options
@@ -29,10 +30,11 @@ export class TestContainerRuntimeFactory implements IRuntimeFactory {
 
         const runtime = await ContainerRuntime.load(
             context,
-            [
-                ["default", Promise.resolve(this.dataStoreFactory)],
-                [this.type, Promise.resolve(this.dataStoreFactory)],
-            ],
+            new FluidDataStoreRegistry(
+                [
+                    ["default", Promise.resolve(this.dataStoreFactory)],
+                    [this.type, Promise.resolve(this.dataStoreFactory)],
+                ]),
             async (req, rt) => builder.handleRequest(req, rt),
             this.runtimeOptions,
         );
