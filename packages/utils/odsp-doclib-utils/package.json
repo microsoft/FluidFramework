@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/odsp-doclib-utils",
-  "version": "0.28.5",
+  "version": "0.28.6",
   "description": "ODSP utilities",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -26,8 +26,8 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/driver-definitions": "^0.28.5",
-    "@fluidframework/driver-utils": "^0.28.5",
+    "@fluidframework/driver-definitions": "^0.28.6",
+    "@fluidframework/driver-utils": "^0.28.6",
     "node-fetch": "^2.2.1"
   },
   "devDependencies": {
