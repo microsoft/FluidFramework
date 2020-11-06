@@ -1114,6 +1114,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // We need to be able to send ops to replay states
         if (!this.canSendOps()) { return; }
 
+        // We need to temporary clear the dirty flags and disable
+        // dirty state change events to detect whether replaying ops
+        // has any effect.
+
         // Save the old state, reset to false, disable event emit
         const oldState = this.dirtyDocument;
         this.dirtyDocument = false;

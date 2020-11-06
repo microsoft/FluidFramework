@@ -47,7 +47,7 @@ describe("Document Dirty", () => {
         return new Promise((resolve) => c.once("connected", () => resolve()));
     }
 
-    async function ensureForContainerConnected(c: Container): Promise<void> {
+    async function ensureContainerConnected(c: Container): Promise<void> {
         if (!c.connected) {
             return waitForContainerReconnection(c);
         }
@@ -268,7 +268,7 @@ describe("Document Dirty", () => {
             async () => {
                 assert(container.clientId);
 
-                // Set batch values in DDSes in disconnected state.
+                // Set batch values in DDSes in connected state.
                 dataObject.context.containerRuntime.orderSequentially(() => {
                     sharedMap.set("key1", "value1");
                     sharedMap.set("key2", "value2");
@@ -299,9 +299,9 @@ describe("Document Dirty", () => {
     describe("Force readonly", () => {
         it(`sets operations when force readonly and then turn off force readonly to process them`, async () => {
             container.forceReadonly(true);
-            await ensureForContainerConnected(container);
+            await ensureContainerConnected(container);
 
-            // Set values in DDSes in disconnected state.
+            // Set values in DDSes in force read only state.
             sharedMap.set("key", "value");
 
             await opProcessingController.process();
@@ -310,7 +310,7 @@ describe("Document Dirty", () => {
             checkDirtyState("after value set while force readonly", true, 0);
 
             container.forceReadonly(false);
-            await ensureForContainerConnected(container);
+            await ensureContainerConnected(container);
 
             // Document should still be dirty right after turning off force readonly
             checkDirtyState("after clear readonly and replayed ops", true, 0);
@@ -323,13 +323,14 @@ describe("Document Dirty", () => {
 
         it(`sets ops then force readonly before sending ops, then turn off force readonly to process them`,
             async () => {
-                // Set values in DDSes in disconnected state.
+                // Set values in DDSes in write mode
                 sharedMap.set("key", "value");
 
                 checkDirtyState("after value set", true, 0);
 
+                // force readonly
                 container.forceReadonly(true);
-                await ensureForContainerConnected(container);
+                await ensureContainerConnected(container);
 
                 await opProcessingController.process();
 
@@ -337,7 +338,7 @@ describe("Document Dirty", () => {
                 checkDirtyState("after value set while force readonly", true, 0);
 
                 container.forceReadonly(false);
-                await ensureForContainerConnected(container);
+                await ensureContainerConnected(container);
 
                 // Document should still be dirty right after turning off force readonly
                 checkDirtyState("after reconnect and replayed ops", true, 0);
