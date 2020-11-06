@@ -65,11 +65,17 @@ export class TestCollection implements ICollection<any> {
     }
 
     public async deleteOne(filter: any): Promise<any> {
-        throw new Error("Method not implemented.");
+        const value = this.findOneInternal(filter);
+        this.removeOneInternal(value);
+        return value;
     }
 
-    public async deleteMany(filter: any): Promise<any> {
-        throw new Error("Method not implemented.");
+    public async deleteMany(filter: any): Promise<any[]> {
+        const values = this.findInternal(filter);
+        values.forEach((value) => {
+            this.removeOneInternal(value);
+        });
+        return values;
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -80,6 +86,13 @@ export class TestCollection implements ICollection<any> {
     private insertOneInternal(value: any): any {
         this.collection.push(value);
         return value;
+    }
+
+    private removeOneInternal(value: any): void {
+        const index = this.collection.indexOf(value);
+        if (index >= 0) {
+            this.collection.splice(index, 1);
+        }
     }
 
     private findOneInternal(query: any): any {
