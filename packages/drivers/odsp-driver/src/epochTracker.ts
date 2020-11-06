@@ -48,7 +48,7 @@ export class EpochTracker {
             try {
                 this.validateEpochFromResponse(value.fluidEpoch);
             } catch (error) {
-                this.checkForEpochError(error);
+                await this.checkForEpochError(error);
                 throw error;
             }
             return value.value as T;
@@ -75,7 +75,7 @@ export class EpochTracker {
             this.validateEpochFromResponse(response.headers.get("x-fluid-epoch"));
             return response;
         } catch (error) {
-            this.checkForEpochError(error);
+            await this.checkForEpochError(error);
             throw error;
         }
     }
@@ -100,7 +100,7 @@ export class EpochTracker {
             this.validateEpochFromResponse(response.headers.get("x-fluid-epoch"));
             return response;
         } catch (error) {
-            this.checkForEpochError(error);
+            await this.checkForEpochError(error);
             throw error;
         }
     }
@@ -153,12 +153,12 @@ export class EpochTracker {
         }
     }
 
-    private checkForEpochError(error) {
+    private async checkForEpochError(error) {
         if (error.errorType === OdspErrorType.epochVersionMismatch) {
             this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, error);
             assert(!!this._hashedDocumentId, "DocId should be set to clear the cached entries!!");
             // If the epoch mismatches, then clear all entries for such document from cache.
-            this.persistedCache.removeAllEntriesForDocId(this._hashedDocumentId);
+            await this.persistedCache.removeAllEntriesForDocId(this._hashedDocumentId);
         }
     }
 }
