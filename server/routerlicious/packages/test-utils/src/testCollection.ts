@@ -67,13 +67,15 @@ export class TestCollection implements ICollection<any> {
     public async deleteOne(filter: any): Promise<any> {
         const value = this.findOneInternal(filter);
         this.removeOneInternal(value);
+        return value;
     }
 
-    public async deleteMany(filter: any): Promise<any> {
+    public async deleteMany(filter: any): Promise<any[]> {
         const values = this.findInternal(filter);
         values.forEach((value) => {
             this.removeOneInternal(value);
         });
+        return values;
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
