@@ -49,8 +49,23 @@ export class DocumentStorageService implements IDocumentStorageService {
         return buildHierarchy(tree, this.blobsShaCache);
     }
 
-    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
-        const commits = await this.manager.getCommits(versionId ? versionId : this.id, count);
+    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+        // If version is null, that means we need to fetch the oldest snapshot. For that use a fairly
+        // high number for the number of snapshot versions to be fetched. The last snapshot version would
+        // be the oldest. This is required as we don't have any way to refer to oldest snapshot for now.
+        // TODO: Think of api to fetch oldest snapshot(server/client side) like fetch snapshot with seq number 0.
+        const commits = await this.manager.getCommits(
+            versionId ? versionId : this.id,
+            versionId !== null ? count : 100000,
+        );
+        if (versionId === null) {
+            const lastCommit = commits[commits.length - 1];
+            return [{
+                date: lastCommit.commit.author.date,
+                id: lastCommit.sha,
+                treeId: lastCommit.commit.tree.sha,
+            }];
+        }
         return commits.map((commit) => ({
             date: commit.commit.author.date,
             id: commit.sha,

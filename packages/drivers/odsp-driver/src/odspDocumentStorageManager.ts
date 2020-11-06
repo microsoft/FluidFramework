@@ -259,7 +259,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         let id: string;
         if (!version || !version.id) {
-            const versions = await this.getVersions(null, 1);
+            const versions = await this.getVersions(this.documentId, 1);
             if (!versions || versions.length === 0) {
                 return null;
             }
@@ -331,7 +331,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
         // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
-        if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
+        if (this.firstVersionCall && count === 1 && blobid === this.documentId) {
             this.firstVersionCall = false;
 
             return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
@@ -473,7 +473,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         return getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "GetVersions");
-            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
+            // If version is null, that means we need to fetch the oldest snapshot. For that use 50 for the number of
+            // snapshot versions to be fetched. The last snapshot version would be the oldest. ODSP doesn't store more
+            // than 50 snapshots and always retain the oldest snapshot. Also they don't allow requesting more than 50
+            // snapshots. This is required as we don't have any way to refer to oldest snapshot for now.
+            // TODO: Think of api to fetch oldest snapshot(server/client side) like fetch snapshot with seq number 0.
+            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${blobid !== null ? count : 50}`, storageToken);
 
             // Fetch the latest snapshot versions for the document
             const response = await PerformanceEvent.timedExecAsync(
@@ -490,6 +495,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             }
             if (!Array.isArray(versionsResponse.value)) {
                 throwOdspNetworkError("getVersions returned non-array response", 400);
+            }
+            // Oldest snapshot will be the last one.
+            if (blobid === null) {
+                versionsResponse.value = [versionsResponse.value[versionsResponse.value.length - 1]];
             }
             return versionsResponse.value.map((version) => {
                 // Parse the date from the message

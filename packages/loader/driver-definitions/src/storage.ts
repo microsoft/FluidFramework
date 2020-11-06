@@ -60,7 +60,8 @@ export interface IDocumentStorageService {
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
 
     /**
-     * Retrieves all versions of the document starting at the specified versionId - or null if from the head
+     * Retrieves count number of versions of the document starting at the specified versionId if specified
+     * or if versionId is null then return the oldest version.
      */
     getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
 

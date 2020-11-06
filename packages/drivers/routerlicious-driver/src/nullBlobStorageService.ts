@@ -19,7 +19,7 @@ export class NullBlobStorageService implements IDocumentStorageService {
         return version ? Promise.reject("Invalid operation") : null;
     }
 
-    public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
+    public async getVersions(versionId: string | null, count: number): Promise<api.IVersion[]> {
         return [];
     }
 

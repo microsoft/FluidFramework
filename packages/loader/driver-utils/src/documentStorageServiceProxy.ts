@@ -27,7 +27,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.internalStorageService.getSnapshotTree(version);
     }
 
-    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
+    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         return this.internalStorageService.getVersions(versionId, count);
     }
 

@@ -433,7 +433,7 @@ export class Loader extends EventEmitter implements ILoader {
         // If set in both query string and headers, use query string
         request.headers[LoaderHeader.version] = parsed.version ?? request.headers[LoaderHeader.version];
 
-        // Version === null means not use any snapshot.
+        // Version === null means use oldest snapshot.
         if (request.headers[LoaderHeader.version] === "null") {
             request.headers[LoaderHeader.version] = null;
         }
