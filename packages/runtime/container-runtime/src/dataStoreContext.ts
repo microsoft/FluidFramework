@@ -220,8 +220,9 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             this.bindState = BindState.Bound;
         };
 
+        // Summarizer node always tracks summary state. Set trackState to true.
         const thisSummarizeInternal =
-            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */);
         this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
     }
 
@@ -699,6 +700,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         let snapshot: ITree;
         if (this.channel.getAttachSummary !== undefined) {
             const summaryTree = this.channel.getAttachSummary();
+            // attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
             snapshot = convertSummaryTreeToITree(summaryTree.summary);
         } else {
             // back-compat 0.28

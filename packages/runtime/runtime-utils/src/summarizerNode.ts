@@ -273,7 +273,7 @@ export class SummarizerNode implements ISummarizerNode {
     }
 
     public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
-        // Try to reuse the tree if unchange
+        // Try to reuse the tree if unchanged
         if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
             const latestSummary = this.latestSummary;
             if (latestSummary !== undefined) {
@@ -296,7 +296,7 @@ export class SummarizerNode implements ISummarizerNode {
         }
 
         try {
-            const result = await this.summarizeInternalFn(fullTree, true /* trackState */);
+            const result = await this.summarizeInternalFn(fullTree);
             this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
             return { summary: result.summary, stats: result.stats };
         } catch (error) {
@@ -578,8 +578,7 @@ export class SummarizerNode implements ISummarizerNode {
     private trackingSequenceNumber: number;
     private constructor(
         private readonly logger: ITelemetryLogger,
-        private readonly summarizeInternalFn:
-            (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+        private readonly summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         config: ISummarizerNodeConfig,
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
@@ -594,7 +593,7 @@ export class SummarizerNode implements ISummarizerNode {
     public static createRoot(
         logger: ITelemetryLogger,
         /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+        summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         /** Sequence number of latest change to new node/subtree */
         changeSequenceNumber: number,
         /**
@@ -620,7 +619,7 @@ export class SummarizerNode implements ISummarizerNode {
 
     public createChild(
         /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+        summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         /** Initial id or path part of this node */
         id: string,
         /**

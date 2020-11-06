@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8, IsoBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
     ITree,
@@ -274,7 +275,7 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
             }
 
             default:
-                throw new Error("Unexpected summary tree type");
+                unreachableCase(value, "Unexpected summary tree type");
         }
     }
     return {

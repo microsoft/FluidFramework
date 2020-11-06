@@ -718,8 +718,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = SummarizerNode.createRoot(
             this.logger,
-            // Summarize function to call when summarize is called
-            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState),
+            // Summarize function to call when summarize is called. Summarizer node always tracks summary state.
+            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */),
             // Latest change sequence number, no changes since summary applied yet
             loadedFromSequenceNumber,
             // Summary reference sequence number, undefined if no summary yet
@@ -1019,7 +1019,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const summaryTree = await value.summarize(true /* fullTree */, false /* trackState */);
             assert(
                 summaryTree.summary.type === SummaryType.Tree,
-                "summarize should always return a tree when fullTree as true");
+                "summarize should always return a tree when fullTree is true");
             // back-compat summary - Remove this once snapshot is removed.
             const snapshot = convertSummaryTreeToITree(summaryTree.summary);
 

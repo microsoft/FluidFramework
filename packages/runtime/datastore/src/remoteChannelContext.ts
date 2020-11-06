@@ -65,8 +65,10 @@ export class RemoteChannelContext implements IChannelContext {
             storageService,
             Promise.resolve(baseSnapshot),
             extraBlobs);
+
+        // Summarizer node always tracks summary state. Set trackState to true.
         const thisSummarizeInternal =
-            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */);
         this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
     }
 

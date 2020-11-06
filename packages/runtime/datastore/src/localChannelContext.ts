@@ -137,7 +137,7 @@ export class LocalChannelContext implements IChannelContext {
         const summaryTree = convertToSummaryTree(snapshot, true /* fullTree */);
         assert(
             summaryTree.summary.type === SummaryType.Tree,
-            "summarize should always return a tree when fullTree as true");
+            "summarize should always return a tree when fullTree is true");
         return {
             stats: summaryTree.stats,
             summary: summaryTree.summary,

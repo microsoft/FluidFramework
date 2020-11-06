@@ -238,7 +238,7 @@ describe("Data Store Context Tests", () => {
             );
             const summaryTree = await remotedDataStoreContext.summarize(true);
             assert(summaryTree.summary.type === SummaryType.Tree,
-                "summarize should always return a tree when fullTree as true");
+                "summarize should always return a tree when fullTree is true");
             const blob = summaryTree.summary.tree[".component"] as ISummaryBlob;
 
             const contents = JSON.parse(blob.content as string) as IFluidDataStoreAttributes;
@@ -277,7 +277,7 @@ describe("Data Store Context Tests", () => {
             );
             const summaryTree = await remotedDataStoreContext.summarize(true);
             assert(summaryTree.summary.type === SummaryType.Tree,
-                "summarize should always return a tree when fullTree as true");
+                "summarize should always return a tree when fullTree is true");
             const blob = summaryTree.summary.tree[".component"] as ISummaryBlob;
 
             const contents = JSON.parse(blob.content as string) as IFluidDataStoreAttributes;
@@ -318,7 +318,7 @@ describe("Data Store Context Tests", () => {
             );
             const summaryTree = await remotedDataStoreContext.summarize(true);
             assert(summaryTree.summary.type === SummaryType.Tree,
-                "summarize should always return a tree when fullTree as true");
+                "summarize should always return a tree when fullTree is true");
             const blob = summaryTree.summary.tree[".component"] as ISummaryBlob;
 
             const contents = JSON.parse(blob.content as string) as IFluidDataStoreAttributes;
