@@ -346,6 +346,7 @@ module.exports = {
         ],
         "prefer-const": "error",
         "prefer-object-spread": "error",
+        "prefer-promise-reject-errors": "error",
         "prefer-template": "error",
         "quote-props": [
             "error",
