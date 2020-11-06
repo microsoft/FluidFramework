@@ -91,10 +91,10 @@ describe("loader/runtime compatibility", () => {
 
             const containersP: Promise<IContainer | old.IContainer>[] = [
                 loadContainer( // new everything
-                    { fluidExport: createRuntimeFactory(TestDataObject.type, createPrimedDataStoreFactory()) },
+                    { fluidExport: createRuntimeFactory(TestDataObject.type, createPrimedDataStoreFactory()[1]) },
                     args.deltaConnectionServer),
                 loadContainerWithOldLoader( // old loader, new container/data store runtimes
-                    { fluidExport: createRuntimeFactory(TestDataObject.type, createPrimedDataStoreFactory()) },
+                    { fluidExport: createRuntimeFactory(TestDataObject.type, createPrimedDataStoreFactory()[1]) },
                     args.deltaConnectionServer),
                 loadContainerWithOldLoader( // old everything
                     { fluidExport: createOldRuntimeFactory(TestDataObject.type, createOldPrimedDataStoreFactory()) },

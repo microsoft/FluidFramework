@@ -19,7 +19,12 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { ICompatLocalTestObjectProvider, generateTestWithCompat, ITestContainerConfig } from "./compatUtils";
+import {
+    generateTestWithCompat,
+    ICompatLocalTestObjectProvider,
+    ITestContainerConfig,
+    DataObjectFactoryType,
+} from "./compatUtils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
@@ -62,7 +67,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         beforeEach(async () => {
             const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
             const testContainerConfig: ITestContainerConfig = {
-                testFluidDataObject: true,
+                fluidDataObjectType: DataObjectFactoryType.Test,
                 registry,
             };
             const container = await args.makeTestContainer(testContainerConfig);
@@ -175,7 +180,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             const stringId = "stringKey";
             const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
             const testContainerConfig: ITestContainerConfig = {
-                testFluidDataObject: true,
+                fluidDataObjectType: DataObjectFactoryType.Test,
                 registry,
             };
 
@@ -219,7 +224,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             [stringId, SharedString.getFactory()],
         ];
         const testContainerConfig: ITestContainerConfig = {
-            testFluidDataObject: true,
+            fluidDataObjectType: DataObjectFactoryType.Test,
             registry,
         };
 

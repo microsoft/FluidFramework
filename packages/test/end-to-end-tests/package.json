@@ -92,6 +92,7 @@
     "@fluidframework/sequence": "^0.29.0",
     "@fluidframework/server-local-server": "^0.1014.0-0",
     "@fluidframework/shared-object-base": "^0.29.0",
+    "@fluidframework/synthesize": "^0.29.0",
     "@fluidframework/telemetry-utils": "^0.29.0",
     "@fluidframework/test-runtime-utils": "^0.29.0",
     "@fluidframework/test-utils": "^0.29.0",

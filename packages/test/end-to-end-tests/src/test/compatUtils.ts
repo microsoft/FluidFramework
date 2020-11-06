@@ -13,7 +13,7 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IFluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { Ink } from "@fluidframework/ink";
 import { LocalResolver } from "@fluidframework/local-driver";
@@ -33,6 +33,8 @@ import {
     LocalTestObjectProvider,
     OpProcessingController,
 } from "@fluidframework/test-utils";
+import { IFluidDependencyProvider } from "@fluidframework/synthesize";
+
 import * as old from "./oldVersion";
 
 /* eslint-enable import/no-extraneous-dependencies */
@@ -59,9 +61,15 @@ export interface ICompatTestOptions {
     serviceConfiguration?: Partial<IServiceConfiguration>,
 }
 
+export enum DataObjectFactoryType {
+    Primed, // default
+    PrimedWithDependency,
+    Test,
+}
+
 export interface ITestContainerConfig {
     // TestFluidDataObject instead of PrimedDataStore
-    testFluidDataObject?: boolean,
+    fluidDataObjectType?: DataObjectFactoryType,
 
     // And array of channel name and DDS factory pair to create on container creation time
     registry?: ChannelFactoryRegistry,
@@ -103,11 +111,56 @@ function convertRegistry(registry: ChannelFactoryRegistry = []): old.ChannelFact
     return oldRegistry;
 }
 
-export class TestDataObject extends DataObject {
+declare module "@fluidframework/core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideArgument>> { }
+}
+
+export const IArgument: keyof IProvideArgument = "IArgument";
+
+export interface IProvideArgument {
+    readonly IArgument: IArgument;
+}
+
+/**
+ * A Fluid object that implements a collection of Fluid objects.  Typically, the
+ * Fluid objects in the collection would be like-typed.
+ */
+export interface IArgument extends IProvideArgument {
+    data: string;
+}
+
+export interface IArgumentLoadable extends IArgument, IFluidLoadable {
+}
+
+export class TestDataObjectCore<O extends IFluidObject> extends DataObject<O> {
     public static readonly type = "@fluid-example/test-dataStore";
     public get _context() { return this.context; }
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
+    public get _providers() {
+        return this.providers as { IArgument: Promise<IArgument> | undefined };
+    }
+
+    async createSubObject(subName: string, dependencies?: IFluidDependencyProvider) {
+        const factory = await this._context.IFluidDataStoreRegistry?.get(subName) as
+            DataObjectFactory<TestDataObject>;
+        return factory.createChildInstance(this.context, undefined, dependencies);
+    }
+}
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+export class TestDataObject extends TestDataObjectCore<object> {
+    async preInitialize() {
+        const arg: IArgument = {
+            data: "data",
+            get IArgument() { return this; },
+        };
+        this.createLoadableObject("argument", arg);
+    }
+}
+
+export class TestDataObjectWithDependency extends TestDataObjectCore<IArgument> {
 }
 
 export class OldTestDataObject extends old.DataObject {
@@ -117,12 +170,38 @@ export class OldTestDataObject extends old.DataObject {
     public get _root() { return this.root; }
 }
 
-export const createPrimedDataStoreFactory = (registry?: ChannelFactoryRegistry): IFluidDataStoreFactory => {
-    return new DataObjectFactory(
-        TestDataObject.type,
+export const createPrimedDataStoreFactoryWithDependency = (
+    registry: ChannelFactoryRegistry | undefined,
+    countDependencies: number,
+    type: string): [string, IFluidDataStoreFactory] =>
+{
+    const count = countDependencies - 1;
+    return [type, new DataObjectFactory(
+        type,
+        TestDataObjectWithDependency,
+        [... registry ?? []].map((r)=>r[1]),
+        { IArgument },
+        count < 0 ? [] : [
+            createPrimedDataStoreFactoryWithDependency(registry, count, "dependency"),
+            createPrimedDataStoreFactory(registry, count, "default"),
+        ])];
+};
+
+export const createPrimedDataStoreFactory = (
+    registry?: ChannelFactoryRegistry,
+    countDependencies: number = 0,
+    type = TestDataObject.type): [string, IFluidDataStoreFactory] =>
+{
+    const count = countDependencies - 1;
+    return [type, new DataObjectFactory(
+        type,
         TestDataObject,
         [... registry ?? []].map((r)=>r[1]),
-        {});
+        {},
+        count < 0 ? [] : [
+            createPrimedDataStoreFactoryWithDependency(registry, count, "dependency"),
+            createPrimedDataStoreFactory(registry, count, "default"),
+        ])];
 };
 
 export const createOldPrimedDataStoreFactory =
@@ -162,6 +241,30 @@ export const createOldRuntimeFactory = (
     return factory as unknown as old.IRuntimeFactory;
 };
 
+function getDataStoreFactory(containerOptions?: ITestContainerConfig) {
+    switch (containerOptions?.fluidDataObjectType) {
+        case undefined:
+        case DataObjectFactoryType.Primed:
+            return createPrimedDataStoreFactory(containerOptions?.registry, 2)[1];
+        case DataObjectFactoryType.Test:
+            return createTestFluidDataStoreFactory(containerOptions?.registry);
+        default:
+            throw new Error("unknown data store factory type");
+    }
+}
+
+function getOldDataStoreFactory(containerOptions?: ITestContainerConfig) {
+    switch (containerOptions?.fluidDataObjectType) {
+        case undefined:
+        case DataObjectFactoryType.Primed:
+            return createOldPrimedDataStoreFactory(containerOptions?.registry);
+        case DataObjectFactoryType.Test:
+            return createOldTestFluidDataStoreFactory(containerOptions?.registry);
+        default:
+            throw new Error("unknown data store factory type");
+    }
+}
+
 export const generateTest = (
     tests: (compatArgs: ICompatLocalTestObjectProvider) => void,
     options: ICompatTestOptions = {},
@@ -170,9 +273,7 @@ export const generateTest = (
     const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
         createRuntimeFactory(
             TestDataObject.type,
-            containerOptions?.testFluidDataObject
-                ? createTestFluidDataStoreFactory(containerOptions?.registry)
-                : createPrimedDataStoreFactory(containerOptions?.registry),
+            getDataStoreFactory(containerOptions),
             containerOptions?.runtimeOptions,
         );
 
@@ -194,14 +295,10 @@ export const generateCompatTest = (
 ) => {
     describe("compatibility", () => {
         describe("old loader, new runtime", function() {
-            const dataStoreFactory = (containerOptions?: ITestContainerConfig) =>
-                containerOptions?.testFluidDataObject
-                    ? createTestFluidDataStoreFactory(containerOptions?.registry)
-                    : createPrimedDataStoreFactory(containerOptions?.registry);
             const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
                 createRuntimeFactory(
                     TestDataObject.type,
-                    dataStoreFactory(containerOptions),
+                    getDataStoreFactory(containerOptions),
                     containerOptions?.runtimeOptions,
                 ) as any as old.IRuntimeFactory;
 
@@ -221,9 +318,7 @@ export const generateCompatTest = (
             const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
                 createOldRuntimeFactory(
                     OldTestDataObject.type,
-                    containerOptions?.testFluidDataObject
-                        ? createOldTestFluidDataStoreFactory(containerOptions?.registry)
-                        : createOldPrimedDataStoreFactory(containerOptions?.registry),
+                    getOldDataStoreFactory(containerOptions),
                     containerOptions?.runtimeOptions,
                 ) as any as IRuntimeFactory;
 
@@ -243,9 +338,7 @@ export const generateCompatTest = (
             const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
                 createRuntimeFactory(
                     OldTestDataObject.type,
-                    containerOptions?.testFluidDataObject
-                        ? createOldTestFluidDataStoreFactory(containerOptions?.registry)
-                        : createOldPrimedDataStoreFactory(containerOptions?.registry),
+                    getOldDataStoreFactory(containerOptions),
                     containerOptions?.runtimeOptions,
                 );
 

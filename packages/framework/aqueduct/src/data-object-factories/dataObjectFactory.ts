@@ -29,7 +29,8 @@ import { PureDataObjectFactory } from "./pureDataObjectFactory";
  * O - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced data object may take during creation
  */
-export class DataObjectFactory<TObj extends DataObject<O, S, E>, O, S, E extends IEvent = IEvent>
+// eslint-disable-next-line @typescript-eslint/ban-types
+export class DataObjectFactory<TObj extends DataObject<O, S, E>, O = object, S = undefined, E extends IEvent = IEvent>
     extends PureDataObjectFactory<TObj, O, S, E>
 {
     constructor(

@@ -52,8 +52,7 @@ function buildRegistryPath(
 {
     const parentPath = context.packagePath;
     assert(parentPath.length > 0);
-    // A factory could not contain the registry for itself. So if it is the same the last snapshot
-    // pkg, return our package path.
+    // A factory should  not contain the registry for itself.
     assert(parentPath[parentPath.length - 1] !== factory.type);
     return [...parentPath, factory.type];
 }

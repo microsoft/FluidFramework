@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
-    private readonly map: Map<string, Promise<FluidDataStoreRegistryEntry>>;
+    private readonly map: Map<string, FluidDataStoreRegistryEntry | Promise<FluidDataStoreRegistryEntry>>;
 
     public get IFluidDataStoreRegistry() { return this; }
 

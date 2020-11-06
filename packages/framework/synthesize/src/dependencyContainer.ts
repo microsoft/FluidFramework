@@ -143,7 +143,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         return Object.assign({}, ...Array.from(values, (t) => {
             const provider = this.getProvider(t);
             if (!provider) {
-                return { get [t]() { return Promise.resolve(undefined); } };
+                return { get [t]() { return undefined; } };
             }
 
             return this.resolveProvider(provider, t);
