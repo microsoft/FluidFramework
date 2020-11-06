@@ -46,7 +46,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.25.0-0",
+    "@fluidframework/common-utils": "^0.25.0",
     "@fluidframework/container-definitions": "^0.29.0",
     "@fluidframework/core-interfaces": "^0.29.0",
     "@fluidframework/datastore": "^0.29.0",
@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
-    "@fluidframework/eslint-config-fluid": "^0.20.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.20.0",
     "@types/assert": "^1.5.1",
     "@types/debug": "^4.1.5",
     "@types/mocha": "^5.2.5",

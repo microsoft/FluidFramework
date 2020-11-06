@@ -30,14 +30,14 @@
     "@fluidframework/core-interfaces": "^0.29.0",
     "@fluidframework/driver-definitions": "^0.29.0",
     "@fluidframework/driver-utils": "^0.29.0",
-    "@fluidframework/protocol-definitions": "^0.1014.0-0",
+    "@fluidframework/protocol-definitions": "^0.1014.0",
     "@fluidframework/routerlicious-driver": "^0.29.0",
     "jsrsasign": "^10.0.2",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
-    "@fluidframework/eslint-config-fluid": "^0.20.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.20.0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@types/jsrsasign": "^8.0.8",
     "@types/mocha": "^5.2.5",

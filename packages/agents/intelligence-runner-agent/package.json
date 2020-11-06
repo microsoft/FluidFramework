@@ -26,13 +26,13 @@
   "dependencies": {
     "@fluidframework/core-interfaces": "^0.29.0",
     "@fluidframework/map": "^0.29.0",
-    "@fluidframework/protocol-definitions": "^0.1014.0-0",
+    "@fluidframework/protocol-definitions": "^0.1014.0",
     "@fluidframework/sequence": "^0.29.0",
     "request": "^2.88.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
-    "@fluidframework/eslint-config-fluid": "^0.20.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.20.0",
     "@types/node": "^10.17.24",
     "@types/request": "^2.47.1",
     "@typescript-eslint/eslint-plugin": "~4.2.0",

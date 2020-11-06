@@ -43,7 +43,7 @@
     "@fluidframework/datastore-definitions": "^0.29.0",
     "@fluidframework/map": "^0.29.0",
     "@fluidframework/merge-tree": "^0.29.0",
-    "@fluidframework/protocol-definitions": "^0.1014.0-0",
+    "@fluidframework/protocol-definitions": "^0.1014.0",
     "@fluidframework/request-handler": "^0.29.0",
     "@fluidframework/runtime-definitions": "^0.29.0",
     "@fluidframework/sequence": "^0.29.0",
@@ -56,7 +56,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
-    "@fluidframework/eslint-config-fluid": "^0.20.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.20.0",
     "@fluidframework/webpack-fluid-loader": "^0.29.0",
     "@types/async": "^2.0.50",
     "@types/lodash": "^4.14.118",
