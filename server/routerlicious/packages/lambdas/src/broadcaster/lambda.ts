@@ -30,6 +30,7 @@ export class BroadcasterLambda implements IPartitionLambda {
     private pending = new Map<string, BroadcasterBatch>();
     private pendingOffset: IQueuedMessage;
     private current = new Map<string, BroadcasterBatch>();
+    private isMessageSending: boolean = false;
 
     constructor(private readonly publisher: IPublisher, protected context: IContext) {
     }
@@ -78,16 +79,19 @@ export class BroadcasterLambda implements IPartitionLambda {
     }
 
     private sendPending() {
-        if (this.pending.size === 0) {
+        if (this.pending.size === 0 || this.isMessageSending) {
             return;
         }
 
         // Invoke the next send after a setImmediate to give IO time to create more batches
+        this.isMessageSending = true;
         setImmediate(() => {
             const batchOffset = this.pendingOffset;
 
             this.current = this.pending;
             this.pending = new Map<string, BroadcasterBatch>();
+
+            this.isMessageSending = false;
 
             // Process all the batches + checkpoint
             this.current.forEach((batch, topic) => {
