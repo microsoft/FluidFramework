@@ -454,8 +454,8 @@ export class ReplayTool {
             }
         }
 
-        if (this.args.initalizeFromSnapshotsDir) {
-            for (const node of fs.readdirSync(this.args.initalizeFromSnapshotsDir, { withFileTypes: true })) {
+        if (this.args.initializeFromSnapshotsDir) {
+            for (const node of fs.readdirSync(this.args.initializeFromSnapshotsDir, { withFileTypes: true })) {
                 let storage;
                 if (node.isDirectory()) {
                     // Did we load it already as main doc?
@@ -463,15 +463,16 @@ export class ReplayTool {
                         continue;
                     }
 
-                    const file = `${this.args.initalizeFromSnapshotsDir}/${node.name}/tree.json`;
+                    const file = `${this.args.initializeFromSnapshotsDir}/${node.name}/tree.json`;
                     if (!fs.existsSync(file)) {
                         console.error(`${file} does not exist, skipping ${node.name} snapshot`);
                         continue;
                     }
-                    storage = new FluidFetchReaderFileSnapshotWriter(this.args.initalizeFromSnapshotsDir, node.name);
+                    storage = new FluidFetchReaderFileSnapshotWriter(this.args.initializeFromSnapshotsDir, node.name);
                 } else {
                     if (node.name.startsWith("snapshot_")) {
-                        const content = fs.readFileSync(`${this.args.initalizeFromSnapshotsDir}/${node.name}`, "utf-8");
+                        const content = fs.readFileSync(
+                            `${this.args.initializeFromSnapshotsDir}/${node.name}`, "utf-8");
                         const snapshot = JSON.parse(content) as IFileSnapshot;
                         storage = new FileSnapshotReader(snapshot);
                     } else {
