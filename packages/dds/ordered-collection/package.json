@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
-    "@fluidframework/eslint-config-fluid": "^0.20.0",
+    "@fluidframework/eslint-config-fluid": "^0.21.0-0",
     "@fluidframework/mocha-test-setup": "^0.29.0",
     "@fluidframework/test-runtime-utils": "^0.29.0",
     "@microsoft/api-extractor": "^7.7.2",

@@ -66,7 +66,7 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
                 const buffer = await new Promise<Buffer>((resolve, reject) => {
                     arrayBufferReader.onerror = (error) => {
                         arrayBufferReader.abort();
-                        reject(`error: ${JSON.stringify(error)}`);
+                        reject(new Error(`error: ${JSON.stringify(error)}`));
                     };
 
                     arrayBufferReader.onloadend = () => {

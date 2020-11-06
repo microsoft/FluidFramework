@@ -330,7 +330,7 @@ export class Loader extends EventEmitter implements ILoader {
             const resolvedAsFluid = resolved as IFluidResolvedUrl;
             const parsed = parseUrl(resolvedAsFluid.url);
             if (parsed === undefined) {
-                return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
+                return Promise.reject(new Error(`Invalid URL ${resolvedAsFluid.url}`));
             }
             const { fromSequenceNumber } =
                 this.parseHeader(parsed, { url: baseUrl, headers: request.headers });
@@ -360,7 +360,7 @@ export class Loader extends EventEmitter implements ILoader {
         // Parse URL into data stores
         const parsed = parseUrl(resolvedAsFluid.url);
         if (parsed === undefined) {
-            return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
+            return Promise.reject(new Error(`Invalid URL ${resolvedAsFluid.url}`));
         }
 
         request.headers = request.headers ?? {};
