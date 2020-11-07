@@ -17,8 +17,8 @@ import { NodeCodeLoader } from "./nodeCodeloader";
 import { fetchFluidObject } from "./utils";
 
 // Base service configuration.
-const ordererEndpoint = "http://localhost:3000";
-const storageEndpoint = "http://localhost:3000";
+const ordererEndpoint = "http://localhost:8080";
+const storageEndpoint = "http://localhost:8080";
 const tenantId = "tinylicious";
 // Tinylicious doesn't care about tenantKey and bearerSecret
 const tenantKey = "12345";
@@ -43,6 +43,11 @@ export async function start(): Promise<void> {
     // Generate access tokens.
     const createNew = docId.length === 0;
     const documentId = docId.length === 0 ? uuid() : docId;
+    const hostToken = jwt.sign(
+        {
+            user,
+        },
+        bearerSecret);
     const token = jwt.sign(
         {
             documentId,
