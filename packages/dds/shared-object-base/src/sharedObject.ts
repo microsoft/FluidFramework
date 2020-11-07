@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
@@ -69,9 +69,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         return this._connected;
     }
 
-    /**
-     * The loadable URL for this SharedObject
-     */
+    // Back-compat <= 0.28
     public get url(): string {
         return this.id;
     }
@@ -103,7 +101,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     private attachListeners() {
         this.on("error", (error: any) => {
-            this.runtime.emit("error", error);
+            this.runtime.raiseContainerWarning(error);
         });
 
         // Only listen to these events if not attached.
@@ -130,14 +128,18 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param services - Services used by the shared object
      */
     public async load(
-        branchId: string,
-        services: IChannelServices): Promise<void> {
-        this.services = services;
-
+        branchId: string | undefined,
+        services: IChannelServices,
+    ): Promise<void> {
+        if (this.runtime.attachState !== AttachState.Detached) {
+            this.services = services;
+        }
         await this.loadCore(
             branchId,
             services.objectStorage);
-        this.attachDeltaHandler();
+        if (this.runtime.attachState !== AttachState.Detached) {
+            this.attachDeltaHandler();
+        }
     }
 
     /**
@@ -200,7 +202,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param services - Storage used by the shared object
      */
     protected abstract loadCore(
-        branchId: string,
+        branchId: string | undefined,
         services: IChannelStorageService): Promise<void>;
 
     /**

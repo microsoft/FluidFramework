@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
 import {
     ICodeLoader,
     IContainer,
-    IFluidCodeDetails,
-    IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -55,26 +54,22 @@ describe("UpgradeManager", () => {
 
     async function createContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const loader = new Loader(
+        const loader = new Loader({
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
 
         return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
     }
 
     async function loadContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const loader = new Loader(
+        const loader = new Loader({
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
 
         return loader.resolve({ url: documentLoadUrl });
     }
@@ -172,7 +167,7 @@ describe("UpgradeManager", () => {
         const container1 = await createContainer(TestDataObject.getFactory());
 
         // Load the second Container.
-        const container2 = await loadContainer(TestDataObject.getFactory());
+        const container2 = await loadContainer(TestDataObject.getFactory()) as Container;
 
         const upgradeManager = new UpgradeManager((container1 as any).context.runtime);
 
@@ -182,6 +177,7 @@ describe("UpgradeManager", () => {
 
         // we expect UpgradeManager not to initiate upgrade (within test timeout) unless there is <= 1 client connected
         const upgradeP = new Promise<void>((resolve, reject) => {
+            // eslint-disable-next-line prefer-promise-reject-errors
             upgradeManager.on("upgradeInProgress", () => quorumCount(container1) === 1 ? resolve() : reject());
         });
 
@@ -198,7 +194,8 @@ describe("UpgradeManager", () => {
         upgradeManager.upgrade(codeDetails);
 
         // disconnect one client, which should initiate upgrade
-        documentServiceFactory.disconnectClient((container2 as Container).clientId, "test");
+        assert(container2.clientId);
+        documentServiceFactory.disconnectClient(container2.clientId, "test");
 
         await upgradeP;
     });

@@ -5,13 +5,12 @@
 
 import * as SearchMenu from "@fluid-example/search-menu";
 import * as api from "@fluid-internal/client-api";
-import { performanceNow } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidHandle,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { IGenericBlob } from "@fluidframework/container-definitions";
 import { IFluidObjectCollection } from "@fluid-example/fluid-object-interfaces";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -23,7 +22,6 @@ import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
-import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
 import { Cursor, IRange } from "./cursor";
@@ -820,7 +818,7 @@ function renderSegmentIntoLine(
                         .get()
                         .then(async (component) => {
                             if (!HTMLViewAdapter.canAdapt(component)) {
-                                return Promise.reject("component is not viewable");
+                                return Promise.reject(new Error("component is not viewable"));
                             }
 
                             return new HTMLViewAdapter(component);
@@ -2327,7 +2325,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                                 // IFluidObject. Then you can go from IFluidHTMLView to IViewLayout.
                                 // Or should you query for each one individually.
                                 if (!HTMLViewAdapter.canAdapt(component)) {
-                                    return Promise.reject("component is not viewable");
+                                    return Promise.reject(new Error("component is not viewable"));
                                 }
 
                                 return new HTMLViewAdapter(component);
@@ -2476,7 +2474,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function makeMathSpan(mathSegpos: number, offsetFromSegpos: number) {
     const span = document.createElement("span") as ISegSpan;
     span.segPos = mathSegpos;
@@ -2973,45 +2970,6 @@ export interface IListReferenceDoc extends IReferenceDoc {
     selectionIndex: number;
 }
 
-export function makeBlobRef(blob: IGenericBlob, cb: (irdoc: IReferenceDoc) => void) {
-    /* eslint-disable default-case */
-    switch (blob.type) {
-        case "image": {
-            const image = document.createElement("img");
-            const irdocType = <IReferenceDocType>{
-                name: "image",
-            };
-            const irdoc = <IReferenceDoc>{
-                referenceDocId: blob.id,
-                type: irdocType,
-                url: blob.url,
-            };
-            image.src = blob.url;
-
-            image.onload = () => {
-                irdoc.layout = { ar: image.naturalHeight / image.naturalWidth, dx: 0, dy: 0 };
-                cb(irdoc);
-            };
-            break;
-        }
-        case "video": {
-            const video = document.createElement("video");
-            const irdocType = <IReferenceDocType>{
-                name: "video",
-            };
-            const irdoc = <IReferenceDoc>{
-                referenceDocId: blob.id,
-                type: irdocType,
-                url: blob.url,
-            };
-            video.src = blob.url;
-            cb(irdoc);
-            video.load();
-        }
-    }
-    /* eslint-enable default-case */
-}
-
 export interface IFlowViewModes {
     showBookmarks?: boolean;
     showComments?: boolean;
@@ -3173,12 +3131,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         this.cursor = new FlowCursor(this.viewportDiv);
         this.setViewOption(this.options);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        blobUploadHandler(
-            element,
-            this.collabDocument,
-            (incl: IGenericBlob) => this.insertBlobInternal(incl),
-        );
 
         // HACK: Expose "insertText" via window to Shared Browser Extension
         //       for 2018/Oct demo.
@@ -4639,19 +4591,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.images = images.IFluidObjectCollection;
     }
 
-    private insertBlobInternal(blob: IGenericBlob) {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.collabDocument.getBlob(blob.id)
-            .then((finalBlob) => {
-                makeBlobRef(finalBlob, (irdoc) => {
-                    const refProps = {
-                        [Paragraph.referenceProperty]: irdoc,
-                    };
-                    this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
-                });
-            });
-    }
-
     public copy() {
         const sel = this.cursor.getSelection();
         if (sel) {
@@ -5091,7 +5030,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.render(0, true);
         if (clockStart > 0) {
             // eslint-disable-next-line max-len
-            console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.getLength()} - ${performanceNow()}`);
+            console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.getLength()} - ${performance.now()}`);
         }
         this.presenceSignal = new PresenceSignal(this.collabDocument.runtime);
         this.addPresenceSignal(this.presenceSignal);

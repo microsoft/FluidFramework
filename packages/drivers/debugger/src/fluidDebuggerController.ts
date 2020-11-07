@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { Deferred } from "@fluidframework/common-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { assert , Deferred } from "@fluidframework/common-utils";
+import {
+    IDocumentService,
+    IDocumentStorageService,
+    IDocumentDeltaStorageService,
+} from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     IDocumentAttributes,
@@ -32,7 +35,7 @@ const MaxBatchDeltas = 2000;
 export class DebugReplayController extends ReplayController implements IDebuggerController {
     public static create(
         createUi: debuggerUIFactory): DebugReplayController | null {
-        if (typeof localStorage === "object" && localStorage !== null && localStorage.FluidDebugger) {
+                if (typeof localStorage === "object" && localStorage !== null && localStorage.FluidDebugger) {
             const controller = new DebugReplayController();
             const ui = createUi(controller);
             if (ui) {
@@ -63,6 +66,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     // True will cause us ping server indefinitely waiting for new ops
     protected retryFetchOpsOnEndOfFile = false;
 
+    protected documentService?: IDocumentService;
     protected documentStorageService?: IDocumentStorageService;
     protected versions: IVersion[] = [];
     protected stepsToPlay: number = 0;
@@ -144,6 +148,25 @@ export class DebugReplayController extends ReplayController implements IDebugger
         reader.readAsText(file, "utf-8");
     }
 
+    public async onDownloadOpsButtonClick(): Promise<string> {
+        if (this.documentService === undefined) {
+            throw new Error("DocumentService required");
+        }
+
+        const documentDeltaStorageService = await this.documentService.connectToDeltaStorage();
+        const messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
+        return JSON.stringify(messages, undefined, 2);
+    }
+
+    private async fetchOpsFromDeltaStorage(documentDeltaStorageService): Promise<ISequencedDocumentMessage[]> {
+        const deltaGenerator = generateSequencedMessagesFromDeltaStorage(documentDeltaStorageService);
+        let messages: ISequencedDocumentMessage[] = [];
+        for await (const message of deltaGenerator) {
+            messages = messages.concat(message);
+        }
+        return messages;
+    }
+
     public fetchTo(currentOp: number): number {
         return currentOp + MaxBatchDeltas;
     }
@@ -174,18 +197,20 @@ export class DebugReplayController extends ReplayController implements IDebugger
         }
     }
 
-    public async initStorage(documentStorageService: IDocumentStorageService): Promise<boolean> {
+    public async initStorage(documentService: IDocumentService): Promise<boolean> {
         if (this.shouldUseController !== undefined) {
             return this.shouldUseController;
         }
 
-        assert(documentStorageService);
+        assert(!!documentService);
+        assert(!this.documentService);
         assert(!this.documentStorageService);
-        this.documentStorageService = documentStorageService;
+        this.documentService = documentService;
+        this.documentStorageService = await documentService.connectToStorage();
 
         // User can chose "file" at any moment in time!
         if (!this.isSelectionMade()) {
-            this.versions = await documentStorageService.getVersions("", 50);
+            this.versions = await this.documentStorageService.getVersions("", 50);
             if (!this.isSelectionMade()) {
                 this.ui.addVersions(this.versions);
                 this.ui.updateVersionText(this.versionCount);
@@ -201,7 +226,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
             let prevRequest = Promise.resolve();
             for (let index = i; index < this.versions.length; index += buckets) {
                 const version = this.versions[index];
-                prevRequest = this.downloadVersionInfo(documentStorageService, prevRequest, index, version);
+                prevRequest = this.downloadVersionInfo(this.documentStorageService, prevRequest, index, version);
             }
             work.push(prevRequest);
         }
@@ -212,7 +237,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
             this.ui.updateVersionText(0);
         });
 
+        // This hangs until the user makes a selection or closes the window.
         this.shouldUseController = await this.startSeqDeferred.promise !== DebugReplayController.WindowClosedSeq;
+
         assert(this.isSelectionMade() === this.shouldUseController);
         return this.shouldUseController;
     }
@@ -302,11 +329,35 @@ export class DebugReplayController extends ReplayController implements IDebugger
         storage: ReadDocumentStorageServiceBase,
         version: IVersion | string) {
         assert(!this.isSelectionMade());
-        assert(storage);
+        assert(!!storage);
         this.storage = storage;
         assert(this.isSelectionMade());
 
         this.ui.versionSelected(seq, version);
         this.startSeqDeferred.resolve(seq);
     }
+}
+
+async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumentDeltaStorageService)  {
+    let lastSeq = 0;
+    const batch = 2000;
+    while (true) {
+        const messages = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
+        if (messages.length === 0) {
+            break;
+        }
+        yield messages;
+        lastSeq = messages[messages.length - 1].sequenceNumber;
+    }
+}
+
+async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaStorageService) {
+    for (let iter = 0; iter < 3; iter++) {
+        try {
+            return await deltaStorage.get(from, to);
+        } catch (error) {
+            // Retry
+        }
+    }
+    throw new Error("Giving up after 3 attempts to download chunk of ops.");
 }

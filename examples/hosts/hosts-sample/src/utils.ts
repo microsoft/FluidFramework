@@ -19,9 +19,9 @@ async function getFluidObjectAndRenderCore(loader: Loader, url: string, div: HTM
         return;
     }
 
-    const component = response.value as IFluidObject;
-    // Try to render the component if it is a view
-    const view: IFluidHTMLView | undefined = component.IFluidHTMLView;
+    const fluidObject = response.value as IFluidObject;
+    // Try to render the Fluid object if it is a view
+    const view: IFluidHTMLView | undefined = fluidObject.IFluidHTMLView;
     if (view !== undefined) {
         view.render(div, { display: "block" });
     }

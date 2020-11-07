@@ -6,21 +6,22 @@
 name: $(Build.BuildId)
 
 parameters:
-- name: publishOverride
-  displayName: Publish Override
-  type: string
-  default: default
-  values:
-    - default
-    - skip
 - name: releaseBuildOverride
-  displayName: Release Build Override
+  displayName: Release Build (default = not released)
   type: string
   default: none
   values:
     - none
     - prerelease
     - release
+- name: publishOverride
+  displayName: Publish Override (default = based on branch)
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+    - force
 
 trigger:
   branches:
@@ -43,6 +44,7 @@ trigger:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
 
 pr:
   branches:
@@ -74,11 +76,12 @@ extends:
     poolBuild: Main
     cgSubDirectory: packages
     checkoutSubmodules: true
-    runBundleAnalysis: true
+    taskBundleAnalysis: true
+
     preCG:
     - task: UseNode@1
       displayName: Use Node 12.x
-      inputs: 
+      inputs:
         version: 12.x
     - task: Npm@1
       displayName: npm ci
@@ -95,3 +98,17 @@ extends:
           node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
           cp repo-package.json packages/package.json
           cp repo-package-lock.json packages/package-lock.json
+
+    additionalTests:
+      - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+        - task: Npm@1
+          displayName: '[end-to-end tests] npm run ci:test:realsvc'
+          env:
+            fluid__webpack__bearerSecret: $(fluid__webpack__bearerSecret)
+            fluid__webpack__fluidHost: $(fluid__webpack__fluidHost)
+            fluid__webpack__tenantId: $(fluid__webpack__tenantId)
+            fluid__webpack__tenantSecret: $(fluid__webpack__tenantSecret)
+          inputs:
+            command: 'custom'
+            workingDir: packages/test/end-to-end-tests
+            customCommand: 'run ci:test:realsvc' # This script ends with 'exit 0' so this task should never fail

@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { IRequest } from "@fluidframework/core-interfaces";
 import {
     ContainerErrorType,
-    IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
+import { CreateContainerError } from "@fluidframework/container-utils";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IFluidResolvedUrl,
     IDocumentServiceFactory,
@@ -17,14 +17,13 @@ import {
     IThrottlingWarning,
 } from "@fluidframework/driver-definitions";
 import { createWriteError } from "@fluidframework/driver-utils";
-import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
-import { CreateContainerError } from "@fluidframework/container-utils";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import {
     createOdspNetworkError,
     invalidFileNameStatusCode,
     OdspErrorType,
-} from "@fluidframework/odsp-driver";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+} from "@fluidframework/odsp-doclib-utils";
+import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 
@@ -33,52 +32,41 @@ describe("Errors Types", () => {
     const testRequest: IRequest = { url: id };
 
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
-    let localResolver: LocalResolver;
+    let urlResolver: LocalResolver;
     let testResolved: IFluidResolvedUrl;
-    let serviceFactory: IDocumentServiceFactory;
+    let documentServiceFactory: IDocumentServiceFactory;
     let codeLoader: LocalCodeLoader;
     let loader: Loader;
 
     it("GeneralError Test", async () => {
         // Setup
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        localResolver = new LocalResolver();
-        testResolved = await localResolver.resolve(testRequest) as IFluidResolvedUrl;
-        serviceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+        urlResolver = new LocalResolver();
+        testResolved = await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
+        documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+
+        const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
+        mockFactory.createDocumentService = async (resolvedUrl) => {
+            const service = await documentServiceFactory.createDocumentService(resolvedUrl);
+            // eslint-disable-next-line prefer-promise-reject-errors
+            service.connectToDeltaStorage = async () => Promise.reject(false);
+            return service;
+        };
 
         codeLoader = new LocalCodeLoader([]);
-        const options = {};
 
-        loader = new Loader(
-            localResolver,
-            serviceFactory,
+        loader = new Loader({
+            urlResolver,
+            documentServiceFactory: mockFactory,
             codeLoader,
-            options,
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
 
         try {
-            const mockFactory = Object.create(serviceFactory) as IDocumentServiceFactory;
-            // Issue typescript-eslint/typescript-eslint #1256
-            // eslint-disable-next-line @typescript-eslint/unbound-method
-            mockFactory.createDocumentService = async (resolvedUrl) => {
-                const service = await serviceFactory.createDocumentService(resolvedUrl);
-                // Issue typescript-eslint/typescript-eslint #1256
-                // eslint-disable-next-line @typescript-eslint/unbound-method
-                service.connectToDeltaStorage = async () => Promise.reject(false);
-                return service;
-            };
-
             await Container.load(
                 "tenantId/documentId",
-                mockFactory,
-                codeLoader,
-                {},
-                {},
                 loader,
                 testRequest,
-                testResolved,
-                localResolver);
+                testResolved);
 
             assert.fail("Error expected");
         } catch (error) {

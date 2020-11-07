@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
@@ -14,23 +12,23 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IBlobManager,
     IDeltaManager,
-    IGenericBlob,
     ContainerWarning,
     ILoader,
     BindState,
     AttachState,
 } from "@fluidframework/container-definitions";
 import {
+    assert,
     Deferred,
+    TypedEventEmitter,
     unreachableCase,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { buildSnapshotTree, readAndParseFromBlobs } from "@fluidframework/driver-utils";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
@@ -38,6 +36,7 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
     ITreeEntry,
+    ITree,
 } from "@fluidframework/protocol-definitions";
 import {
     IAttachMessage,
@@ -48,12 +47,24 @@ import {
     ISummaryTreeWithStats,
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IChannel, IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import {
+    generateHandleContextPath,
+    RequestParser,
+    SummaryTreeBuilder,
+    FluidSerializer,
+} from "@fluidframework/runtime-utils";
+import {
+    IChannel,
+    IFluidDataStoreRuntime,
+    IFluidDataStoreRuntimeEvents,
+    IChannelFactory,
+    IChannelAttributes,
+} from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
+import { convertSnapshotToITree } from "./utils";
 
 export enum DataStoreMessageType {
     // Creates a new channel
@@ -70,8 +81,9 @@ export interface ISharedObjectRegistry {
 /**
  * Base data store class
  */
-export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreChannel,
-    IFluidDataStoreRuntime, IFluidHandleContext {
+export class FluidDataStoreRuntime extends
+TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
+IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
      * Loads the data store runtime
      * @param context - The data store context
@@ -83,23 +95,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         context: IFluidDataStoreContext,
         sharedObjectRegistry: ISharedObjectRegistry,
     ): FluidDataStoreRuntime {
-        const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { dataStoreId: uuid() });
-        const runtime = new FluidDataStoreRuntime(
-            context,
-            context.documentId,
-            context.id,
-            context.parentBranch,
-            context.existing,
-            context.options,
-            context.blobManager,
-            context.deltaManager,
-            context.getQuorum(),
-            context.getAudience(),
-            context.snapshotFn,
-            sharedObjectRegistry,
-            logger);
-
-        return runtime;
+        return new FluidDataStoreRuntime(context, sharedObjectRegistry);
     }
 
     public get IFluidRouter() { return this; }
@@ -147,9 +143,14 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return this.dataStoreContext.containerRuntime.IFluidHandleContext;
     }
 
-    public get IFluidSerializer() { return this.dataStoreContext.containerRuntime.IFluidSerializer; }
+    private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
+    public get IFluidSerializer() { return this.serializer; }
 
     public get IFluidHandleContext() { return this; }
+
+    public get rootRoutingContext() { return this; }
+    public get channelsRoutingContext() { return this; }
+    public get objectsRoutingContext() { return this; }
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
@@ -167,47 +168,86 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     private boundhandles: Set<IFluidHandle> | undefined;
     private _attachState: AttachState;
 
-    private constructor(
+    public readonly documentId: string;
+    public readonly id: string;
+    public readonly parentBranch: string | null;
+    public existing: boolean;
+    public readonly options: any;
+    public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    private readonly quorum: IQuorum;
+    private readonly audience: IAudience;
+    private readonly snapshotFn: (message: string) => Promise<void>;
+    public readonly logger: ITelemetryLogger;
+
+    public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
-        public readonly documentId: string,
-        public readonly id: string,
-        public readonly parentBranch: string | null,
-        public existing: boolean,
-        public readonly options: any,
-        private readonly blobManager: IBlobManager,
-        public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        private readonly quorum: IQuorum,
-        private readonly audience: IAudience,
-        private readonly snapshotFn: (message: string) => Promise<void>,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
-        public readonly logger: ITelemetryLogger,
     ) {
         super();
+
+        this.logger = ChildLogger.create(dataStoreContext.containerRuntime.logger, undefined, { dataStoreId: uuid() });
+        this.documentId = dataStoreContext.documentId;
+        this.id = dataStoreContext.id;
+        this.parentBranch = dataStoreContext.parentBranch;
+        this.existing = dataStoreContext.existing;
+        this.options = dataStoreContext.options;
+        this.deltaManager = dataStoreContext.deltaManager;
+        this.quorum = dataStoreContext.getQuorum();
+        this.audience = dataStoreContext.getAudience();
+        this.snapshotFn = dataStoreContext.snapshotFn;
 
         const tree = dataStoreContext.baseSnapshot;
 
         // Must always receive the data store type inside of the attributes
         if (tree?.trees !== undefined) {
             Object.keys(tree.trees).forEach((path) => {
-                const channelContext = new RemoteChannelContext(
-                    this,
-                    dataStoreContext,
-                    dataStoreContext.storage,
-                    (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
-                    (address: string) => this.setChannelDirty(address),
-                    path,
-                    tree.trees[path],
-                    this.sharedObjectRegistry,
-                    undefined /* extraBlobs */,
-                    dataStoreContext.branch,
-                    this.dataStoreContext.summaryTracker.createOrGetChild(
+                let channelContext: IChannelContext;
+                // If already exists on storage, then create a remote channel. However, if it is case of rehydrating a
+                // container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
+                // true. In this case create a LocalChannelContext.
+                if (dataStoreContext.isLocalDataStore) {
+                    const channelAttributes = readAndParseFromBlobs<IChannelAttributes>(
+                        tree.trees[path].blobs, tree.trees[path].blobs[".attributes"]);
+                    channelContext = new LocalChannelContext(
                         path,
-                        this.deltaManager.lastSequenceNumber,
-                    ),
-                    this.dataStoreContext.getCreateChildSummarizerNodeFn(
+                        this.sharedObjectRegistry,
+                        channelAttributes.type,
+                        this,
+                        this.dataStoreContext,
+                        this.dataStoreContext.storage,
+                        (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
+                        (address: string) => this.setChannelDirty(address),
+                        tree.trees[path]);
+                    // This is the case of rehydrating a detached container from snapshot. Now due to delay loading of
+                    // data store, if the data store is loaded after the container is attached, then we missed marking
+                    // the channel as attached. So mark it now. Otherwise add it to local channel context queue, so
+                    // that it can be mark attached later with the data store.
+                    if (dataStoreContext.attachState !== AttachState.Detached) {
+                        (channelContext as LocalChannelContext).markAttached();
+                    } else {
+                        this.localChannelContextQueue.set(path, channelContext as LocalChannelContext);
+                    }
+                } else {
+                    channelContext = new RemoteChannelContext(
+                        this,
+                        dataStoreContext,
+                        dataStoreContext.storage,
+                        (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
+                        (address: string) => this.setChannelDirty(address),
                         path,
-                        { type: CreateSummarizerNodeSource.FromSummary },
-                    ));
+                        tree.trees[path],
+                        this.sharedObjectRegistry,
+                        undefined /* extraBlobs */,
+                        dataStoreContext.branch,
+                        this.dataStoreContext.summaryTracker.createOrGetChild(
+                            path,
+                            this.deltaManager.lastSequenceNumber,
+                        ),
+                        this.dataStoreContext.getCreateChildSummarizerNodeFn(
+                            path,
+                            { type: CreateSummarizerNodeSource.FromSummary },
+                        ));
+                }
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
 
@@ -217,11 +257,12 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         }
 
         this.attachListener();
-        this.bindState = existing ? BindState.Bound : BindState.NotBound;
-        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
+        // If exists on storage or loaded from a snapshot, it should already be binded.
+        this.bindState = this.existing ? BindState.Bound : BindState.NotBound;
+        this._attachState = dataStoreContext.attachState;
 
         // If it's existing we know it has been attached.
-        if (existing) {
+        if (this.existing) {
             this.deferredAttached.resolve();
         }
     }
@@ -240,23 +281,37 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        // Parse out the leading slash
-        const id = request.url.startsWith("/") ? request.url.substr(1) : request.url;
+        const parser = RequestParser.create(request);
+        const id = parser.pathParts[0];
+
+        if (id === "_channels" || id === "_objects") {
+            return this.request(parser.createSubRequest(1));
+        }
 
         // Check for a data type reference first
-        if (this.contextsDeferred.has(id)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const value = await this.contextsDeferred.get(id)!.promise;
-            const channel = await value.getChannel();
+        if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const value = await this.contextsDeferred.get(id)!.promise;
+                const channel = await value.getChannel();
 
-            return { mimeType: "fluid/object", status: 200, value: channel };
+                return { mimeType: "fluid/object", status: 200, value: channel };
+            } catch (error) {
+                this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
+
+                return {
+                    status: 404,
+                    mimeType: "text/plain",
+                    value: `Failed to get Channel with id:[${id}] error:{${error}}`,
+                };
+            }
         }
 
         // Otherwise defer to an attached request handler
         if (this.requestHandler === undefined) {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         } else {
-            return this.requestHandler(request);
+            return this.requestHandler(parser);
         }
     }
 
@@ -294,7 +349,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             this.dataStoreContext,
             this.dataStoreContext.storage,
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
-            (address: string) => this.setChannelDirty(address));
+            (address: string) => this.setChannelDirty(address),
+            undefined);
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -306,6 +362,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             this.contextsDeferred.set(id, deferred);
         }
 
+        assert(!!context.channel, "Channel should be loaded when created!!");
         return context.channel;
     }
 
@@ -347,7 +404,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         this.localChannelContextQueue.forEach((channel) => {
             // When we are attaching the data store we don't need to send attach for the registered services.
             // This is because they will be captured as part of the Attach data store snapshot
-            channel.attach();
+            channel.markAttached();
         });
 
         this.localChannelContextQueue.clear();
@@ -410,25 +467,10 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return this.snapshotFn(message);
     }
 
-    public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
+    public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         this.verifyNotClosed();
 
-        const blob = await this.blobManager.createBlob(file);
-        file.id = blob.id;
-        file.url = blob.url;
-
-        return file;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getBlob(blobId: string): Promise<IGenericBlob | undefined> {
-        this.verifyNotClosed();
-
-        return this.blobManager.getBlob(blobId);
-    }
-
-    public async getBlobMetadata(): Promise<IGenericBlob[]> {
-        return this.blobManager.getBlobMetadata();
+        return this.dataStoreContext.uploadBlob(blob);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
@@ -444,7 +486,9 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                     assert(this.pendingAttach.has(id), "Unexpected attach (local) channel OP");
                     this.pendingAttach.delete(id);
                 } else {
-                    assert(!this.contexts.has(id), "Unexpected attach channel OP");
+                    assert(!this.contexts.has(id), `Unexpected attach channel OP,
+                        is in pendingAttach set: ${this.pendingAttach.has(id)},
+                        is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}`);
 
                     // Create storage service that wraps the attach data
                     const origin = message.origin?.id ?? this.documentId;
@@ -570,7 +614,16 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             }
 
             if (!this.notBoundedChannelContextSet.has(objectId)) {
-                const snapshot = value.getAttachSnapshot();
+                let snapshot: ITree;
+                if (value.isLoaded) {
+                    snapshot = value.getAttachSnapshot();
+                } else {
+                    // If this channel is not yet loaded, then there should be no changes in the snapshot from which
+                    // it was created as it is detached container. So just use the previous snapshot.
+                    assert(!!this.dataStoreContext.baseSnapshot,
+                        "BaseSnapshot should be there as detached container loaded from snapshot");
+                    snapshot = convertSnapshotToITree(this.dataStoreContext.baseSnapshot.trees[objectId]);
+                }
 
                 // And then store the tree
                 entries.push(new TreeTreeEntry(objectId, snapshot));
@@ -628,7 +681,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         }
 
         const context = this.contexts.get(channel.id) as LocalChannelContext;
-        context.attach();
+        context.markAttached();
     }
 
     private submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
@@ -660,7 +713,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                     // For Operations, find the right channel and trigger resubmission on it.
                     const envelope = content as IEnvelope;
                     const channelContext = this.contexts.get(envelope.address);
-                    assert(channelContext, "There should be a channel context for the op");
+                    assert(!!channelContext, "There should be a channel context for the op");
                     channelContext.reSubmit(envelope.contents, localOpMetadata);
                     break;
                 }
@@ -689,7 +742,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         };
 
         const channelContext = this.contexts.get(envelope.address);
-        assert(channelContext, "Channel not found");
+        assert(!!channelContext, "Channel not found");
         channelContext.processOp(transformed, local, localOpMetadata);
 
         return channelContext;
@@ -722,4 +775,43 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             throw new Error("Runtime is closed");
         }
     }
+}
+
+/**
+ * Mixin class that adds request handler to FluidDataStoreRuntime
+ * @param Base - base class, inherits from FluidDataStoreRuntime
+ * @param requestHandler - request handler to mix in
+ */
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export function requestFluidDataStoreMixin(
+    Base: typeof FluidDataStoreRuntime,
+    requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>)
+{
+    return class RuntimeWithRequestHandler extends Base {
+        public async request(request: IRequest) {
+            const response  = await super.request(request);
+            if (response.status === 404) {
+                return requestHandler(request, this);
+            }
+            return response;
+        }
+    } as typeof FluidDataStoreRuntime;
+}
+
+/**
+ * Mixin class that adds await for DataObject to finish initialization before we proceed to summary.
+ * @param Base - base class, inherits from FluidDataStoreRuntime
+ * @param init - async callback to wait before proceeding with summary
+ */
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export function summaryWaitFluidDataStoreMixin(
+    Base: typeof FluidDataStoreRuntime,
+    init: () => Promise<void>)
+{
+    return class RuntimeWithSummarizerHandler extends Base {
+        public async summarize(...args) {
+            await init();
+            return super.summarize(...args);
+        }
+    } as typeof FluidDataStoreRuntime;
 }

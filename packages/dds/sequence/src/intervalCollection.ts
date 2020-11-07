@@ -360,6 +360,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     public serialize() {
         const client = this.client;
         const intervals = this.intervalTree.intervals.keys();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return intervals.map((interval) => interval.serialize(client));
     }
 }
@@ -380,6 +381,7 @@ class SequenceIntervalCollectionFactory
     }
 
     public store(value: IntervalCollection<SequenceInterval>): ISerializedInterval[] {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value.serializeInternal();
     }
 }
@@ -456,6 +458,7 @@ class IntervalCollectionFactory
     }
 
     public store(value: IntervalCollection<Interval>): ISerializedInterval[] {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value.serializeInternal();
     }
 }
@@ -647,6 +650,7 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
     }
 
     public serializeInternal() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.localCollection.serialize();
     }
 
@@ -724,7 +728,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
 
     public async getView(onDeserialize?: DeserializeCallback): Promise<IntervalCollectionView<TInterval>> {
         if (!this.view) {
-            return Promise.reject("attachSequence must be called prior to retrieving the view");
+            return Promise.reject(new Error("attachSequence must be called prior to retrieving the view"));
         }
 
         // Attach custom deserializers if specified
@@ -761,6 +765,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
             throw new Error("attachSequence must be called");
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.view.serializeInternal();
     }
 }

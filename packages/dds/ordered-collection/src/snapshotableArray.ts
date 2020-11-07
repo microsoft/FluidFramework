@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 
 export class SnapshotableArray<T> extends Array {
     protected data: T[] = [];

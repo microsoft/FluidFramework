@@ -7,15 +7,16 @@ import {
     IClient,
     IConnect,
     IConnected,
-    IContentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import { IPubSub, PubSub } from "@fluidframework/server-memory-orderer";
+import { generateToken } from "@fluidframework/server-services-client";
 import {
     DefaultMetricClient,
+    EmptyTaskMessageSender,
     IDatabaseManager,
     IDocumentStorage,
     ILogger,
@@ -31,7 +32,6 @@ import {
     TestDbFactory,
     TestDocumentStorage,
     TestHistorian,
-    TestTaskMessageSender,
     TestTenantManager,
 } from "@fluidframework/server-test-utils";
 import { LocalWebSocketServer } from "./localWebSocketServer";
@@ -91,9 +91,10 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             testStorage,
             databaseManager,
             testTenantManager,
-            new TestTaskMessageSender(),
+            new EmptyTaskMessageSender(),
             {},
             16 * 1024,
+            generateToken,
             async () => new TestHistorian(testDbFactory.testDatabase),
             logger,
             serviceConfiguration,
@@ -104,7 +105,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             ordererManager,
             testTenantManager,
             testStorage,
-            testDbFactory.testDatabase.collection("ops"),
             new TestClientManager(),
             new DefaultMetricClient(),
             logger);
@@ -153,7 +153,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         const connectedP = new Promise<IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
-            const queuedContents: IContentMessage[] = [];
             const queuedSignals: ISignalMessage[] = [];
 
             const earlyOpHandler = (docId: string, msgs: ISequencedDocumentMessage[]) => {
@@ -161,12 +160,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
                 queuedMessages.push(...msgs);
             };
             socket.on("op", earlyOpHandler);
-
-            const earlyContentHandler = (msg: IContentMessage) => {
-                this.logger.info("Queued early contents");
-                queuedContents.push(msg);
-            };
-            socket.on("op-content", earlyContentHandler);
 
             const earlySignalHandler = (msg: ISignalMessage) => {
                 this.logger.info("Queued early signals");
@@ -181,7 +174,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
             socket.on("connect_document_success", (response: IConnected) => {
                 socket.removeListener("op", earlyOpHandler);
-                socket.removeListener("op-content", earlyContentHandler);
                 socket.removeListener("signal", earlySignalHandler);
 
                 if (queuedMessages.length > 0) {
@@ -189,15 +181,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
                     // add them to the list of initialMessages to be processed
                     response.initialMessages.push(...queuedMessages);
                     response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-                }
-
-                if (queuedContents.length > 0) {
-                    // Some contents were queued.
-                    // add them to the list of initialContents to be processed
-                    response.initialContents.push(...queuedContents);
-
-                    // eslint-disable-next-line max-len, @typescript-eslint/strict-boolean-expressions
-                    response.initialContents.sort((a, b) => (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) || a.clientSequenceNumber - b.clientSequenceNumber);
                 }
 
                 if (queuedSignals.length > 0) {

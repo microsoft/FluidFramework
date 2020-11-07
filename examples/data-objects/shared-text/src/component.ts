@@ -11,7 +11,7 @@ import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import * as API from "@fluid-internal/client-api";
 import { SharedCell } from "@fluidframework/cell";
-import { performanceNow } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidHandle,
@@ -33,12 +33,11 @@ import {
     ITaskManager,
 } from "@fluidframework/runtime-definitions";
 import {
-    IProvideSharedString,
     SharedNumberSequence,
     SharedObjectSequence,
     SharedString,
 } from "@fluidframework/sequence";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
@@ -55,7 +54,7 @@ async function getHandle(runtimeP: Promise<IFluidRouter>): Promise<IFluidHandle>
 
 export class SharedTextRunner
     extends EventEmitter
-    implements IFluidHTMLView, IFluidLoadable, IProvideSharedString {
+    implements IFluidHTMLView, IFluidLoadable {
     public static async load(
         runtime: FluidDataStoreRuntime,
         context: IFluidDataStoreContext,
@@ -73,9 +72,7 @@ export class SharedTextRunner
     public get IFluidLoadable() { return this; }
 
     public get IFluidHTMLView() { return this; }
-    public get ISharedString() { return this.sharedString; }
 
-    public readonly url = "/text";
     private sharedString: SharedString;
     private insightsMap: ISharedMap;
     private rootView: ISharedMap;
@@ -89,7 +86,7 @@ export class SharedTextRunner
         private readonly context: IFluidDataStoreContext,
     ) {
         super();
-        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "/text", this.runtime.objectsRoutingContext);
     }
 
     public render(element: HTMLElement) {
@@ -106,9 +103,13 @@ export class SharedTextRunner
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "" || request.url === "/") {
+        const pathParts = RequestParser.getPathParts(request.url);
+        if (pathParts.length === 0) {
             return { status: 200, mimeType: "fluid/object", value: this };
-        } else {
+        } else if (pathParts.length === 1 && pathParts[0].toLocaleLowerCase() === "sharedstring") {
+            return { status:200, mimeType: "fluid/sharedstring", value: this.sharedString };
+        }
+        else {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
     }
@@ -123,7 +124,7 @@ export class SharedTextRunner
             const insights = this.collabDoc.createMap(insightsMapId);
             this.rootView.set(insightsMapId, insights.handle);
 
-            debug(`Not existing ${this.runtime.id} - ${performanceNow()}`);
+            debug(`Not existing ${this.runtime.id} - ${performance.now()}`);
             this.rootView.set("users", this.collabDoc.createMap().handle);
             const seq = SharedNumberSequence.create(this.collabDoc.runtime);
             this.rootView.set("sequence-test", seq.handle);
@@ -171,16 +172,16 @@ export class SharedTextRunner
             insights.set(newString.id, this.collabDoc.createMap().handle);
         }
 
-        debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
-        debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
+        debug(`collabDoc loaded ${this.runtime.id} - ${performance.now()}`);
+        debug(`Getting root ${this.runtime.id} - ${performance.now()}`);
 
         await this.rootView.wait("flowContainerMap");
 
         this.sharedString = await this.rootView.get<IFluidHandle<SharedString>>("text").get();
         this.insightsMap = await this.rootView.get<IFluidHandle<ISharedMap>>("insights").get();
-        debug(`Shared string ready - ${performanceNow()}`);
+        debug(`Shared string ready - ${performance.now()}`);
         debug(`id is ${this.runtime.id}`);
-        debug(`Partial load fired: ${performanceNow()}`);
+        debug(`Partial load fired: ${performance.now()}`);
 
         this.taskManager = await this.context.containerRuntime.getTaskManager();
 
@@ -255,15 +256,15 @@ export class SharedTextRunner
         if (this.sharedString.getLength() > 0) {
             theFlow.render(0, true);
         }
-        theFlow.timeToEdit = theFlow.timeToImpression = performanceNow();
+        theFlow.timeToEdit = theFlow.timeToImpression = performance.now();
 
         theFlow.setEdit(this.rootView);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.sharedString.loaded.then(() => {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            theFlow.loadFinished(performanceNow());
-            debug(`${this.runtime.id} fully loaded: ${performanceNow()} `);
+            theFlow.loadFinished(performance.now());
+            debug(`${this.runtime.id} fully loaded: ${performance.now()} `);
         });
     }
 }

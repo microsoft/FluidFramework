@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
 
 export interface IHelpTasks {
@@ -37,7 +37,7 @@ export function analyzeTasks(
     if (unhandledTasks.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const runnerClient = clients.get(runnerClientId)!;
-        assert(runnerClient);   // assume runnerClientId must be in the clients list.
+        assert(!!runnerClient);   // assume runnerClientId must be in the clients list.
         const permission = runnerClient.client && runnerClient.client.permission ? runnerClient.client.permission : [];
         const allowedTasks = unhandledTasks.filter((task) => permission && permission.includes(task));
         const robotNeeded = unhandledTasks.filter((task) => permission && !permission.includes(task));

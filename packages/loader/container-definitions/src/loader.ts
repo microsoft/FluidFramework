@@ -3,10 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import {
+    IRequest,
+    IResponse,
+    IFluidRouter,
+    IFluidCodeDetails,
+    IFluidPackage,
+    IProvideFluidCodeDetailsComparer,
+} from "@fluidframework/core-interfaces";
 import {
     IClientDetails,
     IDocumentMessage,
+    IPendingProposal,
     IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
@@ -15,15 +23,14 @@ import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { IFluidModule } from "./fluidModule";
-import { IFluidCodeDetails, IFluidPackage } from "./fluidPackage";
 import { AttachState } from "./runtime";
 
 /**
  * Code loading interface
  */
-export interface ICodeLoader {
+export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     /**
-     * Loads the package specified by IPackage and returns a promise to its entry point exports.
+     * Loads the package specified by code details and returns a promise to its entry point exports.
      */
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
@@ -36,11 +43,11 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
     /**
      * A resolved version of the Fluid package. All Fluid browser file entries should be absolute urls.
      */
-    resolvedPackage: IFluidPackage;
+    readonly resolvedPackage: Readonly<IFluidPackage>;
     /**
      * If not undefined, this id will be used to cache the entry point for the code package
      */
-    resolvedPackageCacheId: string | undefined;
+    readonly resolvedPackageCacheId: string | undefined;
 }
 
 /**
@@ -79,12 +86,13 @@ export interface IContainerEvents extends IEvent {
      * @param opsBehind - number of ops this client is behind (if present).
      */
     (event: "connect", listener: (opsBehind?: number) => void);
-    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
+    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
+    (event: "contextDisposed" | "contextChanged",
+        listener: (codeDetails: IFluidCodeDetails, previousCodeDetails: IFluidCodeDetails | undefined) => void);
     (event: "disconnected" | "attaching" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
-    (event: "pong" | "processTime", listener: (latency: number) => void);
 }
 
 /**
@@ -112,6 +120,29 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * Indicates the attachment state of the container to a host service.
      */
     readonly attachState: AttachState;
+
+    /**
+     * The current code details for the container's runtime
+     */
+    readonly codeDetails: IFluidCodeDetails | undefined
+
+    /**
+     * Returns true if the container has been closed, otherwise false
+     */
+    readonly closed: boolean;
+
+    /**
+     * Closes the container
+     */
+    close(error?: ICriticalContainerError): void;
+
+    /**
+     * Propose new code details that define the code to be loaded
+     * for this container's runtime. The returned promise will
+     * be true when the proposal is accepted, and false if
+     * the proposal is rejected.
+     */
+    proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>
 
     /**
      * Attaches the Container to the Container specified by the given Request.
@@ -158,7 +189,13 @@ export interface ILoader extends IFluidRouter {
      * Creates a new container using the specified chaincode but in an unattached state. While unattached all
      * updates will only be local until the user explicitly attaches the container to a service provider.
      */
-    createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer>;
+    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
+
+    /**
+     * Creates a new container using the specified snapshot but in an unattached state. While unattached all
+     * updates will only be local until the user explicitly attaches the container to a service provider.
+     */
+    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
 }
 
 /**

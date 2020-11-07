@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { EventEmitter } from "events";
+import { assert } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidHandle,
@@ -55,11 +55,11 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     public get IAgentScheduler() { return this; }
 
     private get clientId(): string {
-        if (!this.runtime.IFluidHandleContext.isAttached) {
+        if (this.runtime.attachState === AttachState.Detached) {
             return UnattachedClientId;
         }
         const clientId = this.runtime.clientId;
-        assert(clientId);
+        assert(!!clientId);
         return clientId;
     }
 
@@ -88,7 +88,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     public async register(...taskUrls: string[]): Promise<void> {
         for (const taskUrl of taskUrls) {
             if (this.registeredTasks.has(taskUrl)) {
-                return Promise.reject(`${taskUrl} is already registered`);
+                return Promise.reject(new Error(`${taskUrl} is already registered`));
             }
         }
         const unregisteredTasks: string[] = [];
@@ -105,7 +105,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
 
     public async pick(taskId: string, worker: () => Promise<void>): Promise<void> {
         if (this.locallyRunnableTasks.has(taskId)) {
-            return Promise.reject(`${taskId} is already attempted`);
+            return Promise.reject(new Error(`${taskId} is already attempted`));
         }
         this.locallyRunnableTasks.set(taskId, worker);
 
@@ -130,13 +130,13 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         const active = this.isActive();
         for (const taskUrl of taskUrls) {
             if (!this.locallyRunnableTasks.has(taskUrl)) {
-                return Promise.reject(`${taskUrl} was never registered`);
+                return Promise.reject(new Error(`${taskUrl} was never registered`));
             }
             // Note - the assumption is - we are connected.
             // If not - all tasks should have been dropped already on disconnect / attachment
             assert(active);
             if (this.getTaskClientId(taskUrl) !== this.clientId) {
-                return Promise.reject(`${taskUrl} was never picked`);
+                return Promise.reject(new Error(`${taskUrl} was never picked`));
             }
         }
         return this.releaseCore([...taskUrls]);
@@ -209,7 +209,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         // Probably okay for now to have every client try to do this.
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         quorum.on("removeMember", async (clientId: string) => {
-            assert(this.runtime.IFluidHandleContext.isAttached);
+            assert(this.runtime.objectsRoutingContext.isAttached);
             // Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
             if (this.isActive()) {
                 const leftTasks: string[] = [];
@@ -244,7 +244,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             }
         });
 
-        if (!this.runtime.IFluidHandleContext.isAttached) {
+        if (this.runtime.attachState === AttachState.Detached) {
             this.runtime.waitAttached().then(() => {
                 this.clearRunningTasks();
             }).catch((error) => {
@@ -253,7 +253,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         }
 
         this.runtime.on("disconnected", () => {
-            if (this.runtime.IFluidHandleContext.isAttached) {
+            if (this.runtime.attachState !== AttachState.Detached) {
                 this.clearRunningTasks();
             }
         });
@@ -300,7 +300,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
 
     private isActive() {
         // Scheduler should be active in detached container.
-        if (!this.runtime.IFluidHandleContext.isAttached) {
+        if (this.runtime.attachState === AttachState.Detached) {
             return true;
         }
         if (!this.runtime.connected) {
@@ -378,10 +378,6 @@ export class TaskManager implements ITaskManager {
     public get IFluidRouter() { return this; }
     public get ITaskManager() { return this; }
 
-    public get url() {
-        return this.innerHandle.absolutePath;
-    }
-
     protected readonly taskUrl = "_tasks";
 
     private readonly taskMap = new Map<string, IFluidRunnable>();
@@ -389,7 +385,7 @@ export class TaskManager implements ITaskManager {
         private readonly scheduler: IAgentScheduler,
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly context: IFluidDataStoreContext) {
-        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -424,9 +420,9 @@ export class TaskManager implements ITaskManager {
      */
     public async pick(taskId: string, worker?: boolean): Promise<void> {
         if (!this.context.deltaManager.clientDetails.capabilities.interactive) {
-            return Promise.reject("Picking not allowed on secondary copy");
+            return Promise.reject(new Error("Picking not allowed on secondary copy"));
         } else if (this.runtime.attachState !== AttachState.Attached) {
-            return Promise.reject("Picking not allowed in detached container in task manager");
+            return Promise.reject(new Error("Picking not allowed in detached container in task manager"));
         } else {
             const fullUrl = `/${this.runtime.id}/${this.taskUrl}/${taskId}`;
             return this.scheduler.pick(
@@ -451,13 +447,13 @@ export class TaskManager implements ITaskManager {
         };
         const response = await this.runtime.loader.request(request);
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            return Promise.reject(`Invalid agent route: ${url}`);
+            return Promise.reject(new Error(`Invalid agent route: ${url}`));
         }
 
         const fluidObject = response.value as IFluidObject;
         const agent = fluidObject.IFluidRunnable;
         if (agent === undefined) {
-            return Promise.reject("Fluid object does not implement IFluidRunnable");
+            return Promise.reject(new Error("Fluid object does not implement IFluidRunnable"));
         }
 
         return agent.run();

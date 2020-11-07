@@ -39,14 +39,11 @@ export async function getSessionStorageContainer(
     const module = { fluidExport: containerRuntimeFactory };
     const codeLoader = { load: async () => module };
 
-    const loader = new Loader(
+    const loader = new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
-        { blockUpdateMarkers: true },
-        {},
-        new Map(),
-    );
+    });
 
     let container: Container;
 
@@ -57,10 +54,10 @@ export async function getSessionStorageContainer(
         container = await loader.createDetachedContainer({ package: "", config: {} });
         await container.attach({ url });
     } else {
-        // The InsecureTinyliciousUrlResolver expects the url of the request to be the documentId.
         container = await loader.resolve({ url });
         // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
         // new container here, where we expect this to be loading an existing container.
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!container.existing) {
             throw new Error("Attempted to load a non-existing container");
         }

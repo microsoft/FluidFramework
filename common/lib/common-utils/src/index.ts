@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./assert";
 export * from "./indexNode";
 export * from "./base64Encoding";
 export * from "./batchManager";
@@ -19,3 +20,5 @@ export * from "./timer";
 export * from "./trace";
 export * from "./typedEventEmitter";
 export * from "./unreachable";
+export * from "./lazy";
+export * from "./performanceIsomorphic";

@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IFluidConfiguration,
     IRequest,
     IResponse,
+    IFluidCodeDetails,
+    IFluidCodeDetailsComparer,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -18,15 +19,14 @@ import {
     IDeltaManager,
     ILoader,
     IRuntime,
-    IRuntimeFactory,
     IRuntimeState,
     ICriticalContainerError,
     ContainerWarning,
     AttachState,
+    IFluidModule,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentAttributes,
     IDocumentMessage,
@@ -40,19 +40,21 @@ import {
     ISummaryTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { BlobManager } from "./blobManager";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
-import { NullRuntime } from "./nullRuntime";
+import { NullChaincode, NullRuntime } from "./nullRuntime";
+
+const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
         scope: IFluidObject,
         codeLoader: ICodeLoader,
-        runtimeFactory: IRuntimeFactory,
-        baseSnapshot: ISnapshotTree | null,
+        codeDetails: IFluidCodeDetails,
+        baseSnapshot: ISnapshotTree | undefined,
         attributes: IDocumentAttributes,
-        blobManager: BlobManager | undefined,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
@@ -68,10 +70,9 @@ export class ContainerContext implements IContainerContext {
             container,
             scope,
             codeLoader,
-            runtimeFactory,
+            codeDetails,
             baseSnapshot,
             attributes,
-            blobManager,
             deltaManager,
             quorum,
             loader,
@@ -112,11 +113,6 @@ export class ContainerContext implements IContainerContext {
         return this.container.parentBranch;
     }
 
-    // Back-compat: supporting <= 0.16 data stores
-    public get connectionState(): ConnectionState {
-        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
-    }
-
     public get runtimeVersion(): string | undefined {
         return this.runtime?.runtimeVersion;
     }
@@ -138,12 +134,12 @@ export class ContainerContext implements IContainerContext {
     }
 
     public get options(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.container.options;
     }
 
     public get configuration(): IFluidConfiguration {
         const config: Partial<IFluidConfiguration> = {
-            canReconnect: this.container.canReconnect,
             scopes: this.container.scopes,
         };
         return config as IFluidConfiguration;
@@ -171,14 +167,28 @@ export class ContainerContext implements IContainerContext {
         return this._disposed;
     }
 
+    private readonly fluidModuleP = new LazyPromise<IFluidModule>(async () => {
+        if (this.codeDetails === undefined) {
+            const fluidExport =  new NullChaincode();
+            return {
+                fluidExport,
+            };
+        }
+
+        const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
+            async () => this.codeLoader.load(this.codeDetails),
+        );
+
+        return fluidModule;
+    });
+
     constructor(
         private readonly container: Container,
         public readonly scope: IFluidObject,
         public readonly codeLoader: ICodeLoader,
-        public readonly runtimeFactory: IRuntimeFactory,
-        private readonly _baseSnapshot: ISnapshotTree | null,
+        public readonly codeDetails: IFluidCodeDetails,
+        private readonly _baseSnapshot: ISnapshotTree | undefined,
         private readonly attributes: IDocumentAttributes,
-        public readonly blobManager: BlobManager | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
         public readonly loader: ILoader,
@@ -240,16 +250,9 @@ export class ContainerContext implements IContainerContext {
     public setConnectionState(connected: boolean, clientId?: string) {
         const runtime = this.runtime;
 
-        assert.strictEqual(connected, this.connected, "Mismatch in connection state while setting");
+        assert(connected === this.connected, "Mismatch in connection state while setting");
 
-        // Back-compat: supporting <= 0.16 data stores
-        if (runtime.setConnectionState !== undefined) {
-            runtime.setConnectionState(connected, clientId);
-        } else if (runtime.changeConnectionState !== undefined) {
-            runtime.changeConnectionState(this.connectionState, clientId);
-        } else {
-            assert.fail("Runtime missing both setConnectionState and changeConnectionState");
-        }
+        runtime.setConnectionState(connected, clientId);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
@@ -284,7 +287,46 @@ export class ContainerContext implements IContainerContext {
         return this.container.getAbsoluteUrl(relativeUrl);
     }
 
+    /**
+     * Determines if the current code details of the context
+     * satisfy the incoming constraint code details
+     */
+    public async satisfies(constraintCodeDetails: IFluidCodeDetails) {
+        const comparers: IFluidCodeDetailsComparer[] = [];
+
+        const maybeCompareCodeLoader = this.codeLoader;
+        if (maybeCompareCodeLoader.IFluidCodeDetailsComparer !== undefined) {
+            comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
+        }
+
+        const maybeCompareExport = (await this.fluidModuleP).fluidExport;
+        if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
+            comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
+        }
+
+        // if there are not comparers it is not possible to know
+        // if the current satisfy the incoming, so return false,
+        // as assuming they do not satisfy is safer .e.g we will
+        // reload, rather than potentially running with
+        // incompatible code
+        if (comparers.length === 0) {
+            return false;
+        }
+
+        for (const comparer of comparers) {
+            const satisfies = await comparer.satisfies(this.codeDetails, constraintCodeDetails);
+            if (satisfies === false) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private async load() {
-        this._runtime = await this.runtimeFactory.instantiateRuntime(this);
+        const maybeFactory = (await this.fluidModuleP).fluidExport.IRuntimeFactory;
+        if (maybeFactory === undefined) {
+            throw new Error(PackageNotFactoryError);
+        }
+        this._runtime = await maybeFactory.instantiateRuntime(this);
     }
 }

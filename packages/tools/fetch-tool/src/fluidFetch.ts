@@ -5,11 +5,11 @@
 
 import fs from "fs";
 import util from "util";
-import { isSharepointURL } from "@fluidframework/odsp-utils";
+import { isSharepointURL, IOdspDriveItem } from "@fluidframework/odsp-doclib-utils";
 import { paramSaveDir, paramURL, parseArguments } from "./fluidFetchArgs";
 import { connectionInfo, fluidFetchInit } from "./fluidFetchInit";
 import { fluidFetchMessages } from "./fluidFetchMessages";
-import { getSharepointFiles } from "./fluidFetchSharePoint";
+import { getSharepointFiles, getSingleSharePointFile } from "./fluidFetchSharePoint";
 import { fluidFetchSnapshot } from "./fluidFetchSnapshot";
 
 async function fluidFetchOneFile(urlStr: string, name?: string) {
@@ -29,6 +29,21 @@ async function fluidFetchOneFile(urlStr: string, name?: string) {
 
     await fluidFetchMessages(documentService, saveDir);
     await fluidFetchSnapshot(documentService, saveDir);
+}
+
+async function tryFluidFetchOneSharePointFile(server: string, driveItem: IOdspDriveItem) {
+    const { path, name, drive, item } = driveItem;
+    console.log(`File: ${path}/${name}`);
+    await fluidFetchOneFile(`https://${server}/_api/v2.1/drives/${drive}/items/${item}`, name);
+}
+
+function getSharePointSpecificDriveItem(url: URL): { drive: string; item: string } | undefined {
+    if (url.searchParams.has("driveId") && url.searchParams.has("itemId")) {
+        return {
+            drive: url.searchParams.get("driveId") as string,
+            item: url.searchParams.get("itemId") as string,
+        };
+    }
 }
 
 function getSharepointServerRelativePathFromURL(url: URL) {
@@ -59,14 +74,21 @@ async function fluidFetchMain() {
     const url = new URL(paramURL);
     const server = url.hostname;
     if (isSharepointURL(server)) {
+        // See if the url already has the specific item
+        const driveItem = getSharePointSpecificDriveItem(url);
+        if (driveItem) {
+            const file = await getSingleSharePointFile(server, driveItem.drive, driveItem.item);
+            await tryFluidFetchOneSharePointFile(server, file);
+            return;
+        }
+
         // See if the url given represent a sharepoint directory
         const serverRelativePath = getSharepointServerRelativePathFromURL(url);
         if (serverRelativePath) {
             const files = await getSharepointFiles(server, serverRelativePath, false);
-            for (const { path, name, drive, item } of files) {
-                if (name.endsWith(".b") || name.endsWith(".fluid")) {
-                    console.log(`File: ${path}/${name}`);
-                    await fluidFetchOneFile(`https://${server}/_api/v2.1/drives/${drive}/items/${item}`, name);
+            for (const file of files) {
+                if (file.name.endsWith(".b") || file.name.endsWith(".fluid")) {
+                    await tryFluidFetchOneSharePointFile(server, file);
                 }
             }
             return;

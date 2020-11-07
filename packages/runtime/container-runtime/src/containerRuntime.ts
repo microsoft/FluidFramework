@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { TaskManagerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -14,10 +13,11 @@ import {
     IFluidSerializer,
     IRequest,
     IResponse,
+    IFluidHandle,
+    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IBlobManager,
     IFluidTokenProvider,
     IContainerContext,
     IDeltaManager,
@@ -29,10 +29,16 @@ import {
     ICriticalContainerError,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
 import {
+    IContainerRuntime,
+    IContainerRuntimeDirtyable,
+    IContainerRuntimeEvents,
+} from "@fluidframework/container-runtime-definitions";
+import {
+    assert,
     Deferred,
     Trace,
+    TypedEventEmitter,
     unreachableCase,
 } from "@fluidframework/common-utils";
 import {
@@ -45,6 +51,7 @@ import {
     BlobCacheStorageService,
     buildSnapshotTree,
     readAndParse,
+    readAndParseFromBlobs,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
@@ -52,7 +59,6 @@ import {
     TreeTreeEntry,
 } from "@fluidframework/protocol-base";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
@@ -88,6 +94,7 @@ import {
     CreateSummarizerNodeSource,
     IAgentScheduler,
     ITaskManager,
+    ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
@@ -105,6 +112,8 @@ import {
     LocalDetachedFluidDataStoreContext,
     RemotedFluidDataStoreContext,
     createAttributesBlob,
+    currentSnapshotFormatVersion,
+    IFluidDataStoreAttributes,
 } from "./dataStoreContext";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -117,8 +126,12 @@ import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
+import { BlobManager } from "./blobManager";
+import { convertSnapshotToSummaryTree } from "./utils";
 
 const chunksBlobName = ".chunks";
+const blobsTreeName = ".blobs";
+const nonDataStorePaths = [".protocol", ".logTail", ".serviceProtocol", blobsTreeName];
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -129,6 +142,8 @@ export enum ContainerMessageType {
 
     // Chunked operation.
     ChunkedOp = "chunkedOp",
+
+    BlobAttach = "blobAttach",
 }
 
 export interface IChunkedOp {
@@ -169,6 +184,7 @@ export interface IUploadedSummaryData {
 export interface IUnsubmittedSummaryData extends Partial<IGeneratedSummaryData>, Partial<IUploadedSummaryData> {
     readonly referenceSequenceNumber: number;
     readonly submitted: false;
+    readonly reason: "disconnected";
 }
 
 export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedSummaryData {
@@ -225,6 +241,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.FluidDataStoreOp:
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
+        case ContainerMessageType.BlobAttach:
         case MessageType.Operation:
             return true;
         default:
@@ -284,15 +301,15 @@ export class ScheduleManager {
                 return;
             }
 
-            // If only length one then clear
+            // If the batch contains only a single op, clear the batch flag.
             if (messages.length === 1) {
-                delete messages[0].metadata;
+                delete firstMessageMetadata.batch;
                 return;
             }
 
             // Set the batch flag to false on the last message to indicate the end of the send batch
             const lastMessage = messages[messages.length - 1];
-            lastMessage.metadata = { ...lastMessage.metadata, ...{ batch: false } };
+            lastMessage.metadata = { ...lastMessage.metadata, batch: false };
         });
 
         // Listen for updates and peek at the inbound
@@ -450,7 +467,7 @@ class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
  */
-export class ContainerRuntime extends EventEmitter
+export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
     public get IContainerRuntime() { return this; }
     public get IContainerRuntimeDirtyable() { return this; }
@@ -476,6 +493,7 @@ export class ContainerRuntime extends EventEmitter
         // Back-compat: <= 0.18 loader
         if (context.deltaManager.lastSequenceNumber === undefined) {
             Object.defineProperty(context.deltaManager, "lastSequenceNumber", {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 get: () => (context.deltaManager as any).referenceSequenceNumber,
             });
         }
@@ -483,10 +501,9 @@ export class ContainerRuntime extends EventEmitter
         const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
 
         const chunkId = context.baseSnapshot?.blobs[chunksBlobName];
-        const chunks = chunkId
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            ? await readAndParse<[string, string[]][]>(context.storage!, chunkId)
-            : [];
+        const chunks = context.baseSnapshot && chunkId ? context.storage ?
+            await readAndParse<[string, string[]][]>(context.storage, chunkId) :
+            readAndParseFromBlobs<[string, string[]][]>(context.baseSnapshot.blobs, chunkId) : [];
 
         const runtime = new ContainerRuntime(
             context,
@@ -496,7 +513,8 @@ export class ContainerRuntime extends EventEmitter
             containerScope,
             requestHandler);
 
-        // Create all internal stores in first load.
+        // Create all internal data stores if not already existing on storage or loaded a detached
+        // container from snapshot(ex. draft mode).
         if (!context.existing) {
             await runtime.createRootDataStore(TaskManagerFactory.type, taskSchedulerId);
         }
@@ -520,6 +538,7 @@ export class ContainerRuntime extends EventEmitter
     }
 
     public get options(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.context.options;
     }
 
@@ -529,11 +548,6 @@ export class ContainerRuntime extends EventEmitter
 
     public get clientDetails(): IClientDetails {
         return this.context.clientDetails;
-    }
-
-    public get blobManager(): IBlobManager {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.context.blobManager!;
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -553,7 +567,12 @@ export class ContainerRuntime extends EventEmitter
         return this.context.snapshotFn;
     }
 
-    public get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown) => void {
+    public get reSubmitFn(): (
+        type: ContainerMessageType,
+        content: any,
+        localOpMetadata: unknown,
+        opMetadata: Record<string, unknown> | undefined,
+    ) => void {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.reSubmit;
     }
@@ -589,9 +608,14 @@ export class ContainerRuntime extends EventEmitter
     public nextSummarizerP?: Promise<Summarizer>;
     public nextSummarizerD?: Deferred<Summarizer>;
 
-    public readonly IFluidSerializer: IFluidSerializer = new FluidSerializer();
+    // Back compat: 0.28, can be removed in 0.29
+    public readonly IFluidSerializer: IFluidSerializer;
 
     public readonly IFluidHandleContext: IFluidHandleContext;
+
+    public get codeDetails(): IFluidCodeDetails {
+        return this.context.codeDetails ?? this.getQuorum().get("code") as IFluidCodeDetails;
+    }
 
     // internal logger for ContainerRuntime
     private readonly _logger: ITelemetryLogger;
@@ -655,6 +679,7 @@ export class ContainerRuntime extends EventEmitter
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
+    private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
 
     // Local copy of incomplete received chunks.
@@ -683,6 +708,7 @@ export class ContainerRuntime extends EventEmitter
         this.chunkMap = new Map<string, string[]>(chunks);
 
         this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
+        this.IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
 
         this.logger = ChildLogger.create(context.logger, undefined, {
             runtimeVersion: pkgVersion,
@@ -702,9 +728,8 @@ export class ContainerRuntime extends EventEmitter
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         const isSummarizerClient = this.clientDetails.type === summarizerClientType;
-        // Use runtimeOptions if provided, otherwise check localStorage, defaulting to true/enabled.
-        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode
-            ?? (typeof localStorage === "object" && localStorage?.fluidDisableSummarizerNode ? false : true);
+        // Use runtimeOptions if provided, otherwise default to true/enabled.
+        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode ?? true;
         const summarizerNode = SummarizerNode.createRoot(
             this.logger,
             // Summarize function to call when summarize is called
@@ -746,10 +771,10 @@ export class ContainerRuntime extends EventEmitter
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree | string>();
 
-        if (context.baseSnapshot) {
+        if (typeof context.baseSnapshot === "object") {
             const baseSnapshot = context.baseSnapshot;
             Object.keys(baseSnapshot.trees).forEach((value) => {
-                if (value !== ".protocol" && value !== ".logTail" && value !== ".serviceProtocol") {
+                if (!nonDataStorePaths.includes(value)) {
                     const tree = baseSnapshot.trees[value];
                     fluidDataStores.set(value, tree);
                 }
@@ -758,16 +783,64 @@ export class ContainerRuntime extends EventEmitter
 
         // Create a context for each of them
         for (const [key, value] of fluidDataStores) {
-            const remoteContext = new RemotedFluidDataStoreContext(
-                key,
-                typeof value === "string" ? value : Promise.resolve(value),
-                this,
-                this.storage,
-                this.containerScope,
-                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
-                this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
-            this.setNewContext(key, remoteContext);
+            let dataStoreContext: FluidDataStoreContext;
+            // If we have a detached container, then create local data store contexts.
+            if (this.attachState !== AttachState.Detached) {
+                dataStoreContext = new RemotedFluidDataStoreContext(
+                    key,
+                    typeof value === "string" ? value : Promise.resolve(value),
+                    this,
+                    this.storage,
+                    this.containerScope,
+                    this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
+                    this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
+            } else {
+                let pkgFromSnapshot: string[];
+                if (typeof context.baseSnapshot !== "object") {
+                    throw new Error("Snapshot should be there to load from!!");
+                }
+                const snapshotTree = value as ISnapshotTree;
+                // Need to rip through snapshot.
+                const { pkg, snapshotFormatVersion, isRootDataStore }
+                    = readAndParseFromBlobs<IFluidDataStoreAttributes>(
+                    snapshotTree.blobs,
+                    snapshotTree.blobs[".component"]);
+                // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
+                // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
+                // However the feature of loading a detached container from snapshot, is added when the
+                // snapshotFormatVersion is "0.1", so we don't expect it to be anything else.
+                if (snapshotFormatVersion === currentSnapshotFormatVersion) {
+                    pkgFromSnapshot = JSON.parse(pkg) as string[];
+                } else {
+                    throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
+                }
+
+                /**
+                 * If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that data
+                 * stores in older documents are not garbage collected incorrectly. This may lead to additional roots
+                 * in the document but they won't break.
+                 */
+                dataStoreContext = new LocalFluidDataStoreContext(
+                    key,
+                    pkgFromSnapshot,
+                    this,
+                    this.storage,
+                    this.containerScope,
+                    this.summaryTracker.createOrGetChild(key, this.deltaManager.lastSequenceNumber),
+                    this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
+                    (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+                    snapshotTree,
+                    isRootDataStore ?? true);
+            }
+            this.setNewContext(key, dataStoreContext);
         }
+
+        this.blobManager = new BlobManager(
+            this.IFluidHandleContext,
+            () => this.storage,
+            (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+        );
+        this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName]);
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
@@ -781,6 +854,12 @@ export class ContainerRuntime extends EventEmitter
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);
+        });
+
+        this.context.quorum.on("addProposal",(proposal)=>{
+            if (proposal.key === "code" || proposal.key === "code2") {
+                this.emit("codeDetailsProposed", proposal.value, proposal);
+            }
         });
 
         if (this.context.previousRuntimeState === undefined || this.context.previousRuntimeState.state === undefined) {
@@ -845,11 +924,20 @@ export class ContainerRuntime extends EventEmitter
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
-    public dispose(): void {
+    public dispose(error?: Error): void {
         if (this._disposed) {
             return;
         }
         this._disposed = true;
+
+        this.logger.sendTelemetryEvent({
+            eventName: "ContainerRuntimeDisposed",
+            category: "generic",
+            isDirty: this.isDocumentDirty(),
+            lastSequenceNumber: this.deltaManager.lastSequenceNumber,
+            attachState: this.attachState,
+            message: error?.message,
+        });
 
         this.summaryManager.dispose();
         this.summarizer.dispose();
@@ -890,7 +978,10 @@ export class ContainerRuntime extends EventEmitter
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "_summarizer" || request.url === "/_summarizer") {
+        const parser = RequestParser.create(request);
+        const id = parser.pathParts[0];
+
+        if (id === "_summarizer" && parser.pathParts.length === 1) {
             return {
                 status: 200,
                 mimeType: "fluid/object",
@@ -898,7 +989,7 @@ export class ContainerRuntime extends EventEmitter
             };
         }
         if (this.requestHandler !== undefined) {
-            return this.requestHandler(request, this);
+            return this.requestHandler(parser, this);
         }
 
         return {
@@ -913,23 +1004,35 @@ export class ContainerRuntime extends EventEmitter
      * @param request - Request made to the handler.
      */
     public async resolveHandle(request: IRequest): Promise<IResponse> {
-        const requestParser = new RequestParser(request);
+        const requestParser = RequestParser.create(request);
+        const id = requestParser.pathParts[0];
 
-        if (requestParser.pathParts.length > 0) {
-            const wait =
-                typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+        if (id === "_channel") {
+            return this.resolveHandle(requestParser.createSubRequest(1));
+        }
 
-            const dataStore = await this.getDataStore(requestParser.pathParts[0], wait);
-            const subRequest = requestParser.createSubRequest(1);
-            if (subRequest !== undefined) {
-                return dataStore.IFluidRouter.request(subRequest);
-            } else {
+        if (id === this.blobManager.basePath && requestParser.isLeaf(2)) {
+            const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
+            if (handle) {
                 return {
                     status: 200,
                     mimeType: "fluid/object",
-                    value: dataStore,
+                    value: handle.get(),
+                };
+            } else {
+                return {
+                    status: 404,
+                    mimeType: "text/plain",
+                    value: "blob not found",
                 };
             }
+        } else if (requestParser.pathParts.length > 0) {
+            const wait =
+                typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+
+            const dataStore = await this.getDataStore(id, wait);
+            const subRequest = requestParser.createSubRequest(1);
+            return dataStore.IFluidRouter.request(subRequest);
         }
 
         return {
@@ -984,6 +1087,8 @@ export class ContainerRuntime extends EventEmitter
             const content = JSON.stringify([...this.chunkMap]);
             summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
+        const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
+        summaryTreeBuilder.addWithStats(".blobs", blobsTree);
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
@@ -1001,16 +1106,9 @@ export class ContainerRuntime extends EventEmitter
             nextSummarizerD: this.nextSummarizerD,
         };
 
-        this.dispose();
+        this.dispose(new Error("ContainerRuntimeStopped"));
 
         return { snapshot, state };
-    }
-
-    // Back-compat: <= 0.17
-    public changeConnectionState(state: ConnectionState, clientId?: string) {
-        if (state !== ConnectionState.Connecting) {
-            this.setConnectionState(state === ConnectionState.Connected, clientId);
-        }
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
@@ -1036,7 +1134,7 @@ export class ContainerRuntime extends EventEmitter
                 context.setConnectionState(connected, clientId);
             } catch (error) {
                 this._logger.sendErrorEvent({
-                    eventName: "ChangeConnectionStateError",
+                    eventName: "SetConnectionStateError",
                     clientId,
                     fluidDataStore,
                 }, error);
@@ -1046,7 +1144,7 @@ export class ContainerRuntime extends EventEmitter
         raiseConnectedEvent(this._logger, this, connected, clientId);
 
         if (connected) {
-            assert(clientId);
+            assert(!!clientId);
             this.summaryManager.setConnected(clientId);
         } else {
             this.summaryManager.setDisconnected();
@@ -1103,6 +1201,10 @@ export class ContainerRuntime extends EventEmitter
                 case ContainerMessageType.FluidDataStoreOp:
                     this.processFluidDataStoreOp(message, local, localMessageMetadata);
                     break;
+                case ContainerMessageType.BlobAttach:
+                    assert(message?.metadata?.blobId);
+                    this.blobManager.addBlobId(message.metadata.blobId);
+                    break;
                 default:
             }
 
@@ -1152,7 +1254,7 @@ export class ContainerRuntime extends EventEmitter
         const deferredContext = this.ensureContextDeferred(id);
 
         if (!wait && !deferredContext.isCompleted) {
-            return Promise.reject(`Process ${id} does not exist`);
+            return Promise.reject(new Error(`DataStore ${id} does not exist`));
         }
 
         const context = await deferredContext.promise;
@@ -1234,12 +1336,12 @@ export class ContainerRuntime extends EventEmitter
 
     public async createDataStore(pkg: string | string[]): Promise<IFluidRouter>
     {
-        return this._createDataStore(pkg);
+        return this._createDataStore(pkg, false /* isRoot */);
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>
     {
-        const fluidDataStore = await this._createDataStore(pkg, rootDataStoreId);
+        const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
         fluidDataStore.bindToContext();
         return fluidDataStore;
     }
@@ -1254,21 +1356,33 @@ export class ContainerRuntime extends EventEmitter
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            undefined,
+            false /* isRootDataStore */,
         );
         this.setupNewContext(context);
         return context;
     }
 
-    private async _createDataStore(pkg: string | string[], id = uuid()): Promise<IFluidDataStoreChannel>
+    public async _createDataStoreWithProps(pkg: string | string[], props?: any, id = uuid()):
+        Promise<IFluidDataStoreChannel> {
+        return this._createFluidDataStoreContext(
+            Array.isArray(pkg) ? pkg : [pkg], id, false /* isRoot */, props).realize();
+    }
+
+    private async _createDataStore(
+        pkg: string | string[],
+        isRoot: boolean,
+        id = uuid(),
+        ): Promise<IFluidDataStoreChannel>
     {
-        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id).realize();
+        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot).realize();
     }
 
     private canSendOps() {
         return this.connected && !this.deltaManager.readonly;
     }
 
-    private _createFluidDataStoreContext(pkg: string[], id) {
+    private _createFluidDataStoreContext(pkg: string[], id: string, isRoot: boolean, props?: any) {
         const context = new LocalFluidDataStoreContext(
             id,
             pkg,
@@ -1278,6 +1392,9 @@ export class ContainerRuntime extends EventEmitter
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            undefined,
+            isRoot,
+            props,
         );
         this.setupNewContext(context);
         return context;
@@ -1318,10 +1435,6 @@ export class ContainerRuntime extends EventEmitter
         if (this.leader) {
             this.runTaskAnalyzer();
         }
-    }
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
     }
 
     /**
@@ -1418,6 +1531,18 @@ export class ContainerRuntime extends EventEmitter
             return;
         }
 
+         // If a non-local operation then go and create the object, otherwise mark it as officially attached.
+        if (this.contexts.has(attachMessage.id)) {
+            const error = new Error("DataCorruption: Duplicate data store created with existing ID");
+            this.logger.sendErrorEvent({
+                eventName: "DuplicateDataStoreId",
+                sequenceNumber: message.sequenceNumber,
+                clientId: message.clientId,
+                referenceSequenceNumber: message.referenceSequenceNumber,
+            }, error);
+            throw error;
+        }
+
         const flatBlobs = new Map<string, string>();
         let flatBlobsP = Promise.resolve(flatBlobs);
         let snapshotTreeP: Promise<ISnapshotTree> | null = null;
@@ -1444,13 +1569,10 @@ export class ContainerRuntime extends EventEmitter
                     sequenceNumber: message.sequenceNumber,
                     snapshot: attachMessage.snapshot ?? {
                         id: null,
-                        entries: [createAttributesBlob(pkg)],
+                        entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
                     },
                 }),
             pkg);
-
-        // If a non-local operation then go and create the object, otherwise mark it as officially attached.
-        assert(!this.contexts.has(attachMessage.id), "Store attached with existing ID");
 
         // Resolve pending gets and store off any new ones
         this.setNewContext(attachMessage.id, remotedFluidDataStoreContext);
@@ -1501,12 +1623,12 @@ export class ContainerRuntime extends EventEmitter
     private getContextDeferred(id: string): Deferred<FluidDataStoreContext> {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const deferred = this.contextsDeferred.get(id)!;
-        assert(deferred);
+        assert(!!deferred);
         return deferred;
     }
 
     private setNewContext(id: string, context?: FluidDataStoreContext) {
-        assert(context);
+        assert(!!context);
         assert(!this.contexts.has(id));
         this.contexts.set(id, context);
         const deferred = this.ensureContextDeferred(id);
@@ -1516,7 +1638,7 @@ export class ContainerRuntime extends EventEmitter
     private getContext(id: string): FluidDataStoreContext {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const context = this.contexts.get(id)!;
-        assert(context);
+        assert(!!context);
         return context;
     }
 
@@ -1558,9 +1680,18 @@ export class ContainerRuntime extends EventEmitter
                         || this.attachOpFiredForDataStore.has(key)),
                 )
                 .map(([key, value]) => {
-                    const snapshot = value.generateAttachMessage().snapshot;
-                    const componentSummary = convertToSummaryTree(snapshot, true);
-                    builder.addWithStats(key, componentSummary);
+                    let dataStoreSummary: ISummarizeResult;
+                    if (value.isLoaded) {
+                        const snapshot = value.generateAttachMessage().snapshot;
+                        dataStoreSummary = convertToSummaryTree(snapshot, true);
+                    } else {
+                        // If this data store is not yet loaded, then there should be no changes in the snapshot from
+                        // which it was created as it is detached container. So just use the previous snapshot.
+                        assert(!!this.context.baseSnapshot,
+                            "BaseSnapshot should be there as detached container loaded from snapshot");
+                        dataStoreSummary = convertSnapshotToSummaryTree(this.context.baseSnapshot.trees[key]);
+                    }
+                    builder.addWithStats(key, dataStoreSummary);
                 });
         } while (notBoundContextsLength !== this.notBoundContexts.size);
 
@@ -1602,14 +1733,14 @@ export class ContainerRuntime extends EventEmitter
         try {
             await this.scheduleManager.pause();
 
-            const attemptData: IUnsubmittedSummaryData = {
+            const attemptData: Omit<IUnsubmittedSummaryData, "reason"> = {
                 referenceSequenceNumber: summaryRefSeqNum,
                 submitted: false,
             };
 
             if (!this.connected) {
                 // If summarizer loses connection it will never reconnect
-                return attemptData;
+                return { ...attemptData, reason: "disconnected" };
             }
 
             const trace = Trace.start();
@@ -1621,8 +1752,15 @@ export class ContainerRuntime extends EventEmitter
             };
 
             if (!this.connected) {
-                return { ...attemptData, ...generateData };
+                return { ...attemptData, ...generateData, reason: "disconnected" };
             }
+
+            // Ensure that lastSequenceNumber has not changed after pausing
+            const lastSequenceNumber = this.deltaManager.lastSequenceNumber;
+            assert(
+                lastSequenceNumber === summaryRefSeqNum,
+                `lastSequenceNumber changed while paused. ${lastSequenceNumber} !== ${summaryRefSeqNum}`,
+            );
 
             const handle = await this.storage.uploadSummaryWithContext(
                 treeWithStats.summary,
@@ -1653,8 +1791,16 @@ export class ContainerRuntime extends EventEmitter
             };
 
             if (!this.connected) {
-                return { ...attemptData, ...generateData, ...uploadData };
+                return { ...attemptData, ...generateData, ...uploadData, reason: "disconnected" };
             }
+
+            // We need the summary op's reference sequence number to match our summary sequence number
+            // Otherwise we'll get the wrong sequence number stamped on the summary's .protocol attributes
+            assert(
+                this.deltaManager.lastSequenceNumber === summaryRefSeqNum,
+                `lastSequenceNumber changed before the summary op could be submitted. `
+                    + `${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
+            );
 
             const clientSequenceNumber =
                 this.submitSystemMessage(MessageType.Summarize, summaryMessage);
@@ -1737,10 +1883,16 @@ export class ContainerRuntime extends EventEmitter
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
     }
 
+    public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+        return this.blobManager.createBlob(blob);
+    }
+
     private submit(
         type: ContainerMessageType,
         content: any,
-        localOpMetadata: unknown = undefined): void {
+        localOpMetadata: unknown = undefined,
+        opMetadata: Record<string, unknown> | undefined = undefined,
+    ): void {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
@@ -1750,9 +1902,9 @@ export class ContainerRuntime extends EventEmitter
             const maxOpSize = this.context.deltaManager.maxMessageSize;
 
             // If in manual flush mode we will trigger a flush at the next turn break
-            let batchBegin = false;
             if (this.flushMode === FlushMode.Manual && !this.needsFlush) {
-                batchBegin = true;
+                // eslint-disable-next-line no-param-reassign
+                opMetadata = { ...opMetadata, batch: true };
                 this.needsFlush = true;
 
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
@@ -1768,19 +1920,19 @@ export class ContainerRuntime extends EventEmitter
             // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
             // there will be a lot of escape characters that can make it up to 2x bigger!
             // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
-            if (serializedContent.length <= maxOpSize) {
+            if (!serializedContent || serializedContent.length <= maxOpSize) {
                 clientSequenceNumber = this.submitRuntimeMessage(
                     type,
                     content,
-                    this._flushMode === FlushMode.Manual,
-                    batchBegin ? { batch: true } : undefined);
+                    /* batch: */ this._flushMode === FlushMode.Manual,
+                    opMetadata);
             } else {
                 clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             }
         }
 
         // Let the PendingStateManager know that a message was submitted.
-        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata);
+        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata, opMetadata);
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }
@@ -1856,7 +2008,12 @@ export class ContainerRuntime extends EventEmitter
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private reSubmit(type: ContainerMessageType, content: any, localOpMetadata: unknown) {
+    private reSubmit(
+        type: ContainerMessageType,
+        content: any,
+        localOpMetadata: unknown,
+        opMetadata: Record<string, unknown> | undefined,
+    ) {
         switch (type) {
             case ContainerMessageType.FluidDataStoreOp:
                 // For Operations, call resubmitDataStoreOp which will find the right store
@@ -1868,6 +2025,9 @@ export class ContainerRuntime extends EventEmitter
                 break;
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
+            case ContainerMessageType.BlobAttach:
+                this.submit(type, content, localOpMetadata, opMetadata);
+                break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }
@@ -1876,7 +2036,7 @@ export class ContainerRuntime extends EventEmitter
     private resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
         const context = this.getContext(envelope.address);
-        assert(context, "There should be a store context for the op");
+        assert(!!context, "There should be a store context for the op");
         context.reSubmit(envelope.contents, localOpMetadata);
     }
 
@@ -2024,13 +2184,13 @@ export class ContainerRuntime extends EventEmitter
 
     private async getVersionFromStorage(versionId: string): Promise<IVersion> {
         const versions = await this.storage.getVersions(versionId, 1);
-        assert(versions && versions[0], "Failed to get version from storage");
+        assert(!!versions && !!versions[0], "Failed to get version from storage");
         return versions[0];
     }
 
     private async getSnapshotFromStorage(version: IVersion): Promise<ISnapshotTree> {
         const snapshot = await this.storage.getSnapshotTree(version);
-        assert(snapshot, "Failed to get snapshot from storage");
+        assert(!!snapshot, "Failed to get snapshot from storage");
         return snapshot;
     }
 }

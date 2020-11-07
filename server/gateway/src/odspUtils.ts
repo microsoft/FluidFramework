@@ -10,11 +10,12 @@ import {
     getOdspRefreshTokenFn,
     IClientConfig,
     IOdspTokens,
-} from "@fluidframework/odsp-utils";
+} from "@fluidframework/odsp-doclib-utils";
 
 const spoTenants = new Map<string, string>([
     ["spo", "microsoft-my.sharepoint.com"],
     ["spo-df", "microsoft-my.sharepoint-df.com"],
+    ["spo-shared", "microsoft.sharepoint.com"],
 ]);
 
 const pushSrv = "pushchannel.1drv.ms";
@@ -40,7 +41,9 @@ export async function spoGetResolvedUrl(
     tenantId: string,
     id: string,
     serverTokens: { [server: string]: IOdspTokens } | undefined,
-    clientConfig: IClientConfig) {
+    clientConfig: IClientConfig,
+    driveId?: string,
+) {
     const server = getSpoServer(tenantId);
     if (server === undefined) {
         return Promise.reject(`Invalid SPO tenantId ${tenantId}`);
@@ -54,9 +57,8 @@ export async function spoGetResolvedUrl(
         return Promise.reject(`Missing tokens for ${pushSrv}`);
     }
     // Only .b items can be fluid
-    const encoded = encodeURIComponent(`${id}.b`);
-
-    const filePath = `/r11s/${encoded}`;
+    const encoded = encodeURIComponent(`${id}.fluid`);
+    const filePath = tenantId === "spo-shared" ? `/Gateway/${encoded}` : `/r11s/${encoded}`;
     const { drive, item } = await getDriveItemByRootFileName(
         server,
         "",
@@ -66,7 +68,9 @@ export async function spoGetResolvedUrl(
             refreshTokenFn: getOdspRefreshTokenFn(server, clientConfig, tokens),
         },
         true,
+        driveId,
     );
+
     const odspUrlResolver = new OdspDriverUrlResolver();
     // TODO: pass path
     const encodedDrive = encodeURIComponent(drive);

@@ -25,9 +25,6 @@ import {
     ISharedMap,
     ISharedMapEvents,
 } from "./interfaces";
-import {
-    valueTypes,
-} from "./localValues";
 import { IMapDataObjectSerializable, MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
@@ -158,7 +155,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             () => this.isAttached(),
-            valueTypes,
+            [],
             this,
         );
     }
@@ -333,11 +330,12 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
     */
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 
         const data = fromBase64ToUtf8(header);
+        // eslint-disable-next-line @typescript-eslint/ban-types
         const json = JSON.parse(data) as object;
         const newFormat = json as IMapSerializationFormat;
         if (Array.isArray(newFormat.blobs)) {

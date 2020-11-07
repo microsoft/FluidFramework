@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import * as api from "@fluid-internal/client-api";
 import * as ink from "@fluidframework/ink";
+import { assert } from "@fluidframework/common-utils";
 import * as ui from "../ui";
 import { getShapes } from "./canvasCommon";
 import * as recognizer from "./shapeRecognizer";
@@ -81,7 +81,7 @@ export class DrawingContext {
     // Store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
     public drawSegmentToNewPoint(endPoint: ink.IInkPoint) {
-        assert(this.pen);
+        assert(!!this.pen);
 
         const previous = this.lastPoint || endPoint;
         const shapes = getShapes(previous, endPoint, this.pen, SegmentCircleInclusive.End);

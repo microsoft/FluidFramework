@@ -3,7 +3,7 @@ title: Introducing distributed data structures
 menuPosition: 2
 ---
 
-Fluid Framework provides developers with _distributed data structures_ (DDSes) that automatically ensure that each
+The Fluid Framework provides developers with _distributed data structures_ (DDSes) that automatically ensure that each
 client has access to the same state. We call them _distributed data structures_ because they are similar to data
 structures used commonly when programming, like strings, maps/dictionaries, and sequences/lists. The APIs provided by
 DDSes are designed to be familiar to programmers who've used these types of data structures before. For example, the
@@ -15,7 +15,7 @@ However, a DDS is not _just_ a local object. A DDS can also be changed by other 
 
 {{% callout tip %}}
 
-Most distributed data structures are prefixed with `Shared` by convention. _SharedMap_, _SharedMatrix_, _SharedString_,
+Most distributed data structures are prefixed with "Shared" by convention. _SharedMap_, _SharedMatrix_, _SharedString_,
 etc. This prefix indicates that the object is shared between multiple clients.
 
 {{% /callout %}}
@@ -42,8 +42,8 @@ generally fall into two broad categories: _optimistic_ and _consensus-based_.
 
 {{% callout tip "See also" %}}
 
-* [Fluid Framework architecture](./architecture.md)
-* [Fluid service](./server.md)
+* [Fluid Framework architecture]({{< relref "architecture" >}})
+* [Fluid service]({{< relref "service" >}})
 
 {{% /callout %}}
 
@@ -83,7 +83,7 @@ operation. With an optimistic DDS, the client will apply the local operation bef
 wait. Thus, client A pops a value off the local stack, and client B pops the same value -- even though it was _supposed_
 to pop the second value. This represents divergent behavior; we expect a _distributed_ stack to ensure that `pop`
 operations -- and any other operation for that matter -- are applied such that the clients reach a consistent state
-eventually. The optimstic implementation we just described violates that expectation
+eventually. The optimistic implementation we just described violates that expectation.
 
 A consensus-based DDS does not optimistically apply local ops. Instead, these DDSes wait for the server to apply a
 sequence number to the operation before applying it locally. With this approach, when two clients pop, neither makes any
@@ -103,7 +103,7 @@ the [Encapsulating data with DataObject](./dataobject-aqueduct.md) section.
 
 ### Storing a DDS within another DDS
 
-Distributed data structures can store primitive values like numbers and strings and _JSON serializable_ objects. For
+Distributed data structures can store primitive values like numbers and strings, and _JSON serializable_ objects. For
 objects that are not JSON-serializable, like DDSes, Fluid provides a mechanism called _handles_, which _are_
 serializable.
 
@@ -135,7 +135,7 @@ myMap.on("valueChanged", () => {
 });
 ```
 
-Refer to the sections below for more details about the events raised by each DDS.
+Refer to later sections for more details about the events raised by each DDS.
 
 ## Picking the right data structure
 
@@ -219,11 +219,15 @@ These DDSes are used for storing sequential data. They are all optimistic.
 ### Specialized data structures
 
 - [SharedCounter][] -- a distributed counter.
-- [SharedString][] -- specialized data structure for handling collaborative text.
-- [Ink][] -- specialized daa structure for ink data.
+- [SharedString][] -- a specialized data structure for handling collaborative text.
+- [Ink][] -- a specialized data structure for ink data.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
 
 <!-- Packages -->
 

@@ -19,8 +19,8 @@ import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datasto
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports,import/no-internal-modules,import/no-unassigned-import
-require("bootstrap/dist/css/bootstrap.min.css");
+// eslint-disable-next-line import/no-internal-modules,import/no-unassigned-import
+import "bootstrap/dist/css/bootstrap.min.css";
 
 class ProgressBarView implements IFluidHTMLView {
     public parent: HTMLElement;
@@ -44,7 +44,7 @@ class ProgressBarView implements IFluidHTMLView {
             div.innerHTML = `<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>`;
 
             const urlDiv = document.createElement("div");
-            urlDiv.innerText = this.bar.url;
+            urlDiv.innerText = this.bar.handle.absolutePath;
 
             const downButton = document.createElement("button");
             downButton.innerText = "down";
@@ -84,7 +84,6 @@ export class ProgressBar extends EventEmitter implements
 
     constructor(
         public value: number,
-        public url: string,
         private readonly keyId: string,
         context: IFluidHandleContext,
         private readonly collection: ProgressCollection,
@@ -134,7 +133,6 @@ export class ProgressCollection
     public get IFluidRouter() { return this; }
     public get IFluidObjectCollection() { return this; }
 
-    public url: string;
     public handle: FluidObjectHandle;
 
     private readonly progressBars = new Map<string, ProgressBar>();
@@ -143,8 +141,7 @@ export class ProgressCollection
     constructor(private readonly runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         super();
 
-        this.url = context.id;
-        this.handle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
+        this.handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
     }
 
     public changeValue(key: string, newValue: number) {
@@ -200,9 +197,8 @@ export class ProgressCollection
                 key,
                 new ProgressBar(
                     this.root.get(key),
-                    `${this.url}/${key}`,
                     key,
-                    this.runtime.IFluidHandleContext,
+                    this.runtime.objectsRoutingContext,
                     this));
         }
 
@@ -214,9 +210,8 @@ export class ProgressCollection
                     changed.key,
                     new ProgressBar(
                         this.root.get(changed.key),
-                        `${this.url}/${changed.key}`,
                         changed.key,
-                        this.runtime.IFluidHandleContext,
+                        this.runtime.objectsRoutingContext,
                         this));
                 this.emit("progressAdded", `/${changed.key}`);
             }

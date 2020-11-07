@@ -7,7 +7,7 @@
  * This script is used by the build server to compute the version number of the packages.
  * The release version number is based on what's in the lerna.json/package.json.
  * The CI will supply the build number and branch to determine the prerelease suffix if it is not a tagged build
- * 
+ *
  * Input:
  *      ./lerna.json or ./package.json - base version number to use
  *      env:VERSION_BUILDNUMBER        - monotonically increasing build number from the CI
@@ -18,6 +18,7 @@
  */
 
 import fs from "fs";
+import child_process from "child_process";
 import { test } from "./buildVersionTests";
 
 function getFileVersion() {
@@ -45,7 +46,7 @@ function parseFileVersion(file_version: string, build_id?: number) {
         const r = release_version.split('.');
         if (r.length !== 3) {
             console.error(`ERROR: Invalid format for release version ${release_version}`);
-            process.exit(6);
+            process.exit(9);
         }
         r[2] = (parseInt(r[2]) + build_id).toString();
         release_version = r.join('.');
@@ -58,7 +59,7 @@ function parseFileVersion(file_version: string, build_id?: number) {
  * Compute the build suffix
  */
 function getBuildSuffix(arg_release: boolean, build_num: string) {
-    return arg_release? "" : build_num;
+    return arg_release ? "" : build_num;
 }
 
 /* A simpler CI version that append the build number at the end in the prerelease */
@@ -81,7 +82,7 @@ function generateSimpleVersion(release_version: string, prerelease_version: stri
 export function getSimpleVersion(file_version: string, arg_build_num: string, arg_release: boolean, patch: boolean) {
     // Azure DevOp pass in the build number as $(buildNum).$(buildAttempt).
     // Get the Build number and ignore the attempt number.
-    const build_id = patch? parseInt(arg_build_num.split('.')[0]) : undefined;
+    const build_id = patch ? parseInt(arg_build_num.split('.')[0]) : undefined;
 
     const { release_version, prerelease_version } = parseFileVersion(file_version, build_id);
     const build_suffix = build_id ? "" : getBuildSuffix(arg_release, arg_build_num);
@@ -93,8 +94,9 @@ function main() {
     let arg_build_num: string | undefined;
     let arg_patch = false;
     let arg_release = false;
-    let file_version : string | undefined;
+    let file_version: string | undefined;
     let arg_test = false;
+    let arg_tag: string | undefined;
     for (let i = 2; i < process.argv.length; i++) {
         if (process.argv[i] === "--build") {
             arg_build_num = process.argv[++i];
@@ -121,6 +123,10 @@ function main() {
             continue;
         }
 
+        if (process.argv[i] === "--tag") {
+            arg_tag = process.argv[++i];
+            continue;
+        }
         console.log(`ERROR: Invalid argument ${process.argv[i]}`);
         process.exit(1)
     }
@@ -143,7 +149,11 @@ function main() {
     }
 
     if (!arg_release) {
-        arg_release = (process.env["VERSION_RELEASE"] === "true");
+        arg_release = (process.env["VERSION_RELEASE"] === "release");
+    }
+
+    if (!arg_tag) {
+        arg_tag = process.env["VERSION_TAGNAME"];
     }
 
     if (!file_version) {
@@ -154,8 +164,39 @@ function main() {
         }
     }
 
+    if (!arg_patch && arg_tag) {
+        const tagName = `${arg_tag}_v${file_version}`;
+        const out = child_process.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
+        if (out.trim() === tagName) {
+            if (arg_release) {
+                console.error(`ERROR: Tag ${tagName} already exist`);
+                process.exit(7);
+            }
+            console.warn(`WARNING: Tag ${tagName} already exist`);
+        }
+    }
+
     // Generate and print the version to console
-    console.log(getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch));
+    const version = getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
+    console.log(`version=${version}`);
+    console.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
+    if (arg_release) {
+        let isLatest = true;
+        if (arg_tag) {
+            const split = version.split(".");
+            if (split.length !== 3) {
+                console.error(`ERROR: Invalid format for release version ${version}`);
+                process.exit(8);
+            }
+            const tagName = `${arg_tag}_v${split[0]}.${parseInt(split[1]) + 1}.*`;
+            const out = child_process.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
+            if (out.trim()) {
+                isLatest = false;
+            }
+        }
+        console.log(`isLatest=${isLatest}`);
+        console.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);
+    }
 }
 
 main();

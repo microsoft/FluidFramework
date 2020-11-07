@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import fs from "fs";
+import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -12,6 +12,7 @@ import {
 import {
     IClient,
     ISequencedDocumentMessage,
+    MessageType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { printMessageStats } from "./fluidAnalyzeMessages";
@@ -30,7 +31,18 @@ async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaS
     console.log(`Loading ops at ${from}`);
     for (let iter = 0; iter < 3; iter++) {
         try {
-            return await deltaStorage.get(from, to);
+            const messages = await deltaStorage.get(from, to);
+            // This parsing of message contents happens in delta manager. But when we analyze messages
+            // for message stats, we skip that path. So parsing of json contents needs to happen here.
+            for (const message of messages) {
+                if (typeof message.contents === "string"
+                    && message.contents !== ""
+                    && message.type !== MessageType.ClientLeave
+                ) {
+                    message.contents = JSON.parse(message.contents);
+                }
+            }
+            return messages;
         } catch (error) {
             console.error("Hit error while downloading ops. Retrying");
             console.error(error);
@@ -108,7 +120,7 @@ async function* loadAllSequencedMessages(
         timeStart = Date.now();
         const deltaStream = await documentService.connectToDeltaStream(client);
         const initialMessages = deltaStream.initialMessages;
-        deltaStream.disconnect();
+        deltaStream.close();
         console.log(`${Math.floor((Date.now() - timeStart) / 1000)} seconds to connect to web socket`);
 
         if (initialMessages) {
@@ -204,7 +216,6 @@ export async function fluidFetchMessages(documentService?: IDocumentService, sav
             dumpMessages,
             messageTypeFilter);
     } else {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         let item;
         for await (item of generator) { }
     }

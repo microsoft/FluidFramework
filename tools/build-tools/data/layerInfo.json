@@ -79,7 +79,11 @@
             "Other-Utils": {
                 "dot": false,
                 "packages": [
-                    "@fluidframework/odsp-utils"
+                    "@fluidframework/odsp-doclib-utils"
+                ],
+                "deps": [
+                    "Driver-Definitions",
+                    "Driver-Utils"
                 ]
             },
             "Tool-Utils": {
@@ -121,7 +125,8 @@
                 ],
                 "deps": [
                     "Driver-Utils",
-                    "@fluidframework/core-interfaces"
+                    "@fluidframework/core-interfaces",
+                    "Other-Utils"
                 ]
             },
             "Loader": {
@@ -260,7 +265,7 @@
             },
             "Routerlicious-Server": {
                 "packages": [
-                    "@fluid-internal/server-routerlicious"
+                    "@fluidframework/server-routerlicious"
                 ],
                 "deps": [
                     "Server-Libs"

@@ -8,10 +8,11 @@ import {
     IFluidRunnable,
     IRequest,
     IResponse,
+    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
-import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IContainer, ILoader } from "@fluidframework/container-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
-import Comlink from "comlink";
+import * as Comlink from "comlink";
 
 // Proxy loader that proxies request to web worker.
 interface IProxyLoader extends ILoader, IFluidRunnable {
@@ -73,5 +74,9 @@ export class WebWorkerLoader implements ILoader, IFluidRunnable, IFluidRouter {
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer> {
         return this.proxy.createDetachedContainer(source);
+    }
+
+    public async rehydrateDetachedContainerFromSnapshot(source: string): Promise<IContainer> {
+        return this.proxy.rehydrateDetachedContainerFromSnapshot(source);
     }
 }

@@ -93,7 +93,7 @@ export async function processOneFile(args: IWorkerArgs) {
     if (args.mode === Mode.Validate) {
         const path = `${replayArgs.inDirName}/original_snapshots`;
         if (fs.existsSync(path)) {
-            replayArgs.initalizeFromSnapshotsDir = path;
+            replayArgs.initializeFromSnapshotsDir = path;
         } else {
             return;
         }

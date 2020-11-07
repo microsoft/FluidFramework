@@ -27,7 +27,7 @@ export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLVie
     public get IFluidHTMLView() { return this; }
 
     /**
-     * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
+     * initializingFirstTime is called only once, it is executed only by the first client to open the
      * Fluid object and all work will resolve before the view is presented to any user.
      *
      * This method is used to perform Fluid object setup, which can include setting an initial schema or initial values.
@@ -55,6 +55,7 @@ export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLVie
     }
 
     public get value() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.root.get(diceValueKey);
     }
 

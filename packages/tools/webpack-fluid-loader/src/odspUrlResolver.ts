@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { OdspDriverUrlResolver, createOdspUrl } from "@fluidframework/odsp-driver";
+import { IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
     IOdspAuthRequestInfo,
     getDriveItemByRootFileName,
-} from "@fluidframework/odsp-utils";
+} from "@fluidframework/odsp-doclib-utils";
+import { OdspDriverUrlResolver, createOdspUrl } from "@fluidframework/odsp-driver";
 
 export class OdspUrlResolver implements IUrlResolver {
     private readonly driverUrlResolver = new OdspDriverUrlResolver();
@@ -27,7 +27,9 @@ export class OdspUrlResolver implements IUrlResolver {
 
         const url = new URL(request.url);
 
-        const documentId = url.pathname.substr(1).split("/")[0];
+        const fullPath = url.pathname.substr(1);
+        const documentId = fullPath.split("/")[0];
+        const documentRelativePath = fullPath.slice(documentId.length + 1);
         const filePath = this.formFilePath(documentId);
 
         const { drive, item } = await getDriveItemByRootFileName(
@@ -41,7 +43,7 @@ export class OdspUrlResolver implements IUrlResolver {
             `https://${this.server}`,
             drive,
             item,
-            "");
+            documentRelativePath);
 
         return this.driverUrlResolver.resolve({ url: odspUrl, headers: request.headers });
     }
@@ -64,6 +66,6 @@ export class OdspUrlResolver implements IUrlResolver {
             this.authRequestInfo,
             false);
         return this.driverUrlResolver.createCreateNewRequest(
-            `https://${this.server}`, driveItem.drive, filePath, fileName);
+            `https://${this.server}`, driveItem.drive, filePath, `${fileName}.fluid`);
     }
 }

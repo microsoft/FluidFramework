@@ -11,11 +11,10 @@ import {
 } from "@fluidframework/aqueduct";
 import {
     IContainer,
-    IFluidCodeDetails,
-    IFluidPackage,
     ILoader,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -33,7 +32,7 @@ const V2 = "0.2.0";
 // different versions (defined below) are used to test context reload.
 abstract class TestDataStore extends DataObject {
     public static readonly type = "@fluid-example/test-dataStore";
-    public readonly version: string;
+    public abstract readonly version: string;
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
@@ -57,7 +56,7 @@ class TestDataStoreV2 extends TestDataStore {
 // different runtime versions.
 abstract class OldTestDataStore extends old.DataObject {
     public static readonly type = "@fluid-example/test-dataStore";
-    public readonly version: string;
+    public abstract readonly version: string;
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
@@ -79,10 +78,10 @@ class OldTestDataStoreV2 extends OldTestDataStore {
 describe("context reload", function() {
     const documentId = "contextReloadTest";
     const documentLoadUrl = `fluid-test://localhost/${documentId}`;
-    const codeDetails = (version: string): IFluidCodeDetails => {
+    const codeDetails = (version: string): old.IFluidCodeDetails => {
         return {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            package: { name: TestDataStore.type, version } as IFluidPackage,
+            package: { name: TestDataStore.type, version } as old.IFluidPackage,
             config: {},
         };
     };
@@ -95,6 +94,7 @@ describe("context reload", function() {
         return Promise.all(containers.map(
             async (container) => new Promise((resolve, reject) =>
                 container.on("contextChanged", (code: IFluidCodeDetails) =>
+                    // eslint-disable-next-line prefer-promise-reject-errors
                     typeof code.package === "object" && code.package.version === version ? resolve() : reject()))));
     };
 
@@ -154,11 +154,12 @@ describe("context reload", function() {
             await this.container.getQuorum().propose("code", codeDetails(V2));
 
             // wait for summary ack/nack (non-immediate summary will result in test timeout)
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             await new Promise((resolve, reject) => this.container.on("op", (op) => {
                 if (op.type === "summaryAck") {
                     resolve();
                 } else if (op.type === "summaryNack") {
-                    reject();
+                    reject(new Error("summaryNack"));
                 }
             }));
         });

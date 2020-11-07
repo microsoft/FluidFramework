@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import child_process from "child_process";
 import fs from "fs";
+import { assert } from "@fluidframework/common-utils";
 import * as API from "@fluid-internal/client-api";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -125,11 +124,11 @@ class Logger implements ITelemetryBaseLogger {
             // Stack is not output properly (with newlines), if done as part of event
             const stack: string | undefined = event.stack as string | undefined;
             delete event.stack;
-            console.error(`An error has been logged from ${this.containerDescription}!`);
-            console.error(event);
-            if (stack) {
-                console.error(stack);
-            }
+            const error = new Error(`An error has been logged from ${this.containerDescription}!\n
+                        ${JSON.stringify(event)}`);
+            error.stack = stack;
+            // throw instead of printing an error to fail tests
+            throw error;
         }
     }
 }
@@ -143,7 +142,7 @@ class ContainerUrlResolver implements IUrlResolver {
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         if (!this.cache.has(request.url)) {
-            return Promise.reject(`ContainerUrlResolver can't resolve ${request}`);
+            return Promise.reject(new Error(`ContainerUrlResolver can't resolve ${request}`));
         }
         return this.cache.get(request.url);
     }
@@ -243,7 +242,7 @@ class Document {
             await new Promise((resolve) => {
                 this.resolveC = resolve;
             });
-            assert.equal(this.documentSeqNumber, this.currentOp);
+            assert(this.documentSeqNumber === this.currentOp);
         }
     }
 
@@ -272,7 +271,7 @@ class Document {
     private resolveC = () => { };
 
     private async loadContainer(
-        serviceFactory: IDocumentServiceFactory,
+        documentServiceFactory: IDocumentServiceFactory,
         containerDescription: string,
         errorHandler: (event: ITelemetryBaseEvent) => boolean,
     ): Promise<Container> {
@@ -287,7 +286,7 @@ class Document {
             url: `fluid-file://localhost:6000/fluid/${FileStorageDocumentName}`,
         };
 
-        const resolver = new ContainerUrlResolver(
+        const urlResolver = new ContainerUrlResolver(
             new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
         const chaincode = new API.Chaincode(() => {
             throw new Error("Can't close Document");
@@ -310,18 +309,20 @@ class Document {
                 ["@ms/tablero/TableroView", Promise.resolve(chaincode)],
                 ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
                 ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
+                ["LastEditedComponent", Promise.resolve(chaincode)],
+                ["OfficeRootComponent", Promise.resolve(chaincode)],
             ]);
         const options = {};
 
         // Load the Fluid document
         this.docLogger = ChildLogger.create(new Logger(containerDescription, errorHandler));
-        const loader = new Loader(
-            resolver,
-            serviceFactory,
+        const loader = new Loader({
+            urlResolver,
+            documentServiceFactory,
             codeLoader,
-            options, {},
-            new Map<string, IProxyLoaderFactory>(),
-            this.docLogger);
+            options,
+            logger: this.docLogger,
+        });
         const container: Container = await loader.resolve({ url: resolved.url });
 
         assert(container.existing); // ReplayFileDeltaConnection.create() guarantees that
@@ -429,10 +430,10 @@ export class ReplayTool {
 
     private async setup() {
         if (this.args.inDirName === undefined) {
-            return Promise.reject("Please provide --indir argument");
+            return Promise.reject(new Error("Please provide --indir argument"));
         }
         if (!fs.existsSync(this.args.inDirName)) {
-            return Promise.reject("File does not exist");
+            return Promise.reject(new Error("File does not exist"));
         }
 
         this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
@@ -449,12 +450,12 @@ export class ReplayTool {
         if (this.args.version !== undefined) {
             console.log(`Starting from ${this.args.version}, seq# = ${this.mainDocument.currentOp}`);
             if (this.mainDocument.currentOp > this.args.to) {
-                return Promise.reject("--to argument is below snapshot starting op. Nothing to do!");
+                return Promise.reject(new Error("--to argument is below snapshot starting op. Nothing to do!"));
             }
         }
 
-        if (this.args.initalizeFromSnapshotsDir) {
-            for (const node of fs.readdirSync(this.args.initalizeFromSnapshotsDir, { withFileTypes: true })) {
+        if (this.args.initializeFromSnapshotsDir) {
+            for (const node of fs.readdirSync(this.args.initializeFromSnapshotsDir, { withFileTypes: true })) {
                 let storage;
                 if (node.isDirectory()) {
                     // Did we load it already as main doc?
@@ -462,15 +463,16 @@ export class ReplayTool {
                         continue;
                     }
 
-                    const file = `${this.args.initalizeFromSnapshotsDir}/${node.name}/tree.json`;
+                    const file = `${this.args.initializeFromSnapshotsDir}/${node.name}/tree.json`;
                     if (!fs.existsSync(file)) {
                         console.error(`${file} does not exist, skipping ${node.name} snapshot`);
                         continue;
                     }
-                    storage = new FluidFetchReaderFileSnapshotWriter(this.args.initalizeFromSnapshotsDir, node.name);
+                    storage = new FluidFetchReaderFileSnapshotWriter(this.args.initializeFromSnapshotsDir, node.name);
                 } else {
                     if (node.name.startsWith("snapshot_")) {
-                        const content = fs.readFileSync(`${this.args.initalizeFromSnapshotsDir}/${node.name}`, "utf-8");
+                        const content = fs.readFileSync(
+                            `${this.args.initializeFromSnapshotsDir}/${node.name}`, "utf-8");
                         const snapshot = JSON.parse(content) as IFileSnapshot;
                         storage = new FileSnapshotReader(snapshot);
                     } else {
@@ -591,7 +593,6 @@ export class ReplayTool {
 
         const content = this.mainDocument.extractContent();
 
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         this.storage.onSnapshotHandler = (snapshot: IFileSnapshot) => {
             content.snapshot = snapshot;
             if (this.args.compare) {
@@ -741,7 +742,6 @@ export class ReplayTool {
         const name1 = this.mainDocument.getFileName();
         const name2 = document2.getFileName();
 
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         document2.storage.onSnapshotHandler = (snapshot: IFileSnapshot) => {
             content2.snapshot = snapshot;
         };

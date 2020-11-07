@@ -4,74 +4,44 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-    createAndAttachContainer,
-    createLocalLoader,
+    ChannelFactoryRegistry,
     ITestFluidObject,
-    OpProcessingController,
-    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
+import { generateTestWithCompat, ICompatLocalTestObjectProvider, ITestContainerConfig } from "./compatUtils";
 
-describe("SharedCounter", () => {
-    const documentId = "counterTest";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
-    const counterId = "counterKey";
-    const codeDetails: IFluidCodeDetails = {
-        package: "sharedCounterTestPackage",
-        config: {},
-    };
-    const factory = new TestFluidObjectFactory([[counterId, SharedCounter.getFactory()]]);
+const counterId = "counterKey";
+const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
+const testContainerConfig: ITestContainerConfig = {
+    testFluidDataObject: true,
+    registry,
+};
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: IUrlResolver;
-    let opProcessingController: OpProcessingController;
+const tests = (args: ICompatLocalTestObjectProvider) => {
     let dataStore1: ITestFluidObject;
     let sharedCounter1: ISharedCounter;
     let sharedCounter2: ISharedCounter;
     let sharedCounter3: ISharedCounter;
 
-    async function createContainer(): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
-    }
-
-    async function loadContainer(): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-        return loader.resolve({ url: documentLoadUrl });
-    }
-
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
-        urlResolver = new LocalResolver();
-
         // Create a Container for the first client.
-        const container1 = await createContainer();
+        const container1 = await args.makeTestContainer(testContainerConfig);
         dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedCounter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
 
         // Load the Container that was created by the first client.
-        const container2 = await loadContainer();
+        const container2 = await args.loadTestContainer(testContainerConfig);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedCounter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 
         // Load the Container that was created by the first client.
-        const container3 = await loadContainer();
+        const container3 = await args.loadTestContainer(testContainerConfig);
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         sharedCounter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
-        opProcessingController.addDeltaManagers(
-            dataStore1.runtime.deltaManager,
-            dataStore2.runtime.deltaManager,
-            dataStore3.runtime.deltaManager);
-
-        await opProcessingController.process();
+        await args.opProcessingController.process();
     });
 
     function verifyCounterValue(counter: ISharedCounter, expectedValue, index: number) {
@@ -103,12 +73,12 @@ describe("SharedCounter", () => {
 
         it("can increment and decrement the value in 3 containers correctly", async () => {
             sharedCounter2.increment(7);
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.equal(sharedCounter1.value, 7);
             assert.equal(sharedCounter2.value, 7);
             assert.equal(sharedCounter3.value, 7);
             sharedCounter3.increment(-20);
-            await opProcessingController.process();
+            await args.opProcessingController.process();
             assert.equal(sharedCounter1.value, -13);
             assert.equal(sharedCounter2.value, -13);
             assert.equal(sharedCounter3.value, -13);
@@ -154,7 +124,7 @@ describe("SharedCounter", () => {
 
                 // do the increment
                 incrementer.increment(incrementAmount);
-                await opProcessingController.process();
+                await args.opProcessingController.process();
 
                 // event count is correct
                 assert.equal(eventCount1, expectedEventCount);
@@ -171,8 +141,8 @@ describe("SharedCounter", () => {
             }
         });
     });
+};
 
-    afterEach(async () => {
-        await deltaConnectionServer.webSocketServer.close();
-    });
+describe("SharedCounter", () => {
+    generateTestWithCompat(tests);
 });

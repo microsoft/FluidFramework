@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+
+import { assert } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidRouter,
@@ -15,7 +16,7 @@ export async function requestFluidObject<T = IFluidObject>(
     const response = await router.request(request);
 
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        return Promise.reject("Not found");
+        return Promise.reject(new Error("Not found"));
     }
 
     assert(response.value);

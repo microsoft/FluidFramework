@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IFluidRouter,
     IProvideFluidHandleContext,
-    IProvideFluidSerializer,
+    IFluidHandle,
+    IRequest,
+    IResponse,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IBlobManager,
     IDeltaManager,
     ContainerWarning,
     ILoader,
@@ -22,7 +22,6 @@ import {
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
-    ConnectionState,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -51,14 +50,21 @@ export enum FlushMode {
     Manual,
 }
 
+export interface IContainerRuntimeBaseEvents extends IEvent{
+
+    (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
+    (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
+    (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+    (event: "leader" | "notleader", listener: () => void);
+}
+
 /**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  */
 export interface IContainerRuntimeBase extends
-    EventEmitter,
+    IEventProvider<IContainerRuntimeBaseEvents>,
     IProvideFluidHandleContext,
-    IProvideFluidSerializer,
     /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
     IProvideFluidDataStoreRegistry {
 
@@ -77,17 +83,22 @@ export interface IContainerRuntimeBase extends
     setFlushMode(mode: FlushMode): void;
 
     /**
+     * Executes a request against the container runtime
+     */
+    request(request: IRequest): Promise<IResponse>;
+
+    /**
      * Submits a container runtime level signal to be sent to other clients.
      * @param type - Type of the signal.
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
 
-    on(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): this;
-    on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
-    on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
-    on(event: "leader" | "notleader", listener: () => void): this;
+    /**
+     * @deprecated 0.16 Issue #1537, #3631
+     * @internal
+     */
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IFluidDataStoreChannel>;
 
     /**
      * Creates data store. Returns router of data store. Data store is not bound to container,
@@ -112,6 +123,8 @@ export interface IContainerRuntimeBase extends
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
     getTaskManager(): Promise<ITaskManager>;
+
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 /**
@@ -174,9 +187,6 @@ export interface IFluidDataStoreChannel extends
      */
     setConnectionState(connected: boolean, clientId?: string);
 
-    // Back-compat: supporting <= 0.16 data stores
-    changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
-
     /**
      * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.
      * @param type - The type of the original message.
@@ -223,13 +233,27 @@ export interface ISummaryTracker {
 
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => ISummarizerNode;
 
+export interface IFluidDataStoreContextEvents extends IEvent {
+    (event: "leader" | "notleader" | "attaching" | "attached", listener: () => void);
+}
+
 /**
  * Represents the context for the data store. It is used by the data store runtime to
  * get information and call functionality to the container.
  */
-export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFluidDataStoreRegistry> {
+export interface IFluidDataStoreContext extends
+IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry> {
     readonly documentId: string;
     readonly id: string;
+    /**
+     * A data store created by a client, is a local data store for that client. Also, when a detached container loads
+     * from a snapshot, all the data stores are treated as local data stores because at that stage the container
+     * still doesn't exists in storage and so the data store couldn't have been created by any other client.
+     * Value of this never changes even after the data store is attached.
+     * As implementer of data store runtime, you can use this property to check that this data store belongs to this
+     * client and hence implement any scenario based on that.
+     */
+    readonly isLocalDataStore: boolean;
     /**
      * The package path of the data store as per the package factory.
      */
@@ -244,7 +268,6 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
@@ -263,12 +286,15 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
     readonly snapshotFn: (message: string) => Promise<void>;
 
     /**
+     * @deprecated 0.16 Issue #1635, #3631
+     */
+    readonly createProps?: any;
+
+    /**
      * Ambient services provided with the context
      */
     readonly scope: IFluidObject;
     readonly summaryTracker: ISummaryTracker;
-
-    on(event: "leader" | "notleader" | "attaching" | "attached", listener: () => void): this;
 
     /**
      * Returns the current quorum.
@@ -316,7 +342,7 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
     setChannelDirty(address: string): void;
 
     /**
-     * Get an absolute url to the containe rbased on the provided relativeUrl.
+     * Get an absolute url to the container based on the provided relativeUrl.
      * Returns undefined if the container or data store isn't attached to storage.
      * @param relativeUrl - A relative request within the container
      */
@@ -333,6 +359,8 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
          */
         createParam: CreateChildSummarizerNodeParam,
     ): CreateChildSummarizerNodeFn;
+
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

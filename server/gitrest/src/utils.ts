@@ -6,8 +6,9 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as util from "util";
-import * as git from "nodegit";
+import git from "nodegit";
 import * as resources from "@fluidframework/gitresources";
+import * as winston from "winston";
 
 const exists = util.promisify(fs.exists);
 
@@ -60,7 +61,6 @@ export async function commitToICommit(commit: git.Commit): Promise<resources.ICo
         author: authorToIAuthor(commit.author(), commit.date()),
         committer: committerToICommitter(commit.committer(), commit.date()),
         message: commit.message(),
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         parents: commit.parents() && commit.parents().length > 0 ?
             // eslint-disable-next-line no-null/no-null
             commit.parents().map((parent) => oidToCommitHash(parent)) : null,
@@ -101,6 +101,7 @@ export class RepositoryManager {
         const isBare: any = 1;
         const repository = git.Repository.init(`${this.baseDir}/${repoPath}`, isBare);
         this.repositoryCache[repoPath] = repository;
+        winston.info(`Created a new repo for owner ${owner} reponame: ${name}`);
 
         return repository;
     }
@@ -112,7 +113,8 @@ export class RepositoryManager {
             const directory = `${this.baseDir}/${repoPath}`;
 
             if (!await exists(directory)) {
-                return Promise.reject("Repo does not exist");
+                winston.info(`Repo does not exist ${directory}`);
+                return Promise.reject(`Repo does not exist ${directory}`);
             }
 
             this.repositoryCache[repoPath] = git.Repository.open(directory);

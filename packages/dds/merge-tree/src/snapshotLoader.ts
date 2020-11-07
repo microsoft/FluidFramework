@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
 import { ISegment, MergeTree } from "./mergeTree";
@@ -43,7 +43,7 @@ export class SnapshotLoader {
             ? branchId : this.runtime.documentId;
         const headerLoadedP =
             services.read(SnapshotLegacy.header).then((header) => {
-                assert(header);
+                assert(!!header);
                 return this.loadHeader(header, branch);
             });
 
@@ -124,8 +124,7 @@ export class SnapshotLoader {
             header,
             this.logger,
             this.mergeTree.options,
-            this.runtime.IFluidSerializer,
-            this.runtime.IFluidHandleContext);
+            this.runtime.IFluidSerializer);
         const segs = chunk.segments.map(this.specToSegment);
         this.mergeTree.reloadFromSegments(segs);
         // TODO currently only assumes two levels of branching
@@ -134,24 +133,25 @@ export class SnapshotLoader {
         if (chunk.headerMetadata === undefined) {
             throw new Error("header metadata not available");
         }
-        // specify a default client id, "snapshot" here as we
-        // should enter collaboration/op sending mode if we load
-        // a snapshot in any case (summary or attach message)
-        // once we get a client id this will be called with that
-        // clientId in the connected event
-        // TODO: this won't support rehydrating a detached container
-        // we need to think more holistically about the dds state machine
-        // now that we differentiate attached vs local
-        this.client.startOrUpdateCollaboration(
-            this.runtime.clientId ?? "snapshot",
+        // If we load a detached container from snapshot, then we don't supply a default clientId
+        // because we don't want to start collaboration.
+        if (this.runtime.attachState !== AttachState.Detached) {
+            // specify a default client id, "snapshot" here as we
+            // should enter collaboration/op sending mode if we load
+            // a snapshot in any case (summary or attach message)
+            // once we get a client id this will be called with that
+            // clientId in the connected event
+            this.client.startOrUpdateCollaboration(
+                this.runtime.clientId ?? "snapshot",
 
-            // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
-            //       (See https://github.com/microsoft/FluidFramework/issues/84)
-            /* minSeq: */ chunk.headerMetadata.minSequenceNumber !== undefined
-                ? chunk.headerMetadata.minSequenceNumber
-                : chunk.headerMetadata.sequenceNumber,
-            /* currentSeq: */ chunk.headerMetadata.sequenceNumber,
-            branching);
+                // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
+                //       (See https://github.com/microsoft/FluidFramework/issues/84)
+                /* minSeq: */ chunk.headerMetadata.minSequenceNumber !== undefined
+                    ? chunk.headerMetadata.minSequenceNumber
+                    : chunk.headerMetadata.sequenceNumber,
+                /* currentSeq: */ chunk.headerMetadata.sequenceNumber,
+                branching);
+        }
 
         return chunk;
     }
@@ -176,8 +176,7 @@ export class SnapshotLoader {
                 chunk1.headerMetadata.orderedChunkMetadata[chunkIndex].id,
                 this.logger,
                 this.mergeTree.options,
-                this.runtime.IFluidSerializer,
-                this.runtime.IFluidHandleContext);
+                this.runtime.IFluidSerializer);
             lengthSofar += chunk.length;
             // Deserialize each chunk segment and append it to the end of the MergeTree.
             segs.push(...chunk.segments.map(this.specToSegment));

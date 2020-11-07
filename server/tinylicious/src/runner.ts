@@ -4,7 +4,6 @@
  */
 
 import {
-    ICollection,
     IDocumentStorage,
     IOrdererManager,
     ITenantManager,
@@ -19,6 +18,7 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import { TestClientManager } from "@fluidframework/server-test-utils";
+import detect from "detect-port";
 import * as app from "./app";
 
 export class TinyliciousRunner implements utils.IRunner {
@@ -33,22 +33,18 @@ export class TinyliciousRunner implements utils.IRunner {
         private readonly tenantManager: ITenantManager,
         private readonly storage: IDocumentStorage,
         private readonly mongoManager: MongoManager,
-        private readonly contentCollection: ICollection<any>,
-    ) {
-    }
+    ) {}
 
-    public start(): Promise<void> {
+    public async start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
 
-        // Create the HTTP server and attach alfred to it
-        const alfred = app.create(
-            this.config,
-            this.storage,
-            this.mongoManager);
+        // Make sure provided port is unoccupied
+        await this.ensurePortIsFree();
+
+        const alfred = app.create(this.config, this.storage, this.mongoManager);
         alfred.set("port", this.port);
 
         this.server = this.serverFactory.create(alfred);
-
         const httpServer = this.server.httpServer;
 
         configureWebSocketServices(
@@ -56,10 +52,10 @@ export class TinyliciousRunner implements utils.IRunner {
             this.orderManager,
             this.tenantManager,
             this.storage,
-            this.contentCollection,
             new TestClientManager(),
             new DefaultMetricClient(),
-            winston);
+            winston,
+        );
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);
@@ -77,9 +73,27 @@ export class TinyliciousRunner implements utils.IRunner {
             },
             (error) => {
                 this.runningDeferred.reject(error);
-            });
+            },
+        );
 
         return this.runningDeferred.promise;
+    }
+
+    /**
+     * Ensure provided port is free
+     */
+    private async ensurePortIsFree(): Promise<void> {
+        // If port is a named pipe resolve immediately
+        if (typeof this.port === "string") {
+            return;
+        }
+
+        const freePort = await detect(this.port);
+        if (this.port === freePort) {
+            return;
+        }
+
+        throw new Error(`Port: ${this.port} is occupied. Try port: ${freePort}`);
     }
 
     /**
@@ -90,14 +104,17 @@ export class TinyliciousRunner implements utils.IRunner {
             throw error;
         }
 
-        const bind = typeof this.port === "string"
-            ? `Pipe ${this.port}`
-            : `Port ${this.port}`;
+        const bind =
+            typeof this.port === "string"
+                ? `Pipe ${this.port}`
+                : `Port ${this.port}`;
 
         // Handle specific listen errors with friendly messages
         switch (error.code) {
             case "EACCES":
-                this.runningDeferred.reject(`${bind} requires elevated privileges`);
+                this.runningDeferred.reject(
+                    `${bind} requires elevated privileges`,
+                );
                 break;
             case "EADDRINUSE":
                 this.runningDeferred.reject(`${bind} is already in use`);
@@ -112,9 +129,8 @@ export class TinyliciousRunner implements utils.IRunner {
      */
     private onListening() {
         const addr = this.server.httpServer.address();
-        const bind = typeof addr === "string"
-            ? `pipe ${addr}`
-            : `port ${addr.port}`;
+        const bind =
+            typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
         winston.info(`Listening on ${bind}`);
     }
 }

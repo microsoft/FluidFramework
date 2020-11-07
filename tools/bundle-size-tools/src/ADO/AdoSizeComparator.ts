@@ -6,8 +6,8 @@
 import { WebApi } from 'azure-devops-node-api';
 import JSZip from 'jszip';
 import { join } from 'path';
+import { BundleComparison, BundleComparisonResult } from '../BundleBuddyTypes';
 import { getBaselineCommit, getBuilds, getPriorCommit } from '../utilities';
-import { getAzureDevopsApi } from './getAzureDevopsApi';
 import { BuildStatus, BuildResult } from 'azure-devops-node-api/interfaces/BuildInterfaces';
 import { IADOConstants } from './Constants';
 import { getZipObjectFromArtifact, getBundlePathsFromZipObject, getStatsFileFromZip } from './AdoArtifactFileProvider';
@@ -24,6 +24,15 @@ import { getBundleSummaries } from './getBundleSummaries';
 import { getBundleBuddyConfigMap } from './getBundleBuddyConfigMap';
 
 export class ADOSizeComparator {
+  /**
+   * The default number of most recent builds on the ADO pipeline to search when
+   * looking for a build matching a baseline commit, and the default number of
+   * fallback commits returned by the provided default fallback generator.  The
+   * most recent builds may not necessarily match the chain of commits, but
+   * typically will when the pipeline only builds commits to main.
+   */
+  private static readonly defaultBuildsToSearch = 20;
+
   constructor(
     /**
      * ADO constants identifying where to fetch baseline bundle info
@@ -57,7 +66,7 @@ export class ADOSizeComparator {
    */
   public static * naiveFallbackCommitGenerator(startingCommit: string): Generator<string> {
     let currentCommit = startingCommit;
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < ADOSizeComparator.defaultBuildsToSearch; i++) {
       currentCommit = getPriorCommit(currentCommit);
       yield currentCommit;
     }
@@ -67,9 +76,10 @@ export class ADOSizeComparator {
    * Create a size comparison message that can be posted to a PR
    * @param tagWaiting - If the build should be tagged to be updated when the baseline
    * build completes (if it wasn't already complete when the comparison runs)
-   * @returns The size comparison message
+   * @returns The size comparison result with formatted message and raw data.  In case
+   * of failure, the message contains the error message and the raw data will be undefined.
    */
-  public async createSizeComparisonMessage(tagWaiting: boolean): Promise<string> {
+  public async createSizeComparisonMessage(tagWaiting: boolean): Promise<BundleComparisonResult> {
     let baselineCommit: string | undefined = getBaselineCommit();
     console.log(`The baseline commit for this PR is ${baselineCommit}`);
 
@@ -80,7 +90,7 @@ export class ADOSizeComparator {
     const recentBuilds = await getBuilds(this.adoConnection, {
       project: this.adoConstants.projectName,
       definitions: [this.adoConstants.ciBuildDefinitionId],
-      maxBuildsPerDefinition: this.adoConstants.buildsToSearch ?? 20
+      maxBuildsPerDefinition: this.adoConstants.buildsToSearch ?? ADOSizeComparator.defaultBuildsToSearch,
     });
     while (baselineCommit !== undefined) {
       let baselineBuild = recentBuilds.find((build) => build.sourceVersion === baselineCommit);
@@ -95,7 +105,7 @@ export class ADOSizeComparator {
       if (baselineBuild.id === undefined) {
         const message = `Baseline build does not have a build id`;
         console.log(message);
-        return message;
+        return { message, comparison: undefined };
       }
 
       // Baseline build is pending
@@ -107,7 +117,7 @@ export class ADOSizeComparator {
           this.tagBuildAsWaiting(baselineCommit);
         }
 
-        return message;
+        return { message, comparison: undefined };
       }
 
       // Baseline build failed
@@ -117,7 +127,7 @@ export class ADOSizeComparator {
           baselineCommit
         );
         console.log(message);
-        return message;
+        return { message, comparison: undefined };
       }
 
       // Baseline build succeeded
@@ -145,12 +155,16 @@ export class ADOSizeComparator {
     if (baselineCommit === undefined || baselineZip === undefined) {
       const message = `Could not find a usable baseline build with search starting at CI ${getBaselineCommit()}`;
       console.log(message);
-      return message;
+      return { message, comparison: undefined };
     }
 
-    const message = await this.createMessageFromZip(baselineCommit, baselineZip);
+    const comparison: BundleComparison[] = await this.createComparisonFromZip(baselineCommit, baselineZip);
+    console.log(JSON.stringify(comparison));
+
+    const message = getCommentForBundleDiff(comparison, baselineCommit);
     console.log(message);
-    return message;
+
+    return { message, comparison };
   }
 
   private async tagBuildAsWaiting(baselineCommit: string): Promise<void> {
@@ -165,7 +179,7 @@ export class ADOSizeComparator {
     }
   }
 
-  private async createMessageFromZip(baselineCommit: string, baselineZip: JSZip): Promise<string> {
+  private async createComparisonFromZip(baselineCommit: string, baselineZip: JSZip): Promise<BundleComparison[]> {
     const baselineZipBundlePaths = getBundlePathsFromZipObject(baselineZip);
 
     const prBundleFileSystemPaths = await getBundlePathsFromFileSystem(this.localReportPath);
@@ -190,11 +204,6 @@ export class ADOSizeComparator {
       statsProcessors: DefaultStatsProcessors
     });
 
-    const bundleComparisons = compareBundles(baselineSummaries, prSummaries);
-
-    console.log(JSON.stringify(bundleComparisons));
-
-    const message = getCommentForBundleDiff(bundleComparisons, baselineCommit);
-    return message;
+    return compareBundles(baselineSummaries, prSummaries);
   }
 }

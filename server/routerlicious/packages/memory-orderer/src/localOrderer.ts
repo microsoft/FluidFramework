@@ -14,7 +14,6 @@ import {
     DefaultServiceConfiguration,
     DeliLambda,
     ForemanLambda,
-    IDeliCheckpoint,
     NoopConsolidationTimeout,
     ScribeLambda,
     ScriptoriumLambda,
@@ -24,6 +23,7 @@ import {
 import { IGitManager } from "@fluidframework/server-services-client";
 import {
     IContext,
+    IDeliState,
     IDatabaseManager,
     IDocument,
     IDocumentDetails,
@@ -37,6 +37,7 @@ import {
     ITopic,
     IWebSocket,
     ILogger,
+    TokenGenerator,
 } from "@fluidframework/server-services-core";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
@@ -54,7 +55,7 @@ const DefaultScribe: IScribe = {
     sequenceNumber: -1,
 };
 
-const DefaultDeli: IDeliCheckpoint = {
+const DefaultDeli: IDeliState = {
     branchMap: undefined,
     clients: undefined,
     durableSequenceNumber: 0,
@@ -95,6 +96,7 @@ export class LocalOrderer implements IOrderer {
         tenantManager: ITenantManager,
         permission: any,
         maxMessageSize: number,
+        tokenGenerator: TokenGenerator,
         logger: ILogger,
         gitManager?: IGitManager,
         setup: ILocalOrdererSetup = new LocalOrdererSetup(
@@ -125,6 +127,7 @@ export class LocalOrderer implements IOrderer {
             gitManager,
             permission,
             maxMessageSize,
+            tokenGenerator,
             pubSub,
             broadcasterContext,
             scriptoriumContext,
@@ -159,6 +162,7 @@ export class LocalOrderer implements IOrderer {
         private readonly gitManager: IGitManager | undefined,
         private readonly permission: any,
         private readonly maxMessageSize: number,
+        private readonly foremanTokenGenrator: TokenGenerator,
         private readonly pubSub: IPubSub,
         private readonly broadcasterContext: IContext,
         private readonly scriptoriumContext: IContext,
@@ -226,7 +230,7 @@ export class LocalOrderer implements IOrderer {
     }
 
     private setupKafkas() {
-        const deliState: IDeliCheckpoint = JSON.parse(this.dbObject.deli);
+        const deliState: IDeliState = JSON.parse(this.dbObject.deli);
         this.rawDeltasKafka = new LocalKafka(deliState.logOffset + 1);
         this.deltasKafka = new LocalKafka();
     }
@@ -238,7 +242,7 @@ export class LocalOrderer implements IOrderer {
             this.scriptoriumContext,
             async (lambdaSetup, context) => {
                 const deltasCollection = await lambdaSetup.deltaCollectionP();
-                return new ScriptoriumLambda(deltasCollection, undefined, context);
+                return new ScriptoriumLambda(deltasCollection, context);
             });
 
         this.broadcasterLambda = new LocalLambdaController(
@@ -254,6 +258,7 @@ export class LocalOrderer implements IOrderer {
             async (_, context) => new ForemanLambda(
                 this.taskMessageSender,
                 this.tenantManager,
+                this.foremanTokenGenrator,
                 this.permission,
                 context,
                 this.tenantId,

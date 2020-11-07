@@ -2,6 +2,12 @@
 title: Glossary
 ---
 
+## Aqueduct
+
+The `@fluidframework/aqueduct` package is a library for building Fluid objects and Fluid containers within the Fluid
+Framework. Its goal is to provide a thin base layer over the existing Fluid Framework interfaces that allows developers
+to get started quickly. [Learn more.](https://fluidframework.com/apis/aqueduct/)
+
 ## Code loader
 
 If your app is bundled separately from your container code, Fluid can use a code loader to download
@@ -9,28 +15,28 @@ and load the container code bundle dynamically.
 
 ## Container
 
-The container is your application’s entry point to Fluid Framework. It runs your container Code and is
-the object through which you’ll retrieve your data objects.
+The container is your application's entry point to the Fluid Framework. It runs your container code and is
+the object through which you'll retrieve your data objects.
 
 ## Container code
 
-You’ll write container code to define which data objects your scenario uses and how you’ll access them.
+You'll write container code to define which Fluid objects your scenario uses and how you'll access them.
 
 ## DataObject
 
-Aqueduct's implementation of a Fluid Object. Designed to organize Distributed Data Structures into
+Aqueduct's implementation of a Fluid object. Designed to organize distributed data structures into
 semantically meaningful groupings for your scenario, as well as, providing an API surface to your data.
 
 ## Distributed data structures (DDSes)
 
-DDSes are the data structures Fluid Framework provides for storing the
-collaborative data. As collaborators modify the data, the changes will be reflected to all other collaborators.
+DDSes are the data structures Fluid Framework provides for storing collaborative data. As collaborators modify the data,
+the changes will be reflected to all other collaborators.
 
 ## Fluid loader
 
-Responsible for connecting to a Fluid service and loading a Container.
+Responsible for connecting to a Fluid service and loading a Fluid container.
 
-## Fluid Object
+## Fluid object
 
 Any JavaScript object that implements Fluid feature interfaces.
 
@@ -42,11 +48,7 @@ A service endpoint that is responsible for receiving, processing, storing, and b
 
 Client code responsible for connecting to the Fluid service.
 
-## Fluid Object
+## URL resolver
 
-Any JavaScript object that implements Fluid feature interfaces.
-
-## Url resolver
-
-Fluid's API surface makes use of urls, for example in the `Loader`'s `resolve()` method and
-`Container`'s `request()` method.  The url resolver is used to interpret these urls for use with the Fluid service.
+Fluid's API surface makes use of URLs, for example in the `Loader`'s `resolve()` method and `Container`'s `request()`
+method.  The URL resolver is used to interpret these URLs for use with the Fluid service.

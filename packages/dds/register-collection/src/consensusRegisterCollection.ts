@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -210,7 +209,7 @@ export class ConsensusRegisterCollection<T>
     }
 
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService,
     ): Promise<void> {
         const header = await storage.read(snapshotFileName);
@@ -255,7 +254,6 @@ export class ConsensusRegisterCollection<T>
                         message.sequenceNumber,
                         local);
                     if (local) {
-                        assert(localOpMetadata, "localOpMetadata is missing from the client's write operation");
                         // Resolve the pending promise for this operation now that we have received an ack for it.
                         const resolve = localOpMetadata as PendingResolve;
                         resolve(winner);
@@ -307,7 +305,7 @@ export class ConsensusRegisterCollection<T>
             }
         }
         else {
-            assert(data);
+            assert(!!data);
         }
 
         // Remove versions that were known to the remote client at the time of write
@@ -342,15 +340,11 @@ export class ConsensusRegisterCollection<T>
     }
 
     private stringify(value: any): string {
-        return this.runtime.IFluidSerializer.stringify(
-            value,
-            this.runtime.IFluidHandleContext,
-            this.handle);
+        return this.runtime.IFluidSerializer.stringify(value, this.handle);
     }
 
     private parse(content: string): any {
-        return this.runtime.IFluidSerializer.parse(
-            content,
-            this.runtime.IFluidHandleContext);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return this.runtime.IFluidSerializer.parse(content);
     }
 }

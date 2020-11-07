@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import fs from "fs";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert , fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
@@ -63,6 +62,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
             this.docTree = tree;
         }
         // Fill in this.commit right here?
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return tree;
     }
 
@@ -80,7 +80,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
             return [];
         } else if (this.versionName !== undefined) {
             // We loaded from snapshot - search for commit there.
-            assert(this.docTree);
+            assert(!!this.docTree);
             return [{
                 id: versionId,
                 treeId: FileStorageVersionTreeId,
@@ -199,7 +199,6 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
 
             // Remove tree IDs for easier comparison of snapshots
             delete tree.id;
-            // eslint-disable-next-line @typescript-eslint/no-use-before-define
             removeNullTreIds(tree);
 
             if (ref) {

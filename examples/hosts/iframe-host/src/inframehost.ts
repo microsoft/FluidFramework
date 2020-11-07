@@ -8,13 +8,13 @@ import {
 } from "@fluidframework/iframe-driver";
 import { Loader, Container } from "@fluidframework/container-loader";
 import {
-    IProxyLoaderFactory,
     ICodeLoader,
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
     AttachState,
+    IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
 import { MultiUrlResolver, MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
 import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
@@ -69,14 +69,14 @@ class ProxyCodeLoader implements ICodeLoader {
 }
 
 export interface IFrameOuterHostConfig {
-    documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[];
-    urlResolver: IUrlResolver | IUrlResolver[];
+    documentServiceFactory: IDocumentServiceFactory;
+    urlResolver: IUrlResolver;
 
     // Any config to be provided to loader.
-    config?: any;
+    options?: any;
 
-    // A component that gives host provided capabilities/configurations
-    // to the component in the container(such as auth).
+    // A Fluid object that gives host provided capabilities/configurations
+    // to the Fluid object in the container(such as auth).
     scope?: IFluidObject;
 
     proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
@@ -88,21 +88,17 @@ export class IFrameOuterHost {
         // todo
         // disable summaries
         // set as non-user client
-        this.loader = new Loader(
-            hostConfig.urlResolver,
-            hostConfig.documentServiceFactory,
-            new ProxyCodeLoader(),
-            hostConfig.config ?? {},
-            hostConfig.scope ?? {},
-            hostConfig.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
-        );
+        this.loader = new Loader({
+            ...hostConfig,
+            codeLoader: new ProxyCodeLoader(),
+        });
     }
 
     public async load(request: IRequest, iframe: HTMLIFrameElement): Promise<Container> {
         const proxy = await IFrameDocumentServiceProxyFactory.create(
             MultiDocumentServiceFactory.create(this.hostConfig.documentServiceFactory),
             iframe,
-            this.hostConfig.config,
+            this.hostConfig.options,
             MultiUrlResolver.create(this.hostConfig.urlResolver));
 
         await proxy.createDocumentServiceFromRequest(request);

@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { Trace } from "@fluidframework/common-utils";
+import { assert, Trace } from "@fluidframework/common-utils";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -319,8 +318,8 @@ export class Client {
      * @returns True if the annotate was applied. False if it could not be.
      */
     private applyRemoveRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
-        assert.equal(opArgs.op.type, ops.MergeTreeDeltaType.REMOVE);
-        const op = opArgs.op as ops.IMergeTreeRemoveMsg;
+        assert(opArgs.op.type === ops.MergeTreeDeltaType.REMOVE);
+        const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
         if (!range) {
@@ -357,8 +356,8 @@ export class Client {
      * @returns True if the annotate was applied. False if it could not be.
      */
     private applyAnnotateRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
-        assert.equal(opArgs.op.type, ops.MergeTreeDeltaType.ANNOTATE);
-        const op = opArgs.op as ops.IMergeTreeAnnotateMsg;
+        assert(opArgs.op.type === ops.MergeTreeDeltaType.ANNOTATE);
+        const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
 
@@ -392,8 +391,8 @@ export class Client {
      * @returns True if the insert was applied. False if it could not be.
      */
     private applyInsertOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
-        assert.equal(opArgs.op.type, ops.MergeTreeDeltaType.INSERT);
-        const op = opArgs.op as ops.IMergeTreeInsertMsg;
+        assert(opArgs.op.type === ops.MergeTreeDeltaType.INSERT);
+        const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
 
@@ -709,7 +708,7 @@ export class Client {
     private resetPendingDeltaToOps(
         resetOp: ops.IMergeTreeDeltaOp,
         segmentGroup: SegmentGroup): ops.IMergeTreeDeltaOp[] {
-        assert(segmentGroup, "Segment group undefined");
+        assert(!!segmentGroup, "Segment group undefined");
         const NACKedSegmentGroup = this.mergeTree.pendingSegments.dequeue();
         assert(segmentGroup === NACKedSegmentGroup, "Segment group not at head of merge tree pending queue");
 
@@ -762,6 +761,7 @@ export class Client {
             }
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return opList;
     }
 
@@ -862,7 +862,7 @@ export class Client {
 
             if (resetOp.type === ops.MergeTreeDeltaType.GROUP) {
                 if (Array.isArray(segmentGroup)) {
-                    assert.equal(resetOp.ops.length, segmentGroup.length,
+                    assert(resetOp.ops.length === segmentGroup.length,
                         "Number of ops in 'resetOp' must match the number of segment groups provided.");
 
                     for (let i = 0; i < resetOp.ops.length; i++) {
@@ -872,12 +872,12 @@ export class Client {
                 } else {
                     // A group op containing a single op will pass a direct reference to 'segmentGroup'
                     // rather than an array of segment groups.  (See 'peekPendingSegmentGroups()')
-                    assert.equal(resetOp.ops.length, 1,
+                    assert(resetOp.ops.length === 1,
                         "Number of ops in 'resetOp' must match the number of segment groups provided.");
                     opList.push(...this.resetPendingDeltaToOps(resetOp.ops[0], segmentGroup));
                 }
             } else {
-                assert.notEqual(resetOp.type, ops.MergeTreeDeltaType.GROUP);
+                assert((resetOp.type as any) !== ops.MergeTreeDeltaType.GROUP);
                 assert(!Array.isArray(segmentGroup));
                 opList.push(
                     ...this.resetPendingDeltaToOps(resetOp, segmentGroup));
@@ -910,7 +910,7 @@ export class Client {
 
         // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
         // Not sure why - need to catch it sooner
-        assert.equal(this.getCollabWindow().minSeq, minSeq);
+        assert(this.getCollabWindow().minSeq === minSeq);
 
         // TODO: Remove options flag once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
@@ -922,7 +922,6 @@ export class Client {
             snap.extractSync();
             return snap.emit(
                 runtime.IFluidSerializer,
-                runtime.IFluidHandleContext,
                 handle);
         } else {
             const snap = new SnapshotLegacy(this.mergeTree, this.logger);
@@ -930,7 +929,6 @@ export class Client {
             return snap.emit(
                 catchUpMsgs,
                 runtime.IFluidSerializer,
-                runtime.IFluidHandleContext,
                 handle);
         }
     }

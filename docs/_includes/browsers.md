@@ -1,6 +1,6 @@
-There is a lot of nuance in browser support, but in general, Fluid Framework supports modern browsers, and we recommend
+There is a lot of nuance in browser support, but in general, the Fluid Framework supports modern browsers, and we recommend
 that you use the most up-to-date browser that's compatible with your operating system. The following browsers are
-supported:
+supported.
 
 * The new [Microsoft Edge](https://www.microsoft.com/edge)
 * Safari (latest version, Mac only)

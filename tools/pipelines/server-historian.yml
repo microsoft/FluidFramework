@@ -5,6 +5,33 @@
 
 name: $(Build.BuildId)
 
+parameters:
+- name: releaseBuildOverride
+  displayName: Release Build (default = not released)
+  type: string
+  default: none
+  values:
+    - none
+    - release
+
+- name: releaseKind
+  displayName: Release Kind
+  type: string
+  default: both
+  values:
+    - both
+    - npm
+    - docker
+
+- name: publishOverride
+  displayName: Publish Override (default = based on branch)
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+    - force
+
 trigger:
   branches:
     include:
@@ -18,11 +45,17 @@ trigger:
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
+    - tools/pipelines/templates/include-publish-docker-service.yml
+    - tools/pipelines/templates/include-publish-docker-service-steps.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
 
 pr:
   branches:
     include:
     - main
+    - release/*
   paths:
     include:
     - server/historian
@@ -35,6 +68,12 @@ pr:
 extends:
   template: templates/build-docker-service.yml
   parameters:
+    releaseImage: true
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    releaseKind: ${{ parameters.releaseKind }}
     buildDirectory: server/historian
-    containerName: historian
-    test: true
+    containerName: fluidframework/routerlicious/historian
+    test: test
+    tagName: historian
+    pack: true

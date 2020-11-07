@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import {
     ISummarizerNode,
     ISummarizerNodeConfig,
@@ -20,7 +19,7 @@ import {
     IDocumentAttributes,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { mergeStats, SummaryTreeBuilder, convertToSummaryTree, calculateStats } from "./summaryUtils";
 
 const baseSummaryTreeKey = "_baseSummary";
@@ -146,6 +145,22 @@ function decodeSummary(snapshot: ISnapshotTree, logger: Pick<ITelemetryLogger, "
                     let outstandingOps: ISequencedDocumentMessage[] = [];
                     for (const opsBlob of opsBlobs) {
                         const newOutstandingOps = await readAndParseBlob<ISequencedDocumentMessage[]>(opsBlob);
+                        if (outstandingOps.length > 0 && newOutstandingOps.length > 0) {
+                            const latestSeq = outstandingOps[outstandingOps.length - 1].sequenceNumber;
+                            const newEarliestSeq = newOutstandingOps[0].sequenceNumber;
+                            if (newEarliestSeq <= latestSeq) {
+                                logger.sendTelemetryEvent({
+                                    eventName:"DuplicateOutstandingOps",
+                                    category: "generic",
+                                    // eslint-disable-next-line max-len
+                                    message: `newEarliestSeq <= latestSeq in decodeSummary: ${newEarliestSeq} <= ${latestSeq}`,
+                                });
+                                while (newOutstandingOps.length > 0
+                                    && newOutstandingOps[0].sequenceNumber <= latestSeq) {
+                                    newOutstandingOps.shift();
+                                }
+                            }
+                        }
                         outstandingOps = outstandingOps.concat(newOutstandingOps);
                     }
                     return outstandingOps;
@@ -153,8 +168,8 @@ function decodeSummary(snapshot: ISnapshotTree, logger: Pick<ITelemetryLogger, "
             };
         }
 
-        assert(outstandingOpsBlob, "Outstanding ops blob missing, but base summary tree exists");
-        assert(newBaseSummary, "Base summary tree missing, but outstanding ops blob exists");
+        assert(!!outstandingOpsBlob, "Outstanding ops blob missing, but base summary tree exists");
+        assert(newBaseSummary !== undefined, "Base summary tree missing, but outstanding ops blob exists");
         baseSummary = newBaseSummary;
         pathParts.push(baseSummaryTreeKey);
         opsBlobs.unshift(outstandingOpsBlob);
@@ -240,7 +255,7 @@ export class SummarizerNode implements ISummarizerNode {
 
     private readonly children = new Map<string, SummarizerNode>();
     private readonly pendingSummaries = new Map<string, SummaryNode>();
-    private outstandingOps: ISequencedDocumentMessage[] = [];
+    private readonly outstandingOps: ISequencedDocumentMessage[] = [];
     private wipReferenceSequenceNumber: number | undefined;
     private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
     private wipSkipRecursion = false;
@@ -248,9 +263,8 @@ export class SummarizerNode implements ISummarizerNode {
     public startSummary(referenceSequenceNumber: number) {
         assert(!this.disabled, "Unsupported: cannot call startSummary on disabled SummarizerNode");
 
-        assert.strictEqual(
-            this.wipReferenceSequenceNumber,
-            undefined,
+        assert(
+            this.wipReferenceSequenceNumber === undefined,
             "Already tracking a summary",
         );
 
@@ -316,6 +330,11 @@ export class SummarizerNode implements ISummarizerNode {
                 // No base summary to reference
                 throw error;
             }
+            this.logger.logException({
+                eventName: "SummarizingWithBasePlusOps",
+                category: "error",
+            },
+            error);
             const summary = encodeSummary(encodeParam, this.outstandingOps);
             this.wipLocalPaths = {
                 localPath,
@@ -336,7 +355,7 @@ export class SummarizerNode implements ISummarizerNode {
         parentPath: EscapedPath | undefined,
         parentSkipRecursion: boolean,
     ) {
-        assert(this.wipReferenceSequenceNumber, "Not tracking a summary");
+        assert(this.wipReferenceSequenceNumber !== undefined, "Not tracking a summary");
         let localPathsToUse = this.wipLocalPaths;
 
         if (parentSkipRecursion) {
@@ -367,7 +386,7 @@ export class SummarizerNode implements ISummarizerNode {
         // This should come from wipLocalPaths in normal cases, or from the latestSummary
         // if parentIsFailure or parentIsReused is true.
         // If there is no latestSummary, clearSummary and return before reaching this code.
-        assert(localPathsToUse, "Tracked summary local paths not set");
+        assert(!!localPathsToUse, "Tracked summary local paths not set");
 
         const summary = new SummaryNode({
             ...localPathsToUse,
@@ -436,16 +455,14 @@ export class SummarizerNode implements ISummarizerNode {
         const summaryNode = this.pendingSummaries.get(proposalHandle);
         if (summaryNode === undefined) {
             // This should only happen if parent skipped recursion AND no prior summary existed.
-            assert.strictEqual(
-                this.latestSummary,
-                undefined,
+            assert(
+                this.latestSummary === undefined,
                 "Not found pending summary, but this node has previously completed a summary",
             );
             return;
         } else {
-            assert.strictEqual(
-                referenceSequenceNumber,
-                summaryNode.referenceSequenceNumber,
+            assert(
+                referenceSequenceNumber === summaryNode.referenceSequenceNumber,
                 // eslint-disable-next-line max-len
                 `Pending summary reference sequence number should be consistent: ${summaryNode.referenceSequenceNumber} != ${referenceSequenceNumber}`,
             );
@@ -524,36 +541,22 @@ export class SummarizerNode implements ISummarizerNode {
         const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 
         if (outstandingOps.length > 0) {
-            this.prependOutstandingOps(decodedSummary.pathParts, outstandingOps);
+            assert(!!this.latestSummary, "Should have latest summary defined if any outstanding ops found");
+            this.latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
+
+            // Defensive: tracking number should already exceed this number.
+            // This is probably a little excessive; can remove when stable.
+            const newOpsLatestSeq = outstandingOps[outstandingOps.length - 1].sequenceNumber;
+            assert(
+                newOpsLatestSeq <= this.trackingSequenceNumber,
+                "When loading base summary, expected outstanding ops <= tracking sequence number",
+            );
         }
 
         return {
             baseSummary: decodedSummary.baseSummary,
             outstandingOps,
         };
-    }
-
-    private prependOutstandingOps(pathPartsForChildren: string[], ops: ISequencedDocumentMessage[]): void {
-        assert(this.latestSummary, "Should have latest summary defined to prepend outstanding ops");
-        if (pathPartsForChildren.length > 0) {
-            this.latestSummary.additionalPath = EscapedPath.createAndConcat(pathPartsForChildren);
-        }
-        if (this.disabled) {
-            // Do not track ops when disabled
-            return;
-        }
-        if (ops.length > 0 && this.outstandingOps.length > 0) {
-            const newOpsLatestSeq = ops[ops.length - 1].sequenceNumber;
-            const prevOpsEarliestSeq = this.outstandingOps[0].sequenceNumber;
-            assert(
-                newOpsLatestSeq < prevOpsEarliestSeq,
-                `Out of order prepended outstanding ops: ${newOpsLatestSeq} >= ${prevOpsEarliestSeq}`,
-            );
-            if (newOpsLatestSeq > this.trackingSequenceNumber) {
-                this.trackingSequenceNumber = newOpsLatestSeq;
-            }
-        }
-        this.outstandingOps = ops.concat(this.outstandingOps);
     }
 
     public recordChange(op: ISequencedDocumentMessage): void {
@@ -584,6 +587,7 @@ export class SummarizerNode implements ISummarizerNode {
 
     private readonly canReuseHandle: boolean;
     private readonly throwOnError: boolean;
+    private trackingSequenceNumber: number;
     private constructor(
         private readonly logger: ITelemetryLogger,
         private readonly summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
@@ -593,10 +597,10 @@ export class SummarizerNode implements ISummarizerNode {
         /** Undefined means created without summary */
         private latestSummary?: SummaryNode,
         private readonly initialSummary?: IInitialSummary,
-        private trackingSequenceNumber = _changeSequenceNumber,
     ) {
         this.canReuseHandle = config.canReuseHandle ?? true;
         this.throwOnError = config.throwOnFailure ?? false;
+        this.trackingSequenceNumber = this._changeSequenceNumber;
     }
 
     public static createRoot(
@@ -678,7 +682,7 @@ export class SummarizerNode implements ISummarizerNode {
             }
             case CreateSummarizerNodeSource.FromSummary: {
                 if (!this.disabled && this.initialSummary === undefined) {
-                    assert(latestSummary, "Cannot create child from summary if parent does not have latest summary");
+                    assert(!!latestSummary, "Cannot create child from summary if parent does not have latest summary");
                 }
                 // fallthrough to local
             }
@@ -689,7 +693,7 @@ export class SummarizerNode implements ISummarizerNode {
                     const childSummary = initialSummary.summary?.summary.tree[id];
                     if (createParam.type === CreateSummarizerNodeSource.FromSummary) {
                         // Locally created would not have subtree.
-                        assert(childSummary, "Missing child summary tree");
+                        assert(!!childSummary, "Missing child summary tree");
                     }
                     let childSummaryWithStats: ISummaryTreeWithStats | undefined;
                     if (childSummary !== undefined) {

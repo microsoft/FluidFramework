@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
@@ -11,7 +10,7 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { performanceNow } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 
 class OpPerfTelemetry {
     private pongCount: number = 0;
@@ -26,7 +25,7 @@ class OpPerfTelemetry {
 
     private firstConnection = true;
     private connectionOpSeqNumber: number | undefined;
-    private readonly bootTime = performanceNow();
+    private readonly bootTime = performance.now();
     private connectionStartTime = 0;
     private gap = 0;
 
@@ -40,14 +39,17 @@ class OpPerfTelemetry {
 
         this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
         this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
+
+        // Back-compat: <= 0.28: Replace to "op" and remove "beforeOpProcessing" in the future.
         this.deltaManager.on("beforeOpProcessing", (message) => this.beforeProcessingOp(message));
+
         this.deltaManager.on("connect", (details, opsBehind) => {
             this.clientId = details.clientId;
             this.clientSequenceNumberForLatencyStatistics = undefined;
             if (opsBehind !== undefined) {
                 this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
                 this.gap = opsBehind;
-                this.connectionStartTime = performanceNow();
+                this.connectionStartTime = performance.now();
 
                 // We might be already up-today. If so, report it right away.
                 if (this.gap <= 0) {
@@ -59,18 +61,13 @@ class OpPerfTelemetry {
             this.connectionOpSeqNumber = undefined;
             this.firstConnection = false;
         });
-        this.deltaManager.on("beforeOpProcessing", (message) => {
-            if (message.sequenceNumber === this.connectionOpSeqNumber) {
-                this.reportGettingUpToDate();
-            }
-        });
     }
 
     private reportGettingUpToDate() {
         this.connectionOpSeqNumber = undefined;
         this.logger.sendPerformanceEvent({
             eventName: "ConnectionSpeed",
-            duration: performanceNow() - this.connectionStartTime,
+            duration: performance.now() - this.connectionStartTime,
             ops: this.gap,
             // track time to connect only for first connection.
             timeToConnect: this.firstConnection ?
@@ -100,6 +97,10 @@ class OpPerfTelemetry {
     }
 
     private beforeProcessingOp(message: ISequencedDocumentMessage) {
+        if (message.sequenceNumber === this.connectionOpSeqNumber) {
+            this.reportGettingUpToDate();
+        }
+
         // Record collab window max size after every 1000th op.
         if (message.sequenceNumber % 1000 === 0) {
             if (this.opSendTimeForLatencyStatisticsForMsnStatistics !== undefined) {
@@ -115,7 +116,7 @@ class OpPerfTelemetry {
 
         if (this.clientId === message.clientId &&
             this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
-            assert(this.opSendTimeForLatencyStatistics);
+            assert(!!this.opSendTimeForLatencyStatistics);
             this.logger.sendTelemetryEvent({
                 eventName: "OpRoundtripTime",
                 seqNumber: message.sequenceNumber,

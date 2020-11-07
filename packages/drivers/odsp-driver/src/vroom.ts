@@ -6,17 +6,10 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISocketStorageDiscovery } from "./contracts";
-import {
-    fetchHelper,
-    getWithRetryForTokenRefresh,
-    getOrigin,
-} from "./odspUtils";
+import { getWithRetryForTokenRefresh, getOrigin } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
-import {
-    fetchIncorrectResponse,
-    throwOdspNetworkError,
-} from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
+import { EpochTracker } from "./epochTracker";
 
 /**
  * Makes join session call on SPO to get information about the web socket for a document
@@ -35,13 +28,11 @@ export async function fetchJoinSession(
     path: string,
     method: string,
     logger: ITelemetryLogger,
-    getVroomToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+    getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+    epochTracker: EpochTracker,
 ): Promise<ISocketStorageDiscovery> {
     return getWithRetryForTokenRefresh(async (options) => {
-        const token = await getVroomToken(options, "JoinSession");
-        if (!token) {
-            throwOdspNetworkError("Failed to acquire Vroom token", fetchIncorrectResponse);
-        }
+        const token = await getStorageToken(options, "JoinSession");
 
         const extraProps = options.refresh ? { secondAttempt: 1, hasClaims: !!options.claims } : {};
         return PerformanceEvent.timedExecAsync(logger, { eventName: "JoinSession", ...extraProps }, async (event) => {
@@ -54,7 +45,7 @@ export async function fetchJoinSession(
                 headers = { Authorization: `Bearer ${token}` };
             }
 
-            const response = await fetchHelper<ISocketStorageDiscovery>(
+            const response = await epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
                 `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
                 { method, headers },
             );

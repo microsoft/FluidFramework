@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -84,7 +84,7 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 
                 // Ensure that 'nestEnd' range label matches the 'beginTags' range label (otherwise it
                 // will not close the range.)
-                assert.equal(segment.getRangeLabels()[0], DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
+                assert(segment.getRangeLabels()[0] === DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
                 return DocSegmentKind.endTags;
         }
     }
@@ -94,6 +94,7 @@ const empty = Object.freeze({});
 
 export const getCss = (segment: ISegment): Readonly<{ style?: string, classList?: string }> => segment.properties || empty;
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const getComponentOptions = (segment: ISegment): IFluidHTMLOptions | undefined => (segment.properties && segment.properties.componentOptions) || empty;
 
 type LeafAction = (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean;
@@ -182,6 +183,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     public async getComponentFromMarker(marker: Marker) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return marker.properties.handle.get();
     }
 
@@ -315,6 +317,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public insertComponent(position: number, handle: IFluidHandle, view: string, componentOptions: object, style?: string, classList?: string[]) {
         this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
             ...FlowDocument.inclusionProperties,
@@ -361,6 +364,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 
     public getTags(position: number): Readonly<Marker[]> {
         const tags = this.sharedString.getStackContext(position, [DocSegmentKind.beginTags])[DocSegmentKind.beginTags];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return (tags && tags.items) || emptyArray;
     }
 

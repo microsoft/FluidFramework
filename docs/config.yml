@@ -1,4 +1,4 @@
-baseURL: "https://agreeable-hill-0eeff5b10.azurestaticapps.net/"
+baseURL: "https://fluidframework.com/"
 languageCode: "en-us"
 refLinksErrorLevel: "WARNING"
 theme: "thxvscode"
@@ -27,11 +27,11 @@ menu:
   - name: "API"
     url: "/apis/"
     weight: -80
-  - name: "Blog"
-    url: "/posts/"
-    weight: -50
   - name: "Community"
     url: "/community/"
+    weight: -40
+  - name: "Playground"
+    url: "/playground/"
     weight: -40
 
   docs:

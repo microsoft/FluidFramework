@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
@@ -17,6 +17,8 @@ import {
     MergeTreeDeltaType,
     IMergeTreeMaintenanceCallbackArgs,
     MergeTreeMaintenanceType,
+    LocalReference,
+    ReferenceType,
 } from "@fluidframework/merge-tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
@@ -52,7 +54,7 @@ export class PermutationSegment extends BaseSegment {
 
     public get start() { return this._start; }
     public set start(value: Handle) {
-        assert.equal(this._start, Handle.unallocated);
+        assert(this._start === Handle.unallocated);
         assert(isHandleValid(value));
 
         this._start = value;
@@ -148,6 +150,17 @@ export class PermutationVector extends Client {
         return this.insertSegmentLocal(
             start,
             new PermutationSegment(length));
+    }
+
+    public insertRelative(segment: ISegment, length: number) {
+        const inserted = new PermutationSegment(length);
+
+        return {
+            op: this.insertAtReferencePositionLocal(
+                    new LocalReference(this, segment, /* offset: */ 0, ReferenceType.Transient),
+                    inserted),
+            inserted,
+        };
     }
 
     public remove(start: number, length: number) {
@@ -288,8 +301,10 @@ export class PermutationVector extends Client {
             }))
             .sort((left, right) => left.position - right.position);
 
+        const isLocal = opArgs.sequencedMessage === undefined;
+
         // Notify the undo provider, if any is attached.
-        if (this.undo !== undefined) {
+        if (this.undo !== undefined && isLocal) {
             this.undo.record(operation, ranges);
         }
 
@@ -331,7 +346,7 @@ export class PermutationVector extends Client {
             }
 
             default:
-                assert.fail();
+                throw new Error("Unhandled MergeTreeDeltaType");
         }
     };
 

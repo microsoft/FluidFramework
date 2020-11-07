@@ -34,6 +34,7 @@ export class NodeCodeLoader {
         }
         const codeEntrypoint = await this.installOrWaitForPackages(packageName);
         const entry = import(codeEntrypoint);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return entry;
     }
 
@@ -42,7 +43,7 @@ export class NodeCodeLoader {
         const fluidObjects = pkg.match(/(.*)\/(.*)@(.*)/);
         // eslint-disable-next-line no-null/no-null
         if (fluidObjects === null) {
-            return Promise.reject("Invalid package");
+            return Promise.reject(new Error("Invalid package"));
         }
         const [, scope, name] = fluidObjects;
 
@@ -90,7 +91,6 @@ export class NodeCodeLoader {
         return new Promise((resolve, reject) => {
             const watcher = fs.watch(targetDirectory, (eventType, newFileName) => {
                 if (eventType === "rename" && newFileName === fileName) {
-                    // eslint-disable-next-line @typescript-eslint/no-use-before-define
                     clearTimeout(waitTimer);
                     watcher.close();
                     resolve();
@@ -99,7 +99,7 @@ export class NodeCodeLoader {
             const waitTimer = setTimeout(() => {
                 watcher.close();
                 clearTimeout(waitTimer);
-                reject(`${fileName} in ${targetDirectory} was not generated within ${waitTimeout} msecs`);
+                reject(new Error(`${fileName} in ${targetDirectory} was not generated within ${waitTimeout} msecs`));
             }, waitTimeout);
 
             if (fs.existsSync(`${targetDirectory}/${fileName}`)) {

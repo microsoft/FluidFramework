@@ -4,7 +4,7 @@ imagePullPolicy: IfNotPresent
 
 historian:
   name: historian
-  image: prague.azurecr.io/historian:4049
+  image: fluidcr.azurecr.io/build/fluidframework/routerlicious/historian:latest
   redis:
     url: redis_url
     port: 6379
@@ -16,7 +16,7 @@ historian:
 
 gitrest:
   name: gitrest
-  image: prague.azurecr.io/gitrest:4048
+  image: fluidcr.azurecr.io/build/fluidframework/routerlicious/gitrest:latest
   mode: latest
   persistence:
     storageClass: managed-premium
@@ -25,13 +25,4 @@ gitrest:
 
 gitssh:
   name: gitssh
-  image: prague.azurecr.io/gitssh:654
-
-cobalt:
-  name: cobalt
-  image: prague.azurecr.io/cobalt:1544
-  mode: latest
-  persistence:
-    storageClass: managed-premium
-    size: 128Gi
-    accessMode: ReadWriteOnce
+  image: fluidcr.azurecr.io/build/fluidframework/routerlicious/gitssh:latest

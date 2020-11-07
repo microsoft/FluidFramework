@@ -6,11 +6,10 @@
 import fs from "fs";
 import child_process from "child_process";
 import commander from "commander";
-import { IProxyLoaderFactory, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { OdspDocumentServiceFactory, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
-
 import {
     OdspTokenManager,
     odspTokensCache,
@@ -19,6 +18,7 @@ import {
 } from "@fluidframework/tool-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
+
 const packageName = `${pkgName}@${pkgVersion}`;
 
 interface ITestConfigs {
@@ -49,34 +49,33 @@ const passwordTokenConfig = (username, password): OdspTokenConfig => ({
 });
 
 function createLoader(config: IConfig, password: string) {
-    // Construct the loader
-    const loader = new Loader(
-        urlResolver,
-        new OdspDocumentServiceFactory(
-            async (_siteUrl: string, refresh: boolean, _claims?: string) => {
-                const tokens = await odspTokenManager.getOdspTokens(
-                    config.server,
-                    getMicrosoftConfiguration(),
-                    passwordTokenConfig(config.username, password),
-                    refresh,
-                );
-                return tokens.accessToken;
-            },
-            async (refresh: boolean, _claims?: string) => {
-                const tokens = await odspTokenManager.getPushTokens(
-                    config.server,
-                    getMicrosoftConfiguration(),
-                    passwordTokenConfig(config.username, password),
-                    refresh,
-                );
-                return tokens.accessToken;
-            },
-        ),
-        codeLoader,
-        {},
-        {},
-        new Map<string, IProxyLoaderFactory>(),
+    const documentServiceFactory = new OdspDocumentServiceFactory(
+        async (_siteUrl: string, refresh: boolean, _claims?: string) => {
+            const tokens = await odspTokenManager.getOdspTokens(
+                config.server,
+                getMicrosoftConfiguration(),
+                passwordTokenConfig(config.username, password),
+                refresh,
+            );
+            return tokens.accessToken;
+        },
+        async (refresh: boolean, _claims?: string) => {
+            const tokens = await odspTokenManager.getPushTokens(
+                config.server,
+                getMicrosoftConfiguration(),
+                passwordTokenConfig(config.username, password),
+                refresh,
+            );
+            return tokens.accessToken;
+        },
     );
+
+    // Construct the loader
+    const loader = new Loader({
+        urlResolver,
+        documentServiceFactory,
+        codeLoader,
+    });
     return loader;
 }
 
@@ -121,6 +120,7 @@ async function main() {
         .option("-u, --url <url>", "Load an existing data store rather than creating new")
         .option("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
         .option("-d, --debug", "Debug child processes via --inspect-brk")
+        .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .parse(process.argv);
 
     const password: string = commander.password;
@@ -128,6 +128,11 @@ async function main() {
     let url: string | undefined = commander.url;
     const runId: number | undefined = commander.runId === undefined ? undefined : parseInt(commander.runId, 10);
     const debug: true | undefined = commander.debug;
+    const log: string | undefined = commander.log;
+
+    if (log !== undefined) {
+        process.env.DEBUG = log;
+    }
 
     if (config.profiles[profile] === undefined) {
         console.error("Invalid --profile argument not found in testConfig.json profiles");
@@ -136,17 +141,24 @@ async function main() {
 
     // When runId is specified, kick off a single test runner and exit when it's finished
     if (runId !== undefined) {
-        if (url === undefined) {
-            console.error("Missing --url argument needed to run child process");
+        try {
+            if (url === undefined) {
+                console.error("Missing --url argument needed to run child process");
+                process.exit(-1);
+            }
+            const runConfig: IRunConfig = {
+                runId,
+                testConfig: config.profiles[profile],
+            };
+            const stressTest = await load(config, url, password);
+            await stressTest.run(runConfig);
+            console.log(`${runId.toString().padStart(3)}> exit`);
+            process.exit(0);
+        } catch (e) {
+            console.error(`${runId.toString().padStart(3)}> error: loading test`);
+            console.error(e);
             process.exit(-1);
         }
-        const runConfig: IRunConfig = {
-            runId,
-            testConfig: config.profiles[profile],
-        };
-        const stressTest = await load(config, url, password);
-        await stressTest.run(runConfig);
-        process.exit(0);
     }
 
     // When runId is not specified, this is the orchestrator process which will spawn child test runners.
@@ -198,5 +210,6 @@ async function main() {
 main().catch(
     (error) => {
         console.error(error);
+        process.exit(-1);
     },
 );

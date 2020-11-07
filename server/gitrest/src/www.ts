@@ -6,9 +6,10 @@
 import * as http from "http";
 import * as path from "path";
 import * as debug from "debug";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
+import { ExternalStorageManager } from "./externalStorageManager";
 
 /**
  * Normalize a port into a number, string, or false.
@@ -17,7 +18,8 @@ function normalizePort(val) {
     const normalizedPort = parseInt(val, 10);
 
     if (isNaN(normalizedPort)) {
-    // named pipe
+        // named pipe
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return val;
     }
 
@@ -59,9 +61,9 @@ winston.configure({
 /**
  * Get port from environment and store in Express.
  */
-// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 const port = normalizePort(process.env.PORT || "3000");
-const historian = app.create(provider);
+const externalStorageManager = new ExternalStorageManager(provider);
+const historian = app.create(provider, externalStorageManager);
 historian.set("port", port);
 
 /**
@@ -88,11 +90,9 @@ function onError(error) {
         case "EACCES":
             winston.error(`${bind} requires elevated privileges`);
             process.exit(1);
-            break;
         case "EADDRINUSE":
             winston.error(`${bind} is already in use`);
             process.exit(1);
-            break;
         default:
             throw error;
     }

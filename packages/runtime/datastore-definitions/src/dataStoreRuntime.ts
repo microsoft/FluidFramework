@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandleContext,
     IFluidSerializer,
     IFluidRouter,
+    IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IDeltaManager,
-    IGenericBlob,
     ContainerWarning,
     ILoader,
     AttachState,
@@ -26,12 +25,22 @@ import {
 import { IInboundSignalMessage, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
 import { IChannel } from ".";
 
+export interface IFluidDataStoreRuntimeEvents extends IEvent {
+    (
+        event: "disconnected" | "dispose" | "leader" | "notleader" | "attaching" | "attached",
+        listener: () => void,
+    );
+    (event: "op", listener: (message: ISequencedDocumentMessage) => void);
+    (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+    (event: "connected", listener: (clientId: string) => void);
+}
+
 /**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
  */
 export interface IFluidDataStoreRuntime extends
     IFluidRouter,
-    EventEmitter,
+    IEventProvider<IFluidDataStoreRuntimeEvents>,
     IDisposable,
     Partial<IProvideFluidDataStoreRegistry> {
 
@@ -40,6 +49,10 @@ export interface IFluidDataStoreRuntime extends
     readonly IFluidSerializer: IFluidSerializer;
 
     readonly IFluidHandleContext: IFluidHandleContext;
+
+    readonly rootRoutingContext: IFluidHandleContext;
+    readonly channelsRoutingContext: IFluidHandleContext;
+    readonly objectsRoutingContext: IFluidHandleContext;
 
     readonly options: any;
 
@@ -63,14 +76,6 @@ export interface IFluidDataStoreRuntime extends
      * Indicates the attachment state of the data store to a host service.
      */
     readonly attachState: AttachState;
-
-    on(
-        event: "disconnected" | "dispose" | "leader" | "notleader" | "attaching" | "attached",
-        listener: () => void,
-    ): this;
-    on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
-    on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
-    on(event: "connected", listener: (clientId: string) => void): this;
 
     /**
      * Returns the channel with the given id
@@ -99,9 +104,9 @@ export interface IFluidDataStoreRuntime extends
     // Blob related calls
     /**
      * Api to upload a blob of data.
-     * @param file - blob to be uploaded.
+     * @param blob - blob to be uploaded.
      */
-    uploadBlob(file: IGenericBlob): Promise<IGenericBlob>;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
     /**
      * Submits the signal to be sent to other clients.
@@ -109,17 +114,6 @@ export interface IFluidDataStoreRuntime extends
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
-
-    /**
-     * Api to get the blob for a particular id.
-     * @param blobId - ID of the required blob.
-     */
-    getBlob(blobId: string): Promise<IGenericBlob | undefined>;
-
-    /**
-     * Api to get the blob metadata.
-     */
-    getBlobMetadata(): Promise<IGenericBlob[]>;
 
     /**
      * Returns the current quorum.

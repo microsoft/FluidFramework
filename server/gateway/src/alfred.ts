@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
 import { TenantManager } from "@fluidframework/server-services";
 import { GitManager, Historian, IGitCache } from "@fluidframework/server-services-client";
@@ -119,7 +119,6 @@ export class Alfred implements IAlfred {
 
     private getGitManager(id: string): GitManager {
         const result = this.tenants.get(id);
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!result) {
             throw new Error(`Unknown tenant: ${id}`);
         }

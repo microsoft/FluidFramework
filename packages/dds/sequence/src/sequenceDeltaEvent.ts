@@ -102,7 +102,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
  *
  * For group ops, each op will get it's own event, and the group op property will be set on the op args.
  *
- * Ops may get multiple events. For instance, as insert-replace will get a remove then an insert event.
+ * Ops may get multiple events. For instance, an insert-replace will get a remove then an insert event.
  */
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
     public readonly isLocal: boolean;

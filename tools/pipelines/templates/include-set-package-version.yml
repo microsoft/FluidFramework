@@ -7,15 +7,19 @@ parameters:
 - name: buildNumberInPatch
   type: string
   default:
+- name: tagName
+  type: string
 
 # Set version
 steps:
 - task: Bash@3
+  name: SetVersion
   displayName: Set Package Version
   env:
     VERSION_RELEASE: $(release)
     VERSION_BUILDNUMBER: $(Build.BuildNumber)
     VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
+    VERSION_TAGNAME: ${{ parameters.tagName }}
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
@@ -26,15 +30,21 @@ steps:
       echo VERSION_RELEASE=$VERSION_RELEASE
       echo VERSION_PATCH=$VERSION_PATCH
 
-      version=`node $(Build.SourcesDirectory)/tools/pipelines/scripts/build-version.js`
-      echo COMPUTED_VERSION=$version
-
-      if [ "$version" = "" ]; then
-        exit -1
-      fi
-
+      node $(Build.SourcesDirectory)/tools/pipelines/scripts/build-version.js
+- task: Bash@3
+  displayName: Update Package Version
+  env:
+    VERSION_RELEASE: $(release)
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
       if [ -f "lerna.json" ]; then
-        npx lerna version $version --no-git-tag-version --no-push --yes
+        if [ "$VERSION_RELEASE" = "release" ]; then
+          npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes
+        else
+          npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
+        fi
       else
-        npm version $version --no-git-tag-version -f --allow-same-version
+        npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
       fi

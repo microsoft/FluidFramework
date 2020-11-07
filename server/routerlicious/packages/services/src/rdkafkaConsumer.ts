@@ -23,6 +23,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private isRebalancing = true;
 	private assignedPartitions: Set<number> = new Set();
 	private readonly pendingCommits: Map<number, Deferred<void>> = new Map();
+	private readonly pendingMessages: Map<number, kafkaTypes.Message[]> = new Map();
 	private readonly latestOffsets: Map<number, number> = new Map();
 
 	constructor(
@@ -84,10 +85,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			this.connect();
 		});
 
-		this.consumer.on("data", (message: kafkaTypes.Message) => {
-			this.latestOffsets.set(message.partition, message.offset);
-			this.emit("data", message as IQueuedMessage);
-		});
+		this.consumer.on("data", this.processMessage.bind(this));
 
 		this.consumer.on("offset.commit", (err, offsets) => {
 			let shouldRetryCommit = false;
@@ -152,6 +150,9 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					}
 				}
 
+				// clear pending messages
+				this.pendingMessages.clear();
+
 				if (!this.optimizedRebalance) {
 					if (this.isRebalancing) {
 						this.isRebalancing = false;
@@ -163,11 +164,23 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				this.assignedPartitions = newAssignedPartitions;
 
 				try {
+					this.isRebalancing = true;
 					const partitions = this.getPartitions(this.assignedPartitions);
 					const partitionsWithEpoch = await this.fetchPartitionEpochs(partitions);
 					this.emit("rebalanced", partitionsWithEpoch, err.code);
+					this.isRebalancing = false;
+
+					for (const pendingMessages of this.pendingMessages.values()) {
+						// process messages sent while we were rebalancing for each partition in order
+						for (const pendingMessage of pendingMessages) {
+							this.processMessage(pendingMessage);
+						}
+					}
 				} catch (ex) {
+					this.isRebalancing = false;
 					this.emit("error", ex);
+				} finally {
+					this.pendingMessages.clear();
 				}
 			} else {
 				this.emit("error", err);
@@ -196,14 +209,13 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}
 
 		await new Promise((resolve) => {
-			const consumer = this.consumer;
-			this.consumer = undefined;
-			if (consumer && consumer.isConnected()) {
-				consumer.disconnect(resolve);
+			if (this.consumer && this.consumer.isConnected()) {
+				this.consumer.disconnect(resolve);
 			} else {
 				resolve();
 			}
 		});
+		this.consumer = undefined;
 
 		if (this.zooKeeperClient) {
 			this.zooKeeperClient.close();
@@ -247,6 +259,40 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	public async resume() {
 		this.consumer?.subscribe([this.topic]);
 		return Promise.resolve();
+	}
+
+	/**
+	 * Saves the latest offset for the partition and emits the data event with the message.
+	 * If we are in the middle of rebalancing and the message was sent for a partition we will own,
+	 * the message will be saved and processed after rebalancing is completed.
+	 * @param message The message
+	 */
+	private processMessage(message: kafkaTypes.Message) {
+		const partition = message.partition;
+
+		if (this.assignedPartitions.has(partition) && this.isRebalancing) {
+			/*
+				It is possible to receive messages while we have not yet finished rebalancing
+				due to how we wait for the fetchPartitionEpochs call to finish before emitting the rebalanced event.
+				This means that the PartitionManager has not yet created the partition,
+				so messages will be lost since they were sent to an "untracked partition".
+				To fix this, we should temporarily store the messages and emit them once we finish rebalancing.
+			*/
+
+			let pendingMessages = this.pendingMessages.get(partition);
+
+			if (!pendingMessages) {
+				pendingMessages = [];
+				this.pendingMessages.set(partition, pendingMessages);
+			}
+
+			pendingMessages.push(message);
+
+			return;
+		}
+
+		this.latestOffsets.set(partition, message.offset);
+		this.emit("data", message as IQueuedMessage);
 	}
 
 	private getPartitions(partitions: Set<number>): IPartition[] {

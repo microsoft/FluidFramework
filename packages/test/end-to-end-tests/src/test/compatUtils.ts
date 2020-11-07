@@ -6,70 +6,97 @@
 /* eslint-disable import/no-extraneous-dependencies */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { SharedCell } from "@fluidframework/cell";
 import {
     IContainer,
-    IFluidCodeDetails,
-    IFluidModule,
     ILoader,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { Ink } from "@fluidframework/ink";
 import { LocalResolver } from "@fluidframework/local-driver";
-import { SharedMap } from "@fluidframework/map";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
+import { SharedCounter } from "@fluidframework/counter";
+import { SharedDirectory, SharedMap } from "@fluidframework/map";
+import { SharedMatrix } from "@fluidframework/matrix";
+import { ConsensusQueue } from "@fluidframework/ordered-collection";
+import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { SharedString } from "@fluidframework/sequence";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { SharedString, SparseMatrix } from "@fluidframework/sequence";
+import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     ChannelFactoryRegistry,
-    createAndAttachContainer,
-    createLocalLoader,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
+    LocalTestObjectProvider,
+    OpProcessingController,
 } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
 /* eslint-enable import/no-extraneous-dependencies */
 
-const documentId = "compatibilityTest";
-const documentLoadUrl = `fluid-test://localhost/${documentId}`;
-const codeDetails: IFluidCodeDetails = {
-    package: "compatibilityTestPackage",
-    config: {},
-};
-
 /**
- * Arguments given to the function passed into compatTest()
+ * Arguments given to the function passed into generateTest, generateCompatTest or generateTestWithCompat
  */
-export interface ICompatTestArgs {
+export interface ICompatLocalTestObjectProvider {
     /**
-     * Used to create a test Container. In compatTest(), this Container and its runtime will be arbitrarily-versioned.
+     * Used to create a test Container.
+     * In generateCompatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
-    makeTestContainer: (testFluidDataObjectFactoryRegistry?) => Promise<IContainer | old.IContainer>,
-    loadTestContainer: (testFluidDataObjectFactoryRegistry?) => Promise<IContainer | old.IContainer>,
-    deltaConnectionServer?: ILocalDeltaConnectionServer,
-    urlResolver?: IUrlResolver,
+    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer | old.IContainer>,
+    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer | old.IContainer>,
+    makeTestLoader(testContainerConfig?: ITestContainerConfig): ILoader | old.ILoader,
+    deltaConnectionServer: ILocalDeltaConnectionServer
+    documentServiceFactory: IDocumentServiceFactory | old.IDocumentServiceFactory,
+    urlResolver: LocalResolver | old.LocalResolver,
+    defaultCodeDetails: IFluidCodeDetails | old.IFluidCodeDetails,
+    opProcessingController: OpProcessingController | old.OpProcessingController,
 }
 
 export interface ICompatTestOptions {
-    /**
-     * Use TestFluidDataObject instead of PrimedDataStore
-     */
-    testFluidDataObject?: boolean,
+    serviceConfiguration?: Partial<IServiceConfiguration>,
 }
 
-// TODO: once 0.25 is released this can be replaced with the old imported type
-type OldChannelFactoryRegistry = Iterable<[string | undefined, old.IChannelFactory]>;
+export interface ITestContainerConfig {
+    // TestFluidDataObject instead of PrimedDataStore
+    testFluidDataObject?: boolean,
+
+    // And array of channel name and DDS factory pair to create on container creation time
+    registry?: ChannelFactoryRegistry,
+
+    // Container runtime options for the container instance
+    runtimeOptions?: IContainerRuntimeOptions,
+}
 
 // convert a channel factory registry for TestFluidDataStoreFactory to one with old channel factories
-function convertRegistry(registry: ChannelFactoryRegistry = []): OldChannelFactoryRegistry {
-    const oldRegistry = [];
+function convertRegistry(registry: ChannelFactoryRegistry = []): old.ChannelFactoryRegistry {
+    const oldRegistry: [string | undefined, old.IChannelFactory][] = [];
     for (const [key, factory] of registry) {
         switch (factory.type) {
-            case SharedMap.getFactory().type: oldRegistry.push([key, old.SharedMap.getFactory()]); break;
-            case SharedString.getFactory().type: oldRegistry.push([key, old.SharedString.getFactory()]); break;
-            default: throw Error("Invalid or unimplemented channel factory");
+            case SharedMap.getFactory().type:
+                oldRegistry.push([key, old.SharedMap.getFactory()]); break;
+            case SharedString.getFactory().type:
+                oldRegistry.push([key, old.SharedString.getFactory()]); break;
+            case SharedDirectory.getFactory().type:
+                oldRegistry.push([key, old.SharedDirectory.getFactory()]); break;
+            case ConsensusRegisterCollection.getFactory().type:
+                oldRegistry.push([key, old.ConsensusRegisterCollection.getFactory()]); break;
+            case SharedCell.getFactory().type:
+                oldRegistry.push([key, old.SharedCell.getFactory()]); break;
+            case Ink.getFactory().type:
+                oldRegistry.push([key, old.Ink.getFactory()]); break;
+            case SharedMatrix.getFactory().type:
+                oldRegistry.push([key, old.SharedMatrix.getFactory()]); break;
+            case ConsensusQueue.getFactory().type:
+                oldRegistry.push([key, old.ConsensusQueue.getFactory()]); break;
+            case SparseMatrix.getFactory().type:
+                oldRegistry.push([key, old.SparseMatrix.getFactory()]); break;
+            case SharedCounter.getFactory().type:
+                oldRegistry.push([key, old.SharedCounter.getFactory()]); break;
+            default:
+                throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
         }
     }
 
@@ -78,22 +105,33 @@ function convertRegistry(registry: ChannelFactoryRegistry = []): OldChannelFacto
 
 export class TestDataObject extends DataObject {
     public static readonly type = "@fluid-example/test-dataStore";
+    public get _context() { return this.context; }
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
 
 export class OldTestDataObject extends old.DataObject {
     public static readonly type = "@fluid-example/test-dataStore";
+    public get _context() { return this.context; }
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
 
-export const createPrimedDataStoreFactory = (): IFluidDataStoreFactory => {
-    return new DataObjectFactory(TestDataObject.type, TestDataObject, [], {});
+export const createPrimedDataStoreFactory = (registry?: ChannelFactoryRegistry): IFluidDataStoreFactory => {
+    return new DataObjectFactory(
+        TestDataObject.type,
+        TestDataObject,
+        [... registry ?? []].map((r)=>r[1]),
+        {});
 };
 
-export const createOldPrimedDataStoreFactory = (): old.IFluidDataStoreFactory => {
-    return new old.DataObjectFactory(OldTestDataObject.type, OldTestDataObject, [], {});
+export const createOldPrimedDataStoreFactory =
+    (registry?: ChannelFactoryRegistry): old.IFluidDataStoreFactory => {
+    return new old.DataObjectFactory(
+        OldTestDataObject.type,
+        OldTestDataObject,
+        [... convertRegistry(registry)].map((r)=>r[1]),
+        {});
 };
 
 export const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
@@ -112,204 +150,123 @@ export const createRuntimeFactory = (
     return new TestContainerRuntimeFactory(type, dataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
 };
 
-// TODO: once 0.25 is released this can import the old version of TestContainerRuntimeFactory used above
 export const createOldRuntimeFactory = (
     type: string,
     dataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): old.IRuntimeFactory => {
-    return new old.TestContainerRuntimeFactory(type, dataStoreFactory as old.IFluidDataStoreFactory, runtimeOptions);
+    // TODO: when the old version of 0.27 is released this can use the old version of TestContainerRuntimeFactory
+    // with the default data store
+    // return new old.TestContainerRuntimeFactory(type, dataStoreFactory as old.IFluidDataStoreFactory, runtimeOptions);
+    const factory = new TestContainerRuntimeFactory(type, dataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
+    return factory as unknown as old.IRuntimeFactory;
 };
 
-export async function createContainer(
-    fluidModule: IFluidModule | old.IFluidModule,
-    deltaConnectionServer: ILocalDeltaConnectionServer,
-    urlResolver: IUrlResolver,
-): Promise<IContainer> {
-    const loader: ILoader = createLocalLoader(
-        [[codeDetails, fluidModule as IFluidModule]],
-        deltaConnectionServer,
-        urlResolver);
-    return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
-}
-
-export async function loadContainer(
-    fluidModule: IFluidModule | old.IFluidModule,
-    deltaConnectionServer: ILocalDeltaConnectionServer,
-    urlResolver: IUrlResolver,
-): Promise<IContainer> {
-    const loader: ILoader = createLocalLoader(
-        [[codeDetails, fluidModule as IFluidModule]],
-        deltaConnectionServer,
-        urlResolver);
-    return loader.resolve({ url: documentLoadUrl });
-}
-
-export async function createContainerWithOldLoader(
-    fluidModule: IFluidModule | old.IFluidModule,
-    deltaConnectionServer: ILocalDeltaConnectionServer,
-    urlResolver: IUrlResolver,
-): Promise<old.IContainer> {
-    const loader = old.createLocalLoader(
-        [[codeDetails, fluidModule as old.IFluidModule]],
-        deltaConnectionServer as any,
-        urlResolver);
-    return old.createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
-}
-
-export async function loadContainerWithOldLoader(
-    fluidModule: IFluidModule | old.IFluidModule,
-    deltaConnectionServer: ILocalDeltaConnectionServer,
-    urlResolver: IUrlResolver,
-): Promise<old.IContainer> {
-    const loader = old.createLocalLoader(
-        [[codeDetails, fluidModule as old.IFluidModule]],
-        deltaConnectionServer as any,
-        urlResolver);
-    return loader.resolve({ url: documentLoadUrl });
-}
-
-export const compatTest = (
-    tests: (compatArgs: ICompatTestArgs) => void,
+export const generateTest = (
+    tests: (compatArgs: ICompatLocalTestObjectProvider) => void,
     options: ICompatTestOptions = {},
 ) => {
-    describe("old loader, new runtime", function() {
-        let deltaConnectionServer: ILocalDeltaConnectionServer;
-        let urlResolver: IUrlResolver;
-        const runtimeFactory = (registry?: ChannelFactoryRegistry) => createRuntimeFactory(
+    // Run with all current versions
+    const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+        createRuntimeFactory(
             TestDataObject.type,
-            options.testFluidDataObject
-                ? createTestFluidDataStoreFactory(registry)
-                : createPrimedDataStoreFactory(),
+            containerOptions?.testFluidDataObject
+                ? createTestFluidDataStoreFactory(containerOptions?.registry)
+                : createPrimedDataStoreFactory(containerOptions?.registry),
+            containerOptions?.runtimeOptions,
         );
 
-        const makeTestContainer = async (registry?: ChannelFactoryRegistry) => createContainerWithOldLoader(
-            {
-                fluidExport: runtimeFactory(registry),
-            },
-            deltaConnectionServer,
-            urlResolver,
-        );
-        const loadTestContainer = async (registry?: ChannelFactoryRegistry) => loadContainerWithOldLoader(
-            {
-                fluidExport: runtimeFactory(registry),
-            },
-            deltaConnectionServer,
-            urlResolver,
-        );
+    const localTestObjectProvider = new LocalTestObjectProvider(
+        runtimeFactory,
+        options.serviceConfiguration,
+    );
 
-        beforeEach(async function() {
-            deltaConnectionServer = LocalDeltaConnectionServer.create(
-                undefined,
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                { summary: { maxOps: 1 } as ISummaryConfiguration },
+    tests(localTestObjectProvider);
+
+    afterEach(async () => {
+        await localTestObjectProvider.reset();
+    });
+};
+
+export const generateCompatTest = (
+    tests: (compatArgs: ICompatLocalTestObjectProvider) => void,
+    options: ICompatTestOptions = {},
+) => {
+    describe("compatibility", () => {
+        describe("old loader, new runtime", function() {
+            const dataStoreFactory = (containerOptions?: ITestContainerConfig) =>
+                containerOptions?.testFluidDataObject
+                    ? createTestFluidDataStoreFactory(containerOptions?.registry)
+                    : createPrimedDataStoreFactory(containerOptions?.registry);
+            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+                createRuntimeFactory(
+                    TestDataObject.type,
+                    dataStoreFactory(containerOptions),
+                    containerOptions?.runtimeOptions,
+                ) as any as old.IRuntimeFactory;
+
+            const localTestObjectProvider = new old.LocalTestObjectProvider(
+                runtimeFactory,
+                options.serviceConfiguration,
             );
-            urlResolver = new LocalResolver();
+
+            tests(localTestObjectProvider);
+
+            afterEach(async function() {
+                await localTestObjectProvider.reset();
+            });
         });
 
-        tests({
-            makeTestContainer,
-            loadTestContainer,
-            // These are getters because tests() is called before the beforeEach() callback, at which point
-            // these are undefined.
-            get deltaConnectionServer() { return deltaConnectionServer; },
-            get urlResolver() { return urlResolver; },
+        describe("new loader, old runtime", function() {
+            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+                createOldRuntimeFactory(
+                    OldTestDataObject.type,
+                    containerOptions?.testFluidDataObject
+                        ? createOldTestFluidDataStoreFactory(containerOptions?.registry)
+                        : createOldPrimedDataStoreFactory(containerOptions?.registry),
+                    containerOptions?.runtimeOptions,
+                ) as any as IRuntimeFactory;
+
+            const localTestObjectProvider = new LocalTestObjectProvider(
+                runtimeFactory,
+                options.serviceConfiguration,
+            );
+
+            tests(localTestObjectProvider);
+
+            afterEach(async function() {
+                await localTestObjectProvider.reset();
+            });
         });
 
-        afterEach(async function() {
-            await deltaConnectionServer.webSocketServer.close();
+        describe("new ContainerRuntime, old DataStoreRuntime", function() {
+            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+                createRuntimeFactory(
+                    OldTestDataObject.type,
+                    containerOptions?.testFluidDataObject
+                        ? createOldTestFluidDataStoreFactory(containerOptions?.registry)
+                        : createOldPrimedDataStoreFactory(containerOptions?.registry),
+                    containerOptions?.runtimeOptions,
+                );
+
+            const localTestObjectProvider = new LocalTestObjectProvider(
+                runtimeFactory,
+                options.serviceConfiguration,
+            );
+
+            tests(localTestObjectProvider);
+
+            afterEach(async function() {
+                await localTestObjectProvider.reset();
+            });
         });
     });
+};
 
-    describe("new loader, old runtime", function() {
-        let deltaConnectionServer: ILocalDeltaConnectionServer;
-        let urlResolver: IUrlResolver;
-        const runtimeFactory = (registry?: ChannelFactoryRegistry) => createOldRuntimeFactory(
-            OldTestDataObject.type,
-            options.testFluidDataObject
-                ? createOldTestFluidDataStoreFactory(registry)
-                : createOldPrimedDataStoreFactory(),
-        );
-
-        const makeTestContainer = async (registry: ChannelFactoryRegistry) => createContainer(
-            {
-                fluidExport: runtimeFactory(registry),
-            },
-            deltaConnectionServer,
-            urlResolver,
-        );
-        const loadTestContainer = async (registry: ChannelFactoryRegistry) => loadContainer(
-            {
-                fluidExport: runtimeFactory(registry),
-            },
-            deltaConnectionServer,
-            urlResolver,
-        );
-
-        beforeEach(async function() {
-            deltaConnectionServer = LocalDeltaConnectionServer.create(
-                undefined,
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                { summary: { maxOps: 1 } as ISummaryConfiguration },
-            );
-            urlResolver = new LocalResolver();
-        });
-
-        tests({
-            makeTestContainer,
-            loadTestContainer,
-            get deltaConnectionServer() { return deltaConnectionServer; },
-            get urlResolver() { return urlResolver; },
-        });
-
-        afterEach(async function() {
-            await deltaConnectionServer.webSocketServer.close();
-        });
-    });
-
-    describe("new ContainerRuntime, old DataStoreRuntime", function() {
-        let deltaConnectionServer: ILocalDeltaConnectionServer;
-        let urlResolver: IUrlResolver;
-        const runtimeFactory = (registry?: ChannelFactoryRegistry) => createRuntimeFactory(
-            OldTestDataObject.type,
-            options.testFluidDataObject
-                ? createOldTestFluidDataStoreFactory(registry)
-                : createOldPrimedDataStoreFactory(),
-        );
-
-        const makeTestContainer = async (registry: ChannelFactoryRegistry) => createContainer(
-            {
-                fluidExport: runtimeFactory(registry),
-            },
-            deltaConnectionServer,
-            urlResolver,
-        );
-        const loadTestContainer = async (registry: ChannelFactoryRegistry) => loadContainer(
-            {
-                fluidExport: runtimeFactory(registry),
-            },
-            deltaConnectionServer,
-            urlResolver,
-        );
-
-        beforeEach(async function() {
-            deltaConnectionServer = LocalDeltaConnectionServer.create(
-                undefined,
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                { summary: { maxOps: 1 } as ISummaryConfiguration },
-            );
-            urlResolver = new LocalResolver();
-        });
-
-        tests({
-            makeTestContainer,
-            loadTestContainer,
-            get deltaConnectionServer() { return deltaConnectionServer; },
-            get urlResolver() { return urlResolver; },
-        });
-
-        afterEach(async function() {
-            await deltaConnectionServer.webSocketServer.close();
-        });
-    });
+export const generateTestWithCompat = (
+    tests: (compatArgs: ICompatLocalTestObjectProvider) => void,
+    options: ICompatTestOptions = {},
+) => {
+    generateTest(tests, options);
+    generateCompatTest(tests, options);
 };

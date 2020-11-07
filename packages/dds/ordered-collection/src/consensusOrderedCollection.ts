@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
+import { assert , fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
+
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -119,7 +119,7 @@ export class ConsensusOrderedCollection<T = any>
         // Disconnect order matters because it defines the order items go back to the queue.
         // So we put items back to queue only when we process our own removeMember event.
         runtime.getQuorum().on("removeMember", (clientId: string) => {
-            assert(clientId);
+            assert(!!clientId);
             this.removeClient(clientId);
         });
     }
@@ -273,7 +273,7 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService): Promise<void> {
         assert(this.jobTracking.size === 0);
         const rawContentTracking = await storage.read(snapshotFileNameTracking);
@@ -326,8 +326,6 @@ export class ConsensusOrderedCollection<T = any>
                 default: unreachableCase(op);
             }
             if (local) {
-                assert(
-                    localOpMetadata, `localOpMetadata is missing from the local client's ${op.opName} operation`);
                 // Resolve the pending promise for this operation now that we have received an ack for it.
                 const resolve = localOpMetadata as PendingResolve<T>;
                 resolve(value);
@@ -397,15 +395,11 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     private serializeValue(value) {
-        return this.runtime.IFluidSerializer.stringify(
-            value,
-            this.runtime.IFluidHandleContext,
-            this.handle);
+        return this.runtime.IFluidSerializer.stringify(value, this.handle);
     }
 
     private deserializeValue(content: string) {
-        return this.runtime.IFluidSerializer.parse(
-            content,
-            this.runtime.IFluidHandleContext);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return this.runtime.IFluidSerializer.parse(content);
     }
 }

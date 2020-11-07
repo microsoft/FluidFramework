@@ -4,12 +4,13 @@
  */
 
 import * as url from "url";
-import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import * as jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import { NodeCodeLoader } from "./nodeCodeloader";
@@ -70,30 +71,23 @@ export async function start(): Promise<void> {
         url: documentUrl,
     };
 
-    const hostToken = jwt.sign(
-        {
-            user,
-        },
-        bearerSecret);
-
-    const resolver = new ContainerUrlResolver(
+    const urlResolver = new ContainerUrlResolver(
         ordererEndpoint,
         hostToken,
         new Map([[documentUrl, resolved]]));
 
     // A code loader that installs the code package in a specified location (installPath).
     // Once installed, the loader returns an entry point to Fluid Container to invoke the code.
-    const nodeCodeLoader = new NodeCodeLoader(installPath, timeoutMS);
+    const codeLoader = new NodeCodeLoader(installPath, timeoutMS);
+
+    const tokenProvider = new InsecureTokenProvider(tenantId, documentId, tenantKey, user);
 
     // Construct the loader
-    const loader = new Loader(
-        resolver,
-        new RouterliciousDocumentServiceFactory(),
-        nodeCodeLoader,
-        {},
-        {},
-        new Map<string, IProxyLoaderFactory>(),
-    );
+    const loader = new Loader({
+        urlResolver,
+        documentServiceFactory: new RouterliciousDocumentServiceFactory(tokenProvider),
+        codeLoader,
+    });
 
     const details: IFluidCodeDetails = {
         config: {},

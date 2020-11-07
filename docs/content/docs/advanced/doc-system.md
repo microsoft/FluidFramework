@@ -1,7 +1,6 @@
 ---
 title: Using the documentation system effectively
 menuPosition: 3
-draft: false
 ---
 
 
@@ -24,18 +23,15 @@ To build the API documentation, do the following from the root of the repository
 
 ```bash
 npm install
-npm run build
-npm run build:docs
-npm run build:gendocs
+npm run build:fast -- --symlink:full --install --all
+npm run build:fast -- -s build:docs --all
 ```
 
-The `build:docs` script will generate a JSON representation of all the TSDoc comments, and then `build:gendocs` will
-convert that to a tree of markdown files, under `docs/api/`. These files should _not_ be committed to git.
+This will generate a JSON representation of all the TSDoc comments, which will be transformed into Markdown in the next
+step.
 
-You may run the `build` and `build:docs` scripts from a particular package directory, but `build:gendocs` can only be
-run from the root.
 
-### Building documentation site with Vuepress
+### Building documentation site with Hugo
 
 To build the docs themselves, you'll need to switch to the `docs/` folder, install the dependencies, and then build the
 site.
@@ -43,10 +39,13 @@ site.
 ```bash
 cd docs
 npm install
-npm start
 ```
 
-`npm start` will serve the local documentation from <http://localhost:8080/>.
+`npm start` will serve the local documentation from <http://localhost:1313/>, while `npm run build` will build the full
+documentation site and output it to `docs/public/`.
+
+Both `npm start` and `npm run build` will convert the TSDoc JSON into a tree of Markdown files under
+`docs/content/apis/` as part of the site build. These files should _not_ be committed to Git.
 
 ## Documentation sources
 
@@ -56,14 +55,12 @@ Narrative documentation
 : The overall structure of the documentation comes from Markdown files in the `docs/` folder.
 
 Automated API documentation
-: The contents of the [API](../api/) section is built from [TSDoc
+: The contents of the [API]({{< relref "apis" >}}) section is built from [TSDoc
 comments](https://api-extractor.com/pages/tsdoc/doc_comment_syntax/) in the source code.
 
 ## Features
 
-### Including other files
-
-#### Reusable snippets
+### Reusable snippets
 
 If you want to re-use a snippet in multiple places, place the snippet file in `docs/_includes/`. You can then reference
 it in a Markdown file like so:
@@ -204,9 +201,17 @@ Markdown formatting _goes_ **here.**
 {{% /callout %}}
 
 
-### Diagrams with Mermaid
+### Diagrams
 
-[Mermaid examples and syntax reference](https://mermaid-js.github.io/mermaid/)
+We prefer text-based diagrams that are converted to images at build time. You can create inline diagrams with
+[Mermaid](https://mermaid-js.github.io/), or you can create ASCII art diagrams that will be converted to PNGs at build
+time.
+
+#### Mermaid diagrams
+
+Mermaid diagrams can be put inline in a Markdown file using the `{{</* mermaid */>}}` shortcode.
+
+[Mermaid examples and syntax reference.](https://mermaid-js.github.io/mermaid/)
 
 **Input**
 
@@ -248,6 +253,28 @@ Class01 : int gorilla
 Class08 <--> C2: Cool label
 {{< /mermaid >}}
 
+#### ASCII art diagrams with ditaa
+
+[ditaa](https://github.com/stathissideris/ditaa) is a tool to convert ASCII art block diagrams to PNGs. Any file
+in the `/docs/content` folder with a `.ditaa` file extension will be converted to a PNG file in the same folder at
+build time.
+
+[asciiflow](http://asciiflow.com/) is an in-browser editor that makes it easier to create ASCII art block diagrams.
+
+**Input**
+
+```
+{{% include file="content/docs/advanced/images/example.ditaa" safeHTML=true %}}
+```
+
+**Output**
+
+![An example ditaa diagram that has been converted to a PNG image](/docs/advanced/images/example.png)
+
+
+[Read more about ditaa here.](https://github.com/stathissideris/ditaa) Note that we are using
+[a fork of the original implementation](https://github.com/akavel/ditaa) re-written in Go to remove a Java dependency.
+
 ### Markdown enhancements
 
 #### Typography
@@ -257,8 +284,6 @@ Ellipsis: ... `...`
 Em dash: --- `---`
 
 En dash: -- `--`
-
-Plus/minus: +- `+-`
 
 #### Definition lists <Badge text="markdown-it plugin" vertical="middle"/>
 

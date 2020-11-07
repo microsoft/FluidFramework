@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import {
     IFluidObject,
     IFluidRouter,
@@ -27,10 +26,11 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import {
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { assert } from "@fluidframework/common-utils";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -68,7 +68,7 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
     private _root: ISharedMap | undefined;
 
     public get root() {
-        assert(this._root);
+        assert(!!this._root);
         return this._root;
     }
 
@@ -80,6 +80,7 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
     }
 
     public get(key: string): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.root.get(key);
     }
 
@@ -141,7 +142,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
             new Map([[ComponentName, Promise.resolve(this)]]),
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(this.defaultComponentId),
-                deprecated_innerRequestHandler,
+                innerRequestHandler,
             ),
         );
 

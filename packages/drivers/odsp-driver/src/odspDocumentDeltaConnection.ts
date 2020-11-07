@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { IDocumentDeltaConnection, DriverError } from "@fluidframework/driver-definitions";
+import { OdspError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
     IConnect,
@@ -19,7 +19,7 @@ import {
 import uuid from "uuid/v4";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
-import { errorObjectFromSocketError, OdspError } from "./odspError";
+import { errorObjectFromSocketError } from "./odspError";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -340,23 +340,20 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     /**
      * Disconnect from the websocket
      */
-    public disconnect(socketProtocolError: boolean = false) {
-        if (this.socketReferenceKey !== undefined) {
-            const key = this.socketReferenceKey;
-            this.socketReferenceKey = undefined;
+    protected disconnect(socketProtocolError: boolean, reason: DriverError) {
+        const key = this.socketReferenceKey;
+        assert(key !== undefined, "reentrancy not supported!");
+        this.socketReferenceKey = undefined;
 
-            const reason = "client closing connection";
-
-            if (this.enableMultiplexing && !socketProtocolError && this.hasDetails) {
-                // tell the server we are disconnecting this client from the document
-                this.socket.emit("disconnect_document", this.clientId, this.documentId);
-            }
-
-            OdspDocumentDeltaConnection.removeSocketIoReference(key, socketProtocolError, reason);
-
-            // RemoveSocketIoReference() above raises "disconnect" event on socket for socketProtocolError === true
-            // If it's not critical error, we want to raise event on this object only.
-            this.emit("disconnect", reason);
+        if (!socketProtocolError && this.hasDetails) {
+            // tell the server we are disconnecting this client from the document
+            this.socket.emit("disconnect_document", this.clientId, this.documentId);
         }
+
+        OdspDocumentDeltaConnection.removeSocketIoReference(key, socketProtocolError, reason);
+
+        // RemoveSocketIoReference() above raises "disconnect" event on socket for socketProtocolError === true
+        // If it's not critical error, we want to raise event on this object only.
+        this.emit("disconnect", reason);
     }
 }

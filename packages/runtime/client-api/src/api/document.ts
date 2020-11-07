@@ -8,9 +8,6 @@ import * as cell from "@fluidframework/cell";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     IDeltaManager,
-    IFluidCodeDetails,
-    IGenericBlob,
-    IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -26,10 +23,11 @@ import {
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { IFluidHandle, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
 const apiVersion = require("../../package.json").version;
 
 // Registered services to use when loading a document
@@ -78,6 +76,7 @@ export class Document extends EventEmitter {
     }
 
     public get options(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.runtime.options;
     }
 
@@ -192,17 +191,8 @@ export class Document extends EventEmitter {
         return this.closeFn();
     }
 
-    public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
-        return this.runtime.uploadBlob(file);
-    }
-
-    public async getBlob(blobId: string): Promise<IGenericBlob> {
-        return this.runtime.getBlob(blobId);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getBlobMetadata(): Promise<IGenericBlob[]> {
-        return this.runtime.getBlobMetadata();
+    public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+        return this.runtime.uploadBlob(blob);
     }
 }
 
@@ -256,7 +246,6 @@ async function requestDocument(loader: Loader, container: Container, uri: string
         attach(loader, uri, deferred);
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     deferred.promise.finally(() => container.removeListener("error", errorHandler));
     return deferred.promise;
 }
@@ -266,23 +255,21 @@ async function requestDocument(loader: Loader, container: Container, uri: string
  */
 export async function load(
     url: string,
-    resolver: IUrlResolver,
+    urlResolver: IUrlResolver,
     options: any = {},
-    serviceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
+    documentServiceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
     runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
 ): Promise<Document> {
     const codeLoader = new CodeLoader(runtimeOptions);
 
     // Load the Fluid document
     // For legacy purposes we currently fill in a default domain
-    const loader = new Loader(
-        resolver,
-        serviceFactory,
+    const loader = new Loader({
+        urlResolver,
+        documentServiceFactory,
         codeLoader,
         options,
-        {},
-        new Map<string, IProxyLoaderFactory>(),
-    );
+    });
     const container = await loader.resolve({ url });
 
     // The client-api CodeLoader doesn't actually read the proposed code details, so this doesn't really matter.

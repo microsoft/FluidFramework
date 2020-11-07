@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import {
     createInsertSegmentOp,
     Marker,
@@ -392,6 +392,7 @@ export function sliceToGroupOps(
 // Likely a cleaner way to detect the gap than checking every offset adjust - but brute forcing for now
 function adjustOffset(from, offset, value, insert, gapDistance) {
     const newFrom = from + offset + value;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return newFrom === insert ? offset + value + gapDistance : offset + value;
 }
 

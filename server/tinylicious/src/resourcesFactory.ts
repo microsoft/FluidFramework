@@ -31,7 +31,7 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
         const collectionNames = config.get("mongo:collectionNames");
 
         const tenantManager = new TenantManager(`http://localhost:${port}`);
-        const dbFactory = new DbFactory();
+        const dbFactory = new DbFactory(config);
         const taskMessageSender = new TaskMessageSender();
         const mongoManager = new MongoManager(dbFactory);
         const databaseManager = new MongoDatabaseManager(
@@ -63,10 +63,6 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
             undefined /* serviceConfiguration */,
             pubsub);
 
-        // TODO would be nicer to just pass the mongoManager down
-        const db = await mongoManager.getDatabase();
-        const contentCollection = db.collection(collectionNames.content);
-
         return new TinyliciousResources(
             config,
             orderManager,
@@ -74,7 +70,6 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
             storage,
             mongoManager,
             port,
-            contentCollection,
             webServerFactory);
     }
 }

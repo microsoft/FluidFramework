@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import {
     IBlob,
     ISequencedDocumentMessage,
@@ -74,6 +74,7 @@ class ActiveSession {
 }
 
 // Format a number separating 3 digits by comma
+// eslint-disable-next-line unicorn/no-unsafe-regex
 export const formatNumber = (num: number): string => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 function dumpStats(
@@ -647,7 +648,7 @@ function processQuorumMessages(
         const clientId = JSON.parse(dataString);
         session = sessionsInProgress.get(clientId);
         sessionsInProgress.delete(clientId);
-        assert(session);
+        assert(!!session);
         if (session) {
             if (!skipMessage) {
                 session.reportOp(message.timestamp);
@@ -664,7 +665,7 @@ function processQuorumMessages(
         session = sessionsInProgress.get(message.clientId);
         if (session === undefined) {
             session = sessionsInProgress.get(noClientName);
-            assert(session);
+            assert(!!session);
         }
     }
     return session;

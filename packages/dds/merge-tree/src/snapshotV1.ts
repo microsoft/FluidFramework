@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
-    IFluidHandleContext,
     IFluidSerializer,
 } from "@fluidframework/core-interfaces";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     FileMode,
@@ -86,7 +84,6 @@ export class SnapshotV1 {
      */
     emit(
         serializer?: IFluidSerializer,
-        context?: IFluidHandleContext,
         bind?: IFluidHandle,
     ): ITree {
         const chunks: MergeTreeChunkV1[] = [];
@@ -120,7 +117,6 @@ export class SnapshotV1 {
                         this.logger,
                         this.mergeTree.options,
                         serializer,
-                        context,
                         bind),
                     encoding: "utf-8",
                 },
@@ -140,7 +136,6 @@ export class SnapshotV1 {
                             this.logger,
                             this.mergeTree.options,
                             serializer,
-                            context,
                             bind),
                         encoding: "utf-8",
                     },
@@ -257,10 +252,9 @@ export class SnapshotV1 {
         logger: ITelemetryLogger,
         options: Properties.PropertySet,
         serializer?: IFluidSerializer,
-        context?: IFluidHandleContext,
     ): Promise<MergeTreeChunkV1> {
         const chunkAsString: string = await storage.read(path);
-        return SnapshotV1.processChunk(path, chunkAsString, logger, options, serializer, context);
+        return SnapshotV1.processChunk(path, chunkAsString, logger, options, serializer);
     }
 
     public static processChunk(
@@ -269,10 +263,9 @@ export class SnapshotV1 {
         logger: ITelemetryLogger,
         options: Properties.PropertySet,
         serializer?: IFluidSerializer,
-        context?: IFluidHandleContext,
     ): MergeTreeChunkV1 {
         const utf8 = fromBase64ToUtf8(chunk);
-        const chunkObj = serializer ? serializer.parse(utf8, context) : JSON.parse(utf8);
+        const chunkObj = serializer ? serializer.parse(utf8) : JSON.parse(utf8);
         return toLatestVersion(path, chunkObj, logger, options);
     }
 }

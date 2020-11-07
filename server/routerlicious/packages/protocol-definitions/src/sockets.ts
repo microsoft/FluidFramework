@@ -5,7 +5,7 @@
 
 import { ConnectionMode, IClient, ISignalClient } from "./clients";
 import { IServiceConfiguration } from "./config";
-import { IContentMessage, ISequencedDocumentMessage, ISignalMessage } from "./protocol";
+import { ISequencedDocumentMessage, ISignalMessage } from "./protocol";
 import { ITokenClaims } from "./tokens";
 
 /**
@@ -81,11 +81,6 @@ export interface IConnected {
      * Messages sent during the connection
      */
     initialMessages: ISequencedDocumentMessage[];
-
-    /**
-     * Contents sent during the connection
-     */
-    initialContents: IContentMessage[];
 
     /**
      * Signals sent during the connection

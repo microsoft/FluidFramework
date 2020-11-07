@@ -13,7 +13,7 @@ import {
     pushScope,
     getLoginPageUrl,
     TokenRequestCredentials,
-} from "@fluidframework/odsp-utils";
+} from "@fluidframework/odsp-doclib-utils";
 import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
 import { serverListenAndHandle, endResponse } from "./httpHelpers";
 
@@ -54,6 +54,10 @@ export class OdspTokenManager {
     constructor(
         private readonly tokenCache?: IAsyncCache<OdspTokenManagerCacheKey, IOdspTokens>,
     ) { }
+
+    public async updateTokensCache(key: OdspTokenManagerCacheKey, value: IOdspTokens) {
+        await this.tokenCache?.save(key, value);
+    }
 
     public async getOdspTokens(
         server: string,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
@@ -43,6 +43,7 @@ export function createSharedMapWithInterception(
                 executingCallback = false;
             }
         });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return map;
     };
 

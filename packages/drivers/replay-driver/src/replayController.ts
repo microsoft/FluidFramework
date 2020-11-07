@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+    IDocumentService,
+    IDocumentStorageService,
+    ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**
@@ -15,24 +19,25 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
     public abstract read(blobId: string): Promise<string>;
 
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
-        return Promise.reject("Invalid operation");
+        return Promise.reject(new Error("Invalid operation"));
     }
 
     public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
-        return Promise.reject("Invalid operation");
+        return Promise.reject(new Error("Invalid operation"));
     }
 
-    public async createBlob(file: Uint8Array): Promise<api.ICreateBlobResponse> {
-        return Promise.reject("Invalid operation");
+    public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
+        return Promise.reject(new Error("Invalid operation"));
+    }
+
+    public async readBlob(blobId) {
+        return Promise.reject(new Error("Invalid operation"));
     }
 
     public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
-        return Promise.reject("Invalid operation");
+        return Promise.reject(new Error("Invalid operation"));
     }
 
-    public getRawUrl(blobId: string): string {
-        throw new Error("Invalid operation");
-    }
     public get repositoryUrl(): string {
         throw new Error("Invalid operation");
     }
@@ -46,11 +51,11 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
 export abstract class ReplayController extends ReadDocumentStorageServiceBase {
     /**
      * Initialize reply controller
-     * @param storage - real document storage
+     * @param documentService - the real document service
      * @returns - Boolean, indicating if controller should be used.
      * If false is returned, caller should fallback to original storage.
      */
-    public abstract initStorage(storage: IDocumentStorageService): Promise<boolean>;
+    public abstract initStorage(documentService: IDocumentService): Promise<boolean>;
 
     /**
      * Returns sequence number to start processing ops

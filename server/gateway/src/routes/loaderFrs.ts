@@ -4,7 +4,8 @@
  */
 
 import { parse } from "url";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import _ from "lodash";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
@@ -14,11 +15,15 @@ import jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { v4 } from "uuid";
 import winston from "winston";
+import dotenv from "dotenv";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
-import { getConfig, getJWTClaims, getUserDetails, queryParamAsString } from "../utils";
+import { getConfig, getJWTClaims, getUserDetails, queryParamAsString, getR11sToken } from "../utils";
 import { defaultPartials } from "./partials";
+import { getUser, IExtendedUser } from "./utils";
+
+dotenv.config();
 
 export function create(
     config: Provider,
@@ -56,8 +61,10 @@ export function create(
 
         const search = parse(request.url).search;
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+        const user = getUser(request);
+        const accessToken = getR11sToken(tenantId, documentId, appTenants, scopes, user as IExtendedUser);
         const [resolvedP, fullTreeP] =
-            resolveUrl(config, alfred, appTenants, tenantId, documentId, scopes, request);
+            resolveUrl(config, alfred, tenantId, documentId, accessToken, request);
 
         const workerConfig = getConfig(
             config.get("worker"),
@@ -65,7 +72,6 @@ export function create(
             config.get("error:track"));
 
         const pkgP = fullTreeP.then((fullTree) => {
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (fullTree && fullTree.code) {
                 return codeResolver.resolveCodeDetails(fullTree.code);
             }
@@ -147,14 +153,14 @@ export function create(
                 // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 timings!.push(Date.now() - start);
-
+                const configClientId = config.get("login:microsoft").clientId;
                 response.render(
                     "loader",
                     {
-                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                         cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
                         chaincode: JSON.stringify(pkg),
-                        clientId: config.get("login:microsoft").clientId,
+                        clientId: _.isEmpty(configClientId)
+                            ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : configClientId,
                         config: workerConfig,
                         jwt: jwtToken,
                         partials: defaultPartials,

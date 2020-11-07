@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
- import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { IRequest, IFluidObject } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
-import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
+import {
+    FluidDataStoreRuntime,
+    ISharedObjectRegistry,
+    requestFluidDataStoreMixin,
+ } from "@fluidframework/datastore";
+ import { IEvent } from "@fluidframework/common-definitions";
+ import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IContainerRuntimeBase,
@@ -54,10 +59,9 @@ export interface IFluidDataObjectFactory {
      * They get attached only when a handle to one of them is attached to already attached objects.
      */
     createChildInstance<
-        P,
-        S,
-        TObject extends PureDataObject<P,S>,
-        TFactory extends PureDataObjectFactory<TObject, P,S>>
+        TObject extends PureDataObject<O, S, E>,
+        TFactory extends PureDataObjectFactory<TObject, O, S, E>,
+        O, S, E extends IEvent = IEvent>
     (subFactory: TFactory, initialState?: S): Promise<TObject>;
 
     /**
@@ -78,10 +82,9 @@ class FluidDataObjectFactory {
     }
 
     public async createChildInstance<
-        P,
-        S,
-        TObject extends PureDataObject<P,S>,
-        TFactory extends PureDataObjectFactory<TObject,P,S>>(subFactory: TFactory, initialState?: S)
+        TObject extends PureDataObject<O, S, E>,
+        TFactory extends PureDataObjectFactory<TObject, O, S, E>,
+        O, S, E extends IEvent = IEvent>(subFactory: TFactory, initialState?: S)
     {
         return subFactory.createChildInstance(this.context, initialState);
     }
@@ -102,15 +105,70 @@ export const getFluidObjectFactoryFromInstance = (context: IFluidDataStoreContex
     new FluidDataObjectFactory(context) as IFluidDataObjectFactory;
 
 /**
+ * Proxy over PureDataObject
+ * Does delayed creation & initialization of PureDataObject
+*/
+async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E extends IEvent = IEvent>(
+    ctor: new (props: IDataObjectProps<O, S>) => TObj,
+    context: IFluidDataStoreContext,
+    sharedObjectRegistry: ISharedObjectRegistry,
+    optionalProviders: FluidObjectSymbolProvider<O>,
+    runtimeFactoryArg: typeof FluidDataStoreRuntime,
+    initProps?: S)
+{
+    // base
+    let runtimeFactory = runtimeFactoryArg;
+
+    // request mixin in
+    runtimeFactory = requestFluidDataStoreMixin(
+        runtimeFactory,
+        async (request: IRequest, runtimeArg: FluidDataStoreRuntime) =>
+            (await PureDataObject.getDataObject(runtimeArg)).request(request));
+
+    // Create a new runtime for our data store
+    // The runtime is what Fluid uses to create DDS' and route to your data store
+    const runtime = new runtimeFactory(
+        context,
+        sharedObjectRegistry,
+    );
+
+    // Create object right away.
+    // This allows object to register various callbacks with runtime before runtime
+    // becomes globally available. But it's not full initialization - constructor can't
+    // access DDSs or other services of runtime as objects are not fully initialized.
+    // In order to use object, we need to go through full initialization by calling finishInitialization().
+    const dependencyContainer = new DependencyContainer(context.scope.IFluidDependencySynthesizer);
+    const providers = dependencyContainer.synthesize<O>(optionalProviders, {});
+    const instance = new ctor({ runtime, context, providers, initProps });
+
+    // if it's a newly created object, we need to wait for it to finish initialization
+    // as that results in creation of DDSs, before it gets attached, providing atomic
+    // guarantee of creation.
+    // WARNING: we can't do the same (yet) for already existing PureDataObject!
+    // This will result in deadlock, as it tries to resolve internal handles, but any
+    // handle resolution goes through root (container runtime), which can't route it back
+    // to this data store, as it's still not initialized and not known to container runtime yet.
+    // In the future, we should address it by using relative paths for handles and be able to resolve
+    // local DDSs while data store is not fully initialized.
+    if (!runtime.existing) {
+        await instance.finishInitialization();
+    }
+
+    return { instance, runtime };
+}
+
+/**
  * PureDataObjectFactory is a barebones IFluidDataStoreFactory for use with PureDataObject.
  * Consumers should typically use DataObjectFactory instead unless creating
  * another base data store factory.
  *
  * Generics:
- * P - represents a type that will define optional providers that will be injected
+ * TObj - DataObject (concrete type)
+ * O - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced data store may take during creation
+ * E - represents events that will be available in the EventForwarder
  */
-export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
+export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E extends IEvent = IEvent>
     implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
@@ -118,11 +176,11 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
 
     constructor(
         public readonly type: string,
-        private readonly ctor: new (props: IDataObjectProps<P>) => TObj,
+        private readonly ctor: new (props: IDataObjectProps<O, S>) => TObj,
         sharedObjects: readonly IChannelFactory[],
-        private readonly optionalProviders: FluidObjectSymbolProvider<P>,
+        private readonly optionalProviders: FluidObjectSymbolProvider<O>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,
-        private readonly onDemandInstantiation = true,
+        private readonly runtimeCtor: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
     ) {
         if (this.type === "") {
             throw new Error("undefined type member");
@@ -155,59 +213,14 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
      * @param context - data store context used to load a data store runtime
      */
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        return this.instantiateDataStoreCore(context);
-    }
-
-    /**
-     * Private method for data store instantiation that exposes initial state
-     *
-     * @param context - data store context used to load a data store runtime
-     */
-    protected instantiateDataStoreCore(context: IFluidDataStoreContext, props?: S) {
-        // Create a new runtime for our data store
-        // The runtime is what Fluid uses to create DDS' and route to your data store
-        const runtime = FluidDataStoreRuntime.load(
+        const { runtime } = await createDataObject(
+            this.ctor,
             context,
             this.sharedObjectRegistry,
-        );
-
-        let instanceP: Promise<TObj>;
-        // For new runtime, we need to force the data store instance to be create
-        // run the initialization.
-        if (!this.onDemandInstantiation || !runtime.existing) {
-            // Create a new instance of our component up front
-            instanceP = this.instantiateInstance(runtime, context, props);
-        }
-
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            if (!instanceP) {
-                // Create a new instance of our data store on demand
-                instanceP = this.instantiateInstance(runtime, context, props);
-            }
-            const instance = await instanceP;
-            return instance.request(request);
-        });
+            this.optionalProviders,
+            this.runtimeCtor);
 
         return runtime;
-    }
-
-    /**
-     * Instantiate and initialize the data store object
-     * @param runtime - data store runtime created for the data store context
-     * @param context - data store context used to load a data store runtime
-     */
-    private async instantiateInstance(
-        runtime: FluidDataStoreRuntime,
-        context: IFluidDataStoreContext,
-        props?: S,
-    ): Promise<TObj> {
-        const dependencyContainer = new DependencyContainer(context.scope.IFluidDependencySynthesizer);
-        const providers = dependencyContainer.synthesize<P>(this.optionalProviders, {});
-        // Create a new instance of our data store
-        const instance = new this.ctor({ runtime, context, providers });
-        await instance.initializeInternal(props);
-        return instance;
     }
 
    /**
@@ -289,20 +302,16 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
     ): Promise<TObj> {
         const newContext = containerRuntime.createDetachedDataStore();
 
-        const runtime = FluidDataStoreRuntime.load(
+        const { instance, runtime } = await createDataObject(
+            this.ctor,
             newContext,
             this.sharedObjectRegistry,
-        );
-
-        const instanceP = this.instantiateInstance(runtime, newContext, initialState);
-
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const instance = await instanceP;
-            return instance.request(request);
-        });
+            this.optionalProviders,
+            this.runtimeCtor,
+            initialState);
 
         await newContext.attachRuntime(packagePath, this, runtime);
 
-        return instanceP;
+        return instance;
     }
 }

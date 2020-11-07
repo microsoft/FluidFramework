@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { EventEmitter } from "events";
+import { assert ,
+    Deferred,
+    fromUtf8ToBase64,
+} from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
@@ -14,15 +17,11 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IGenericBlob,
     ContainerWarning,
     ILoader,
     AttachState,
 } from "@fluidframework/container-definitions";
-import {
-    Deferred,
-    fromUtf8ToBase64,
-} from "@fluidframework/common-utils";
+
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     IBlob,
@@ -251,7 +250,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
 
     async propose(key: string, value: any) {
         if (this.map.has(key)) {
-            assert.fail(`${key} exists`);
+            throw new Error(`${key} exists`);
         }
         this.map.set(key, value);
         this.eventEmitter.emit("approveProposal", 0, key, value);
@@ -263,6 +262,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
     }
 
     get(key: string) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.map.get(key);
     }
 
@@ -339,9 +339,11 @@ export class MockQuorum implements IQuorum, EventEmitter {
     getMaxListeners(): number {
         throw new Error("Method not implemented.");
     }
+    // eslint-disable-next-line @typescript-eslint/ban-types
     listeners(event: string | symbol): Function[] {
         throw new Error("Method not implemented.");
     }
+    // eslint-disable-next-line @typescript-eslint/ban-types
     rawListeners(event: string | symbol): Function[] {
         throw new Error("Method not implemented.");
     }
@@ -362,9 +364,13 @@ export class MockQuorum implements IQuorum, EventEmitter {
 export class MockFluidDataStoreRuntime extends EventEmitter
     implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     public get IFluidHandleContext(): IFluidHandleContext { return this; }
+    public get rootRoutingContext(): IFluidHandleContext { return this; }
+    public get channelsRoutingContext(): IFluidHandleContext { return this; }
+    public get objectsRoutingContext(): IFluidHandleContext { return this; }
+
     public get IFluidRouter() { return this; }
 
-    public readonly IFluidSerializer = new FluidSerializer();
+    public readonly IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
 
     public readonly documentId: string;
     public readonly id: string = uuid();
@@ -458,15 +464,11 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
-    public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
+    public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         return null;
     }
 
-    public async getBlob(blobId: string): Promise<IGenericBlob> {
-        return null;
-    }
-
-    public async getBlobMetadata(): Promise<IGenericBlob[]> {
+    public async getBlob(blobId: string): Promise<any> {
         return null;
     }
 

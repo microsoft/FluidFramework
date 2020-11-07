@@ -6,13 +6,12 @@
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
-    IDocumentStorageService,
     IDocumentDeltaConnectionEvents,
+    IDocumentService,
 } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IConnected,
-    IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -56,7 +55,7 @@ export class ReplayControllerStatic extends ReplayController {
         }
     }
 
-    public async initStorage(storage: IDocumentStorageService) {
+    public async initStorage(documentService: IDocumentService) {
         return true;
     }
 
@@ -65,11 +64,11 @@ export class ReplayControllerStatic extends ReplayController {
     }
 
     public async getSnapshotTree(version?: IVersion) {
-        return version ? Promise.reject("Invalid operation") : null;
+        return version ? Promise.reject(new Error("Invalid operation")) : null;
     }
 
     public async read(blobId: string): Promise<string> {
-        return Promise.reject("Invalid operation");
+        return Promise.reject(new Error("Invalid operation"));
     }
 
     public async getStartingOpSequence(): Promise<number> {
@@ -200,7 +199,6 @@ export class ReplayDocumentDeltaConnection
             claims: ReplayDocumentDeltaConnection.claims,
             clientId: "",
             existing: true,
-            initialContents: [],
             initialMessages: [],
             initialSignals: [],
             initialClients: [],
@@ -238,6 +236,9 @@ export class ReplayDocumentDeltaConnection
         user: {
             id: "",
         },
+        iat: Math.round(new Date().getTime() / 1000),
+        exp: Math.round(new Date().getTime() / 1000) + 5 * 60, // 5 minute expiration
+        ver: "1.0",
     };
 
     public get clientId(): string {
@@ -262,10 +263,6 @@ export class ReplayDocumentDeltaConnection
 
     public get version(): string {
         return this.details.version;
-    }
-
-    public get initialContents(): IContentMessage[] {
-        return this.details.initialContents;
     }
 
     public get initialMessages(): ISequencedDocumentMessage[] {
@@ -293,19 +290,15 @@ export class ReplayDocumentDeltaConnection
     }
 
     public submit(documentMessage: IDocumentMessage[]): void {
-        debug("dropping the outbound message");
-    }
-
-    public async submitAsync(documentMessage: IDocumentMessage[]): Promise<void> {
-        debug("dropping the outbound message and wait for response");
+        // ReplayDocumentDeltaConnection.submit() can't be called - client never sees its own join on,
+        // and thus can never move to sending ops.
+        throw new Error("ReplayDocumentDeltaConnection.submit() can't be called");
     }
 
     public async submitSignal(message: any) {
-        debug("dropping the outbound signal and wait for response");
     }
 
-    public disconnect() {
-        debug("no implementation for disconnect...");
+    public close() {
     }
 
     /**

@@ -1,8 +1,19 @@
 ---
 title: Anatomy of a distributed data structure
+draft: true
 ---
 
-Although each Distributed Data Structure (DDS) has its own unique functionality, they all share some broad traits.  Understanding these traits is the first step to understanding how DDSes work.  They are:
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
+{{% callout warning "Draft!" %}}
+
+This documentation is a **Draft**. It is technically accurate but has not yet been reviewed for consistency and clarity.
+
+{{% /callout %}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+Although each distributed data structure (DDS) has its own unique functionality, they all share some broad traits.
+Understanding these traits is the first step to understanding how DDSes work.  They are:
 
 1. Local representation
 1. Op vocabulary
@@ -13,11 +24,12 @@ Although each Distributed Data Structure (DDS) has its own unique functionality,
 
 ## Local representation
 
-Just like any non-distributed data structure such as JavaScript's Map object, all DDSes must also be accessible on the client with an in-memory
-representation via a public API surface. A developer using the DDS operates on and reads from this in-memory structure similarly to
-any other non-distributed data structure. The particular format of the data and functionality of the API will vary
-between data structures. For example, a SharedMap holds key:value data and provides interfaces like get and set for
-reading and updating values in the map. This is very similar to the native (non-distributed) Map object in JS.
+Just like any non-distributed data structure such as JavaScript's Map object, all DDSes must also be accessible on the
+client with an in-memory representation via a public API surface. A developer using the DDS operates on and reads from
+this in-memory structure similarly to any other non-distributed data structure. The particular format of the data and
+functionality of the API will vary between data structures. For example, a SharedMap holds key:value data and provides
+interfaces like get and set for reading and updating values in the map. This is very similar to the native
+(non-distributed) Map object in JS.
 
 ## Op vocabulary
 
@@ -33,7 +45,8 @@ corresponding update being applied on client B. However, this correspondence is 
 
 Frequently, ops will need to carry a data payload. For example, when performing a "set" on a SharedMap, the new
 key:value pair needs to be communicated to other clients. As a result, DDSes will have some serialization format for op
-data payloads that can be reconstituted on the receiving end. This is why SharedMap requires its keys to be strings and values to be serializable - non-serializable keys or values can't be transmitted to other clients.
+data payloads that can be reconstituted on the receiving end. This is why SharedMap requires its keys to be strings and
+values to be serializable - non-serializable keys or values can't be transmitted to other clients.
 
 ## Data serialization format (summary operations)
 
@@ -46,11 +59,11 @@ coordinate updates in its ops while serializing entire ink strokes in its summar
 
 ## Reaction to remote changes
 
-As compared to their non-distributed counterparts, DDSes can change state without the developer's awareness as remote ops are
-received. A standard JS Map will never change values without the local client calling a method on it, but
-a SharedMap will, as remote clients modify data. To make the local client aware of the update, DDSes
-must expose a means for the local client to observe and respond to these changes. This is typically done
-through eventing, like the "valueChanged" event on SharedMap.
+As compared to their non-distributed counterparts, DDSes can change state without the developer's awareness as remote
+ops are received. A standard JS Map will never change values without the local client calling a method on it, but a
+SharedMap will, as remote clients modify data. To make the local client aware of the update, DDSes must expose a means
+for the local client to observe and respond to these changes. This is typically done through eventing, like the
+"valueChanged" event on SharedMap.
 
 {{< callout danger TODO >}}
 

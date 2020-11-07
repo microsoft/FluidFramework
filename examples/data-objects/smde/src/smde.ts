@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { EventEmitter } from "events";
+import { assert } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidLoadable,
@@ -52,21 +52,19 @@ export class Smde extends EventEmitter implements
     public get IFluidRouter() { return this; }
     public get IFluidHTMLView() { return this; }
 
-    public url: string;
     private root: ISharedMap | undefined;
     private _text: SharedString | undefined;
     private textArea: HTMLTextAreaElement | undefined;
     private smde: SimpleMDE | undefined;
 
     private get text() {
-        assert(this._text);
+        assert(!!this._text);
         return this._text;
     }
     constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
         super();
 
-        this.url = context.id;
-        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
