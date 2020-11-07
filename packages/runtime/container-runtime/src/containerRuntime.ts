@@ -676,6 +676,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Stores tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private dirtyDocument = false;
+    private emitDirtyDocumentEvent = true;
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
@@ -803,8 +804,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Need to rip through snapshot.
                 const { pkg, snapshotFormatVersion, isRootDataStore }
                     = readAndParseFromBlobs<IFluidDataStoreAttributes>(
-                    snapshotTree.blobs,
-                    snapshotTree.blobs[".component"]);
+                        snapshotTree.blobs,
+                        snapshotTree.blobs[".component"]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
                 // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
                 // However the feature of loading a detached container from snapshot, is added when the
@@ -856,7 +857,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.clearPartialChunks(clientId);
         });
 
-        this.context.quorum.on("addProposal",(proposal)=>{
+        this.context.quorum.on("addProposal", (proposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
                 this.emit("codeDetailsProposed", proposal.value, proposal);
             }
@@ -906,19 +907,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // when we either never send an op, or attempted to send it but we know for sure it was not
             // sequenced by server and will never be sequenced (i.e. was lost)
             // For loss of connection, we wait for our own "join" op and use it a a barrier to know all the
-            // ops that maid it from previous connection, before switching clientId and raising "connected" event
+            // ops that made it from previous connection, before switching clientId and raising "connected" event
             // But with read-only permissions, if we transition between read-only and r/w states while on same
             // connection, then we have no good signal to tell us when it's safe to send ops we accumulated while
             // being in read-only state.
             // For that reason, we support getting to read-only state only when disconnected. This ensures that we
-            // can reply on same safety mechanism and resend ops only when we establish new connection.
+            // can rely on same safety mechanism and resend ops only when we establish new connection.
             // This is applicable for read-only permissions (event is raised before connection is properly registered),
             // but it's an extra requirement for Container.forceReadonly() API
             assert(!readonly || !this.connected, "Unsafe to transition to read-only state!");
 
-            if (this.canSendOps()) {
-                this.pendingStateManager.replayPendingStates();
-            }
+            this.replayPendingStates();
         });
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
@@ -1111,6 +1110,31 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return { snapshot, state };
     }
 
+    private replayPendingStates() {
+        // We need to be able to send ops to replay states
+        if (!this.canSendOps()) { return; }
+
+        // We need to temporary clear the dirty flags and disable
+        // dirty state change events to detect whether replaying ops
+        // has any effect.
+
+        // Save the old state, reset to false, disable event emit
+        const oldState = this.dirtyDocument;
+        this.dirtyDocument = false;
+        this.emitDirtyDocumentEvent = false;
+
+        // replay the ops
+        this.pendingStateManager.replayPendingStates();
+
+        // Save the new start and restore the old state, re-enable event emit
+        const newState = this.dirtyDocument;
+        this.dirtyDocument = oldState;
+        this.emitDirtyDocumentEvent = true;
+
+        // Officially transition from the old state to the new state.
+        this.updateDocumentDirtyState(newState);
+    }
+
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
@@ -1118,15 +1142,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const changeOfState = this._connected !== connected;
         this._connected = connected;
 
-        if (connected) {
-            // Once we are connected, all acks are accounted.
-            // If there are any pending ops, DDSes will resubmit them right away (below) and
-            // we will switch back to dirty state in such case.
-            this.updateDocumentDirtyState(false);
-        }
-
-        if (changeOfState && this.canSendOps()) {
-            this.pendingStateManager.replayPendingStates();
+        if (changeOfState) {
+           this.replayPendingStates();
         }
 
         for (const [fluidDataStore, context] of this.contexts) {
@@ -1334,13 +1351,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter>
-    {
+    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
         return this._createDataStore(pkg, false /* isRoot */);
     }
 
-    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>
-    {
+    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
         const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
         fluidDataStore.bindToContext();
         return fluidDataStore;
@@ -1373,8 +1388,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         pkg: string | string[],
         isRoot: boolean,
         id = uuid(),
-        ): Promise<IFluidDataStoreChannel>
-    {
+    ): Promise<IFluidDataStoreChannel> {
         return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot).realize();
     }
 
@@ -1799,7 +1813,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             assert(
                 this.deltaManager.lastSequenceNumber === summaryRefSeqNum,
                 `lastSequenceNumber changed before the summary op could be submitted. `
-                    + `${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
+                + `${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
             );
 
             const clientSequenceNumber =
@@ -1869,7 +1883,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         this.dirtyDocument = dirty;
-        this.emit(dirty ? "dirtyDocument" : "savedDocument");
+        if (this.emitDirtyDocumentEvent) {
+            this.emit(dirty ? "dirtyDocument" : "savedDocument");
+        }
     }
 
     public submitDataStoreOp(

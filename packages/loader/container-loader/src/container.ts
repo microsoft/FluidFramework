@@ -345,6 +345,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager.readonlyPermissions;
     }
 
+    /**
+     * {@inheritDoc DeltaManager.forceReadonly}
+     */
     public forceReadonly(readonly: boolean) {
         this._deltaManager.forceReadonly(readonly);
     }
