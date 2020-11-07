@@ -75,6 +75,13 @@ export class RequestParser implements IRequest {
 
     /**
      * Creates a sub request starting at a specific path part of this request's url
+     * The sub request url always has a leading slash, and always include query params if original url has any
+     * e.g. original url is /a/b/?queryParams, createSubRequest(0) is /a/b/?queryParams
+     * createSubRequest(1) is /b/?queryParams
+     * createSubRequest(2) is /?queryParams
+     * createSubRequest(n) where n > parts length, in this case, 2, or n < 0 will throw an exception
+     *
+     * note: query params are not counted towards path parts.
      *
      * @param startingPathIndex - The index of the first path part of the sub request
      */
