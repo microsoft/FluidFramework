@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import { fromBase64ToUtf8, IsoBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
