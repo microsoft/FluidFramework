@@ -15,7 +15,7 @@ describe("context reload", () => {
 
     beforeEach(async () => {
         await page.goto(globals.PATH, { waitUntil: "load" });
-        await page.waitFor(() => window.fluidStarted as boolean);
+        await page.waitFor(() => (window as any).fluidStarted as boolean);
     });
 
     it("retains previous data", async () => {
@@ -32,7 +32,7 @@ describe("context reload", () => {
         ).toBe(`${globals.PATH}/file`);
 
         const upgrade = await page.$("#sbs-right button.upgrade");
-        await upgrade.click();
+        await upgrade?.click();
 
         await page.waitForSelector("button.diceRoller");
         expect(await getTitleValue("right")).toEqual(await getTitleValue("left"));
@@ -50,7 +50,7 @@ describe("context reload", () => {
         ).toBe(`${globals.PATH}/file`);
 
         const upgrade = await page.$("#sbs-right button.upgrade");
-        await upgrade.click();
+        await upgrade?.click();
 
         await page.waitForSelector("button.diceRoller");
         await expect(page).toClick("button.diceRoller", { text: "Roll" });
@@ -66,7 +66,7 @@ describe("context reload", () => {
         await page.goto(globals.PATH, { waitUntil: "load" });
         await page.evaluate(() => localStorage.debug = undefined);
 
-        await page.waitFor(() => window.fluidStarted as boolean);
+        await page.waitFor(() => (window as any).fluidStarted as boolean);
 
         const summMessage = new Deferred<void>();
         page.on("console", (msg) => {
@@ -81,7 +81,7 @@ describe("context reload", () => {
         ).toBe(`${globals.PATH}/file`);
 
         const upgrade = await page.$("#sbs-right button.upgrade");
-        await upgrade.click();
+        await upgrade?.click();
 
         await summMessage.promise;
     });
