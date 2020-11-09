@@ -10,16 +10,13 @@ import { ISummarizeResult } from "@fluidframework/runtime-definitions";
 
 export function convertSnapshotToSummaryTree(snapshotTree: ISnapshotTree): ISummarizeResult {
     const builder = new SummaryTreeBuilder();
-    const blobMapInitial = new Map(Object.entries(snapshotTree.blobs));
-    const blobMapFinal = new Map<string, string>();
-    for (const [key, value] of blobMapInitial.entries()) {
-        if (blobMapInitial.has(value)) {
-            blobMapFinal[key] = blobMapInitial.get(value);
+    for (const [key, value] of Object.entries(snapshotTree.blobs)) {
+        // The entries in blobs are supposed to be blobPath -> blobId and blobId -> blobValue
+        // and we want to push blobPath to blobValue in tree entries.
+        if (snapshotTree.blobs[value] !== undefined) {
+            const decoded = fromBase64ToUtf8(snapshotTree.blobs[value]);
+            builder.addBlob(key, decoded);
         }
-    }
-    for (const [key, value] of Object.entries(blobMapFinal)) {
-        const decoded = fromBase64ToUtf8(value);
-        builder.addBlob(key, decoded);
     }
     for (const [key, tree] of Object.entries(snapshotTree.trees)) {
         const subtree = convertSnapshotToSummaryTree(tree);
