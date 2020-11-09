@@ -377,6 +377,15 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                             let method: string;
                             if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
                                 const snapshotP = this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
+                                snapshotP.catch(async (error) => {
+                                    const errorType = error.errorType;
+                                    // Clear the cache on 401/403/404 on snapshot fetch from network because this means either the user doesn't have permissions
+                                    // permissions for the file or it was deleted. So the user will again try to fetch from cache on any failure in future.
+                                    if (errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
+                                        await this.cache.persistedCache.removeAllEntriesForDocId(this.documentId);
+                                    }
+                                    throw error;
+                                });
 
                                 const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
                                 cachedSnapshot = promiseRaceWinner.value;
