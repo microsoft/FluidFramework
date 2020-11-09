@@ -799,12 +799,12 @@ export class ReplayTool {
     private compareSnapshots(contentAsString: string, filename: string) {
         /**
          * Normalize the snapshots. The packageVersion of the snapshot could be different from the reference snapshot.
-         * Replace all occurences of packageVersion with XXX before we compare them. This is how it will looks like:
-         * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0\"}"
-         * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X.X.X\"}"
+         * Replace all package versions with X before we compare them. This is how it will looks like:
+         * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
+         * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
          */
-        const packageVersionRegex = /\\"packageversion\\":\\"[\d.]+\\"/gi;
-        const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X.X.X\\\"";
+        const packageVersionRegex = /\\"packageversion\\":\\".+\\"/gi;
+        const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
 
         const snapshotAsString = fs.readFileSync(`${filename}.json`, "utf-8");
         const snapshotObject = JSON.parse(snapshotAsString.replace(packageVersionRegex, packageVersionPlaceholder));
