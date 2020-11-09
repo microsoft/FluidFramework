@@ -31,6 +31,7 @@ import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
+    IFluidDataStoreContextDetached,
  } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
@@ -109,7 +110,8 @@ export interface IContainerRuntime extends
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
 
     /**
-     * Returns the current quorum.
+     * Creates detached data store context. only after context.attachRuntime() is called,
+     * data store initialization is considered compete.
      */
     getQuorum(): IQuorum;
 
@@ -117,6 +119,14 @@ export interface IContainerRuntime extends
      * Returns the current audience.
      */
     getAudience(): IAudience;
+
+    /**
+     * Creates detached data store context. only after context.attachRuntime() is called,
+     * data store initialization is considered compete.
+     * @param pkg - package path
+     * @param rootDataStoreId - data store ID (unique name)
+     */
+    createRootDetachedDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
 
     /**
      * Used to raise an unrecoverable error on the runtime.
