@@ -12,9 +12,7 @@ import ReactDOM from "react-dom";
 import { ITodoItemInitialState, TodoItem } from "../TodoItem/index";
 import { TodoView } from "./TodoView";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../../package.json");
-export const TodoName = `${pkg.name as string}-todo`;
+export const TodoName = "Todo";
 
 /**
  * Todo base component.

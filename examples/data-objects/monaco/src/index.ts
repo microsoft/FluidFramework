@@ -26,7 +26,7 @@ const componentFactory = new DataObjectFactory(
 );
 
 const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-    monacoName,
+    componentFactory,
     new Map([
         [monacoName, Promise.resolve(componentFactory)],
     ]),

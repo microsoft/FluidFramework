@@ -32,9 +32,7 @@ import {
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const ComponentName = pkg.name;
+export const ComponentName = "Key-Valye-Cache";
 
 export const IKeyValue: keyof IProvideKeyValue = "IKeyValue";
 
