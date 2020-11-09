@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-internal-modules
 import * as BufferNode from "../src/bufferNode";
+// eslint-disable-next-line import/no-internal-modules
 import * as BufferBrowser from "../src/bufferBrowser";
 
 describe("Buffer isomorphism", () => {
@@ -15,20 +17,22 @@ describe("Buffer isomorphism", () => {
             "😂💁🏼‍♂️💁🏼‍💁‍♂", // surrogate pairs with glyph modifiers
             "\u0080\u0080", // invalid sequence of utf-8 continuation codes
             "\ud800", // single utf-16 surrogate without pair
-            "\u2962\u0000\uffff\uaaaa" // garbage
+            "\u2962\u0000\uffff\uaaaa", // garbage
         ];
 
-        for (let i = 0; i < testArray.length; i++) {
-            const nodeBuffer = BufferNode.IsoBuffer.from(testArray[i]);
-            const browserBuffer = BufferBrowser.IsoBuffer.from(testArray[i]);
+        for (const item of testArray) {
+            const nodeBuffer = BufferNode.IsoBuffer.from(item);
+            const browserBuffer = BufferBrowser.IsoBuffer.from(item);
 
             expect(nodeBuffer.toString()).toEqual(browserBuffer.toString());
         }
 
-        const nodeBuffer = BufferNode.IsoBuffer.from(testArray[1]);
-        const browserBuffer = BufferBrowser.IsoBuffer.from(testArray[1]);
-        expect(nodeBuffer.toString("utf8")).toEqual(browserBuffer.toString("utf8"));
-        expect(nodeBuffer.toString("utf-8")).toEqual(browserBuffer.toString("utf-8"));
+        {
+            const nodeBuffer = BufferNode.IsoBuffer.from(testArray[1]);
+            const browserBuffer = BufferBrowser.IsoBuffer.from(testArray[1]);
+            expect(nodeBuffer.toString("utf8")).toEqual(browserBuffer.toString("utf8"));
+            expect(nodeBuffer.toString("utf-8")).toEqual(browserBuffer.toString("utf-8"));
+        }
     });
 
     test("from string base64 is compatible", () => {
@@ -41,12 +45,12 @@ describe("Buffer isomorphism", () => {
             "Not A Base64 String 🤪",
             "YXNkZmFzZGY=", // asdfasdf
             "5q+U54m55biB", // 比特币
-            "8J+YgvCfkoHwn4+84oCN4pmC77iP8J+SgfCfj7zigI3wn5KB4oCN4pmC" // 😂💁🏼‍♂️💁🏼‍💁‍♂
+            "8J+YgvCfkoHwn4+84oCN4pmC77iP8J+SgfCfj7zigI3wn5KB4oCN4pmC", // 😂💁🏼‍♂️💁🏼‍💁‍♂
         ];
 
-        for (let i = 0; i < testArray.length; i++) {
-            const nodeBuffer = BufferNode.IsoBuffer.from(testArray[i], "base64");
-            const browserBuffer = BufferBrowser.IsoBuffer.from(testArray[i], "base64");
+        for (const item of testArray) {
+            const nodeBuffer = BufferNode.IsoBuffer.from(item, "base64");
+            const browserBuffer = BufferBrowser.IsoBuffer.from(item, "base64");
 
             expect(nodeBuffer.toString("base64")).toEqual(browserBuffer.toString("base64"));
         }
@@ -60,8 +64,8 @@ describe("Buffer isomorphism", () => {
             "😂💁🏼‍♂️💁🏼‍💁‍♂", // surrogate pairs with glyph modifiers
         ];
 
-        for (let i = 0; i < testArray.length; i++) {
-            const encoded = new TextEncoder().encode(testArray[i]).buffer;
+        for (const item of testArray) {
+            const encoded = new TextEncoder().encode(item).buffer;
             const nodeBuffer = BufferNode.IsoBuffer.from(encoded);
             const browserBuffer = BufferBrowser.IsoBuffer.from(encoded);
 
@@ -74,14 +78,14 @@ describe("Buffer isomorphism", () => {
             "",
             "asdfasdf", // ascii range
             "比特币", // non-ascii range
-            "😂💁🏼‍♂️💁🏼‍💁‍♂" // surrogate pairs with glyph modifiers
+            "😂💁🏼‍♂️💁🏼‍💁‍♂", // surrogate pairs with glyph modifiers
         ];
 
         const testArrayBase64 = [
             "",
             "YXNkZmFzZGY=", // asdfasdf
             "5q+U54m55biB", // 比特币
-            "8J+YgvCfkoHwn4+84oCN4pmC77iP8J+SgfCfj7zigI3wn5KB4oCN4pmC" // 😂💁🏼‍♂️💁🏼‍💁‍♂
+            "8J+YgvCfkoHwn4+84oCN4pmC77iP8J+SgfCfj7zigI3wn5KB4oCN4pmC", // 😂💁🏼‍♂️💁🏼‍💁‍♂
         ];
 
         for (let i = 0; i < testArrayUtf8.length; i++) {
