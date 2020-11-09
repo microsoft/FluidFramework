@@ -63,7 +63,7 @@ describe("RequestParser", () => {
             assert.throws(() => requestParser.createSubRequest(-1));
         });
     });
-    
+
     describe(".createSubRequest with special urls", () => {
         it("Create request for `/`", () => {
             const testRequestParser = RequestParser.create({ url: "/" });
@@ -78,15 +78,16 @@ describe("RequestParser", () => {
             assert.throws(() => testRequestParser.createSubRequest(-1));
         });
     });
-    
-    const testSubRequest = function(uri: string){
+
+    const testSubRequest = function(uri: string) {
         describe(".createSubRequest with query params", () => {
             let requestParser2: RequestParser;
             beforeEach(() => {
                 requestParser2 = RequestParser.create({ url: uri });
             });
             it("Create request from part 0", () => {
-                assert.strictEqual(requestParser2.createSubRequest(0).url, "/dataStoreId/some/route/?query1=1&query2=2");
+                assert.strictEqual(requestParser2.createSubRequest(0).url,
+                    "/dataStoreId/some/route/?query1=1&query2=2");
             });
             it("Create request from part 1", () => {
                 assert.strictEqual(requestParser2.createSubRequest(1).url, "/some/route/?query1=1&query2=2");
@@ -102,7 +103,7 @@ describe("RequestParser", () => {
                 assert.throws(() => requestParser2.createSubRequest(-1));
             });
         });
-    }
+    };
     testSubRequest("/dataStoreId/some/route/?query1=1&query2=2");
     testSubRequest("dataStoreId/some/route/?query1=1&query2=2");
 });
