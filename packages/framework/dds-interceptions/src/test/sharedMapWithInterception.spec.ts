@@ -33,7 +33,6 @@ describe("Shared Map with Interception", () => {
         beforeEach(() => {
             const dataStoreRuntime = new MockFluidDataStoreRuntime();
             sharedMap = new SharedMap(documentId, dataStoreRuntime, MapFactory.Attributes);
-            dataStoreRuntime.bindToContext();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             dataStoreContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;

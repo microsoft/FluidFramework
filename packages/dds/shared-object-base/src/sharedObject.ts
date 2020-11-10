@@ -101,7 +101,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     private attachListeners() {
         this.on("error", (error: any) => {
-            this.runtime.emit("error", error);
+            this.runtime.raiseContainerWarning(error);
         });
 
         // Only listen to these events if not attached.

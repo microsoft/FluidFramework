@@ -3,44 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
-import { BaseTelemetryNullLogger } from "@fluidframework/common-utils";
 import {
+    IFluidCodeDetails,
     IFluidRunnable,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
-import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IContainer, ILoader } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import {
-    IDocumentServiceFactory,
-    IFluidResolvedUrl,
-    IUrlResolver,
-    IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import * as Comlink from "comlink";
-
-// Container load requires a URL resolver although it does not make use of it.
-class NotUsedUrlResolver implements IUrlResolver {
-    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
-        throw new Error("Method not implemented.");
-    }
-
-    public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
-        throw new Error("Method not implemented.");
-    }
-
-    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
-        throw new Error("Method not implemented.");
-    }
-}
 
 // Loader class to load a container and proxy Fluid object interfaces from within a web worker.
 // Only supports IFluidRunnable for now.
+
+// TODO: Need to update this class with latest loader changes.
 class WorkerLoader implements ILoader, IFluidRunnable {
     public get IFluidRouter() { return this; }
     private container: Container | undefined;
@@ -48,7 +26,6 @@ class WorkerLoader implements ILoader, IFluidRunnable {
 
     constructor(
         private readonly id: string,
-        private readonly options: any,
         private readonly resolved: IFluidResolvedUrl,
         private readonly fromSequenceNumber: number) {
     }
@@ -56,26 +33,12 @@ class WorkerLoader implements ILoader, IFluidRunnable {
     public async request(request: IRequest): Promise<IResponse> {
         console.log(`Request inside web worker`);
         console.log(request);
-        const urlObj = parse(this.resolved.url);
-        let factory: IDocumentServiceFactory;
-        if (urlObj.protocol === "fluid:") {
-            factory = new RouterliciousDocumentServiceFactory();
-        } else {
-            factory = new OdspDocumentServiceFactory(
-                async () => Promise.resolve(this.resolved.tokens.storageToken),
-                async () => Promise.resolve(this.resolved.tokens.socketToken));
-        }
         const container = await Container.load(
             this.id,
-            factory,
-            new WebCodeLoader(new SemVerCdnCodeResolver()),
-            this.options,
-            {},
             (this as unknown) as Loader,
             request,
             this.resolved,
-            new NotUsedUrlResolver(),
-            new BaseTelemetryNullLogger());
+        );
         this.container = container;
 
         // TODO: referenceSequenceNumber -> lastSequenceNumber (when latest loader is picked up)
@@ -119,6 +82,10 @@ class WorkerLoader implements ILoader, IFluidRunnable {
     }
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer> {
+        throw new Error("Method not implemented.");
+    }
+
+    public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer> {
         throw new Error("Method not implemented.");
     }
 }

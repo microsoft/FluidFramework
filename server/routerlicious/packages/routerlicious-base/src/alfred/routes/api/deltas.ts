@@ -16,38 +16,6 @@ import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { getParam } from "../../../utils";
 
-const sequenceNumber = "sequenceNumber";
-
-export async function getDeltaContents(
-    mongoManager: MongoManager,
-    collectionName: string,
-    tenantId: string,
-    documentId: string,
-    from?: number,
-    to?: number): Promise<any[]> {
-    // Create an optional filter to restrict the delta range
-    const query: any = { documentId, tenantId };
-    if (from !== undefined || to !== undefined) {
-        query[sequenceNumber] = {};
-
-        if (from !== undefined) {
-            query[sequenceNumber].$gt = from;
-        }
-
-        if (to !== undefined) {
-            query[sequenceNumber].$lt = to;
-        }
-    }
-
-    // Query for the deltas and return a filtered version of just the operations field
-    const db = await mongoManager.getDatabase();
-    // eslint-disable-next-line @typescript-eslint/await-thenable
-    const collection = await db.collection<any>(collectionName);
-    const dbDeltas = await collection.find(query, { sequenceNumber: 1 });
-
-    return dbDeltas;
-}
-
 export async function getDeltas(
     mongoManager: MongoManager,
     collectionName: string,
@@ -269,33 +237,6 @@ export function create(
             tenantManager,
             mongoManager,
             deltasCollectionName,
-            tenantId,
-            getParam(request.params, "id"),
-            from,
-            to);
-
-        deltasP.then(
-            (deltas) => {
-                response.status(200).json(deltas);
-            },
-            (error) => {
-                response.status(500).json(error);
-            });
-    });
-
-    /**
-     * Retrieves delta contents for the given document. With an optional from and to range (both exclusive) specified
-     * @deprecated path "/content:tenantId?/:id" currently kept for backwards compatibility
-     */
-    router.get(["/content/:tenantId?/:id", "/:tenantId?/:id/content"], (request, response, next) => {
-        const from = stringToSequenceNumber(request.query.from);
-        const to = stringToSequenceNumber(request.query.to);
-        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
-
-        // Query for the deltas and return a filtered version of just the operations field
-        const deltasP = getDeltaContents(
-            mongoManager,
-            "content",
             tenantId,
             getParam(request.params, "id"),
             from,

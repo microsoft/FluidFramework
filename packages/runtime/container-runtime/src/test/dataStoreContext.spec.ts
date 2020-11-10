@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
-import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IBlob, ISnapshotTree, ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
@@ -31,20 +31,6 @@ describe("Data Store Context Tests", () => {
     const dataStoreId = "Test1";
     let summaryTracker: SummaryTracker;
     let createSummarizerNodeFn: CreateChildSummarizerNodeFn;
-    beforeEach(async () => {
-        summaryTracker = new SummaryTracker("", 0, 0);
-        const summarizerNode = SummarizerNode.createRoot(
-            new TelemetryNullLogger(),
-            (() => undefined) as unknown as SummarizeInternalFn,
-            0,
-            0,
-            true);
-        createSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
-            summarizeInternal,
-            dataStoreId,
-            { type: CreateSummarizerNodeSource.Local },
-        );
-    });
 
     describe("LocalFluidDataStoreContext Initialization", () => {
         let localDataStoreContext: LocalFluidDataStoreContext;
@@ -52,7 +38,20 @@ describe("Data Store Context Tests", () => {
         let scope: IFluidObject;
         const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
+
         beforeEach(async () => {
+            summaryTracker = new SummaryTracker("", 0, 0);
+            const summarizerNode = SummarizerNode.createRoot(
+                new TelemetryNullLogger(),
+                (() => undefined) as unknown as SummarizeInternalFn,
+                0,
+                0);
+            createSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
+                summarizeInternal,
+                dataStoreId,
+                { type: CreateSummarizerNodeSource.Local },
+            );
+
             const factory: IFluidDataStoreFactory = {
                 type: "store-type",
                 get IFluidDataStoreFactory() { return factory; },
@@ -185,6 +184,18 @@ describe("Data Store Context Tests", () => {
         let scope: IFluidObject;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
+            summaryTracker = new SummaryTracker("", 0, 0);
+            const summarizerNode = SummarizerNode.createRoot(
+                new TelemetryNullLogger(),
+                (() => undefined) as unknown as SummarizeInternalFn,
+                0,
+                0);
+            createSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
+                summarizeInternal,
+                dataStoreId,
+                { type: CreateSummarizerNodeSource.FromSummary },
+            );
+
             const factory: { [key: string]: any } = {};
             factory.IFluidDataStoreFactory = factory;
             factory.instantiateDataStore =
@@ -225,10 +236,12 @@ describe("Data Store Context Tests", () => {
                 summaryTracker,
                 createSummarizerNodeFn,
             );
-            const snapshot = await remotedDataStoreContext.snapshot(true);
-            const blob = snapshot.entries[0].value as IBlob;
+            const summaryTree = await remotedDataStoreContext.summarize(true);
+            assert(summaryTree.summary.type === SummaryType.Tree,
+                "summarize should always return a tree when fullTree is true");
+            const blob = summaryTree.summary.tree[".component"] as ISummaryBlob;
 
-            const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
+            const contents = JSON.parse(blob.content as string) as IFluidDataStoreAttributes;
             assert.strictEqual(contents.pkg, dataStoreAttributes.pkg, "Remote DataStore package does not match.");
             assert.strictEqual(
                 contents.snapshotFormatVersion,
@@ -262,10 +275,12 @@ describe("Data Store Context Tests", () => {
                 summaryTracker,
                 createSummarizerNodeFn,
             );
-            const snapshot = await remotedDataStoreContext.snapshot(true);
-            const blob = snapshot.entries[0].value as IBlob;
+            const summaryTree = await remotedDataStoreContext.summarize(true);
+            assert(summaryTree.summary.type === SummaryType.Tree,
+                "summarize should always return a tree when fullTree is true");
+            const blob = summaryTree.summary.tree[".component"] as ISummaryBlob;
 
-            const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
+            const contents = JSON.parse(blob.content as string) as IFluidDataStoreAttributes;
             assert.strictEqual(
                 contents.pkg,
                 JSON.stringify([dataStoreAttributes.pkg]),
@@ -301,10 +316,12 @@ describe("Data Store Context Tests", () => {
                 summaryTracker,
                 createSummarizerNodeFn,
             );
-            const snapshot = await remotedDataStoreContext.snapshot(true);
-            const blob = snapshot.entries[0].value as IBlob;
+            const summaryTree = await remotedDataStoreContext.summarize(true);
+            assert(summaryTree.summary.type === SummaryType.Tree,
+                "summarize should always return a tree when fullTree is true");
+            const blob = summaryTree.summary.tree[".component"] as ISummaryBlob;
 
-            const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
+            const contents = JSON.parse(blob.content as string) as IFluidDataStoreAttributes;
             assert.strictEqual(contents.pkg, dataStoreAttributes.pkg, "Remote DataStore package does not match.");
             assert.strictEqual(
                 contents.snapshotFormatVersion,

@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -44,7 +45,11 @@ export class TabsFluidObject extends DataObject implements IFluidHTMLView {
     }
 
     protected async hasInitialized() {
-        const registry = await this.context.containerRuntime.IFluidDataStoreRegistry.get("internalRegistry");
+        // TODO: This code should not rely on container globals (i.e. IContainerRuntime)
+        // It should be refactored to pass dependencies in.
+        const runtime = this.context.containerRuntime as IContainerRuntime;
+
+        const registry = await runtime.IFluidDataStoreRegistry.get("internalRegistry");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const registryDetails = (registry as IFluidObject).IFluidObjectInternalRegistry!;
         this.dataModelInternal =

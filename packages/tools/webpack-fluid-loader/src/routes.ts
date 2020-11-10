@@ -287,7 +287,6 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
             options,
             document.getElementById("content"))
         .then(() => fluidStarted = true)
-        .catch((error) => console.error(error));
     </script>
 </body>
 </html>`;

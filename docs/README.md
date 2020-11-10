@@ -21,12 +21,14 @@ Open <http://localhost:1313> to preview the site.
 
 ### API documentation and Playground
 
-The steps above won't include API documentation or the Playground by default.  You can
-download the latest content with the `download` script.
+The steps above won't include API documentation (the TSDoc JSON files) or the Playground by default.  You can
+download the latest API docs and Playground files with the `download` script.
 
 ```bash
 npm run download
 ```
+
+Note that this script will **overwrite any locally built API docs.**
 
 ## Building the documentation
 
@@ -62,7 +64,7 @@ npm run build:fast -- -s build -s build:docs --nolint --all
 
 You can then build or preview the docs using the steps described earlier.
 
-Note that this will leave the build tool in full-symlink mode.  To return to the default isolated
+Note that this will leave the fluid-build tool in full-symlink mode.  To return to the default isolated
 mode (e.g. for typical development) run:
 
 ```bash
@@ -72,23 +74,26 @@ npm run build:fast -- --symlink
 ### Understanding the API documentation build pipeline
 
 If you encounter problems updating or building the API docs, it can be helpful to have a high-level
-understanding of how it gets built.  The steps are as follows:
+understanding of how it gets built. The steps are as follows:
 
 1. Root: `build:fast`
-    1. Compile the code, generating Typescript definitions, etc.
+    1. Compile the code, generating TypeScript definitions, etc.
 1. Root: `build:docs`
     1. Run the @microsoft/api-extractor (using Lerna) in each package to extract documentation info in a JSON format.
-The output is placed in a folder `_api-extractor-temp` in each package's directory.
-    1. The JSON is also copied from each package up to a shared `_api-extractor-temp` directory under the repository root.
+       The output is placed in a folder `_api-extractor-temp` in each package's directory.
+    1. The JSON is also copied from each package up to a shared `_api-extractor-temp` directory under the repository
+       root.
 1. `/docs`: `build`
-    1. Run markdown-magic
-    1. Run the @mattetti/api-extractor tool to transform the JSON format into markdown.  The generated markdown is placed
-at `/docs/content/apis`.  We maintain this fork of @microsoft/api-extractor [here](https://github.com/mattetti/custom-api-documenter).
-    1. Run hugo to build the site itself.  The generated output is placed at `/docs/public/apis`.
+    1. Run markdown-magic to update some shared content in the source Markdown files.
+    1. Run the @mattetti/api-extractor tool to transform the JSON format into Markdown.  The generated Markdown is
+       placed at `/docs/content/apis`. We maintain this fork of @microsoft/api-extractor
+       [here](https://github.com/mattetti/custom-api-documenter).
+    1. Run ditaa to build some of the diagrams in the site.
+    1. Run hugo to build the site itself. The generated output is placed at `/docs/public/apis`.
 1. `/docs`: `start`
-    1. Run the hugo server to host the site at <http://localhost:1313>
+    1. Run the hugo server to host the site at <http://localhost:1313>.
 
-To investigate incorrect output, you can check the intermediate outputs (JSON, markdown, html) at these locations
+To investigate incorrect output, you can check the intermediate outputs (JSON, Markdown, HTML) at these locations
 to narrow down where the error is occurring.
 
 ## Creating new content
@@ -174,7 +179,7 @@ allows the template to link pages and load the right information.
 
 ### Table of Contents
 
-Some template pages include a TOC of the page, this is generated on the fly by reading the
+Some template pages include a TOC of the page. This is generated on the fly by reading the
 headers.
 
 ### Social action
@@ -190,7 +195,7 @@ can be called from within the Markdown to insert specific content.
 
 ## Working on the template
 
-The template lives in `themes/thxvscode`.
+The site theme/template lives in `themes/thxvscode`.
 
 ## Scripts
 
@@ -199,23 +204,30 @@ The template lives in `themes/thxvscode`.
 |--------|-------------|
 | `build` | Build the site; outputs to `public/` by default. |
 | `build:api-documenter` | Convert API JSON into Markdown. |
-| `build:api-documenter:default` | -- |
-| `build:api-documenter:win32` | -- |
-| `build:diagrams` | Generate the diagram images using ditaa; requires Java to run. |
+| `build:api-documenter:default` | --- |
+| `build:api-documenter:win32` | --- |
+| `build:diagrams` | Generate the diagram images using ditaa. |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `clean` | Remove all generated files. |
+| `ditaa` | Run the local copy of ditaa. |
+| `ditaa:default` | --- |
+| `ditaa:win32` | --- |
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
 | `download:playground` | Download and extract the Playground files locally. |
 | `hugo` | Run the local copy of Hugo. |
 | `hugo:default` | --- |
 | `hugo:win32` | --- |
-| `install:ditaa` | Install ditaa to generate diagrams; requires Java to run. |
-| `install:hugo` | Install the version of Hugo used by the documentation. |
-| `postinstall` | -- |
-| `postinstall:default` | -- |
-| `postinstall:win32` | -- |
+| `install:ditaa` | Install ditaa to generate diagrams unless it already exists. |
+| `install:ditaa:default` | --- |
+| `install:ditaa:force` | Install ditaa to generate diagrams. |
+| `install:ditaa:win32` | --- |
+| `install:hugo` | Install Hugo unless it already exists. |
+| `install:hugo:default` | --- |
+| `install:hugo:force` | Install the version of Hugo used by the documentation. |
+| `install:hugo:win32` | --- |
+| `postinstall` | --- |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
-| `start:default` | -- |
-| `start:win32` | -- |
+| `start:default` | --- |
+| `start:win32` | --- |
 <!-- AUTO-GENERATED-CONTENT:END -->

@@ -325,12 +325,30 @@ export class DeltaManager
      * as in read-only permissions.
      * But this.active can be used by some DDSes to figure out if ops can be sent
      * (for example, read-only view still participates in code proposals / upgrades decisions)
+     *
+     * Forcing Readonly does not prevent DDS from generating ops. It is up to user code to honour
+     * the readonly flag. If ops are generated, they will accumulate locally and not be sent. If
+     * there are pending in the outbound queue, it will stop sending until force readonly is
+     * cleared.
+     *
+     * @param readonly - set or clear force readonly.
      */
     public forceReadonly(readonly: boolean) {
         const oldValue = this.readonly;
         this._forceReadonly = readonly;
         if (oldValue !== this.readonly) {
+            let reconnect = false;
+            if (this.readonly === true) {
+                // If we switch to readonly while connected, we should disconnect first
+                // See comment in the "readonly" event handler to deltaManager set up by
+                // the ContainerRuntime constructor
+                reconnect = this.disconnectFromDeltaStream("Force readonly");
+            }
             safeRaiseEvent(this, this.logger, "readonly", this.readonly);
+            if (reconnect) {
+                // reconnect if we disconnected from before.
+                this.triggerConnect({ mode: "read", fetchOpsFromStorage: false });
+            }
         }
     }
 
@@ -472,7 +490,22 @@ export class DeltaManager
         return DeltaManager.detailsFromConnection(connection);
     }
 
-    public async connectCore(args: IConnectionArgs = {}): Promise<IDocumentDeltaConnection> {
+    /**
+     * Start the connection. Any error should result in container being close.
+     * And report the error if it excape for any reason.
+     * @param args - The connection arguments
+     */
+    private triggerConnect(args: IConnectionArgs) {
+        this.connectCore(args).catch((err) => {
+            // Errors are raised as "error" event and close container.
+            // Have a catch-all case in case we missed something
+            if (!this.closed) {
+                this.logger.sendErrorEvent({ eventName: "ConnectException" }, err);
+            }
+        });
+    }
+
+    private async connectCore(args: IConnectionArgs = {}): Promise<IDocumentDeltaConnection> {
         if (this.connection !== undefined) {
             return this.connection;
         }
@@ -1076,7 +1109,7 @@ export class DeltaManager
      */
     private disconnectFromDeltaStream(reason: string) {
         if (this.connection === undefined) {
-            return;
+            return false;
         }
 
         const connection = this.connection;
@@ -1104,6 +1137,8 @@ export class DeltaManager
         this.emit("disconnect", reason);
 
         connection.close();
+
+        return true;
     }
 
     /**
@@ -1145,13 +1180,7 @@ export class DeltaManager
                 await waitForConnectedState(delay * 1000);
             }
 
-            this.connect({ mode: requestedMode, fetchOpsFromStorage: false }).catch((err) => {
-                // Errors are raised as "error" event and close container.
-                // Have a catch-all case in case we missed something
-                if (!this.closed) {
-                    this.logger.sendErrorEvent({ eventName: "ConnectException" }, err);
-                }
-            });
+            this.triggerConnect({ mode: requestedMode, fetchOpsFromStorage: false });
         }
     }
 

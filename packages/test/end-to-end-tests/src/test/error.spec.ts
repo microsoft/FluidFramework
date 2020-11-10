@@ -48,6 +48,7 @@ describe("Errors Types", () => {
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         mockFactory.createDocumentService = async (resolvedUrl) => {
             const service = await documentServiceFactory.createDocumentService(resolvedUrl);
+            // eslint-disable-next-line prefer-promise-reject-errors
             service.connectToDeltaStorage = async () => Promise.reject(false);
             return service;
         };

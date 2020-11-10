@@ -440,14 +440,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         if (response.status !== 200
             || (response.mimeType !== "fluid/object" && response.mimeType !== "fluid/component")) {
-            return Promise.reject<ISummarizer>("Invalid summarizer route");
+            return Promise.reject(new Error("Invalid summarizer route"));
         }
 
         const rawFluidObject = response.value as IFluidObject;
         const summarizer = rawFluidObject.ISummarizer;
 
         if (!summarizer) {
-            return Promise.reject<ISummarizer>("Fluid object does not implement ISummarizer");
+            return Promise.reject(new Error("Fluid object does not implement ISummarizer"));
         }
 
         return summarizer;

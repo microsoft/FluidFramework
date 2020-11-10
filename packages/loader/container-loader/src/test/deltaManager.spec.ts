@@ -216,6 +216,47 @@ describe("Loader", () => {
                     await tickClock(expectedTimeout);
                 });
             });
+
+            describe("Readonly API", () => {
+                it("Should override readonly", async () => {
+                    await startDeltaManager();
+
+                    assert.strictEqual(deltaManager.readonly, false);
+
+                    deltaManager.forceReadonly(true);
+                    assert.strictEqual(deltaManager.readonly, true);
+
+                    deltaManager.forceReadonly(false);
+                    assert.strictEqual(deltaManager.readonly, false);
+                });
+
+                it("Should raise readonly event when container was not readonly", async () => {
+                    await startDeltaManager();
+                    let runCount = 0;
+
+                    deltaManager.on("readonly", (readonly: boolean) => {
+                        assert.strictEqual(readonly, true);
+                        runCount++;
+                    });
+
+                    deltaManager.forceReadonly(true);
+                    assert.strictEqual(runCount, 1);
+                });
+
+                it("Shouldn't raise readonly event when container was already readonly", async () => {
+                    await startDeltaManager();
+
+                    // Closing underlying connection makes container readonly
+                    deltaConnection.close();
+                    assert.strictEqual(deltaManager.readonly, true);
+
+                    deltaManager.on("readonly", () => {
+                        assert.fail("Shouldn't be called");
+                    });
+
+                    deltaManager.forceReadonly(true);
+                });
+            });
         });
     });
 });
