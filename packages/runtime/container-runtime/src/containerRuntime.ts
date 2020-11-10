@@ -747,7 +747,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 canReuseHandle: false,
                 // Must set to true to throw on any data stores failure that was too severe to be handled.
                 // We also are not decoding the base summaries at the root.
-                throwOnFailure: true,
+                // BUG BUG; Disabled why we investigate differential summary issues
+                // throwOnFailure: true,
             },
         );
 
