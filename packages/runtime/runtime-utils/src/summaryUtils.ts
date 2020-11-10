@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8, IsoBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
+import {
+    assert,
+    fromBase64ToUtf8,
+    IsoBuffer,
+    Uint8ArrayToString,
+    unreachableCase,
+} from "@fluidframework/common-utils";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
     ITree,
@@ -214,6 +220,8 @@ export function convertToSummaryTree(
 export function convertSnapshotTreeToSummaryTree(
     snapshot: ISnapshotTree,
 ): ISummaryTreeWithStats {
+    assert(Object.keys(snapshot.commits).length === 0, "There should not be commit tree entries in snapshot");
+
     const blobMapInitial = new Map(Object.entries(snapshot.blobs));
     const blobMapFinal = new Map<string, string>();
     for (const [key, value] of blobMapInitial.entries()) {

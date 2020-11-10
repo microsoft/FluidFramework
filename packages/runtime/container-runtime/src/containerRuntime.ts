@@ -1011,9 +1011,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * Notifies this object to take the snapshot of the container.
      * @deprecated - Use summarize to get summary of the container runtime.
-     * @param tagMessage - Message to supply to storage service for writing the snapshot.
      */
-    public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree> {
+    public async snapshot(): Promise<ITree> {
         // Iterate over each store and ask it to snapshot
         const fluidDataStoreSnapshotsP = Array.from(this.contexts).map(async ([fluidDataStoreId, value]) => {
             const summaryTree = await value.summarize(true /* fullTree */, false /* trackState */);
@@ -1036,9 +1035,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStoreSnapshots = await Promise.all(fluidDataStoreSnapshotsP);
 
         // Sort for better diffing of snapshots (in replay tool, used to find bugs in snapshotting logic)
-        if (fullTree) {
-            fluidDataStoreSnapshots.sort((a, b) => a.fluidDataStoreId.localeCompare(b.fluidDataStoreId));
-        }
+        fluidDataStoreSnapshots.sort((a, b) => a.fluidDataStoreId.localeCompare(b.fluidDataStoreId));
 
         for (const fluidDataStoreSnapshot of fluidDataStoreSnapshots) {
             root.entries.push(new TreeTreeEntry(

@@ -578,7 +578,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     /**
-     * back-compat 0.28
+     * back-compat 0.28 - snapshot is being removed and replaced with summary.
+     * So, getAttachSnapshot has been deprecated and getAttachSummary should be used instead.
      */
     public getAttachSnapshot(): ITreeEntry[] {
         const summaryTree = this.getAttachSummary();

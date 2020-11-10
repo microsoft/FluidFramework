@@ -698,12 +698,15 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         assert(this.channel !== undefined, "There should be a channel when generating attach message");
 
         let snapshot: ITree;
+        /**
+         * back-compat 0.28 - snapshot is being removed and replaced with summary.
+         * So, getAttachSnapshot has been deprecated and getAttachSummary should be used instead.
+         */
         if (this.channel.getAttachSummary !== undefined) {
             const summaryTree = this.channel.getAttachSummary();
-            // attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
+            // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
             snapshot = convertSummaryTreeToITree(summaryTree.summary);
         } else {
-            // back-compat 0.28
             const entries = this.channel.getAttachSnapshot();
             snapshot = { entries, id: null };
         }
