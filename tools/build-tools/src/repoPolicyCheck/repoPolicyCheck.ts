@@ -83,7 +83,7 @@ function routeToHandlers(file: string) {
             } else {
                 process.exitCode = 1;
             }
-            writeOutLine(output);
+            console.log(output);
         }
     });
 }
@@ -116,7 +116,7 @@ lineReader.on('line', line => {
             routeToHandlers(filePath);
             processed++;
         } else {
-            console.log(`Excluded: ${line}`);
+            writeOutLine(`Excluded: ${line}`);
         }
     }
 });
