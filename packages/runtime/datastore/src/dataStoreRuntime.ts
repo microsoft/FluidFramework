@@ -421,7 +421,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
         this.bindState = BindState.Binding;
         // Attach the runtime to the container via this callback
-        this.dataStoreContext.bindToContext(this);
+        // back-compat: remove argument ans cast in 0.30.
+        (this.dataStoreContext as any).bindToContext(this);
 
         this.bindState = BindState.Bound;
     }
