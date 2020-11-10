@@ -1,10 +1,15 @@
 ## 0.29 Breaking Changes
 
 - [removeAllEntriesForDocId api in host storage changed](#removeAllEntriesForDocId-api-in-host-storage-changed)
+- [IContainerRuntimeBase.IProvideFluidDataStoreRegistry](#IContainerRuntimeBase.IProvideFluidDataStoreRegistry)
 - [NamedFluidDataStoreRegistryEntries](#NamedFluidDataStoreRegistryEntries)
 
 ### removeAllEntriesForDocId api in host storage changed
 `removeAllEntriesForDocId` api in host storage is now an async api.
+
+### IContainerRuntimeBase.IProvideFluidDataStoreRegistry
+`IProvideFluidDataStoreRegistry` implementation moved from IContainerRuntimeBase to IContainerRuntime. Data stores and objects should not have access to global state in container.
+`IProvideFluidDataStoreRegistry` is removed from IFluidDataStoreChannel - it has not been implemented there for a while (it moved to context).
 
 ### NamedFluidDataStoreRegistryEntries 
 NamedFluidDataStoreRegistryEntries usage across repo is reduced substantially. Specifically, `ContainerRuntime.load()` is changed. Instead many interfaces are changed to accept IFluidDataStoreRegistry

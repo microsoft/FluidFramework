@@ -64,9 +64,8 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
  */
 export interface IContainerRuntimeBase extends
     IEventProvider<IContainerRuntimeBaseEvents>,
-    IProvideFluidHandleContext,
-    /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
-    IProvideFluidDataStoreRegistry {
+    IProvideFluidHandleContext
+{
 
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
@@ -113,7 +112,7 @@ export interface IContainerRuntimeBase extends
      * Creates detached data store context. only after context.attachRuntime() is called,
      * data store initialization is considered compete.
      */
-    createDetachedDataStore(): IFluidDataStoreContextDetached;
+    createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
 
     /**
      * Get an absolute url for a provided container-relative request.
@@ -125,6 +124,16 @@ export interface IContainerRuntimeBase extends
     getTaskManager(): Promise<ITaskManager>;
 
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+
+    /**
+     * Returns the current quorum.
+     */
+    getQuorum(): IQuorum;
+
+    /**
+     * Returns the current audience.
+     */
+    getAudience(): IAudience;
 }
 
 /**
@@ -135,7 +144,6 @@ export interface IContainerRuntimeBase extends
  */
 export interface IFluidDataStoreChannel extends
     IFluidRouter,
-    Partial<IProvideFluidDataStoreRegistry>,
     IDisposable {
 
     readonly id: string;
@@ -368,7 +376,6 @@ export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
      * Binds a runtime to the context.
      */
     attachRuntime(
-        packagePath: Readonly<string[]>,
         factory: IProvideFluidDataStoreFactory,
         dataStoreRuntime: IFluidDataStoreChannel,
     ): Promise<void>;
