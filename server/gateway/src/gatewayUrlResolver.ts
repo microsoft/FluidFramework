@@ -23,28 +23,6 @@ export interface FullTree {
     code: IFluidCodeDetails | null,
 }
 
-export function resolveR11sUrl(
-    config: Provider,
-    alfred: IAlfred,
-    tenantId: string,
-    documentId: string,
-    accessToken: string,
-    request: Request,
-): [Promise<IFluidResolvedUrl>, Promise<undefined | FullTree>] {
-    const endPointConfig: { provider: Provider, tenantId: string, documentId: string } = {
-        provider: config,
-        tenantId,
-        documentId,
-    };
-
-    const resolverList = [
-        new RouterliciousUrlResolver(endPointConfig, async () => Promise.resolve(accessToken))];
-    const resolvedP = configurableUrlResolver(resolverList, request);
-    const fullTreeP = alfred.getFullTree(tenantId, documentId);
-    // RouterliciousUrlResolver only resolves as IFluidResolvedUrl
-    return [resolvedP as Promise<IFluidResolvedUrl>, fullTreeP];
-}
-
 export function resolveSpoUrl(
     config: Provider,
     tenantId: string,
@@ -69,4 +47,26 @@ export function resolveSpoUrl(
     } else {
         throw new Error("Failed to find client ID and secret values");
     }
+}
+
+export function resolveR11sUrl(
+    config: Provider,
+    alfred: IAlfred,
+    tenantId: string,
+    documentId: string,
+    accessToken: string,
+    request: Request,
+): [Promise<IFluidResolvedUrl>, Promise<undefined | FullTree>] {
+    const endPointConfig: { provider: Provider, tenantId: string, documentId: string } = {
+        provider: config,
+        tenantId,
+        documentId,
+    };
+
+    const resolverList = [
+        new RouterliciousUrlResolver(endPointConfig, async () => Promise.resolve(accessToken))];
+    const resolvedP = configurableUrlResolver(resolverList, request);
+    const fullTreeP = alfred.getFullTree(tenantId, documentId);
+    // RouterliciousUrlResolver only resolves as IFluidResolvedUrl
+    return [resolvedP as Promise<IFluidResolvedUrl>, fullTreeP];
 }
