@@ -14,17 +14,17 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import * as jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import { NodeCodeLoader } from "./nodeCodeloader";
-import { fetchFluidObject, initializeChaincode } from "./utils";
+import { fetchFluidObject } from "./utils";
 
 // Base service configuration.
-const ordererEndpoint = "";
-const storageEndpoint = "";
-const tenantId = "";
-const tenantKey = "";
-const bearerSecret = "";
-
+const ordererEndpoint = "http://localhost:3000";
+const storageEndpoint = "http://localhost:3000";
+const tenantId = "tinylicious";
+// Tinylicious doesn't care about tenantKey and bearerSecret
+const tenantKey = "12345";
+const bearerSecret = "12345";
 // Code package details.
-const defaultPackage = "@fluid-example/key-value-cache@0.19.0-28557";
+const defaultPackage = "@fluid-example/key-value-cache@0.28.2";
 const installPath = "/tmp/fluid-objects";
 const timeoutMS = 60000;
 
@@ -41,6 +41,7 @@ const user = {
 export async function start(): Promise<void> {
     // TODO: Create a url resolver for node environment.
     // Generate access tokens.
+    const createNew = docId.length === 0;
     const documentId = docId.length === 0 ? uuid() : docId;
     const hostToken = jwt.sign(
         {
@@ -62,6 +63,7 @@ export async function start(): Promise<void> {
     const documentUrl = `fluid://${url.parse(ordererEndpoint).host}/${encodedTenantId}/${encodedDocId}`;
     const deltaStorageUrl = `${ordererEndpoint}/deltas/${encodedTenantId}/${encodedDocId}`;
     const storageUrl = `${storageEndpoint}/repos/${encodedTenantId}`;
+    const requestUrl = `http://${url.parse(ordererEndpoint).host}/${encodedTenantId}/${encodedDocId}`;
 
     // Crafting IFluidResolvedUrl with urls and access tokens.
     const resolved: IFluidResolvedUrl = {
@@ -78,7 +80,7 @@ export async function start(): Promise<void> {
     const urlResolver = new ContainerUrlResolver(
         ordererEndpoint,
         hostToken,
-        new Map([[documentUrl, resolved]]));
+        new Map([[requestUrl, resolved]]));
 
     // A code loader that installs the code package in a specified location (installPath).
     // Once installed, the loader returns an entry point to Fluid Container to invoke the code.
@@ -93,24 +95,21 @@ export async function start(): Promise<void> {
         codeLoader,
     });
 
+    const details: IFluidCodeDetails = {
+        config: {},
+        package: defaultPackage,
+    };
     // Resolving the URL to its underlying Fluid document.
-    const fluidDocument = await loader.resolve({ url: documentUrl });
+    let container;
+    if (createNew) {
+        container = await loader.createDetachedContainer(details);
+        await container.attach({ url: requestUrl });
+    } else {
+        container = await loader.resolve({ url: requestUrl });
+    }
 
     // Fetches the underlying Fluid object.
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    fetchFluidObject(loader, fluidDocument, documentUrl);
-
-    // Proposes the code package for a new document.
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    if (!fluidDocument.existing) {
-        const details: IFluidCodeDetails = {
-            config: {},
-            package: defaultPackage,
-        };
-
-        await initializeChaincode(fluidDocument, details)
-            .catch((error) => console.error("chaincode error", error));
-    }
+    await fetchFluidObject(loader, container, requestUrl);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
