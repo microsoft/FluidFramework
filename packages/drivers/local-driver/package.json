@@ -3,7 +3,7 @@
   "version": "0.29.0",
   "description": "Fluid local driver",
   "homepage": "https://fluidframework.com",
-  "repository": "microsoft/FluidFramework",
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/index.js",

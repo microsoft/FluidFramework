@@ -3,31 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { launchCLI } from "./cli";
-
-/**
- * The initializeChaincode method takes in a document and a desired npm package and establishes a code quorum
- * on this package.
- */
-export async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails): Promise<void> {
-    if (pkg === undefined) {
-        return;
-    }
-
-    const quorum = document.getQuorum();
-
-    // Wait for connection so that proposals can be sent
-    if (!document.connected) {
-        await new Promise<void>((resolve) => document.on("connected", () => resolve()));
-    }
-
-    // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code")) {
-        await quorum.propose("code", pkg);
-    }
-}
 
 /**
  * fetchCore is used to make a request against the loader to load a Fluid object.
@@ -51,8 +29,7 @@ async function fetchCore(loader: Loader, url: string) {
  * quorumed on.
  */
 export async function fetchFluidObject(loader: Loader, container: Container, url: string) {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    fetchCore(loader, url);
+    await fetchCore(loader, url);
     container.on("contextChanged", () => {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         fetchCore(loader, url);
