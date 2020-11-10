@@ -32,7 +32,7 @@ import {
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 
-export const ComponentName = "Key-Valye-Cache";
+export const ComponentName = "Key-Value-Cache";
 
 export const IKeyValue: keyof IProvideKeyValue = "IKeyValue";
 
