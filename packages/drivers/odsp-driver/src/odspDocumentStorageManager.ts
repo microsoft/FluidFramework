@@ -219,7 +219,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     public async read(blobid: string): Promise<string> {
         let blob = this.blobCache.get(blobid);
-        if (!blob) {
+        if (blob === undefined) {
             this.checkSnapshotUrl();
 
             const response = await getWithRetryForTokenRefresh(async (options) => {
@@ -237,10 +237,15 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }),
                 );
             });
-            blob = response.content;
+            // Verify that we haven't populated the cache in the meantime from a simultaneous read
+            blob = this.blobCache.get(blobid);
+            if (blob === undefined) {
+                blob = response.content;
+                this.blobCache.set(blobid, blob);
+            }
         }
 
-        if (blob && this.attributesBlobHandles.has(blobid)) {
+        if (this.attributesBlobHandles.has(blobid)) {
             // ODSP document ids are random guids (different per session)
             // fix the branch name in attributes
             // this prevents issues when generating summaries
