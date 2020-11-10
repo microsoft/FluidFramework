@@ -32,14 +32,15 @@ export function getR11sToken(
     tenants: IAlfredTenant[],
     scopes: ScopeType[],
     user: IAlfredUser,
-    lifetimeSec: number = 60 * 60): string {
+    lifetimeSec: number = 60 * 60,
+    hostToken: string = ""): string {
+    let token = hostToken;
     for (const tenant of tenants) {
         if (tenantId === tenant.id) {
-            return generateToken(tenantId, documentId, tenant.key, scopes, user, lifetimeSec);
+            token = generateToken(tenantId, documentId, tenant.key, scopes, user, lifetimeSec);
         }
     }
-
-    throw new Error("Invalid tenant");
+    return token;
 }
 
 /**

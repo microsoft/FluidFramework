@@ -56,7 +56,12 @@ export async function initialize(
         async () => Promise.resolve(resolved.tokens.storageToken),
         async () => Promise.resolve(resolved.tokens.socketToken)));
 
-    const tokenProvider = new GatewayTokenProvider(document.location.origin, resolved.url, hostToken, accessToken);
+    const tokenProvider = new GatewayTokenProvider(
+        document.location.origin,
+        resolved.url,
+        hostToken,
+        resolved.tokens.storageToken,
+    );
     documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
         tokenProvider,
         false,

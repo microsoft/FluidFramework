@@ -83,7 +83,7 @@ export function create(
                 const user = getUser(request);
                 const accessToken = getR11sToken(tenantId, documentId, appTenants, scopes, user as IExtendedUser);
                 const [resolvedP, fullTreeP] =
-                    resolveUrl(config, alfred, tenantId, documentId, accessToken, request);
+                    resolveUrl(config, alfred, tenantId, documentId, request, accessToken);
 
                 const workerConfig = getConfig(
                     config.get("worker"),

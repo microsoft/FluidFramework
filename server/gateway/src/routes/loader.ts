@@ -80,9 +80,10 @@ export function create(
                 const search = parse(request.url).search;
                 const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
                 const user = getUser(request);
-                const accessToken = getR11sToken(tenantId, documentId, appTenants, scopes, user as IExtendedUser);
+                const accessToken = getR11sToken(
+                    tenantId, documentId, appTenants, scopes, user as IExtendedUser);
                 const [resolvedP, fullTreeP] =
-                    resolveUrl(config, alfred, tenantId, documentId, accessToken, request, driveId);
+                    resolveUrl(config, alfred, tenantId, documentId, request, accessToken, driveId);
 
                 const workerConfig = getConfig(
                     config.get("worker"),

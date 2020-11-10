@@ -13,6 +13,7 @@ import { IGitCache } from "@fluidframework/server-services-client";
 import { Request } from "express";
 import { Provider } from "nconf";
 import dotenv from "dotenv";
+import winston from "winston";
 import { IAlfred } from "./interfaces";
 import { isSpoTenant, spoGetResolvedUrl } from "./odspUtils";
 
@@ -28,11 +29,12 @@ export function resolveUrl(
     alfred: IAlfred,
     tenantId: string,
     documentId: string,
-    accessToken: string,
     request: Request,
+    accessToken?: string,
     driveId?: string,
 ): [Promise<IFluidResolvedUrl>, Promise<undefined | FullTree>] {
     if (isSpoTenant(tenantId)) {
+        winston.info("hi");
         const microsoftConfiguration = config.get("login:microsoft");
         const clientId = _.isEmpty(microsoftConfiguration.clientId)
             ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : microsoftConfiguration.clientId;
@@ -57,7 +59,8 @@ export function resolveUrl(
             documentId,
         };
 
-        const resolverList = [new RouterliciousUrlResolver(endPointConfig, async () => Promise.resolve(accessToken))];
+        const resolverList = [
+            new RouterliciousUrlResolver(endPointConfig, async () => Promise.resolve(accessToken ?? ""))];
         const resolvedP = configurableUrlResolver(resolverList, request);
         const fullTreeP = alfred.getFullTree(tenantId, documentId);
         // RouterliciousUrlResolver only resolves as IFluidResolvedUrl
