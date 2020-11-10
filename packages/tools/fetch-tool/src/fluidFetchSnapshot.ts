@@ -31,27 +31,46 @@ interface ISnapshotInfo {
     sizeNew: number;
 }
 
-interface IBlob {
-    path: string;
+type IFetchedData = IFetchedBlob | IFetchedTree;
+
+interface IFetchedBlob {
+    treePath: string;
+    filename: string;
     blobId: string;
     blob: Promise<string | undefined>;
-    isTree: boolean;
     reused: boolean;
-    canBeReused: boolean;
+}
+
+interface IFetchedTree {
+    treePath: string;
+    blobId: string;
+    filename: string;
+    blob: string;
+
+    reused: false;
+
+    patched: boolean;
+}
+
+function isFetchedTree(fetchedData: IFetchedData): fetchedData is IFetchedTree {
+    return "patched" in fetchedData;
 }
 
 const blobCache = new Map<string, Promise<string>>();
 let blobCachePrevious = new Map<string, Promise<string>>();
 let blobCacheCurrent = new Map<string, Promise<string>>();
 
-function fetchBlobs(prefix: string, tree: ISnapshotTree, storage: IDocumentStorageService) {
-    const result: IBlob[] = [];
+function fetchBlobs(prefix: string,
+    tree: ISnapshotTree,
+    storage: IDocumentStorageService,
+    blobIdMap: Map<string, number>,
+) {
+    const result: IFetchedBlob[] = [];
     for (const item of Object.keys(tree.blobs)) {
-        const path = `${prefix}${item}`;
+        const treePath = `${prefix}${item}`;
         const blobId = tree.blobs[item];
         if (blobId !== null) {
             let reused = true;
-            const canBeReused = false;
             let blob = blobCachePrevious.get(blobId);
             if (!blob) {
                 reused = false;
@@ -62,18 +81,39 @@ function fetchBlobs(prefix: string, tree: ISnapshotTree, storage: IDocumentStora
                 }
             }
             blobCacheCurrent.set(blobId, blob);
-            result.push({ path, blobId, blob, isTree: false, reused, canBeReused });
+
+            // Use the blobIdMap to assign a number for each unique blob
+            // and use it as a prefix for files to avoid case-insensitive fs
+            let index = blobIdMap.get(blobId);
+            if (!index) {
+                index = blobIdMap.size;
+                blobIdMap.set(blobId, index);
+            }
+            const filename = `${index}-${blobId}`;
+            result.push({ treePath, blobId, blob, reused, filename });
+
+            // patch the tree so that we can write it out to reference the file
+            tree.blobs[item] = filename;
         }
     }
     return result;
+}
+
+function createTreeBlob(tree: ISnapshotTree, prefix: string, patched: boolean): IFetchedTree {
+    assert(!!tree.id);
+    const content = JSON.stringify(tree);
+    const filename = `tree-${tree.id}${patched ? "-patched" : ""}`;
+    const treePath = `${prefix}${filename}`;
+    return { treePath, blobId: tree.id, filename, blob: content, patched, reused: false };
 }
 
 async function fetchBlobsFromSnapshotTree(
     storage: IDocumentStorageService,
     tree: ISnapshotTree,
     prefix: string = "/",
-    commit = true) {
+    perCommitBlobIdMap?: Map<string, number>): Promise<IFetchedData[]> {
     assert(Object.keys(tree.commits).length === 0 || (prefix === "/"));
+    const commit = !perCommitBlobIdMap;
     if (commit && dumpSnapshotTrees) {
         console.log(tree);
     }
@@ -83,15 +123,14 @@ async function fetchBlobsFromSnapshotTree(
         blobCacheCurrent = new Map<string, Promise<string>>();
     }
 
-    let result = fetchBlobs(prefix, tree, storage);
-
+    // Create the tree info before fetching blobs (which will modify it)
+    let commitBlob: IFetchedTree | undefined;
     if (commit) {
-        assert(!!tree.id);
-        const blobId = prefix === "/" ? "tree" : tree.id === null ? "no id" : tree.id;
-        const content = JSON.stringify(tree, undefined, 2);
-        const path = `${prefix}tree.json`;
-        result.push({ path, blobId, blob: Promise.resolve(content), isTree: true, reused: false, canBeReused: false });
+        commitBlob = createTreeBlob(tree, prefix, false);
     }
+
+    const blobIdMap = perCommitBlobIdMap ?? new Map<string, number>();
+    let result: IFetchedData[] = fetchBlobs(prefix, tree, storage, blobIdMap);
 
     for (const dataStore of Object.keys(tree.commits)) {
         const dataStoreVersions = await storage.getVersions(tree.commits[dataStore], 1);
@@ -122,20 +161,29 @@ async function fetchBlobsFromSnapshotTree(
         const dataStoreBlobs = await fetchBlobsFromSnapshotTree(
             storage,
             subtree,
-            `${prefix}${subtreeId}/`,
-            false);
+            `${prefix}${subtreeId}/`, blobIdMap);
         result = result.concat(dataStoreBlobs);
+    }
+
+    if (commitBlob) {
+        result.push(commitBlob);
+        result.push(createTreeBlob(tree, prefix, true));
     }
     return result;
 }
 
-async function dumpSnapshotTreeVerbose(name: string, blobs: IBlob[]) {
+function getDumpFetchedData(fetchedData: IFetchedData[]) {
+    const sorted = fetchedData.sort((a, b) => a.treePath.localeCompare(b.treePath));
+    return sorted.filter((item) => !isFetchedTree(item) || !item.patched);
+}
+
+async function dumpSnapshotTreeVerbose(name: string, fetchedData: IFetchedData[]) {
     let size = 0;
-    const sorted = blobs.sort((a, b) => a.path.localeCompare(b.path));
+    const sorted = getDumpFetchedData(fetchedData);
 
     let nameLength = 10;
     for (const item of sorted) {
-        nameLength = Math.max(nameLength, item.path.length);
+        nameLength = Math.max(nameLength, item.treePath.length);
     }
 
     console.log("");
@@ -147,7 +195,7 @@ async function dumpSnapshotTreeVerbose(name: string, blobs: IBlob[]) {
             continue;
         }
         // eslint-disable-next-line max-len
-        console.log(`${item.path.padEnd(nameLength)} |    ${item.reused ? "X" : " "}   | ${formatNumber(blob.length).padStart(10)}`);
+        console.log(`${item.treePath.padEnd(nameLength)} |    ${item.reused ? "X" : " "}   | ${formatNumber(blob.length).padStart(10)}`);
         size += blob.length;
     }
 
@@ -155,11 +203,11 @@ async function dumpSnapshotTreeVerbose(name: string, blobs: IBlob[]) {
     console.log(`${"Total snapshot size".padEnd(nameLength)} |        | ${formatNumber(size).padStart(10)}`);
 }
 
-async function dumpSnapshotTree(name: string, blobs: IBlob[]): Promise<ISnapshotInfo> {
+async function dumpSnapshotTree(name: string, fetchedData: IFetchedData[]): Promise<ISnapshotInfo> {
     let size = 0;
     let sizeNew = 0;
     let blobCountNew = 0;
-    const sorted = blobs.sort((a, b) => a.path.localeCompare(b.path));
+    const sorted = getDumpFetchedData(fetchedData);
 
     for (const item of sorted) {
         const blob = await item.blob;
@@ -176,31 +224,31 @@ async function dumpSnapshotTree(name: string, blobs: IBlob[]): Promise<ISnapshot
     return { blobCountNew, blobCount: sorted.length, size, sizeNew };
 }
 
-async function saveSnapshot(name: string, blobs: IBlob[], saveDir: string) {
+async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: string) {
     const outDir = `${saveDir}/${name}/`;
     const mkdir = util.promisify(fs.mkdir);
 
     await mkdir(`${outDir}/decoded`, { recursive: true });
-    await Promise.all(blobs.map(async (blob) => {
-        const data = await blob.blob;
+    await Promise.all(fetchedData.map(async (item) => {
+        const data = await item.blob;
         if (data === undefined) {
-            console.error(`ERROR: Unable to get data for blob ${blob.blobId}`);
+            console.error(`ERROR: Unable to get data for blob ${item.blobId}`);
             return;
         }
 
-        if (!blob.isTree) {
-            fs.writeFileSync(`${outDir}/${blob.blobId}`, data);
+        if (!isFetchedTree(item)) {
+            fs.writeFileSync(`${outDir}/${item.filename}`, data);
             const decoded = fromBase64ToUtf8(data);
             try {
                 const object = JSON.parse(decoded);
-                fs.writeFileSync(`${outDir}/decoded/${blob.blobId}.json`, JSON.stringify(object, undefined, 2));
+                fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`, JSON.stringify(object, undefined, 2));
             } catch (e) {
-                fs.writeFileSync(`${outDir}/decoded/${blob.blobId}.txt`, decoded);
+                fs.writeFileSync(`${outDir}/decoded/${item.filename}.txt`, decoded);
             }
         } else {
             // Write out same data for tree
-            fs.writeFileSync(`${outDir}/${blob.blobId}.json`, data);
-            fs.writeFileSync(`${outDir}/decoded/${blob.blobId}.json`, data);
+            fs.writeFileSync(`${outDir}/${item.filename}.json`, data);
+            fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`, JSON.stringify(JSON.parse(data), undefined, 2));
         }
     }));
 }
@@ -246,7 +294,7 @@ export async function fluidFetchSnapshot(documentService?: IDocumentService, sav
         console.log(versions);
     }
 
-    let blobsToDump: IBlob[] | undefined;
+    let blobsToDump: IFetchedData[] | undefined;
     if (paramSnapshotVersionIndex !== undefined) {
         version = versions[paramSnapshotVersionIndex];
         if (version === undefined) {
@@ -262,7 +310,7 @@ export async function fluidFetchSnapshot(documentService?: IDocumentService, sav
     } else {
         version = versions[0];
         if (saveDir !== undefined && versions.length > 0) {
-            console.log("  Name          |                  Date |       Size |   New Size |  Blobs | New Blobs");
+            console.log("  Name          |                    Date |       Size |   New Size |  Blobs | New Blobs");
             console.log("-".repeat(86));
 
             // Go in reverse order, to correctly calculate blob reuse - from oldest to newest snapshots
@@ -285,7 +333,7 @@ export async function fluidFetchSnapshot(documentService?: IDocumentService, sav
                         }
                     }
                 }
-                date = date.padStart(21);
+                date = date.padStart(23);
                 const size = formatNumber(res.size).padStart(10);
                 const sizeNew = formatNumber(res.sizeNew).padStart(10);
                 const blobCount = formatNumber(res.blobCount).padStart(6);

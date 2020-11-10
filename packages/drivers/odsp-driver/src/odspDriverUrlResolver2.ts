@@ -112,7 +112,6 @@ export class OdspDriverUrlResolver2 implements IUrlResolver {
         if (odspResolvedUrl.itemId) {
             // Kick start the sharing link request if we don't already have it already as a performance optimization.
             // For detached create new, we don't have an item id yet and therefore cannot generate a share link
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.getShareLinkPromise(odspResolvedUrl).catch(() => {});
         }
         return odspResolvedUrl;

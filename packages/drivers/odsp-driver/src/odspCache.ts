@@ -123,7 +123,7 @@ export interface IPersistedCache {
      * Removes all the entries from the cache for given docId.
      * @param docId - DocId for which all entries needs to be deleted from cache.
      */
-    removeAllEntriesForDocId(docId: string): void;
+    removeAllEntriesForDocId(docId: string): Promise<void>;
 }
 
 /**
@@ -194,9 +194,9 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
         }
     }
 
-    removeAllEntriesForDocId(docId: string): void {
+    async removeAllEntriesForDocId(docId: string): Promise<void> {
         try {
-            this.cache.removeAllEntriesForDocId(docId);
+            await this.cache.removeAllEntriesForDocId(docId);
         } catch (error) {
             this.logger.sendErrorEvent({ eventName: "removeAllEntriesForDocId", docId }, error);
         }
@@ -233,7 +233,7 @@ export class LocalPersistentCache implements IPersistedCache {
     updateUsage(entry: ICacheEntry, seqNumber: number): void {
     }
 
-    removeAllEntriesForDocId(docId: string): void {
+    async removeAllEntriesForDocId(docId: string): Promise<void> {
         Array.from(this.cache)
         .filter(([key]) => {
             key.startsWith(docId);
@@ -328,7 +328,8 @@ export class LocalPersistentCacheAdapter implements IPersistedCache {
         this.cache.updateUsage(entry, seqNumber);
     }
 
-    removeAllEntriesForDocId(docId: string): void {
+    async removeAllEntriesForDocId(docId: string): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.cache.removeAllEntriesForDocId(docId);
     }
 }

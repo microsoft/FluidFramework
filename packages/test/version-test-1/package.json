@@ -18,8 +18,8 @@
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
-    "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint": "eslint --format stylish src tests",
+    "eslint:fix": "eslint --format stylish src tests --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
@@ -38,13 +38,13 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.29.0",
     "@fluidframework/base-host": "^0.29.0",
-    "@fluidframework/common-utils": "^0.25.0-0",
+    "@fluidframework/common-utils": "^0.25.0",
     "@fluidframework/view-interfaces": "^0.29.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@fluidframework/eslint-config-fluid": "^0.20.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.21.0-0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@fluidframework/webpack-fluid-loader": "^0.29.0",
     "@types/jest": "22.2.3",

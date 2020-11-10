@@ -16,7 +16,7 @@ export class NullBlobStorageService implements IDocumentStorageService {
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
-        return version ? Promise.reject("Invalid operation") : null;
+        return version ? Promise.reject(new Error("Invalid operation")) : null;
     }
 
     public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
@@ -24,25 +24,25 @@ export class NullBlobStorageService implements IDocumentStorageService {
     }
 
     public async read(blobId: string): Promise<string> {
-        return Promise.reject("Invalid operation");
+        return Promise.reject(new Error("Invalid operation"));
     }
 
     public async write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion> {
-        return Promise.reject("Null blob storage can not write commit");
+        return Promise.reject(new Error("Null blob storage can not write commit"));
     }
 
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
-        return Promise.reject("Invalid operation");
+        return Promise.reject(new Error("Invalid operation"));
     }
 
     public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
-        return Promise.reject("Invalid operation");
+        return Promise.reject(new Error("Invalid operation"));
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
-        return Promise.reject("Null blob storage can not create blob");
+        return Promise.reject(new Error("Null blob storage can not create blob"));
     }
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        return Promise.reject("Null blob storage can not read blob");
+        return Promise.reject(new Error("Null blob storage can not read blob"));
     }
 }

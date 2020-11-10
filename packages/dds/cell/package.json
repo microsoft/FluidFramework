@@ -52,17 +52,17 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.25.0-0",
+    "@fluidframework/common-utils": "^0.25.0",
     "@fluidframework/core-interfaces": "^0.29.0",
     "@fluidframework/datastore-definitions": "^0.29.0",
-    "@fluidframework/protocol-definitions": "^0.1014.0-0",
+    "@fluidframework/protocol-definitions": "^0.1014.0",
     "@fluidframework/shared-object-base": "^0.29.0",
     "assert": "^2.0.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
-    "@fluidframework/eslint-config-fluid": "^0.20.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.21.0-0",
     "@fluidframework/mocha-test-setup": "^0.29.0",
     "@fluidframework/test-runtime-utils": "^0.29.0",
     "@microsoft/api-extractor": "^7.7.2",

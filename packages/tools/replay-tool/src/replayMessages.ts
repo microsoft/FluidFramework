@@ -142,7 +142,7 @@ class ContainerUrlResolver implements IUrlResolver {
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         if (!this.cache.has(request.url)) {
-            return Promise.reject(`ContainerUrlResolver can't resolve ${request}`);
+            return Promise.reject(new Error(`ContainerUrlResolver can't resolve ${request}`));
         }
         return this.cache.get(request.url);
     }
@@ -430,10 +430,10 @@ export class ReplayTool {
 
     private async setup() {
         if (this.args.inDirName === undefined) {
-            return Promise.reject("Please provide --indir argument");
+            return Promise.reject(new Error("Please provide --indir argument"));
         }
         if (!fs.existsSync(this.args.inDirName)) {
-            return Promise.reject("File does not exist");
+            return Promise.reject(new Error("File does not exist"));
         }
 
         this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
@@ -450,12 +450,12 @@ export class ReplayTool {
         if (this.args.version !== undefined) {
             console.log(`Starting from ${this.args.version}, seq# = ${this.mainDocument.currentOp}`);
             if (this.mainDocument.currentOp > this.args.to) {
-                return Promise.reject("--to argument is below snapshot starting op. Nothing to do!");
+                return Promise.reject(new Error("--to argument is below snapshot starting op. Nothing to do!"));
             }
         }
 
-        if (this.args.initalizeFromSnapshotsDir) {
-            for (const node of fs.readdirSync(this.args.initalizeFromSnapshotsDir, { withFileTypes: true })) {
+        if (this.args.initializeFromSnapshotsDir) {
+            for (const node of fs.readdirSync(this.args.initializeFromSnapshotsDir, { withFileTypes: true })) {
                 let storage;
                 if (node.isDirectory()) {
                     // Did we load it already as main doc?
@@ -463,15 +463,16 @@ export class ReplayTool {
                         continue;
                     }
 
-                    const file = `${this.args.initalizeFromSnapshotsDir}/${node.name}/tree.json`;
+                    const file = `${this.args.initializeFromSnapshotsDir}/${node.name}/tree.json`;
                     if (!fs.existsSync(file)) {
                         console.error(`${file} does not exist, skipping ${node.name} snapshot`);
                         continue;
                     }
-                    storage = new FluidFetchReaderFileSnapshotWriter(this.args.initalizeFromSnapshotsDir, node.name);
+                    storage = new FluidFetchReaderFileSnapshotWriter(this.args.initializeFromSnapshotsDir, node.name);
                 } else {
                     if (node.name.startsWith("snapshot_")) {
-                        const content = fs.readFileSync(`${this.args.initalizeFromSnapshotsDir}/${node.name}`, "utf-8");
+                        const content = fs.readFileSync(
+                            `${this.args.initializeFromSnapshotsDir}/${node.name}`, "utf-8");
                         const snapshot = JSON.parse(content) as IFileSnapshot;
                         storage = new FileSnapshotReader(snapshot);
                     } else {

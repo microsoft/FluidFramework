@@ -1,3 +1,10 @@
+## 0.29 Breaking Changes
+
+- [removeAllEntriesForDocId api in host storage changed](#removeAllEntriesForDocId-api-in-host-storage-changed)
+
+### removeAllEntriesForDocId api in host storage changed
+`removeAllEntriesForDocId` api in host storage is now an async api.
+
 ## 0.28 Breaking Changes
 
 - [FileName should contain extension for ODSP driver create new path](#FileName-should-contain-extension-for-ODSP-driver-create-new-path)
