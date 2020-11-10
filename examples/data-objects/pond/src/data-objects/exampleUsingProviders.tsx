@@ -12,9 +12,6 @@ import ReactDOM from "react-dom";
 
 import { IFluidUserInformation } from "../interfaces";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../../package.json");
-
 /**
  * Basic example that takes a container provider
  */
@@ -25,7 +22,7 @@ export class ExampleUsingProviders
 
     private userInformation: IFluidUserInformation | undefined;
 
-    public static readonly ComponentName = `${pkg.name as string}-example-using-provider`;
+    public static readonly ComponentName = `@fluid-example/pond-example-using-provider`;
 
     protected async hasInitialized() {
         this.userInformation = await this.providers.IFluidUserInformation;

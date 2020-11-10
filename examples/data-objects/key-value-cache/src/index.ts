@@ -32,8 +32,6 @@ import {
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 
-export const ComponentName = "Key-Value-Cache";
-
 export const IKeyValue: keyof IProvideKeyValue = "IKeyValue";
 
 export interface IProvideKeyValue {
@@ -137,7 +135,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
-            new Map([[ComponentName, Promise.resolve(this)]]),
+            new Map([[this.type, Promise.resolve(this)]]),
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(this.defaultComponentId),
                 innerRequestHandler,
@@ -145,7 +143,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
         );
 
         if (!runtime.existing) {
-            await runtime.createRootDataStore(ComponentName, this.defaultComponentId);
+            await runtime.createRootDataStore(this.type, this.defaultComponentId);
         }
 
         return runtime;

@@ -20,8 +20,7 @@ export type FluidDataStoreRegistryEntry =
  * An associated pair of an identifier and registry entry.  Registry entries
  * may be dynamically loaded.
  */
-export type NamedFluidDataStoreRegistryEntry =
-    [string, FluidDataStoreRegistryEntry | Promise<FluidDataStoreRegistryEntry>];
+export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
 /**
  * An iterable identifier/registry entry pair list
  */
