@@ -97,7 +97,7 @@ export interface IContainerRuntimeBase extends
      * @deprecated 0.16 Issue #1537, #3631
      * @internal
      */
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IFluidDataStoreChannel>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IFluidRouter>;
 
     /**
      * Creates data store. Returns router of data store. Data store is not bound to container,
@@ -160,9 +160,15 @@ export interface IFluidDataStoreChannel extends
     bindToContext(): void;
 
     /**
+     * @deprecated - Replaced by getAttachSummary()
      * Retrieves the snapshot used as part of the initial snapshot message
      */
     getAttachSnapshot(): ITreeEntry[];
+
+    /**
+     * Retrieves the summary used as part of the initial summary message
+     */
+    getAttachSummary(): ISummaryTreeWithStats
 
     /**
      * Processes the op.
@@ -175,17 +181,12 @@ export interface IFluidDataStoreChannel extends
     processSignal(message: any, local: boolean): void;
 
     /**
-     * Generates a snapshot of the given data store
-     * @deprecated in 0.22 summarizerNode
-     */
-    snapshotInternal(fullTree?: boolean): Promise<ITreeEntry[]>;
-
-    /**
      * Generates a summary for the data store.
      * Introduced with summarizerNode - will be required in a future release.
-     * @param fullTree - true to bypass optimizations and force a full summary tree
+     * @param fullTree - true to bypass optimizations and force a full summary tree.
+     * @param trackState - This tells whether we should track state from this summary.
      */
-    summarize?(fullTree?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
      * Notifies this object about changes in the connection state.
@@ -339,9 +340,8 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
 
     /**
      * Register the runtime to the container
-     * @param dataStoreRuntime - runtime to attach
      */
-    bindToContext(dataStoreRuntime: IFluidDataStoreChannel): void;
+    bindToContext(): void;
 
     /**
      * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
