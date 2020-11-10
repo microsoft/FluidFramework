@@ -602,7 +602,7 @@ export class SummarizerNode implements ISummarizerNode {
         // BUGBUG: Seeing issues with differential summaries.
         // this will disable them, and throw instead
         // why we continue to investigate
-        this.throwOnError = config.throwOnFailure ?? true;
+        this.throwOnError = true; // config.throwOnFailure ?? false;
         this.trackingSequenceNumber = this._changeSequenceNumber;
     }
 

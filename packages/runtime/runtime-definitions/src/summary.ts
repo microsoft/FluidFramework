@@ -45,7 +45,7 @@ export interface ISummarizerNodeConfig {
      * plus outstanding ops in case of internal summarize failure.
      * Defaults to false.
      */
-    readonly throwOnFailure?: boolean,
+    // readonly throwOnFailure?: boolean,
 }
 
 export enum CreateSummarizerNodeSource {
