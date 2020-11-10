@@ -28,7 +28,7 @@ export async function requestFluidObject<T = IFluidObject>(
     return response.value as T;
 }
 
-type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
+export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
 
 export function createDataStoreFactory(
     type: string,
