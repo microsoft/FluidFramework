@@ -4,13 +4,18 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { FluidDataStoreRegistry, createDataStoreFactory } from "@fluidframework/runtime-utils";
+import { IRuntimeFactory } from "@fluidframework/container-definitions";
 import { tableViewType } from "./tableview";
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
+const factory = createDataStoreFactory(
     tableViewType,
+    // eslint-disable-next-line max-len
+    import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableview").then((m) => m.TableView.getFactory()));
+
+export const fluidExport: IRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+    factory,
     new FluidDataStoreRegistry([
-        // eslint-disable-next-line max-len
-        [tableViewType, import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableview").then((m) => m.TableView.getFactory())],
+        [factory.type, Promise.resolve(factory)],
     ]),
 );

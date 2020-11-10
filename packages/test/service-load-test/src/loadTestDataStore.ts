@@ -136,7 +136,7 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    LoadTestDataStore.DataStoreName,
+    LoadTestDataStoreInstantiationFactory,
     new FluidDataStoreRegistry([
         [LoadTestDataStore.DataStoreName, Promise.resolve(LoadTestDataStoreInstantiationFactory)],
     ]),

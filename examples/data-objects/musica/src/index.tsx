@@ -21,8 +21,6 @@ import { Player, NoteProperties } from "./Player";
 import { PianoUtility } from "./PianoUtility";
 import { DAW } from "./daw";
 
-const musicaName = "@fluid-example/musica";
-
 // TODO: Is this right?
 const audioContext = new AudioContext();
 
@@ -102,15 +100,15 @@ export class Musica extends DataObject implements IFluidHTMLView {
 }
 
 export const MusicaInstantiationFactory = new DataObjectFactory(
-    musicaName,
+    "@fluid-example/musica",
     Musica,
     [],
     {},
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    musicaName,
+    MusicaInstantiationFactory,
     new FluidDataStoreRegistry([
-        [musicaName, Promise.resolve(MusicaInstantiationFactory)],
+        [MusicaInstantiationFactory.type, Promise.resolve(MusicaInstantiationFactory)],
     ]),
 );

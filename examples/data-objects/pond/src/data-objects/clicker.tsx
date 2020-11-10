@@ -15,9 +15,6 @@ const storedMapKey = "storedMap";
 const counter1Key = "counter";
 const counter2Key = "counter2";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../../package.json");
-
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
@@ -27,7 +24,7 @@ export class Clicker extends DataObject implements IFluidHTMLView {
     private counter1: SharedCounter | undefined;
     private counter2: SharedCounter | undefined;
 
-    public static readonly ComponentName = `${pkg.name as string}-clicker`;
+    public static readonly ComponentName = `@fluid-example/pond-clicker`;
 
     /**
      * Do setup work here

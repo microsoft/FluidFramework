@@ -21,9 +21,7 @@ import {
 import { IFluidUserInformation } from "./interfaces";
 import { userInfoFactory } from "./providers";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const PondName = pkg.name as string;
+export const PondName = "Pond";
 
 /**
  * Basic Pond example using stock component classes.
@@ -116,7 +114,7 @@ export class Pond extends DataObject implements IFluidHTMLView {
 // ----- CONTAINER SETUP STUFF -----
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    Pond.getFactory().type,
+    Pond.getFactory(),
     new FluidDataStoreRegistry([
         Pond.getFactory().registryEntry,
     ]),

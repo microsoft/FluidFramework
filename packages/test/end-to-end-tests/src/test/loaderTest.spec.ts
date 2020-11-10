@@ -80,10 +80,10 @@ describe("Loader.request", () => {
     async function createContainer(): Promise<IContainer> {
         const runtimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore(
-                "default",
+                testSharedDataObjectFactory1,
                 new FluidDataStoreRegistry([
-                    ["default", Promise.resolve(testSharedDataObjectFactory1)],
-                    ["TestSharedDataObject2", Promise.resolve(testSharedDataObjectFactory2)],
+                    [testSharedDataObjectFactory1.type, Promise.resolve(testSharedDataObjectFactory1)],
+                    [testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
                 ]),
             );
         loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);

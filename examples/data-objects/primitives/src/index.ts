@@ -6,7 +6,6 @@
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 
-import { PrimitivesName } from "./main";
 import { PrimitivesInstantiationFactory } from "./primitivesInstantiationFactory";
 
 /**
@@ -21,8 +20,8 @@ import { PrimitivesInstantiationFactory } from "./primitivesInstantiationFactory
  * components.
  */
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    PrimitivesName,
+    PrimitivesInstantiationFactory,
     new FluidDataStoreRegistry([
-        [PrimitivesName, Promise.resolve(PrimitivesInstantiationFactory)],
+        [PrimitivesInstantiationFactory.type, Promise.resolve(PrimitivesInstantiationFactory)],
     ]),
 );

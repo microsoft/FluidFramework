@@ -33,10 +33,6 @@ import {
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const ComponentName = pkg.name;
-
 export const IKeyValue: keyof IProvideKeyValue = "IKeyValue";
 
 export interface IProvideKeyValue {
@@ -140,7 +136,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
-            new FluidDataStoreRegistry([[ComponentName, Promise.resolve(this)]]),
+            new FluidDataStoreRegistry([[this.type, Promise.resolve(this)]]),
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(this.defaultComponentId),
                 innerRequestHandler,
@@ -148,7 +144,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
         );
 
         if (!runtime.existing) {
-            await runtime.createRootDataStore(ComponentName, this.defaultComponentId);
+            await runtime.createRootDataStore(this.type, this.defaultComponentId);
         }
 
         return runtime;

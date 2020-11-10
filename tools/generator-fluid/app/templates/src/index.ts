@@ -9,7 +9,7 @@ export { DiceRoller };
  * as a DataObject that can be created in the container.
  */
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRoller.factory.type,
+    DiceRoller.factory,
     new FluidDataStoreRegistry([
         DiceRoller.factory.registryEntry,
         // Add another data store here to create it within the container

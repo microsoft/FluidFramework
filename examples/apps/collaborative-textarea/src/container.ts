@@ -19,6 +19,6 @@ import { CollaborativeText } from "./fluid-object/";
  */
 
 export const CollaborativeTextContainer = new ContainerRuntimeFactoryWithDefaultDataStore(
-    CollaborativeText.Name,
+    CollaborativeText.getFactory(),
     new FluidDataStoreRegistry([[CollaborativeText.Name, Promise.resolve(CollaborativeText.getFactory())]]),
 );

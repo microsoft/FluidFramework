@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 import { DiceRoller, DiceRollerInstantiationFactory } from "./main";
@@ -24,7 +22,7 @@ export { DiceRoller, DiceRollerInstantiationFactory } from "./main";
  * Fluid objects.
  */
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRoller.Name,
+    DiceRollerInstantiationFactory,
     new FluidDataStoreRegistry([
         [DiceRoller.Name, Promise.resolve(DiceRollerInstantiationFactory)],
     ]),
