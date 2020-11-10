@@ -16,7 +16,7 @@ steps:
       customRegistry: 'useNpmrc'
   - bash: |
       # Generate the package/package lock for the lerna project so we would scan it.
-      node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
+      node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --server
       cp server/routerlicious/repo-package.json server/routerlicious/packages/package.json
       cp server/routerlicious/repo-package-lock.json server/routerlicious/packages/package-lock.json
     displayName: 'Generate Mono repo package json'

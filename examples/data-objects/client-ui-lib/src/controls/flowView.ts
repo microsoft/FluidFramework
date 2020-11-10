@@ -818,7 +818,7 @@ function renderSegmentIntoLine(
                         .get()
                         .then(async (component) => {
                             if (!HTMLViewAdapter.canAdapt(component)) {
-                                return Promise.reject("component is not viewable");
+                                return Promise.reject(new Error("component is not viewable"));
                             }
 
                             return new HTMLViewAdapter(component);
@@ -2325,7 +2325,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                                 // IFluidObject. Then you can go from IFluidHTMLView to IViewLayout.
                                 // Or should you query for each one individually.
                                 if (!HTMLViewAdapter.canAdapt(component)) {
-                                    return Promise.reject("component is not viewable");
+                                    return Promise.reject(new Error("component is not viewable"));
                                 }
 
                                 return new HTMLViewAdapter(component);

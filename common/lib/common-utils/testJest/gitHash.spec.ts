@@ -6,6 +6,7 @@
 import fs from "fs";
 import path from "path";
 import http from "http";
+// eslint-disable-next-line import/no-internal-modules
 import * as HashNode from "../src/hashFileNode";
 
 async function getFileContents(p: string): Promise<Buffer> {
@@ -31,20 +32,20 @@ async function evaluateBrowserHash(page, file: Buffer): Promise<string> {
     const prefixBuffer = Buffer.from(filePrefix, "utf-8");
     const hashBuffer = Buffer.concat([prefixBuffer, file], prefixBuffer.length + file.length);
 
-    return page.evaluate(async (file) => {
+    return page.evaluate(async (f) => {
         // Pass the string conversion into evaluate and re-encode it here because
         // Uint8Array is not directly jsonable
-        const fileUint8 = Uint8Array.from(new window.TextEncoder().encode(file));
+        const fileUint8 = Uint8Array.from(new window.TextEncoder().encode(f));
 
         // This is copied from hashFileBrowser's hashFile - puppeteer has issues
         // with calling crypto through page.exposeFunction but not directly
         const hash = await crypto.subtle.digest("SHA-1", fileUint8);
         const hashArray = new Uint8Array(hash);
-        const hashHex = Array.prototype.map.call(hashArray, function(byte) {
+        const hashHex = Array.prototype.map.call(hashArray, function(byte: number) {
             return byte.toString(16).padStart(2, "0");
         }).join("");
         return hashHex;
-    }, hashBuffer.toString());
+    }, hashBuffer.toString()) as Promise<string>;
 }
 
 describe("Common-Utils", () => {
@@ -62,7 +63,7 @@ describe("Common-Utils", () => {
 
     afterAll(() => {
         server?.close();
-    })
+    });
 
     // Expected hashes are from git hash-object file...
     // Make sure the hash is of the file and not of an LFS stub

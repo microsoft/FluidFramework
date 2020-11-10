@@ -43,7 +43,7 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
         if (url.startsWith(this.bigBlobs)) {
             const value = this.root.get<string>(url);
             if (value === undefined) {
-                return { mimeType: "fluid/object", status: 404, value: `request ${url} not found` };
+                return { mimeType: "text/plain", status: 404, value: `request ${url} not found` };
             }
             return { mimeType: "fluid/object", status: 200, value };
         } else {

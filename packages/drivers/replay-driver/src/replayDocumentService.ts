@@ -66,7 +66,7 @@ export class ReplayDocumentService implements api.IDocumentService {
     }
 
     public async branch(): Promise<string> {
-        return Promise.reject("Invalid operation");
+        return Promise.reject(new Error("Invalid operation"));
     }
 
     public getErrorTrackingService() {

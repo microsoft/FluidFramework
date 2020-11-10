@@ -45,10 +45,26 @@ export class GitRepo {
     constructor(public readonly resolvedRoot: string) {
     }
 
-    public async getRemotes() {
+    private async getRemotes() {
         const result = await this.exec(`remote -v`, `getting remotes`);
         const remoteLines = result.split(/\r?\n/);
         return remoteLines.map(line => line.split(/\s+/));
+    }
+
+    /**
+     * Get the remote based on the partial Url.
+     * It will match the first remote that contains the partialUrl case insensitively
+     * @param partialUrl partial url to match case insensitively
+     */
+    public async getRemote(partialUrl: string) {
+        const lowerPartialUrl = partialUrl.toLowerCase();
+        const remotes = await this.getRemotes();
+        for (const r of remotes) {
+            if (r[1] && r[1].toLowerCase().includes(lowerPartialUrl)) {
+                return r[0];
+            }
+        }
+        return undefined;
     }
 
     public async getCurrentSha() {

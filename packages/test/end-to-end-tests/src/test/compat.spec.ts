@@ -79,7 +79,7 @@ describe("loader/runtime compatibility", () => {
                 if (op.type === "summaryAck") {
                     resolve();
                 } else if (op.type === "summaryNack") {
-                    reject("summaryNack");
+                    reject(new Error("summaryNack"));
                 }
             }));
         });

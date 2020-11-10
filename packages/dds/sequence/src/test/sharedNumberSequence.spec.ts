@@ -14,7 +14,6 @@ describe("SharedNumberSequence", () => {
         const dataStoreRuntime = new MockFluidDataStoreRuntime();
         sharedNumberSequence =
             new SharedNumberSequence(dataStoreRuntime, documentId, SharedNumberSequenceFactory.Attributes);
-        dataStoreRuntime.bindToContext();
     });
 
     describe("getItems", () => {

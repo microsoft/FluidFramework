@@ -26,12 +26,3 @@ gitrest:
 gitssh:
   name: gitssh
   image: fluidcr.azurecr.io/build/fluidframework/routerlicious/gitssh:latest
-
-cobalt:
-  name: cobalt
-  image: prague.azurecr.io/cobalt:1544
-  mode: latest
-  persistence:
-    storageClass: managed-premium
-    size: 128Gi
-    accessMode: ReadWriteOnce

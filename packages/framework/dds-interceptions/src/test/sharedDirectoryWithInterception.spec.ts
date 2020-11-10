@@ -89,7 +89,6 @@ describe("Shared Directory with Interception", () => {
         beforeEach(() => {
             const dataStoreRuntime = new MockFluidDataStoreRuntime();
             sharedDirectory = new SharedDirectory(documentId, dataStoreRuntime, DirectoryFactory.Attributes);
-            dataStoreRuntime.bindToContext();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             dataStoreContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;

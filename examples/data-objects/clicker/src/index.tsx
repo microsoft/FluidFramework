@@ -12,9 +12,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { ClickerAgent } from "./agent";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const ClickerName = pkg.name as string;
+export const ClickerName = "Clicker";
 
 const counterKey = "counter";
 

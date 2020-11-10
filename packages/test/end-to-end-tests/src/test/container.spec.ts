@@ -62,6 +62,7 @@ describe("Container", () => {
             mockFactory.createDocumentService = async (resolvedUrl) => {
                 const service = await documentServiceFactory.createDocumentService(resolvedUrl);
                 // Issue typescript-eslint/typescript-eslint #1256
+                // eslint-disable-next-line prefer-promise-reject-errors
                 service.connectToStorage = async () => Promise.reject(false);
                 return service;
             };
@@ -84,6 +85,7 @@ describe("Container", () => {
             mockFactory.createDocumentService = async (resolvedUrl) => {
                 const service = await documentServiceFactory.createDocumentService(resolvedUrl);
                 // Issue typescript-eslint/typescript-eslint #1256
+                // eslint-disable-next-line prefer-promise-reject-errors
                 service.connectToDeltaStorage = async () => Promise.reject(false);
                 return service;
             };
