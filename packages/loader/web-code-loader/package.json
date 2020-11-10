@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/web-code-loader",
-  "version": "0.27.14",
+  "version": "0.27.15",
   "description": "Fluid web code loader",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -27,7 +27,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.27.14",
+    "@fluidframework/container-definitions": "^0.27.15",
     "@types/node": "^10.17.24",
     "isomorphic-fetch": "^2.2.1"
   },
