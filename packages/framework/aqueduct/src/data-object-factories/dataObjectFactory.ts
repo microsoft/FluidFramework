@@ -17,7 +17,7 @@ import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { FluidObjectSymbolProvider } from "@fluidframework/synthesize";
 import {
     FluidDataStoreRuntime,
-    mixinSummaryHander,
+    mixinSummaryHandler,
  } from "@fluidframework/datastore";
  import { assert } from "@fluidframework/common-utils";
  import { IFluidObject } from "@fluidframework/core-interfaces";
@@ -90,7 +90,7 @@ export interface IProvideSearchableDataObject {
 }
 
 export const createSearchDataStoreFactory = (runtimeFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime) =>
-    mixinSummaryHander(async (runtime: FluidDataStoreRuntime) => {
+    mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
         const obj: IFluidObject = await DataObject.getDataObject(runtime) as IFluidObject;
         assert(obj.ISearchableDataObject !== undefined);
         const content = await obj.ISearchableDataObject.searchHandler();

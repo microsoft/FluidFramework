@@ -793,7 +793,7 @@ export function requestFluidDataStoreMixin(
  * @param Base - base class, inherits from FluidDataStoreRuntime
  */
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function mixinSummaryHander(
+export function mixinSummaryHandler(
     handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string }>,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
     )
