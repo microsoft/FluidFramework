@@ -66,7 +66,8 @@ export function create(
         const user = getUser(request);
         let fullTreeP: Promise<undefined | FullTree>;
         let resolvedP: Promise<IFluidResolvedUrl>;
-        if (isSpoTenant(tenantId)) {
+        const isSpoTenantPath = isSpoTenant(tenantId);
+        if (isSpoTenantPath) {
             [resolvedP, fullTreeP] =
                 resolveSpoUrl(config, tenantId, documentId, request);
         } else {
@@ -172,6 +173,7 @@ export function create(
                         clientId: _.isEmpty(configClientId)
                             ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : configClientId,
                         config: workerConfig,
+                        isSpoTenantPath,
                         jwt: jwtToken,
                         partials: defaultPartials,
                         resolved: JSON.stringify(resolved),

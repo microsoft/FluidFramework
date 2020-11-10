@@ -82,10 +82,11 @@ export function create(
                 const search = parse(request.url).search;
                 const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
                 const user = getUser(request);
+                const isSpoTenantPath = isSpoTenant(tenantId);
                 let fullTreeP: Promise<undefined | FullTree>;
                 let resolvedP: Promise<IFluidResolvedUrl>;
                 let r11sAccessToken = "";
-                if (isSpoTenant(tenantId)) {
+                if (isSpoTenantPath) {
                     [resolvedP, fullTreeP] =
                         resolveSpoUrl(config, tenantId, documentId, request, driveId);
                 } else {
@@ -190,6 +191,7 @@ export function create(
                                 clientId: _.isEmpty(configClientId)
                                 ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : configClientId,
                                 config: workerConfig,
+                                isSpoTenantPath,
                                 hostToken,
                                 accessToken: r11sAccessToken,
                                 partials: defaultPartials,

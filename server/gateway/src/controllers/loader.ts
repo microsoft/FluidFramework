@@ -18,7 +18,6 @@ import { IGitCache } from "@fluidframework/server-services-client";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { GatewayTokenProvider } from "../shared";
-import { isSpoTenant } from "../odspUtils";
 import { DocumentFactory } from "./documentFactory";
 import { IHostServices } from "./services";
 import { seedFromScriptIds } from "./helpers";
@@ -44,6 +43,7 @@ export async function initialize(
     hostToken: string,
     accessToken: string,
     config: any,
+    isSpoTenantPath: boolean,
 ) {
     const documentFactory = new DocumentFactory(config.tenantId);
 
@@ -52,24 +52,26 @@ export async function initialize(
     };
 
     const documentServiceFactories: IDocumentServiceFactory[] = [];
-    // TODO: need to be support refresh token
-    documentServiceFactories.push(new OdspDocumentServiceFactory(
-        async () => Promise.resolve(resolved.tokens.storageToken),
-        async () => Promise.resolve(resolved.tokens.socketToken)));
-
-    const tokenProvider = new GatewayTokenProvider(
-        document.location.origin,
-        resolved.url,
-        hostToken,
-        isSpoTenant(config.tenantId) ? resolved.tokens.storageToken : accessToken,
-    );
-    documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
-        tokenProvider,
-        false,
-        new DefaultErrorTracking(),
-        false,
-        true,
-        cache));
+    if (isSpoTenantPath) {
+        // TODO: need to be support refresh token
+        documentServiceFactories.push(new OdspDocumentServiceFactory(
+            async () => Promise.resolve(resolved.tokens.storageToken),
+            async () => Promise.resolve(resolved.tokens.socketToken)));
+    } else {
+        const tokenProvider = new GatewayTokenProvider(
+            document.location.origin,
+            resolved.url,
+            hostToken,
+            accessToken,
+        );
+        documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
+            tokenProvider,
+            false,
+            new DefaultErrorTracking(),
+            false,
+            true,
+            cache));
+    }
 
     const resolver = new ContainerUrlResolver(
         document.location.origin,
