@@ -91,13 +91,13 @@ describe("ConsensusRegisterCollection", () => {
                 await writeAndProcessMsg("key1", crc2.handle);
 
                 // Verify the referenced routes returned by snapshot.
-                const routeDetails = crc.snapshot().routeDetails;
+                const garbageCollectionNode = crc.summarize().nodes[0];
                 assert.strictEqual(
-                    routeDetails.source,
+                    garbageCollectionNode.path,
                     crc.id,
-                    "Source of the referenced routes should be collection's id");
+                    "Path of the referenced routes should be collection's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes,
+                    garbageCollectionNode.routes,
                     [crc2.handle.absolutePath],
                     "Referenced routes is incorrect");
             });
@@ -135,7 +135,7 @@ describe("ConsensusRegisterCollection", () => {
 
             it("snapshot", async () => {
                 await crc.write("key1", "val1.1");
-                const tree: ITree = crc.snapshot().snapshot;
+                const tree: ITree = crc.snapshot();
                 assert(tree.entries.length === 1, "snapshot should return a tree with blob");
                 const serialized: string = (tree.entries[0]?.value as IBlob)?.contents;
                 assert(serialized, "snapshot should return a tree with blob with contents");

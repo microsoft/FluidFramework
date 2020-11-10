@@ -87,7 +87,7 @@ describe("SharedString Snapshot Version", () => {
             const filename = `${filebase}${name}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
             const data = fs.readFileSync(filename, "utf8").trim();
-            const testData = JSON.stringify(testString.snapshot().snapshot, undefined, 1).trim();
+            const testData = JSON.stringify(testString.snapshot(), undefined, 1).trim();
             if (data !== testData) {
                 assert(false, `${message}\n\t${diff(data, testData)}\n\t${diff(testData, data)}`);
             }

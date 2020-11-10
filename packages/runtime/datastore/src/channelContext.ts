@@ -4,12 +4,14 @@
  */
 
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { BlobTreeEntry } from "@fluidframework/protocol-base";
+import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IChannel, IChannelSnapshotDetails } from "@fluidframework/datastore-definitions";
-import { ISummarizeResult } from "@fluidframework/runtime-definitions";
+import { IChannelSummarizeResult, IContextSummarizeResult } from "@fluidframework/runtime-definitions";
+import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
+
+export const attributesBlobKey = ".attributes";
 
 export interface IChannelContext {
     getChannel(): Promise<IChannel>;
@@ -18,7 +20,7 @@ export interface IChannelContext {
 
     processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
 
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummarizeResult>;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 }
@@ -45,12 +47,9 @@ export function createServiceEndpoints(
     };
 }
 
-export function snapshotChannel(channel: IChannel): IChannelSnapshotDetails {
-    const snapshotDetails = channel.snapshot();
-
-    // Add in the object attributes to the returned tree
-    const objectAttributes = channel.attributes;
-    snapshotDetails.snapshot.entries.push(new BlobTreeEntry(".attributes", JSON.stringify(objectAttributes)));
-
-    return snapshotDetails;
+export function summarizeChannel(channel: IChannel, fullTree: boolean = false): IChannelSummarizeResult {
+    const summarizeResult = channel.summarize(fullTree);
+    // Add the channel attributes to the returned tree
+    addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
+    return summarizeResult;
 }

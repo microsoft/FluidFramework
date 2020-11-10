@@ -4,7 +4,6 @@
  */
 
 export * from "./sharedObject";
-export * from "./snapshotSerializer";
 export * from "./types";
 export * from "./utils";
 export * from "./valueType";

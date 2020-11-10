@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IChannel, IChannelServices, IChannelSnapshotDetails } from "@fluidframework/datastore-definitions";
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
+import { IChannelSummarizeResult } from "@fluidframework/runtime-definitions";
 
 export interface ISharedObjectEvents extends IErrorEvent {
     (event: "pre-op" | "op",
@@ -30,11 +31,17 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     isAttached(): boolean;
 
     /**
-     * Generates snapshot of the shared object.
-     * @returns A tree representing the snapshot of the shared object and a set of routes
-     * to fluid objects referenced by this object.
+     * Generates summary of the shared object.
+     * @returns A tree representing the summary of the shared object and a set of nodes for garbage collection.
      */
-    snapshot(): IChannelSnapshotDetails;
+    summarize(fullTree?: boolean): IChannelSummarizeResult;
+
+    /**
+     * @deprecated - Use summarize to get serialized object data.
+     * Gets a form of the object that can be serialized.
+     * @returns A tree representing the snapshot of the shared object
+     */
+    snapshot(): ITree;
 
     /**
      * Enables the channel to send and receive ops.

@@ -4,6 +4,7 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
@@ -16,11 +17,9 @@ import {
     IChannelStorageService,
     IChannelServices,
     IChannelFactory,
-    IChannelSnapshotDetails,
 } from "@fluidframework/datastore-definitions";
 import {
     SharedObject,
-    SnapshotSerializer,
 } from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
 import {
@@ -250,7 +249,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
     */
-    public snapshot(): IChannelSnapshotDetails {
+   protected snapshotCore(serializer: IFluidSerializer): ITree {
         let currentSize = 0;
         let counter = 0;
         let headerBlob: IMapDataObjectSerializable = {};
@@ -260,11 +259,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             entries: [],
             id: null,
         };
-
-        // Create a SnapshotSerializer that will be used to serialize any IFluidHandles in this map. The
-        // IFluidHandles represents route to any referenced fluid object.
-        // SnapshotSerializer tracks the routes of all handles that it serializes.
-        const serializer = new SnapshotSerializer(this.runtime.IFluidHandleContext);
 
         const data = this.kernel.getSerializedStorage(serializer);
 
@@ -325,14 +319,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         };
         addBlobToTree(tree, snapshotFileName, header);
 
-        // Return the snapshot tree and the list of routes tracked by the SnapshotSerializer.
-        return {
-            snapshot: tree,
-            routeDetails: {
-                source: this.id,
-                routes: serializer.serializedRoutes,
-            },
-        };
+        return tree;
     }
 
     public getSerializableStorage(): IMapDataObjectSerializable {

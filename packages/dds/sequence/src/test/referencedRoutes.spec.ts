@@ -42,13 +42,15 @@ describe("Referenced Routes", () => {
             containerRuntimeFactory.processAllMessages();
 
             // Verify the referenced routes returned by snapshot.
-            const routeDetails = sharedObjectSequence.snapshot().routeDetails;
+            const garbageCollectionNode = sharedObjectSequence.summarize().nodes[0];
             assert.strictEqual(
-                routeDetails.source,
+                garbageCollectionNode.path,
                 sharedObjectSequence.id,
-                "Source of the referenced routes should be sequence's id");
+                "Path of the referenced routes should be sequence's id");
             assert.deepStrictEqual(
-                routeDetails.routes, [subSequence.handle.absolutePath], "Referenced routes is incorrect");
+                garbageCollectionNode.routes,
+                [subSequence.handle.absolutePath],
+                "Referenced routes is incorrect");
         });
 
         it("can generate referenced routes for multiple handles", () => {
@@ -59,13 +61,13 @@ describe("Referenced Routes", () => {
             containerRuntimeFactory.processAllMessages();
 
             // Verify the referenced routes returned by snapshot.
-            const routeDetails = sharedObjectSequence.snapshot().routeDetails;
+            const garbageCollectionNode = sharedObjectSequence.summarize().nodes[0];
             assert.strictEqual(
-                routeDetails.source,
+                garbageCollectionNode.path,
                 sharedObjectSequence.id,
-                "Source of the referenced routes should be sequence's id");
+                "Path of the referenced routes should be sequence's id");
             assert.deepStrictEqual(
-                routeDetails.routes,
+                garbageCollectionNode.routes,
                 [subSequence.handle.absolutePath, subSequence2.handle.absolutePath],
                 "Referenced routes is incorrect");
         });
@@ -80,13 +82,13 @@ describe("Referenced Routes", () => {
             containerRuntimeFactory.processAllMessages();
 
             // Verify the referenced routes returned by snapshot.
-            let routeDetails = sharedObjectSequence.snapshot().routeDetails;
+            let garbageCollectionNode = sharedObjectSequence.summarize().nodes[0];
             assert.strictEqual(
-                routeDetails.source,
+                garbageCollectionNode.path,
                 sharedObjectSequence.id,
-                "Source of the referenced routes should be sequence's id");
+                "Path of the referenced routes should be sequence's id");
             assert.deepStrictEqual(
-                routeDetails.routes,
+                garbageCollectionNode.routes,
                 [subSequence.handle.absolutePath, subSequence2.handle.absolutePath],
                 "Referenced routes is incorrect");
 
@@ -99,13 +101,13 @@ describe("Referenced Routes", () => {
             sharedObjectSequence.insert(1, [undefined]);
             containerRuntimeFactory.processAllMessages();
 
-            routeDetails = sharedObjectSequence.snapshot().routeDetails;
+            garbageCollectionNode = sharedObjectSequence.summarize().nodes[0];
             assert.strictEqual(
-                routeDetails.source,
+                garbageCollectionNode.path,
                 sharedObjectSequence.id,
-                "Source of the referenced routes should be sequence's id");
+                "Path of the referenced routes should be sequence's id");
             assert.deepStrictEqual(
-                routeDetails.routes,
+                garbageCollectionNode.routes,
                 [subSequence.handle.absolutePath],
                 "Referenced routes is incorrect");
         });

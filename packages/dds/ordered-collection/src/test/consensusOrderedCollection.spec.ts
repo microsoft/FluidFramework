@@ -163,13 +163,13 @@ describe("ConsensusOrderedCollection", () => {
                 await addItem(testCollection2.handle);
 
                 // Verify the referenced routes returned by snapshot.
-                const routeDetails = testCollection.snapshot().routeDetails;
+                const garbageCollectionNode = testCollection.summarize().nodes[0];
                 assert.strictEqual(
-                    routeDetails.source,
+                    garbageCollectionNode.path,
                     testCollection.id,
-                    "Source of the referenced routes should be collection's id");
+                    "Path of the referenced routes should be collection's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes,
+                    garbageCollectionNode.routes,
                     [testCollection2.handle.absolutePath],
                     "Referenced routes is incorrect");
             });
@@ -179,24 +179,24 @@ describe("ConsensusOrderedCollection", () => {
                 await addItem(testCollection2.handle);
 
                 // Verify the referenced routes returned by snapshot.
-                let routeDetails = testCollection.snapshot().routeDetails;
+                let garbageCollectionNode = testCollection.summarize().nodes[0];
                 assert.strictEqual(
-                    routeDetails.source,
+                    garbageCollectionNode.path,
                     testCollection.id,
-                    "Source of the referenced routes should be collection's id");
+                    "Path of the referenced routes should be collection's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes,
+                    garbageCollectionNode.routes,
                     [testCollection2.handle.absolutePath],
                     "Referenced routes is incorrect");
 
                 // Verify that removed handle updates referenced routes correctly.
                 await removeItem();
-                routeDetails = testCollection.snapshot().routeDetails;
+                garbageCollectionNode = testCollection.summarize().nodes[0];
                 assert.strictEqual(
-                    routeDetails.source,
+                    garbageCollectionNode.path,
                     testCollection.id,
-                    "Source of the referenced routes should be collection's id");
-                assert.deepStrictEqual(routeDetails.routes, [], "Referenced routes is incorrect");
+                    "Path of the referenced routes should be collection's id");
+                assert.deepStrictEqual(garbageCollectionNode.routes, [], "Referenced routes is incorrect");
             });
         });
     }

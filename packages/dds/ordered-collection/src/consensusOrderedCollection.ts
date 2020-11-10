@@ -16,9 +16,8 @@ import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
-    IChannelSnapshotDetails,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject, SnapshotSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import {
     ConsensusCallback,
@@ -185,15 +184,10 @@ export class ConsensusOrderedCollection<T = any>
         } while (!(await this.acquire(callback)));
     }
 
-    public snapshot(): IChannelSnapshotDetails {
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
         // If we are transitioning from unattached to attached mode,
         // then we are losing all checked out work!
         this.removeClient(idForLocalUnattachedClient);
-
-        // Create a SnapshotSerializer that will be used to serialize any IFluidHandles in this collection. The
-        // IFluidHandles represents route to any referenced fluid object.
-        // SnapshotSerializer tracks the routes of all handles that it serializes.
-        const serializer = new SnapshotSerializer(this.runtime.IFluidHandleContext);
 
         const tree: ITree = {
             entries: [
@@ -221,14 +215,7 @@ export class ConsensusOrderedCollection<T = any>
             },
         });
 
-        // Return the snapshot tree and the list of routes tracked by the SnapshotSerializer.
-        return {
-            snapshot: tree,
-            routeDetails: {
-                source: this.id,
-                routes: serializer.serializedRoutes,
-            },
-        };
+        return tree;
     }
 
     protected isActive() {

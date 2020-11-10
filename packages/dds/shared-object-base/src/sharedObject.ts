@@ -3,21 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { v4 as uuid } from "uuid";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/common-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelServices,
-    IChannelSnapshotDetails,
 } from "@fluidframework/datastore-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
-import { v4 as uuid } from "uuid";
+import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
+import {
+    IChannelSummarizeResult,
+    IGarbageCollectionNode,
+} from "@fluidframework/runtime-definitions";
+import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
+import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { SharedObjectHandle } from "./handle";
+import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
 /**
@@ -181,7 +186,36 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * {@inheritDoc (ISharedObject:interface).snapshot}
      */
-    public abstract snapshot(): IChannelSnapshotDetails;
+    public summarize(fullTree: boolean = false): IChannelSummarizeResult {
+        // Create a SummarySerializer that will be used to serialize any IFluidHandles in this object. The
+        // IFluidHandles represents route to any referenced fluid object.
+        // SummarySerializer tracks the routes of all handles that it serializes.
+        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+
+        const snapshot: ITree = this.snapshotCore(serializer);
+        const summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
+
+        const node: IGarbageCollectionNode = {
+            path: this.id,
+            routes: serializer.serializedRoutes,
+        };
+
+        // Return the snapshot tree and the list of routes tracked by the SummarySerializer.
+        return {
+            stats: summaryTree.stats,
+            summary: summaryTree.summary,
+            nodes: [node],
+        };
+    }
+
+    /**
+     * {@inheritDoc (ISharedObject:interface).snapshot}
+     */
+    public snapshot(): ITree {
+        return this.snapshotCore(this.runtime.IFluidSerializer);
+    }
+
+    protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
 
     /**
      * Set the owner of the object if it is an OwnedSharedObject

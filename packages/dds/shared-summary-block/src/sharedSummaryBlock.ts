@@ -4,6 +4,7 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -17,7 +18,6 @@ import {
     Jsonable,
     AsJsonable,
     IChannelFactory,
-    IChannelSnapshotDetails,
 } from "@fluidframework/datastore-definitions";
 import {
     SharedObject,
@@ -98,7 +98,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
      */
-    public snapshot(): IChannelSnapshotDetails {
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
         const contentsBlob: ISharedSummaryBlockDataSerializable = {};
         this.data.forEach((value, key) => {
             contentsBlob[key] = value;
@@ -121,13 +121,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
             id: null,
         };
 
-        return {
-            snapshot: tree,
-            routeDetails: {
-                source: this.id,
-                routes: [],
-            },
-        };
+        return tree;
     }
 
     /**

@@ -16,9 +16,8 @@ import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
-    IChannelSnapshotDetails,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject, SnapshotSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { debug } from "./debug";
 import { IConsensusRegisterCollection, ReadPolicy, IConsensusRegisterCollectionEvents } from "./interfaces";
@@ -187,14 +186,9 @@ export class ConsensusRegisterCollection<T>
         return [...this.data.keys()];
     }
 
-    public snapshot(): IChannelSnapshotDetails {
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
         const dataObj: { [key: string]: ILocalData<T> } = {};
         this.data.forEach((v, k) => { dataObj[k] = v; });
-
-        // Create a SnapshotSerializer that will be used to serialize any IFluidHandles in this collection. The
-        // IFluidHandles represents route to any referenced fluid object.
-        // SnapshotSerializer tracks the routes of all handles that it serializes.
-        const serializer = new SnapshotSerializer(this.runtime.IFluidHandleContext);
 
         const tree: ITree = {
             entries: [
@@ -212,14 +206,7 @@ export class ConsensusRegisterCollection<T>
             id: null,
         };
 
-        // Return the snapshot tree and the list of routes tracked by the SnapshotSerializer.
-        return {
-            snapshot: tree,
-            routeDetails: {
-                source: this.id,
-                routes: serializer.serializedRoutes,
-            },
-        };
+        return tree;
     }
 
     /**

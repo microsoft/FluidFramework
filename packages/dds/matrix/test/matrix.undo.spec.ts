@@ -439,7 +439,7 @@ describe("Matrix", () => {
             // equivalent, and then returns the 2nd matrix.
             async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
                 // Create a snapshot
-                const objectStorage = new MockStorage(matrix.snapshot().snapshot);
+                const objectStorage = new MockStorage(matrix.snapshot());
 
                 // Create a local DataStoreRuntime since we only want to load the snapshot for a local client.
                 const dataStoreRuntime = new MockFluidDataStoreRuntime();

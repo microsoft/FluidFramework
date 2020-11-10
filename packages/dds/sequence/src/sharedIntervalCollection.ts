@@ -4,6 +4,7 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     MapKernel,
 } from "@fluidframework/map";
@@ -16,11 +17,9 @@ import {
     IChannelStorageService,
     IChannelServices,
     IChannelFactory,
-    IChannelSnapshotDetails,
 } from "@fluidframework/datastore-definitions";
 import {
     SharedObject,
-    SnapshotSerializer,
 } from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
 import {
@@ -149,12 +148,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return sharedCollection;
     }
 
-    public snapshot(): IChannelSnapshotDetails {
-        // Create a SnapshotSerializer that will be used to serialize any IFluidHandles in this collection. The
-        // IFluidHandles represents route to any referenced fluid object.
-        // SnapshotSerializer tracks the routes of all handles that it serializes.
-        const serializer = new SnapshotSerializer(this.runtime.IFluidHandleContext);
-
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
         const tree: ITree = {
             entries: [
                 {
@@ -171,14 +165,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
             id: null,
         };
 
-        // Return the snapshot tree and the list of routes tracked by the SnapshotSerializer.
-        return {
-            snapshot: tree,
-            routeDetails: {
-                source: this.id,
-                routes: serializer.serializedRoutes,
-            },
-        };
+        return tree;
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {

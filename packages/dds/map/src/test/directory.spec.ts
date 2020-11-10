@@ -27,7 +27,7 @@ async function populate(directory: SharedDirectory, content: object) {
 }
 
 function serialize(directory: SharedDirectory): string {
-    const tree = directory.snapshot().snapshot;
+    const tree = directory.snapshot();
     assert(tree.entries.length === 1);
     assert(tree.entries[0].path === "header");
     assert(tree.entries[0].type === TreeEntry.Blob);
@@ -116,12 +116,12 @@ describe("Directory", () => {
                 assert.equal(serialized, expected);
 
                 // Verify the referenced routes returned by snapshot.
-                const routeDetails = directory.snapshot().routeDetails;
+                const garbageCollectionNode = directory.summarize().nodes[0];
                 assert.strictEqual(
-                    routeDetails.source, directory.id, "Source of the referenced routes should be directory's id");
+                    garbageCollectionNode.path, directory.id, "Path of the referenced routes should be directory's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes,
-                    [subMap.handle.absolutePath],
+                    garbageCollectionNode.routes,
+                    [ subMap.handle.absolutePath ],
                     "Referenced routes is incorrect");
             });
 
@@ -297,7 +297,7 @@ describe("Directory", () => {
                 nestedDirectory.set("deepKey1", "deepValue1");
                 nestedDirectory.set("long2", logWord2);
 
-                const tree = directory.snapshot().snapshot;
+                const tree = directory.snapshot();
                 assert(tree.entries.length === 3);
                 assert(tree.entries[0].path === "blob0");
                 assert(tree.entries[1].path === "blob1");
@@ -344,7 +344,7 @@ describe("Directory", () => {
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-            const services2 = MockSharedObjectServices.createFromTree(directory.snapshot().snapshot);
+            const services2 = MockSharedObjectServices.createFromTree(directory.snapshot());
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);
@@ -387,7 +387,7 @@ describe("Directory", () => {
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-            const services2 = MockSharedObjectServices.createFromTree(directory.snapshot().snapshot);
+            const services2 = MockSharedObjectServices.createFromTree(directory.snapshot());
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);
@@ -1062,11 +1062,11 @@ describe("Directory", () => {
                 bazDirectory.set("object", subMap4.handle);
 
                 // Verify the referenced routes returned by snapshot.
-                const routeDetails = directory.snapshot().routeDetails;
+                const garbageCollectionNode = directory.summarize().nodes[0];
                 assert.strictEqual(
-                    routeDetails.source, directory.id, "Source of the referenced routes should be directory's id");
+                    garbageCollectionNode.path, directory.id, "Path of the referenced routes should be directory's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes,
+                    garbageCollectionNode.routes,
                     [
                         subMap.handle.absolutePath,
                         subMap2.handle.absolutePath,
@@ -1089,11 +1089,11 @@ describe("Directory", () => {
                 barDirectory.set("object", subMap3.handle);
 
                 // Verify the referenced routes returned by snapshot.
-                let routeDetails = directory.snapshot().routeDetails;
+                let garbageCollectionNode = directory.summarize().nodes[0];
                 assert.strictEqual(
-                    routeDetails.source, directory.id, "Source of the referenced routes should be directory's id");
+                    garbageCollectionNode.path, directory.id, "Path of the referenced routes should be directory's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes,
+                    garbageCollectionNode.routes,
                     [
                         subMap.handle.absolutePath,
                         subMap2.handle.absolutePath,
@@ -1104,14 +1104,14 @@ describe("Directory", () => {
                 // Verify that removed handle updates referenced routes correctly.
                 fooDirectory.delete("object");
 
-                routeDetails = directory.snapshot().routeDetails;
+                garbageCollectionNode = directory.summarize().nodes[0];
                 assert.strictEqual(
-                    routeDetails.source, directory.id, "Source of the referenced routes should be directory's id");
+                    garbageCollectionNode.path, directory.id, "Path of the referenced routes should be directory's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes,
+                    garbageCollectionNode.routes,
                     [
                         subMap.handle.absolutePath,
-                        subMap3.handle.absolutePath,
+                        subMap2.handle.absolutePath,
                     ],
                     "Referenced routes is incorrect");
             });

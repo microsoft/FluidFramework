@@ -145,7 +145,7 @@ describe("Map", () => {
             it("new serialization format for small maps", async () => {
                 map.set("key", "value");
 
-                const tree = map.snapshot().snapshot;
+                const tree = map.snapshot();
                 assert(tree.entries.length === 1);
                 const content = JSON.stringify({
                     blobs: [],
@@ -177,7 +177,7 @@ describe("Map", () => {
                 map.set("longValue", longString);
                 map.set("zzz", "the end");
 
-                const tree = map.snapshot().snapshot;
+                const tree = map.snapshot();
                 assert(tree.entries.length === 2);
                 const content1 = JSON.stringify({
                     blobs: ["blob0"],
@@ -245,7 +245,7 @@ describe("Map", () => {
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-            const services2 = MockSharedObjectServices.createFromTree(map.snapshot().snapshot);
+            const services2 = MockSharedObjectServices.createFromTree(map.snapshot());
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const map2 = new SharedMap("testMap2", dataStoreRuntime2, MapFactory.Attributes);
@@ -465,10 +465,13 @@ describe("Map", () => {
                 containerRuntimeFactory.processAllMessages();
 
                 // Verify the referenced routes returned by snapshot.
-                const routeDetails = map2.snapshot().routeDetails;
-                assert.strictEqual(routeDetails.source, map2.id, "Source of the referenced routes should be map's id");
+                const garbageCollectionNode = map2.summarize().nodes[0];
+                assert.strictEqual(
+                    garbageCollectionNode.path, map2.id, "Path of the referenced routes should be map's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes, [subMap.handle.absolutePath], "Referenced routes is incorrect");
+                    garbageCollectionNode.routes,
+                    [ subMap.handle.absolutePath ],
+                    "Referenced routes is incorrect");
             });
 
             it("can generate referenced routes for nested handles", () => {
@@ -485,12 +488,12 @@ describe("Map", () => {
                 containerRuntimeFactory.processAllMessages();
 
                 // Verify the referenced routes returned by snapshot.
-                const routeDetails = map2.snapshot().routeDetails;
+                const garbageCollectionNode = map2.summarize().nodes[0];
                 assert.strictEqual(
-                    routeDetails.source, map2.id, "Source of the referenced routes should be map's id");
+                    garbageCollectionNode.path, map2.id, "Path of the referenced routes should be map's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes,
-                    [subMap.handle.absolutePath, subMap2.handle.absolutePath],
+                    garbageCollectionNode.routes,
+                    [ subMap.handle.absolutePath, subMap2.handle.absolutePath ],
                     "Referenced routes is incorrect");
             });
 
@@ -503,20 +506,24 @@ describe("Map", () => {
                 containerRuntimeFactory.processAllMessages();
 
                 // Verify the referenced routes returned by snapshot.
-                let routeDetails = map2.snapshot().routeDetails;
-                assert.strictEqual(routeDetails.source, map2.id, "Source of the referenced routes should be map's id");
+                let garbageCollectionNode = map2.summarize().nodes[0];
+                assert.strictEqual(
+                    garbageCollectionNode.path, map2.id, "Path of the referenced routes should be map's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes,
-                    [subMap.handle.absolutePath, subMap2.handle.absolutePath],
+                    garbageCollectionNode.routes,
+                    [ subMap.handle.absolutePath, subMap2.handle.absolutePath ],
                     "Referenced routes is incorrect");
 
-                map.delete("object");
+                    map.delete("object");
                 containerRuntimeFactory.processAllMessages();
 
-                routeDetails = map2.snapshot().routeDetails;
-                assert.strictEqual(routeDetails.source, map2.id, "Source of the referenced routes should be map's id");
+                garbageCollectionNode = map2.summarize().nodes[0];
+                assert.strictEqual(
+                    garbageCollectionNode.path, map2.id, "Path of the referenced routes should be map's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes, [subMap2.handle.absolutePath], "Referenced routes is incorrect");
+                    garbageCollectionNode.routes,
+                    [ subMap2.handle.absolutePath ],
+                    "Referenced routes is incorrect");
             });
         });
     });

@@ -28,7 +28,7 @@ describe("Matrix", () => {
         // equivalent, and then returns the 2nd matrix.
         async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
             // Create a snapshot
-            const objectStorage = new MockStorage(matrix.snapshot().snapshot);
+            const objectStorage = new MockStorage(matrix.snapshot());
 
             // Create a local DataStoreRuntime since we only want to load the snapshot for a local client.
             const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -616,11 +616,14 @@ describe("Matrix", () => {
                 containerRuntimeFactory.processAllMessages();
     
                 // Verify the referenced routes returned by snapshot.
-                const routeDetails = matrix2.snapshot().routeDetails;
-                assert.strictEqual(routeDetails.source, matrix2.id, "Source of the referenced routes should be matrix's id");
+                const garbageCollectionNode = matrix2.summarize().nodes[0];
+                assert.strictEqual(garbageCollectionNode.path, matrix2.id, "Path of the referenced routes should be matrix's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes,
-                    [submatrix.handle.absolutePath, submatrix2.handle.absolutePath],
+                    garbageCollectionNode.routes,
+                    [
+                        submatrix.handle.absolutePath,
+                        submatrix2.handle.absolutePath,
+                    ],
                     "Referenced routes is incorrect");
             });
 
@@ -641,11 +644,14 @@ describe("Matrix", () => {
                 containerRuntimeFactory.processAllMessages();
     
                 // Verify the referenced routes returned by snapshot.
-                const routeDetails = matrix2.snapshot().routeDetails;
-                assert.strictEqual(routeDetails.source, matrix2.id, "Source of the referenced routes should be matrix's id");
+                const garbageCollectionNode = matrix2.summarize().nodes[0];
+                assert.strictEqual(garbageCollectionNode.path, matrix2.id, "Path of the referenced routes should be matrix's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes,
-                    [submatrix.handle.absolutePath, submatrix2.handle.absolutePath],
+                    garbageCollectionNode.routes,
+                    [
+                        submatrix.handle.absolutePath,
+                        submatrix2.handle.absolutePath,
+                    ],
                     "Referenced routes is incorrect");
             });
 
@@ -661,22 +667,27 @@ describe("Matrix", () => {
                 containerRuntimeFactory.processAllMessages();
     
                 // Verify the referenced routes returned by snapshot.
-                let routeDetails = matrix2.snapshot().routeDetails;
-                assert.strictEqual(routeDetails.source, matrix2.id, "Source of the referenced routes should be matrix's id");
+                let garbageCollectionNode = matrix2.summarize().nodes[0];
+                assert.strictEqual(garbageCollectionNode.path, matrix2.id, "Path of the referenced routes should be matrix's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes,
-                    [submatrix.handle.absolutePath, submatrix2.handle.absolutePath],
+                    garbageCollectionNode.routes,
+                    [
+                        submatrix.handle.absolutePath,
+                        submatrix2.handle.absolutePath,
+                    ],
                     "Referenced routes is incorrect");
 
                 // Verify that removed handle updates referenced routes correctly.
                 matrix1.setCell(0, 0, undefined);
                 containerRuntimeFactory.processAllMessages();
 
-                routeDetails = matrix2.snapshot().routeDetails;
-                assert.strictEqual(routeDetails.source, matrix2.id, "Source of the referenced routes should be matrix's id");
+                garbageCollectionNode = matrix2.summarize().nodes[0];
+                assert.strictEqual(garbageCollectionNode.path, matrix2.id, "Path of the referenced routes should be matrix's id");
                 assert.deepStrictEqual(
-                    routeDetails.routes,
-                    [submatrix2.handle.absolutePath],
+                    garbageCollectionNode.routes,
+                    [
+                        submatrix2.handle.absolutePath,
+                    ],
                     "Referenced routes is incorrect");
             });
         });

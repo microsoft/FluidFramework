@@ -44,7 +44,11 @@ import {
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
 import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
-import { IFluidDataStoreChannel, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import {
+    IChannelSummarizeResult,
+    IFluidDataStoreChannel,
+    ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 
@@ -494,15 +498,20 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
-    public async summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats> {
+    public async summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult> {
         const stats = mergeStats();
         stats.treeNodeCount++;
-        return {
+        const summaryTree: ISummaryTreeWithStats = {
             summary: {
                 type: SummaryType.Tree,
                 tree: {},
             },
             stats,
+        };
+        return {
+            stats: summaryTree.stats,
+            summary: summaryTree.summary,
+            nodes: [],
         };
     }
 

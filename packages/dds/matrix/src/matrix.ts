@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -15,12 +16,10 @@ import {
     IChannelStorageService,
     Serializable,
     IChannelAttributes,
-    IChannelSnapshotDetails,
 } from "@fluidframework/datastore-definitions";
 import {
     makeHandlesSerializable,
     parseHandles,
-    SnapshotSerializer,
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
@@ -403,12 +402,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
     }
 
-    public snapshot(): IChannelSnapshotDetails {
-        // Create a SnapshotSerializer that will be used to serialize any IFluidHandles in this matrix. The
-        // IFluidHandles represents route to any referenced fluid object.
-        // SnapshotSerializer tracks the routes of all handles that it serializes.
-        const serializer = new SnapshotSerializer(this.runtime.IFluidHandleContext);
-
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
         const tree: ITree = {
             entries: [
                 {
@@ -435,14 +429,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
             id: null,   // eslint-disable-line no-null/no-null
         };
 
-        // Return the snapshot tree and the list of routes tracked by the SnapshotSerializer.
-        return {
-            snapshot: tree,
-            routeDetails: {
-                source: this.id,
-                routes: serializer.serializedRoutes,
-            },
-        };
+        return tree;
     }
 
     /**

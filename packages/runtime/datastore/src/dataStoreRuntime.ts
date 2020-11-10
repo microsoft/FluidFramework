@@ -40,13 +40,15 @@ import {
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import {
+    CreateSummarizerNodeSource,
     IAttachMessage,
+    IChannelSummarizeResult,
+    IEnvelope,
     IFluidDataStoreContext,
     IFluidDataStoreChannel,
-    IEnvelope,
+    IGarbageCollectionNode,
     IInboundSignalMessage,
     ISummaryTreeWithStats,
-    CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
 import {
     convertSnapshotTreeToSummaryTree,
@@ -64,7 +66,7 @@ import {
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
-import { IChannelContext, snapshotChannel } from "./channelContext";
+import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
 
@@ -568,7 +570,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
+        const nodes: IGarbageCollectionNode[] = [];
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each data store and ask it to snapshot
@@ -581,11 +584,17 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // (i.e. it has a base mapping) - then we go ahead and snapshot
                 return isAttached;
             }).map(async ([key, value]) => {
-                const channelSummary = await value.summarize(fullTree, trackState);
-                builder.addWithStats(key, channelSummary);
+                const summarizeResult = await value.summarize(fullTree, trackState);
+                builder.addWithStats(key, summarizeResult);
+                nodes.push(...summarizeResult.nodes);
             }));
 
-        return builder.getSummaryTree();
+        const summaryTree = builder.getSummaryTree();
+        return {
+            stats: summaryTree.stats,
+            summary: summaryTree.summary,
+            nodes,
+        };
     }
 
     /**
@@ -661,14 +670,17 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         channel.handle.attachGraph();
 
         assert(this.isAttached, "Data store should be attached to attach the channel.");
+
         // Get the object snapshot only if the data store is Bound and its graph is attached too,
         // because if the graph is attaching, then it would get included in the data store snapshot.
         if (this.bindState === BindState.Bound && this.graphAttachState === AttachState.Attached) {
-            const snapshotDetails = snapshotChannel(channel);
+            const summarizeResult = summarizeChannel(channel, true /* fullTree */);
+            // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
+            const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
 
             const message: IAttachMessage = {
                 id: channel.id,
-                snapshot: snapshotDetails.snapshot,
+                snapshot,
                 type: channel.attributes.type,
             };
             this.pendingAttach.set(channel.id, message);

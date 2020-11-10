@@ -17,9 +17,8 @@ import {
     IChannelStorageService,
     IChannelServices,
     IChannelFactory,
-    IChannelSnapshotDetails,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject, SnapshotSerializer, ValueType } from "@fluidframework/shared-object-base";
+import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import * as path from "path-browserify";
 import { debug } from "./debug";
 import {
@@ -583,22 +582,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
      */
-    public snapshot(): IChannelSnapshotDetails {
-        // Create a SnapshotSerializer that will be used to serialize any IFluidHandles in this directory. The
-        // IFluidHandles represents route to any referenced fluid object.
-        // SnapshotSerializer tracks the routes of all handles that it serializes.
-        const serializer = new SnapshotSerializer(this.runtime.IFluidHandleContext);
-
-        const tree: ITree = serializeDirectory(this.root, serializer);
-
-        // Return the snapshot tree and the list of routes tracked by the SnapshotSerializer.
-        return {
-            snapshot: tree,
-            routeDetails: {
-                source: this.id,
-                routes: serializer.serializedRoutes,
-            },
-        };
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
+        return serializeDirectory(this.root, serializer);
     }
 
     /**

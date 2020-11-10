@@ -5,6 +5,7 @@
 
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
+import { IChannelSummarizeResult } from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
@@ -19,9 +20,16 @@ export interface IChannel extends IFluidLoadable {
     readonly attributes: IChannelAttributes;
 
     /**
+     * @deprecated - Use summarize instead.
      * Generates snapshot of the channel.
      */
-    snapshot(): IChannelSnapshotDetails;
+    snapshot(): ITree;
+
+    /**
+     * Generates summary of the shared object.
+     * @returns A tree representing the summary of the channel and a set of nodes for garbage collection.
+     */
+    summarize(fullTree?: boolean): IChannelSummarizeResult;
 
     /**
      * True if the data structure is attached to storage.
@@ -168,32 +176,4 @@ export interface IChannelFactory {
      * for consistency.
      */
     create(runtime: IFluidDataStoreRuntime, id: string): IChannel;
-}
-
-/**
- * Represents the format of route details returned by a channel snapshot.
- */
-export interface IRouteDetails {
-    /**
-     * The path to the object that contains the routes. This path is relative to its parent.
-     */
-    source: string;
-    /**
-     * A set of routes to fluid objects referenced by this object.
-     */
-    routes: string[];
-}
-
-/**
- * Represents the format of the snapshot of a channel's data.
- */
-export interface IChannelSnapshotDetails {
-    /**
-     * A tree representing the channel's data.
-     */
-    snapshot: ITree;
-    /**
-     * A list of routes to fluid objects referenced by this channel.
-     */
-    routeDetails: IRouteDetails;
 }

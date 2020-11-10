@@ -4,6 +4,7 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -15,7 +16,6 @@ import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelAttributes,
-    IChannelSnapshotDetails,
 } from "@fluidframework/datastore-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -191,7 +191,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
      */
-    public snapshot(): IChannelSnapshotDetails {
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
         const tree: ITree = {
             entries: [
                 {
@@ -208,13 +208,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
             id: null,
         };
 
-        return {
-            snapshot: tree,
-            routeDetails: {
-                source: this.id,
-                routes: [],
-            },
-        };
+        return tree;
     }
 
     /**
