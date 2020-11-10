@@ -18,6 +18,7 @@ import { IGitCache } from "@fluidframework/server-services-client";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { GatewayTokenProvider } from "../shared";
+import { isSpoTenant } from "../odspUtils";
 import { DocumentFactory } from "./documentFactory";
 import { IHostServices } from "./services";
 import { seedFromScriptIds } from "./helpers";
@@ -60,7 +61,7 @@ export async function initialize(
         document.location.origin,
         resolved.url,
         hostToken,
-        resolved.tokens.storageToken,
+        isSpoTenant(config.tenantId) ? resolved.tokens.storageToken : accessToken,
     );
     documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
         tokenProvider,
