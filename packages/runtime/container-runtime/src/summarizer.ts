@@ -30,6 +30,7 @@ import {
     ISummaryConfiguration,
     MessageType,
 } from "@fluidframework/protocol-definitions";
+import { v4 as uuid } from "uuid";
 import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
 import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
@@ -598,7 +599,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         summaryCollection?: SummaryCollection,
     ) {
         super();
-        this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
+        this.logger = ChildLogger.create(this.runtime.logger, "Summarizer", { SummaryId: uuid() });
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
         if (summaryCollection) {
             // summarize immediately because we just went through context reload
