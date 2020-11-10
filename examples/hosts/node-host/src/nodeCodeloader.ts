@@ -21,7 +21,8 @@ const signalFileName = "dummy";
 export class NodeCodeLoader {
     constructor(
         private readonly packageDirectory: string,
-        private readonly waitTimeoutMSec: number) {
+        private readonly waitTimeoutMSec: number,
+        private readonly useLocalDirectory: boolean = true) {
     }
 
     public async load<T>(pkg: any): Promise<T> {
@@ -55,7 +56,11 @@ export class NodeCodeLoader {
             fs.mkdirSync(packageDirectory, { recursive: true });
 
             // Copy over the root .npmrc (if present) to the directory where npm install will be executed.
-            if (fs.existsSync(`${this.packageDirectory}/.npmrc`)) {
+            if (this.useLocalDirectory) {
+                if (fs.existsSync(`${__dirname}/../.npmrc`)) {
+                    fs.copyFileSync(`${__dirname}/../.npmrc`, `${packageDirectory}/.npmrc`);
+                }
+            } else if (fs.existsSync(`${this.packageDirectory}/.npmrc`)) {
                 fs.copyFileSync(`${this.packageDirectory}/.npmrc`, `${packageDirectory}/.npmrc`);
             }
 

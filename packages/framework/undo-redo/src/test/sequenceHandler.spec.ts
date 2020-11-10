@@ -48,7 +48,6 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 
     beforeEach(() => {
         const dataStoreRuntime = new MockFluidDataStoreRuntime();
-        dataStoreRuntime.bindToContext();
 
         containerRuntimeFactory = new MockContainerRuntimeFactory();
         const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);

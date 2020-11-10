@@ -23,7 +23,7 @@ export { DiceRoller, DiceRollerInstantiationFactory } from "./main";
  * Fluid objects.
  */
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRoller.Name,
+    DiceRollerInstantiationFactory,
     new Map([
         [DiceRoller.Name, Promise.resolve(DiceRollerInstantiationFactory)],
     ]),

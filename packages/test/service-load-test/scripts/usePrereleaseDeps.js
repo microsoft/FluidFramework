@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
-/* eslint-disable @typescript-eslint/no-var-requires */
-/* eslint-disable @typescript-eslint/no-require-imports */
-
 /**
  * This script will bump dependencies of this package to pre-release
  * so it can be installed standalone during CI outer loop

@@ -13,10 +13,11 @@ import {
     readFile,
     writeFile,
 } from "../common";
+const PJV = require("package-json-validator").PJV;
 
 const licenseId = 'MIT';
 const author = 'Microsoft';
-const repository = 'microsoft/FluidFramework';
+const repository = 'https://github.com/microsoft/FluidFramework';
 const homepage = 'https://fluidframework.com';
 const trademark = `
 ## Trademark
@@ -79,47 +80,70 @@ export const handlers: Handler[] = [
         name: "npm-package-metadata-and-sorting",
         match,
         handler: file => {
+            let jsonStr: string;
             let json;
             try {
-                json = JSON.parse(readFile(file));
+                jsonStr = readFile(file);
+                json = JSON.parse(jsonStr);
             } catch (err) {
                 return 'Error parsing JSON file: ' + file;
             }
 
-            const missing = [];
+            const ret = [];
+
+            if (JSON.stringify(sortPackageJson(json)) != JSON.stringify(json)) {
+                ret.push(`package.json not sorted`);
+            }
+
+            const validationResults = PJV.validate(jsonStr, 'npm', { warnings: false, recommendations: false });
+
+            // special handling for the end-to-end tests package since it uses non-standard version values.
+            if (file.includes("end-to-end-tests") && !validationResults.valid) {
+                validationResults.errors = validationResults.errors.filter(
+                    (error: string) => {
+                        return !error.startsWith("Invalid version range for dependency");
+                    }
+                );
+
+                if (validationResults.errors.length === 0) {
+                    validationResults.valid = true;
+                }
+            }
+
+            if (!validationResults.valid) {
+                if (validationResults.critical) {
+                    ret.push(validationResults.critical);
+                }
+                ret.push(validationResults.errors);
+            }
 
             if (json.author !== author) {
-                missing.push(`${author} author entry`);
+                ret.push(`author: "${json.author}" !== "${author}"`);
             }
 
             if (json.license !== licenseId) {
-                missing.push(`${licenseId} license entry`);
+                ret.push(`license: "${json.license}" !== "${licenseId}"`);
             }
 
             if (json.repository !== repository) {
-                missing.push(`${repository} repository entry`);
+                ret.push(`repository: "${json.repository}" !== "${repository}"`);
             }
 
             if (!json.private && !json.description) {
-                missing.push("description entry");
+                ret.push("description: must not be empty");
             }
-            
+
             if (json.homepage !== homepage) {
-                missing.push(`${homepage} homepage entry`);
+                ret.push(`homepage: "${json.homepage}" !== "${homepage}"`);
             }
 
-            const ret = [];
-            if (missing.length > 0) {
-                ret.push(`missing or incorrect ${missing.join(' and ')}`);
+            if (ret.length > 1) {
+                return `${ret.join(newline)}`;
+            } else if (ret.length === 1) {
+                return ret[0];
             }
 
-            if (JSON.stringify(sortPackageJson(json)) != JSON.stringify(json)) {
-                ret.push(`not sorted`);
-            }
-
-            if (ret.length > 0) {
-                return `Package.json ${ret.join(', ')}`;
-            }
+            return undefined;
         },
         resolver: file => {
             let json;
@@ -131,28 +155,20 @@ export const handlers: Handler[] = [
 
             let resolved = true;
 
-            if (!json.author) {
+            if (json.author === undefined || json.author !== author) {
                 json.author = author;
-            } else if (json.author !== author) {
-                resolved = false;
             }
 
-            if (!json.license) {
+            if (json.license === undefined || json.license !== licenseId) {
                 json.license = licenseId;
-            } else if (json.license !== licenseId) {
-                resolved = false;
             }
 
-            if (!json.repository) {
+            if (json.repository === undefined || json.repository !== repository) {
                 json.repository = repository;
-            } else if (json.repository !== repository) {
-                resolved = false;
             }
 
-            if (!json.homepage) {
+            if (json.homepage === undefined || json.homepage !== homepage) {
                 json.homepage = homepage;
-            } else if (json.homepage !== homepage) {
-                resolved = false;
             }
 
             writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
@@ -188,7 +204,7 @@ export const handlers: Handler[] = [
             }
 
             if (ret.length > 0) {
-                return `Package.json ${ret.join(', ')}`;
+                return `Package.json ${ret.join(newline)}`;
             }
         },
     },
@@ -249,7 +265,7 @@ export const handlers: Handler[] = [
             const fixTrademark = !readmeInfo.trademark && !readmeInfo.readme.includes("## Trademark");
             if (fixTrademark) {
                 const existingNewLine = readmeInfo.readme[readmeInfo.readme.length - 1] === "\n";
-                writeFile(readmeInfo.filePath, `${readmeInfo.readme}${existingNewLine? "" : newline}${trademark}`);
+                writeFile(readmeInfo.filePath, `${readmeInfo.readme}${existingNewLine ? "" : newline}${trademark}`);
             }
             if (readmeInfo.title !== packageName) {
                 replace.sync({

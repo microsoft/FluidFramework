@@ -108,7 +108,7 @@ export const MusicaInstantiationFactory = new DataObjectFactory(
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    musicaName,
+    MusicaInstantiationFactory,
     new Map([
         [musicaName, Promise.resolve(MusicaInstantiationFactory)],
     ]),

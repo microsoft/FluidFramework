@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
 import { assert } from "@fluidframework/common-utils";
@@ -597,7 +598,7 @@ export class ReplayTool {
             content.snapshot = snapshot;
             if (this.args.compare) {
                 this.compareSnapshots(
-                    content,
+                    content.snapshotAsString,
                     `${dir}/${this.mainDocument.getFileName()}`);
             } else if (this.args.write) {
                 fs.mkdirSync(dir, { recursive: true });
@@ -796,41 +797,25 @@ export class ReplayTool {
         }
     }
 
-    private compareSnapshots(content: ContainerContent, filename: string) {
-        // normalize the snapshots
-        const packageVersionRegex = /["\\]+packageVersion["\\]+:["\\]+.+["\\]+/g;
-        const packageVersionPlaceholder = "\"packageVersion\":\"XXX\"";
-        const snapshotAsString = fs.readFileSync(
-            `${filename}.json`,
-            { encoding: "utf-8" }).replace(packageVersionRegex, packageVersionPlaceholder);
-        const contentString =
-            content.snapshotAsString.replace(packageVersionRegex, packageVersionPlaceholder);
+    private compareSnapshots(contentAsString: string, filename: string) {
+        /**
+         * Normalize the snapshots. The packageVersion of the snapshot could be different from the reference snapshot.
+         * Replace all package versions with X before we compare them. This is how it will looks like:
+         * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
+         * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
+         */
+        const packageVersionRegex = /\\"packageversion\\":\\".+\\"/gi;
+        const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
 
-        if (snapshotAsString !== contentString) {
-            const fileLines = snapshotAsString.split("\n");
-            const contentLines = contentString.split("\n");
-            let line = 0;
-            const maxLines = Math.max(fileLines.length, contentLines.length);
-            while (line < maxLines && fileLines[line] === contentLines[line]) {
-                line++;
-            }
+        const snapshotAsString = fs.readFileSync(`${filename}.json`, "utf-8");
+        const snapshotObject = JSON.parse(snapshotAsString.replace(packageVersionRegex, packageVersionPlaceholder));
+        const contentObject = JSON.parse(contentAsString.replace(packageVersionRegex, packageVersionPlaceholder));
 
-            const fileLine = fileLines[line] ?? "";
-            const contentLine = contentLines[line] ?? "";
-
-            let char = 0;
-            const maxChars = Math.max(fileLine.length, contentLine.length);
-            while (char < maxChars && fileLine.charAt(char) === contentLine.charAt(char)) {
-                char++;
-            }
-
-            const start = Math.max(0, char - 64);
-            const end = char + 64;
-
-            this.reportError(
-                `Mismatch in snapshot ${filename}.json @${line}:${char}
-                +${fileLine.substr(start, end).trim()}
-                -${contentLine.substr(start, end).trim()}`);
+        // Put the assert in a try catch block, so that we can report errors, if any.
+        try {
+            strict.deepStrictEqual(contentObject, snapshotObject);
+        } catch (error) {
+            this.reportError(`Mismatch in snapshot ${filename}.json`, error);
         }
     }
 }

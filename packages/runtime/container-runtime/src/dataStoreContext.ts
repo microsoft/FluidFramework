@@ -48,7 +48,7 @@ import {
     IProvideFluidDataStoreFactory,
     IFluidDataStoreContextEvents,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
+import { SummaryTracker, addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in store attributes.
@@ -186,7 +186,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
-    public readonly bindToContext: (channel: IFluidDataStoreChannel) => void;
+    public readonly bindToContext: () => void;
     protected channel: IFluidDataStoreChannel | undefined;
     private loaded = false;
     protected pending: ISequencedDocumentMessage[] | undefined = [];
@@ -210,17 +210,24 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     ) {
         super();
 
+        // URIs use slashes as delimiters. Handles use URIs.
+        // Thus having slashes in types almost guarantees trouble down the road!
+        assert(id.indexOf("/") === -1, `Data store ID contains slash: ${id}`);
+
         this._attachState = this.containerRuntime.attachState !== AttachState.Detached && existing ?
             this.containerRuntime.attachState : AttachState.Detached;
 
-        this.bindToContext = (channel: IFluidDataStoreChannel) => {
+        this.bindToContext = () => {
             assert(this.bindState === BindState.NotBound);
             this.bindState = BindState.Binding;
-            bindChannel(channel);
+            assert(this.channel !== undefined);
+            bindChannel(this.channel);
             this.bindState = BindState.Bound;
         };
 
-        const thisSummarizeInternal = async (fullTree: boolean) => this.summarizeInternal(fullTree);
+        // Summarizer node always tracks summary state. Set trackState to true.
+        const thisSummarizeInternal =
+            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */);
         this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
     }
 
@@ -300,11 +307,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.registry = registry;
 
         const channel = await factory.instantiateDataStore(this);
-
-        // back-compat: <= 0.25 allows returning nothing and calling bindRuntime() later directly.
-        if (channel !== undefined) {
-            this.bindRuntime(channel);
-        }
+        assert(channel !== undefined);
+        this.bindRuntime(channel);
     }
 
     /**
@@ -368,53 +372,28 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     /**
-     * Notifies the object to take snapshot of a store.
-     * @deprecated in 0.22 summarizerNode
+     * Returns a summary at the current sequence number.
+     * @param fullTree - true to bypass optimizations and force a full summary tree
+     * @param trackState - This tells whether we should track state from this summary.
      */
-    public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        if (!fullTree) {
-            const id = await this.summaryTracker.getId();
-            if (id !== undefined) {
-                return { id, entries: [] };
-            }
-        }
-
-        await this.realize();
-
-        const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const entries = await this.channel!.snapshotInternal(fullTree);
-
-        const attributesBlob = createAttributesBlob(pkg, isRootDataStore);
-        entries.push(attributesBlob);
-
-        return { entries, id: null };
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
+        // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
+        // the summary. Else, get the summary tree directly.
+        return trackState
+            ? this.summarizerNode.summarize(fullTree)
+            : this.summarizeInternal(fullTree, false /* trackState */);
     }
 
-    public async summarize(fullTree = false): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(fullTree);
-    }
-
-    private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         await this.realize();
 
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const channel = this.channel!;
-        if (channel.summarize !== undefined) {
-            const summary = await channel.summarize(fullTree);
-            const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
-            addBlobToSummary(summary, attributesBlobKey, JSON.stringify(attributes));
-            return { ...summary, id: this.id };
-        } else {
-            // back-compat summarizerNode - remove this case
-            const entries = await channel.snapshotInternal(fullTree);
-            const attributesBlob = createAttributesBlob(pkg, isRootDataStore);
-            entries.push(attributesBlob);
-            const summary = convertToSummaryTree({ entries, id: null });
-            return { ...summary, id: this.id };
-        }
+        const summary = await channel.summarize(fullTree, trackState);
+        const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
+        addBlobToSummary(summary, attributesBlobKey, JSON.stringify(attributes));
+        return { ...summary, id: this.id };
     }
 
     /**
@@ -494,7 +473,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
-    public bindRuntime(channel: IFluidDataStoreChannel) {
+    protected bindRuntime(channel: IFluidDataStoreChannel) {
         if (this.channel) {
             throw new Error("Runtime already bound");
         }
@@ -677,7 +656,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     constructor(
         id: string,
-        pkg: string[] | undefined,
+        pkg: Readonly<string[]>,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject,
@@ -685,7 +664,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
-        private readonly isRootDataStore: boolean,
+        protected readonly isRootDataStore: boolean,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -718,10 +697,21 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     }
 
     public generateAttachMessage(): IAttachMessage {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const entries = this.channel!.getAttachSnapshot();
+        assert(this.channel !== undefined, "There should be a channel when generating attach message");
 
-        const snapshot: ITree = { entries, id: null };
+        let snapshot: ITree;
+        /**
+         * back-compat 0.28 - snapshot is being removed and replaced with summary.
+         * So, getAttachSnapshot has been deprecated and getAttachSummary should be used instead.
+         */
+        if (this.channel.getAttachSummary !== undefined) {
+            const summaryTree = this.channel.getAttachSummary();
+            // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
+            snapshot = convertSummaryTreeToITree(summaryTree.summary);
+        } else {
+            const entries = this.channel.getAttachSnapshot();
+            snapshot = { entries, id: null };
+        }
 
         assert(this.pkg !== undefined, "pkg should be available in local data store context");
         assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store context");
@@ -798,6 +788,7 @@ export class LocalDetachedFluidDataStoreContext
 {
     constructor(
         id: string,
+        pkg: Readonly<string[]>,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
@@ -809,7 +800,7 @@ export class LocalDetachedFluidDataStoreContext
     ) {
         super(
             id,
-            undefined, // pkg
+            pkg,
             runtime,
             storage,
             scope,
@@ -819,21 +810,17 @@ export class LocalDetachedFluidDataStoreContext
             snapshotTree,
             isRootDataStore,
         );
-        assert(this.pkg === undefined);
         this.detachedRuntimeCreation = true;
     }
 
     public async attachRuntime(
-        packagePath: Readonly<string[]>,
         registry: IProvideFluidDataStoreFactory,
         dataStoreRuntime: IFluidDataStoreChannel)
     {
         assert(this.detachedRuntimeCreation);
         assert(this.channelDeferred === undefined);
-        assert(this.pkg === undefined);
 
         const factory = registry.IFluidDataStoreFactory;
-        this.pkg = packagePath;
 
         const entry = await this.factoryFromPackagePath(this.pkg);
         assert(entry.factory === factory);
@@ -845,6 +832,10 @@ export class LocalDetachedFluidDataStoreContext
         this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
 
         super.bindRuntime(dataStoreRuntime);
+
+        if (this.isRootDataStore) {
+            dataStoreRuntime.bindToContext();
+        }
     }
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {

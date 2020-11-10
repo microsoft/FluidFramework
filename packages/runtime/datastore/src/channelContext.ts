@@ -5,11 +5,7 @@
 
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
-import {
-    ISequencedDocumentMessage,
-    ISnapshotTree,
-    ITree,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISummarizeResult } from "@fluidframework/runtime-definitions";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -22,10 +18,7 @@ export interface IChannelContext {
 
     processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
 
-    /** @deprecated in 0.22 summarizerNode */
-    snapshot(fullTree?: boolean): Promise<ITree>;
-
-    summarize(fullTree?: boolean): Promise<ISummarizeResult>;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummarizeResult>;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 }

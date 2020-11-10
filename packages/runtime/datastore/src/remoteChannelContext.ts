@@ -10,7 +10,6 @@ import { readAndParse } from "@fluidframework/driver-utils";
 import {
     ISequencedDocumentMessage,
     ISnapshotTree,
-    ITree,
 } from "@fluidframework/protocol-definitions";
 import {
     IChannel,
@@ -66,7 +65,10 @@ export class RemoteChannelContext implements IChannelContext {
             storageService,
             Promise.resolve(baseSnapshot),
             extraBlobs);
-        const thisSummarizeInternal = async (fullTree: boolean) => this.summarizeInternal(fullTree);
+
+        // Summarizer node always tracks summary state. Set trackState to true.
+        const thisSummarizeInternal =
+            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */);
         this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
     }
 
@@ -107,23 +109,20 @@ export class RemoteChannelContext implements IChannelContext {
         this.services.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
-    public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        if (!fullTree) {
-            const id = await this.summaryTracker.getId();
-            if (id !== undefined) {
-                return { id, entries: [] };
-            }
-        }
-
-        const channel = await this.getChannel();
-        return snapshotChannel(channel);
+    /**
+     * Returns a summary at the current sequence number.
+     * @param fullTree - true to bypass optimizations and force a full summary tree
+     * @param trackState - This tells whether we should track state from this summary.
+     */
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
+        // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
+        // the summary. Else, get the summary tree directly.
+        return trackState
+            ? this.summarizerNode.summarize(fullTree)
+            : this.summarizeInternal(fullTree, false /* trackState */);
     }
 
-    public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(fullTree);
-    }
-
-    private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const channel = await this.getChannel();
         const snapshotTree = snapshotChannel(channel);
         const summaryResult = convertToSummaryTree(snapshotTree, fullTree);

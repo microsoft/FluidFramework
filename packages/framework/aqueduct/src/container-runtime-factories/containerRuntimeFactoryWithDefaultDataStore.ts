@@ -4,7 +4,7 @@
  */
 
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { DependencyContainerRegistry } from "@fluidframework/synthesize";
 import {
@@ -26,7 +26,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
     public static readonly defaultDataStoreId = defaultDataStoreId;
 
     constructor(
-        private readonly defaultDataStoreName: string,
+        protected readonly defaultFactory: IFluidDataStoreFactory,
         registryEntries: NamedFluidDataStoreRegistryEntries,
         providerEntries: DependencyContainerRegistry = [],
         requestHandlers: RuntimeRequestHandler[] = [],
@@ -48,12 +48,9 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
      * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const router = await runtime.createRootDataStore(
-            this.defaultDataStoreName,
-            ContainerRuntimeFactoryWithDefaultDataStore.defaultDataStoreId,
+        await runtime.createRootDataStore(
+            this.defaultFactory.type,
+            defaultDataStoreId,
         );
-        // We need to request the data store before attaching to ensure it
-        // runs through its entire instantiation flow.
-        await router.request({ url: "/" });
     }
 }
