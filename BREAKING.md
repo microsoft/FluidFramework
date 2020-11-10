@@ -1,10 +1,14 @@
 ## 0.29 Breaking Changes
 
 - [removeAllEntriesForDocId api in host storage changed](#removeAllEntriesForDocId-api-in-host-storage-changed)
+- [_createDataStoreWithProps returns IFluidRouter](#_createDataStoreWithProps-returns-IFluidRouter)
 
 ### removeAllEntriesForDocId api in host storage changed
 `removeAllEntriesForDocId` api in host storage is now an async api.
 
+### _createDataStoreWithProps returns IFluidRouter
+`IContainerRuntimeBase._createDataStoreWithProps` returns IFluidRouter instead of IFluidDataStoreChannel. This is done to be consistent with other APIs create data stores, and ensure we do not return internal interfaces. This likely to expose areas where IFluidDataStoreChannel.bindToContext() was called manually on data store. Such usage should be re-evaluate - lifetime management should be left up to runtime, storage of any handle form data store in attached DDS will result in automatic attachment of data store (and all of its objects) to container. If absolutely needed, and only for staging, casting can be done to implement old behavior.
+    
 ## 0.28 Breaking Changes
 
 - [FileName should contain extension for ODSP driver create new path](#FileName-should-contain-extension-for-ODSP-driver-create-new-path)

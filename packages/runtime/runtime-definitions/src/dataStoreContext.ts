@@ -98,7 +98,7 @@ export interface IContainerRuntimeBase extends
      * @deprecated 0.16 Issue #1537, #3631
      * @internal
      */
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IFluidDataStoreChannel>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IFluidRouter>;
 
     /**
      * Creates data store. Returns router of data store. Data store is not bound to container,
@@ -331,9 +331,8 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
 
     /**
      * Register the runtime to the container
-     * @param dataStoreRuntime - runtime to attach
      */
-    bindToContext(dataStoreRuntime: IFluidDataStoreChannel): void;
+    bindToContext(): void;
 
     /**
      * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.

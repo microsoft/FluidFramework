@@ -186,7 +186,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
-    public readonly bindToContext: (channel: IFluidDataStoreChannel) => void;
+    public readonly bindToContext: () => void;
     protected channel: IFluidDataStoreChannel | undefined;
     private loaded = false;
     protected pending: ISequencedDocumentMessage[] | undefined = [];
@@ -213,10 +213,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this._attachState = this.containerRuntime.attachState !== AttachState.Detached && existing ?
             this.containerRuntime.attachState : AttachState.Detached;
 
-        this.bindToContext = (channel: IFluidDataStoreChannel) => {
+        this.bindToContext = () => {
             assert(this.bindState === BindState.NotBound);
             this.bindState = BindState.Binding;
-            bindChannel(channel);
+            assert(this.channel !== undefined);
+            bindChannel(this.channel);
             this.bindState = BindState.Bound;
         };
 
@@ -300,11 +301,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.registry = registry;
 
         const channel = await factory.instantiateDataStore(this);
-
-        // back-compat: <= 0.25 allows returning nothing and calling bindRuntime() later directly.
-        if (channel !== undefined) {
-            this.bindRuntime(channel);
-        }
+        assert(channel !== undefined);
+        this.bindRuntime(channel);
     }
 
     /**
@@ -494,7 +492,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
-    public bindRuntime(channel: IFluidDataStoreChannel) {
+    protected bindRuntime(channel: IFluidDataStoreChannel) {
         if (this.channel) {
             throw new Error("Runtime already bound");
         }
