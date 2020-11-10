@@ -71,7 +71,7 @@ async function defaultUpgradeFn(runtime: IUpgradeRuntime, config: IUpgradeFnConf
     }
 
     if (promises.length === 0) {
-        return Promise.reject("no upgrade parameters specified");
+        return Promise.reject(new Error("no upgrade parameters specified"));
     }
 
     return Promise.race(promises);

@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { PromiseCache } from "@fluidframework/common-utils";
+import { parse } from "url";
+import { assert, PromiseCache } from "@fluidframework/common-utils";
 import {
     IRequest,
 } from "@fluidframework/core-interfaces";
 import {
+    IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
@@ -53,6 +55,18 @@ export class ContainerUrlResolver implements IUrlResolver {
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
     ): Promise<string> {
-        throw new Error("Not implmented");
+        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
+
+        const parsedUrl = parse(fluidResolvedUrl.url);
+        assert(parsedUrl.pathname !== undefined, "Pathname should be defined");
+        const [, tenantId, documentId] = parsedUrl.pathname.split("/");
+        assert(documentId !== undefined && tenantId !== undefined);
+
+        let url = relativeUrl;
+        if (url.startsWith("/")) {
+            url = url.substr(1);
+        }
+        return `${this.baseUrl}/${encodeURIComponent(
+            tenantId)}/${encodeURIComponent(documentId)}${url ? `/${url}` : ``}`;
     }
 }

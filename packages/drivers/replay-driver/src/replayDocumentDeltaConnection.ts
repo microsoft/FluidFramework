@@ -64,11 +64,11 @@ export class ReplayControllerStatic extends ReplayController {
     }
 
     public async getSnapshotTree(version?: IVersion) {
-        return version ? Promise.reject("Invalid operation") : null;
+        return version ? Promise.reject(new Error("Invalid operation")) : null;
     }
 
     public async read(blobId: string): Promise<string> {
-        return Promise.reject("Invalid operation");
+        return Promise.reject(new Error("Invalid operation"));
     }
 
     public async getStartingOpSequence(): Promise<number> {

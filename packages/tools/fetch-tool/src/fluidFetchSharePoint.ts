@@ -61,7 +61,7 @@ export async function resolveWrapper<T>(
             // Re-auth
             return resolveWrapper<T>(callback, server, clientConfig, true, forToken);
         }
-        return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${e}`);
+        return Promise.reject(new Error(`Fail to connect to ODSP server\nError Response:\n${e}`));
     }
 }
 

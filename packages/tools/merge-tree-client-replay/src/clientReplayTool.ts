@@ -101,10 +101,10 @@ export class ClientReplayTool {
 
     private async setup() {
         if (this.args.inDirName === undefined) {
-            return Promise.reject("Please provide --indir argument");
+            return Promise.reject(new Error("Please provide --indir argument"));
         }
         if (!fs.existsSync(this.args.inDirName)) {
-            return Promise.reject("File does not exist");
+            return Promise.reject(new Error("File does not exist"));
         }
 
         this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);

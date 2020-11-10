@@ -1,6 +1,10 @@
-## 0.29 Breaking changes
+## 0.29 Breaking Changes
 
+- [removeAllEntriesForDocId api in host storage changed](#removeAllEntriesForDocId-api-in-host-storage-changed)
 - [NamedFluidDataStoreRegistryEntries](#NamedFluidDataStoreRegistryEntries)
+
+### removeAllEntriesForDocId api in host storage changed
+`removeAllEntriesForDocId` api in host storage is now an async api.
 
 ### NamedFluidDataStoreRegistryEntries 
 NamedFluidDataStoreRegistryEntries usage across repo is reduced substantially. Specifically, `ContainerRuntime.load()` is changed. Instead many interfaces are changed to accept IFluidDataStoreRegistry
@@ -11,7 +15,6 @@ The following two classes are added to assist in conversion:
 3. factory
 
 `MultipleDataStoreRegistries` - can be used to combine  multiple IFluidDataStoreRegistry objects into one.
-
 
 ## 0.28 Breaking Changes
 
