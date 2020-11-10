@@ -310,7 +310,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
         runtime: IContainerRuntime,
         initialState?: S,
     ): Promise<TObj> {
-        const context = runtime.createRootDetachedDataStore([this.type], rootDataStoreId);
+        const context = runtime.createDetachedRootDataStore([this.type], rootDataStoreId);
         return this.createInstanceCore(context, initialState);
     }
 

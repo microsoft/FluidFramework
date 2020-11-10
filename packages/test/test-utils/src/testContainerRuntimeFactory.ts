@@ -41,9 +41,9 @@ export class TestContainerRuntimeFactory implements IRuntimeFactory {
             await runtime.createRootDataStore(this.type, "default");
 
             // back-compat: remove this check in 0.30
-            if ("createRootDetachedDataStore" in runtime) {
+            if ("createDetachedRootDataStore" in runtime) {
                 // Test detached creation
-                const root2Context = runtime.createRootDetachedDataStore([this.type], "default2");
+                const root2Context = runtime.createDetachedRootDataStore([this.type], "default2");
                 const root2Runtime = await this.dataStoreFactory.instantiateDataStore(root2Context);
                 await root2Context.attachRuntime(this.dataStoreFactory, root2Runtime);
             }

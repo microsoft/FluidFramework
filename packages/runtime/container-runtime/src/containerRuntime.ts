@@ -1361,7 +1361,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return fluidDataStore;
     }
 
-    public createRootDetachedDataStore(
+    public createDetachedRootDataStore(
         pkg: Readonly<string[]>,
         rootDataStoreId: string): IFluidDataStoreContextDetached
     {
