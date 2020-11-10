@@ -601,7 +601,7 @@ export class SummarizerNode implements ISummarizerNode {
         this.canReuseHandle = config.canReuseHandle ?? true;
         // BUGBUG: Seeing issues with differential summaries.
         // this will disable them, and throw instead
-        // why we continue to investigate
+        // while we continue to investigate
         this.throwOnError = true; // config.throwOnFailure ?? false;
         this.trackingSequenceNumber = this._changeSequenceNumber;
     }

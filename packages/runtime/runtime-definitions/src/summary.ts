@@ -44,6 +44,9 @@ export interface ISummarizerNodeConfig {
      * attempt creating a summary that is a pointer ot the last acked summary
      * plus outstanding ops in case of internal summarize failure.
      * Defaults to false.
+     *
+     * BUG BUG: Disable config and default to true while we investigate problem
+     * with differential summaries
      */
     // readonly throwOnFailure?: boolean,
 }
