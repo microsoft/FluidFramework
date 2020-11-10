@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/iframe-host",
-  "version": "0.28.6",
+  "version": "0.28.7",
   "description": "IFrame Host",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
@@ -32,20 +32,20 @@
     "webpack": "webpack --env build"
   },
   "dependencies": {
-    "@fluid-example/todo": "^0.28.6",
-    "@fluidframework/base-host": "^0.28.6",
-    "@fluidframework/container-definitions": "^0.28.6",
-    "@fluidframework/container-loader": "^0.28.6",
-    "@fluidframework/core-interfaces": "^0.28.6",
-    "@fluidframework/driver-definitions": "^0.28.6",
-    "@fluidframework/driver-utils": "^0.28.6",
-    "@fluidframework/get-tinylicious-container": "^0.28.6",
-    "@fluidframework/iframe-driver": "^0.28.6",
+    "@fluid-example/todo": "^0.28.7",
+    "@fluidframework/base-host": "^0.28.7",
+    "@fluidframework/container-definitions": "^0.28.7",
+    "@fluidframework/container-loader": "^0.28.7",
+    "@fluidframework/core-interfaces": "^0.28.7",
+    "@fluidframework/driver-definitions": "^0.28.7",
+    "@fluidframework/driver-utils": "^0.28.7",
+    "@fluidframework/get-tinylicious-container": "^0.28.7",
+    "@fluidframework/iframe-driver": "^0.28.7",
     "@fluidframework/protocol-definitions": "^0.1014.1",
-    "@fluidframework/routerlicious-driver": "^0.28.6",
-    "@fluidframework/test-runtime-utils": "^0.28.6",
-    "@fluidframework/view-adapters": "^0.28.6",
-    "@fluidframework/web-code-loader": "^0.28.6"
+    "@fluidframework/routerlicious-driver": "^0.28.7",
+    "@fluidframework/test-runtime-utils": "^0.28.7",
+    "@fluidframework/view-adapters": "^0.28.7",
+    "@fluidframework/web-code-loader": "^0.28.7"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
