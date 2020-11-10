@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     FluidObjectHandle,
-    createDataStoreRuntimeWithRouter,
+    mixinRequestHandler,
 } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
@@ -276,11 +276,15 @@ class SmdeFactory implements IFluidDataStoreFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(sequenceFactory.type, sequenceFactory);
 
-        return createDataStoreRuntimeWithRouter(
-            context,
-            dataTypes,
-            CodeMirrorComponent.load,
-        );
+        const runtimeFactory = mixinRequestHandler(
+            async (request: IRequest) => {
+                const router = await routerP;
+                return router.request(request);
+            });
+
+        const runtime = new runtimeFactory(context, dataTypes);
+        const routerP = CodeMirrorComponent.load(runtime, context);
+        return runtime;
     }
 }
 

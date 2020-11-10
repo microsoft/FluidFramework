@@ -9,7 +9,6 @@ import {
     IFluidHandleContext,
     IRequest,
     IResponse,
-    IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -771,9 +770,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
  * @param requestHandler - request handler to mix in
  */
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function requestFluidDataStoreMixin(
-    Base: typeof FluidDataStoreRuntime,
-    requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>)
+export function mixinRequestHandler(
+    requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
+    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
 {
     return class RuntimeWithRequestHandler extends Base {
         public async request(request: IRequest) {
@@ -784,24 +783,6 @@ export function requestFluidDataStoreMixin(
             return response;
         }
     } as typeof FluidDataStoreRuntime;
-}
-
-export function createDataStoreRuntimeWithRouter(
-    context: IFluidDataStoreContext,
-    sharedObjectRegistry: ISharedObjectRegistry,
-    routerCtor: (runtime: FluidDataStoreRuntime, context: IFluidDataStoreContext) => Promise<IFluidRouter>)
-{
-    const runtimeFactory = requestFluidDataStoreMixin(
-        FluidDataStoreRuntime,
-        async (request: IRequest) => {
-            const router = await routerP;
-            return router.request(request);
-        });
-
-    const runtime = new runtimeFactory(context, sharedObjectRegistry);
-    const routerP = routerCtor(runtime, context);
-
-    return runtime;
 }
 
 /**

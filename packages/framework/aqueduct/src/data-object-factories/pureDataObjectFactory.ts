@@ -8,7 +8,7 @@ import { IRequest, IFluidObject, IFluidRouter } from "@fluidframework/core-inter
 import {
     FluidDataStoreRuntime,
     ISharedObjectRegistry,
-    requestFluidDataStoreMixin,
+    mixinRequestHandler,
  } from "@fluidframework/datastore";
 import { IEvent } from "@fluidframework/common-definitions";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
@@ -130,10 +130,10 @@ async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E ex
     let runtimeFactory = runtimeFactoryArg;
 
     // request mixin in
-    runtimeFactory = requestFluidDataStoreMixin(
-        runtimeFactory,
+    runtimeFactory = mixinRequestHandler(
         async (request: IRequest, runtimeArg: FluidDataStoreRuntime) =>
-            (await PureDataObject.getDataObject(runtimeArg)).request(request));
+            (await PureDataObject.getDataObject(runtimeArg)).request(request),
+        runtimeFactory);
 
     // Create a new runtime for our data store
     // The runtime is what Fluid uses to create DDS' and route to your data store
