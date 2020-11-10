@@ -210,6 +210,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     ) {
         super();
 
+        // URIs use slashes as delimiters. Handles use URIs.
+        // Thus having slashes in types almost guarantees trouble down the road!
+        assert(id.indexOf("/") === -1, `Data store ID contains slash: ${id}`);
+
         this._attachState = this.containerRuntime.attachState !== AttachState.Detached && existing ?
             this.containerRuntime.attachState : AttachState.Detached;
 
@@ -677,7 +681,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     constructor(
         id: string,
-        pkg: string[] | undefined,
+        pkg: Readonly<string[]>,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject,
@@ -685,7 +689,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
-        private readonly isRootDataStore: boolean,
+        protected readonly isRootDataStore: boolean,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -798,6 +802,7 @@ export class LocalDetachedFluidDataStoreContext
 {
     constructor(
         id: string,
+        pkg: Readonly<string[]>,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
@@ -809,7 +814,7 @@ export class LocalDetachedFluidDataStoreContext
     ) {
         super(
             id,
-            undefined, // pkg
+            pkg,
             runtime,
             storage,
             scope,
@@ -819,21 +824,17 @@ export class LocalDetachedFluidDataStoreContext
             snapshotTree,
             isRootDataStore,
         );
-        assert(this.pkg === undefined);
         this.detachedRuntimeCreation = true;
     }
 
     public async attachRuntime(
-        packagePath: Readonly<string[]>,
         registry: IProvideFluidDataStoreFactory,
         dataStoreRuntime: IFluidDataStoreChannel)
     {
         assert(this.detachedRuntimeCreation);
         assert(this.channelDeferred === undefined);
-        assert(this.pkg === undefined);
 
         const factory = registry.IFluidDataStoreFactory;
-        this.pkg = packagePath;
 
         const entry = await this.factoryFromPackagePath(this.pkg);
         assert(entry.factory === factory);
@@ -845,6 +846,10 @@ export class LocalDetachedFluidDataStoreContext
         this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
 
         super.bindRuntime(dataStoreRuntime);
+
+        if (this.isRootDataStore) {
+            dataStoreRuntime.bindToContext();
+        }
     }
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {

@@ -29,6 +29,7 @@ import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
+    IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
  } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
@@ -107,6 +108,14 @@ export interface IContainerRuntime extends
      * it results in container corruption - loading this file after that will always result in error.
      */
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
+
+    /**
+     * Creates detached data store context. Data store initialization is considered compete
+     * only after context.attachRuntime() is called.
+     * @param pkg - package path
+     * @param rootDataStoreId - data store ID (unique name)
+     */
+    createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
 
     /**
      * Used to raise an unrecoverable error on the runtime.
