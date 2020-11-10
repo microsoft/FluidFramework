@@ -61,7 +61,6 @@ export interface ICompatTestOptions {
 
 export enum DataObjectFactoryType {
     Primed, // default
-    PrimedWithDependency,
     Test,
 }
 
