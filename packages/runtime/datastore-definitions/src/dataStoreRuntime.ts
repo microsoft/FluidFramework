@@ -95,12 +95,6 @@ export interface IFluidDataStoreRuntime extends
      */
     bindChannel(channel: IChannel): void;
 
-    /**
-     * Api for generating the snapshot of the data store.
-     * @param message - Message for the snapshot.
-     */
-    snapshot(message: string): Promise<void>;
-
     // Blob related calls
     /**
      * Api to upload a blob of data.

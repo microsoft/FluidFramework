@@ -160,9 +160,15 @@ export interface IFluidDataStoreChannel extends
     bindToContext(): void;
 
     /**
+     * @deprecated - Replaced by getAttachSummary()
      * Retrieves the snapshot used as part of the initial snapshot message
      */
     getAttachSnapshot(): ITreeEntry[];
+
+    /**
+     * Retrieves the summary used as part of the initial summary message
+     */
+    getAttachSummary(): ISummaryTreeWithStats
 
     /**
      * Processes the op.
@@ -175,17 +181,12 @@ export interface IFluidDataStoreChannel extends
     processSignal(message: any, local: boolean): void;
 
     /**
-     * Generates a snapshot of the given data store
-     * @deprecated in 0.22 summarizerNode
-     */
-    snapshotInternal(fullTree?: boolean): Promise<ITreeEntry[]>;
-
-    /**
      * Generates a summary for the data store.
      * Introduced with summarizerNode - will be required in a future release.
-     * @param fullTree - true to bypass optimizations and force a full summary tree
+     * @param fullTree - true to bypass optimizations and force a full summary tree.
+     * @param trackState - This tells whether we should track state from this summary.
      */
-    summarize?(fullTree?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
      * Notifies this object about changes in the connection state.

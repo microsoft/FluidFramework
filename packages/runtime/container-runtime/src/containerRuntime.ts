@@ -72,6 +72,7 @@ import {
     ITree,
     MessageType,
     IVersion,
+    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
@@ -89,7 +90,6 @@ import {
     ISummaryStats,
     ISummarizeInternalResult,
     SummarizeInternalFn,
-    CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     CreateSummarizerNodeSource,
     IAgentScheduler,
@@ -101,6 +101,7 @@ import {
     SummaryTracker,
     SummaryTreeBuilder,
     SummarizerNode,
+    convertSummaryTreeToITree,
     convertToSummaryTree,
     RequestParser,
     requestFluidObject,
@@ -119,7 +120,7 @@ import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
 import { ISummarizerRuntime, Summarizer } from "./summarizer";
-import { SummaryManager, summarizerClientType } from "./summaryManager";
+import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
@@ -224,12 +225,6 @@ export interface IContainerRuntimeOptions {
 
     // Delay before first attempt to spawn summarizing container
     initialSummarizerDelayMs?: number;
-
-    // Flag to enable summarizing with new SummarizerNode strategy.
-    // Enabling this feature will allow data stores that fail to summarize to
-    // try to still summarize based on previous successful summary + ops since.
-    // Enabled by default.
-    enableSummarizerNode?: boolean;
 }
 
 interface IRuntimeMessageMetadata {
@@ -627,13 +622,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // back-compat: summarizerNode - remove all summary trackers
     private readonly summaryTracker: SummaryTracker;
 
-    private readonly summarizerNode: {
-        readonly referenceSequenceNumber: number;
-        readonly getCreateChildFn: (
-            id: string,
-            createParam: CreateChildSummarizerNodeParam,
-        ) => CreateChildSummarizerNodeFn;
-    } & ({ readonly enabled: true; readonly node: SummarizerNode } | { readonly enabled: false });
+    private readonly summarizerNode: SummarizerNode;
     private readonly notBoundContexts = new Set<string>();
     // 0.24 back-compat attachingBeforeSummary
     private readonly attachOpFiredForDataStore = new Set<string>();
@@ -728,19 +717,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
-        const isSummarizerClient = this.clientDetails.type === summarizerClientType;
-        // Use runtimeOptions if provided, otherwise default to true/enabled.
-        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode ?? true;
-        const summarizerNode = SummarizerNode.createRoot(
+        this.summarizerNode = SummarizerNode.createRoot(
             this.logger,
-            // Summarize function to call when summarize is called
-            async (fullTree: boolean) => this.summarizeInternal(fullTree),
+            // Summarize function to call when summarize is called. Summarizer node always tracks summary state.
+            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */),
             // Latest change sequence number, no changes since summary applied yet
             loadedFromSequenceNumber,
             // Summary reference sequence number, undefined if no summary yet
             context.baseSnapshot ? loadedFromSequenceNumber : undefined,
-            // Disable calls to summarize if not summarizer client, or if runtimeOption is disabled
-            !isSummarizerClient || !enableSummarizerNode,
             {
                 // Must set to false to prevent sending summary handle which would be pointing to
                 // a summary with an older protocol state.
@@ -750,24 +734,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 throwOnFailure: true,
             },
         );
-
-        const getCreateChildFn = (id: string, createParam: CreateChildSummarizerNodeParam) =>
-            (summarizeInternal: SummarizeInternalFn) =>
-                summarizerNode.createChild(summarizeInternal, id, createParam);
-        if (enableSummarizerNode) {
-            this.summarizerNode = {
-                enabled: true,
-                node: summarizerNode,
-                get referenceSequenceNumber() { return this.node.referenceSequenceNumber; },
-                getCreateChildFn,
-            };
-        } else {
-            this.summarizerNode = {
-                enabled: false,
-                get referenceSequenceNumber() { return summarizerNode.referenceSequenceNumber; },
-                getCreateChildFn,
-            };
-        }
 
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree | string>();
@@ -794,7 +760,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.storage,
                     this.containerScope,
                     this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
-                    this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
+                    this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
             } else {
                 let pkgFromSnapshot: string[];
                 if (typeof context.baseSnapshot !== "object") {
@@ -828,7 +794,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.storage,
                     this.containerScope,
                     this.summaryTracker.createOrGetChild(key, this.deltaManager.lastSequenceNumber),
-                    this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
+                    this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
                     (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
                     snapshotTree,
                     isRootDataStore ?? true);
@@ -1043,12 +1009,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /**
      * Notifies this object to take the snapshot of the container.
-     * @param tagMessage - Message to supply to storage service for writing the snapshot.
+     * @deprecated - Use summarize to get summary of the container runtime.
      */
-    public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree> {
+    public async snapshot(): Promise<ITree> {
         // Iterate over each store and ask it to snapshot
         const fluidDataStoreSnapshotsP = Array.from(this.contexts).map(async ([fluidDataStoreId, value]) => {
-            const snapshot = await value.snapshot(fullTree);
+            const summaryTree = await value.summarize(true /* fullTree */, false /* trackState */);
+            assert(
+                summaryTree.summary.type === SummaryType.Tree,
+                "summarize should always return a tree when fullTree is true");
+            // back-compat summary - Remove this once snapshot is removed.
+            const snapshot = convertSummaryTreeToITree(summaryTree.summary);
 
             // If ID exists then previous commit is still valid
             return {
@@ -1063,9 +1034,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStoreSnapshots = await Promise.all(fluidDataStoreSnapshotsP);
 
         // Sort for better diffing of snapshots (in replay tool, used to find bugs in snapshotting logic)
-        if (fullTree) {
-            fluidDataStoreSnapshots.sort((a, b) => a.fluidDataStoreId.localeCompare(b.fluidDataStoreId));
-        }
+        fluidDataStoreSnapshots.sort((a, b) => a.fluidDataStoreId.localeCompare(b.fluidDataStoreId));
 
         for (const fluidDataStoreSnapshot of fluidDataStoreSnapshots) {
             root.entries.push(new TreeTreeEntry(
@@ -1097,7 +1066,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
 
-        const snapshot = await this.snapshot("", true);
+        const summaryTree = await this.summarize(true /* fullTree */, false /* trackState */);
+        // back-compat summarize - Remove this once we start return ISummaryTree here.
+        const snapshot = convertSummaryTreeToITree(summaryTree.summary);
         const state: IPreviousState = {
             reload: true,
             summaryCollection: this.summarizer.summaryCollection,
@@ -1384,7 +1355,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
+            this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
             isRoot,
@@ -1419,7 +1390,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
+            this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
             isRoot,
@@ -1522,14 +1493,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /**
      * Returns a summary of the runtime at the current sequence number.
+     * @param fullTree - true to bypass optimizations and force a full summary tree.
+     * @param trackState - This tells whether we should track state from this summary.
      */
-    private async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {
-        return this.summarizerNode.enabled
-            ? await this.summarizerNode.node.summarize(fullTree) as ISummaryTreeWithStats
-            : await this.summarizeInternal(fullTree ?? false) as ISummaryTreeWithStats;
+    private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
+        // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
+        // the summary. Else, get the summary tree directly.
+        return trackState
+            ? await this.summarizerNode.summarize(fullTree) as ISummaryTreeWithStats
+            : await this.summarizeInternal(fullTree, false /* trackState */) as ISummaryTreeWithStats;
     }
 
-    private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
@@ -1539,9 +1514,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 assert(value.attachState !== AttachState.Attaching);
                 return value.attachState === AttachState.Attached;
             }).map(async ([key, value]) => {
-                const contextSummary = this.summarizerNode.enabled
-                    ? await value.summarize(fullTree)
-                    : convertToSummaryTree(await value.snapshot(fullTree), fullTree);
+                const contextSummary = await value.summarize(fullTree, trackState);
                 builder.addWithStats(key, contextSummary);
             }));
 
@@ -1591,7 +1564,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             new BlobCacheStorageService(this.storage, flatBlobsP),
             this.containerScope,
             this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
-            this.summarizerNode.getCreateChildFn(
+            this.getCreateChildSummarizerNodeFn(
                 attachMessage.id,
                 {
                     type: CreateSummarizerNodeSource.FromAttach,
@@ -1756,9 +1729,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
-        if (this.summarizerNode.enabled) {
-            this.summarizerNode.node.startSummary(summaryRefSeqNum);
-        }
+        this.summarizerNode.startSummary(summaryRefSeqNum);
+
         try {
             await this.scheduleManager.pause();
 
@@ -1773,7 +1745,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             const trace = Trace.start();
-            const treeWithStats = await this.summarize(fullTree || safe);
+            const treeWithStats = await this.summarize(fullTree || safe, true /* trackState */);
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: treeWithStats.stats,
@@ -1834,9 +1806,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const clientSequenceNumber =
                 this.submitSystemMessage(MessageType.Summarize, summaryMessage);
 
-            if (this.summarizerNode.enabled) {
-                this.summarizerNode.node.completeSummary(handle);
-            }
+            this.summarizerNode.completeSummary(handle);
 
             return {
                 ...attemptData,
@@ -1848,9 +1818,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             };
         } finally {
             // Cleanup wip summary in case of failure
-            if (this.summarizerNode.enabled) {
-                this.summarizerNode.node.clearSummary();
-            }
+            this.summarizerNode.clearSummary();
             // Restart the delta manager
             this.scheduleManager.resume();
         }
@@ -2033,6 +2001,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
+        return (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
+            summarizeInternal,
+            id,
+            createParam,
+        );
+    }
+
     /**
      * Finds the right store and asks it to resubmit the message. This typically happens when we
      * reconnect and there are pending messages.
@@ -2180,38 +2156,36 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // back-compat summarizerNode - remove all summary trackers when fully enabled
         this.summaryTracker.refreshLatestSummary(trackerRefSeqNum);
 
-        if (this.summarizerNode.enabled) {
-            const getSnapshot = async () => {
-                const perfEvent = PerformanceEvent.start(this.logger, {
-                    eventName: "RefreshLatestSummaryGetSnapshot",
-                    hasVersion: !!version, // expected in this case
-                });
-                const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
-                let snapshot: ISnapshotTree | undefined;
-                try {
-                    const trace = Trace.start();
+        const getSnapshot = async () => {
+            const perfEvent = PerformanceEvent.start(this.logger, {
+                eventName: "RefreshLatestSummaryGetSnapshot",
+                hasVersion: !!version, // expected in this case
+            });
+            const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
+            let snapshot: ISnapshotTree | undefined;
+            try {
+                const trace = Trace.start();
 
-                    const versionToUse = version ?? await this.getVersionFromStorage(ackHandle);
-                    stats.getVersionDuration = trace.trace().duration;
+                const versionToUse = version ?? await this.getVersionFromStorage(ackHandle);
+                stats.getVersionDuration = trace.trace().duration;
 
-                    snapshot = await this.getSnapshotFromStorage(versionToUse);
-                    stats.getSnapshotDuration = trace.trace().duration;
-                } catch (error) {
-                    perfEvent.cancel(stats, error);
-                    throw error;
-                }
+                snapshot = await this.getSnapshotFromStorage(versionToUse);
+                stats.getSnapshotDuration = trace.trace().duration;
+            } catch (error) {
+                perfEvent.cancel(stats, error);
+                throw error;
+            }
 
-                perfEvent.end(stats);
-                return snapshot;
-            };
+            perfEvent.end(stats);
+            return snapshot;
+        };
 
-            await this.summarizerNode.node.refreshLatestSummary(
+        await this.summarizerNode.refreshLatestSummary(
                 proposalHandle,
                 getSnapshot,
                 async <T>(id: string) => readAndParse<T>(this.storage, id),
             );
         }
-    }
 
     private async getVersionFromStorage(versionId: string): Promise<IVersion> {
         const versions = await this.storage.getVersions(versionId, 1);
