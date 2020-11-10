@@ -7,7 +7,6 @@ import { IEventProvider } from "@fluidframework/common-definitions";
 import {
     AttachState,
     ContainerWarning,
-    IAudience,
     IDeltaManager,
     ILoader,
 } from "@fluidframework/container-definitions";
@@ -24,13 +23,13 @@ import {
     IDocumentMessage,
     IHelpMessage,
     IPendingProposal,
-    IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
+    IProvideFluidDataStoreRegistry,
  } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
@@ -67,6 +66,7 @@ export type IContainerRuntimeBaseWithCombinedEvents =
 export interface IContainerRuntime extends
     IProvideContainerRuntime,
     Partial<IProvideContainerRuntimeDirtyable>,
+    IProvideFluidDataStoreRegistry,
     IContainerRuntimeBaseWithCombinedEvents {
     readonly id: string;
     readonly existing: boolean;
@@ -107,16 +107,6 @@ export interface IContainerRuntime extends
      * it results in container corruption - loading this file after that will always result in error.
      */
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
-
-    /**
-     * Returns the current quorum.
-     */
-    getQuorum(): IQuorum;
-
-    /**
-     * Returns the current audience.
-     */
-    getAudience(): IAudience;
 
     /**
      * Used to raise an unrecoverable error on the runtime.
