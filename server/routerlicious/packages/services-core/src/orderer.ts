@@ -37,7 +37,7 @@ export interface IOrdererConnection {
     readonly existing: boolean;
 
     // TODO remove after client packages update
-    readonly parentBranch: string;
+    readonly parentBranch: null;
 
     readonly maxMessageSize: number;
 

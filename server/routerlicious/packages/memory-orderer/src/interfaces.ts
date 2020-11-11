@@ -50,7 +50,7 @@ export interface IConnectedMessage {
     clientId: string;
     existing: boolean;
     // TODO remove after client packages update
-    parentBranch: string;
+    parentBranch: null;
     maxMessageSize: number;
     serviceConfiguration: IServiceConfiguration;
 }

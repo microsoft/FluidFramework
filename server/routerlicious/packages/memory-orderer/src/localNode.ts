@@ -208,7 +208,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                             existing: connection.existing,
                             maxMessageSize: this.maxMessageSize,
                             // TODO remove after client packages update
-                            parentBranch: connection.parentBranch,
+                            parentBranch: null,
                             serviceConfiguration: DefaultServiceConfiguration,
                         };
                         socket.send({ cid: message.cid, type: "connected", payload: connected });

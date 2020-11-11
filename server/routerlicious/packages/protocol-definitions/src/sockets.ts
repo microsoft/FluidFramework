@@ -76,7 +76,7 @@ export interface IConnected {
     /**
      * The parent branch for the document
      */
-    parentBranch: string | null;
+    parentBranch: null;
 
     /**
      * Messages sent during the connection

@@ -25,7 +25,7 @@ import { ISubscriber } from "./pubsub";
 
 export class LocalOrdererConnection implements IOrdererConnection {
     // TODO remove after client packages update
-    public readonly parentBranch: string;
+    public readonly parentBranch = null;
 
     constructor(
         public socket: ISubscriber,
@@ -38,9 +38,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
         private readonly client: IClient,
         public readonly maxMessageSize: number,
         public readonly serviceConfiguration: IServiceConfiguration,
-    ) {
-        this.parentBranch = null;
-    }
+    ) { }
 
     public async connect() {
         // Send the connect message
