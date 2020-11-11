@@ -5,7 +5,7 @@
 
 import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { RequestParser, requestFluidObject, FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { RequestParser, requestFluidObject, createDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
 import { Constellation } from "@fluid-example/multiview-constellation-model";
@@ -78,7 +78,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
         // We'll use a MountableView so webpack-fluid-loader can display us,
         // and add our default view request handler.
         super(
-            new FluidDataStoreRegistry([
+            createDataStoreRegistry([
                 Coordinate.getFactory().registryEntry,
                 Constellation.getFactory().registryEntry,
                 ]),

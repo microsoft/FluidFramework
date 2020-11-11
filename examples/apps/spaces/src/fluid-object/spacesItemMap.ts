@@ -5,7 +5,7 @@
 
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { AsSerializable, Serializable } from "@fluidframework/datastore-definitions";
-import { NamedFluidDataStoreRegistryEntries, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { CollaborativeText } from "@fluid-example/collaborative-textarea";
@@ -100,7 +100,7 @@ export const spacesItemMap = new Map<string, ISpacesItemEntry>([
 ]);
 
 // This can go away if the item entries have a way to bring their own subregistries.
-export const spacesRegistryEntries: NamedFluidDataStoreRegistryEntries = new Map([
+export const spacesRegistryEntries = new Map([
     ClickerInstantiationFactory.registryEntry,
     [cmfe.type, Promise.resolve(cmfe)],
     [CollaborativeText.Name, Promise.resolve(CollaborativeText.getFactory())],

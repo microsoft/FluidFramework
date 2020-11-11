@@ -4,7 +4,7 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 import { DiceRollerInstantiationFactory } from "./dataObject";
 
@@ -20,7 +20,7 @@ import { DiceRollerInstantiationFactory } from "./dataObject";
  */
 export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
     DiceRollerInstantiationFactory,
-    new FluidDataStoreRegistry([
+    createDataStoreRegistry([
         DiceRollerInstantiationFactory.registryEntry,
     ]),
 );

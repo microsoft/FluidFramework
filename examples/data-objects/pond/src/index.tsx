@@ -12,7 +12,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedDirectory } from "@fluidframework/map";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 import {
     Clicker,
@@ -115,7 +115,7 @@ export class Pond extends DataObject implements IFluidHTMLView {
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     Pond.getFactory(),
-    new FluidDataStoreRegistry([
+    createDataStoreRegistry([
         Pond.getFactory().registryEntry,
     ]),
     [

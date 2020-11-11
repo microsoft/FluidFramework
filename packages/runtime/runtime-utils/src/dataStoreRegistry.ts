@@ -5,18 +5,29 @@
 import {
     FluidDataStoreRegistryEntry,
     IFluidDataStoreRegistry,
-    IProvideFluidDataStoreFactory,
+    FluidDataStoreRegistry,
+    FluidDataStoreRegistryEntries,
+    IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
-export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
+export function createDataStoreRegistry(arg: FluidDataStoreRegistry): IFluidDataStoreRegistry {
+    // Ensure that FluidDataStoreRegistry type did not change from original
+    // We do casting below and need to ensure that only these two types can come in
+    const entries: FluidDataStoreRegistryEntries | IFluidDataStoreRegistry = arg;
+
+    const registry = (entries as IProvideFluidDataStoreRegistry).IFluidDataStoreRegistry;
+    if (registry !== undefined) {
+        return registry;
+    }
+    return new DataStoreRegistry(entries as FluidDataStoreRegistryEntries);
+}
+
+class DataStoreRegistry implements IFluidDataStoreRegistry {
     private readonly map: Map<string, FluidDataStoreRegistryEntry | Promise<FluidDataStoreRegistryEntry>> = new Map();
 
     public get IFluidDataStoreRegistry() { return this; }
 
-    constructor(namedEntries: Iterable<
-        [string, FluidDataStoreRegistryEntry | Promise<FluidDataStoreRegistryEntry>] |
-        IProvideFluidDataStoreFactory
-        >) {
+    constructor(namedEntries: FluidDataStoreRegistryEntries) {
         for (const entry of namedEntries) {
             if (Array.isArray(entry)) {
                 this.map.set(entry[0], entry[1]);

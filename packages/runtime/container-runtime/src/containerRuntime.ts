@@ -104,7 +104,7 @@ import {
     convertToSummaryTree,
     RequestParser,
     requestFluidObject,
-    FluidDataStoreRegistry,
+    createDataStoreRegistry,
     MultipleDataStoreRegistries,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -484,7 +484,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         const registry = new MultipleDataStoreRegistries(
-            new FluidDataStoreRegistry([TaskManagerFactory.registryEntry]),
+            createDataStoreRegistry([TaskManagerFactory.registryEntry]),
             registryEntries,
         );
 

@@ -35,7 +35,7 @@ import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
-import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import Axios from "axios";
 
@@ -461,7 +461,7 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
 
         const runtime = await ContainerRuntime.load(
             context,
-            new FluidDataStoreRegistry([
+            createDataStoreRegistry([
                 [ScribeFactory.type, Promise.resolve(this)],
             ]),
             buildRuntimeRequestHandler(

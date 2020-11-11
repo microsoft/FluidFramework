@@ -15,20 +15,21 @@ import {
 import {
     IFluidDataStoreFactory,
     FlushMode,
+    IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 const defaultStoreId = "" as const;
 
 export class RuntimeFactory implements IRuntimeFactory {
-    private readonly registry: FluidDataStoreRegistry;
+    private readonly registry: IFluidDataStoreRegistry;
 
     constructor(
         private readonly defaultStoreFactory: IFluidDataStoreFactory,
         storeFactories: IFluidDataStoreFactory[] = [defaultStoreFactory],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
     ) {
-        this.registry = new FluidDataStoreRegistry(
+        this.registry = createDataStoreRegistry(
             (storeFactories.includes(defaultStoreFactory)
                 ? storeFactories
                 : storeFactories.concat(defaultStoreFactory)

@@ -16,7 +16,7 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreContext,
@@ -136,7 +136,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
-            new FluidDataStoreRegistry([[this.type, Promise.resolve(this)]]),
+            createDataStoreRegistry([[this.type, Promise.resolve(this)]]),
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(this.defaultComponentId),
                 innerRequestHandler,

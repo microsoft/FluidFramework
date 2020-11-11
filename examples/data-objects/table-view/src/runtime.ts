@@ -4,7 +4,7 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { FluidDataStoreRegistry, createDataStoreFactory } from "@fluidframework/runtime-utils";
+import { createDataStoreRegistry, createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
 import { tableViewType } from "./tableview";
 
@@ -15,7 +15,7 @@ const factory = createDataStoreFactory(
 
 export const fluidExport: IRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
     factory,
-    new FluidDataStoreRegistry([
+    createDataStoreRegistry([
         [factory.type, Promise.resolve(factory)],
     ]),
 );

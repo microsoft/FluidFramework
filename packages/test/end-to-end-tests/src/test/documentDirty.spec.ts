@@ -11,7 +11,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject, FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { requestFluidObject, createDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createAndAttachContainer,
@@ -88,7 +88,7 @@ describe("Document Dirty", () => {
         const runtimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore(
                 factory,
-                new FluidDataStoreRegistry([
+                createDataStoreRegistry([
                     [factory.type, Promise.resolve(factory)],
                 ]),
             );

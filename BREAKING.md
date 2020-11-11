@@ -18,7 +18,7 @@
 ### NamedFluidDataStoreRegistryEntries 
 NamedFluidDataStoreRegistryEntries usage across repo is reduced substantially. Specifically, `ContainerRuntime.load()` is changed. Instead many interfaces are changed to accept IFluidDataStoreRegistry
 The following two classes are added to assist in conversion:
-`FluidDataStoreRegistry` class can be used to wrap input in many formats, including NamedFluidDataStoreRegistryEntries format into IFluidDataStoreRegistry. It takes Iterable<> of:
+`createDataStoreRegistry` class can be used to wrap input in many formats, including FluidDataStoreRegistryEntries format into IFluidDataStoreRegistry. It takes Iterable<> of:
 1. old [name, Promise<factory>] format.
 2. [name, factory]
 3. factory

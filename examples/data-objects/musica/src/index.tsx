@@ -10,7 +10,7 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 // React
 import React from "react";
@@ -108,7 +108,7 @@ export const MusicaInstantiationFactory = new DataObjectFactory(
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     MusicaInstantiationFactory,
-    new FluidDataStoreRegistry([
+    createDataStoreRegistry([
         [MusicaInstantiationFactory.type, Promise.resolve(MusicaInstantiationFactory)],
     ]),
 );

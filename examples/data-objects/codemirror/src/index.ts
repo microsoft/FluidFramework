@@ -15,7 +15,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
-import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 import { fluidExport as smde } from "./codemirror";
 
@@ -23,7 +23,7 @@ class CodeMirrorFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const registry = new FluidDataStoreRegistry([
+        const registry = createDataStoreRegistry([
             ["@fluid-example/smde", Promise.resolve(smde)],
         ]);
 

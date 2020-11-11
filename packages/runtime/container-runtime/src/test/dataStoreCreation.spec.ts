@@ -9,7 +9,7 @@ import {
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     FluidDataStoreRegistryEntry,
-    NamedFluidDataStoreRegistryEntries,
+    FluidDataStoreRegistry,
     SummarizeInternalFn,
     CreateChildSummarizerNodeFn,
     CreateSummarizerNodeSource,
@@ -17,7 +17,7 @@ import {
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SummaryTracker, SummarizerNode, FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { SummaryTracker, SummarizerNode, createDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { LocalFluidDataStoreContext } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
@@ -51,16 +51,14 @@ describe("Data Store Creation Tests", () => {
         // Helper function that creates a FluidDataStoreRegistryEntry with the registry entries
         // provided to it.
         function createDataStoreRegistryEntry(
-            entries: NamedFluidDataStoreRegistryEntries,
+            entries: FluidDataStoreRegistry,
         ): FluidDataStoreRegistryEntry {
-            const registryEntries = new Map(entries);
+            const registry = createDataStoreRegistry(entries);
             const factory: IFluidDataStoreFactory = {
                 type: "store-type",
                 get IFluidDataStoreFactory() { return factory; },
                 instantiateDataStore: async (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime(),
             };
-            const registry = new FluidDataStoreRegistry(registryEntries);
-
             const entry: FluidDataStoreRegistryEntry = {
                 get IFluidDataStoreFactory() { return factory; },
                 get IFluidDataStoreRegistry() { return registry; },

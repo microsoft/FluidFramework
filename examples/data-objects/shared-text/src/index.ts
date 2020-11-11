@@ -22,7 +22,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
-import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 import * as sharedTextComponent from "./component";
 
 /* eslint-disable max-len */
@@ -94,7 +94,7 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const runtime = await ContainerRuntime.load(
             context,
-            new FluidDataStoreRegistry(
+            createDataStoreRegistry(
                 [
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     ["@fluid-example/math", math.then((m) => m.fluidExport)],

@@ -4,7 +4,7 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 import { LikesAndComments } from "./fluidObject";
 
@@ -19,6 +19,6 @@ import { LikesAndComments } from "./fluidObject";
  * FluidObjects.
  */
 export const LikesAndCommentsContainer = new ContainerRuntimeFactoryWithDefaultDataStore(
-LikesAndComments.factory,
-    new FluidDataStoreRegistry([LikesAndComments.factory.registryEntry]),
+    LikesAndComments.factory,
+    createDataStoreRegistry([LikesAndComments.factory.registryEntry]),
 );

@@ -15,7 +15,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
-import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { fluidExport as smde } from "./smde";
 
 class SmdeContainerFactory implements IRuntimeFactory {
@@ -27,7 +27,7 @@ class SmdeContainerFactory implements IRuntimeFactory {
 
         const runtime = await ContainerRuntime.load(
             context,
-            new FluidDataStoreRegistry([
+            createDataStoreRegistry([
                 ["@fluid-example/smde", Promise.resolve(smde)],
             ]),
             buildRuntimeRequestHandler(

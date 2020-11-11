@@ -20,7 +20,7 @@ import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
-import { requestFluidObject, FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { requestFluidObject, createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 import {
     Anchor,
@@ -130,7 +130,7 @@ const generateFactory = () => {
     // and the default registry is already determined Issue:#1138
     return new VltavaRuntimeFactory(
         Anchor.getFactory(),
-        new FluidDataStoreRegistry([
+        createDataStoreRegistry([
             ...containerFluidObjects,
             LastEditedTrackerDataObject.getFactory().registryEntry,
             // We don't want to include the default wrapper fluidObject in our list of available fluidObjects

@@ -28,7 +28,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
-import { FluidDataStoreRegistry, MultipleDataStoreRegistries } from "@fluidframework/runtime-utils";
+import { createDataStoreRegistry, MultipleDataStoreRegistries } from "@fluidframework/runtime-utils";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -113,7 +113,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
         const chaincode = new Chaincode(context.closeFn);
 
         let registry: IFluidDataStoreRegistry =
-            new FluidDataStoreRegistry([[chaincode.type, Promise.resolve(chaincode)]]);
+            createDataStoreRegistry([[chaincode.type, Promise.resolve(chaincode)]]);
         if (this.registries) {
             registry = new MultipleDataStoreRegistries(
                 registry,

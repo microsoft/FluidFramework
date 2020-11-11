@@ -4,7 +4,7 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { createDataStoreFactory, FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { createDataStoreFactory, createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 import { VersiontestInstantiationFactory } from "./main";
 
@@ -14,7 +14,7 @@ const defaultFactory = createDataStoreFactory(fluidPackageName, VersiontestInsta
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     defaultFactory,
-    new FluidDataStoreRegistry([
+    createDataStoreRegistry([
         [defaultFactory.type, Promise.resolve(defaultFactory)],
     ]),
 );

@@ -9,7 +9,7 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { FluidDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -109,7 +109,7 @@ export const ImageGalleryInstantiationFactory = new DataObjectFactory(
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     ImageGalleryInstantiationFactory,
-    new FluidDataStoreRegistry([
+    createDataStoreRegistry([
         [imageGalleryName, Promise.resolve(ImageGalleryInstantiationFactory)],
     ]),
 );
