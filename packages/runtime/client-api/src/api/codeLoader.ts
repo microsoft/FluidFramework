@@ -67,7 +67,7 @@ export class Chaincode implements IFluidDataStoreFactory {
         modules.set(directoryFactory.type, directoryFactory);
         modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
 
-        const runtimeFactory = mixinRequestHandler(
+        const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const document = await routerP;
                 if (request.url === "" || request.url === "/") {
@@ -81,7 +81,7 @@ export class Chaincode implements IFluidDataStoreFactory {
                 }
             });
 
-        const runtime = new runtimeFactory(context, modules);
+        const runtime = new runtimeClass(context, modules);
 
         // Initialize core data structures
         let root: map.ISharedMap;

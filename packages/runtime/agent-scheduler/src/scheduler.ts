@@ -477,13 +477,13 @@ export class TaskManagerFactory implements IFluidDataStoreFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 
-        const runtimeFactory = mixinRequestHandler(
+        const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await routerP;
                 return router.request(request);
             });
 
-        const runtime = new runtimeFactory(context, dataTypes);
+        const runtime = new runtimeClass(context, dataTypes);
         const routerP = TaskManager.load(runtime, context);
 
         return runtime;

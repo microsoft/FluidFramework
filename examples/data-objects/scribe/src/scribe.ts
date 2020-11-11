@@ -484,13 +484,13 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        const runtimeFactory = mixinRequestHandler(
+        const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await routerP;
                 return router.request(request);
             });
 
-        const runtime = new runtimeFactory(context, dataTypes);
+        const runtime = new runtimeClass(context, dataTypes);
         const routerP = Scribe.load(runtime, context);
 
         return runtime;

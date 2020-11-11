@@ -157,13 +157,13 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
             }
         }
 
-        const runtimeFactory = mixinRequestHandler(
+        const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await routerP;
                 return router.request(request);
             });
 
-        const runtime = new runtimeFactory(context, dataTypes);
+        const runtime = new runtimeClass(context, dataTypes);
         const routerP = TestFluidObject.load(runtime, runtime, context, factoryEntriesMapForObject);
 
         return runtime;

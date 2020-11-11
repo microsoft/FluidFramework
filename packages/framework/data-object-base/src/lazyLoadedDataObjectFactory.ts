@@ -49,13 +49,13 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
     public get IFluidDataStoreFactory() { return this; }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        const runtimeFactory = mixinRequestHandler(
+        const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await instance;
                 return router.request(request);
             });
 
-        const runtime = new runtimeFactory(context, this.ISharedObjectRegistry);
+        const runtime = new runtimeClass(context, this.ISharedObjectRegistry);
 
         // Note this may synchronously return an instance or a deferred LazyPromise,
         // depending of if a new store is being created or an existing store

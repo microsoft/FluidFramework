@@ -321,13 +321,13 @@ export function instantiateDataStore(context: IFluidDataStoreContext) {
     modules.set(objectSequenceFactory.type, objectSequenceFactory);
     modules.set(numberSequenceFactory.type, numberSequenceFactory);
 
-    const runtimeFactory = mixinRequestHandler(
+    const runtimeClass = mixinRequestHandler(
         async (request: IRequest) => {
             const router = await routerP;
             return router.request(request);
         });
 
-    const runtime = new runtimeFactory(context, modules);
+    const runtime = new runtimeClass(context, modules);
     const routerP = SharedTextRunner.load(runtime, context);
 
     return runtime;
