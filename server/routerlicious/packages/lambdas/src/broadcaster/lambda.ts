@@ -26,6 +26,10 @@ class BroadcasterBatch {
     }
 }
 
+// Set immediate is not available in all environments, specifically it does not work in a browser.
+// Fallback to set timeout in those cases
+const taskScheduleFunction: (cb: () => void) => void = typeof setImmediate === "function" ? setImmediate : setTimeout;
+
 export class BroadcasterLambda implements IPartitionLambda {
     private pending = new Map<string, BroadcasterBatch>();
     private pendingOffset: IQueuedMessage;
@@ -83,9 +87,9 @@ export class BroadcasterLambda implements IPartitionLambda {
             return;
         }
 
-        // Invoke the next send after a setImmediate to give IO time to create more batches
+        // Invoke the next send after a delay to give IO time to create more batches
         this.isMessageSending = true;
-        setImmediate(() => {
+        taskScheduleFunction(() => {
             const batchOffset = this.pendingOffset;
 
             this.current = this.pending;

@@ -106,6 +106,7 @@ import {
     requestFluidObject,
     createDataStoreRegistry,
     MultipleDataStoreRegistries,
+    convertSnapshotTreeToSummaryTree,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import {
@@ -128,7 +129,6 @@ import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager } from "./blobManager";
-import { convertSnapshotToSummaryTree } from "./utils";
 
 const chunksBlobName = ".chunks";
 const blobsTreeName = ".blobs";
@@ -1059,9 +1059,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
 
-        const summaryTree = await this.summarize(true /* fullTree */, false /* trackState */);
-        // back-compat summarize - Remove this once we start return ISummaryTree here.
-        const snapshot = convertSummaryTreeToITree(summaryTree.summary);
+        const snapshot = await this.snapshot();
         const state: IPreviousState = {
             reload: true,
             summaryCollection: this.summarizer.summaryCollection,
@@ -1684,7 +1682,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         // which it was created as it is detached container. So just use the previous snapshot.
                         assert(!!this.context.baseSnapshot,
                             "BaseSnapshot should be there as detached container loaded from snapshot");
-                        dataStoreSummary = convertSnapshotToSummaryTree(this.context.baseSnapshot.trees[key]);
+                        dataStoreSummary = convertSnapshotTreeToSummaryTree(this.context.baseSnapshot.trees[key]);
                     }
                     builder.addWithStats(key, dataStoreSummary);
                 });
