@@ -4,7 +4,7 @@
  */
 
 import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidObjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreContext,
@@ -147,11 +147,6 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
             dataTypes.set(factory.type, factory);
         }
 
-        const runtime = FluidDataStoreRuntime.load(
-            context,
-            dataTypes,
-        );
-
         // Create a map from the factory entries with entries that don't have the id as undefined. This will be
         // passed to the Fluid object.
         const factoryEntriesMapForObject = new Map<string, IChannelFactory>();
@@ -162,11 +157,14 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
             }
         }
 
-        const testFluidObjectP = TestFluidObject.load(runtime, runtime, context, factoryEntriesMapForObject);
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const testFluidObject = await testFluidObjectP;
-            return testFluidObject.request(request);
-        });
+        const runtimeFactory = mixinRequestHandler(
+            async (request: IRequest) => {
+                const router = await routerP;
+                return router.request(request);
+            });
+
+        const runtime = new runtimeFactory(context, dataTypes);
+        const routerP = TestFluidObject.load(runtime, runtime, context, factoryEntriesMapForObject);
 
         return runtime;
     }
