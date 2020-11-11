@@ -495,7 +495,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             const { catchupOpsP } = await this.client.load(
                 this.runtime,
                 new ObjectStoragePartition(storage, contentPath),
-                branchId);
+            );
 
             // setup a promise to process the
             // catch up ops, and finishing the loading process
