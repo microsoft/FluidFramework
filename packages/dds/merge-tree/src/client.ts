@@ -1047,9 +1047,7 @@ export class Client {
 
     getLength() { return this.mergeTree.length; }
 
-    startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0) {
-        // TODO remove
-        const branchId = 0;
+    startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0, branchId = 0) {
         // we should always have a client id if we are collaborating
         // if the client id is undefined we are likely bound to a detached
         // container, so we should keep going in local mode. once
