@@ -1111,7 +1111,7 @@ describe("Directory", () => {
                     garbageCollectionNode.routes,
                     [
                         subMap.handle.absolutePath,
-                        subMap2.handle.absolutePath,
+                        subMap3.handle.absolutePath,
                     ],
                     "Referenced routes is incorrect");
             });

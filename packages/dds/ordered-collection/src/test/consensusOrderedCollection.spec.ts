@@ -209,12 +209,11 @@ describe("ConsensusOrderedCollection", () => {
     });
 
     describe("Attached, connected", () => {
-        let containerRuntimeFactory: MockContainerRuntimeFactory;
+        const containerRuntimeFactory: MockContainerRuntimeFactory = new MockContainerRuntimeFactory();
         let counter = 0;
 
         generate([1, 2], [1, 2],
             () => {
-                containerRuntimeFactory = new MockContainerRuntimeFactory();
                 const dataStoreRuntime = new MockFluidDataStoreRuntime();
                 const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
                 const services: IChannelServices = {
