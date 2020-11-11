@@ -126,6 +126,10 @@ import { convertSnapshotToSummaryTree } from "./utils";
 
 const chunksBlobName = ".chunks";
 
+// forward-compat for 0.28+
+const blobsTreeName = ".blobs";
+const nonDataStorePaths = [".protocol", ".logTail", ".serviceProtocol", blobsTreeName];
+
 export enum ContainerMessageType {
     // An op to be delivered to store
     FluidDataStoreOp = "component",
@@ -754,7 +758,7 @@ export class ContainerRuntime extends EventEmitter
         if (typeof context.baseSnapshot === "object") {
             const baseSnapshot = context.baseSnapshot;
             Object.keys(baseSnapshot.trees).forEach((value) => {
-                if (value !== ".protocol" && value !== ".logTail" && value !== ".serviceProtocol") {
+                if (!nonDataStorePaths.includes(value)) {
                     const tree = baseSnapshot.trees[value];
                     fluidDataStores.set(value, tree);
                 }
