@@ -67,7 +67,7 @@ describe("Table Document with Interception", () => {
 
         beforeEach(async () => {
             const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
-                TableDocumentType,
+                TableDocument.getFactory(),
                 new Map([
                     [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
                 ]),

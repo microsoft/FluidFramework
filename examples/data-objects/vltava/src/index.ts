@@ -16,6 +16,7 @@ import {
     IFluidLastEditedTracker,
 } from "@fluidframework/last-edited-experimental";
 import {
+    IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntries,
@@ -67,10 +68,10 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectIn
 
 export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultDataStore {
     constructor(
-        defaultFluidObjectName: string,
+        defaultFactory: IFluidDataStoreFactory,
         registryEntries: NamedFluidDataStoreRegistryEntries,
     ) {
-        super(defaultFluidObjectName, registryEntries);
+        super(defaultFactory, registryEntries);
     }
 
     /**
@@ -129,7 +130,7 @@ const generateFactory = () => {
     // TODO: You should be able to specify the default registry instead of just a list of fluidObjects
     // and the default registry is already determined Issue:#1138
     return new VltavaRuntimeFactory(
-        Anchor.getFactory().type,
+        Anchor.getFactory(),
         [
             ...containerFluidObjects,
             LastEditedTrackerDataObject.getFactory().registryEntry,

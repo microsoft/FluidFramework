@@ -8,8 +8,8 @@ import cloneDeep from "lodash/cloneDeep";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ISequencedDocumentMessage,
-    ITree,
     ISnapshotTree,
+    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
     IChannel,
@@ -17,7 +17,7 @@ import {
     IChannelFactory,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreContext, ISummarizeResult } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext, ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { convertToSummaryTree } from "@fluidframework/runtime-utils";
@@ -119,19 +119,29 @@ export class LocalChannelContext implements IChannelContext {
         this.services.value.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
-    public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        return this.getAttachSnapshot();
-    }
-
-    public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
-        const snapshot = this.getAttachSnapshot();
+    /**
+     * Returns a summary at the current sequence number.
+     * @param fullTree - true to bypass optimizations and force a full summary tree
+     * @param trackState - This tells whether we should track state from this summary.
+     */
+    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummarizeResult> {
+        assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to take summary");
+        const snapshot = snapshotChannel(this.channel);
         const summary = convertToSummaryTree(snapshot, fullTree);
         return summary;
     }
 
-    public getAttachSnapshot(): ITree {
+    public getAttachSummary(): ISummaryTreeWithStats {
         assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to take snapshot");
-        return snapshotChannel(this.channel);
+        const snapshot = snapshotChannel(this.channel);
+        const summaryTree = convertToSummaryTree(snapshot, true /* fullTree */);
+        assert(
+            summaryTree.summary.type === SummaryType.Tree,
+            "summarize should always return a tree when fullTree is true");
+        return {
+            stats: summaryTree.stats,
+            summary: summaryTree.summary,
+        };
     }
 
     private async loadChannel(): Promise<IChannel> {

@@ -102,8 +102,7 @@ describe("Data Store Creation Tests", () => {
                 new TelemetryNullLogger(),
                 (() => { }) as unknown as SummarizeInternalFn,
                 0,
-                0,
-                true);
+                0);
             getCreateSummarizerNodeFn = (id: string) => (si: SummarizeInternalFn) => summarizerNode.createChild(
                 si,
                 id,
