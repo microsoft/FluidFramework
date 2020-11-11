@@ -105,7 +105,7 @@ export class BroadcasterLambda implements IPartitionLambda {
 
         // Set immediate is not available in all environments, specifically it does not work in a browser.
         // Fallback to set timeout in those cases.
-        if (setImmediate === undefined) {
+        if (typeof setImmediate !== "function") {
             setTimeout(callback, 0);
         } else {
             setImmediate(callback);
