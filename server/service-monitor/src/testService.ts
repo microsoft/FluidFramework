@@ -108,6 +108,9 @@ export async function testFluidService(config: Provider): Promise<void> {
             scopes: ["doc:read", "doc:write", "summary:write"],
             tenantId: params.tenant,
             user: { id: "node-user" },
+            iat: Math.round(new Date().getTime() / 1000),
+            exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
+            ver: "1.0",
         },
         params.secret);
 
