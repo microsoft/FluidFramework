@@ -26,17 +26,17 @@ class BroadcasterBatch {
     }
 }
 
+// Set immediate is not available in all environments, specifically it does not work in a browser.
+// Fallback to set timeout in those cases
+const taskScheduleFunction: (cb: () => void) => void = typeof setImmediate === "function" ? setImmediate : setTimeout;
+
 export class BroadcasterLambda implements IPartitionLambda {
     private pending = new Map<string, BroadcasterBatch>();
     private pendingOffset: IQueuedMessage;
     private current = new Map<string, BroadcasterBatch>();
     private isMessageSending: boolean = false;
-    private readonly taskScheduleFunction: (callback: () => void) => void;
 
     constructor(private readonly publisher: IPublisher, protected context: IContext) {
-        // Set immediate is not available in all environments, specifically it does not work in a browser.
-        // Fallback to set timeout in those cases.
-        this.taskScheduleFunction = typeof setImmediate === "function" ? setImmediate : setTimeout;
     }
 
     public handler(message: IQueuedMessage): void {
@@ -89,7 +89,7 @@ export class BroadcasterLambda implements IPartitionLambda {
 
         // Invoke the next send after a delay to give IO time to create more batches
         this.isMessageSending = true;
-        this.taskScheduleFunction(() => {
+        taskScheduleFunction(() => {
             const batchOffset = this.pendingOffset;
 
             this.current = this.pending;
