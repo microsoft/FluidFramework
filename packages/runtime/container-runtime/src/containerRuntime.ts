@@ -1079,8 +1079,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const content = JSON.stringify([...this.chunkMap]);
             summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
-        const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
-        summaryTreeBuilder.addWithStats(".blobs", blobsTree);
+        const blobsTree = this.blobManager.snapshot();
+        if (blobsTree) {
+            summaryTreeBuilder.addWithStats(".blobs", convertToSummaryTree(blobsTree, false));
+        }
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
