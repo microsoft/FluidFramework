@@ -134,9 +134,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         if (this.runtime.attachState !== AttachState.Detached) {
             this.services = services;
         }
-        await this.loadCore(
-            branchId,
-            services.objectStorage);
+        await this.loadCore(services.objectStorage);
         if (this.runtime.attachState !== AttachState.Detached) {
             this.attachDeltaHandler();
         }
@@ -198,12 +196,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     /**
      * Allows the distributed data type to perform custom loading
-     * @param branchId - Branch ID
      * @param services - Storage used by the shared object
      */
-    protected abstract loadCore(
-        branchId: string | undefined,
-        services: IChannelStorageService): Promise<void>;
+    protected abstract loadCore(services: IChannelStorageService): Promise<void>;
 
     /**
      * Allows the distributed data type to perform custom local loading.
