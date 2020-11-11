@@ -94,6 +94,7 @@ describe("context reload", function() {
         return Promise.all(containers.map(
             async (container) => new Promise((resolve, reject) =>
                 container.on("contextChanged", (code: IFluidCodeDetails) =>
+                    // eslint-disable-next-line prefer-promise-reject-errors
                     typeof code.package === "object" && code.package.version === version ? resolve() : reject()))));
     };
 
@@ -114,9 +115,10 @@ describe("context reload", function() {
 
     const createRuntimeFactory = (dataStore): IRuntimeFactory => {
         const type = TestDataStore.type;
+        const factory = new DataObjectFactory(type, dataStore, [], {});
         return new ContainerRuntimeFactoryWithDefaultDataStore(
-            type,
-            [[type, Promise.resolve(new DataObjectFactory(type, dataStore, [], {}))]],
+            factory,
+            [[type, Promise.resolve(factory)]],
         );
     };
 
@@ -158,7 +160,7 @@ describe("context reload", function() {
                 if (op.type === "summaryAck") {
                     resolve();
                 } else if (op.type === "summaryNack") {
-                    reject();
+                    reject(new Error("summaryNack"));
                 }
             }));
         });

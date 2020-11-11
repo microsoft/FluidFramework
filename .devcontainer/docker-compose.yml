@@ -7,20 +7,20 @@ services:
         user: node
 
         # Using a Dockerfile is optional, but included for completeness.
-        build: 
+        build:
             context: .
-            dockerfile: Dockerfile  
+            dockerfile: Dockerfile
 
         # Uncomment to expose one or more ports
         ports:
-        - "8080:8080"  
-        
+        - "8080:8080"
+
         volumes:
             # This is where VS Code should expect to find your project's source code
             # and the value of "workspaceFolder" in .devcontainer/devcontainer.json
-            - ..:/workspace  
+            - ..:/workspace
             # Uncomment the next line to use Docker from inside the container. See https://aka.ms/vscode-remote/samples/docker-in-docker-compose for details.
-            - /var/run/docker.sock:/var/run/docker.sock 
+            - /var/run/docker.sock:/var/run/docker.sock
 
         # Overrides default command so things don't shut down after the process ends.
         command: sleep infinity
@@ -97,9 +97,6 @@ services:
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
-        restart: always
-    cobalt:
-        image: prague.azurecr.io/cobalt:1544
         restart: always
     gitrest:
         image: prague.azurecr.io/gitrest:4048

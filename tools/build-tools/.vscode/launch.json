@@ -12,6 +12,19 @@
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "policy-check",
+            "program": "${workspaceFolder}\\dist\\repoPolicyCheck\\repoPolicyCheck.js",
+            "args": [
+                ""
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ],
+            "cwd": "${workspaceFolder}",
         }
-    ]
+    ],
 }

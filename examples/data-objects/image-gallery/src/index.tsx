@@ -106,7 +106,7 @@ export const ImageGalleryInstantiationFactory = new DataObjectFactory(
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    imageGalleryName,
+    ImageGalleryInstantiationFactory,
     new Map([
         [imageGalleryName, Promise.resolve(ImageGalleryInstantiationFactory)],
     ]),

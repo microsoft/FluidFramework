@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
 import { assert } from "@fluidframework/common-utils";
@@ -142,7 +143,7 @@ class ContainerUrlResolver implements IUrlResolver {
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         if (!this.cache.has(request.url)) {
-            return Promise.reject(`ContainerUrlResolver can't resolve ${request}`);
+            return Promise.reject(new Error(`ContainerUrlResolver can't resolve ${request}`));
         }
         return this.cache.get(request.url);
     }
@@ -430,10 +431,10 @@ export class ReplayTool {
 
     private async setup() {
         if (this.args.inDirName === undefined) {
-            return Promise.reject("Please provide --indir argument");
+            return Promise.reject(new Error("Please provide --indir argument"));
         }
         if (!fs.existsSync(this.args.inDirName)) {
-            return Promise.reject("File does not exist");
+            return Promise.reject(new Error("File does not exist"));
         }
 
         this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
@@ -450,12 +451,12 @@ export class ReplayTool {
         if (this.args.version !== undefined) {
             console.log(`Starting from ${this.args.version}, seq# = ${this.mainDocument.currentOp}`);
             if (this.mainDocument.currentOp > this.args.to) {
-                return Promise.reject("--to argument is below snapshot starting op. Nothing to do!");
+                return Promise.reject(new Error("--to argument is below snapshot starting op. Nothing to do!"));
             }
         }
 
-        if (this.args.initalizeFromSnapshotsDir) {
-            for (const node of fs.readdirSync(this.args.initalizeFromSnapshotsDir, { withFileTypes: true })) {
+        if (this.args.initializeFromSnapshotsDir) {
+            for (const node of fs.readdirSync(this.args.initializeFromSnapshotsDir, { withFileTypes: true })) {
                 let storage;
                 if (node.isDirectory()) {
                     // Did we load it already as main doc?
@@ -463,15 +464,16 @@ export class ReplayTool {
                         continue;
                     }
 
-                    const file = `${this.args.initalizeFromSnapshotsDir}/${node.name}/tree.json`;
+                    const file = `${this.args.initializeFromSnapshotsDir}/${node.name}/tree.json`;
                     if (!fs.existsSync(file)) {
                         console.error(`${file} does not exist, skipping ${node.name} snapshot`);
                         continue;
                     }
-                    storage = new FluidFetchReaderFileSnapshotWriter(this.args.initalizeFromSnapshotsDir, node.name);
+                    storage = new FluidFetchReaderFileSnapshotWriter(this.args.initializeFromSnapshotsDir, node.name);
                 } else {
                     if (node.name.startsWith("snapshot_")) {
-                        const content = fs.readFileSync(`${this.args.initalizeFromSnapshotsDir}/${node.name}`, "utf-8");
+                        const content = fs.readFileSync(
+                            `${this.args.initializeFromSnapshotsDir}/${node.name}`, "utf-8");
                         const snapshot = JSON.parse(content) as IFileSnapshot;
                         storage = new FileSnapshotReader(snapshot);
                     } else {
@@ -596,7 +598,7 @@ export class ReplayTool {
             content.snapshot = snapshot;
             if (this.args.compare) {
                 this.compareSnapshots(
-                    content,
+                    content.snapshotAsString,
                     `${dir}/${this.mainDocument.getFileName()}`);
             } else if (this.args.write) {
                 fs.mkdirSync(dir, { recursive: true });
@@ -795,41 +797,25 @@ export class ReplayTool {
         }
     }
 
-    private compareSnapshots(content: ContainerContent, filename: string) {
-        // normalize the snapshots
-        const packageVersionRegex = /["\\]+packageVersion["\\]+:["\\]+.+["\\]+/g;
-        const packageVersionPlaceholder = "\"packageVersion\":\"XXX\"";
-        const snapshotAsString = fs.readFileSync(
-            `${filename}.json`,
-            { encoding: "utf-8" }).replace(packageVersionRegex, packageVersionPlaceholder);
-        const contentString =
-            content.snapshotAsString.replace(packageVersionRegex, packageVersionPlaceholder);
+    private compareSnapshots(contentAsString: string, filename: string) {
+        /**
+         * Normalize the snapshots. The packageVersion of the snapshot could be different from the reference snapshot.
+         * Replace all package versions with X before we compare them. This is how it will looks like:
+         * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
+         * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
+         */
+        const packageVersionRegex = /\\"packageversion\\":\\".+\\"/gi;
+        const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
 
-        if (snapshotAsString !== contentString) {
-            const fileLines = snapshotAsString.split("\n");
-            const contentLines = contentString.split("\n");
-            let line = 0;
-            const maxLines = Math.max(fileLines.length, contentLines.length);
-            while (line < maxLines && fileLines[line] === contentLines[line]) {
-                line++;
-            }
+        const snapshotAsString = fs.readFileSync(`${filename}.json`, "utf-8");
+        const snapshotObject = JSON.parse(snapshotAsString.replace(packageVersionRegex, packageVersionPlaceholder));
+        const contentObject = JSON.parse(contentAsString.replace(packageVersionRegex, packageVersionPlaceholder));
 
-            const fileLine = fileLines[line] ?? "";
-            const contentLine = contentLines[line] ?? "";
-
-            let char = 0;
-            const maxChars = Math.max(fileLine.length, contentLine.length);
-            while (char < maxChars && fileLine.charAt(char) === contentLine.charAt(char)) {
-                char++;
-            }
-
-            const start = Math.max(0, char - 64);
-            const end = char + 64;
-
-            this.reportError(
-                `Mismatch in snapshot ${filename}.json @${line}:${char}
-                +${fileLine.substr(start, end).trim()}
-                -${contentLine.substr(start, end).trim()}`);
+        // Put the assert in a try catch block, so that we can report errors, if any.
+        try {
+            strict.deepStrictEqual(contentObject, snapshotObject);
+        } catch (error) {
+            this.reportError(`Mismatch in snapshot ${filename}.json`, error);
         }
     }
 }

@@ -5,7 +5,7 @@
 
 import { parse } from "url";
 import _ from "lodash";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
@@ -13,14 +13,15 @@ import { Router } from "express";
 import safeStringify from "json-stringify-safe";
 import jwt from "jsonwebtoken";
 import { Provider } from "nconf";
-import { v4 } from "uuid";
+import { v4 as uuid } from "uuid";
 import winston from "winston";
 import dotenv from "dotenv";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
-import { getConfig, getJWTClaims, getUserDetails, queryParamAsString } from "../utils";
+import { getConfig, getJWTClaims, getR11sToken, getUserDetails, queryParamAsString } from "../utils";
 import { defaultPartials } from "./partials";
+import { getUser, IExtendedUser } from "./utils";
 
 dotenv.config();
 
@@ -67,7 +68,7 @@ export function create(
                 response.redirect(redirectUrl);
             } else {
                 const claims = getJWTClaims(request);
-                const jwtToken = jwt.sign(claims, jwtKey);
+                const hostToken = jwt.sign(claims, jwtKey);
 
                 const rawPath = request.params[0];
                 const slash = rawPath.indexOf("/");
@@ -78,8 +79,10 @@ export function create(
 
                 const search = parse(request.url).search;
                 const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+                const user = getUser(request);
+                const accessToken = getR11sToken(tenantId, documentId, appTenants, scopes, user as IExtendedUser);
                 const [resolvedP, fullTreeP] =
-                    resolveUrl(config, alfred, appTenants, tenantId, documentId, scopes, request, driveId);
+                    resolveUrl(config, alfred, tenantId, documentId, accessToken, request, driveId);
 
                 const workerConfig = getConfig(
                     config.get("worker"),
@@ -114,7 +117,7 @@ export function create(
                                         },
                                     },
                                 },
-                                name: `@gateway/${v4()}`,
+                                name: `@gateway/${uuid()}`,
                                 version: "0.0.0",
                             },
                         };
@@ -177,7 +180,8 @@ export function create(
                                 clientId: _.isEmpty(configClientId)
                                 ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : configClientId,
                                 config: workerConfig,
-                                jwt: jwtToken,
+                                hostToken,
+                                accessToken,
                                 partials: defaultPartials,
                                 resolved: JSON.stringify(resolved),
                                 scripts,
