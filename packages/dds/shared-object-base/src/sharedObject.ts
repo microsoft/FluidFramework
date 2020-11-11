@@ -195,7 +195,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     public summarize(fullTree: boolean = false): IChannelSummarizeResult {
         // Create a SummarySerializer that will be used to serialize any IFluidHandles in this object. The
-        // IFluidHandles represents route to any referenced fluid object.
+        // IFluidHandles represents route to any referenced Fluid object.
         // SummarySerializer tracks the routes of all handles that it serializes.
         const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
 

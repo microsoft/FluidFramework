@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 /**
- * Represents the format of a node in the graph of fluid objects in a Container.
+ * Represents the format of a node in the graph of Fluid objects in a Container.
  * Garbage collection navigates this graph to find objects that are not used.
  */
 export interface IGarbageCollectionNode {
