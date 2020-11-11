@@ -447,7 +447,7 @@ describe("Matrix", () => {
 
                 // Load the snapshot into a newly created 2nd SharedMatrix.
                 const matrix2 = new SharedMatrix<T>(dataStoreRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
-                await matrix2.load(/*branchId: */ null as any, {
+                await matrix2.load({
                     deltaConnection: new MockEmptyDeltaConnection(),
                     objectStorage
                 });
