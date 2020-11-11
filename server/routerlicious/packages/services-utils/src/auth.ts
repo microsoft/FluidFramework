@@ -38,8 +38,8 @@ export function validateTokenClaims(
 }
 
 /**
- * Generates a JWT token to authorize routerlicious. This function uses a browser friendly auth library (jsrsasign)
- * and should only be used in client context.
+ * Generates a JWT token to authorize routerlicious. This function uses a large auth library (jsonwebtoken)
+ * and should only be used in server context.
  */
 // TODO: We should use this library in all server code rather than using jsonwebtoken directly.
 export function generateToken(
