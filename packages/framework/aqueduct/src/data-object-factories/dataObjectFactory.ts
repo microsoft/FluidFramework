@@ -15,12 +15,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { FluidObjectSymbolProvider } from "@fluidframework/synthesize";
-import {
-    FluidDataStoreRuntime,
-    mixinSummaryHandler,
- } from "@fluidframework/datastore";
- import { assert } from "@fluidframework/common-utils";
- import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 
 import { DataObject, IDataObjectProps } from "../data-objects";
 import { PureDataObjectFactory } from "./pureDataObjectFactory";
@@ -66,57 +61,5 @@ export class DataObjectFactory<TObj extends DataObject<O, S, E>, O, S, E extends
             registryEntries,
             runtimeFactory,
         );
-    }
-}
-
-// This is just an example!
-// This code will not be here, it needs to be in FCL, as this is contract between SPO and
-// Office Fluid container / components.
-// For time being, this code will be in Office Bohemia code base.
-export interface ISearchableDataObject extends IProvideSearchableDataObject {
-    searchHandler(): Promise<string>;
-}
-
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideSearchableDataObject>> {
-    }
-}
-
-export const ISearchableDataObject: keyof IProvideSearchableDataObject = "ISearchableDataObject";
-
-export interface IProvideSearchableDataObject {
-    readonly ISearchableDataObject: ISearchableDataObject;
-}
-
-export const createSearchDataStoreFactory = (runtimeFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime) =>
-    mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
-        const obj: IFluidObject = await DataObject.getDataObject(runtime) as IFluidObject;
-        assert(obj.ISearchableDataObject !== undefined);
-        const content = await obj.ISearchableDataObject.searchHandler();
-        return {
-            path: ["_search", "01"],
-            content,
-        };
-    }, runtimeFactory);
-
-//
-// Usage example
-//
-export class SearchableDataObjectExample extends DataObject implements ISearchableDataObject {
-    private static readonly factory = new DataObjectFactory(
-        "SearchableSample",
-        SearchableDataObjectExample,
-        [],
-        {},
-        undefined,
-        createSearchDataStoreFactory(),
-    );
-
-    public get ISearchableDataObject() { return this; }
-    public static getFactory() { return this.factory; }
-
-    public async searchHandler(): Promise<string> {
-        return "some content to be indexed";
     }
 }
