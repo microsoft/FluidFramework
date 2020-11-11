@@ -377,7 +377,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly existing: boolean;
     public options: any = {};
     public clientId: string | undefined = uuid();
-    public readonly parentBranch: string;
     public readonly path = "";
     public readonly connected = true;
     public readonly leader: boolean;

@@ -40,11 +40,10 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             serviceConfiguration);
     }
 
+    // TODO remove after client packages update
     public get parentBranch(): string {
-        return this._parentBranch;
+        return null;
     }
-
-    private readonly _parentBranch: string;
 
     constructor(
         public readonly existing: boolean,
@@ -56,10 +55,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         private readonly client: IClient,
         public readonly maxMessageSize: number,
         public readonly serviceConfiguration: IServiceConfiguration,
-    ) {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        this._parentBranch = document.parent ? document.parent.documentId : null;
-    }
+    ) { }
 
     /**
      * Sends the client join op for this connection

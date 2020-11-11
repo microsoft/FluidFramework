@@ -49,6 +49,7 @@ export interface IConnectMessage {
 export interface IConnectedMessage {
     clientId: string;
     existing: boolean;
+    // TODO remove after client packages update
     parentBranch: string;
     maxMessageSize: number;
     serviceConfiguration: IServiceConfiguration;

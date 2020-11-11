@@ -72,6 +72,7 @@ export interface IConnected {
      */
     maxMessageSize: number;
 
+    // TODO remove after client packages update
     /**
      * The parent branch for the document
      */

@@ -127,11 +127,6 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     existing: boolean;
 
     /**
-     * The parent branch for the document
-     */
-    parentBranch: string | null;
-
-    /**
      * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.
      */
     maxMessageSize: number;

@@ -81,13 +81,6 @@ export class Document extends EventEmitter {
     }
 
     /**
-     * Returns the parent branch for this document
-     */
-    public get parentBranch(): string | null {
-        return this.runtime.parentBranch;
-    }
-
-    /**
      * Flag indicating whether this document is fully connected.
      */
     public get isConnected(): boolean {

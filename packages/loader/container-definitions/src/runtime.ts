@@ -119,7 +119,6 @@ export interface IContainerContext extends IDisposable {
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly codeDetails: IFluidCodeDetails;
-    readonly parentBranch: string | null;
     readonly storage: IDocumentStorageService | undefined | null;
     readonly connected: boolean;
     readonly branch: string;

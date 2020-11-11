@@ -24,6 +24,7 @@ import {
 import { ISubscriber } from "./pubsub";
 
 export class LocalOrdererConnection implements IOrdererConnection {
+    // TODO remove after client packages update
     public readonly parentBranch: string;
 
     constructor(
@@ -38,7 +39,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
         public readonly maxMessageSize: number,
         public readonly serviceConfiguration: IServiceConfiguration,
     ) {
-        this.parentBranch = document.parent ? document.parent.documentId : null;
+        this.parentBranch = null;
     }
 
     public async connect() {

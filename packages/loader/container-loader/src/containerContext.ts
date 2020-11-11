@@ -109,10 +109,6 @@ export class ContainerContext implements IContainerContext {
         return this.attributes.branch;
     }
 
-    public get parentBranch(): string | null {
-        return this.container.parentBranch;
-    }
-
     public get runtimeVersion(): string | undefined {
         return this.runtime?.runtimeVersion;
     }
