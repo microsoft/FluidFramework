@@ -1066,9 +1066,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
 
-        const summaryTree = await this.summarize(true /* fullTree */, false /* trackState */);
-        // back-compat summarize - Remove this once we start return ISummaryTree here.
-        const snapshot = convertSummaryTreeToITree(summaryTree.summary);
+        const snapshot = await this.snapshot();
         const state: IPreviousState = {
             reload: true,
             summaryCollection: this.summarizer.summaryCollection,
