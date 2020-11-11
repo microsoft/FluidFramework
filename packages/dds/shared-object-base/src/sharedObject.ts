@@ -19,7 +19,7 @@ import {
     IChannelSummarizeResult,
     IGarbageCollectionNode,
 } from "@fluidframework/runtime-definitions";
-import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
+import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
@@ -81,6 +81,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
+     * The serializer to use to serialize / parse handles, if any.
+     */
+    protected readonly serializer: IFluidSerializer;
+
+    /**
      * @param id - The id of the shared object
      * @param runtime - The IFluidDataStoreRuntime which contains the shared object
      * @param attributes - Attributes of the shared object
@@ -101,6 +106,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.logger = ChildLogger.create(
             // eslint-disable-next-line no-null/no-null
             runtime !== null ? runtime.logger : undefined, undefined, { sharedObjectId: uuid() });
+
+        this.serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
 
         this.attachListeners();
     }
@@ -212,7 +219,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).snapshot}
      */
     public snapshot(): ITree {
-        return this.snapshotCore(this.runtime.IFluidSerializer);
+        return this.snapshotCore(this.serializer);
     }
 
     protected abstract snapshotCore(serializer: IFluidSerializer): ITree;

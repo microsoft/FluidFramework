@@ -406,7 +406,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * Root of the SharedDirectory, most operations on the SharedDirectory itself act on the root.
      */
-    private readonly root: SubDirectory = new SubDirectory(this, this.runtime, posix.sep);
+    private readonly root: SubDirectory = new SubDirectory(this, this.runtime, this.serializer, posix.sep);
 
     /**
      * Mapping of op types to message handlers.
@@ -426,7 +426,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
-        this.localValueMaker = new LocalValueMaker(runtime);
+        this.localValueMaker = new LocalValueMaker(this.serializer);
         this.setMessageHandlers();
     }
 
@@ -681,6 +681,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         newSubDir = new SubDirectory(
                             this,
                             this.runtime,
+                            this.serializer,
                             posix.join(currentSubDir.absolutePath, subdirName),
                         );
                         currentSubDir.populateSubDirectory(subdirName, newSubDir);
@@ -888,7 +889,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
-                    const translatedValue = this.runtime.IFluidSerializer.parse(JSON.stringify(op.value.value));
+                    const translatedValue = this.serializer.parse(JSON.stringify(op.value.value));
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
                     this.emit("valueChanged", event, local, message);
@@ -946,11 +947,13 @@ class SubDirectory implements IDirectory {
      * Constructor.
      * @param directory - Reference back to the SharedDirectory to perform operations
      * @param runtime - The data store runtime this directory is associated with
+     * @param serializer - The serializer to serialize / parse handles
      * @param absolutePath - The absolute path of this IDirectory
      */
     constructor(
         private readonly directory: SharedDirectory,
         private readonly runtime: IFluidDataStoreRuntime,
+        private readonly serializer: IFluidSerializer,
         public readonly absolutePath: string) {
     }
 
@@ -1009,7 +1012,7 @@ class SubDirectory implements IDirectory {
         const localValue = this.directory.localValueMaker.fromInMemory(value);
         const serializableValue = makeSerializable(
             localValue,
-            this.runtime.IFluidSerializer,
+            this.serializer,
             this.directory.handle);
 
         // Set the value locally.
@@ -1583,7 +1586,11 @@ class SubDirectory implements IDirectory {
         if (!this._subdirectories.has(subdirName)) {
             this._subdirectories.set(
                 subdirName,
-                new SubDirectory(this.directory, this.runtime, posix.join(this.absolutePath, subdirName)),
+                new SubDirectory(
+                    this.directory,
+                    this.runtime,
+                    this.serializer,
+                    posix.join(this.absolutePath, subdirName)),
             );
         }
     }

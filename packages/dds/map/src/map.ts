@@ -151,7 +151,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     ) {
         super(id, runtime, attributes);
         this.kernel = new MapKernel(
-            runtime,
+            this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             () => this.isAttached(),
@@ -323,7 +323,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     public getSerializableStorage(): IMapDataObjectSerializable {
-        return this.kernel.getSerializableStorage(this.runtime.IFluidSerializer);
+        return this.kernel.getSerializableStorage(this.serializer);
     }
 
     /**

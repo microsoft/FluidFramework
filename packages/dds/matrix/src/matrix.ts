@@ -453,14 +453,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         //       (See https://github.com/microsoft/FluidFramework/issues/2559)
         assert(this.isAttached() === true);
 
-        super.submitLocalMessage(
-            makeHandlesSerializable(
-                message,
-                this.runtime.IFluidSerializer,
-                this.handle,
-            ),
-            localOpMetadata,
-        );
+        super.submitLocalMessage(makeHandlesSerializable(message, this.serializer, this.handle), localOpMetadata);
 
         // Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
         assert(
@@ -534,16 +527,15 @@ export class SharedMatrix<T extends Serializable = Serializable>
      */
     protected async loadCore(storage: IChannelStorageService) {
         try {
-            const serializer = this.runtime.IFluidSerializer;
             await this.rows.load(
                 this.runtime,
                 new ObjectStoragePartition(storage, SnapshotPath.rows),
-                serializer);
+                this.serializer;
             await this.cols.load(
                 this.runtime,
                 new ObjectStoragePartition(storage, SnapshotPath.cols),
-                serializer);
-            const [cellData, pendingCliSeqData] = await deserializeBlob(storage, SnapshotPath.cells, serializer);
+                this.serializer);
+            const [cellData, pendingCliSeqData] = await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
 
             this.cells = SparseArray2D.load(cellData);
             this.annotations = new SparseArray2D();
@@ -554,7 +546,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        const msg = parseHandles(rawMessage, this.runtime.IFluidSerializer);
+        const msg = parseHandles(rawMessage, this.serializer);
 
         const contents = msg.contents;
 

@@ -163,7 +163,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
         // Serialize the value if required.
         const operationValue: ICellValue = {
             type: ValueType[ValueType.Plain],
-            value: this.toSerializable(value, this.runtime.IFluidSerializer),
+            value: this.toSerializable(value, this.serializer),
         };
 
         // Set the value locally.
@@ -350,7 +350,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value !== undefined
-            ? this.runtime.IFluidSerializer.parse(JSON.stringify(value))
+            ? this.serializer.parse(JSON.stringify(value))
             : value;
     }
 }

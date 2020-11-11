@@ -134,11 +134,11 @@ export class ConsensusRegisterCollection<T>
      * @returns Promise<true> if write was non-concurrent
      */
     public async write(key: string, value: T): Promise<boolean> {
-        const serializedValue = this.stringify(value, this.runtime.IFluidSerializer);
+        const serializedValue = this.stringify(value, this.serializer);
 
         if (!this.isAttached()) {
             // JSON-roundtrip value for local writes to match the behavior of going through the wire
-            this.processInboundWrite(key, this.parse(serializedValue, this.runtime.IFluidSerializer), 0, 0, true);
+            this.processInboundWrite(key, this.parse(serializedValue, this.serializer), 0, 0, true);
             return true;
         }
 
@@ -214,7 +214,7 @@ export class ConsensusRegisterCollection<T>
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const header = await storage.read(snapshotFileName);
-        const dataObj = header !== undefined ? this.parse(fromBase64ToUtf8(header), this.runtime.IFluidSerializer) : {};
+        const dataObj = header !== undefined ? this.parse(fromBase64ToUtf8(header), this.serializer) : {};
 
         for (const key of Object.keys(dataObj)) {
             assert(dataObj[key].atomic?.value.type !== "Shared",
@@ -246,7 +246,7 @@ export class ConsensusRegisterCollection<T>
                     assert(refSeqWhenCreated <= message.referenceSequenceNumber);
 
                     const value = incomingOpMatchesCurrentFormat(op)
-                        ? this.parse(op.serializedValue, this.runtime.IFluidSerializer) as T
+                        ? this.parse(op.serializedValue, this.serializer) as T
                         : op.value.value;
                     const winner = this.processInboundWrite(
                         op.key,

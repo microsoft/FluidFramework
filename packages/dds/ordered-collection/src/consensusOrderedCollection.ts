@@ -128,12 +128,12 @@ export class ConsensusOrderedCollection<T = any>
      * Add a value to the consensus collection.
      */
     public async add(value: T): Promise<void> {
-        const valueSer = this.serializeValue(value, this.runtime.IFluidSerializer);
+        const valueSer = this.serializeValue(value, this.serializer);
 
         if (!this.isAttached()) {
             // For the case where this is not attached yet, explicitly JSON
             // clone the value to match the behavior of going thru the wire.
-            const addValue = this.deserializeValue(valueSer, this.runtime.IFluidSerializer) as T;
+            const addValue = this.deserializeValue(valueSer, this.serializer) as T;
             this.addCore(addValue);
             return;
         }
@@ -281,7 +281,7 @@ export class ConsensusOrderedCollection<T = any>
         const rawContentTracking = await storage.read(snapshotFileNameTracking);
         if (rawContentTracking !== undefined) {
             const content =
-                this.deserializeValue(fromBase64ToUtf8(rawContentTracking), this.runtime.IFluidSerializer);
+                this.deserializeValue(fromBase64ToUtf8(rawContentTracking), this.serializer);
             this.jobTracking = new Map(content) as JobTrackingInfo<T>;
         }
 
@@ -289,7 +289,7 @@ export class ConsensusOrderedCollection<T = any>
         const rawContentData = await storage.read(snapshotFileNameData);
         if (rawContentData !== undefined) {
             const content =
-                this.deserializeValue(fromBase64ToUtf8(rawContentData), this.runtime.IFluidSerializer) as T[];
+                this.deserializeValue(fromBase64ToUtf8(rawContentData), this.serializer) as T[];
             this.data.loadFrom(content);
         }
     }
@@ -312,7 +312,7 @@ export class ConsensusOrderedCollection<T = any>
             let value: IConsensusOrderedCollectionValue<T> | undefined;
             switch (op.opName) {
                 case "add":
-                    this.addCore(this.deserializeValue(op.value, this.runtime.IFluidSerializer) as T);
+                    this.addCore(this.deserializeValue(op.value, this.serializer) as T);
                     break;
 
                 case "acquire":

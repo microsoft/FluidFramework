@@ -166,7 +166,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         });
 
         this.intervalMapKernel = new MapKernel(
-            this.runtime,
+            this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             () => this.isAttached(),
@@ -317,10 +317,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         if (!this.isAttached()) {
             return;
         }
-        const translated = makeHandlesSerializable(
-            message,
-            this.runtime.IFluidSerializer,
-            this.handle);
+        const translated = makeHandlesSerializable(message, this.serializer, this.handle);
         const metadata = this.client.peekPendingSegmentGroups(
             message.type === MergeTree.MergeTreeDeltaType.GROUP ? message.ops.length : 1);
 
@@ -497,7 +494,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             const { catchupOpsP } = await this.client.load(
                 this.runtime,
                 new ObjectStoragePartition(storage, contentPath),
-                this.runtime.IFluidSerializer);
+                this.serializer);
 
             // setup a promise to process the
             // catch up ops, and finishing the loading process
@@ -593,9 +590,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     private processMergeTreeMsg(
         rawMessage: ISequencedDocumentMessage) {
-        const message = parseHandles(
-            rawMessage,
-            this.runtime.IFluidSerializer);
+        const message = parseHandles(rawMessage, this.serializer);
 
         const ops: MergeTree.IMergeTreeDeltaOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {
