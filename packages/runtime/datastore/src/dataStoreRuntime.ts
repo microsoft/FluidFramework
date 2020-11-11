@@ -235,7 +235,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         tree.trees[path],
                         this.sharedObjectRegistry,
                         undefined /* extraBlobs */,
-                        dataStoreContext.branch,
                         this.dataStoreContext.summaryTracker.createOrGetChild(
                             path,
                             this.deltaManager.lastSequenceNumber,
@@ -482,9 +481,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         is in pendingAttach set: ${this.pendingAttach.has(id)},
                         is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}`);
 
-                    // Create storage service that wraps the attach data
-                    const origin = message.origin?.id ?? this.documentId;
-
                     const flatBlobs = new Map<string, string>();
                     const snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
                     // flatBlobsP's validity is contingent on snapshotTreeP's resolution
@@ -500,7 +496,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         snapshotTreeP,
                         this.sharedObjectRegistry,
                         flatBlobsP,
-                        origin,
                         this.dataStoreContext.summaryTracker.createOrGetChild(
                             id,
                             message.sequenceNumber,

@@ -30,11 +30,13 @@ export class SharedMatrixFactory implements IChannelFactory {
         return SharedMatrixFactory.Attributes;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+     */
     public async load(
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes,
     ): Promise<IChannel> {
         const matrix = new SharedMatrix(runtime, id, attributes);

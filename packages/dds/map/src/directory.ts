@@ -332,7 +332,6 @@ export class DirectoryFactory {
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes): Promise<ISharedDirectory> {
         const directory = new SharedDirectory(id, runtime, attributes);
         await directory.load(services);

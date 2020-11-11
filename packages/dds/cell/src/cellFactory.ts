@@ -33,11 +33,13 @@ export class CellFactory implements IChannelFactory {
         return CellFactory.Attributes;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+     */
     public async load(
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string | undefined,
         attributes: IChannelAttributes): Promise<ISharedCell> {
         const cell = new SharedCell(id, runtime, attributes);
         await cell.load(services);

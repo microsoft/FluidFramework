@@ -51,11 +51,13 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
         return SharedIntervalCollectionFactory.Attributes;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+     */
     public async load(
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes): Promise<SharedIntervalCollection> {
         const map = new SharedIntervalCollection(id, runtime, attributes);
         await map.load(services);

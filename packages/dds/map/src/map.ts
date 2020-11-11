@@ -75,7 +75,6 @@ export class MapFactory implements IChannelFactory {
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes): Promise<ISharedMap> {
         const map = new SharedMap(id, runtime, attributes);
         await map.load(services);

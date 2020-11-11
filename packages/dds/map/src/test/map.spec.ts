@@ -137,7 +137,7 @@ describe("Map", () => {
 
                 const services = new MockSharedObjectServices({ header: content });
                 const loadedMap = await factory.load(
-                    dataStoreRuntime, "mapId", services, "branchId", factory.attributes,
+                    dataStoreRuntime, "mapId", services, factory.attributes,
                 );
                 assert(loadedMap.get("key") === "value");
             });
@@ -161,7 +161,7 @@ describe("Map", () => {
 
                 const services = new MockSharedObjectServices({ header: content });
                 const loadedMap = await factory.load(
-                    dataStoreRuntime, "mapId", services, "branchId", factory.attributes,
+                    dataStoreRuntime, "mapId", services, factory.attributes,
                 );
                 assert(loadedMap.get("key") === "value");
             });
@@ -211,7 +211,7 @@ describe("Map", () => {
                     blob0: content2,
                 });
                 const loadedMap = await factory.load(
-                    dataStoreRuntime, "mapId", services, "branchId", factory.attributes,
+                    dataStoreRuntime, "mapId", services, factory.attributes,
                 );
                 assert(loadedMap.get("key") === "value");
                 assert(loadedMap.get("longValue") === longString);
