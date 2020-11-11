@@ -136,7 +136,6 @@ export class FlowContainer extends ui.Component {
             this.initSpellcheck(value);
         });
 
-        // For now only allow one level deep of branching
         this.status.addButton("Versions", `/sharedText/${this.collabDocument.id}/commits`, false);
 
         // Add children to the panel once we have both
