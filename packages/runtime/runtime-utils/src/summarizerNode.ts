@@ -319,9 +319,9 @@ export class SummarizerNode implements ISummarizerNode {
         return { summary: summary.summary, stats: summary.stats };
     }
 
-    public async summarize(cannotReuseHandle: boolean, differential: boolean | undefined): Promise<ISummarizeResult> {
+    public async summarize(noHandles: boolean, forceDifferential = false): Promise<ISummarizeResult> {
         // Try to reuse the tree if unchanged
-        if (this.canReuseHandle && !cannotReuseHandle && !this.hasChanged()) {
+        if (this.canReuseHandle && !noHandles && !this.hasChanged()) {
             const latestSummary = this.latestSummary;
             if (latestSummary !== undefined) {
                 this.wipLocalPaths = {
@@ -342,12 +342,12 @@ export class SummarizerNode implements ISummarizerNode {
             }
         }
 
-        if (differential === true) {
+        if (forceDifferential === true) {
             return this.differentialSummary("Cannot generate differential summary");
         }
 
         try {
-            const result = await this.summarizeInternalFn(cannotReuseHandle);
+            const result = await this.summarizeInternalFn(noHandles);
             this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
             return { summary: result.summary, stats: result.stats };
         } catch (error) {
@@ -596,7 +596,7 @@ export class SummarizerNode implements ISummarizerNode {
     private trackingSequenceNumber: number;
     private constructor(
         private readonly logger: ITelemetryLogger,
-        private readonly summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+        private readonly summarizeInternalFn: (noHandles: boolean) => Promise<ISummarizeInternalResult>,
         config: ISummarizerNodeConfig,
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */

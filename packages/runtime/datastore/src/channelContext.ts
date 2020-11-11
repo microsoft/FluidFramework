@@ -18,7 +18,10 @@ export interface IChannelContext {
 
     processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
 
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummarizeResult>;
+    summarize(params: {
+        noHandles: boolean;
+        trackState: boolean;
+    }): Promise<ISummarizeResult>;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 }

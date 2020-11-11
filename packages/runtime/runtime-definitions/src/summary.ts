@@ -82,16 +82,16 @@ export interface ISummarizerNode {
     invalidate(sequenceNumber: number): void;
     /**
      * Calls the internal summarize function and handles internal state tracking.
-     * If unchanged and cannotReuseHandle is false, it will reuse previous summary subtree.
+     * If unchanged and noHandles is false, it will reuse previous summary subtree.
      * If an error is encountered and throwOnFailure is false, it will try to make
      * a differential summary with a pointer to the previous summary + a blob of outstanding ops.
-     * @param cannotReuseHandle - true to not allow reuse of previous handle if unchanged.
-     * @param differential - true to send handle of previous summary + blob of outstanding ops
-     * Setting differential to true will not call summarizeInternalFn.
-     * If both differential is true and cannotReuseHandle is false, a handle pointing to the previous
+     * @param noHandles - true to not allow reuse of previous handle if unchanged.
+     * @param forceDifferential - true to send differential summary; defaults to false.
+     * Setting forceDifferential to true will not call summarizeInternalFn.
+     * If both forceDifferential is true and noHandles is false, a handle pointing to the previous
      * tree will be used, not a differential summary.
      */
-    summarize(cannotReuseHandle: boolean, differential: boolean): Promise<ISummarizeResult>;
+    summarize(noHandles: boolean, forceDifferential?: boolean): Promise<ISummarizeResult>;
     /**
      * Checks if the base snapshot was created as a failure summary. If it has
      * the base summary handle + outstanding ops blob, then this will return the

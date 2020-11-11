@@ -68,7 +68,7 @@ export class RemoteChannelContext implements IChannelContext {
 
         // Summarizer node always tracks summary state. Set trackState to true.
         const thisSummarizeInternal =
-            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */);
+            async (noHandles: boolean) => this.summarizeInternal({ noHandles, trackState: true });
         this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
     }
 
@@ -111,21 +111,27 @@ export class RemoteChannelContext implements IChannelContext {
 
     /**
      * Returns a summary at the current sequence number.
-     * @param fullTree - true to bypass optimizations and force a full summary tree
+     * @param noHandles - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(cannotReuseHandle: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
+    public async summarize(params: {
+        noHandles: boolean;
+        trackState: boolean;
+    }): Promise<ISummarizeResult> {
         // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
         // the summary. Else, get the summary tree directly.
-        return trackState
-            ? this.summarizerNode.summarize(cannotReuseHandle)
-            : this.summarizeInternal(cannotReuseHandle, false /* trackState */);
+        return params.trackState
+            ? this.summarizerNode.summarize(params.noHandles, false /* differential */)
+            : this.summarizeInternal(params);
     }
 
-    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(params: {
+        noHandles: boolean;
+        trackState: boolean;
+    }): Promise<ISummarizeInternalResult> {
         const channel = await this.getChannel();
         const snapshotTree = snapshotChannel(channel);
-        const summaryResult = convertToSummaryTree(snapshotTree, fullTree);
+        const summaryResult = convertToSummaryTree(snapshotTree, params.noHandles);
         return { ...summaryResult, id: this.id };
     }
 

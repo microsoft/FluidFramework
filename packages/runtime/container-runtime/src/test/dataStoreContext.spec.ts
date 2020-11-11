@@ -183,6 +183,8 @@ describe("Data Store Context Tests", () => {
         const storage: Partial<IDocumentStorageService> = {};
         let scope: IFluidObject;
         let containerRuntime: ContainerRuntime;
+        const summarizeParams = { noHandles: true, trackState: true };
+
         beforeEach(async () => {
             summaryTracker = new SummaryTracker("", 0, 0);
             const summarizerNode = SummarizerNode.createRoot(
@@ -236,7 +238,7 @@ describe("Data Store Context Tests", () => {
                 summaryTracker,
                 createSummarizerNodeFn,
             );
-            const summaryTree = await remotedDataStoreContext.summarize(true);
+            const summaryTree = await remotedDataStoreContext.summarize(summarizeParams);
             assert(summaryTree.summary.type === SummaryType.Tree,
                 "summarize should always return a tree when fullTree is true");
             const blob = summaryTree.summary.tree[".component"] as ISummaryBlob;
@@ -275,7 +277,7 @@ describe("Data Store Context Tests", () => {
                 summaryTracker,
                 createSummarizerNodeFn,
             );
-            const summaryTree = await remotedDataStoreContext.summarize(true);
+            const summaryTree = await remotedDataStoreContext.summarize(summarizeParams);
             assert(summaryTree.summary.type === SummaryType.Tree,
                 "summarize should always return a tree when fullTree is true");
             const blob = summaryTree.summary.tree[".component"] as ISummaryBlob;
@@ -316,7 +318,7 @@ describe("Data Store Context Tests", () => {
                 summaryTracker,
                 createSummarizerNodeFn,
             );
-            const summaryTree = await remotedDataStoreContext.summarize(true);
+            const summaryTree = await remotedDataStoreContext.summarize(summarizeParams);
             assert(summaryTree.summary.type === SummaryType.Tree,
                 "summarize should always return a tree when fullTree is true");
             const blob = summaryTree.summary.tree[".component"] as ISummaryBlob;

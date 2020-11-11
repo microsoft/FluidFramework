@@ -30,7 +30,7 @@ import {
     ISummaryConfiguration,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { GenerateSummaryData, IPreviousState, ISummarizeParams } from "./containerRuntime";
+import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
 import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
@@ -130,7 +130,10 @@ const checkNotTimeout = <T>(something: T | IPromiseTimerResult | undefined): som
     return (something as IPromiseTimerResult).timerResult === undefined;
 };
 
-type SummarizeFnType = (params: Omit<ISummarizeParams, "differential">) => Promise<GenerateSummaryData | undefined>;
+type SummarizeFnType = (params: {
+    noHandles: boolean;
+    refreshPreviousAck: boolean;
+}) => Promise<GenerateSummaryData | undefined>;
 
 /**
  * This class contains the heuristics for when to summarize.
@@ -514,8 +517,8 @@ export class RunningSummarizer implements IDisposable {
         let summaryData: GenerateSummaryData | undefined;
         try {
             // Neither immediate summaries nor safe summaries should reuse handles
-            const canReuseHandle = !this.immediateSummary && !safe;
-            summaryData = await this.generateSummary({ canReuseHandle, refreshPreviousAck: safe });
+            const noHandles = this.immediateSummary || safe;
+            summaryData = await this.generateSummary({ noHandles, refreshPreviousAck: safe });
         } catch (error) {
             summarizingEvent.cancel({ category: "error" }, error);
             return;

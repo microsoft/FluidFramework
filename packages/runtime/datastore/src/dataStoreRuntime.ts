@@ -560,7 +560,20 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
+    public async summarize(params: boolean | undefined | {
+        noHandles: boolean;
+        trackState: boolean;
+    }, tempTrackState = false): Promise<ISummaryTreeWithStats> {
+        // back-compat: boundary between data store context and runtime
+        let noHandles = false;
+        let trackState = tempTrackState;
+        if (params === true) {
+            noHandles = true;
+        } else if (params !== false && params !== undefined) {
+            noHandles = params.noHandles;
+            trackState = params.trackState;
+        }
+
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each data store and ask it to snapshot
@@ -573,7 +586,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // (i.e. it has a base mapping) - then we go ahead and snapshot
                 return isAttached;
             }).map(async ([key, value]) => {
-                const channelSummary = await value.summarize(fullTree, trackState);
+                const channelSummary = await value.summarize({ noHandles, trackState });
                 builder.addWithStats(key, channelSummary);
             }));
 
@@ -796,7 +809,7 @@ export function summaryWaitFluidDataStoreMixin(
     init: () => Promise<void>)
 {
     return class RuntimeWithSummarizerHandler extends Base {
-        public async summarize(...args) {
+        public async summarize(...args: Parameters<FluidDataStoreRuntime["summarize"]>) {
             await init();
             return super.summarize(...args);
         }

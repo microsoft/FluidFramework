@@ -124,10 +124,13 @@ export class LocalChannelContext implements IChannelContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummarizeResult> {
+    public async summarize(params: {
+        noHandles: boolean;
+        trackState: boolean;
+    }): Promise<ISummarizeResult> {
         assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to take summary");
         const snapshot = snapshotChannel(this.channel);
-        const summary = convertToSummaryTree(snapshot, fullTree);
+        const summary = convertToSummaryTree(snapshot, params.noHandles);
         return summary;
     }
 

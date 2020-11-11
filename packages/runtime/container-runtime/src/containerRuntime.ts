@@ -197,13 +197,6 @@ export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedS
 
 export type GenerateSummaryData = IUnsubmittedSummaryData | ISubmittedSummaryData;
 
-export interface ISummarizeParams {
-    canReuseHandle: boolean;
-    refreshPreviousAck: boolean;
-    differential: boolean;
-    trackState: boolean;
-}
-
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 const IdleDetectionTime = 5000;
 
@@ -506,7 +499,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             runtimeVersion: pkgVersion,
         });
 
-        let summarizerInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult> = async () => {
+        let summarizerInternalFn: (noHandles: boolean) => Promise<ISummarizeInternalResult> = async () => {
             throw Error("Attempted to summarize before setting summarizeInternalFn");
         };
 
@@ -514,7 +507,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const summarizerNode = SummarizerNode.createRoot(
             logger,
             // Summarize function to call when summarize is called. Summarizer node always tracks summary state.
-            async (fullTree) => summarizerInternalFn(fullTree, true /* trackState */),
+            async (noHandles) => summarizerInternalFn(noHandles),
             // Latest change sequence number, no changes since summary applied yet
             loadedFromSequenceNumber,
             // Summary reference sequence number, undefined if no summary yet
@@ -557,7 +550,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             logger,
             requestHandler);
 
-        summarizerInternalFn = async (fullTree) => runtime.summarizeInternal(fullTree);
+        summarizerInternalFn = async (noHandles) => runtime.summarizeInternal({ noHandles, trackState: true });
 
         // Create all internal data stores if not already existing on storage or loaded a detached
         // container from snapshot(ex. draft mode).
@@ -675,7 +668,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // back-compat: summarizerNode - remove all summary trackers
     private readonly summaryTracker: SummaryTracker;
 
-    private readonly summarizerNode: SummarizerNode;
     private readonly notBoundContexts = new Set<string>();
     // 0.24 back-compat attachingBeforeSummary
     private readonly attachOpFiredForDataStore = new Set<string>();
@@ -745,7 +737,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             enableWorker: false,
         },
         private readonly containerScope: IFluidObject,
-        summarizerNode: SummarizerNode,
+        private readonly summarizerNode: SummarizerNode,
         private readonly baseSnapshot: ISnapshotTree | undefined,
         // publicly visible logger, to be used by stores, summarize, etc.
         public readonly logger: ITelemetryLogger,
@@ -874,13 +866,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // want to be on demand instead.
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
         // This will ensure we correctly convert old documents.
-        const generateSummaryFn = async (params: Omit<ISummarizeParams, "differential">) =>
-            this.generateSummary({ ...params, differential: false });
         this.summarizer = new Summarizer(
             "/_summarizer",
             this,
             () => this.summaryConfiguration,
-            generateSummaryFn,
+            async (params) => this.generateSummary(params),
             async (propHandle, ackHandle, refSeq) => this.refreshLatestSummaryAck(propHandle, ackHandle, refSeq),
             this.IFluidHandleContext,
             this.previousState.summaryCollection);
@@ -1051,7 +1041,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async snapshot(): Promise<ITree> {
         // Iterate over each store and ask it to snapshot
         const fluidDataStoreSnapshotsP = Array.from(this.contexts).map(async ([fluidDataStoreId, value]) => {
-            const summaryTree = await value.summarize(true /* fullTree */, false /* trackState */);
+            const summaryTree = await value.summarize({ noHandles: true, trackState: false });
             assert(
                 summaryTree.summary.type === SummaryType.Tree,
                 "summarize should always return a tree when fullTree is true");
@@ -1103,7 +1093,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
 
-        const summaryTree = await this.summarize(true /* fullTree */, false /* trackState */);
+        const summaryTree = await this.summarize({ noHandles: true, forceDifferential: false, trackState: false });
         // back-compat summarize - Remove this once we start return ISummaryTree here.
         const snapshot = convertSummaryTreeToITree(summaryTree.summary);
         const state: IPreviousState = {
@@ -1140,9 +1130,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Try to summarize only once and fail otherwise. In the future, may want
             // to retry with back-off until success is reached.
             this.generateSummary({
-                canReuseHandle: false,
+                noHandles: false,
                 refreshPreviousAck: false,
-                differential: true,
+                forceDifferential: true,
             }).catch((error) => {
                 this.logger.sendErrorEvent({ eventName: "RaceToSummarizeError" }, error);
             });
@@ -1567,18 +1557,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /**
      * Returns a summary of the runtime at the current sequence number.
-     * @param fullTree - true to bypass optimizations and force a full summary tree.
+     * @param noHandles - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
      */
-    private async summarize(params: Omit<ISummarizeParams, "refreshPreviousAck">): Promise<ISummaryTreeWithStats> {
+    private async summarize(params: {
+        noHandles: boolean;
+        trackState: boolean;
+        forceDifferential?: boolean;
+    }): Promise<ISummaryTreeWithStats> {
         // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
         // the summary. Else, get the summary tree directly.
-        return params.trackState
-            ? await this.summarizerNode.summarize(!params.canReuseHandle, params.differential) as ISummaryTreeWithStats
-            : await this.summarizeInternal(!params.canReuseHandle, false /* trackState */) as ISummaryTreeWithStats;
+        return (params.trackState
+            ? await this.summarizerNode.summarize(params.noHandles, params.forceDifferential ?? false)
+            : await this.summarizeInternal(params)) as ISummaryTreeWithStats;
     }
 
-    private async summarizeInternal(cannotReuseHandle: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(params: {
+        noHandles: boolean;
+        trackState: boolean;
+    }): Promise<ISummarizeInternalResult> {
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
@@ -1588,7 +1585,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 assert(value.attachState !== AttachState.Attaching);
                 return value.attachState === AttachState.Attached;
             }).map(async ([key, value]) => {
-                const contextSummary = await value.summarize({ canReuseHandle: !cannotReuseHandle, trackState });
+                const contextSummary = await value.summarize(params);
                 builder.addWithStats(key, contextSummary);
             }));
 
@@ -1788,9 +1785,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private async generateSummary(
         params: {
-            canReuseHandle: boolean,
+            noHandles: boolean,
             refreshPreviousAck: boolean,
-            differential: boolean,
+            forceDifferential?: boolean,
         },
     ): Promise<GenerateSummaryData | undefined> {
         const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;

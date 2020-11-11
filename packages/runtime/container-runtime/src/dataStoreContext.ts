@@ -49,7 +49,7 @@ import {
     IFluidDataStoreContextEvents,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { ContainerRuntime, ISummarizeParams } from "./containerRuntime";
+import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in store attributes.
 export const currentSnapshotFormatVersion = "0.1";
@@ -227,7 +227,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // Summarizer node always tracks summary state. Set trackState to true.
         const thisSummarizeInternal =
-            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */);
+            async (noHandles: boolean) => this.summarizeInternal({ noHandles, trackState: true });
         this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
     }
 
@@ -376,21 +376,27 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(params: Pick<ISummarizeParams, "canReuseHandle" | "trackState">): Promise<ISummarizeResult> {
+    public async summarize(params: {
+        noHandles: boolean;
+        trackState: boolean;
+    }): Promise<ISummarizeResult> {
         // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
         // the summary. Else, get the summary tree directly.
-        return trackState
-            ? this.summarizerNode.summarize(!params.canReuseHandle, false /* differential */)
-            : this.summarizeInternal(fullTree, params.trackState /* trackState */);
+        return params.trackState
+            ? this.summarizerNode.summarize(params.noHandles)
+            : this.summarizeInternal(params);
     }
 
-    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(params: {
+        noHandles: boolean;
+        trackState: boolean;
+    }): Promise<ISummarizeInternalResult> {
         await this.realize();
 
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const channel = this.channel!;
-        const summary = await channel.summarize(fullTree, trackState);
+        const summary = await channel.summarize(params.noHandles, params.trackState);
         const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
         addBlobToSummary(summary, attributesBlobKey, JSON.stringify(attributes));
         return { ...summary, id: this.id };
