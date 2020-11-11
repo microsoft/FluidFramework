@@ -805,7 +805,7 @@ export function mixinSummaryHandler(
                 throw new Error("Path can't be empty");
             }
 
-            let searchBlob: ISummaryTree | ISummaryBlob = {
+            let blob: ISummaryTree | ISummaryBlob = {
                 type: SummaryType.Blob,
                 content,
             };
@@ -813,13 +813,13 @@ export function mixinSummaryHandler(
             summary.stats.totalBlobSize += content.length;
 
             for (const name of path.reverse()) {
-                searchBlob = {
+                blob = {
                     type: SummaryType.Tree,
-                    tree: { [name]: searchBlob },
+                    tree: { [name]: blob },
                 };
                 summary.stats.treeNodeCount++;
             }
-            summary.summary.tree[firstName] = searchBlob;
+            summary.summary.tree[firstName] = blob;
         }
 
         async summarize(...args: any[]) {
