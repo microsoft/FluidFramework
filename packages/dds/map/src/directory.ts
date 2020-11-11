@@ -335,7 +335,7 @@ export class DirectoryFactory {
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedDirectory> {
         const directory = new SharedDirectory(id, runtime, attributes);
-        await directory.load(branchId, services);
+        await directory.load(services);
 
         return directory;
     }

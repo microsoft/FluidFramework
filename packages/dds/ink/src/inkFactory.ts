@@ -56,7 +56,7 @@ export class InkFactory implements IChannelFactory {
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
         const ink = new Ink(runtime, id, attributes);
-        await ink.load(branchId, services);
+        await ink.load(services);
 
         return ink;
     }

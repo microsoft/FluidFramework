@@ -38,7 +38,7 @@ export class SharedMatrixFactory implements IChannelFactory {
         attributes: IChannelAttributes,
     ): Promise<IChannel> {
         const matrix = new SharedMatrix(runtime, id, attributes);
-        await matrix.load(branchId, services);
+        await matrix.load(services);
         return matrix;
     }
 

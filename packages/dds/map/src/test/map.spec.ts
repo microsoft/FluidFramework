@@ -249,7 +249,7 @@ describe("Map", () => {
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const map2 = new SharedMap("testMap2", dataStoreRuntime2, MapFactory.Attributes);
-            await map2.load("branchId", services2);
+            await map2.load(services2);
 
             // Now connect the first SharedMap
             dataStoreRuntime.local = false;

@@ -39,7 +39,7 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
         branchId: string,
         attributes: IChannelAttributes): Promise<IConsensusRegisterCollection> {
         const collection = new ConsensusRegisterCollection(id, runtime, attributes);
-        await collection.load(branchId, services);
+        await collection.load(services);
         return collection;
     }
 

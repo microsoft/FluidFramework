@@ -58,7 +58,7 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
         branchId: string,
         attributes: IChannelAttributes): Promise<SharedIntervalCollection> {
         const map = new SharedIntervalCollection(id, runtime, attributes);
-        await map.load(branchId, services);
+        await map.load(services);
 
         return map;
     }

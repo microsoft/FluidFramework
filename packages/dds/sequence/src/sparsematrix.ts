@@ -362,7 +362,7 @@ export class SparseMatrixFactory implements IChannelFactory {
         attributes: IChannelAttributes,
     ): Promise<ISharedObject> {
         const sharedObject = new SparseMatrix(runtime, id, attributes);
-        await sharedObject.load(branchId, services);
+        await sharedObject.load(services);
         return sharedObject;
     }
 

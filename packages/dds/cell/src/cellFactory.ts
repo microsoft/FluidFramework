@@ -40,7 +40,7 @@ export class CellFactory implements IChannelFactory {
         branchId: string | undefined,
         attributes: IChannelAttributes): Promise<ISharedCell> {
         const cell = new SharedCell(id, runtime, attributes);
-        await cell.load(branchId, services);
+        await cell.load(services);
         return cell;
     }
 

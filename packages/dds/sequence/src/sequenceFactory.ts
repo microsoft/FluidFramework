@@ -51,7 +51,7 @@ export class SharedStringFactory implements IChannelFactory {
         branchId: string,
         attributes: IChannelAttributes): Promise<SharedString> {
         const sharedString = new SharedString(runtime, id, attributes);
-        await sharedString.load(branchId, services);
+        await sharedString.load(services);
         return sharedString;
     }
 
@@ -100,7 +100,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
         attributes: IChannelAttributes): Promise<ISharedObject> {
         // eslint-disable-next-line @typescript-eslint/ban-types
         const sharedSeq = new SharedObjectSequence<object>(runtime, id, attributes);
-        await sharedSeq.load(branchId, services);
+        await sharedSeq.load(services);
         return sharedSeq;
     }
 
@@ -146,7 +146,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
         const sharedSeq = new SharedNumberSequence(runtime, id, attributes);
-        await sharedSeq.load(branchId, services);
+        await sharedSeq.load(services);
         return sharedSeq;
     }
 

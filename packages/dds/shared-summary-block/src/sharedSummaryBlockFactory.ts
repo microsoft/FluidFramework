@@ -58,7 +58,7 @@ export class SharedSummaryBlockFactory implements IChannelFactory {
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
         const sharedSummaryBlock = new SharedSummaryBlock(id, runtime, attributes);
-        await sharedSummaryBlock.load(branchId, services);
+        await sharedSummaryBlock.load(services);
 
         return sharedSummaryBlock;
     }

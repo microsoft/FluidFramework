@@ -40,7 +40,7 @@ export class CounterFactory implements IChannelFactory {
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedCounter> {
         const counter = new SharedCounter(id, runtime, attributes);
-        await counter.load(branchId, services);
+        await counter.load(services);
         return counter;
     }
 
