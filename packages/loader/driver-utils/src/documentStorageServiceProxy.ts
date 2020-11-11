@@ -35,8 +35,8 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.internalStorageService.read(blobId);
     }
 
-    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        return this.internalStorageService.write(tree, parents, message, ref);
+    public async write(tree: ITree, parents: string[], message: string): Promise<IVersion> {
+        return this.internalStorageService.write(tree, parents, message);
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {

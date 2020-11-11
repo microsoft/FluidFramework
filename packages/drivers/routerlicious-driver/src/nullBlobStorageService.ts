@@ -24,25 +24,25 @@ export class NullBlobStorageService implements IDocumentStorageService {
     }
 
     public async read(blobId: string): Promise<string> {
-        return Promise.reject(new Error("Invalid operation"));
+        throw new Error("Invalid operation");
     }
 
-    public async write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion> {
-        return Promise.reject(new Error("Null blob storage can not write commit"));
+    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
+        throw new Error("Null blob storage can not write commit");
     }
 
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
-        return Promise.reject(new Error("Invalid operation"));
+        throw new Error("Invalid operation");
     }
 
     public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
-        return Promise.reject(new Error("Invalid operation"));
+        throw new Error("Invalid operation");
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
-        return Promise.reject(new Error("Null blob storage can not create blob"));
+        throw new Error("Null blob storage can not create blob");
     }
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        return Promise.reject(new Error("Null blob storage can not read blob"));
+        throw new Error("Null blob storage can not read blob");
     }
 }

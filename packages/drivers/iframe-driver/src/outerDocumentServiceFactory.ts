@@ -165,8 +165,8 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             read: async (id) => {
                 return storage.read(id);
             },
-            write: async (root, parents, message, ref) => {
-                return storage.write(root, parents, message, ref);
+            write: async (root, parents, message) => {
+                return storage.write(root, parents, message);
             },
             createBlob: async (file) => {
                 return storage.createBlob(file);

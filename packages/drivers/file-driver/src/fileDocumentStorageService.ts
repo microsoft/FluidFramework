@@ -178,8 +178,8 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             tree: api.ITree,
             parents: string[],
             message: string,
-            ref: string): Promise<api.IVersion> {
-            let dataStoreName = ref ? ref : "container";
+        ): Promise<api.IVersion> {
+            let dataStoreName = "container";
             if (tree && tree.entries) {
                 tree.entries.forEach((entry) => {
                     if (entry.path === ".component" && entry.type === api.TreeEntry.Blob) {
@@ -201,21 +201,17 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             delete tree.id;
             removeNullTreIds(tree);
 
-            if (ref) {
-                this.commitsWriter[commitName] = tree;
-            } else {
-                // Rebuild latest tree - runtime will ask for it when generating next snapshot to write out
-                // non-changed commits for data stores
-                await this.writeOutFullSnapshot(tree);
+            // Rebuild latest tree - runtime will ask for it when generating next snapshot to write out
+            // non-changed commits for data stores
+            await this.writeOutFullSnapshot(tree);
 
-                // Prep for the future - refresh latest tree, as it's requests on next snapshot generation.
-                // Do not care about blobs (at least for now), as blobs are not written out (need follow up)
-                this.latestWriterTree = await buildSnapshotTree(tree.entries, this.blobsWriter);
+            // Prep for the future - refresh latest tree, as it's requests on next snapshot generation.
+            // Do not care about blobs (at least for now), as blobs are not written out (need follow up)
+            this.latestWriterTree = await buildSnapshotTree(tree.entries, this.blobsWriter);
 
-                // Do not reset this.commitsWriter - runtime will reference same commits in future snapshots
-                // if data store did not change in between two snapshots.
-                // We can optimize here by filtering commits based on contents of this.docTree.commits
-            }
+            // Do not reset this.commitsWriter - runtime will reference same commits in future snapshots
+            // if data store did not change in between two snapshots.
+            // We can optimize here by filtering commits based on contents of this.docTree.commits
 
             this.onCommitHandler(dataStoreName, tree);
             return {

@@ -889,7 +889,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const parents = lastVersion !== undefined ? [lastVersion.id] : [];
 
         // Write the full snapshot
-        return this.storageService.write(root, parents, message, "");
+        return this.storageService.write(root, parents, message);
     }
 
     private snapshotBase(): ITree {
