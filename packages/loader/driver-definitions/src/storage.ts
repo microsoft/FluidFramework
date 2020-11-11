@@ -201,11 +201,6 @@ export interface IDocumentService {
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
 
     /**
-     * Creates a branch of the document with the given ID. Returns the new ID.
-     */
-    branch(): Promise<string>;
-
-    /**
      * Returns the error tracking service
      */
     getErrorTrackingService(): IErrorTrackingService | null;

@@ -84,13 +84,6 @@ export class LocalDocumentService implements api.IDocumentService {
     /**
      * Returns null
      */
-    public async branch(): Promise<string> {
-        throw new Error("Not implemented");
-    }
-
-    /**
-     * Returns null
-     */
     public getErrorTrackingService(): any {
         // eslint-disable-next-line no-null/no-null
         return null;
