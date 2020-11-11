@@ -214,7 +214,8 @@ export function convertToSummaryTree(
 }
 
 /**
- * Converts ISnapshotTree to ISummaryTree format and tracks stats.
+ * Converts ISnapshotTree to ISummaryTree format and tracks stats. This snapshot tree was
+ * was taken by serialize api in detached container.
  * @param snapshot - snapshot in ISnapshotTree format
  */
 export function convertSnapshotTreeToSummaryTree(
