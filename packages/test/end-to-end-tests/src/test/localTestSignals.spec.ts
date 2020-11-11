@@ -10,10 +10,15 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { generateTestWithCompat, ICompatLocalTestObjectProvider, ITestContainerConfig } from "./compatUtils";
+import {
+    generateTestWithCompat,
+    ICompatLocalTestObjectProvider,
+    ITestContainerConfig,
+    DataObjectFactoryType,
+} from "./compatUtils";
 
 const testContainerConfig: ITestContainerConfig = {
-    testFluidDataObject: true,
+    fluidDataObjectType: DataObjectFactoryType.Test,
 };
 
 const tests = (args: ICompatLocalTestObjectProvider) => {
