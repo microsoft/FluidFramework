@@ -85,7 +85,7 @@ export class BroadcasterLambda implements IPartitionLambda {
 
         // Invoke the next send after a setImmediate to give IO time to create more batches
         this.isMessageSending = true;
-        setImmediate(() => {
+        const callback = () => {
             const batchOffset = this.pendingOffset;
 
             this.current = this.pending;
@@ -101,6 +101,14 @@ export class BroadcasterLambda implements IPartitionLambda {
             this.context.checkpoint(batchOffset);
             this.current.clear();
             this.sendPending();
-        });
+        };
+
+        // Set immediate is not available in all environments, specifically it does not work in a browser.
+        // Fallback to set timeout in those cases.
+        if (setImmediate === undefined) {
+            setTimeout(callback, 0);
+        } else {
+            setImmediate(callback);
+        }
     }
 }
