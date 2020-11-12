@@ -4,7 +4,7 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
+import { ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
@@ -49,23 +49,18 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
     public get IFluidDataStoreFactory() { return this; }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        const runtime = this.createRuntime(context);
+        const runtimeClass = mixinRequestHandler(
+            async (request: IRequest) => {
+                const router = await instance;
+                return router.request(request);
+            });
+
+        const runtime = new runtimeClass(context, this.ISharedObjectRegistry);
 
         // Note this may synchronously return an instance or a deferred LazyPromise,
         // depending of if a new store is being created or an existing store
         // is being loaded.
-        let instance = this.instantiate(context, runtime);
-
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            // If the instance has not yet been resolved, await it now.  Once the instance is
-            // resolved, we replace the value of `instance` with the resolved store, at which
-            // point we begin processing requests synchronously.
-            if ("then" in instance) {
-                instance = await instance;
-            }
-
-            return instance.request(request);
-        });
+        const instance = this.instantiate(context, runtime);
 
         return runtime;
     }
@@ -101,12 +96,5 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
 
         await instance.load();
         return instance;
-    }
-
-    private createRuntime(context: IFluidDataStoreContext) {
-        return FluidDataStoreRuntime.load(
-            context,
-            this.ISharedObjectRegistry,
-        );
     }
 }

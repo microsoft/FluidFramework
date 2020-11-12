@@ -315,6 +315,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
     }
 
+    /**
+     * @deprecated
+     * Please use mixinRequestHandler() to override default behavior or request()
+     * // back-compat: remove in 0.30+
+     */
     public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
         this.requestHandler = handler;
     }
@@ -769,13 +774,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
 /**
  * Mixin class that adds request handler to FluidDataStoreRuntime
+ * Request handler is only called when data store can't resolve request, i.e. for custom requests.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
  */
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function requestFluidDataStoreMixin(
-    Base: typeof FluidDataStoreRuntime,
-    requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>)
+export function mixinRequestHandler(
+    requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
+    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
 {
     return class RuntimeWithRequestHandler extends Base {
         public async request(request: IRequest) {

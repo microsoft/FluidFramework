@@ -4,7 +4,7 @@
  */
 
 import * as cell from "@fluidframework/cell";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { mixinRequestHandler } from "@fluidframework/datastore";
 import {
     ICodeLoader,
     IContainerContext,
@@ -12,7 +12,7 @@ import {
     IRuntimeFactory,
     IFluidModule,
 } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import * as ink from "@fluidframework/ink";
 import * as map from "@fluidframework/map";
@@ -67,7 +67,21 @@ export class Chaincode implements IFluidDataStoreFactory {
         modules.set(directoryFactory.type, directoryFactory);
         modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
 
-        const runtime = FluidDataStoreRuntime.load(context, modules);
+        const runtimeClass = mixinRequestHandler(
+            async (request: IRequest) => {
+                const document = await routerP;
+                if (request.url === "" || request.url === "/") {
+                    return {
+                        mimeType: "fluid/object",
+                        status: 200,
+                        value: document,
+                    };
+                } else {
+                    return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+                }
+            });
+
+        const runtime = new runtimeClass(context, modules);
 
         // Initialize core data structures
         let root: map.ISharedMap;
@@ -84,17 +98,8 @@ export class Chaincode implements IFluidDataStoreFactory {
             root = await runtime.getChannel(rootMapId) as map.ISharedMap;
             return new Document(runtime, context, root, this.closeFn);
         };
-        const documentP = createDocument();
 
-        // And then return it from requests
-        runtime.registerRequestHandler(async (request) => {
-            const document = await documentP;
-            return {
-                mimeType: "fluid/object",
-                status: 200,
-                value: document,
-            };
-        });
+        const routerP = createDocument();
 
         return runtime;
     }
