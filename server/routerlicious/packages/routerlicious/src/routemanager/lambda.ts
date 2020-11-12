@@ -38,7 +38,7 @@ export class RouteManagerLambda extends SequencedLambda {
                 // Route the fork message to all clients
                 // TODO - routing the message keeps the sequenced messages exact - but should all clients see
                 // fork requests on the parent?
-                const routeP = this.routeToForks(sequencedOpMessage, rawMessage.offset);
+                const routeP = this.routeToForks(sequencedOpMessage);
                 boxcarProcessed.push(routeP);
             }
         }
@@ -85,7 +85,7 @@ export class RouteManagerLambda extends SequencedLambda {
     /**
      * Routes the provided message to all active forks
      */
-    private async routeToForks(message: core.ISequencedOperationMessage, offset: number): Promise<void> {
+    private async routeToForks(message: core.ISequencedOperationMessage): Promise<void> {
         const document = this.document;
         const forks = document.getActiveForks();
 
