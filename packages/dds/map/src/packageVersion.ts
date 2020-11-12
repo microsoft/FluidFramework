@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/map";
-export const pkgVersion = "0.28.7";
+export const pkgVersion = "0.28.8";
