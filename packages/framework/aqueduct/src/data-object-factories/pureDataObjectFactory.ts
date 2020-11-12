@@ -213,7 +213,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
      * @returns The NamedFluidDataStoreRegistryEntry
      */
     public get registryEntry(): NamedFluidDataStoreRegistryEntry {
-        return [this.type, Promise.resolve(this)];
+        return [this.type, this];
     }
 
     /**

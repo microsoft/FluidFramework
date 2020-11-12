@@ -466,10 +466,6 @@ export class TaskManagerFactory implements IFluidDataStoreFactory {
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public static get registryEntry(): NamedFluidDataStoreRegistryEntry {
-        return [this.type, Promise.resolve(new TaskManagerFactory())];
-    }
-
     public async instantiateDataStore(context: IFluidDataStoreContext) {
         const mapFactory = SharedMap.getFactory();
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();

@@ -484,7 +484,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         const registry = new MultipleDataStoreRegistries(
-            createDataStoreRegistry([TaskManagerFactory.registryEntry]),
+            createDataStoreRegistry([new TaskManagerFactory()]),
             registryEntries,
         );
 
