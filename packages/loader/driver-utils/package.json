@@ -51,9 +51,9 @@
     "@fluidframework/common-utils": "^0.25.0",
     "@fluidframework/core-interfaces": "^0.29.0",
     "@fluidframework/driver-definitions": "^0.29.0",
-    "@fluidframework/gitresources": "^0.1014.0",
-    "@fluidframework/protocol-base": "^0.1014.0",
-    "@fluidframework/protocol-definitions": "^0.1014.0",
+    "@fluidframework/gitresources": "^0.1015.0-0",
+    "@fluidframework/protocol-base": "^0.1015.0-0",
+    "@fluidframework/protocol-definitions": "^0.1015.0-0",
     "@fluidframework/telemetry-utils": "^0.29.0",
     "assert": "^2.0.0"
   },
