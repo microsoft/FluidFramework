@@ -15,8 +15,8 @@ import {
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
 import {
-    generateTestWithCompat,
-    ICompatLocalTestObjectProvider,
+    generateTest,
+    ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "./compatUtils";
@@ -32,7 +32,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
     let dataObject1map1: SharedMap;
@@ -500,5 +500,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("Batching", () => {
-    generateTestWithCompat(tests);
+    generateTest(tests);
 });

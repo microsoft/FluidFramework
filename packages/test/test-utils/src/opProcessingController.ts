@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 // An IDeltaManager alias to be used within this class.
 export type DeltaManager = IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -54,6 +53,10 @@ class DeltaManagerToggle {
     }
 }
 
+export interface IDeltaConnectionServerMonitor {
+    hasPendingWork(): Promise<boolean>;
+}
+
 /**
  * Class with access to the local delta connection server and delta managers that can control op processing.
  */
@@ -79,9 +82,9 @@ export class OpProcessingController {
     }
 
     /**
-     * @param localDeltaConnectionServer - instance of delta connection server
+     * @param deltaConnectionServerMonitor - delta connection server monitor to tell whether we have pending work
      */
-    public constructor(private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer) { }
+    public constructor(private readonly deltaConnectionServerMonitor: IDeltaConnectionServerMonitor) { }
 
     /**
      * Add a collection of delta managers by adding them to the local collection.
@@ -231,7 +234,7 @@ export class OpProcessingController {
         let working: boolean;
         do {
             await OpProcessingController.yield();
-            working = await this.localDeltaConnectionServer.hasPendingWork();
+            working = await this.deltaConnectionServerMonitor.hasPendingWork();
             if (!working) {
                 for (const toggle of toggles) {
                     if (hasWork(toggle.deltaManager)) {

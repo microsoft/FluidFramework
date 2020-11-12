@@ -11,12 +11,12 @@ import {
     TestFluidObject,
 } from "@fluidframework/test-utils";
 import {
-    generateTestWithCompat,
-    ICompatLocalTestObjectProvider,
+    generateTest,
+    ITestObjectProvider,
     TestDataObject,
 } from "./compatUtils";
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     let firstContainerObject1: TestDataObject;
     let firstContainerObject2: TestDataObject;
     let secondContainerObject1: TestDataObject;
@@ -164,5 +164,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("FluidObjectHandle", () => {
-    generateTestWithCompat(tests);
+    generateTest(tests);
 });

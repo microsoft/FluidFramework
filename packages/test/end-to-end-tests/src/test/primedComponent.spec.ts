@@ -9,7 +9,7 @@ import { Container } from "@fluidframework/container-loader";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedDirectory } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { generateTestWithCompat, ICompatLocalTestObjectProvider } from "./compatUtils";
+import { generateTest, ITestObjectProvider } from "./compatUtils";
 
 /**
  * My sample dataObject
@@ -23,7 +23,7 @@ class TestDataObject extends DataObject {
     }
 }
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     let dataObject: TestDataObject;
 
     beforeEach(async () => {
@@ -49,5 +49,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("DataObject", () => {
-    generateTestWithCompat(tests);
+    generateTest(tests);
 });

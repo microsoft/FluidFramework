@@ -18,8 +18,8 @@ import {
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
 import {
-    generateTestWithCompat,
-    ICompatLocalTestObjectProvider,
+    generateLocalTest,
+    ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "./compatUtils";
@@ -39,7 +39,7 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
-    const tests = (args: ICompatLocalTestObjectProvider) => {
+    const tests = (args: ITestObjectProvider) => {
         let dataStore1: ITestFluidObject;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
@@ -194,7 +194,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
     };
 
     describe(name, () => {
-        generateTestWithCompat(tests);
+        generateLocalTest(tests);
     });
 }
 

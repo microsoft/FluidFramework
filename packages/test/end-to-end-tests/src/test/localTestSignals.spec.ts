@@ -11,8 +11,8 @@ import {
     ITestFluidObject,
 } from "@fluidframework/test-utils";
 import {
-    generateTestWithCompat,
-    ICompatLocalTestObjectProvider,
+    generateLocalTest,
+    ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "./compatUtils";
@@ -21,7 +21,7 @@ const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
 };
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
 
@@ -142,5 +142,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("TestSignals", () => {
-    generateTestWithCompat(tests);
+    generateLocalTest(tests);
 });

@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { Ink } from "@fluidframework/ink";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { SharedCounter } from "@fluidframework/counter";
@@ -32,30 +32,39 @@ import {
     TestFluidObjectFactory,
     LocalTestObjectProvider,
     OpProcessingController,
+    TinyliciousTestObjectProvider,
 } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
 /* eslint-enable import/no-extraneous-dependencies */
 
-/**
- * Arguments given to the function passed into generateTest, generateCompatTest or generateTestWithCompat
- */
-export interface ICompatLocalTestObjectProvider {
+export interface ITestObjectProvider {
     /**
      * Used to create a test Container.
-     * In generateCompatTest(), this Container and its runtime will be arbitrarily-versioned.
+     * In generateLocalCompatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer | old.IContainer>,
     loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer | old.IContainer>,
     makeTestLoader(testContainerConfig?: ITestContainerConfig): ILoader | old.ILoader,
-    deltaConnectionServer: ILocalDeltaConnectionServer
     documentServiceFactory: IDocumentServiceFactory | old.IDocumentServiceFactory,
-    urlResolver: LocalResolver | old.LocalResolver,
+    urlResolver: IUrlResolver | old.IUrlResolver,
     defaultCodeDetails: IFluidCodeDetails | old.IFluidCodeDetails,
     opProcessingController: OpProcessingController | old.OpProcessingController,
 }
 
-export interface ICompatTestOptions {
+/**
+ * Arguments given to the function passed into generateTest, generateLocalCompatTest or generateTestWithCompat
+ */
+export interface ILocalTestObjectProvider extends ITestObjectProvider {
+    /**
+     * Used to create a test Container.
+     * In generateLocalCompatTest(), this Container and its runtime will be arbitrarily-versioned.
+     */
+    deltaConnectionServer: ILocalDeltaConnectionServer,
+    urlResolver: LocalResolver | old.LocalResolver,
+}
+
+export interface ITestOptions {
     serviceConfiguration?: Partial<IServiceConfiguration>,
 }
 
@@ -126,18 +135,18 @@ export const createPrimedDataStoreFactory = (registry?: ChannelFactoryRegistry):
     return new DataObjectFactory(
         TestDataObject.type,
         TestDataObject,
-        [... registry ?? []].map((r)=>r[1]),
+        [...registry ?? []].map((r) => r[1]),
         {});
 };
 
 export const createOldPrimedDataStoreFactory =
     (registry?: ChannelFactoryRegistry): old.IFluidDataStoreFactory => {
-    return new old.DataObjectFactory(
-        OldTestDataObject.type,
-        OldTestDataObject,
-        [... convertRegistry(registry)].map((r)=>r[1]),
-        {});
-};
+        return new old.DataObjectFactory(
+            OldTestDataObject.type,
+            OldTestDataObject,
+            [...convertRegistry(registry)].map((r) => r[1]),
+            {});
+    };
 
 export const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
     return new TestFluidObjectFactory(registry);
@@ -191,93 +200,128 @@ function getOldDataStoreFactory(containerOptions?: ITestContainerConfig) {
     }
 }
 
-export const generateTest = (
-    tests: (compatArgs: ICompatLocalTestObjectProvider) => void,
-    options: ICompatTestOptions = {},
+export const generateLocalNonCompatTest = (
+    tests: (compatArgs: ILocalTestObjectProvider) => void,
+    options: ITestOptions = {},
 ) => {
-    // Run with all current versions
-    const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-        createRuntimeFactory(
-            TestDataObject.type,
-            getDataStoreFactory(containerOptions),
-            containerOptions?.runtimeOptions,
+    describe("non-compat", () => {
+        // Run with all current versions
+        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+            createRuntimeFactory(
+                TestDataObject.type,
+                getDataStoreFactory(containerOptions),
+                containerOptions?.runtimeOptions,
+            );
+
+        const localTestObjectProvider = new LocalTestObjectProvider(
+            runtimeFactory,
+            options.serviceConfiguration,
         );
 
-    const localTestObjectProvider = new LocalTestObjectProvider(
-        runtimeFactory,
-        options.serviceConfiguration,
-    );
+        tests(localTestObjectProvider);
 
-    tests(localTestObjectProvider);
-
-    afterEach(async () => {
-        await localTestObjectProvider.reset();
+        afterEach(async () => {
+            await localTestObjectProvider.reset();
+        });
     });
 };
 
-export const generateCompatTest = (
-    tests: (compatArgs: ICompatLocalTestObjectProvider) => void,
-    options: ICompatTestOptions = {},
+export const generateLocalCompatTest = (
+    tests: (compatArgs: ILocalTestObjectProvider) => void,
+    options: ITestOptions = {},
 ) => {
-    describe("compatibility", () => {
-        describe("old loader, new runtime", function() {
-            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-                createRuntimeFactory(
-                    TestDataObject.type,
-                    getDataStoreFactory(containerOptions),
-                    containerOptions?.runtimeOptions,
-                ) as any as old.IRuntimeFactory;
+    describe("compat - old loader, new runtime", function() {
+        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+            createRuntimeFactory(
+                TestDataObject.type,
+                getDataStoreFactory(containerOptions),
+                containerOptions?.runtimeOptions,
+            ) as any as old.IRuntimeFactory;
 
-            const localTestObjectProvider = new old.LocalTestObjectProvider(
-                runtimeFactory,
-                options.serviceConfiguration,
-            );
+        const localTestObjectProvider = new old.LocalTestObjectProvider(
+            runtimeFactory,
+            options.serviceConfiguration,
+        );
 
-            tests(localTestObjectProvider);
+        tests(localTestObjectProvider);
 
-            afterEach(async function() {
-                await localTestObjectProvider.reset();
-            });
+        afterEach(async function() {
+            await localTestObjectProvider.reset();
         });
+    });
 
-        describe("new loader, old runtime", function() {
-            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-                createOldRuntimeFactory(
-                    OldTestDataObject.type,
-                    getOldDataStoreFactory(containerOptions),
-                    containerOptions?.runtimeOptions,
-                ) as any as IRuntimeFactory;
+    describe("compat - new loader, old runtime", function() {
+        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+            createOldRuntimeFactory(
+                OldTestDataObject.type,
+                getOldDataStoreFactory(containerOptions),
+                containerOptions?.runtimeOptions,
+            ) as any as IRuntimeFactory;
 
-            const localTestObjectProvider = new LocalTestObjectProvider(
-                runtimeFactory,
-                options.serviceConfiguration,
-            );
+        const localTestObjectProvider = new LocalTestObjectProvider(
+            runtimeFactory,
+            options.serviceConfiguration,
+        );
 
-            tests(localTestObjectProvider);
+        tests(localTestObjectProvider);
 
-            afterEach(async function() {
-                await localTestObjectProvider.reset();
-            });
+        afterEach(async function() {
+            await localTestObjectProvider.reset();
         });
+    });
 
-        describe("new ContainerRuntime, old DataStoreRuntime", function() {
-            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-                createRuntimeFactory(
-                    OldTestDataObject.type,
-                    getOldDataStoreFactory(containerOptions),
-                    containerOptions?.runtimeOptions,
-                );
-
-            const localTestObjectProvider = new LocalTestObjectProvider(
-                runtimeFactory,
-                options.serviceConfiguration,
+    describe("compat - new ContainerRuntime, old DataStoreRuntime", function() {
+        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+            createRuntimeFactory(
+                OldTestDataObject.type,
+                getOldDataStoreFactory(containerOptions),
+                containerOptions?.runtimeOptions,
             );
 
-            tests(localTestObjectProvider);
+        const localTestObjectProvider = new LocalTestObjectProvider(
+            runtimeFactory,
+            options.serviceConfiguration,
+        );
 
-            afterEach(async function() {
-                await localTestObjectProvider.reset();
-            });
+        tests(localTestObjectProvider);
+
+        afterEach(async function() {
+            await localTestObjectProvider.reset();
+        });
+    });
+};
+
+export const generateLocalTest = (
+    tests: (compatArgs: ILocalTestObjectProvider) => void,
+    options: ITestOptions = {},
+) => {
+    describe("local server", () => {
+        generateLocalNonCompatTest(tests, options);
+        generateLocalCompatTest(tests, options);
+    });
+};
+
+export const generateTinyliciousTest = (
+    tests: (compatArgs: ITestObjectProvider) => void,
+    options: ITestOptions = {},
+) => {
+    describe("tinylicious", () => {
+        // Run with all current versions
+        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+            createRuntimeFactory(
+                TestDataObject.type,
+                getDataStoreFactory(containerOptions),
+                containerOptions?.runtimeOptions,
+            );
+
+        const testObjectProvider = new TinyliciousTestObjectProvider(
+            runtimeFactory,
+        );
+
+        tests(testObjectProvider);
+
+        afterEach(async () => {
+            await testObjectProvider.reset();
         });
 
         describe("old ContainerRuntime, new DataStoreRuntime", function() {
@@ -302,10 +346,10 @@ export const generateCompatTest = (
     });
 };
 
-export const generateTestWithCompat = (
-    tests: (compatArgs: ICompatLocalTestObjectProvider) => void,
-    options: ICompatTestOptions = {},
+export const generateTest = (
+    tests: (compatArgs: ITestObjectProvider) => void,
+    options: ITestOptions = {},
 ) => {
-    generateTest(tests, options);
-    generateCompatTest(tests, options);
+    generateLocalTest(tests, options);
+    generateTinyliciousTest(tests);
 };

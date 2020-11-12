@@ -12,8 +12,8 @@ import {
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
 import {
-    generateTestWithCompat,
-    ICompatLocalTestObjectProvider,
+    generateTest,
+    ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "./compatUtils";
@@ -25,7 +25,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     const initialCellValue = "Initial cell value";
     const newCellValue = "A new cell value";
 
@@ -215,5 +215,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("Cell", () => {
-    generateTestWithCompat(tests);
+    generateTest(tests);
 });

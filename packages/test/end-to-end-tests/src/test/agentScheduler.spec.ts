@@ -9,10 +9,10 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { taskSchedulerId } from "@fluidframework/container-runtime";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { generateTestWithCompat, ICompatLocalTestObjectProvider, TestDataObject } from "./compatUtils";
+import { generateLocalTest, ITestObjectProvider, TestDataObject } from "./compatUtils";
 import * as old from "./oldVersion";
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     const leader = "leader";
 
     describe("Single client", () => {
@@ -228,5 +228,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("AgentScheduler", () => {
-    generateTestWithCompat(tests);
+    generateLocalTest(tests);
 });

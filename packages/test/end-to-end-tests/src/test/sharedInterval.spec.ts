@@ -20,8 +20,8 @@ import {
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
 import {
-    generateTestWithCompat,
-    ICompatLocalTestObjectProvider,
+    generateTest,
+    ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "./compatUtils";
@@ -53,7 +53,7 @@ const assertIntervalsHelper = (
     }
 };
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     describe("one client", () => {
         const stringId = "stringKey";
 
@@ -322,5 +322,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("SharedInterval", () => {
-    generateTestWithCompat(tests);
+    generateTest(tests);
 });

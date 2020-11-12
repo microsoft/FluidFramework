@@ -14,8 +14,8 @@ import {
     ITestFluidObject,
 } from "@fluidframework/test-utils";
 import {
-    generateTestWithCompat,
-    ICompatLocalTestObjectProvider,
+    generateTest,
+    ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "./compatUtils";
@@ -27,7 +27,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     let dataObject1: ITestFluidObject;
     let sharedMap1: ISharedMap;
     let sharedMap2: ISharedMap;
@@ -265,7 +265,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
          * https://github.com/microsoft/FluidFramework/issues/2400
          *
          * - A SharedMap in local (detached) state set a key.
-         * - The map is then attached so that it is avaible to remote clients.
+         * - The map is then attached so that it is available to remote clients.
          * - One of the remote clients sets a new value to the same key.
          * - The expected behavior is that the first SharedMap updates the key with the new value. But in the bug
          *   the first SharedMap stores the key in its pending state even though it does not send out an op. So,
@@ -300,5 +300,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("Map", () => {
-    generateTestWithCompat(tests);
+    generateTest(tests);
 });

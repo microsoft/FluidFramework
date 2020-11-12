@@ -11,8 +11,8 @@ import {
     ITestFluidObject,
 } from "@fluidframework/test-utils";
 import {
-    generateTestWithCompat,
-    ICompatLocalTestObjectProvider,
+    generateTest,
+    ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "./compatUtils";
@@ -24,7 +24,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     let dataStore1: ITestFluidObject;
     let sharedCounter1: ISharedCounter;
     let sharedCounter2: ISharedCounter;
@@ -79,14 +79,10 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         it("can increment and decrement the value in 3 containers correctly", async () => {
             sharedCounter2.increment(7);
             await args.opProcessingController.process();
-            assert.equal(sharedCounter1.value, 7);
-            assert.equal(sharedCounter2.value, 7);
-            assert.equal(sharedCounter3.value, 7);
+            verifyCounterValues(7, 7, 7);
             sharedCounter3.increment(-20);
             await args.opProcessingController.process();
-            assert.equal(sharedCounter1.value, -13);
-            assert.equal(sharedCounter2.value, -13);
-            assert.equal(sharedCounter3.value, -13);
+            verifyCounterValues(-13, -13, -13);
         });
 
         it("fires incremented events in 3 containers correctly", async () => {
@@ -137,9 +133,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                 assert.equal(eventCount3, expectedEventCount);
 
                 // counter value is updated correctly
-                assert.equal(sharedCounter1.value, expectedValue);
-                assert.equal(sharedCounter2.value, expectedValue);
-                assert.equal(sharedCounter3.value, expectedValue);
+                verifyCounterValues(expectedValue, expectedValue, expectedValue);
 
                 // done with this step
                 incrementSteps.shift();
@@ -149,5 +143,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("SharedCounter", () => {
-    generateTestWithCompat(tests);
+    generateTest(tests);
 });

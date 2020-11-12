@@ -12,8 +12,8 @@ import {
     ITestFluidObject,
 } from "@fluidframework/test-utils";
 import {
-    generateTestWithCompat,
-    ICompatLocalTestObjectProvider,
+    generateLocalTest,
+    ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "./compatUtils";
@@ -25,7 +25,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     let sharedString1: SharedString;
     let sharedString2: SharedString;
 
@@ -67,5 +67,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("SharedString", () => {
-    generateTestWithCompat(tests);
+    generateLocalTest(tests);
 });
