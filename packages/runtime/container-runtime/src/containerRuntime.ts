@@ -972,7 +972,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const requestParser = RequestParser.create(request);
         const id = requestParser.pathParts[0];
 
-        if (id === "_channel") {
+        if (id === "_channels") {
             return this.resolveHandle(requestParser.createSubRequest(1));
         }
 
