@@ -18,7 +18,6 @@ import * as core from "@fluidframework/server-services-core";
 export class KafkaOrdererConnection implements core.IOrdererConnection {
     public static async create(
         existing: boolean,
-        document: core.IDocument,
         producer: core.IProducer,
         tenantId: string,
         documentId: string,
@@ -30,7 +29,6 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         // Create the connection
         return new KafkaOrdererConnection(
             existing,
-            document,
             producer,
             tenantId,
             documentId,
@@ -47,7 +45,6 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 
     constructor(
         public readonly existing: boolean,
-        document: core.IDocument,
         private readonly producer: core.IProducer,
         public readonly tenantId: string,
         public readonly documentId: string,
@@ -188,7 +185,6 @@ export class KafkaOrderer implements core.IOrderer {
         this.existing = details.existing;
         const connection = KafkaOrdererConnection.create(
             this.existing,
-            details.value,
             this.producer,
             this.tenantId,
             this.documentId,
