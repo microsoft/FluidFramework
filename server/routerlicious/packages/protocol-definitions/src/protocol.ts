@@ -34,9 +34,6 @@ export enum MessageType {
     // Forced snapshot
     Save = "saveOp",
 
-    // Message sent when forwarding a sequenced message to an upstream branch
-    Integrate = "integrate",
-
     // Message to indicate the need of a remote agent for a document.
     RemoteHelp = "remoteHelp",
 

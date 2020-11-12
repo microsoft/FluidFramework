@@ -12,7 +12,6 @@ import {
     ISequencedDocumentAugmentedMessage,
     IBranchOrigin,
     IClientJoin,
-    IDocumentMessage,
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
@@ -78,11 +77,6 @@ interface ITicketedMessageOutput {
 
     instruction: InstructionType;
 }
-
-/**
- * Maps from a branch to a clientId stored in the MSN map
- */
-const getBranchClientId = (branch: string) => `branch$${branch}`;
 
 export class DeliLambda implements IPartitionLambda {
     private sequenceNumber: number;
@@ -235,11 +229,11 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // Update and retrieve the minimum sequence number
-        let message = rawMessage as IRawOperationMessage;
-        let systemContent = this.extractSystemContent(message);
+        const message = rawMessage as IRawOperationMessage;
+        const systemContent = this.extractSystemContent(message);
 
         // Check incoming message order. Nack if there is any gap so that the client can resend.
-        const messageOrder = this.checkOrder(message, systemContent);
+        const messageOrder = this.checkOrder(message);
         if (messageOrder === IncomingMessageOrder.Duplicate) {
             return;
         } else if (messageOrder === IncomingMessageOrder.Gap) {
@@ -250,68 +244,65 @@ export class DeliLambda implements IPartitionLambda {
                 `Gap detected in incoming op`);
         }
 
-        // Cases only applies to non-integration messages
-        if (message.operation.type !== MessageType.Integrate) {
-            // Handle client join/leave messages.
-            if (!message.clientId) {
-                if (message.operation.type === MessageType.ClientLeave) {
-                    // Return if the client has already been removed due to a prior leave message.
-                    if (!this.clientSeqManager.removeClient(systemContent)) {
-                        return;
-                    }
-                } else if (message.operation.type === MessageType.ClientJoin) {
-                    const clientJoinMessage = systemContent as IClientJoin;
-                    const isNewClient = this.clientSeqManager.upsertClient(
-                        clientJoinMessage.clientId,
-                        0,
-                        this.minimumSequenceNumber,
-                        message.timestamp,
-                        true,
-                        clientJoinMessage.detail.scopes);
-                    // Return if the client has already been added due to a prior join message.
-                    if (!isNewClient) {
-                        return;
-                    }
-                    this.canClose = false;
+        // Handle client join/leave messages.
+        if (!message.clientId) {
+            if (message.operation.type === MessageType.ClientLeave) {
+                // Return if the client has already been removed due to a prior leave message.
+                if (!this.clientSeqManager.removeClient(systemContent)) {
+                    return;
                 }
-            } else {
-                // Nack inexistent client.
-                const client = this.clientSeqManager.get(message.clientId);
-                if (!client || client.nack) {
+            } else if (message.operation.type === MessageType.ClientJoin) {
+                const clientJoinMessage = systemContent as IClientJoin;
+                const isNewClient = this.clientSeqManager.upsertClient(
+                    clientJoinMessage.clientId,
+                    0,
+                    this.minimumSequenceNumber,
+                    message.timestamp,
+                    true,
+                    clientJoinMessage.detail.scopes);
+                // Return if the client has already been added due to a prior join message.
+                if (!isNewClient) {
+                    return;
+                }
+                this.canClose = false;
+            }
+        } else {
+            // Nack inexistent client.
+            const client = this.clientSeqManager.get(message.clientId);
+            if (!client || client.nack) {
+                return this.createNackMessage(
+                    message,
+                    400,
+                    NackErrorType.BadRequestError,
+                    `Nonexistent client`);
+            }
+            // Verify that the message is within the current window.
+            // -1 check just for directly sent ops (e.g., using REST API).
+            if (message.clientId &&
+                message.operation.referenceSequenceNumber !== -1 &&
+                message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
+                this.clientSeqManager.upsertClient(
+                    message.clientId,
+                    message.operation.clientSequenceNumber,
+                    this.minimumSequenceNumber,
+                    message.timestamp,
+                    true,
+                    [],
+                    true);
+                return this.createNackMessage(
+                    message,
+                    400,
+                    NackErrorType.BadRequestError,
+                    `Refseq ${message.operation.referenceSequenceNumber} < ${this.minimumSequenceNumber}`);
+            }
+            // Nack if an unauthorized client tries to summarize.
+            if (message.operation.type === MessageType.Summarize) {
+                if (!canSummarize(client.scopes)) {
                     return this.createNackMessage(
                         message,
-                        400,
-                        NackErrorType.BadRequestError,
-                        `Nonexistent client`);
-                }
-                // Verify that the message is within the current window.
-                // -1 check just for directly sent ops (e.g., using REST API).
-                if (message.clientId &&
-                    message.operation.referenceSequenceNumber !== -1 &&
-                    message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
-                    this.clientSeqManager.upsertClient(
-                        message.clientId,
-                        message.operation.clientSequenceNumber,
-                        this.minimumSequenceNumber,
-                        message.timestamp,
-                        true,
-                        [],
-                        true);
-                    return this.createNackMessage(
-                        message,
-                        400,
-                        NackErrorType.BadRequestError,
-                        `Refseq ${message.operation.referenceSequenceNumber} < ${this.minimumSequenceNumber}`);
-                }
-                // Nack if an unauthorized client tries to summarize.
-                if (message.operation.type === MessageType.Summarize) {
-                    if (!canSummarize(client.scopes)) {
-                        return this.createNackMessage(
-                            message,
-                            403,
-                            NackErrorType.InvalidScopeError,
-                            `Client ${message.clientId} does not have summary permission`);
-                    }
+                        403,
+                        NackErrorType.InvalidScopeError,
+                        `Client ${message.clientId} does not have summary permission`);
                 }
             }
         }
@@ -320,96 +311,34 @@ export class DeliLambda implements IPartitionLambda {
         // We don't increment sequence number for noops sent by client since they will
         // be consolidated and sent later as raw message.
         let sequenceNumber = this.sequenceNumber;
-        let origin: IBranchOrigin;
-        if (message.operation.type === MessageType.Integrate) {
-            sequenceNumber = this.revSequenceNumber();
-
-            // Branch operation is the original message
-            const branchOperation = systemContent as ISequencedOperationMessage;
-            const branchDocumentMessage = branchOperation.operation;
-            const branchClientId = getBranchClientId(branchOperation.documentId);
-
-            // Do I transform the ref or the MSN - I guess the ref here because it's that key space
-            const transformedRefSeqNumber = this.transformBranchSequenceNumber(
-                branchDocumentMessage.referenceSequenceNumber);
-            const transformedMinSeqNumber = this.transformBranchSequenceNumber(
-                branchDocumentMessage.minimumSequenceNumber);
-
-            // Update the branch mappings
-            this.branchMap.add(branchDocumentMessage.sequenceNumber, sequenceNumber);
-            this.branchMap.updateBase(branchDocumentMessage.minimumSequenceNumber);
-
-            // A merge message contains the sequencing information in the target branch's (i.e. this)
-            // coordinate space. But contains the original message in the contents.
-            const operation: IDocumentMessage = {
-                clientSequenceNumber: branchDocumentMessage.sequenceNumber,
-                contents: branchDocumentMessage.contents,
-                referenceSequenceNumber: transformedRefSeqNumber,
-                traces: message.operation.traces,
-                type: branchDocumentMessage.type,
-            };
-            if (isSystemType(branchDocumentMessage.type)) {
-                const systemMessage = operation as IDocumentSystemMessage;
-                systemMessage.data = (branchDocumentMessage as ISequencedDocumentSystemMessage).data;
+        if (message.clientId) {
+            // Don't rev for client sent no-ops
+            if (message.operation.type !== MessageType.NoOp) {
+                // Rev the sequence number
+                sequenceNumber = this.revSequenceNumber();
+                // We checked earlier for the below case. Why checking again?
+                // Only for directly sent ops (e.g., using REST API). To avoid getting nacked,
+                // We rev the refseq number to current sequence number.
+                if (message.operation.referenceSequenceNumber === -1) {
+                    message.operation.referenceSequenceNumber = sequenceNumber;
+                }
             }
+            assert(
+                message.operation.referenceSequenceNumber >= this.minimumSequenceNumber,
+                `${message.operation.referenceSequenceNumber} >= ${this.minimumSequenceNumber}`);
 
-            const transformed: IRawOperationMessage = {
-                clientId: branchDocumentMessage.clientId,
-                documentId: this.documentId,
-                operation,
-                tenantId: message.tenantId,
-                timestamp: message.timestamp,
-                type: RawOperationType,
-            };
-
-            // Set origin information for the message
-            origin = {
-                id: branchOperation.documentId,
-                minimumSequenceNumber: branchDocumentMessage.minimumSequenceNumber,
-                sequenceNumber: branchDocumentMessage.sequenceNumber,
-            };
-
-            message = transformed;
-            // Need to re-extract system content for the transformed messages
-            systemContent = this.extractSystemContent(message);
-
-            // Update the entry for the branch client
             this.clientSeqManager.upsertClient(
-                branchClientId,
-                branchDocumentMessage.sequenceNumber,
-                transformedMinSeqNumber,
+                message.clientId,
+                message.operation.clientSequenceNumber,
+                message.operation.referenceSequenceNumber,
                 message.timestamp,
-                false);
+                true);
         } else {
-            if (message.clientId) {
-                // Don't rev for client sent no-ops
-                if (message.operation.type !== MessageType.NoOp) {
-                    // Rev the sequence number
-                    sequenceNumber = this.revSequenceNumber();
-                    // We checked earlier for the below case. Why checking again?
-                    // Only for directly sent ops (e.g., using REST API). To avoid getting nacked,
-                    // We rev the refseq number to current sequence number.
-                    if (message.operation.referenceSequenceNumber === -1) {
-                        message.operation.referenceSequenceNumber = sequenceNumber;
-                    }
-                }
-                assert(
-                    message.operation.referenceSequenceNumber >= this.minimumSequenceNumber,
-                    `${message.operation.referenceSequenceNumber} >= ${this.minimumSequenceNumber}`);
-
-                this.clientSeqManager.upsertClient(
-                    message.clientId,
-                    message.operation.clientSequenceNumber,
-                    message.operation.referenceSequenceNumber,
-                    message.timestamp,
-                    true);
-            } else {
-                // Don't rev for server sent no-ops, noClient, or Control messages.
-                if (!(message.operation.type === MessageType.NoOp ||
-                    message.operation.type === MessageType.NoClient ||
-                    message.operation.type === MessageType.Control)) {
-                    sequenceNumber = this.revSequenceNumber();
-                }
+            // Don't rev for server sent no-ops, noClient, or Control messages.
+            if (!(message.operation.type === MessageType.NoOp ||
+                message.operation.type === MessageType.NoClient ||
+                message.operation.type === MessageType.Control)) {
+                sequenceNumber = this.revSequenceNumber();
             }
         }
 
@@ -493,7 +422,7 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // And now craft the output message
-        const outputMessage = this.createOutputMessage(message, origin, sequenceNumber, systemContent);
+        const outputMessage = this.createOutputMessage(message, undefined /* origin */, sequenceNumber, systemContent);
 
         const sequencedMessage: ISequencedOperationMessage = {
             documentId: message.documentId,
@@ -557,20 +486,13 @@ export class DeliLambda implements IPartitionLambda {
         }
     }
 
-    private checkOrder(message: IRawOperationMessage, content: any): IncomingMessageOrder {
-        if (message.operation.type !== MessageType.Integrate && !message.clientId) {
+    private checkOrder(message: IRawOperationMessage): IncomingMessageOrder {
+        if (!message.clientId) {
             return IncomingMessageOrder.ConsecutiveOrSystem;
         }
 
-        let clientId: string;
-        let clientSequenceNumber: number;
-        if (message.operation.type === MessageType.Integrate) {
-            clientId = getBranchClientId(content.documentId);
-            clientSequenceNumber = content.operation.sequenceNumber;
-        } else {
-            clientId = message.clientId;
-            clientSequenceNumber = message.operation.clientSequenceNumber;
-        }
+        const clientId = message.clientId;
+        const clientSequenceNumber = message.operation.clientSequenceNumber;
 
         const client = this.clientSeqManager.get(clientId);
         if (!client) {
@@ -738,11 +660,6 @@ export class DeliLambda implements IPartitionLambda {
      */
     private revSequenceNumber(): number {
         return ++this.sequenceNumber;
-    }
-
-    private transformBranchSequenceNumber(sequenceNumber: number): number {
-        // -1 indicates an unused sequence number
-        return sequenceNumber !== -1 ? this.branchMap.get(sequenceNumber) : -1;
     }
 
     /**
