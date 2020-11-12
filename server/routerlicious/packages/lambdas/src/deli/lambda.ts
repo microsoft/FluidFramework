@@ -114,7 +114,6 @@ export class DeliLambda implements IPartitionLambda {
         private readonly tenantId: string,
         private readonly documentId: string,
         readonly lastCheckpoint: IDeliState,
-        dbObject: IDocument,
         collection: ICollection<IDocument>,
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
@@ -132,29 +131,6 @@ export class DeliLambda implements IPartitionLambda {
                     client.canEvict,
                     client.scopes,
                     client.nack);
-            }
-        }
-
-        // Setup branch information
-        if (dbObject.parent) {
-            if (lastCheckpoint.branchMap) {
-                this.branchMap = new RangeTracker(lastCheckpoint.branchMap);
-            } else {
-                // Initialize the range tracking window
-                this.branchMap = new RangeTracker(
-                    dbObject.parent.minimumSequenceNumber,
-                    dbObject.parent.minimumSequenceNumber);
-                for (let i = dbObject.parent.minimumSequenceNumber + 1; i <= dbObject.parent.sequenceNumber; i++) {
-                    this.branchMap.add(i, i);
-                }
-
-                // Add in the client representing the parent
-                this.clientSeqManager.upsertClient(
-                    getBranchClientId(dbObject.parent.documentId),
-                    dbObject.parent.sequenceNumber,
-                    dbObject.parent.minimumSequenceNumber,
-                    dbObject.createTime,
-                    false);
             }
         }
 
@@ -276,7 +252,7 @@ export class DeliLambda implements IPartitionLambda {
 
         // Cases only applies to non-integration messages
         if (message.operation.type !== MessageType.Integrate) {
-            // Handle client join/leave and fork messages.
+            // Handle client join/leave messages.
             if (!message.clientId) {
                 if (message.operation.type === MessageType.ClientLeave) {
                     // Return if the client has already been removed due to a prior leave message.
@@ -297,12 +273,6 @@ export class DeliLambda implements IPartitionLambda {
                         return;
                     }
                     this.canClose = false;
-                } else if (message.operation.type === MessageType.Fork) {
-                    const messageMetaData = {
-                        documentId: this.documentId,
-                        tenantId: this.tenantId,
-                    };
-                    this.context.log.info(`Fork ${message.documentId} -> ${systemContent.name}`, { messageMetaData });
                 }
             } else {
                 // Nack inexistent client.

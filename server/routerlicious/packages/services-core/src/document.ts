@@ -26,10 +26,6 @@ export interface IDocumentStorage {
 
     getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }>;
 
-    getForks(tenantId: string, documentId: string): Promise<string[]>;
-
-    createFork(tenantId: string, id: string): Promise<string>;
-
     createDocument(
         tenantId: string,
         documentId: string,
@@ -37,20 +33,6 @@ export interface IDocumentStorage {
         sequenceNumber: number,
         term: number,
         values: [string, ICommittedProposal][]): Promise<IDocumentDetails>;
-}
-
-export interface IFork {
-    // The id of the fork
-    documentId: string;
-
-    // Tenant for the fork
-    tenantId: string;
-
-    // The sequence number where the fork originated
-    sequenceNumber: number;
-
-    // The last forwarded sequence number
-    lastForwardedSequenceNumber: number;
 }
 
 export interface IClientSequenceNumber {
@@ -116,21 +98,6 @@ export interface IDocument {
     documentId: string;
 
     tenantId: string;
-
-    forks: IFork[];
-
-    /**
-     * Parent references the point from which the document was branched
-     */
-    parent: {
-        documentId: string,
-
-        sequenceNumber: number,
-
-        tenantId: string;
-
-        minimumSequenceNumber: number;
-    };
 
     // Scribe state
     scribe: string;
