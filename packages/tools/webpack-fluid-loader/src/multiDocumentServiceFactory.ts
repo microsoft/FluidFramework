@@ -13,7 +13,6 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
 import uuid from "uuid/v4";
 import { IDevServerUser, IRouterliciousRouteOptions, RouteOptions } from "./loader";
-import { getuid } from "process";
 
 export const deltaConns = new Map<string, ILocalDeltaConnectionServer>();
 
@@ -34,7 +33,11 @@ export function getDocumentServiceFactory(documentId: string, options: RouteOpti
         getUser());
 
         if (options.mode === "tinylicious") {
-            routerliciousTokenProvider = new InsecureTokenProvider("tinylicious", documentId, "12345", getUser());
+            routerliciousTokenProvider = new InsecureTokenProvider(
+                "tinylicious",
+                documentId,
+                "12345",
+                getUser());
         }
     return MultiDocumentServiceFactory.create([
         new LocalDocumentServiceFactory(deltaConn),
