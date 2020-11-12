@@ -66,6 +66,8 @@ export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
 
 export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
     mode: "tinylicious";
+    tenantId?: string;
+    tenantSecret?: string;
     bearerSecret?: string;
 }
 
