@@ -18,11 +18,16 @@ export const handler: Handler = {
         let content = readFile(file);
         const matches = content.match(urlPattern);
         if (matches !== null) {
+            const results: string[] = [];
             const containsBadUrl = matches.some((value) => {
-                return !value.startsWith(`https://registry.npmjs.org`);
+                if (value.startsWith(`https://registry.npmjs.org`)) {
+                    return false;
+                }
+                results.push(value)
+                return true;
             });
             if (containsBadUrl) {
-                return `A private registry URL is in lock file: ${file}`;
+                return `A private registry URL is in lock file: ${file}:\n${results.join("\n")}`;
             }
         }
         return;
