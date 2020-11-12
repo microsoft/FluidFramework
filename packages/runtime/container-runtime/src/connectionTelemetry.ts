@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
@@ -11,7 +10,7 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 
 class OpPerfTelemetry {
     private pongCount: number = 0;

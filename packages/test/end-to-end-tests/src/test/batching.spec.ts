@@ -14,7 +14,12 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { generateTestWithCompat, ICompatLocalTestObjectProvider, ITestContainerConfig } from "./compatUtils";
+import {
+    generateTestWithCompat,
+    ICompatLocalTestObjectProvider,
+    ITestContainerConfig,
+    DataObjectFactoryType,
+} from "./compatUtils";
 
 const map1Id = "map1Key";
 const map2Id = "map2Key";
@@ -23,7 +28,7 @@ const registry: ChannelFactoryRegistry = [
     [map2Id, SharedMap.getFactory()],
 ];
 const testContainerConfig: ITestContainerConfig = {
-    testFluidDataObject: true,
+    fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
 };
 

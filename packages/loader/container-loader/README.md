@@ -159,7 +159,7 @@ This value is not affected by `Container.forceReadonly` calls discussed below an
 
 Hosts can also force readonly-mode for a container via calling `Container.forceReadonly(true)`. This can be useful in scenarios like:
 
-- Loss of connectivity, in scenarios where host choses method od preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of container
+- Loss of connectivity, in scenarios where host choses method of preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of container
 - Special view-only mode in host. For example can be used by hosts for previewing container content in-place with other host content, and leveraging full-screen / separate window experience for editing.
 
 Container and DeltaManager expose `"readonly"` event and property. It can have 3 states:

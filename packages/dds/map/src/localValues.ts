@@ -10,7 +10,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
-    ISharedObject,
     parseHandles,
     serializeHandles,
     SharedObject,
@@ -93,39 +92,6 @@ export class PlainLocalValue implements ILocalValue {
         return {
             type: this.type,
             value,
-        };
-    }
-}
-
-/**
- * SharedLocalValue exists for supporting older documents and is now deprecated.
- * @deprecated
- */
-export class SharedLocalValue implements ILocalValue {
-    /**
-     * Create a new SharedLocalValue.
-     * @param value - The shared object to store
-     * @deprecated
-     */
-    constructor(public readonly value: ISharedObject) {
-    }
-
-    /**
-     * {@inheritDoc ILocalValue."type"}
-     * @deprecated
-     */
-    public get type(): string {
-        return ValueType[ValueType.Shared];
-    }
-
-    /**
-     * {@inheritDoc ILocalValue.makeSerialized}
-     * @deprecated
-     */
-    public makeSerialized(): ISerializedValue {
-        return {
-            type: this.type,
-            value: this.value.id,
         };
     }
 }

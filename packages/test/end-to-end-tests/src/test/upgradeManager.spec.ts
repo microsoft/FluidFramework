@@ -177,6 +177,7 @@ describe("UpgradeManager", () => {
 
         // we expect UpgradeManager not to initiate upgrade (within test timeout) unless there is <= 1 client connected
         const upgradeP = new Promise<void>((resolve, reject) => {
+            // eslint-disable-next-line prefer-promise-reject-errors
             upgradeManager.on("upgradeInProgress", () => quorumCount(container1) === 1 ? resolve() : reject());
         });
 

@@ -49,6 +49,7 @@ export class InsecureTokenProvider implements ITokenProvider {
             ver,
         };
 
-        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, this.tenantKey);
+        const utf8Key = { utf8: this.tenantKey };
+        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
     }
 }

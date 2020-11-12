@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import fs from "fs";
+import { assert } from "@fluidframework/common-utils";
 import { FileDeltaStorageService } from "@fluidframework/file-driver";
 import {
     createGroupOp,
@@ -101,10 +101,10 @@ export class ClientReplayTool {
 
     private async setup() {
         if (this.args.inDirName === undefined) {
-            return Promise.reject("Please provide --indir argument");
+            return Promise.reject(new Error("Please provide --indir argument"));
         }
         if (!fs.existsSync(this.args.inDirName)) {
-            return Promise.reject("File does not exist");
+            return Promise.reject(new Error("File does not exist"));
         }
 
         this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
@@ -246,12 +246,10 @@ export class ClientReplayTool {
             const readonlyClient = clients.get("readonly");
             for (const client of clients) {
                 for (const mergeTree of client[1]) {
-                    assert.equal(
-                        mergeTree[1].getLength(),
-                        readonlyClient.get(mergeTree[0]).getLength());
-                    assert.equal(
-                        mergeTree[1].getText(),
-                        readonlyClient.get(mergeTree[0]).getText());
+                    assert(
+                        mergeTree[1].getLength() === readonlyClient.get(mergeTree[0]).getLength());
+                    assert(
+                        mergeTree[1].getText() === readonlyClient.get(mergeTree[0]).getText());
                 }
             }
         }

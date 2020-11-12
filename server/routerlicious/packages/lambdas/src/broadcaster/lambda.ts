@@ -26,10 +26,15 @@ class BroadcasterBatch {
     }
 }
 
+// Set immediate is not available in all environments, specifically it does not work in a browser.
+// Fallback to set timeout in those cases
+const taskScheduleFunction: (cb: () => void) => void = typeof setImmediate === "function" ? setImmediate : setTimeout;
+
 export class BroadcasterLambda implements IPartitionLambda {
     private pending = new Map<string, BroadcasterBatch>();
     private pendingOffset: IQueuedMessage;
     private current = new Map<string, BroadcasterBatch>();
+    private isMessageSending: boolean = false;
 
     constructor(private readonly publisher: IPublisher, protected context: IContext) {
     }
@@ -78,26 +83,26 @@ export class BroadcasterLambda implements IPartitionLambda {
     }
 
     private sendPending() {
-        // If there is work currently being sent or we have no pending work return early
-        if (this.current.size > 0 || this.pending.size === 0) {
+        if (this.pending.size === 0 || this.isMessageSending) {
             return;
         }
 
-        // Swap current and pending
-        const temp = this.current;
-        this.current = this.pending;
-        this.pending = temp;
-        const batchOffset = this.pendingOffset;
+        // Invoke the next send after a delay to give IO time to create more batches
+        this.isMessageSending = true;
+        taskScheduleFunction(() => {
+            const batchOffset = this.pendingOffset;
 
-        // Process all the batches + checkpoint
-        this.current.forEach((batch, topic) => {
-            this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
-        });
+            this.current = this.pending;
+            this.pending = new Map<string, BroadcasterBatch>();
 
-        this.context.checkpoint(batchOffset);
+            this.isMessageSending = false;
 
-        // Invoke the next send after a setImmediate to give IO time to create more batches
-        setImmediate(() => {
+            // Process all the batches + checkpoint
+            this.current.forEach((batch, topic) => {
+                this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
+            });
+
+            this.context.checkpoint(batchOffset);
             this.current.clear();
             this.sendPending();
         });

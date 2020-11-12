@@ -201,9 +201,17 @@ Markdown formatting _goes_ **here.**
 {{% /callout %}}
 
 
-### Diagrams with Mermaid
+### Diagrams
 
-[Mermaid examples and syntax reference](https://mermaid-js.github.io/mermaid/)
+We prefer text-based diagrams that are converted to images at build time. You can create inline diagrams with
+[Mermaid](https://mermaid-js.github.io/), or you can create ASCII art diagrams that will be converted to PNGs at build
+time.
+
+#### Mermaid diagrams
+
+Mermaid diagrams can be put inline in a Markdown file using the `{{</* mermaid */>}}` shortcode.
+
+[Mermaid examples and syntax reference.](https://mermaid-js.github.io/mermaid/)
 
 **Input**
 
@@ -244,6 +252,28 @@ Class01 : int chimp
 Class01 : int gorilla
 Class08 <--> C2: Cool label
 {{< /mermaid >}}
+
+#### ASCII art diagrams with ditaa
+
+[ditaa](https://github.com/stathissideris/ditaa) is a tool to convert ASCII art block diagrams to PNGs. Any file
+in the `/docs/content` folder with a `.ditaa` file extension will be converted to a PNG file in the same folder at
+build time.
+
+[asciiflow](http://asciiflow.com/) is an in-browser editor that makes it easier to create ASCII art block diagrams.
+
+**Input**
+
+```
+{{% include file="content/docs/advanced/images/example.ditaa" safeHTML=true %}}
+```
+
+**Output**
+
+![An example ditaa diagram that has been converted to a PNG image](/docs/advanced/images/example.png)
+
+
+[Read more about ditaa here.](https://github.com/stathissideris/ditaa) Note that we are using
+[a fork of the original implementation](https://github.com/akavel/ditaa) re-written in Go to remove a Java dependency.
 
 ### Markdown enhancements
 

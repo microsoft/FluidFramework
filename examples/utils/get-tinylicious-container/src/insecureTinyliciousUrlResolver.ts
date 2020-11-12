@@ -59,11 +59,12 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
             tenantId: "tinylicious",
             user: { id: uuid() },
             iat: Math.round(new Date().getTime() / 1000),
-            exp: Math.round(new Date().getTime() / 1000) + 5 * 60, // 5 minute expiration
+            exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
             ver: "1.0",
         };
 
+        const utf8Key = { utf8: "12345" };
         // eslint-disable-next-line no-null/no-null
-        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, "12345");
+        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
     }
 }

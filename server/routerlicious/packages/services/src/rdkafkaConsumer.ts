@@ -209,14 +209,13 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}
 
 		await new Promise((resolve) => {
-			const consumer = this.consumer;
-			this.consumer = undefined;
-			if (consumer && consumer.isConnected()) {
-				consumer.disconnect(resolve);
+			if (this.consumer && this.consumer.isConnected()) {
+				this.consumer.disconnect(resolve);
 			} else {
 				resolve();
 			}
 		});
+		this.consumer = undefined;
 
 		if (this.zooKeeperClient) {
 			this.zooKeeperClient.close();

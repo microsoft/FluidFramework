@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
-import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IBlob, ISnapshotTree, ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
@@ -31,20 +31,6 @@ describe("Data Store Context Tests", () => {
     const dataStoreId = "Test1";
     let summaryTracker: SummaryTracker;
     let createSummarizerNodeFn: CreateChildSummarizerNodeFn;
-    beforeEach(async () => {
-        summaryTracker = new SummaryTracker("", 0, 0);
-        const summarizerNode = SummarizerNode.createRoot(
-            new TelemetryNullLogger(),
-            (() => undefined) as unknown as SummarizeInternalFn,
-            0,
-            0,
-            true);
-        createSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
-            summarizeInternal,
-            dataStoreId,
-            { type: CreateSummarizerNodeSource.Local },
-        );
-    });
 
     describe("LocalFluidDataStoreContext Initialization", () => {
         let localDataStoreContext: LocalFluidDataStoreContext;
@@ -52,7 +38,20 @@ describe("Data Store Context Tests", () => {
         let scope: IFluidObject;
         const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
+
         beforeEach(async () => {
+            summaryTracker = new SummaryTracker("", 0, 0);
+            const summarizerNode = SummarizerNode.createRoot(
+                new TelemetryNullLogger(),
+                (() => undefined) as unknown as SummarizeInternalFn,
+                0,
+                0);
+            createSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
+                summarizeInternal,
+                dataStoreId,
+                { type: CreateSummarizerNodeSource.Local },
+            );
+
             const factory: IFluidDataStoreFactory = {
                 type: "store-type",
                 get IFluidDataStoreFactory() { return factory; },
@@ -80,7 +79,8 @@ describe("Data Store Context Tests", () => {
                 summaryTracker,
                 createSummarizerNodeFn,
                 attachCb,
-                undefined);
+                undefined,
+                true /* isRootDataStore */);
 
             await localDataStoreContext.realize();
             const attachMessage = localDataStoreContext.generateAttachMessage();
@@ -91,14 +91,19 @@ describe("Data Store Context Tests", () => {
             const dataStoreAttributes: IFluidDataStoreAttributes = {
                 pkg: JSON.stringify(["TestDataStore1"]),
                 snapshotFormatVersion: "0.1",
+                isRootDataStore: true,
             };
 
-            assert.equal(contents.pkg, dataStoreAttributes.pkg, "Local DataStore package does not match.");
-            assert.equal(
+            assert.strictEqual(contents.pkg, dataStoreAttributes.pkg, "Local DataStore package does not match.");
+            assert.strictEqual(
                 contents.snapshotFormatVersion,
                 dataStoreAttributes.snapshotFormatVersion,
                 "Local DataStore snapshot version does not match.");
-            assert.equal(attachMessage.type, "TestDataStore1", "Attach message type does not match.");
+            assert.strictEqual(
+                contents.isRootDataStore,
+                dataStoreAttributes.isRootDataStore,
+                "Local DataStore isRootDataStore flag does not match");
+            assert.strictEqual(attachMessage.type, "TestDataStore1", "Attach message type does not match.");
         });
 
         it("Supplying array of packages in LocalFluidDataStoreContext should create exception", async () => {
@@ -112,13 +117,14 @@ describe("Data Store Context Tests", () => {
                 summaryTracker,
                 createSummarizerNodeFn,
                 attachCb,
-                undefined);
+                undefined,
+                false /* isRootDataStore */);
 
             await localDataStoreContext.realize()
                 .catch((error) => {
                     exception = true;
                 });
-            assert.equal(exception, true, "Exception did not occur.");
+            assert.strictEqual(exception, true, "Exception did not occur.");
         });
 
         it("Supplying array of packages in LocalFluidDataStoreContext should not create exception", async () => {
@@ -144,7 +150,8 @@ describe("Data Store Context Tests", () => {
                 summaryTracker,
                 createSummarizerNodeFn,
                 attachCb,
-                undefined);
+                undefined,
+                false /* isRootDataStore */);
 
             await localDataStoreContext.realize();
 
@@ -154,14 +161,19 @@ describe("Data Store Context Tests", () => {
             const dataStoreAttributes: IFluidDataStoreAttributes = {
                 pkg: JSON.stringify(["TestComp", "SubComp"]),
                 snapshotFormatVersion: "0.1",
+                isRootDataStore: false,
             };
 
-            assert.equal(contents.pkg, dataStoreAttributes.pkg, "Local DataStore package does not match.");
-            assert.equal(
+            assert.strictEqual(contents.pkg, dataStoreAttributes.pkg, "Local DataStore package does not match.");
+            assert.strictEqual(
                 contents.snapshotFormatVersion,
                 dataStoreAttributes.snapshotFormatVersion,
                 "Local DataStore snapshot version does not match.");
-            assert.equal(attachMessage.type, "SubComp", "Attach message type does not match.");
+            assert.strictEqual(
+                contents.isRootDataStore,
+                dataStoreAttributes.isRootDataStore,
+                "Local DataStore isRootDataStore flag does not match");
+            assert.strictEqual(attachMessage.type, "SubComp", "Attach message type does not match.");
         });
     });
 
@@ -172,6 +184,18 @@ describe("Data Store Context Tests", () => {
         let scope: IFluidObject;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
+            summaryTracker = new SummaryTracker("", 0, 0);
+            const summarizerNode = SummarizerNode.createRoot(
+                new TelemetryNullLogger(),
+                (() => undefined) as unknown as SummarizeInternalFn,
+                0,
+                0);
+            createSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
+                summarizeInternal,
+                dataStoreId,
+                { type: CreateSummarizerNodeSource.FromSummary },
+            );
+
             const factory: { [key: string]: any } = {};
             factory.IFluidDataStoreFactory = factory;
             factory.instantiateDataStore =
@@ -192,6 +216,7 @@ describe("Data Store Context Tests", () => {
             dataStoreAttributes = {
                 pkg: JSON.stringify(["TestDataStore1"]),
                 snapshotFormatVersion: "0.1",
+                isRootDataStore: true,
             };
             const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
             const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
@@ -211,15 +236,21 @@ describe("Data Store Context Tests", () => {
                 summaryTracker,
                 createSummarizerNodeFn,
             );
-            const snapshot = await remotedDataStoreContext.snapshot(true);
-            const blob = snapshot.entries[0].value as IBlob;
+            const summaryTree = await remotedDataStoreContext.summarize(true);
+            assert(summaryTree.summary.type === SummaryType.Tree,
+                "summarize should always return a tree when fullTree is true");
+            const blob = summaryTree.summary.tree[".component"] as ISummaryBlob;
 
-            const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
-            assert.equal(contents.pkg, dataStoreAttributes.pkg, "Remote DataStore package does not match.");
-            assert.equal(
+            const contents = JSON.parse(blob.content as string) as IFluidDataStoreAttributes;
+            assert.strictEqual(contents.pkg, dataStoreAttributes.pkg, "Remote DataStore package does not match.");
+            assert.strictEqual(
                 contents.snapshotFormatVersion,
                 dataStoreAttributes.snapshotFormatVersion,
                 "Remote DataStore snapshot version does not match.");
+            assert.strictEqual(
+                contents.isRootDataStore,
+                dataStoreAttributes.isRootDataStore,
+                "Remote DataStore isRootDataStore flag does not match");
         });
 
         it("Check RemotedDataStore Attributes without version", async () => {
@@ -244,15 +275,60 @@ describe("Data Store Context Tests", () => {
                 summaryTracker,
                 createSummarizerNodeFn,
             );
-            const snapshot = await remotedDataStoreContext.snapshot(true);
-            const blob = snapshot.entries[0].value as IBlob;
+            const summaryTree = await remotedDataStoreContext.summarize(true);
+            assert(summaryTree.summary.type === SummaryType.Tree,
+                "summarize should always return a tree when fullTree is true");
+            const blob = summaryTree.summary.tree[".component"] as ISummaryBlob;
 
-            const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
-            assert.equal(
+            const contents = JSON.parse(blob.content as string) as IFluidDataStoreAttributes;
+            assert.strictEqual(
                 contents.pkg,
                 JSON.stringify([dataStoreAttributes.pkg]),
                 "Remote DataStore package does not match.");
-            assert.equal(contents.snapshotFormatVersion, "0.1", "Remote DataStore snapshot version does not match.");
+            assert.strictEqual(
+                contents.snapshotFormatVersion,
+                "0.1",
+                "Remote DataStore snapshot version does not match.");
+            // Remote context without the isRootDataStore flag in the snapshot should default it to true.
+            assert.strictEqual(contents.isRootDataStore, true, "Remote DataStore isRootDataStore flag does not match.");
+        });
+
+        it("can process RemotedDataStore Attributes without isRootDataStore flag", async () => {
+            dataStoreAttributes = {
+                pkg: JSON.stringify(["TestDataStore1"]),
+                snapshotFormatVersion: "0.1",
+            };
+            const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
+            const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
+            const snapshotTree: ISnapshotTree = {
+                id: "dummy",
+                blobs: { [".component"]: "fluidDataStoreAttributes" },
+                commits: {},
+                trees: {},
+            };
+
+            remotedDataStoreContext = new RemotedFluidDataStoreContext(
+                dataStoreId,
+                Promise.resolve(snapshotTree),
+                containerRuntime,
+                new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
+                scope,
+                summaryTracker,
+                createSummarizerNodeFn,
+            );
+            const summaryTree = await remotedDataStoreContext.summarize(true);
+            assert(summaryTree.summary.type === SummaryType.Tree,
+                "summarize should always return a tree when fullTree is true");
+            const blob = summaryTree.summary.tree[".component"] as ISummaryBlob;
+
+            const contents = JSON.parse(blob.content as string) as IFluidDataStoreAttributes;
+            assert.strictEqual(contents.pkg, dataStoreAttributes.pkg, "Remote DataStore package does not match.");
+            assert.strictEqual(
+                contents.snapshotFormatVersion,
+                dataStoreAttributes.snapshotFormatVersion,
+                "Remote DataStore snapshot version does not match.");
+            // Remote context without the isRootDataStore flag in the snapshot should default it to true.
+            assert.strictEqual(contents.isRootDataStore, true, "Remote DataStore isRootDataStore flag does not match.");
         });
     });
 });

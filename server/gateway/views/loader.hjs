@@ -22,7 +22,8 @@
         {{/chaincode}}
         var url = "{{ url }}";
         var resolved = {{{ resolved }}};
-        var jwt = "{{ jwt }}";
+        var hostToken = "{{ hostToken }}";
+        var accessToken = "{{ accessToken }}";
         var config = {{{ config }}};
         var clientId = "{{ clientId }}";
 
@@ -43,7 +44,8 @@
             cache,
             chaincode,
             scriptIds,
-            jwt,
+            hostToken,
+            accessToken,
             config,
         );
 

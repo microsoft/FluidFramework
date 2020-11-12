@@ -33,7 +33,6 @@ describe("Shared Map with Interception", () => {
         beforeEach(() => {
             const dataStoreRuntime = new MockFluidDataStoreRuntime();
             sharedMap = new SharedMap(documentId, dataStoreRuntime, MapFactory.Attributes);
-            dataStoreRuntime.bindToContext();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             dataStoreContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;
@@ -110,8 +109,9 @@ describe("Shared Map with Interception", () => {
             try {
                 sharedMapWithInterception.set("color", "green");
             } catch (error) {
-                assert(error instanceof assert.AssertionError,
-                    "We should have caught an assert in the set method because it detects an infinite recursion");
+                assert.strictEqual(error.message,
+                    "set called recursively from the interception callback",
+                    "We should have caught an assert in replaceText because it detects an infinite recursion");
                 asserted = true;
             }
             assert.equal(asserted, true, "The set call should have asserted because it detects inifinite recursion");

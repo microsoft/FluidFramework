@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ISequencedDocumentMessage,
-    ITree,
     ISnapshotTree,
+    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
     IChannel,
@@ -18,11 +17,11 @@ import {
     IChannelFactory,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreContext, ISummarizeResult } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext, ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { convertToSummaryTree } from "@fluidframework/runtime-utils";
-import { Lazy } from "@fluidframework/common-utils";
+import { assert, Lazy } from "@fluidframework/common-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
@@ -108,7 +107,7 @@ export class LocalChannelContext implements IChannelContext {
         if (this.isLoaded) {
             this.services.value.deltaConnection.process(message, local, localOpMetadata);
         } else {
-            assert.strictEqual(local, false,
+            assert(local === false,
                 "Should always be remote because a local dds shouldn't generate ops before loading");
             this.pending.push(message);
         }
@@ -120,31 +119,41 @@ export class LocalChannelContext implements IChannelContext {
         this.services.value.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
-    public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        return this.getAttachSnapshot();
-    }
-
-    public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
-        const snapshot = this.getAttachSnapshot();
+    /**
+     * Returns a summary at the current sequence number.
+     * @param fullTree - true to bypass optimizations and force a full summary tree
+     * @param trackState - This tells whether we should track state from this summary.
+     */
+    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummarizeResult> {
+        assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to take summary");
+        const snapshot = snapshotChannel(this.channel);
         const summary = convertToSummaryTree(snapshot, fullTree);
         return summary;
     }
 
-    public getAttachSnapshot(): ITree {
+    public getAttachSummary(): ISummaryTreeWithStats {
         assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to take snapshot");
-        return snapshotChannel(this.channel);
+        const snapshot = snapshotChannel(this.channel);
+        const summaryTree = convertToSummaryTree(snapshot, true /* fullTree */);
+        assert(
+            summaryTree.summary.type === SummaryType.Tree,
+            "summarize should always return a tree when fullTree is true");
+        return {
+            stats: summaryTree.stats,
+            summary: summaryTree.summary,
+        };
     }
 
     private async loadChannel(): Promise<IChannel> {
         assert(!this.isLoaded, "Channel must not already be loaded when loading");
-        assert(this.snapshotTree, "Snapshot should be provided to load from!!");
+        assert(!!this.snapshotTree, "Snapshot should be provided to load from!!");
 
         assert(await this.services.value.objectStorage.contains(".attributes"), ".attributes blob should be present");
         const attributes = await readAndParse<IChannelAttributes>(
             this.services.value.objectStorage,
             ".attributes");
 
-        assert(this.factory, "Factory should be there for local channel");
+        assert(!!this.factory, "Factory should be there for local channel");
         // Services will be assigned during this load.
         const channel = await this.factory.load(
             this.runtime,
@@ -176,7 +185,7 @@ export class LocalChannelContext implements IChannelContext {
         }
 
         if (this.isLoaded) {
-            assert(this.channel, "Channel should be there if loaded!!");
+            assert(!!this.channel, "Channel should be there if loaded!!");
             this.channel.connect(this.services.value);
         }
         this.attached = true;

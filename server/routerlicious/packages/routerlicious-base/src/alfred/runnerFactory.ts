@@ -178,6 +178,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
         const address = `${await utils.getHostIp()}:4000`;
+
         const nodeFactory = new LocalNodeFactory(
             os.hostname(),
             address,
@@ -189,6 +190,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             tenantManager,
             foremanConfig.permissions,
             maxSendMessageSize,
+            utils.generateToken,
             winston);
         const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
         const kafkaOrdererFactory = new KafkaOrdererFactory(

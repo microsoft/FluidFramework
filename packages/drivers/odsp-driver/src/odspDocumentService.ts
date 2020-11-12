@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaConnection,
@@ -265,6 +264,9 @@ export class OdspDocumentService implements IDocumentService {
                 return connection;
             } catch (error) {
                 this.cache.sessionJoinCache.remove(this.joinSessionKey);
+                if (typeof error === "object" && error !== null) {
+                    error.socketDocumentId = websocketEndpoint.id;
+                }
                 throw error;
             }
         });
@@ -327,7 +329,7 @@ export class OdspDocumentService implements IDocumentService {
                     io,
                     client,
                     nonAfdUrl,
-                    20000,
+                    60000,
                     this.logger,
                 );
                 const endTime = performance.now();
@@ -364,7 +366,7 @@ export class OdspDocumentService implements IDocumentService {
                     io,
                     client,
                     afdUrl,
-                    20000,
+                    60000,
                     this.logger,
                 );
                 const endTime = performance.now();

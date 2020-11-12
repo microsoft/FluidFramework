@@ -45,7 +45,6 @@ describe("Shared String with Interception", () => {
         beforeEach(() => {
             const dataStoreRuntime = new MockFluidDataStoreRuntime();
             sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
-            dataStoreRuntime.bindToContext();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             dataStoreContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;
@@ -160,7 +159,8 @@ describe("Shared String with Interception", () => {
                 // Try to replace text.
                 sharedStringWithInterception.replaceText(1, 2, text);
             } catch (error) {
-                assert(error instanceof assert.AssertionError,
+                assert.strictEqual(error.message,
+                    "Interception wrapper methods called recursively from the interception callback",
                     "We should have caught an assert in replaceText because it detects an infinite recursion");
                 asserted = true;
             }

@@ -17,6 +17,7 @@ const optionsArray = [
     "Processing:",
     ["--snapfreq <N>", "A snapshot will be taken after every <N>th op"],
     ["--stressTest", "Run stress tests. Adds --quiet --snapfreq 50",
+        "Runs 4 overlapping containers to detect summary consistency issues",
         "Writes out only snapshots with consistency issues"],
     ["--storageSnapshots", "Validate storage (FluidFetch) snapshots"],
     ["--incremental", "Allow incremental snapshots (to closer simulate reality). Diff will be noisy"],
@@ -100,6 +101,7 @@ class ReplayProcessArgs extends ReplayArgs {
                     this.validateStorageSnapshots = true;
                     break;
                 case "--stressTest":
+                    this.overlappingContainers = 4;
                     this.verbose = false;
                     if (this.snapFreq === undefined) {
                         this.snapFreq = 50;
@@ -121,9 +123,9 @@ class ReplayProcessArgs extends ReplayArgs {
                 case "--initialSnapshots":
                     if (process.argv[i + 1] && !process.argv[i + 1].startsWith("-")) {
                         i += 1;
-                        this.initalizeFromSnapshotsDir = this.parseStrArg(i);
+                        this.initializeFromSnapshotsDir = this.parseStrArg(i);
                     } else {
-                        this.initalizeFromSnapshotsDir = this.inDirName;
+                        this.initializeFromSnapshotsDir = this.inDirName;
                     }
                     break;
                 default:
@@ -197,7 +199,7 @@ new ReplayTool(new ReplayProcessArgs())
         }
         finished = true;
     })
-    .catch((error: string) => {
+    .catch((error: Error) => {
         console.error(`ERROR: ${error}`);
         process.exit(2);
     });

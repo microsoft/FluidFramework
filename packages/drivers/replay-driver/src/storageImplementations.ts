@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -103,7 +103,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
         protected readonly storage: IDocumentStorageService,
         protected readonly docTree: ISnapshotTree | null) {
         super();
-        assert(this.docTree);
+        assert(!!this.docTree);
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
@@ -163,7 +163,7 @@ export class StaticStorageDocumentService implements IDocumentService {
     }
 
     public async branch(): Promise<string> {
-        return Promise.reject("Invalid operation");
+        return Promise.reject(new Error("Invalid operation"));
     }
 
     public getErrorTrackingService() {

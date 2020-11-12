@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
 
@@ -11,7 +11,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     private _handler: IDeltaHandler | undefined;
 
     private get handler(): IDeltaHandler {
-        assert(this._handler);
+        assert(!!this._handler);
         return this._handler;
     }
     public get connected(): boolean {

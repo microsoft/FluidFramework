@@ -59,9 +59,14 @@ export interface ICompatTestOptions {
     serviceConfiguration?: Partial<IServiceConfiguration>,
 }
 
+export enum DataObjectFactoryType {
+    Primed, // default
+    Test,
+}
+
 export interface ITestContainerConfig {
     // TestFluidDataObject instead of PrimedDataStore
-    testFluidDataObject?: boolean,
+    fluidDataObjectType?: DataObjectFactoryType,
 
     // And array of channel name and DDS factory pair to create on container creation time
     registry?: ChannelFactoryRegistry,
@@ -117,12 +122,21 @@ export class OldTestDataObject extends old.DataObject {
     public get _root() { return this.root; }
 }
 
-export const createPrimedDataStoreFactory = (): IFluidDataStoreFactory => {
-    return new DataObjectFactory(TestDataObject.type, TestDataObject, [], {});
+export const createPrimedDataStoreFactory = (registry?: ChannelFactoryRegistry): IFluidDataStoreFactory => {
+    return new DataObjectFactory(
+        TestDataObject.type,
+        TestDataObject,
+        [... registry ?? []].map((r)=>r[1]),
+        {});
 };
 
-export const createOldPrimedDataStoreFactory = (): old.IFluidDataStoreFactory => {
-    return new old.DataObjectFactory(OldTestDataObject.type, OldTestDataObject, [], {});
+export const createOldPrimedDataStoreFactory =
+    (registry?: ChannelFactoryRegistry): old.IFluidDataStoreFactory => {
+    return new old.DataObjectFactory(
+        OldTestDataObject.type,
+        OldTestDataObject,
+        [... convertRegistry(registry)].map((r)=>r[1]),
+        {});
 };
 
 export const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
@@ -153,6 +167,30 @@ export const createOldRuntimeFactory = (
     return factory as unknown as old.IRuntimeFactory;
 };
 
+function getDataStoreFactory(containerOptions?: ITestContainerConfig) {
+    switch (containerOptions?.fluidDataObjectType) {
+        case undefined:
+        case DataObjectFactoryType.Primed:
+            return createPrimedDataStoreFactory(containerOptions?.registry);
+        case DataObjectFactoryType.Test:
+            return createTestFluidDataStoreFactory(containerOptions?.registry);
+        default:
+            throw new Error("unknown data store factory type");
+    }
+}
+
+function getOldDataStoreFactory(containerOptions?: ITestContainerConfig) {
+    switch (containerOptions?.fluidDataObjectType) {
+        case undefined:
+        case DataObjectFactoryType.Primed:
+            return createOldPrimedDataStoreFactory(containerOptions?.registry);
+        case DataObjectFactoryType.Test:
+            return createOldTestFluidDataStoreFactory(containerOptions?.registry);
+        default:
+            throw new Error("unknown data store factory type");
+    }
+}
+
 export const generateTest = (
     tests: (compatArgs: ICompatLocalTestObjectProvider) => void,
     options: ICompatTestOptions = {},
@@ -161,9 +199,7 @@ export const generateTest = (
     const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
         createRuntimeFactory(
             TestDataObject.type,
-            containerOptions?.testFluidDataObject
-                ? createTestFluidDataStoreFactory(containerOptions?.registry)
-                : createPrimedDataStoreFactory(),
+            getDataStoreFactory(containerOptions),
             containerOptions?.runtimeOptions,
         );
 
@@ -185,14 +221,10 @@ export const generateCompatTest = (
 ) => {
     describe("compatibility", () => {
         describe("old loader, new runtime", function() {
-            const dataStoreFactory = (containerOptions?: ITestContainerConfig) =>
-                containerOptions?.testFluidDataObject
-                    ? createTestFluidDataStoreFactory(containerOptions?.registry)
-                    : createPrimedDataStoreFactory();
             const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
                 createRuntimeFactory(
                     TestDataObject.type,
-                    dataStoreFactory(containerOptions),
+                    getDataStoreFactory(containerOptions),
                     containerOptions?.runtimeOptions,
                 ) as any as old.IRuntimeFactory;
 
@@ -212,9 +244,7 @@ export const generateCompatTest = (
             const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
                 createOldRuntimeFactory(
                     OldTestDataObject.type,
-                    containerOptions?.testFluidDataObject
-                        ? createOldTestFluidDataStoreFactory(containerOptions?.registry)
-                        : createOldPrimedDataStoreFactory(),
+                    getOldDataStoreFactory(containerOptions),
                     containerOptions?.runtimeOptions,
                 ) as any as IRuntimeFactory;
 
@@ -234,9 +264,7 @@ export const generateCompatTest = (
             const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
                 createRuntimeFactory(
                     OldTestDataObject.type,
-                    containerOptions?.testFluidDataObject
-                        ? createOldTestFluidDataStoreFactory(containerOptions?.registry)
-                        : createOldPrimedDataStoreFactory(),
+                    getOldDataStoreFactory(containerOptions),
                     containerOptions?.runtimeOptions,
                 );
 
