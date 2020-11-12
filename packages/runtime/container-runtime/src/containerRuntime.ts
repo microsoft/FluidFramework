@@ -877,8 +877,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             "/_summarizer",
             this,
             () => this.summaryConfiguration,
-            async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
-            async (propHandle, ackHandle, refSeq) => this.refreshLatestSummaryAck(propHandle, ackHandle, refSeq),
+            // eslint-disable-next-line max-len
+            async (full: boolean, safe: boolean, summaryLogger: ITelemetryLogger) => this.generateSummary(full, safe, summaryLogger),
+            // eslint-disable-next-line max-len
+            async (propHandle, ackHandle, refSeq, summaryLogger) => this.refreshLatestSummaryAck(propHandle, ackHandle, refSeq, undefined, summaryLogger),
             this.IFluidHandleContext,
             this.previousState.summaryCollection);
 
@@ -1727,6 +1729,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private async generateSummary(
         fullTree: boolean = false,
         safe: boolean = false,
+        summaryLogger: ITelemetryLogger,
     ): Promise<GenerateSummaryData | undefined> {
         const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
         const message =
@@ -1734,7 +1737,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // TODO: Issue-2171 Support for Branch Snapshots
         if (this.parentBranch) {
-            this._logger.sendTelemetryEvent({
+            summaryLogger.sendTelemetryEvent({
                 eventName: "SkipGenerateSummaryParentBranch",
                 parentBranch: this.parentBranch,
             });
@@ -1742,7 +1745,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         if (this.summarizerNode.enabled) {
-            this.summarizerNode.node.startSummary(summaryRefSeqNum);
+            this.summarizerNode.node.startSummary(summaryRefSeqNum, summaryLogger);
         }
         try {
             await this.scheduleManager.pause();
@@ -2155,6 +2158,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         ackHandle: string,
         trackerRefSeqNum: number, // back-compat summarizerNode - remove when fully enabled
         version?: IVersion,
+        summaryLogger: ITelemetryLogger = this.logger,
     ) {
         if (trackerRefSeqNum < this.summaryTracker.referenceSequenceNumber) {
             return;
@@ -2167,7 +2171,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         if (this.summarizerNode.enabled) {
             const getSnapshot = async () => {
-                const perfEvent = PerformanceEvent.start(this.logger, {
+                const perfEvent = PerformanceEvent.start(summaryLogger, {
                     eventName: "RefreshLatestSummaryGetSnapshot",
                     hasVersion: !!version, // expected in this case
                 });
@@ -2194,6 +2198,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 proposalHandle,
                 getSnapshot,
                 async <T>(id: string) => readAndParse<T>(this.storage, id),
+                summaryLogger,
             );
         }
     }

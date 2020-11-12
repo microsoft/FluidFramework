@@ -259,8 +259,9 @@ export class SummarizerNode implements ISummarizerNode {
     private wipReferenceSequenceNumber: number | undefined;
     private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
     private wipSkipRecursion = false;
+    private summaryLogger: ITelemetryLogger | undefined;
 
-    public startSummary(referenceSequenceNumber: number) {
+    public startSummary(referenceSequenceNumber: number, summaryLogger) {
         assert(!this.disabled, "Unsupported: cannot call startSummary on disabled SummarizerNode");
 
         assert(
@@ -268,14 +269,17 @@ export class SummarizerNode implements ISummarizerNode {
             "Already tracking a summary",
         );
 
+        this.summaryLogger = summaryLogger;
+
         for (const child of this.children.values()) {
-            child.startSummary(referenceSequenceNumber);
+            child.startSummary(referenceSequenceNumber, summaryLogger);
         }
         this.wipReferenceSequenceNumber = referenceSequenceNumber;
     }
 
     public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
         assert(!this.disabled, "Unsupported: cannot call summarize on disabled SummarizerNode");
+        assert(this.summaryLogger !== undefined, "summaryLogger should have been set in startSummary");
 
         // Try to reuse the tree if unchanged
         if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
@@ -330,7 +334,7 @@ export class SummarizerNode implements ISummarizerNode {
                 // No base summary to reference
                 throw error;
             }
-            this.logger.logException({
+            this.summaryLogger.logException({
                 eventName: "SummarizingWithBasePlusOps",
                 category: "error",
             },
@@ -347,6 +351,8 @@ export class SummarizerNode implements ISummarizerNode {
 
     public completeSummary(proposalHandle: string) {
         assert(!this.disabled, "Unsupported: cannot call completeSummary on disabled SummarizerNode");
+        assert(this.summaryLogger !== undefined, "summaryLogger should have been set in startSummary");
+        this.summaryLogger = undefined;
         this.completeSummaryCore(proposalHandle, undefined, false);
     }
 
@@ -426,6 +432,7 @@ export class SummarizerNode implements ISummarizerNode {
         proposalHandle: string | undefined,
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
+        summaryLogger: ITelemetryLogger,
     ): Promise<void> {
         assert(!this.disabled, "Unsupported: cannot call refreshLatestSummary on disabled SummarizerNode");
 
@@ -445,6 +452,7 @@ export class SummarizerNode implements ISummarizerNode {
             snapshotTree,
             undefined,
             EscapedPath.create(""),
+            summaryLogger,
         );
     }
 
@@ -486,10 +494,11 @@ export class SummarizerNode implements ISummarizerNode {
         snapshotTree: ISnapshotTree,
         basePath: EscapedPath | undefined,
         localPath: EscapedPath,
+        summaryLogger: ITelemetryLogger,
     ): void {
         this.refreshLatestSummaryCore(referenceSequenceNumber);
 
-        const { baseSummary, pathParts } = decodeSummary(snapshotTree, this.logger);
+        const { baseSummary, pathParts } = decodeSummary(snapshotTree, summaryLogger);
 
         this.latestSummary = new SummaryNode({
             referenceSequenceNumber,
@@ -512,6 +521,7 @@ export class SummarizerNode implements ISummarizerNode {
                     subtree,
                     pathForChildren,
                     EscapedPath.create(id),
+                    summaryLogger,
                 );
             }
         }
@@ -537,7 +547,7 @@ export class SummarizerNode implements ISummarizerNode {
         snapshot: ISnapshotTree,
         readAndParseBlob: ReadAndParseBlob,
     ): Promise<{ baseSummary: ISnapshotTree, outstandingOps: ISequencedDocumentMessage[] }> {
-        const decodedSummary = decodeSummary(snapshot, this.logger);
+        const decodedSummary = decodeSummary(snapshot, this.defaultLogger);
         const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 
         if (outstandingOps.length > 0) {
@@ -589,7 +599,7 @@ export class SummarizerNode implements ISummarizerNode {
     private readonly throwOnError: boolean;
     private trackingSequenceNumber: number;
     private constructor(
-        private readonly logger: ITelemetryLogger,
+        private readonly defaultLogger: ITelemetryLogger,
         private readonly summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         private readonly disabled: boolean,
         config: ISummarizerNodeConfig,
@@ -670,7 +680,7 @@ export class SummarizerNode implements ISummarizerNode {
                     };
                 }
                 child = new SummarizerNode(
-                    this.logger,
+                    this.defaultLogger,
                     summarizeInternalFn,
                     this.disabled,
                     config,
@@ -713,7 +723,7 @@ export class SummarizerNode implements ISummarizerNode {
                     };
                 }
                 child = new SummarizerNode(
-                    this.logger,
+                    this.defaultLogger,
                     summarizeInternalFn,
                     this.disabled || createParam.type === CreateSummarizerNodeSource.Local,
                     config,
