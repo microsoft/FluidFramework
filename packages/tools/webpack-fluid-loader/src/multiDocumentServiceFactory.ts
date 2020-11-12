@@ -26,6 +26,10 @@ export function getDocumentServiceFactory(documentId: string, options: RouteOpti
         name: getRandomName(),
     });
 
+    if (options.mode === "tinylicious") {
+        options.tenantId = "tinylicious";
+        options.tenantSecret = "12345";
+    }
     const routerliciousTokenProvider = new InsecureTokenProvider(
         (options as IRouterliciousRouteOptions).tenantId ,
         documentId,
