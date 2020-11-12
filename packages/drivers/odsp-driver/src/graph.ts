@@ -42,9 +42,10 @@ export async function getShareLink(
     logger?: ITelemetryLogger,
     scope: "anonymous" | "organization" | "default" | "existingAccess" = "existingAccess",
     type: "view" | "edit" = "edit",
+    usePPE?: boolean,
 ): Promise<string | undefined> {
     if (scope === "existingAccess") {
-        return getFileDefaultUrl(getShareLinkToken, siteUrl, driveId, itemId, identityType, logger);
+        return getFileDefaultUrl(getShareLinkToken, siteUrl, driveId, itemId, identityType, logger, usePPE);
     }
 
     const createShareLinkResponse = await graphFetch(
@@ -58,6 +59,9 @@ export async function getShareLink(
             headers: { "Content-Type": "application/json" },
             body: scope === "default" ? undefined : JSON.stringify({ type, scope }),
         },
+        undefined,
+        undefined,
+        usePPE,
     );
 
     if (createShareLinkResponse.ok) {
@@ -90,6 +94,7 @@ export async function graphFetch(
     requestInit?: RequestInit,
     retryPolicy?: RetryPolicy<Response>,
     timeoutMs = 0,
+    usePPE?: boolean,
 ): Promise<Response> {
     const getToken = async (options: TokenFetchOptions) =>
         getShareLinkToken(
@@ -97,7 +102,8 @@ export async function graphFetch(
             SharingLinkScopeFor.nonFileDefaultUrl,
             siteUrl,
         );
-    const url = graphUrl.startsWith("http") ? graphUrl : `https://graph.microsoft.com/v1.0/${graphUrl}`;
+    const url = graphUrl.startsWith("http") ? graphUrl :
+        `https://graph.microsoft${ usePPE ? "-ppe" : "" }.com/v1.0/${graphUrl}`;
     return (
         await authorizedFetchWithRetry({
             getToken,
@@ -156,8 +162,9 @@ async function getFileDefaultUrl(
     itemId: string,
     identityType: IdentityType,
     logger?: ITelemetryLogger,
+    usePPE?: boolean,
 ): Promise<string | undefined> {
-    const graphItem = await getGraphItemLite(getShareLinkToken, siteUrl, driveId, itemId, logger);
+    const graphItem = await getGraphItemLite(getShareLinkToken, siteUrl, driveId, itemId, logger, usePPE);
     if (!graphItem) {
         return undefined;
     }
@@ -219,6 +226,7 @@ export async function getGraphItemLite(
     driveId: string,
     itemId: string,
     logger?: ITelemetryLogger,
+    usePPE?: boolean,
 ): Promise<GraphItemLite | undefined> {
     const cacheKey = `${driveId}_${itemId}`;
     if (graphItemLiteCache.has(cacheKey) === false) {
@@ -227,7 +235,17 @@ export async function getGraphItemLite(
 
             let response: Response | undefined;
             try {
-                response = await graphFetch(getShareLinkToken, siteUrl, partialUrl, "GetGraphItemLite", logger);
+                response = await graphFetch(
+                    getShareLinkToken,
+                    siteUrl,
+                    partialUrl,
+                    "GetGraphItemLite",
+                    logger,
+                    undefined,
+                    undefined,
+                    undefined,
+                    usePPE,
+                );
             } catch { }
 
             // Cache only if we got a response and the response was a 200 (success) or 404 (NotFound)
