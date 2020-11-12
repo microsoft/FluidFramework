@@ -35,6 +35,9 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
     ITreeEntry,
+    SummaryType,
+    ISummaryBlob,
+    ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import {
     IAttachMessage,
@@ -312,6 +315,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
     }
 
+    /**
+     * @deprecated
+     * Please use mixinRequestHandler() to override default behavior or request()
+     * // back-compat: remove in 0.30+
+     */
     public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
         this.requestHandler = handler;
     }
@@ -766,13 +774,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
 /**
  * Mixin class that adds request handler to FluidDataStoreRuntime
+ * Request handler is only called when data store can't resolve request, i.e. for custom requests.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
  */
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function requestFluidDataStoreMixin(
-    Base: typeof FluidDataStoreRuntime,
-    requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>)
+export function mixinRequestHandler(
+    requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
+    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
 {
     return class RuntimeWithRequestHandler extends Base {
         public async request(request: IRequest) {
@@ -788,17 +797,42 @@ export function requestFluidDataStoreMixin(
 /**
  * Mixin class that adds await for DataObject to finish initialization before we proceed to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
- * @param init - async callback to wait before proceeding with summary
  */
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function summaryWaitFluidDataStoreMixin(
-    Base: typeof FluidDataStoreRuntime,
-    init: () => Promise<void>)
+export function mixinSummaryHandler(
+    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string }>,
+    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
+    )
 {
     return class RuntimeWithSummarizerHandler extends Base {
-        public async summarize(...args) {
-            await init();
-            return super.summarize(...args);
+        private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {
+            const firstName = path.shift();
+            if (firstName === undefined) {
+                throw new Error("Path can't be empty");
+            }
+
+            let blob: ISummaryTree | ISummaryBlob = {
+                type: SummaryType.Blob,
+                content,
+            };
+            summary.stats.blobNodeCount++;
+            summary.stats.totalBlobSize += content.length;
+
+            for (const name of path.reverse()) {
+                blob = {
+                    type: SummaryType.Tree,
+                    tree: { [name]: blob },
+                };
+                summary.stats.treeNodeCount++;
+            }
+            summary.summary.tree[firstName] = blob;
+        }
+
+        async summarize(...args: any[]) {
+            const summary = await super.summarize(...args);
+            const content = await handler(this);
+            this.addBlob(summary, content.path, content.content);
+            return summary;
         }
     } as typeof FluidDataStoreRuntime;
 }

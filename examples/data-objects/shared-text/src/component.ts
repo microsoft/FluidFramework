@@ -20,7 +20,7 @@ import {
     IResponse,
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
+import { FluidDataStoreRuntime, FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { Ink } from "@fluidframework/ink";
 import {
     ISharedMap,
@@ -321,17 +321,14 @@ export function instantiateDataStore(context: IFluidDataStoreContext) {
     modules.set(objectSequenceFactory.type, objectSequenceFactory);
     modules.set(numberSequenceFactory.type, numberSequenceFactory);
 
-    const runtime = FluidDataStoreRuntime.load(
-        context,
-        modules,
-    );
+    const runtimeClass = mixinRequestHandler(
+        async (request: IRequest) => {
+            const router = await routerP;
+            return router.request(request);
+        });
 
-    const runnerP = SharedTextRunner.load(runtime, context);
-    runtime.registerRequestHandler(async (request: IRequest) => {
-        debug(`request(url=${request.url})`);
-        const runner = await runnerP;
-        return runner.request(request);
-    });
+    const runtime = new runtimeClass(context, modules);
+    const routerP = SharedTextRunner.load(runtime, context);
 
     return runtime;
 }

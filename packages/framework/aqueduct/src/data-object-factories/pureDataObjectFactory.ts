@@ -8,7 +8,7 @@ import { IRequest, IFluidObject, IFluidRouter } from "@fluidframework/core-inter
 import {
     FluidDataStoreRuntime,
     ISharedObjectRegistry,
-    requestFluidDataStoreMixin,
+    mixinRequestHandler,
  } from "@fluidframework/datastore";
 import { IEvent } from "@fluidframework/common-definitions";
 import {
@@ -122,21 +122,21 @@ async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E ex
     context: IFluidDataStoreContext,
     sharedObjectRegistry: ISharedObjectRegistry,
     optionalProviders: FluidObjectSymbolProvider<O>,
-    runtimeFactoryArg: typeof FluidDataStoreRuntime,
+    runtimeClassArg: typeof FluidDataStoreRuntime,
     initProps?: S)
 {
     // base
-    let runtimeFactory = runtimeFactoryArg;
+    let runtimeClass = runtimeClassArg;
 
     // request mixin in
-    runtimeFactory = requestFluidDataStoreMixin(
-        runtimeFactory,
+    runtimeClass = mixinRequestHandler(
         async (request: IRequest, runtimeArg: FluidDataStoreRuntime) =>
-            (await PureDataObject.getDataObject(runtimeArg)).request(request));
+            (await PureDataObject.getDataObject(runtimeArg)).request(request),
+            runtimeClass);
 
     // Create a new runtime for our data store
     // The runtime is what Fluid uses to create DDS' and route to your data store
-    const runtime = new runtimeFactory(
+    const runtime = new runtimeClass(
         context,
         sharedObjectRegistry,
     );
@@ -189,7 +189,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
         sharedObjects: readonly IChannelFactory[],
         private readonly optionalProviders: FluidObjectSymbolProvider<O>,
         registryEntries?: FluidDataStoreRegistry,
-        private readonly runtimeCtor: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
+        private readonly runtimeClass: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
     ) {
         if (this.type === "") {
             throw new Error("undefined type member");
@@ -227,7 +227,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
             context,
             this.sharedObjectRegistry,
             this.optionalProviders,
-            this.runtimeCtor);
+            this.runtimeClass);
 
         return runtime;
     }
@@ -331,7 +331,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
             context,
             this.sharedObjectRegistry,
             this.optionalProviders,
-            this.runtimeCtor,
+            this.runtimeClass,
             initialState);
 
         await context.attachRuntime(this, runtime);
