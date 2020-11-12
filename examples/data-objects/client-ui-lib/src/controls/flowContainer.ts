@@ -4,26 +4,16 @@
  */
 
 import * as api from "@fluid-internal/client-api";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IInk } from "@fluidframework/ink";
 import { ISharedMap } from "@fluidframework/map";
-import * as MergeTree from "@fluidframework/merge-tree";
 import * as Sequence from "@fluidframework/sequence";
 import * as ui from "../ui";
 import { DockPanel } from "./dockPanel";
 import { FlowView, IOverlayMarker } from "./flowView";
 import { Image } from "./image";
 import { LayerPanel } from "./layerPanel";
-import { InkLayer, Layer, OverlayCanvas } from "./overlayCanvas";
 import { IRange } from "./scrollBar";
 import { Status } from "./status";
 import { Title } from "./title";
-
-interface IOverlayLayerStatus {
-    layer: Layer;
-    active: boolean;
-    cursorOffset: ui.IPoint;
-}
 
 export class FlowContainer extends ui.Component {
     public status: Status;
@@ -31,10 +21,6 @@ export class FlowContainer extends ui.Component {
     public flowView: FlowView;
     private readonly dockPanel: DockPanel;
     private readonly layerPanel: LayerPanel;
-    private readonly overlayCanvas: OverlayCanvas;
-
-    private layerCache: { [key: string]: Layer } = {};
-    private activeLayers: { [key: string]: IOverlayLayerStatus } = {};
 
     // api.Document should not be used. It should be removed after #2915 is fixed.
     constructor(
@@ -42,7 +28,6 @@ export class FlowContainer extends ui.Component {
         title: string,
         private readonly collabDocument: api.Document,
         private readonly sharedString: Sequence.SharedString,
-        private readonly overlayInkMap: ISharedMap,
         private readonly image: Image,
         private readonly options?: Record<string, any>) {
         super(element);
@@ -72,35 +57,6 @@ export class FlowContainer extends ui.Component {
         layerPanelDiv.id = "layer-panel";
         this.layerPanel = new LayerPanel(layerPanelDiv);
 
-        // Overlay canvas for ink
-        const overlayCanvasDiv = document.createElement("div");
-        overlayCanvasDiv.classList.add("overlay-canvas");
-        this.overlayCanvas = new OverlayCanvas(this.collabDocument, overlayCanvasDiv, layerPanelDiv);
-
-        this.overlayCanvas.on("ink", (layer: InkLayer, model: IInk, start: ui.IPoint) => {
-            this.overlayCanvas.enableInkHitTest(false);
-            const position = this.flowView.getNearestPosition(start);
-            this.overlayCanvas.enableInkHitTest(true);
-
-            const location = this.flowView.getPositionLocation(position);
-            const cursorOffset = {
-                x: start.x - location.x,
-                y: start.y - location.y,
-            };
-
-            this.layerCache[model.id] = layer;
-            this.activeLayers[model.id] = { layer, active: true, cursorOffset };
-            this.overlayInkMap.set(model.id, model.handle);
-            // Inserts the marker at the flow view's cursor position
-            this.sharedString.insertMarker(
-                position,
-                MergeTree.ReferenceType.Simple,
-                {
-                    [MergeTree.reservedMarkerIdKey]: model.id,
-                    [MergeTree.reservedMarkerSimpleTypeKey]: "inkOverlay",
-                });
-        });
-
         // Update the scroll bar
         this.flowView.on(
             "render",
@@ -115,19 +71,7 @@ export class FlowContainer extends ui.Component {
                 this.layerPanel.showScrollBar(showScrollBar);
 
                 this.layerPanel.scrollBar.setRange(renderInfo.range);
-
-                this.markLayersInactive();
-                for (const marker of renderInfo.overlayMarkers) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this.addLayer(marker);
-                }
-                this.pruneInactiveLayers();
             });
-
-        this.status.addOption("inkingEnabled", "ink");
-        this.status.on("inkingEnabled", (value) => {
-            this.overlayCanvas.enableInk(value);
-        });
 
         const spellOption = "spellchecker";
         const spellcheckOn = (this.options === undefined || this.options[spellOption] !== "disabled") ? true : false;
@@ -142,9 +86,8 @@ export class FlowContainer extends ui.Component {
             this.status.addButton("Branch", `/sharedText/${this.collabDocument.id}/fork`, true);
         }
 
-        // Add children to the panel once we have both
+        // Add flowView to the panel
         this.layerPanel.addChild(this.flowView);
-        this.layerPanel.addChild(this.overlayCanvas);
 
         this.dockPanel = new DockPanel(this.element);
         this.addChild(this.dockPanel);
@@ -184,45 +127,6 @@ export class FlowContainer extends ui.Component {
         }
     }
 
-    private async addLayer(marker: IOverlayMarker) {
-        const id = marker.id;
-        const position = marker.position;
-        const location = this.flowView.getPositionLocation(position);
-
-        if (this.activeLayers[id]) {
-            this.activeLayers[id].active = true;
-        }
-        const inkLayerData = await this.overlayInkMap.get<IFluidHandle<IInk>>(id).get();
-
-        if (!(id in this.layerCache)) {
-            const layer = new InkLayer(this.size, inkLayerData);
-            this.layerCache[id] = layer;
-        }
-
-        if (!(id in this.activeLayers)) {
-            const layer = this.layerCache[id];
-            this.overlayCanvas.addLayer(layer);
-            this.activeLayers[id] = {
-                active: true,
-                cursorOffset: { x: 0, y: 0 },
-                layer,
-            };
-        }
-
-        const activeLayer = this.activeLayers[id];
-
-        // Add in any cursor offset
-        location.x += activeLayer.cursorOffset.x;
-        location.y += activeLayer.cursorOffset.y;
-
-        // Translate from global to local coordinates
-        const bounds = this.flowView.element.getBoundingClientRect();
-        const translated = { x: location.x - bounds.left, y: location.y - bounds.top };
-
-        // Update the position unless we're in the process of drawing the layer
-        this.activeLayers[id].layer.setPosition(translated);
-    }
-
     private async updateInsights(insights: ISharedMap) {
         if (insights.has("ResumeAnalytics") && this.image) {
             const resume = insights.get("ResumeAnalytics");
@@ -244,25 +148,6 @@ export class FlowContainer extends ui.Component {
                         : analytics.sentiment < 0.3 ? "🙁" : "😐";
                     this.status.add("si", sentimentEmoji);
                 }
-            }
-        }
-    }
-
-    private markLayersInactive() {
-        // eslint-disable-next-line guard-for-in, no-restricted-syntax
-        for (const layer in this.activeLayers) {
-            this.activeLayers[layer].active = false;
-        }
-    }
-
-    private pruneInactiveLayers() {
-        // eslint-disable-next-line no-restricted-syntax
-        for (const layerId in this.activeLayers) {
-            if (!this.activeLayers[layerId].active) {
-                const layer = this.activeLayers[layerId];
-                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                delete this.activeLayers[layerId];
-                this.overlayCanvas.removeLayer(layer.layer);
             }
         }
     }
