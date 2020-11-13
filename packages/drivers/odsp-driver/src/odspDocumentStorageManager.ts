@@ -242,14 +242,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }),
                 );
             });
-            // Verify that we haven't populated the cache in the meantime from a simultaneous read
-            blob = this.blobCache.get(blobid);
-            if (blob === undefined) {
-                blob = response.content;
-                this.blobCache.set(blobid, blob);
-                // Reset the timer on cache write
-                this.scheduleClearBlobsCache();
-            }
+            blob = response.content;
         }
 
         if (this.attributesBlobHandles.has(blobid)) {
