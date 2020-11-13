@@ -96,7 +96,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
         const contentsBlob: ISharedSummaryBlockDataSerializable = {};

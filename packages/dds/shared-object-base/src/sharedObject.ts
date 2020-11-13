@@ -198,7 +198,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).snapshot}
+     * {@inheritDoc (ISharedObject:interface).summarize}
      */
     public summarize(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
         this._isSummarizing = true;
@@ -217,13 +217,16 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).snapshot}
      * backcompat 0.28 - This is deprecated. summarize() should be used instead.
      */
     public snapshot(): ITree {
         return this.snapshotCore(this.serializer);
     }
 
+    /**
+     * Gets a form of the object that can be serialized.
+     * @returns A tree representing the snapshot of the shared object.
+     */
     protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
 
     /**
