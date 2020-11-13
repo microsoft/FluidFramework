@@ -880,7 +880,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // eslint-disable-next-line max-len
             async (full: boolean, safe: boolean, summaryLogger: ITelemetryLogger) => this.generateSummary(full, safe, summaryLogger),
             // eslint-disable-next-line max-len
-            async (propHandle, ackHandle, refSeq, summaryLogger) => this.refreshLatestSummaryAck(propHandle, ackHandle, refSeq, undefined, summaryLogger),
+            async (propHandle, ackHandle, refSeq, summaryLogger) => this.refreshLatestSummaryAck(propHandle, ackHandle, refSeq, summaryLogger),
             this.IFluidHandleContext,
             this.previousState.summaryCollection);
 
@@ -1790,6 +1790,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     undefined,
                     version.id,
                     this.summaryTracker.referenceSequenceNumber,
+                    new ChildLogger(summaryLogger, undefined, { preemptive: true }),
                     version,
                 );
             }
@@ -2157,8 +2158,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         proposalHandle: string | undefined,
         ackHandle: string,
         trackerRefSeqNum: number, // back-compat summarizerNode - remove when fully enabled
+        summaryLogger: ITelemetryLogger,
         version?: IVersion,
-        summaryLogger: ITelemetryLogger = this.logger,
     ) {
         if (trackerRefSeqNum < this.summaryTracker.referenceSequenceNumber) {
             return;
