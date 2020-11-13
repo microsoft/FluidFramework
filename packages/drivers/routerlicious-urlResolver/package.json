@@ -32,7 +32,7 @@
   "dependencies": {
     "@fluidframework/core-interfaces": "^0.29.0",
     "@fluidframework/driver-definitions": "^0.29.0",
-    "@fluidframework/protocol-definitions": "^0.1014.0",
+    "@fluidframework/protocol-definitions": "^0.1015.0-0",
     "nconf": "^0.10.0"
   },
   "devDependencies": {
