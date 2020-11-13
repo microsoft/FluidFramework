@@ -64,6 +64,8 @@ describe("collaborativetext", () => {
 
         setText(0, "hello");
 
+        await page.waitFor(100);
+        
         const ta12 = await getValue(0);
         expect(ta12).toEqual("hello");
 

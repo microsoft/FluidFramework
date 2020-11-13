@@ -43,6 +43,7 @@ describe("pond", () => {
 
         // Click the +1 button
         await expect(page).toClick("button", { text: "+1" });
+        await page.waitFor(100);
 
         // Validate both users have 6 as their value
         const postValue_51 = await getValue(0, "clicker-value-class-5+1");
@@ -58,6 +59,7 @@ describe("pond", () => {
 
         // Click the +10 button
         await expect(page).toClick("button", { text: "+10" });
+        await page.waitFor(100);
 
         // Validate both users have 10 as their value
         const postValue_010 = await getValue(0, "clicker-value-class-0+10");

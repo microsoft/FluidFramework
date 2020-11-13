@@ -42,6 +42,7 @@ describe("clicker", () => {
 
         // Click the button
         await expect(page).toClick("button", { text: "+" });
+        await page.waitFor(100);
 
         // Validate both users have 1 as their value
         const postValue = await getValue(0);
