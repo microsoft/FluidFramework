@@ -122,7 +122,7 @@ export class RemoteChannelContext implements IChannelContext {
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const channel = await this.getChannel();
-        const summarizeResult = summarizeChannel(channel, fullTree);
+        const summarizeResult = summarizeChannel(channel, fullTree, trackState);
         return { ...summarizeResult, id: this.id };
     }
 
