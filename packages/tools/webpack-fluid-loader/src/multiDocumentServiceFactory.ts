@@ -26,19 +26,23 @@ export function getDocumentServiceFactory(documentId: string, options: RouteOpti
         name: getRandomName(),
     });
 
-    let routerliciousTokenProvider = new InsecureTokenProvider(
-        (options as IRouterliciousRouteOptions).tenantId ,
-        documentId,
-        (options as IRouterliciousRouteOptions).tenantSecret,
-        getUser());
+    let routerliciousTokenProvider: InsecureTokenProvider;
+    // tokenprovider and routerlicious document service will not be called for local and spo server.
+    if (options.mode === "tinylicious") {
+        routerliciousTokenProvider = new InsecureTokenProvider(
+            "tinylicious",
+            documentId,
+            "12345",
+            getUser());
+    }
+    else {
+        routerliciousTokenProvider = new InsecureTokenProvider(
+            (options as IRouterliciousRouteOptions).tenantId ,
+            documentId,
+            (options as IRouterliciousRouteOptions).tenantSecret,
+            getUser());
+    }
 
-        if (options.mode === "tinylicious") {
-            routerliciousTokenProvider = new InsecureTokenProvider(
-                "tinylicious",
-                documentId,
-                "12345",
-                getUser());
-        }
     return MultiDocumentServiceFactory.create([
         new LocalDocumentServiceFactory(deltaConn),
         // TODO: web socket token
