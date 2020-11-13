@@ -45,7 +45,7 @@ export interface IDataObjectProps<O = object, S = undefined> {
 // eslint-disable-next-line @typescript-eslint/ban-types
 export abstract class PureDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
     extends EventForwarder<E>
-    implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
+    implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IFluidObject {
     private readonly innerHandle: IFluidHandle<this>;
     private _disposed = false;
 

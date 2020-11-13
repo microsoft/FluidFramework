@@ -34,23 +34,26 @@ export async function initialize(
     accessToken: string,
     config: any,
     clientId: string,
+    isSpoTenantPath: boolean,
 ) {
     debug(`Loading ${url}`);
 
     const documentServiceFactories: IDocumentServiceFactory[] = [];
-    // TODO: need to be support refresh token
-    documentServiceFactories.push(new OdspDocumentServiceFactory(
-        async () => Promise.resolve(resolved.tokens.storageToken),
-        async () => Promise.resolve(resolved.tokens.socketToken)));
-
-    const tokenProvider = new GatewayTokenProvider(document.location.origin, resolved.url, hostToken, accessToken);
-    documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
-        tokenProvider,
-        false,
-        new DefaultErrorTracking(),
-        false,
-        true,
-        cache));
+    if (isSpoTenantPath) {
+        // TODO: need to be support refresh token
+        documentServiceFactories.push(new OdspDocumentServiceFactory(
+            async () => Promise.resolve(resolved.tokens.storageToken),
+            async () => Promise.resolve(resolved.tokens.socketToken)));
+    } else {
+        const tokenProvider = new GatewayTokenProvider(document.location.origin, resolved.url, hostToken, accessToken);
+        documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
+            tokenProvider,
+            false,
+            new DefaultErrorTracking(),
+            false,
+            true,
+            cache));
+    }
 
     config.moniker = (await Axios.get("/api/v1/moniker")).data;
     config.url = url;

@@ -37,7 +37,7 @@
     "@fluidframework/get-tinylicious-container": "^0.29.0",
     "@fluidframework/map": "^0.29.0",
     "@fluidframework/merge-tree": "^0.29.0",
-    "@fluidframework/protocol-definitions": "^0.1014.0",
+    "@fluidframework/protocol-definitions": "^0.1015.0-0",
     "@fluidframework/react": "^0.29.0",
     "@fluidframework/react-inputs": "^0.29.0",
     "@fluidframework/sequence": "^0.29.0",

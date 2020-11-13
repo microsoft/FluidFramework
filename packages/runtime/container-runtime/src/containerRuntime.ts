@@ -105,6 +105,7 @@ import {
     convertToSummaryTree,
     RequestParser,
     requestFluidObject,
+    convertSnapshotTreeToSummaryTree,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import {
@@ -128,7 +129,6 @@ import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager } from "./blobManager";
-import { convertSnapshotToSummaryTree } from "./utils";
 
 const chunksBlobName = ".chunks";
 const blobsTreeName = ".blobs";
@@ -1003,7 +1003,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return this.resolveHandle(requestParser.createSubRequest(1));
         }
 
-        if (id === this.blobManager.basePath && requestParser.isLeaf(2)) {
+        if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
             const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
             if (handle) {
                 return {
@@ -1083,7 +1083,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
         const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
-        summaryTreeBuilder.addWithStats(".blobs", blobsTree);
+        summaryTreeBuilder.addWithStats(blobsTreeName, blobsTree);
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
@@ -1130,9 +1130,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Now we will no longer support fast hot-swap, since we always post and wait for a summary.
         await this.raceToSummarize();
 
-        const summaryTree = await this.summarize({ noHandles: true, forceDifferential: false, trackState: false });
-        // back-compat summarize - Remove this once we start return ISummaryTree here.
-        const snapshot = convertSummaryTreeToITree(summaryTree.summary);
+        const snapshot = await this.snapshot();
         const state: IPreviousState = {
             reload: true,
             summaryCollection: this.summarizer.summaryCollection,
@@ -1765,7 +1763,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         // which it was created as it is detached container. So just use the previous snapshot.
                         assert(!!this.baseSnapshot,
                             "BaseSnapshot should be there as detached container loaded from snapshot");
-                        dataStoreSummary = convertSnapshotToSummaryTree(this.baseSnapshot.trees[key]);
+                        dataStoreSummary = convertSnapshotTreeToSummaryTree(this.baseSnapshot.trees[key]);
                     }
                     builder.addWithStats(key, dataStoreSummary);
                 });

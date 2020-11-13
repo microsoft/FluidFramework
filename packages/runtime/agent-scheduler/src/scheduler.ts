@@ -12,7 +12,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
+import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { LoaderHeader, AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -477,18 +477,14 @@ export class TaskManagerFactory implements IFluidDataStoreFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 
-        const runtime = FluidDataStoreRuntime.load(
-            context,
-            dataTypes,
-        );
+        const runtimeClass = mixinRequestHandler(
+            async (request: IRequest) => {
+                const router = await routerP;
+                return router.request(request);
+            });
 
-        // Warning: This promise is unhandled in this scope, and can result in unhandled promise rejection error,
-        // similar to cases where the no-floating-promise eslint rule applies.
-        const taskManagerP = TaskManager.load(runtime, context);
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const taskManager = await taskManagerP;
-            return taskManager.request(request);
-        });
+        const runtime = new runtimeClass(context, dataTypes);
+        const routerP = TaskManager.load(runtime, context);
 
         return runtime;
     }
