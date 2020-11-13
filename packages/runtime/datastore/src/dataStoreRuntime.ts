@@ -563,9 +563,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         );
     }
 
-    /**
-     * back-compat for N-2 < 0.29, remove when N-2 >= 0.29
-     */
+    // back-compat for N-2 <= 0.28, remove when N-2 >= 0.29
     public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
         const summaryTree = await this.summarize(fullTree);
         const tree = convertSummaryTreeToITree(summaryTree.summary);
