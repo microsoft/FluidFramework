@@ -7,15 +7,11 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
-import { assert } from "@fluidframework/common-utils";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
-    IFluidDataStoreRegistry,
-    IProvideFluidDataStoreFactory,
-    IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -61,31 +57,6 @@ const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
     ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
 ];
 
-class MyRegistry implements IFluidDataStoreRegistry {
-    constructor(
-        private readonly context: IContainerContext,
-        private readonly defaultRegistry: string) {
-    }
-
-    public get IFluidDataStoreRegistry() { return this; }
-
-    public async get(name: string): Promise<IProvideFluidDataStoreFactory | IProvideFluidDataStoreRegistry> {
-        const scope = `${name.split("/")[0]}:cdn`;
-        const config = {};
-        config[scope] = this.defaultRegistry;
-
-        const codeDetails = {
-            package: name,
-            config,
-        };
-        const fluidModule = await this.context.codeLoader.load(codeDetails);
-        const moduleExport = fluidModule.fluidExport;
-        assert(moduleExport.IFluidDataStoreFactory !== undefined ||
-            moduleExport.IFluidDataStoreRegistry  !== undefined);
-        return moduleExport as IProvideFluidDataStoreFactory | IProvideFluidDataStoreRegistry;
-    }
-}
-
 class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFactory {
     public static readonly type = "@fluid-example/shared-text";
     public readonly type = SharedTextFactoryComponent.type;
@@ -106,10 +77,6 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
             [
                 ...defaultRegistryEntries,
                 [SharedTextFactoryComponent.type, Promise.resolve(this)],
-                [
-                    "verdaccio",
-                    Promise.resolve(new MyRegistry(context, "https://pragueauspkn.azureedge.net")),
-                ],
             ],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(DefaultComponentName),

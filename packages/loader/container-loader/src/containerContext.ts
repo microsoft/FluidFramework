@@ -185,7 +185,7 @@ export class ContainerContext implements IContainerContext {
     constructor(
         private readonly container: Container,
         public readonly scope: IFluidObject,
-        public readonly codeLoader: ICodeLoader,
+        private readonly codeLoader: ICodeLoader,
         public readonly codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
         private readonly attributes: IDocumentAttributes,
