@@ -1090,25 +1090,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.requestSnapshot(tagMessage);
     }
 
-    public async stop(): Promise<IRuntimeState> {
-        this.verifyNotClosed();
-
-        const summaryTree = await this.summarize({ noHandles: true, forceDifferential: false, trackState: false });
-        // back-compat summarize - Remove this once we start return ISummaryTree here.
-        const snapshot = convertSummaryTreeToITree(summaryTree.summary);
-        const state: IPreviousState = {
-            reload: true,
-            summaryCollection: this.summarizer.summaryCollection,
-            nextSummarizerP: this.nextSummarizerP,
-            nextSummarizerD: this.nextSummarizerD,
-        };
-
-        this.dispose(new Error("ContainerRuntimeStopped"));
-
-        return { snapshot, state };
-    }
-
-    public async raceToSummarize(): Promise<void> {
+    private async raceToSummarize(): Promise<void> {
         return PerformanceEvent.timedExecAsync(this._logger, { eventName: "RaceToSummarize" }, async () => {
             this.verifyNotClosed();
 
@@ -1140,6 +1122,27 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // May wait forever if all summaries fail.
             await summaryCollection.waitSummaryAck(sequenceNumber);
         });
+    }
+
+    public async stop(): Promise<IRuntimeState> {
+        this.verifyNotClosed();
+
+        // Now we will no longer support fast hot-swap, since we always post and wait for a summary.
+        await this.raceToSummarize();
+
+        const summaryTree = await this.summarize({ noHandles: true, forceDifferential: false, trackState: false });
+        // back-compat summarize - Remove this once we start return ISummaryTree here.
+        const snapshot = convertSummaryTreeToITree(summaryTree.summary);
+        const state: IPreviousState = {
+            reload: true,
+            summaryCollection: this.summarizer.summaryCollection,
+            nextSummarizerP: this.nextSummarizerP,
+            nextSummarizerD: this.nextSummarizerD,
+        };
+
+        this.dispose(new Error("ContainerRuntimeStopped"));
+
+        return { snapshot, state };
     }
 
     private replayPendingStates() {

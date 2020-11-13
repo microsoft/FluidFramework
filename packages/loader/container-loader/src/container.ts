@@ -95,8 +95,6 @@ import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
 const detachedContainerRefSeqNumber = 0;
-// TODO: move and expose this
-const shouldRefresh = false;
 
 interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
@@ -755,17 +753,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.emit("warning", warning);
     }
 
-    private async raceToSummarize(): Promise<void> {
-        try {
-            await this.context.raceToSummarize();
-            this.context.dispose();
-            const codeDetails = this.getCodeDetailsFromQuorum();
-            this.emit("contextDisposed", codeDetails, this.context?.codeDetails);
-        } catch (error) {
-            this.close(CreateContainerError(error));
-        }
-    }
-
     public async reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
             this.close(CreateContainerError(error));
@@ -1292,13 +1279,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         });
                     }
 
-                    if (shouldRefresh) {
-                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        this.raceToSummarize();
-                    } else {
-                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        this.reloadContext();
-                    }
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    this.reloadContext();
                 }
             });
 

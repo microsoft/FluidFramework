@@ -68,10 +68,6 @@ export class NullRuntime extends EventEmitter implements IRuntime {
         return Promise.resolve({});
     }
 
-    public async raceToSummarize(): Promise<void> {
-        return;
-    }
-
     public createSummary(): ISummaryTree {
         return {
             tree: {},
