@@ -157,47 +157,6 @@ describe("ConsensusOrderedCollection", () => {
                 assert.notStrictEqual(result, obj);
                 assert.strictEqual(result.x, 1);
             });
-
-            it("Can generate referenced routes for handles", async () => {
-                const testCollection2 = creator();
-                await addItem(testCollection2.handle);
-
-                // Verify the referenced routes returned by snapshot.
-                const garbageCollectionNode = testCollection.summarize().nodes[0];
-                assert.strictEqual(
-                    garbageCollectionNode.path,
-                    testCollection.id,
-                    "Path of the referenced routes should be collection's id");
-                assert.deepStrictEqual(
-                    garbageCollectionNode.routes,
-                    [testCollection2.handle.absolutePath],
-                    "Referenced routes is incorrect");
-            });
-
-            it("Can generate referenced routes for removed handles", async () => {
-                const testCollection2 = creator();
-                await addItem(testCollection2.handle);
-
-                // Verify the referenced routes returned by snapshot.
-                let garbageCollectionNode = testCollection.summarize().nodes[0];
-                assert.strictEqual(
-                    garbageCollectionNode.path,
-                    testCollection.id,
-                    "Path of the referenced routes should be collection's id");
-                assert.deepStrictEqual(
-                    garbageCollectionNode.routes,
-                    [testCollection2.handle.absolutePath],
-                    "Referenced routes is incorrect");
-
-                // Verify that removed handle updates referenced routes correctly.
-                await removeItem();
-                garbageCollectionNode = testCollection.summarize().nodes[0];
-                assert.strictEqual(
-                    garbageCollectionNode.path,
-                    testCollection.id,
-                    "Path of the referenced routes should be collection's id");
-                assert.deepStrictEqual(garbageCollectionNode.routes, [], "Referenced routes is incorrect");
-            });
         });
     }
 

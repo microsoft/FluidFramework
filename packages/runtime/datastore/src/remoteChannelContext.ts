@@ -19,11 +19,10 @@ import {
 } from "@fluidframework/datastore-definitions";
 import {
     CreateChildSummarizerNodeFn,
-    IContextSummarizeResult,
     IFluidDataStoreContext,
-    IGarbageCollectionNode,
     ISummarizeInternalResult,
     ISummarizerNode,
+    ISummarizeResult,
     ISummaryTracker,
 } from "@fluidframework/runtime-definitions";
 import { createServiceEndpoints, IChannelContext, summarizeChannel } from "./channelContext";
@@ -42,7 +41,6 @@ export class RemoteChannelContext implements IChannelContext {
         readonly objectStorage: ChannelStorageService,
     };
     private readonly summarizerNode: ISummarizerNode;
-    private garbageCollectionNodes: IGarbageCollectionNode[] = [];
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -114,30 +112,18 @@ export class RemoteChannelContext implements IChannelContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IContextSummarizeResult> {
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
         // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
         // the summary. Else, get the summary tree directly.
-        const summarizeResult = trackState
-            ? await this.summarizerNode.summarize(fullTree)
-            : await this.summarizeInternal(fullTree, false /* trackState */);
-
-        return {
-            stats: summarizeResult.stats,
-            summary: summarizeResult.summary,
-            nodes: this.garbageCollectionNodes,
-        };
+        return trackState
+            ? this.summarizerNode.summarize(fullTree)
+            : this.summarizeInternal(fullTree, false /* trackState */);
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const channel = await this.getChannel();
         const summarizeResult = summarizeChannel(channel, fullTree);
-        this.garbageCollectionNodes = summarizeResult.nodes;
-
-        return {
-            stats: summarizeResult.stats,
-            summary: summarizeResult.summary,
-            id: this.id,
-        };
+        return { ...summarizeResult, id: this.id };
     }
 
     private async loadChannel(): Promise<IChannel> {

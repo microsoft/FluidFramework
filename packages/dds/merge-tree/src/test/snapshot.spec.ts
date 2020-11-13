@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { MockStorage } from "@fluidframework/test-runtime-utils";
+import { MockSerializer, MockStorage } from "@fluidframework/test-runtime-utils";
 import { IMergeTreeOp } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
 import { TestClient } from ".";
@@ -20,7 +20,7 @@ async function loadSnapshot(tree: ITree) {
         clientId: "1",
     };
 
-    const { catchupOpsP } = await client2.load(runtime as IFluidDataStoreRuntime, services, undefined);
+    const { catchupOpsP } = await client2.load(runtime as IFluidDataStoreRuntime, services, new MockSerializer());
     await catchupOpsP;
     return client2;
 }

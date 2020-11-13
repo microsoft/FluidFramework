@@ -36,18 +36,16 @@ import {
     CreateChildSummarizerNodeParam,
     FluidDataStoreRegistryEntry,
     IAttachMessage,
-    IChannelSummarizeResult,
-    IContextSummarizeResult,
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
     IFluidDataStoreContextEvents,
     IFluidDataStoreRegistry,
-    IGarbageCollectionNode,
     IInboundSignalMessage,
     IProvideFluidDataStoreFactory,
     ISummarizeInternalResult,
     ISummarizerNode,
+    ISummarizeResult,
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
@@ -192,7 +190,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNode;
-    private garbageCollectionNodes: IGarbageCollectionNode[] = [];
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
@@ -375,18 +372,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IContextSummarizeResult> {
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
         // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
         // the summary. Else, get the summary tree directly.
-        const summarizeResult = trackState
-            ? await this.summarizerNode.summarize(fullTree)
-            : await this.summarizeInternal(fullTree, false /* trackState */);
-
-        return {
-            stats: summarizeResult.stats,
-            summary: summarizeResult.summary,
-            nodes: this.garbageCollectionNodes,
-        };
+        return trackState
+            ? this.summarizerNode.summarize(fullTree)
+            : this.summarizeInternal(fullTree, false /* trackState */);
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
@@ -394,19 +385,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const summarizeResult: IChannelSummarizeResult = await this.channel!.summarize(fullTree, trackState);
-            if (summarizeResult.nodes !== undefined) {
-                this.garbageCollectionNodes = summarizeResult.nodes;
-            }
-
-            // Add data store attributes to the returned tree;
-            const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
-            addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(attributes));
-            return {
-                stats: summarizeResult.stats,
-                summary: summarizeResult.summary,
-                id: this.id,
-             };
+        const summary = await this.channel!.summarize(fullTree, trackState);
+        const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
+        addBlobToSummary(summary, attributesBlobKey, JSON.stringify(attributes));
+        return { ...summary, id: this.id };
     }
 
     /**

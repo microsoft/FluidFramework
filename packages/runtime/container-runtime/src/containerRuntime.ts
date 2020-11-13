@@ -76,8 +76,6 @@ import {
 import {
     FlushMode,
     IAttachMessage,
-    IChannelSummarizeResult,
-    IGarbageCollectionNode,
     InboundAttachMessage,
     IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
@@ -664,8 +662,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // List of pending contexts (for the case where a client knows a store will exist and is waiting
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<FluidDataStoreContext>>();
-
-    private garbageCollectionNodes: IGarbageCollectionNode[] = [];
 
     private constructor(
         private readonly context: IContainerContext,
@@ -1479,21 +1475,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
      */
-    private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
+    private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
         // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
         // the summary. Else, get the summary tree directly.
-        const summarizeResult = trackState
+        return trackState
             ? await this.summarizerNode.summarize(fullTree) as ISummaryTreeWithStats
             : await this.summarizeInternal(fullTree, false /* trackState */) as ISummaryTreeWithStats;
-        return {
-            stats: summarizeResult.stats,
-            summary: summarizeResult.summary,
-            nodes: this.garbageCollectionNodes,
-        };
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
-        const nodes: IGarbageCollectionNode[] = [];
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
@@ -1505,10 +1495,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }).map(async ([key, value]) => {
                 const contextSummary = await value.summarize(fullTree, trackState);
                 builder.addWithStats(key, contextSummary);
-                nodes.push(...contextSummary.nodes);
             }));
 
-        this.garbageCollectionNodes = nodes;
         this.serializeContainerBlobs(builder);
         const summary = builder.getSummaryTree();
         return { ...summary, id: "" };

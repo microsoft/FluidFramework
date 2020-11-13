@@ -12,26 +12,20 @@ export const serializeBlob = (
     handle: IFluidHandle,
     path: string,
     snapshot: Serializable,
-    serializer?: IFluidSerializer,
+    serializer: IFluidSerializer,
 ) => ({
         mode: FileMode.File,
         path,
         type: TreeEntry.Blob,
         value: {
-            contents: serializer !== undefined
-                ? serializer.stringify(snapshot, handle)
-                : JSON.stringify(snapshot),
+            contents: serializer.stringify(snapshot, handle),
             encoding: "utf-8",
         },
     });
 
-export async function deserializeBlob(storage: IChannelStorageService, path: string, serializer?: IFluidSerializer) {
+export async function deserializeBlob(storage: IChannelStorageService, path: string, serializer: IFluidSerializer) {
     const handleTableChunk = await storage.read(path);
     const utf8 = fromBase64ToUtf8(handleTableChunk);
-    const data = serializer !== undefined
-        ? serializer.parse(utf8)
-        : JSON.parse(utf8);
-
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return data;
+    return serializer.parse(utf8);
 }

@@ -6,7 +6,7 @@
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult, IContextSummarizeResult } from "@fluidframework/runtime-definitions";
+import { ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
@@ -20,7 +20,7 @@ export interface IChannelContext {
 
     processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
 
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummarizeResult>;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 }
@@ -47,8 +47,12 @@ export function createServiceEndpoints(
     };
 }
 
-export function summarizeChannel(channel: IChannel, fullTree: boolean = false): IChannelSummarizeResult {
-    const summarizeResult = channel.summarize(fullTree);
+export function summarizeChannel(
+    channel: IChannel,
+    fullTree: boolean = false,
+    trackState: boolean = false,
+): ISummaryTreeWithStats {
+    const summarizeResult = channel.summarize(fullTree, trackState);
     // Add the channel attributes to the returned tree
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
     return summarizeResult;

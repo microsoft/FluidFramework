@@ -11,21 +11,6 @@ import {
     ITree,
 } from "@fluidframework/protocol-definitions";
 
-/**
- * Represents the format of a node in the graph of Fluid objects in a Container.
- * Garbage collection navigates this graph to find objects that are not used.
- */
-export interface IGarbageCollectionNode {
-    /**
-     * The path to the node. This path is relative to its parent.
-     */
-    path: string;
-    /**
-     * A set of routes to other nodes referenced by this node.
-     */
-    routes: string[];
-}
-
 export interface ISummaryStats {
     treeNodeCount: number;
     blobNodeCount: number;
@@ -45,28 +30,6 @@ export interface ISummarizeResult {
 
 export interface ISummarizeInternalResult extends ISummarizeResult {
     id: string;
-}
-
-/**
- * Represents the result of the summary of a channel's data.
- */
-export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
-    /**
-     * A list of nodes in this channel. Each node represents a node in the garbage collection graph and has a set
-     * of routes to other nodes in the graph.
-     */
-    nodes: IGarbageCollectionNode[];
-}
-
-/**
- * Represents the result of the summary of a context's data.
- */
-export interface IContextSummarizeResult extends ISummarizeResult {
-    /**
-     * A list of nodes in this channel. Each node represents a node in the garbage collection graph and has a set
-     * of routes to other nodes in the graph.
-     */
-    nodes: IGarbageCollectionNode[];
 }
 
 export type SummarizeInternalFn = (fullTree: boolean) => Promise<ISummarizeInternalResult>;

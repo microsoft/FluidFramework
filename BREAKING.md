@@ -2,12 +2,16 @@
 
 - [Branching removed](#Branching-removed)
 - [removeAllEntriesForDocId api name and signature change](#removeAllEntriesForDocId-api-name-and-signature-change)
+- [snapshot removed from IChannel and ISharedObject](#snapshot-removed-from-IChannel-and-ISharedObject)
 
 ### Branching removed
-The branching feature has been removed.  This includes all related members, methods, etc. such as `parentBranch`, `branchId`, `branch()`, etc.
+The branching feature has been removed. This includes all related members, methods, etc. such as `parentBranch`, `branchId`, `branch()`, etc.
 
 ### removeAllEntriesForDocId api name and signature change
 `removeAllEntriesForDocId` api renamed to `removeEntries`. Now it takes `IFileEntry` as argument instead of just docId. 
+
+### snapshot removed from IChannel and ISharedObject
+`snapshot` has been removed from `IChannel` and `ISharedObject`. It is replaced by `summarize` which should be used to get a summary of the channel / shared object.
 
 ## 0.29 Breaking Changes
 

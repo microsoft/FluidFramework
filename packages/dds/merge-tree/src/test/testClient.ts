@@ -8,7 +8,7 @@ import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { MockStorage } from "@fluidframework/test-runtime-utils";
+import { MockSerializer, MockStorage } from "@fluidframework/test-runtime-utils";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import random from "random-js";
 import { Client } from "../client";
@@ -68,7 +68,7 @@ export class TestClient extends Client {
                 clientId: newLongClientId,
             } as IFluidDataStoreRuntime,
             services,
-            undefined);
+            new MockSerializer());
         await catchupOpsP;
         return client2;
     }

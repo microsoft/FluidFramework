@@ -19,6 +19,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { IDeltaConnection, IChannelServices } from "@fluidframework/datastore-definitions";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
+import { ConsensusRegisterCollection } from "../consensusRegisterCollection";
 import { IConsensusRegisterCollection } from "../interfaces";
 
 describe("ConsensusRegisterCollection", () => {
@@ -85,22 +86,6 @@ describe("ConsensusRegisterCollection", () => {
                 });
                 await writeAndProcessMsg("key1", "val1");
             });
-
-            it("Can generate referenced routes for handles", async () => {
-                const crc2 = crcFactory.create(dataStoreRuntime, "crc2");
-                await writeAndProcessMsg("key1", crc2.handle);
-
-                // Verify the referenced routes returned by snapshot.
-                const garbageCollectionNode = crc.summarize().nodes[0];
-                assert.strictEqual(
-                    garbageCollectionNode.path,
-                    crc.id,
-                    "Path of the referenced routes should be collection's id");
-                assert.deepStrictEqual(
-                    garbageCollectionNode.routes,
-                    [crc2.handle.absolutePath],
-                    "Referenced routes is incorrect");
-            });
         });
 
         describe("Summary", () => {
@@ -135,7 +120,7 @@ describe("ConsensusRegisterCollection", () => {
 
             it("snapshot", async () => {
                 await crc.write("key1", "val1.1");
-                const tree: ITree = crc.snapshot();
+                const tree: ITree = (crc as ConsensusRegisterCollection<any>).snapshot();
                 assert(tree.entries.length === 1, "snapshot should return a tree with blob");
                 const serialized: string = (tree.entries[0]?.value as IBlob)?.contents;
                 assert(serialized, "snapshot should return a tree with blob with contents");

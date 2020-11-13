@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { MockStorage } from "@fluidframework/test-runtime-utils";
+import { MockSerializer, MockStorage } from "@fluidframework/test-runtime-utils";
 import { SnapshotLegacy } from "../snapshotlegacy";
 import { TestClient } from ".";
 
@@ -30,7 +30,7 @@ describe("snapshot", () => {
             logger: client2.logger,
             clientId: "1",
         };
-        await client2.load(runtime as IFluidDataStoreRuntime, services, undefined);
+        await client2.load(runtime as IFluidDataStoreRuntime, services, new MockSerializer());
 
         assert.equal(client2.getLength(), client1.getLength());
         assert.equal(client2.getText(), client1.getText());
@@ -59,7 +59,7 @@ describe("snapshot", () => {
                 logger: client2.logger,
                 clientId: (i + 1).toString(),
             };
-            await client2.load(runtime as IFluidDataStoreRuntime, services, undefined);
+            await client2.load(runtime as IFluidDataStoreRuntime, services, new MockSerializer());
 
             const client2Len = client2.getLength();
             assert.equal(

@@ -6,7 +6,7 @@
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
     IChannel,
     IFluidDataStoreRuntime,
@@ -14,7 +14,7 @@ import {
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
-    IContextSummarizeResult,
+    ISummarizeResult,
     IFluidDataStoreContext,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
@@ -127,20 +127,19 @@ export class LocalChannelContext implements IChannelContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<IContextSummarizeResult> {
+    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummarizeResult> {
         assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to summarize");
-        const summarizeResult = summarizeChannel(this.channel, fullTree);
-        return {
-            stats: summarizeResult.stats,
-            summary: summarizeResult.summary,
-            nodes: summarizeResult.nodes,
-        };
+        return summarizeChannel(this.channel, fullTree, trackState);
     }
 
     public getAttachSummary(): ISummaryTreeWithStats {
         assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to take snapshot");
-        const summarizeResult = summarizeChannel(this.channel, true /* fullTree */);
-        return summarizeResult as ISummaryTreeWithStats;
+
+        const summarizeResult = summarizeChannel(this.channel, true /* fullTree */, false /* trackState */);
+        assert(
+            summarizeResult.summary.type === SummaryType.Tree,
+            "summarize should always return a tree when fullTree is true");
+        return summarizeResult;
     }
 
     private async loadChannel(): Promise<IChannel> {

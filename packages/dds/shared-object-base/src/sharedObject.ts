@@ -15,10 +15,7 @@ import {
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
-import {
-    IChannelSummarizeResult,
-    IGarbageCollectionNode,
-} from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { SharedObjectHandle } from "./handle";
@@ -68,6 +65,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private _isBoundToContext: boolean = false;
 
     /**
+     * True while we are summarizing this object's data.
+     */
+    private _isSummarizing: boolean = false;
+
+    /**
      * Gets the connection state
      * @returns The state of the connection
      */
@@ -80,10 +82,15 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         return this.id;
     }
 
+    protected get serializer(): IFluidSerializer {
+        assert(!this._isSummarizing, "SummarySerializer should be used for serializing data during summary.");
+        return this._serializer;
+    }
+
     /**
      * The serializer to use to serialize / parse handles, if any.
      */
-    protected readonly serializer: IFluidSerializer;
+    private readonly _serializer: IFluidSerializer;
 
     /**
      * @param id - The id of the shared object
@@ -107,7 +114,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             // eslint-disable-next-line no-null/no-null
             runtime !== null ? runtime.logger : undefined, undefined, { sharedObjectId: uuid() });
 
-        this.serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
+        this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
 
         this.attachListeners();
     }
@@ -193,30 +200,25 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * {@inheritDoc (ISharedObject:interface).snapshot}
      */
-    public summarize(fullTree: boolean = false): IChannelSummarizeResult {
-        // Create a SummarySerializer that will be used to serialize any IFluidHandles in this object. The
-        // IFluidHandles represents route to any referenced Fluid object.
-        // SummarySerializer tracks the routes of all handles that it serializes.
+    public summarize(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
+        this._isSummarizing = true;
+
+        /**
+         * Create a SummarySerializer that will be used to serialize any IFluidHandles in this object. The
+         * IFluidHandles represents route to any referenced Fluid object.
+         * SummarySerializer tracks the routes of all handles that it serializes.
+         */
         const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
 
         const snapshot: ITree = this.snapshotCore(serializer);
-        const summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
 
-        const node: IGarbageCollectionNode = {
-            path: this.id,
-            routes: serializer.serializedRoutes,
-        };
-
-        // Return the snapshot tree and the list of routes tracked by the SummarySerializer.
-        return {
-            stats: summaryTree.stats,
-            summary: summaryTree.summary,
-            nodes: [node],
-        };
+        this._isSummarizing = false;
+        return convertToSummaryTreeWithStats(snapshot, fullTree);
     }
 
     /**
      * {@inheritDoc (ISharedObject:interface).snapshot}
+     * backcompat 0.28 - This is deprecated. summarize() should be used instead.
      */
     public snapshot(): ITree {
         return this.snapshotCore(this.serializer);
