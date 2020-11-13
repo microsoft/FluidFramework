@@ -4,6 +4,8 @@
 - [IContainerRuntimeBase.IProvideFluidDataStoreRegistry](#IContainerRuntimeBase.IProvideFluidDataStoreRegistry)
 - [_createDataStoreWithProps returns IFluidRouter](#_createDataStoreWithProps-returns-IFluidRouter)
 - [FluidDataStoreRuntime.registerRequestHandler deprecated](#FluidDataStoreRuntime.registerRequestHandler-deprecated)
+- [snapshot removed from IFluidDataStoreRuntime](#snapshot-removed-from-IFluidDataStoreRuntime)
+- [getAttachSnapshot deprecated in IFluidDataStoreChannel](#getAttachSnapshot-deprecated-in-IFluidDataStoreChannel)
 
 ### removeAllEntriesForDocId api in host storage changed
 `removeAllEntriesForDocId` api in host storage is now an async api.
@@ -18,6 +20,12 @@
 ### FluidDataStoreRuntime.registerRequestHandler deprecated
 Please use mixinRequestHandler() as a way to create custom data store runtime  factory/object and append request handling to existing implementation.
 
+### snapshot removed from IFluidDataStoreRuntime
+`snapshot` has been removed from `IFluidDataStoreRuntime`.
+
+### getAttachSnapshot deprecated in IFluidDataStoreChannel
+`getAttachSnapshot()` has been deprecated in `IFluidDataStoreChannel`. It is replaced by `getAttachSummary()`.
+
 ## 0.28 Breaking Changes
 
 - [FileName should contain extension for ODSP driver create new path](#FileName-should-contain-extension-for-ODSP-driver-create-new-path)
@@ -29,8 +37,6 @@ Please use mixinRequestHandler() as a way to create custom data store runtime  f
 - [Loader Constructor Changes](#Loader-Constructor-Changes)
 - [Moving DriverHeader and merge with CreateNewHeader](#moving-driverheader-and-merge-with-createnewheader)
 - [ODSP status codes moved from odsp-driver to odsp-doclib-utils](#ODSP-status-codes-moved-modules-from-odsp-driver-to-odsp-doclib-utils)
-- [snapshot removed from IFluidDataStoreRuntime](#snapshot-removed-from-IFluidDataStoreRuntime)
-- [getAttachSnapshot deprecated in IFluidDataStoreChannel](#getAttachSnapshot-deprecated-in-IFluidDataStoreChannel)
 
 ### FileName should contain extension for ODSP driver create new path
 Now the ODSP driver expects file extension in the file name while creating a new detached container.
@@ -102,12 +108,6 @@ DriverHeader is a driver concept, so move from core-interface to driver-definiti
 
 ### ODSP status codes moved modules from odsp-driver to odsp-doclib-utils
 Error/status codes like `offlineFetchFailureStatusCode` which used to be imported like `import { offlineFetchFailureStatusCode } from '@fluidframework/@odsp-driver';` have been moved to `odspErrorUtils.ts` in `odsp-doclib-utils`.
-
-### snapshot removed from IFluidDataStoreRuntime
-`snapshot` has been removed from `IFluidDataStoreRuntime`.
-
-### getAttachSnapshot deprecated in IFluidDataStoreChannel
-`getAttachSnapshot()` has been deprecated in `IFluidDataStoreChannel` and replaced by `getAttachSummary()`.
 
 ## 0.27 Breaking Changes
 - [Local Web Host Removed](#Local-Web-Host-Removed)
