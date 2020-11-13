@@ -259,10 +259,10 @@ export class SummarizerNode implements ISummarizerNode {
     private wipReferenceSequenceNumber: number | undefined;
     private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
     private wipSkipRecursion = false;
-    private summaryLogger: ITelemetryLogger | undefined;
 
     public startSummary(referenceSequenceNumber: number, summaryLogger) {
         assert(!this.disabled, "Unsupported: cannot call startSummary on disabled SummarizerNode");
+        assert(this.summaryLogger === undefined, "summaryLogger should not be set atop startSummary");
 
         assert(
             this.wipReferenceSequenceNumber === undefined,
@@ -419,10 +419,12 @@ export class SummarizerNode implements ISummarizerNode {
 
     public clearSummary() {
         assert(!this.disabled, "Unsupported: cannot call clearSummary on disabled SummarizerNode");
+        assert(this.summaryLogger !== undefined, "summaryLogger should have been set in startSummary");
 
         this.wipReferenceSequenceNumber = undefined;
         this.wipLocalPaths = undefined;
         this.wipSkipRecursion = false;
+        this.summaryLogger = undefined;
         for (const child of this.children.values()) {
             child.clearSummary();
         }
@@ -607,6 +609,7 @@ export class SummarizerNode implements ISummarizerNode {
         /** Undefined means created without summary */
         private latestSummary?: SummaryNode,
         private readonly initialSummary?: IInitialSummary,
+        private summaryLogger?: ITelemetryLogger,
     ) {
         this.canReuseHandle = config.canReuseHandle ?? true;
         this.throwOnError = config.throwOnFailure ?? false;
@@ -687,6 +690,7 @@ export class SummarizerNode implements ISummarizerNode {
                     createParam.sequenceNumber,
                     summaryNode,
                     initialSummary,
+                    this.summaryLogger,
                 );
                 break;
             }
@@ -730,6 +734,7 @@ export class SummarizerNode implements ISummarizerNode {
                     latestSummary?.referenceSequenceNumber ?? -1,
                     latestSummary?.createForChild(id),
                     childInitialSummary,
+                    this.summaryLogger,
                 );
                 break;
             }
