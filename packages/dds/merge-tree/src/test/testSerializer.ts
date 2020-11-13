@@ -10,9 +10,9 @@ import {
 } from "@fluidframework/core-interfaces";
 
 /**
- * Mock serializer implementation
+ * Test serializer implementation for merge tree tests
  */
-export class MockSerializer implements IFluidSerializer {
+export class TestSerializer implements IFluidSerializer {
     public constructor() {}
 
     public get IFluidSerializer() { return this; }
@@ -24,14 +24,13 @@ export class MockSerializer implements IFluidSerializer {
         throw new Error("Method not implemented.");
     }
 
-    public stringify(input: any, bind: IFluidHandle) {
-        assert(bind === undefined, "Mock serializer should not be called with bind handles");
-        return JSON.stringify(input);
+    public stringify(value: any, bind: IFluidHandle) {
+        assert(bind === undefined, "Test serializer should not be called with bind handles");
+        return JSON.stringify(value);
     }
 
-    // Parses the serialized data - context must match the context with which the JSON was stringified
-    public parse(input: string) {
+    public parse(value: string) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return JSON.parse(input);
+        return JSON.parse(value);
     }
 }

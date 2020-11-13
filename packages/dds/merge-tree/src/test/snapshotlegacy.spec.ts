@@ -5,8 +5,9 @@
 
 import { strict as assert } from "assert";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { MockSerializer, MockStorage } from "@fluidframework/test-runtime-utils";
+import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { SnapshotLegacy } from "../snapshotlegacy";
+import { TestSerializer } from "./testSerializer";
 import { TestClient } from ".";
 
 describe("snapshot", () => {
@@ -20,9 +21,11 @@ describe("snapshot", () => {
             client1.applyMsg(msg);
         }
 
+        const serializer = new TestSerializer();
+
         const snapshot = new SnapshotLegacy(client1.mergeTree, client1.logger);
         snapshot.extractSync();
-        const snapshotTree = snapshot.emit([]);
+        const snapshotTree = snapshot.emit([], serializer);
         const services = new MockStorage(snapshotTree);
 
         const client2 = new TestClient(undefined);
@@ -30,7 +33,7 @@ describe("snapshot", () => {
             logger: client2.logger,
             clientId: "1",
         };
-        await client2.load(runtime as IFluidDataStoreRuntime, services, new MockSerializer());
+        await client2.load(runtime as IFluidDataStoreRuntime, services, serializer);
 
         assert.equal(client2.getLength(), client1.getLength());
         assert.equal(client2.getText(), client1.getText());
@@ -48,18 +51,19 @@ describe("snapshot", () => {
             clients[0].applyMsg(msg);
         }
 
+        const serializer = new TestSerializer();
         for (let i = 0; i < clients.length - 1; i++) {
             const client1 = clients[i];
             const client2 = clients[i + 1];
             const snapshot = new SnapshotLegacy(client1.mergeTree, client1.logger);
             snapshot.extractSync();
-            const snapshotTree = snapshot.emit([]);
+            const snapshotTree = snapshot.emit([], serializer);
             const services = new MockStorage(snapshotTree);
             const runtime: Partial<IFluidDataStoreRuntime> = {
                 logger: client2.logger,
                 clientId: (i + 1).toString(),
             };
-            await client2.load(runtime as IFluidDataStoreRuntime, services, new MockSerializer());
+            await client2.load(runtime as IFluidDataStoreRuntime, services, serializer);
 
             const client2Len = client2.getLength();
             assert.equal(
