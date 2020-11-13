@@ -181,6 +181,12 @@ export interface IFluidDataStoreChannel extends
     processSignal(message: any, local: boolean): void;
 
     /**
+     * Generates a snapshot of the given data store
+     * @deprecated in 0.22 summarizerNode
+     */
+    snapshotInternal(fullTree?: boolean): Promise<ITreeEntry[]>;
+
+    /**
      * Generates a summary for the data store.
      * Introduced with summarizerNode - will be required in a future release.
      * @param fullTree - true to bypass optimizations and force a full summary tree.

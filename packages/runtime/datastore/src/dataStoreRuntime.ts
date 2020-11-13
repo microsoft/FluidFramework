@@ -564,6 +564,15 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
+     * back-compat for N-2 < 0.29, remove when N-2 >= 0.29
+     */
+    public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
+        const summaryTree = await this.summarize(fullTree);
+        const tree = convertSummaryTreeToITree(summaryTree.summary);
+        return tree.entries;
+    }
+
+    /**
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.

@@ -500,6 +500,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
+    public async snapshotInternal(): Promise<ITreeEntry[]> {
+        return [];
+    }
+
     public async summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats> {
         const stats = mergeStats();
         stats.treeNodeCount++;
