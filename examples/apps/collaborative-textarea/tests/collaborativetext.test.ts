@@ -64,6 +64,16 @@ describe("collaborativetext", () => {
 
         setText(0, "hello");
 
+        await page.waitForFunction( async () => {
+                const divs = document.getElementsByClassName("text-area");
+                const textAreaElements = divs[0].getElementsByTagName("textarea");
+                const textarea = textAreaElements[0] as HTMLTextAreaElement;
+                if (textarea) {
+                    return textarea.value.includes("hello");
+                }
+            }, { timeout: 1000 }
+        );
+
         const ta12 = await getValue(0);
         expect(ta12).toEqual("hello");
 
