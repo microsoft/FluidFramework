@@ -165,7 +165,6 @@ export class SharedTextRunner
             // The flowContainerMap MUST be set last
 
             const flowContainerMap = this.collabDoc.createMap();
-            flowContainerMap.set("overlayInk", this.collabDoc.createMap().handle);
             this.rootView.set("flowContainerMap", flowContainerMap.handle);
 
             insights.set(newString.id, this.collabDoc.createMap().handle);
