@@ -1,11 +1,15 @@
 ## 0.29 Breaking Changes
 
+- [OdspDriverUrlResolver2 renamed to OdspDriverUrlResolverForShareLink](#OdspDriverUrlResolver2-renamed-to-OdspDriverUrlResolverForShareLink)
 - [removeAllEntriesForDocId api in host storage changed](#removeAllEntriesForDocId-api-in-host-storage-changed)
 - [IContainerRuntimeBase.IProvideFluidDataStoreRegistry](#IContainerRuntimeBase.IProvideFluidDataStoreRegistry)
 - [_createDataStoreWithProps returns IFluidRouter](#_createDataStoreWithProps-returns-IFluidRouter)
 - [FluidDataStoreRuntime.registerRequestHandler deprecated](#FluidDataStoreRuntime.registerRequestHandler-deprecated)
 - [snapshot removed from IFluidDataStoreRuntime](#snapshot-removed-from-IFluidDataStoreRuntime)
 - [getAttachSnapshot deprecated in IFluidDataStoreChannel](#getAttachSnapshot-deprecated-in-IFluidDataStoreChannel)
+
+### OdspDriverUrlResolver2 renamed to OdspDriverUrlResolverForShareLink
+`OdspDriverUrlResolver2` renamed to `OdspDriverUrlResolverForShareLink`
 
 ### removeAllEntriesForDocId api in host storage changed
 `removeAllEntriesForDocId` api in host storage is now an async api.
