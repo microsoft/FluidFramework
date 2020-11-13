@@ -248,6 +248,7 @@
             "request": "launch",
             "name": "Debug Current Test",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
             "stopOnEntry": false,
             "env": {
                 "TS_NODE_PROJECT": "${fileDirname}/../../tsconfig.json",
