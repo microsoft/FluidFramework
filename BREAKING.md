@@ -1,6 +1,10 @@
 ## 0.29 Breaking Changes
 
+- [OdspDriverUrlResolver2 renamed to OdspDriverUrlResolverForShareLink](#OdspDriverUrlResolver2-renamed-to-OdspDriverUrlResolverForShareLink)
 - [removeAllEntriesForDocId api in host storage changed](#removeAllEntriesForDocId-api-in-host-storage-changed)
+
+### OdspDriverUrlResolver2 renamed to OdspDriverUrlResolverForShareLink
+`OdspDriverUrlResolver2` renamed to `OdspDriverUrlResolverForShareLink`
 
 ### removeAllEntriesForDocId api in host storage changed
 `removeAllEntriesForDocId` api in host storage is now an async api.
