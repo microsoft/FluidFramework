@@ -284,7 +284,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         const parser = RequestParser.create(request);
         const id = parser.pathParts[0];
 
-        if (id === "_channels" || id === "_objects") {
+        if (id === "_channels" || id === "_custom") {
             return this.request(parser.createSubRequest(1));
         }
 
