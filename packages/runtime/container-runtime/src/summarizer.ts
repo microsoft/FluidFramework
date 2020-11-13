@@ -283,7 +283,7 @@ export class RunningSummarizer implements IDisposable {
     private constructor(
         private readonly clientId: string,
         private readonly onBehalfOfClientId: string,
-        private readonly logger: ITelemetryLogger,
+        private readonly summarizerLogger: ITelemetryLogger,
         private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
         // eslint-disable-next-line max-len
@@ -309,7 +309,7 @@ export class RunningSummarizer implements IDisposable {
                 this.raiseSummarizingError("SummaryAckWaitTimeout");
                 // When RunningSummarizer first starts up, we won't have a summaryLogger
                 // since this instance won't have kicked off a summary yet
-                const ackTimeoutLogger = this.summaryLogger ?? this.logger;
+                const ackTimeoutLogger = this.summaryLogger ?? this.summarizerLogger;
                 ackTimeoutLogger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
@@ -436,7 +436,7 @@ export class RunningSummarizer implements IDisposable {
                 this.heuristics.run();
             }
         }).catch((error) => {
-            this.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
+            this.summarizerLogger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
         });
     }
 
@@ -459,7 +459,7 @@ export class RunningSummarizer implements IDisposable {
 
     private async summarizeCore(reason: string, safe: boolean): Promise<boolean | undefined> {
         const summarizeCount = ++this.summarizeCount;
-        this.summaryLogger = new ChildLogger(this.logger, "Summary", { summarizeCount });
+        this.summaryLogger = new ChildLogger(this.summarizerLogger, "Summary", { summarizeCount });
 
         // Wait to generate and send summary
         const summaryData = await this.generateSummaryWithLogging(reason, safe);
@@ -564,7 +564,7 @@ export class RunningSummarizer implements IDisposable {
     }
 
     private summarizeTimerHandler(time: number, count: number) {
-        this.logger.sendPerformanceEvent({
+        this.summarizerLogger.sendPerformanceEvent({
             eventName: "SummarizeTimeout",
             timeoutTime: time,
             timeoutCount: count,
@@ -619,7 +619,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         summaryCollection?: SummaryCollection,
     ) {
         super();
-        this.logger = ChildLogger.create(this.runtime.logger, "Summarizer", { SummaryId: uuid() });
+        this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
         if (summaryCollection) {
             // summarize immediately because we just went through context reload
