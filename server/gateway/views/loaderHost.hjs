@@ -27,6 +27,7 @@
         var npm = "{{ npm }}";
         var config = {{{ config }}};
         var clientId = "{{ clientId }}";
+        var isSpoTenantPath = {{{ isSpoTenantPath }}};
 
         var scriptIds = [];
 
@@ -37,7 +38,8 @@
             hostToken,
             accessToken,
             config,
-            clientId);
+            clientId,
+            isSpoTenantPath);
     </script>
 {{/scripts}}
 

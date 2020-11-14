@@ -284,7 +284,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         const parser = RequestParser.create(request);
         const id = parser.pathParts[0];
 
-        if (id === "_channels" || id === "_objects") {
+        if (id === "_channels" || id === "_custom") {
             return this.request(parser.createSubRequest(1));
         }
 
@@ -561,6 +561,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             // Removed when attach op is broadcast
             && !this.pendingAttach.has(id)
         );
+    }
+
+    // back-compat for N-2 <= 0.28, remove when N-2 >= 0.29
+    public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
+        const summaryTree = await this.summarize(fullTree);
+        const tree = convertSummaryTreeToITree(summaryTree.summary);
+        return tree.entries;
     }
 
     /**

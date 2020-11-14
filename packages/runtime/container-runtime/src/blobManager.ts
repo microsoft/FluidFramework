@@ -40,7 +40,7 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 }
 
 export class BlobManager {
-    public readonly basePath = "_blobs";
+    public static readonly basePath = "_blobs";
     private readonly blobIds: Set<string> = new Set();
 
     constructor(
@@ -51,7 +51,7 @@ export class BlobManager {
 
     public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
         return new BlobHandle(
-            `${this.basePath}/${blobId}`,
+            `${BlobManager.basePath}/${blobId}`,
             this.routeContext,
             async () => this.getStorage().readBlob(blobId),
             () => null,
@@ -62,7 +62,7 @@ export class BlobManager {
         const response = await this.getStorage().createBlob(blob);
 
         const handle = new BlobHandle(
-            `${this.basePath}/${response.id}`,
+            `${BlobManager.basePath}/${response.id}`,
             this.routeContext,
             async () => this.getStorage().readBlob(response.id),
             () => this.sendBlobAttachOp(response.id),

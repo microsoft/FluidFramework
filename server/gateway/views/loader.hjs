@@ -26,6 +26,7 @@
         var accessToken = "{{ accessToken }}";
         var config = {{{ config }}};
         var clientId = "{{ clientId }}";
+        var isSpoTenantPath = {{{ isSpoTenantPath }}};
 
         {{#scripts}}
         var scriptIds = [
@@ -47,6 +48,7 @@
             hostToken,
             accessToken,
             config,
+            isSpoTenantPath,
         );
 
         const connectionDiv = document.getElementById("connection-state");

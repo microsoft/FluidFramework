@@ -43,6 +43,7 @@ export async function initialize(
     hostToken: string,
     accessToken: string,
     config: any,
+    isSpoTenantPath: boolean,
 ) {
     const documentFactory = new DocumentFactory(config.tenantId);
 
@@ -51,19 +52,26 @@ export async function initialize(
     };
 
     const documentServiceFactories: IDocumentServiceFactory[] = [];
-    // TODO: need to be support refresh token
-    documentServiceFactories.push(new OdspDocumentServiceFactory(
-        async () => Promise.resolve(resolved.tokens.storageToken),
-        async () => Promise.resolve(resolved.tokens.socketToken)));
-
-    const tokenProvider = new GatewayTokenProvider(document.location.origin, resolved.url, hostToken, accessToken);
-    documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
-        tokenProvider,
-        false,
-        new DefaultErrorTracking(),
-        false,
-        true,
-        cache));
+    if (isSpoTenantPath) {
+        // TODO: need to be support refresh token
+        documentServiceFactories.push(new OdspDocumentServiceFactory(
+            async () => Promise.resolve(resolved.tokens.storageToken),
+            async () => Promise.resolve(resolved.tokens.socketToken)));
+    } else {
+        const tokenProvider = new GatewayTokenProvider(
+            document.location.origin,
+            resolved.url,
+            hostToken,
+            accessToken,
+        );
+        documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
+            tokenProvider,
+            false,
+            new DefaultErrorTracking(),
+            false,
+            true,
+            cache));
+    }
 
     const resolver = new ContainerUrlResolver(
         document.location.origin,

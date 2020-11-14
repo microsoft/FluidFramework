@@ -14,53 +14,59 @@ import { Request } from "express";
 import { Provider } from "nconf";
 import dotenv from "dotenv";
 import { IAlfred } from "./interfaces";
-import { isSpoTenant, spoGetResolvedUrl } from "./odspUtils";
+import { spoGetResolvedUrl } from "./odspUtils";
 
 dotenv.config();
 
-interface FullTree {
+export interface FullTree {
     cache: IGitCache,
     code: IFluidCodeDetails | null,
 }
 
-export function resolveUrl(
+export function resolveSpoUrl(
+    config: Provider,
+    tenantId: string,
+    documentId: string,
+    request: Request,
+    driveId?: string,
+): [Promise<IFluidResolvedUrl>, Promise<undefined | FullTree>] {
+    const microsoftConfiguration = config.get("login:microsoft");
+    const clientId = _.isEmpty(microsoftConfiguration.clientId)
+        ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : microsoftConfiguration.clientId;
+    const clientSecret = _.isEmpty(microsoftConfiguration.clientSecret)
+        ? process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET : microsoftConfiguration.clientSecret;
+    if (clientId !== undefined && clientSecret !== undefined) {
+        const clientConfig: IClientConfig = {
+            clientId,
+            clientSecret,
+        };
+        const resolvedP = spoGetResolvedUrl(tenantId, documentId,
+            request.session?.tokens, clientConfig, driveId);
+        const fullTreeP = Promise.resolve(undefined);
+        return [resolvedP, fullTreeP];
+    } else {
+        throw new Error("Failed to find client ID and secret values");
+    }
+}
+
+export function resolveR11sUrl(
     config: Provider,
     alfred: IAlfred,
     tenantId: string,
     documentId: string,
     accessToken: string,
     request: Request,
-    driveId?: string,
 ): [Promise<IFluidResolvedUrl>, Promise<undefined | FullTree>] {
-    if (isSpoTenant(tenantId)) {
-        const microsoftConfiguration = config.get("login:microsoft");
-        const clientId = _.isEmpty(microsoftConfiguration.clientId)
-            ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : microsoftConfiguration.clientId;
-        const clientSecret = _.isEmpty(microsoftConfiguration.clientSecret)
-            ? process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET : microsoftConfiguration.clientSecret;
-        if (clientId !== undefined && clientSecret !== undefined) {
-            const clientConfig: IClientConfig = {
-                clientId,
-                clientSecret,
-            };
-            const resolvedP = spoGetResolvedUrl(tenantId, documentId,
-                request.session?.tokens, clientConfig, driveId);
-            const fullTreeP = Promise.resolve(undefined);
-            return [resolvedP, fullTreeP];
-        } else {
-            throw new Error("Failed to find client ID and secret values");
-        }
-    } else {
-        const endPointConfig: { provider: Provider, tenantId: string, documentId: string } = {
-            provider: config,
-            tenantId,
-            documentId,
-        };
+    const endPointConfig: { provider: Provider, tenantId: string, documentId: string } = {
+        provider: config,
+        tenantId,
+        documentId,
+    };
 
-        const resolverList = [new RouterliciousUrlResolver(endPointConfig, async () => Promise.resolve(accessToken))];
-        const resolvedP = configurableUrlResolver(resolverList, request);
-        const fullTreeP = alfred.getFullTree(tenantId, documentId);
-        // RouterliciousUrlResolver only resolves as IFluidResolvedUrl
-        return [resolvedP as Promise<IFluidResolvedUrl>, fullTreeP];
-    }
+    const resolverList = [
+        new RouterliciousUrlResolver(endPointConfig, async () => Promise.resolve(accessToken))];
+    const resolvedP = configurableUrlResolver(resolverList, request);
+    const fullTreeP = alfred.getFullTree(tenantId, documentId);
+    // RouterliciousUrlResolver only resolves as IFluidResolvedUrl
+    return [resolvedP as Promise<IFluidResolvedUrl>, fullTreeP];
 }

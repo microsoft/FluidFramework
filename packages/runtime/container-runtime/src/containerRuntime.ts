@@ -965,11 +965,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const requestParser = RequestParser.create(request);
         const id = requestParser.pathParts[0];
 
-        if (id === "_channel") {
+        if (id === "_channels") {
             return this.resolveHandle(requestParser.createSubRequest(1));
         }
 
-        if (id === this.blobManager.basePath && requestParser.isLeaf(2)) {
+        if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
             const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
             if (handle) {
                 return {
@@ -1049,7 +1049,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
         const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
-        summaryTreeBuilder.addWithStats(".blobs", blobsTree);
+        summaryTreeBuilder.addWithStats(blobsTreeName, blobsTree);
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {

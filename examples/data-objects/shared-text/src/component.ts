@@ -21,7 +21,6 @@ import {
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
-import { Ink } from "@fluidframework/ink";
 import {
     ISharedMap,
     SharedMap,
@@ -166,7 +165,6 @@ export class SharedTextRunner
             // The flowContainerMap MUST be set last
 
             const flowContainerMap = this.collabDoc.createMap();
-            flowContainerMap.set("overlayInk", this.collabDoc.createMap().handle);
             this.rootView.set("flowContainerMap", flowContainerMap.handle);
 
             insights.set(newString.id, this.collabDoc.createMap().handle);
@@ -222,11 +220,6 @@ export class SharedTextRunner
             document.createElement("div"),
             url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
-        const overlayMap = await this.rootView
-            .get<IFluidHandle<ISharedMap>>("flowContainerMap")
-            .get();
-        const overlayInkMap = await overlayMap.get<IFluidHandle<ISharedMap>>("overlayInk").get();
-
         const containerDiv = document.createElement("div");
         containerDiv.id = "flow-container";
         containerDiv.style.touchAction = "none";
@@ -241,7 +234,6 @@ export class SharedTextRunner
                 this.rootView,
                 () => { throw new Error("Can't close document"); }),
             this.sharedString,
-            overlayInkMap,
             image,
             {});
         const theFlow = container.flowView;
@@ -309,14 +301,12 @@ export function instantiateDataStore(context: IFluidDataStoreContext) {
     // Create channel factories
     const mapFactory = SharedMap.getFactory();
     const sharedStringFactory = SharedString.getFactory();
-    const inkFactory = Ink.getFactory();
     const cellFactory = SharedCell.getFactory();
     const objectSequenceFactory = SharedObjectSequence.getFactory();
     const numberSequenceFactory = SharedNumberSequence.getFactory();
 
     modules.set(mapFactory.type, mapFactory);
     modules.set(sharedStringFactory.type, sharedStringFactory);
-    modules.set(inkFactory.type, inkFactory);
     modules.set(cellFactory.type, cellFactory);
     modules.set(objectSequenceFactory.type, objectSequenceFactory);
     modules.set(numberSequenceFactory.type, numberSequenceFactory);
