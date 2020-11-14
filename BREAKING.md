@@ -1,3 +1,10 @@
+## 0.30 Breaking Changes
+
+- [Branching removed](#Branching-removed)
+
+### Branching removed
+The branching feature has been removed.  This includes all related members, methods, etc. such as `parentBranch`, `branchId`, `branch()`, etc.
+
 ## 0.29 Breaking Changes
 
 - [removeAllEntriesForDocId api in host storage changed](#removeAllEntriesForDocId-api-in-host-storage-changed)
