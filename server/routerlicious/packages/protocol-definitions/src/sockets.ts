@@ -72,7 +72,7 @@ export interface IConnected {
      */
     maxMessageSize: number;
 
-    // TODO remove after client packages update
+    // Back-compat, removal tracked with issue #4346
     /**
      * The parent branch for the document
      */

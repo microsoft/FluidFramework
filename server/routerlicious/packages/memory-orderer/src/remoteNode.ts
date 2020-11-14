@@ -22,7 +22,7 @@ class ProxySocketConnection implements IOrdererConnection {
         return this.details.existing;
     }
 
-    // TODO remove after client packages update
+    // Back-compat, removal tracked with issue #4346
     public get parentBranch(): null {
         return null;
     }

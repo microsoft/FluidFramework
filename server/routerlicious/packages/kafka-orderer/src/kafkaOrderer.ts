@@ -38,7 +38,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             serviceConfiguration);
     }
 
-    // TODO remove after client packages update
+    // Back-compat, removal tracked with issue #4346
     public get parentBranch(): null {
         return null;
     }
