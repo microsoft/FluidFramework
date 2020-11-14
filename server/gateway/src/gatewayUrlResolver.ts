@@ -33,8 +33,8 @@ export function resolveSpoUrl(
     const microsoftConfiguration = config.get("login:microsoft");
     const clientId = _.isEmpty(microsoftConfiguration.clientId)
         ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : microsoftConfiguration.clientId;
-    const clientSecret = _.isEmpty(microsoftConfiguration.clientSecret)
-        ? process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET : microsoftConfiguration.clientSecret;
+    const clientSecret = _.isEmpty(microsoftConfiguration.secret)
+        ? process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET : microsoftConfiguration.secret;
     if (clientId !== undefined && clientSecret !== undefined) {
         const clientConfig: IClientConfig = {
             clientId,
