@@ -81,6 +81,7 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
+    IProvideFluidDataStoreRegistry,
     IFluidDataStoreChannel,
     IEnvelope,
     IInboundSignalMessage,
@@ -470,7 +471,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public static async load(
         context: IContainerContext,
-        registryEntries: IFluidDataStoreRegistry,
+        registryEntries: IProvideFluidDataStoreRegistry,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IFluidObject = context.scope,

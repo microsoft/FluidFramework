@@ -21,6 +21,7 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
+    IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import {
@@ -117,7 +118,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const chaincode = new Chaincode(context.closeFn);
 
-        let registry: IFluidDataStoreRegistry =
+        let registry: IProvideFluidDataStoreRegistry =
             createDataStoreRegistry([[chaincode.type, Promise.resolve(chaincode)]]);
         if (this.registries) {
             registry = new MultipleDataStoreRegistries(

@@ -27,7 +27,7 @@ export type NamedFluidDataStoreRegistryEntry =
  */
 export type FluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry | IProvideFluidDataStoreFactory>;
 
-export type FluidDataStoreRegistry = FluidDataStoreRegistryEntries | IFluidDataStoreRegistry;
+export type FluidDataStoreRegistry = FluidDataStoreRegistryEntries | IProvideFluidDataStoreRegistry;
 
 export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry = "IFluidDataStoreRegistry";
 

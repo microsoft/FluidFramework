@@ -34,7 +34,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         if (storeFactories !== undefined) {
             this.IFluidDataStoreRegistry = createDataStoreRegistry(
                 storeFactories.map(
-                    (factory) => [factory.type, Promise.resolve(factory)]));
+                    (factory) => [factory.type, Promise.resolve(factory)])).IFluidDataStoreRegistry;
         }
 
         this.ISharedObjectRegistry = new Map(

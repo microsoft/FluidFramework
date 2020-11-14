@@ -17,7 +17,6 @@ import {
     innerRequestHandler,
 } from "@fluidframework/request-handler";
 import {
-    IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import { DependencyContainer, DependencyContainerRegistry } from "@fluidframework/synthesize";
@@ -28,9 +27,7 @@ import { DependencyContainer, DependencyContainerRegistry } from "@fluidframewor
  * it creates.
  */
 export class BaseContainerRuntimeFactory implements
-    IProvideFluidDataStoreRegistry,
     IRuntimeFactory {
-    public get IFluidDataStoreRegistry() { return this.registry; }
     public get IRuntimeFactory() { return this; }
 
     /**
@@ -40,7 +37,7 @@ export class BaseContainerRuntimeFactory implements
      * @param runtimeOptions - The runtime options passed to the ContainerRuntime when instantiating it
      */
     constructor(
-        private readonly registry: IFluidDataStoreRegistry,
+        private readonly registry: IProvideFluidDataStoreRegistry,
         private readonly providerEntries: DependencyContainerRegistry = [],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
         private readonly runtimeOptions?: IContainerRuntimeOptions,

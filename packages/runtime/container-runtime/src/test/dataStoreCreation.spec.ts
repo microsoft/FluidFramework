@@ -61,7 +61,7 @@ describe("Data Store Creation Tests", () => {
             };
             const entry: FluidDataStoreRegistryEntry = {
                 get IFluidDataStoreFactory() { return factory; },
-                get IFluidDataStoreRegistry() { return registry; },
+                get IFluidDataStoreRegistry() { return registry.IFluidDataStoreRegistry; },
             };
             return entry;
         }

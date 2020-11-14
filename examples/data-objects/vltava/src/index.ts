@@ -19,6 +19,7 @@ import {
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreFactory,
+    IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import { requestFluidObject, createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
@@ -68,7 +69,7 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectIn
 export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultDataStore {
     constructor(
         defaultFactory: IFluidDataStoreFactory,
-        registryEntries: IFluidDataStoreRegistry,
+        registryEntries: IProvideFluidDataStoreRegistry,
     ) {
         super(defaultFactory, registryEntries);
     }

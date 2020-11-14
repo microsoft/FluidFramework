@@ -195,7 +195,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
             throw new Error("undefined type member");
         }
         if (registryEntries !== undefined) {
-            this.registry = createDataStoreRegistry(registryEntries);
+            this.registry = createDataStoreRegistry(registryEntries).IFluidDataStoreRegistry;
         }
         this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
     }

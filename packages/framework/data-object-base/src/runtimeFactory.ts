@@ -15,14 +15,14 @@ import {
 import {
     IFluidDataStoreFactory,
     FlushMode,
-    IFluidDataStoreRegistry,
+    IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 const defaultStoreId = "" as const;
 
 export class RuntimeFactory implements IRuntimeFactory {
-    private readonly registry: IFluidDataStoreRegistry;
+    private readonly registry: IProvideFluidDataStoreRegistry;
 
     constructor(
         private readonly defaultStoreFactory: IFluidDataStoreFactory,

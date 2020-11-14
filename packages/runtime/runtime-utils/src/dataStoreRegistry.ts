@@ -10,13 +10,13 @@ import {
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
-export function createDataStoreRegistry(arg: FluidDataStoreRegistry): IFluidDataStoreRegistry {
+export function createDataStoreRegistry(arg: FluidDataStoreRegistry): IProvideFluidDataStoreRegistry {
     // Ensure that FluidDataStoreRegistry type did not change from original
     // We do casting below and need to ensure that only these two types can come in
-    const entries: FluidDataStoreRegistryEntries | IFluidDataStoreRegistry = arg;
+    const entries: FluidDataStoreRegistryEntries | IProvideFluidDataStoreRegistry = arg;
 
-    const registry = (entries as IProvideFluidDataStoreRegistry).IFluidDataStoreRegistry;
-    if (registry !== undefined) {
+    const registry = entries as IProvideFluidDataStoreRegistry;
+    if (registry.IFluidDataStoreRegistry !== undefined) {
         return registry;
     }
     return new DataStoreRegistry(entries as FluidDataStoreRegistryEntries);
@@ -43,16 +43,16 @@ class DataStoreRegistry implements IFluidDataStoreRegistry {
 }
 
 export class MultipleDataStoreRegistries implements IFluidDataStoreRegistry {
-    private readonly registries: IFluidDataStoreRegistry[];
+    private readonly registries: IProvideFluidDataStoreRegistry[];
 
     get IFluidDataStoreRegistry() { return this; }
 
-    constructor(...registries: IFluidDataStoreRegistry[]) {
+    constructor(...registries: IProvideFluidDataStoreRegistry[]) {
         this.registries = registries;
     }
     public async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
         for (const reg of this.registries) {
-            const res = await reg.get(name);
+            const res = await reg.IFluidDataStoreRegistry.get(name);
             if (res !== undefined) {
                 return res;
             }

@@ -313,7 +313,7 @@ class Document {
                 ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
                 ["LastEditedComponent", Promise.resolve(chaincode)],
                 ["OfficeRootComponent", Promise.resolve(chaincode)],
-            ]));
+            ]).IFluidDataStoreRegistry);
         const options = {};
 
         // Load the Fluid document
