@@ -10,6 +10,7 @@ import { configurableUrlResolver } from "@fluidframework/driver-utils";
 import { IClientConfig } from "@fluidframework/odsp-doclib-utils";
 import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
 import { IGitCache } from "@fluidframework/server-services-client";
+import winston from "winston";
 import { Request } from "express";
 import { Provider } from "nconf";
 import dotenv from "dotenv";
@@ -31,10 +32,11 @@ export function resolveSpoUrl(
     driveId?: string,
 ): [Promise<IFluidResolvedUrl>, Promise<undefined | FullTree>] {
     const microsoftConfiguration = config.get("login:microsoft");
+    winston.info(JSON.stringify(microsoftConfiguration));
     const clientId = _.isEmpty(microsoftConfiguration.clientId)
         ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : microsoftConfiguration.clientId;
-    const clientSecret = _.isEmpty(microsoftConfiguration.clientSecret)
-        ? process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET : microsoftConfiguration.clientSecret;
+    const clientSecret = _.isEmpty(microsoftConfiguration.secret)
+        ? process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET : microsoftConfiguration.secret;
     if (clientId !== undefined && clientSecret !== undefined) {
         const clientConfig: IClientConfig = {
             clientId,
