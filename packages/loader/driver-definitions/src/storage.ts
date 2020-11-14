@@ -72,7 +72,7 @@ export interface IDocumentStorageService {
     /**
      * Writes to the object with the given ID
      */
-    write(root: ITree, parents: string[], message: string): Promise<IVersion>;
+    write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 
     /**
      * Creates a blob out of the given buffer
