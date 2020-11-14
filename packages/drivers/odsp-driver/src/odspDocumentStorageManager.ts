@@ -671,6 +671,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             }
 
             const clientTime = networkTime ? overallTime - networkTime : undefined;
+            const isAfd = msEdge != null ? true : false;
 
             event.end({
                 trees: content.trees?.length ?? 0,
@@ -690,7 +691,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 overalltime: overallTime,
                 networktime: networkTime,
                 clienttime: clientTime,
-                msEdge: msEdge,
+                msedge: msEdge,
+                isafd: isAfd,
                 contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
                 bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
             });
