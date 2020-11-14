@@ -5,10 +5,7 @@
 
 import {
     IFluidHandle,
-    IFluidHandleContext,
-    IFluidRouter,
-    IRequest,
-    IResponse,
+    IFluidRoutingContext,
 } from "@fluidframework/core-interfaces";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { ISharedDirectory } from "@fluidframework/map";
@@ -21,7 +18,6 @@ import { ISharedDirectory } from "@fluidframework/map";
  * and loads blob.
  */
 export class BlobHandle implements IFluidHandle {
-    public get IFluidRouter(): IFluidRouter { return this; }
     public get IFluidHandle(): IFluidHandle { return this; }
 
     public get isAttached(): boolean {
@@ -33,7 +29,7 @@ export class BlobHandle implements IFluidHandle {
     constructor(
         private readonly path: string,
         private readonly directory: ISharedDirectory,
-        public readonly routeContext: IFluidHandleContext,
+        public readonly routeContext: IFluidRoutingContext,
     ) {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);
     }
@@ -48,9 +44,5 @@ export class BlobHandle implements IFluidHandle {
 
     public bind(handle: IFluidHandle) {
         throw new Error("Cannot bind to blob handle");
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }
 }

@@ -11,9 +11,10 @@ import { assert ,
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
-    IFluidHandleContext,
     IRequest,
     IResponse,
+    IFluidHandleContext,
+    IFluidRoutingParent,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -362,15 +363,18 @@ export class MockQuorum implements IQuorum, EventEmitter {
  * Mock implementation of IRuntime for testing that does nothing
  */
 export class MockFluidDataStoreRuntime extends EventEmitter
-    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
-    public get IFluidHandleContext(): IFluidHandleContext { return this; }
-    public get rootRoutingContext(): IFluidHandleContext { return this; }
-    public get channelsRoutingContext(): IFluidHandleContext { return this; }
-    public get objectsRoutingContext(): IFluidHandleContext { return this; }
-
+    implements IFluidDataStoreRuntime, IFluidDataStoreChannel {
     public get IFluidRouter() { return this; }
 
-    public readonly IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
+    public readonly IFluidSerializer = new FluidSerializer(this.channelsRoutingContext);
+
+    public get objectsRoutingContext(): IFluidHandleContext & IFluidRoutingParent {
+        throw new Error("Not implemented");
+    }
+
+    public get channelsRoutingContext(): IFluidHandleContext & IFluidRoutingParent {
+        throw new Error("Not implemented");
+    }
 
     public readonly documentId: string;
     public readonly id: string = uuid();
@@ -386,10 +390,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
     private readonly activeDeferred = new Deferred<void>();
     public readonly quorum = new MockQuorum();
-
-    public get absolutePath() {
-        return `/${this.id}`;
-    }
 
     private _local = false;
 
@@ -490,10 +490,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public setConnectionState(connected: boolean, clientId?: string) {
         return;
-    }
-
-    public async resolveHandle(request: IRequest): Promise<IResponse> {
-        return this.request(request);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

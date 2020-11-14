@@ -35,7 +35,7 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainer
  * that will allow any GC policy to be implemented by container authors.)
  */
 export const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-    runtime.IFluidHandleContext.resolveHandle(request);
+    runtime.resolveHandle(request);
 
 export const createFluidObjectResponse = (fluidObject: IFluidObject) => {
     return { status: 200, mimeType: "fluid/object", value: fluidObject };
@@ -54,7 +54,7 @@ class LegacyUriHandle<T = IFluidObject & IFluidLoadable> implements IFluidHandle
     }
 
     public async get(): Promise<any> {
-        const response = await this.runtime.IFluidHandleContext.resolveHandle({ url: this.absolutePath });
+        const response = await innerRequestHandler({ url: this.absolutePath }, this.runtime);
         if (response.status === 200 && response.mimeType === "fluid/object") {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return response.value;

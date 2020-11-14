@@ -11,8 +11,6 @@ import {
     ILoader,
 } from "@fluidframework/container-definitions";
 import {
-    IRequest,
-    IResponse,
     IFluidObject,
     IFluidRouter,
     IFluidCodeDetails,
@@ -139,10 +137,4 @@ export interface IContainerRuntime extends
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-
-    /**
-     * Resolves handle URI
-     * @param request - request to resolve
-     */
-    resolveHandle(request: IRequest): Promise<IResponse>;
 }

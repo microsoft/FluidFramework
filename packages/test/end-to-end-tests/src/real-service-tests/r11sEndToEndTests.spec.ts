@@ -160,6 +160,8 @@ describe(`r11s End-To-End tests`, () => {
         const subComponent2 = response2.value as ITestFluidObject;
         assert(subComponent2.runtime.attachState !== AttachState.Detached,
             "Component should be attached!!");
+        assert.strictEqual(subComponent2.runtime.channelsRoutingContext.isAttached, true,
+            "channelsRoutingContext should be attached!!");
 
         // Verify the attributes of the root channel of both sub components.
         const testChannel1 = await subComponent1.runtime.getChannel("root");

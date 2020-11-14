@@ -7,7 +7,7 @@ import { ITelemetryLogger, IDisposable, IEvent, IEventProvider } from "@fluidfra
 import {
     IFluidObject,
     IFluidRouter,
-    IProvideFluidHandleContext,
+    IFluidRoutingContextEx,
     IFluidHandle,
     IRequest,
     IResponse,
@@ -62,11 +62,8 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  */
-export interface IContainerRuntimeBase extends
-    IEventProvider<IContainerRuntimeBaseEvents>,
-    IProvideFluidHandleContext
+export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents>
 {
-
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
 
@@ -85,6 +82,11 @@ export interface IContainerRuntimeBase extends
      * Executes a request against the container runtime
      */
     request(request: IRequest): Promise<IResponse>;
+
+    /**
+     * Internal resolution of requests, used to resolve handles
+     */
+    resolveHandle(request: IRequest): Promise<IResponse>;
 
     /**
      * Submits a container runtime level signal to be sent to other clients.
@@ -142,9 +144,7 @@ export interface IContainerRuntimeBase extends
  * Functionality include attach, snapshot, op/signal processing, request routes,
  * and connection state notifications
  */
-export interface IFluidDataStoreChannel extends
-    IFluidRouter,
-    IDisposable {
+export interface IFluidDataStoreChannel extends IDisposable {
 
     readonly id: string;
 
@@ -304,6 +304,11 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
      */
     readonly scope: IFluidObject;
     readonly summaryTracker: ISummaryTracker;
+
+    /**
+     * Context for handle resolution, represents a route to a data store
+     */
+    readonly channelRoutingContext: IFluidRoutingContextEx;
 
     /**
      * Returns the current quorum.

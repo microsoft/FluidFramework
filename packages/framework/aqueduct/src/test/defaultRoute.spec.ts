@@ -7,9 +7,7 @@
 import { strict as assert } from "assert";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import {
-    IRequest,
     IResponse,
     IFluidObject,
     IFluidRouter,
@@ -18,8 +16,6 @@ import { createFluidObjectResponse } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "../request-handlers";
 
 class MockRuntime {
-    public get IFluidHandleContext() { return this; }
-
     public async getRootDataStore(id, wait): Promise<IFluidRouter> {
         if (id === "objectId") {
             return {
@@ -29,25 +25,11 @@ class MockRuntime {
                     }
                     return { status: 404, mimeType: "text/plain", value: "not found" };
                 },
-            } as IFluidDataStoreChannel;
+            } as IFluidRouter;
         }
 
         assert(wait !== true);
         throw new Error("No data store");
-    }
-
-    protected async resolveHandle(request: IRequest) {
-        const requestParser = RequestParser.create(request);
-
-        if (requestParser.pathParts.length > 0) {
-            const wait =
-                typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
-
-            const dataStore = await this.getRootDataStore(requestParser.pathParts[0], wait);
-            const subRequest = requestParser.createSubRequest(1);
-            return dataStore.request(subRequest);
-        }
-        return { status: 404, mimeType: "text/plain", value: "not found" };
     }
 }
 

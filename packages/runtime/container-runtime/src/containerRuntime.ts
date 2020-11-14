@@ -9,11 +9,10 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IFluidRouter,
-    IFluidHandleContext,
-    IFluidSerializer,
     IRequest,
     IResponse,
     IFluidHandle,
+    IFluidRoutingContextEx,
     IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
@@ -97,7 +96,6 @@ import {
     ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import {
-    FluidSerializer,
     SummaryTracker,
     SummaryTreeBuilder,
     SummarizerNode,
@@ -105,6 +103,8 @@ import {
     convertToSummaryTree,
     RequestParser,
     requestFluidObject,
+    FluidRoutingContext,
+    FluidHandleContext,
     convertSnapshotTreeToSummaryTree,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -117,7 +117,6 @@ import {
     currentSnapshotFormatVersion,
     IFluidDataStoreAttributes,
 } from "./dataStoreContext";
-import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
 import { ISummarizerRuntime, Summarizer } from "./summarizer";
@@ -603,11 +602,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public nextSummarizerP?: Promise<Summarizer>;
     public nextSummarizerD?: Deferred<Summarizer>;
 
-    // Back compat: 0.28, can be removed in 0.29
-    public readonly IFluidSerializer: IFluidSerializer;
-
-    public readonly IFluidHandleContext: IFluidHandleContext;
-
     public get codeDetails(): IFluidCodeDetails {
         return this.context.codeDetails ?? this.getQuorum().get("code") as IFluidCodeDetails;
     }
@@ -662,6 +656,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
+    public readonly rootRoute: IFluidRoutingContextEx;
+    public readonly channelsRoute: IFluidRoutingContextEx;
+
     // Stores tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private dirtyDocument = false;
@@ -697,8 +694,31 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
 
-        this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
-        this.IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
+        // Handler that does infinite waiting. This code needs to be re-evaluated in the future:
+        // It should initiate a barrier and wait up till the point we pass that barrier.
+        // I.e. we should fail wait at the point in time we know that
+        // all ops known at the time of URI creation were processed
+        const handler = async (request: IRequest, route?: string) => {
+            if (route !== undefined && (request.headers === undefined || request.headers.wait === true)) {
+                // WARNING: this can be infinite wait!
+                const router = await this.getDataStore(route, true);
+                return router.request(RequestParser.create(request).createSubRequest(1));
+            }
+            return { status: 404, mimeType: "text/plain", value: "resource not found" };
+        };
+
+        this.rootRoute = new FluidRoutingContext("", undefined, undefined, handler);
+        this.channelsRoute = new FluidRoutingContext("_channels", this.rootRoute, undefined, handler);
+
+        // back-compat: 0.30 data stores, to be removed in 0.31
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const self = this;
+        (this as any).IFluidHandleContext = new FluidHandleContext(
+            {
+                get attachState() { return self.attachState; },
+                attachGraph: () => { throw new Error(); },
+            },
+            this.rootRoute);
 
         this.logger = ChildLogger.create(context.logger, undefined, {
             runtimeVersion: pkgVersion,
@@ -803,7 +823,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         this.blobManager = new BlobManager(
-            this.IFluidHandleContext,
+            this.rootRoute,
             () => this.storage,
             (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
         );
@@ -840,12 +860,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
         // This will ensure we correctly convert old documents.
         this.summarizer = new Summarizer(
-            "/_summarizer",
             this,
             () => this.summaryConfiguration,
             async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
             async (propHandle, ackHandle, refSeq) => this.refreshLatestSummaryAck(propHandle, ackHandle, refSeq),
-            this.IFluidHandleContext,
             this.previousState.summaryCollection);
 
         // Create the SummaryManager and mark the initial state
@@ -964,47 +982,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
     }
 
-    /**
-     * Resolves URI representing handle
-     * @param request - Request made to the handler.
-     */
     public async resolveHandle(request: IRequest): Promise<IResponse> {
-        const requestParser = RequestParser.create(request);
-        const id = requestParser.pathParts[0];
-
-        if (id === "_channel") {
-            return this.resolveHandle(requestParser.createSubRequest(1));
-        }
-
-        if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
-            const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
-            if (handle) {
-                return {
-                    status: 200,
-                    mimeType: "fluid/object",
-                    value: handle.get(),
-                };
-            } else {
-                return {
-                    status: 404,
-                    mimeType: "text/plain",
-                    value: "blob not found",
-                };
-            }
-        } else if (requestParser.pathParts.length > 0) {
-            const wait =
-                typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
-
-            const dataStore = await this.getDataStore(id, wait);
-            const subRequest = requestParser.createSubRequest(1);
-            return dataStore.IFluidRouter.request(subRequest);
-        }
-
-        return {
-            status: 404,
-            mimeType: "text/plain",
-            value: "resource not found",
-        };
+        return this.rootRoute.request(request);
     }
 
     /**
@@ -1244,7 +1223,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         const context = await deferredContext.promise;
-        return context.realize();
+        return context.IFluidRouter;
     }
 
     public notifyDataStoreInstantiated(context: IFluidDataStoreContext) {
@@ -1320,14 +1299,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
-        return this._createDataStore(pkg, false /* isRoot */);
+    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter>
+    {
+        return this._createDataStore(pkg, false);
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
-        const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
-        fluidDataStore.bindToContext();
-        return fluidDataStore;
+        return this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
     }
 
     public createDetachedRootDataStore(
@@ -1362,18 +1340,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return context;
     }
 
-    public async _createDataStoreWithProps(pkg: string | string[], props?: any, id = uuid()):
-        Promise<IFluidDataStoreChannel> {
-        return this._createFluidDataStoreContext(
-            Array.isArray(pkg) ? pkg : [pkg], id, false /* isRoot */, props).realize();
+    public async _createDataStoreWithProps(pkg: string | string[], props?: any, id = uuid()): Promise<IFluidRouter> {
+        return this._createDataStore(Array.isArray(pkg) ? pkg : [pkg], false /* isRoot */, id, props);
     }
 
     private async _createDataStore(
         pkg: string | string[],
         isRoot: boolean,
         id = uuid(),
-    ): Promise<IFluidDataStoreChannel> {
-        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot).realize();
+        props?: any,
+    ): Promise<IFluidRouter> {
+        const context = this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props);
+        const fluidDataStore = await context.realize();
+        if (isRoot) {
+            fluidDataStore.bindToContext();
+        }
+        return context.IFluidRouter;
     }
 
     private canSendOps() {

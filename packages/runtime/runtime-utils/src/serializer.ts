@@ -5,7 +5,7 @@
 
 import {
     IFluidHandle,
-    IFluidHandleContext,
+    IFluidRoutingContext,
     IFluidSerializer,
 } from "@fluidframework/core-interfaces";
 import { RemoteFluidObjectHandle } from "./remoteFluidObjectHandle";
@@ -15,9 +15,9 @@ import { isSerializedHandle } from "./utils";
  * Data Store serializer implementation
  */
 export class FluidSerializer implements IFluidSerializer {
-    private readonly root: IFluidHandleContext;
+    private readonly root: IFluidRoutingContext;
 
-    public constructor(private readonly context: IFluidHandleContext) {
+    public constructor(private readonly context: IFluidRoutingContext) {
         this.root = this.context;
         while (this.root.routeContext !== undefined) {
             this.root = this.root.routeContext;

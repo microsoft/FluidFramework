@@ -12,15 +12,7 @@ import {
     IPromiseTimerResult,
 } from "@fluidframework/common-utils";
 import { ChildLogger, CustomErrorWithProps, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import {
-    IFluidRouter,
-    IFluidRunnable,
-    IRequest,
-    IResponse,
-    IFluidHandleContext,
-    IFluidHandle,
-    IFluidLoadable,
-} from "@fluidframework/core-interfaces";
+import { IFluidRunnable } from "@fluidframework/core-interfaces";
 import { IDeltaManager, IErrorBase } from "@fluidframework/container-definitions";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
@@ -33,7 +25,6 @@ import {
 import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
 import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
-import { SummarizerHandle } from "./summarizerHandle";
 
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
@@ -81,7 +72,7 @@ export interface ISummarizerEvents extends IEvent {
     (event: "summarizingError", listener: (error: ISummarizingWarning) => void);
 }
 export interface ISummarizer
-    extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
+    extends IEventProvider<ISummarizerEvents>, IFluidRunnable {
     /**
      * Returns a promise that will be resolved with the next Summarizer after context reload
      */
@@ -562,10 +553,8 @@ export class RunningSummarizer implements IDisposable {
  * It is the main entry point for summary work.
  */
 export class Summarizer extends EventEmitter implements ISummarizer {
-    public get IFluidLoadable() { return this; }
-    public get IFluidRouter() { return this; }
-    public get IFluidRunnable() { return this; }
-    public get ISummarizer() { return this; }
+    public get IFluidRunnable(): IFluidRunnable { return this; }
+    public get ISummarizer(): ISummarizer { return this; }
 
     private readonly logger: ITelemetryLogger;
     private readonly runCoordinator: RunWhileConnectedCoordinator;
@@ -579,12 +568,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     private readonly stopDeferred = new Deferred<void>();
     private _disposed: boolean = false;
 
-    private readonly innerHandle: IFluidHandle<this>;
-
-    public get handle(): IFluidHandle<this> { return this.innerHandle; }
-
     constructor(
-        url: string,
         private readonly runtime: ISummarizerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
         // eslint-disable-next-line max-len
@@ -594,7 +578,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             ackHandle: string,
             referenceSequenceNumber: number
         ) => Promise<void>,
-        handleContext: IFluidHandleContext,
         summaryCollection?: SummaryCollection,
     ) {
         super();
@@ -611,7 +594,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             (op) => this.summaryCollection.handleOp(op));
 
         this.runtime.previousState.nextSummarizerD?.resolve(this);
-        this.innerHandle = new SummarizerHandle(this, url, handleContext);
     }
 
     public async run(onBehalfOf: string): Promise<void> {
@@ -659,14 +641,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     public updateOnBehalfOf(onBehalfOf: string): void {
         this.onBehalfOfClientId = onBehalfOf;
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        return {
-            mimeType: "fluid/object",
-            status: 200,
-            value: this,
-        };
     }
 
     private async runCore(onBehalfOf: string): Promise<void> {

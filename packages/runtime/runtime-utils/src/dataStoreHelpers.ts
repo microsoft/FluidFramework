@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import {
     IFluidObject,
-    IFluidRouter,
+    IFluidRequestHandler,
     IRequest,
 } from "@fluidframework/core-interfaces";
 import {
@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 export async function requestFluidObject<T = IFluidObject>(
-    router: IFluidRouter, url: string | IRequest): Promise<T> {
+    router: IFluidRequestHandler, url: string | IRequest): Promise<T> {
     const request = typeof url === "string" ? { url } : url;
     const response = await router.request(request);
 

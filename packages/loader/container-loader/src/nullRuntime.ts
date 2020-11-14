@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import {
-    IFluidHandleContext,
     IFluidSerializer,
     IRequest,
     IResponse,
@@ -26,10 +25,6 @@ import {
 
 export class NullRuntime extends EventEmitter implements IRuntime {
     public get IFluidSerializer(): IFluidSerializer {
-        throw new Error("Not implemented");
-    }
-
-    public get IFluidHandleContext(): IFluidHandleContext {
         throw new Error("Not implemented");
     }
 

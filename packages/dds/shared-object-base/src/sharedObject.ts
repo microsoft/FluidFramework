@@ -88,7 +88,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.handle = new SharedObjectHandle(
             this,
             id,
-            runtime.IFluidHandleContext);
+            runtime.channelsRoutingContext);
 
         // Runtime could be null since some package hasn't turn on strictNullChecks yet
         // We should remove the null check once that is done

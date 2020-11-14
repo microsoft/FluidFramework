@@ -7,8 +7,9 @@ import { IDisposable } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IRequest,
-    IResponse,
+    IFluidRouter,
     IFluidHandle,
+    IFluidRoutingContextEx,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -48,7 +49,12 @@ import {
     IProvideFluidDataStoreFactory,
     IFluidDataStoreContextEvents,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker, addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import {
+    SummaryTracker,
+    addBlobToSummary,
+    convertSummaryTreeToITree,
+    FluidRoutingContext,
+} from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in store attributes.
@@ -183,6 +189,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.registry;
     }
 
+    public get IFluidRouter() {
+        const obj = this.channelRoutingContext;
+        return {
+            get IFluidRouter() { return this; },
+            request: async (request: IRequest) => obj.request(request),
+        };
+    }
+
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
@@ -194,6 +208,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNode;
+    readonly channelRoutingContext: IFluidRoutingContextEx;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
@@ -229,6 +244,36 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const thisSummarizeInternal =
             async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */);
         this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
+
+        const routing_staging = true;
+        if (routing_staging) {
+            // back-compat: 0.30:
+            // Continue to produce handle paths without /store/, but be able to handle future paths
+            this.channelRoutingContext = new FluidRoutingContext(
+                this.id,
+                _containerRuntime.rootRoute,
+                async () => { await this.realize(); },
+                // Supporting 0.29 data stores that do not utilize yet proper route registration
+                async (request: IRequest) => {
+                    const router = (await this.realize()) as any as IFluidRouter;
+                    if (router.IFluidRouter !== undefined) {
+                        return router.IFluidRouter.request(request);
+                    }
+                    return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+                });
+            // Future routes
+            _containerRuntime.channelsRoute.addRoute(this.id, this.channelRoutingContext);
+        } else {
+            this.channelRoutingContext = new FluidRoutingContext(
+                this.id,
+                _containerRuntime.channelsRoute,
+                async () => { await this.realize(); });
+            // Supporting legacy URI format: required to handle old external URIs and handles in old files
+            // Note: this may explode if there is ID collision (i.e. id === "_channels" || id === "_blobs")
+            try {
+                _containerRuntime.rootRoute.addRoute(this.id, this.channelRoutingContext);
+            } catch (error) {}
+        }
     }
 
     public dispose(): void {
@@ -394,14 +439,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
         addBlobToSummary(summary, attributesBlobKey, JSON.stringify(attributes));
         return { ...summary, id: this.id };
-    }
-
-    /**
-     * @deprecated 0.18.Should call request on the runtime directly
-     */
-    public async request(request: IRequest): Promise<IResponse> {
-        const runtime = await this.realize();
-        return runtime.request(request);
     }
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {

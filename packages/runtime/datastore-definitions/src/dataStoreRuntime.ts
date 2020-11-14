@@ -6,8 +6,8 @@
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandleContext,
+    IFluidRoutingParent,
     IFluidSerializer,
-    IFluidRouter,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
@@ -39,7 +39,6 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
  */
 export interface IFluidDataStoreRuntime extends
-    IFluidRouter,
     IEventProvider<IFluidDataStoreRuntimeEvents>,
     IDisposable,
     Partial<IProvideFluidDataStoreRegistry> {
@@ -48,11 +47,8 @@ export interface IFluidDataStoreRuntime extends
 
     readonly IFluidSerializer: IFluidSerializer;
 
-    readonly IFluidHandleContext: IFluidHandleContext;
-
-    readonly rootRoutingContext: IFluidHandleContext;
-    readonly channelsRoutingContext: IFluidHandleContext;
-    readonly objectsRoutingContext: IFluidHandleContext;
+    readonly channelsRoutingContext: IFluidHandleContext & IFluidRoutingParent;
+    readonly objectsRoutingContext: IFluidHandleContext & IFluidRoutingParent;
 
     readonly options: any;
 

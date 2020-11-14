@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 
-import { IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IQuorum } from "@fluidframework/protocol-definitions";
 import { DependencyContainer } from "@fluidframework/synthesize";
 import { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
@@ -66,7 +65,6 @@ export const userInfoFactory = async (dc: DependencyContainer) => {
     const s = dc.synthesize<IContainerRuntime>({
         IContainerRuntime,
         IContainerRuntimeDirtyable,
-        IFluidHandleContext,
         IFluidDataStoreRegistry,
     }, {});
     const containerRuntime = await s.IContainerRuntime;

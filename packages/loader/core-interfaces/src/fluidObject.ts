@@ -9,7 +9,7 @@ import {
     IProvideFluidRunnable,
 } from "./fluidLoadable";
 import { IProvideFluidRouter } from "./fluidRouter";
-import { IProvideFluidHandle, IProvideFluidHandleContext } from "./handles";
+import { IProvideFluidHandle } from "./handles";
 import { IProvideFluidSerializer } from "./serializer";
 
 /* eslint-disable @typescript-eslint/no-empty-interface */
@@ -18,7 +18,6 @@ export interface IFluidObject extends
         IProvideFluidLoadable
         & IProvideFluidRunnable
         & IProvideFluidRouter
-        & IProvideFluidHandleContext
         & IProvideFluidConfiguration
         & IProvideFluidHandle
         & IProvideFluidSerializer>> {

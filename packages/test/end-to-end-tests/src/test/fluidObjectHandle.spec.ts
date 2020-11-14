@@ -36,41 +36,6 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         await args.opProcessingController.process();
     });
 
-    it("should generate the absolute path for ContainerRuntime correctly", () => {
-        // The expected absolute path for the ContainerRuntime is empty string.
-        const absolutePath = "";
-
-        // Verify that the local client's ContainerRuntime has the correct absolute path.
-        const containerRuntime1 = firstContainerObject1._context.containerRuntime.IFluidHandleContext;
-        assert.equal(containerRuntime1.absolutePath, absolutePath, "The ContainerRuntime's path is incorrect");
-
-        // Verify that the remote client's ContainerRuntime has the correct absolute path.
-        const containerRuntime2 = secondContainerObject1._context.containerRuntime.IFluidHandleContext;
-        assert.equal(containerRuntime2.absolutePath, absolutePath, "The remote ContainerRuntime's path is incorrect");
-    });
-
-    it("should generate the absolute path for FluidDataObjectRuntime correctly", function() {
-        // The expected absolute path for the FluidDataObjectRuntime.
-        const absolutePath = `/${firstContainerObject1._runtime.id}`;
-
-        // Verify that the local client's FluidDataObjectRuntime has the correct absolute path.
-        const fluidHandleContext11 = firstContainerObject1._runtime.rootRoutingContext;
-        // back-compat for N-2 <= 0.27, remove when N-2 >= 0.28
-        if (fluidHandleContext11) {
-            assert.equal(fluidHandleContext11.absolutePath, absolutePath,
-                "The FluidDataObjectRuntime's path is incorrect");
-
-            // Verify that the remote client's FluidDataObjectRuntime has the correct absolute path.
-            const fluidHandleContext12 = secondContainerObject1._runtime.rootRoutingContext;
-            assert.equal(
-                fluidHandleContext12.absolutePath,
-                absolutePath,
-                "The remote FluidDataObjectRuntime's path is incorrect");
-        } else {
-            this.skip();
-        }
-    });
-
     it("can store and retrieve a DDS from handle within same data store runtime", async () => {
         // Create a new SharedMap in `firstContainerObject1` and set a value.
         const sharedMap = SharedMap.create(firstContainerObject1._runtime);

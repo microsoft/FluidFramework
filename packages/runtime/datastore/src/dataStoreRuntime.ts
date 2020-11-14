@@ -7,6 +7,8 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidHandleContext,
+    IFluidRoutingParent,
+    IFluidSerializer,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -50,8 +52,9 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
     convertSnapshotTreeToSummaryTree,
-    generateHandleContextPath,
-    RequestParser,
+    FluidHandleContext,
+    FluidRoutingContext,
+    TerminatingRoute,
     SummaryTreeBuilder,
     FluidSerializer,
     convertSummaryTreeToITree,
@@ -85,7 +88,7 @@ export interface ISharedObjectRegistry {
  */
 export class FluidDataStoreRuntime extends
 TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
-IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
+IFluidDataStoreChannel, IFluidDataStoreRuntime {
     /**
      * Loads the data store runtime
      * @param context - The data store context
@@ -99,8 +102,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     ): FluidDataStoreRuntime {
         return new FluidDataStoreRuntime(context, sharedObjectRegistry);
     }
-
-    public get IFluidRouter() { return this; }
 
     public get connected(): boolean {
         return this.dataStoreContext.connected;
@@ -122,7 +123,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.dataStoreContext.loader;
     }
 
-    public get isAttached(): boolean {
+    protected get isAttached(): boolean {
         return this.attachState !== AttachState.Detached;
     }
 
@@ -130,37 +131,16 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this._attachState;
     }
 
-    /**
-     * @deprecated - 0.21 back-compat
-     */
-    public get path(): string {
-        return this.id;
-    }
+    public readonly channelsRoutingContext: IFluidHandleContext & IFluidRoutingParent;
+    public readonly objectsRoutingContext: IFluidHandleContext & IFluidRoutingParent;
 
-    public get absolutePath(): string {
-        return generateHandleContextPath(this.id, this.routeContext);
-    }
-
-    public get routeContext(): IFluidHandleContext {
-        return this.dataStoreContext.containerRuntime.IFluidHandleContext;
-    }
-
-    private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
-    public get IFluidSerializer() { return this.serializer; }
-
-    public get IFluidHandleContext() { return this; }
-
-    public get rootRoutingContext() { return this; }
-    public get channelsRoutingContext() { return this; }
-    public get objectsRoutingContext() { return this; }
+    public readonly IFluidSerializer: IFluidSerializer;
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
     private readonly contexts = new Map<string, IChannelContext>();
-    private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
-    private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
     private bindState: BindState;
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
     private graphAttachState: AttachState = AttachState.Detached;
@@ -195,6 +175,18 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.deltaManager = dataStoreContext.deltaManager;
         this.quorum = dataStoreContext.getQuorum();
         this.audience = dataStoreContext.getAudience();
+
+        const channelRoutingContext = this.dataStoreContext.channelRoutingContext;
+
+        this.objectsRoutingContext = new FluidHandleContext(
+            this,
+            new FluidRoutingContext("_custom", channelRoutingContext, undefined, this.request.bind(this)));
+
+        this.channelsRoutingContext = new FluidHandleContext(
+            this,
+            new FluidRoutingContext("_channels", channelRoutingContext));
+
+        this.IFluidSerializer = new FluidSerializer(channelRoutingContext);
 
         const tree = dataStoreContext.baseSnapshot;
 
@@ -248,11 +240,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                             { type: CreateSummarizerNodeSource.FromSummary },
                         ));
                 }
-                const deferred = new Deferred<IChannelContext>();
-                deferred.resolve(channelContext);
-
-                this.contexts.set(path, channelContext);
-                this.contextsDeferred.set(path, deferred);
+                this.addChannel(path, channelContext);
             });
         }
 
@@ -267,6 +255,21 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
     }
 
+    protected addChannel(id: string, context: IChannelContext) {
+        this.contexts.set(id, context);
+
+        const route = new TerminatingRoute(
+            id,
+            this.channelsRoutingContext,
+            async () => context.getChannel());
+
+        // Supporting legacy URI format: required to handle old external URIs and handles in old files
+        // Note: this may explode if there is ID collision (i.e. id === "_channels" || id === "_custom")
+        try {
+            this.dataStoreContext.channelRoutingContext.addRoute(id, route);
+        } catch (error) {}
+    }
+
     public dispose(): void {
         if (this._disposed) {
             return;
@@ -276,68 +279,18 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.emit("dispose");
     }
 
-    public async resolveHandle(request: IRequest): Promise<IResponse> {
-        return this.request(request);
-    }
-
     public async request(request: IRequest): Promise<IResponse> {
-        const parser = RequestParser.create(request);
-        const id = parser.pathParts[0];
-
-        if (id === "_channels" || id === "_objects") {
-            return this.request(parser.createSubRequest(1));
-        }
-
-        // Check for a data type reference first
-        if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
-            try {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const value = await this.contextsDeferred.get(id)!.promise;
-                const channel = await value.getChannel();
-
-                return { mimeType: "fluid/object", status: 200, value: channel };
-            } catch (error) {
-                this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
-
-                return {
-                    status: 404,
-                    mimeType: "text/plain",
-                    value: `Failed to get Channel with id:[${id}] error:{${error}}`,
-                };
-            }
-        }
-
-        // Otherwise defer to an attached request handler
-        if (this.requestHandler === undefined) {
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-        } else {
-            return this.requestHandler(parser);
-        }
-    }
-
-    /**
-     * @deprecated
-     * Please use mixinRequestHandler() to override default behavior or request()
-     * // back-compat: remove in 0.30+
-     */
-    public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
-        this.requestHandler = handler;
+        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }
 
     public async getChannel(id: string): Promise<IChannel> {
         this.verifyNotClosed();
 
-        // TODO we don't assume any channels (even root) in the runtime. If you request a channel that doesn't exist
-        // we will never resolve the promise. May want a flag to getChannel that doesn't wait for the promise if
-        // it doesn't exist
-        if (!this.contextsDeferred.has(id)) {
-            this.contextsDeferred.set(id, new Deferred<IChannelContext>());
+        const context = this.contexts.get(id);
+        if (context === undefined) {
+            throw new Error(`Channel ${id} does not exist`);
         }
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const context = await this.contextsDeferred.get(id)!.promise;
         const channel = await context.getChannel();
-
         return channel;
     }
 
@@ -356,16 +309,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
             (address: string) => this.setChannelDirty(address),
             undefined);
-        this.contexts.set(id, context);
-
-        if (this.contextsDeferred.has(id)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.contextsDeferred.get(id)!.resolve(context);
-        } else {
-            const deferred = new Deferred<IChannelContext>();
-            deferred.resolve(context);
-            this.contextsDeferred.set(id, deferred);
-        }
+        this.addChannel(id, context);
 
         assert(!!context.channel, "Channel should be loaded when created!!");
         return context.channel;
@@ -523,15 +467,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         ),
                         attachMessage.type);
 
-                    this.contexts.set(id, remoteChannelContext);
-                    if (this.contextsDeferred.has(id)) {
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        this.contextsDeferred.get(id)!.resolve(remoteChannelContext);
-                    } else {
-                        const deferred = new Deferred<IChannelContext>();
-                        deferred.resolve(remoteChannelContext);
-                        this.contextsDeferred.set(id, deferred);
-                    }
+                    this.addChannel(id, remoteChannelContext);
                 }
                 break;
             }

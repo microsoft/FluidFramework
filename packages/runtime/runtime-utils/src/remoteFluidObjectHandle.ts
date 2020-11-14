@@ -6,9 +6,7 @@
 import {
     IFluidObject,
     IFluidHandle,
-    IFluidHandleContext,
-    IRequest,
-    IResponse,
+    IFluidRoutingContext,
 } from "@fluidframework/core-interfaces";
 
 /**
@@ -19,41 +17,32 @@ import {
  * retrieved by calling `get` on it.
  */
 export class RemoteFluidObjectHandle implements IFluidHandle {
-    public get IFluidRouter() { return this; }
-    public get IFluidHandleContext() { return this; }
     public get IFluidHandle() { return this; }
 
     public readonly isAttached = true;
-    private dataStoreP: Promise<IFluidObject> | undefined;
+    private objectP: Promise<IFluidObject> | undefined;
 
     /**
      * Creates a new RemoteFluidObjectHandle when parsing an IFluidHandle.
      * @param absolutePath - The absolute path to the handle from the container runtime.
-     * @param routeContext - The root IFluidHandleContext that has a route to this handle.
+     * @param routeContext - The root IFluidRoutingContext that has a route to this handle.
      */
     constructor(
         public readonly absolutePath: string,
-        public readonly routeContext: IFluidHandleContext,
+        public readonly routeContext: IFluidRoutingContext,
     ) {
     }
 
-    /**
-     * @deprecated - This returns the absolute path.
-     */
-    public get path() {
-        return this.absolutePath;
-    }
-
     public async get(): Promise<any> {
-        if (this.dataStoreP === undefined) {
-            this.dataStoreP = this.routeContext.resolveHandle({ url: this.absolutePath })
+        if (this.objectP === undefined) {
+            this.objectP = this.routeContext.request({ url: this.absolutePath })
                 .then<IFluidObject>((response) =>
                     response.mimeType === "fluid/object"
                         ? response.value as IFluidObject
-                        : Promise.reject(new Error("Not found")));
+                        : Promise.reject(new Error(`Path not found: ${this.absolutePath}`)));
         }
 
-        return this.dataStoreP;
+        return this.objectP;
     }
 
     public attachGraph(): void {
@@ -62,14 +51,5 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
 
     public bind(handle: IFluidHandle): void {
         handle.attachGraph();
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        const dataStore = await this.get() as IFluidObject;
-        const router = dataStore.IFluidRouter;
-
-        return router !== undefined
-            ? router.request(request)
-            : { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }
 }

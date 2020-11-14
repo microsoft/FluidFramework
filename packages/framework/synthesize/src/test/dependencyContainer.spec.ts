@@ -17,12 +17,11 @@ import { DependencyContainer } from "..";
 const mockHandleContext: IFluidHandleContext = {
     absolutePath: "",
     isAttached: false,
-    IFluidHandleContext: undefined as any,
 
     attachGraph: () => {
         throw new Error("Method not implemented.");
     },
-    resolveHandle: () => {
+    request: () => {
         throw new Error("Method not implemented.");
     },
 };

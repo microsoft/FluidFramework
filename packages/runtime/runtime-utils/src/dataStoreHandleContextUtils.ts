@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { IFluidRoutingContext } from "@fluidframework/core-interfaces";
 
 /**
- * Generates the absolute path for an IFluidHandleContext given its path and its parent routeContext.
+ * Generates the absolute path for an IFluidRoutingContext given its path and its parent routeContext.
  */
-export function generateHandleContextPath(path: string, routeContext?: IFluidHandleContext): string {
+export function generateHandleContextPath(path: string, routeContext?: IFluidRoutingContext): string {
     let result: string;
 
     if (path === "") {
