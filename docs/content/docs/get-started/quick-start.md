@@ -22,6 +22,24 @@ We also recommend that you install the following:
 
 - [Git](https://git-scm.com/downloads)
 
+### Installing Fluid Packages
+
+For this example we already have the necessary fluid packages in our package.json. Therefore, when you run `npm install`, they will be installed for you.
+However, if you wanted to start a new project on your own, available packages are labeled in the [Fluid API Section](https://fluidframework.com/apis/) of the documentation. 
+To install your packages you can follow this format `npm i package-name` if you use `npm` or `yarn add package-name` if you use `yarn`.
+
+Here are the packages we use for this tutorial, and how you can install them based on the package manager you use.
+- **@fluidframework/aqueduct** 
+   - `npm i @fluidframework/aqueduct` or `yarn add @fluidframework/aqueduct`
+- **@fluidframework/get-tinylicious-container** 
+   - `npm i @fluidframework/get-tinylicious-container` or `yarn add @fluidframework/get-tinylicious-container`
+- **@fluidframework/map** 
+   - `npm i @fluidframework/map` or `yarn add @fluidframework/map`
+- **tinylicious**
+   - `npm i tinylicious --save-dev` or `yarn add tinylicious --dev`
+
+Tinylicious is only a development dependency, since it is the [service](http://localhost:1313/docs/concepts/service/) used when developing your Fluid app.
+
 ## Getting Started
 
 Open a new command window and navigate to the folder you where you want to install the project, and then clone the [FluidHelloWorld repo](https://github.com/microsoft/FluidHelloWorld) with the
