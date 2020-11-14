@@ -18,6 +18,12 @@ export interface GraphItemLite {
     name: string;
 }
 
+let msGraphOrigin = "https://graph.microsoft.com";
+
+export function setMsGraphOrigin(graphOrigin: string) {
+    msGraphOrigin = graphOrigin;
+}
+
 /**
  * Returns share link with requested scope and type for a file with given drive and item ids.
  * Scope needed: files.readwrite.all
@@ -97,7 +103,7 @@ export async function graphFetch(
             SharingLinkScopeFor.nonFileDefaultUrl,
             siteUrl,
         );
-    const url = graphUrl.startsWith("http") ? graphUrl : `https://graph.microsoft.com/v1.0/${graphUrl}`;
+    const url = graphUrl.startsWith("http") ? graphUrl : `${msGraphOrigin}/v1.0/${graphUrl}`;
     return (
         await authorizedFetchWithRetry({
             getToken,
