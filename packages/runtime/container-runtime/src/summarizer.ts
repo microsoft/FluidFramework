@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
- //* Import from common-utils per Christian's PR
-import assert from "assert";
 import { EventEmitter } from "events";
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
