@@ -300,5 +300,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("Map", () => {
-    generateTest(tests);
+    generateTest(tests, { tinylicious: process.argv.includes("--tinylicious") });
 });

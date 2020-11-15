@@ -18,7 +18,7 @@ import {
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
 import {
-    generateLocalTest,
+    generateTest,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
@@ -194,7 +194,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
     };
 
     describe(name, () => {
-        generateLocalTest(tests);
+        generateTest(tests);
     });
 }
 

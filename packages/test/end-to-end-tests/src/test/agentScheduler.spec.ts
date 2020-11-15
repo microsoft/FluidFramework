@@ -9,7 +9,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { taskSchedulerId } from "@fluidframework/container-runtime";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { generateLocalTest, ITestObjectProvider, TestDataObject } from "./compatUtils";
+import { generateTest, ITestObjectProvider, TestDataObject } from "./compatUtils";
 import * as old from "./oldVersion";
 
 const tests = (args: ITestObjectProvider) => {
@@ -228,5 +228,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("AgentScheduler", () => {
-    generateLocalTest(tests);
+    generateTest(tests);
 });

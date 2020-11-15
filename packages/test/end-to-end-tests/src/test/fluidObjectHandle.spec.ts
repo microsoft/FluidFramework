@@ -164,5 +164,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("FluidObjectHandle", () => {
-    generateTest(tests);
+    generateTest(tests, { tinylicious: process.argv.includes("--tinylicious") });
 });

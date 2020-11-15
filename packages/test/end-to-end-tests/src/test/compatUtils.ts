@@ -66,6 +66,7 @@ export interface ILocalTestObjectProvider extends ITestObjectProvider {
 
 export interface ITestOptions {
     serviceConfiguration?: Partial<IServiceConfiguration>,
+    tinylicious?: boolean,
 }
 
 export enum DataObjectFactoryType {
@@ -301,7 +302,7 @@ export const generateLocalTest = (
     });
 };
 
-export const generateTinyliciousTest = (
+const generateTinyliciousTest = (
     tests: (compatArgs: ITestObjectProvider) => void,
     options: ITestOptions = {},
 ) => {
@@ -351,5 +352,7 @@ export const generateTest = (
     options: ITestOptions = {},
 ) => {
     generateLocalTest(tests, options);
-    generateTinyliciousTest(tests);
+    if (options.tinylicious) {
+        generateTinyliciousTest(tests);
+    }
 };

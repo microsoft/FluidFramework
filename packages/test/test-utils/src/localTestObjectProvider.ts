@@ -7,7 +7,7 @@ import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { TestObjectProviderCommon } from "./baseTestObjectProvider";
+import { BaseTestObjectProvider } from "./baseTestObjectProvider";
 import { fluidEntryPoint } from "./localCodeLoader";
 import { OpProcessingController } from "./opProcessingController";
 
@@ -27,7 +27,7 @@ const defaultDocumentId = "defaultDocumentId";
  *   ILocalDeltaConnectionServer
  */
 export class LocalTestObjectProvider<TestContainerConfigType>
-    extends TestObjectProviderCommon<TestContainerConfigType> {
+    extends BaseTestObjectProvider<TestContainerConfigType> {
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _defaultUrlResolver: LocalResolver | undefined;
     private _opProcessingController: OpProcessingController | undefined;

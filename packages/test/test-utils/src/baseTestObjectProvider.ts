@@ -15,13 +15,14 @@ const defaultCodeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-export abstract class TestObjectProviderCommon<TestContainerConfigType> {
+/**
+ * Shared base class for test object provider.  Contain code for loader and container creation and loading
+ */
+export abstract class BaseTestObjectProvider<TestContainerConfigType> {
     /**
-     * Create a set of object to
+     * Manage objects for loading and creating container, including the driver, loader, and OpProcessingController
      * @param createFluidEntryPoint - callback to create a fluidEntryPoint, with an optiona; set of channel name
      * and factory for TestFluidObject
-     * @param serviceConfiguration - optional serviceConfiguration to create the LocalDeltaConnectionServer with
-     * @param _deltaConnectionServer - optional deltaConnectionServer to share documents between different provider
      */
     constructor(
         private readonly createFluidEntryPoint: (testContainerConfig?: TestContainerConfigType) => fluidEntryPoint,

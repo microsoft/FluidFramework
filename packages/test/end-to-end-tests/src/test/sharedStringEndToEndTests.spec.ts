@@ -12,7 +12,7 @@ import {
     ITestFluidObject,
 } from "@fluidframework/test-utils";
 import {
-    generateLocalTest,
+    generateTest,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
@@ -67,5 +67,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("SharedString", () => {
-    generateLocalTest(tests);
+    generateTest(tests);
 });
