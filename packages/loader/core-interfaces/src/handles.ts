@@ -7,6 +7,8 @@ import { IFluidRequestHandler } from "./fluidRouter";
 import { IFluidObject } from "./fluidObject";
 import { IFluidLoadable } from "./fluidLoadable";
 
+export const defaultRoutePath = "";
+
 /**
  * Base interface for IFluidHandleContext.
  * It is used to represent a route in routing, base for an object that implements IFluidHandleContext

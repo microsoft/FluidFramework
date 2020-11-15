@@ -11,6 +11,7 @@ import {
     IFluidSerializer,
     IRequest,
     IResponse,
+    defaultRoutePath,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -58,6 +59,7 @@ import {
     SummaryTreeBuilder,
     FluidSerializer,
     convertSummaryTreeToITree,
+    requestFluidObject,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -177,6 +179,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
         this.audience = dataStoreContext.getAudience();
 
         const channelRoutingContext = this.dataStoreContext.channelRoutingContext;
+
+        // Supporting legacy URIs: empty request is same as /_custom/ path.
+        new TerminatingRoute(
+            defaultRoutePath,
+            channelRoutingContext,
+            async () => requestFluidObject(this, "/"),
+        );
 
         this.objectsRoutingContext = new FluidHandleContext(
             this,
