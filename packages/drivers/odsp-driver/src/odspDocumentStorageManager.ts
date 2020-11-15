@@ -99,6 +99,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly blobCache: Map<string, IBlob> = new Map();
     private readonly treesCache: Map<string, ITree> = new Map();
 
+    // Save the timeout so we can cancel and reschedule it as needed
+    private blobCacheTimeout: ReturnType<typeof setTimeout> | undefined;
+
     private readonly attributesBlobHandles: Set<string> = new Set();
 
     private lastSummaryHandle: string | undefined;
@@ -219,7 +222,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     public async read(blobid: string): Promise<string> {
         let blob = this.blobCache.get(blobid);
-        if (!blob) {
+        // Reset the timer on attempted cache read
+        this.scheduleClearBlobsCache();
+        if (blob === undefined) {
             this.checkSnapshotUrl();
 
             const response = await getWithRetryForTokenRefresh(async (options) => {
@@ -240,7 +245,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             blob = response.content;
         }
 
-        if (blob && this.attributesBlobHandles.has(blobid)) {
+        if (this.attributesBlobHandles.has(blobid)) {
             // ODSP document ids are random guids (different per session)
             // fix the branch name in attributes
             // this prevents issues when generating summaries
@@ -768,6 +773,18 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private initBlobsCache(blobs: IBlob[]) {
         blobs.forEach((blob) => this.blobCache.set(blob.id, blob));
+        this.scheduleClearBlobsCache();
+    }
+
+    /**
+     * Stop the current timer for clearing the blob cache (if any) and schedule a new one
+     */
+    private scheduleClearBlobsCache() {
+        const blobCacheTimeoutDuration = 10000;
+        if (this.blobCacheTimeout !== undefined) {
+            clearTimeout(this.blobCacheTimeout);
+        }
+        this.blobCacheTimeout = setTimeout(() => { this.blobCache.clear(); }, blobCacheTimeoutDuration);
     }
 
     private checkSnapshotUrl() {

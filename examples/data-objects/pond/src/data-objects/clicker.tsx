@@ -120,12 +120,12 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
                 <h3>Clicker</h3>
                 <h5>Clicker on the root directory increments 1</h5>
                 <div>
-                    <span className="clicker-value-class-5+1">{this.state.value1}</span>
+                    <span className="clicker-value-class-5">{this.state.value1}</span>
                     <button onClick={() => { this.props.counter1.increment(1); }}>+1</button>
                 </div>
                 <h5>Clicker on a map on the root directory increments 10</h5>
                 <div>
-                    <span className="clicker-value-class-0+10">{this.state.value2}</span>
+                    <span className="clicker-value-class-10">{this.state.value2}</span>
                     <button onClick={() => { this.props.counter2.increment(10); }}>+10</button>
                 </div>
             </div>
