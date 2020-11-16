@@ -728,7 +728,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
 
     public async getView(onDeserialize?: DeserializeCallback): Promise<IntervalCollectionView<TInterval>> {
         if (!this.view) {
-            return Promise.reject("attachSequence must be called prior to retrieving the view");
+            return Promise.reject(new Error("attachSequence must be called prior to retrieving the view"));
         }
 
         // Attach custom deserializers if specified

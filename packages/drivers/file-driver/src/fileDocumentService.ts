@@ -43,10 +43,6 @@ export class FileDocumentService implements api.IDocumentService {
         return this.deltaConnection;
     }
 
-    public async branch(): Promise<string> {
-        return Promise.reject("Not implemented");
-    }
-
     public getErrorTrackingService() {
         return null;
     }

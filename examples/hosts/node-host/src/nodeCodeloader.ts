@@ -21,7 +21,8 @@ const signalFileName = "dummy";
 export class NodeCodeLoader {
     constructor(
         private readonly packageDirectory: string,
-        private readonly waitTimeoutMSec: number) {
+        private readonly waitTimeoutMSec: number,
+        private readonly useLocalDirectory: boolean = true) {
     }
 
     public async load<T>(pkg: any): Promise<T> {
@@ -42,7 +43,7 @@ export class NodeCodeLoader {
         const fluidObjects = pkg.match(/(.*)\/(.*)@(.*)/);
         // eslint-disable-next-line no-null/no-null
         if (fluidObjects === null) {
-            return Promise.reject("Invalid package");
+            return Promise.reject(new Error("Invalid package"));
         }
         const [, scope, name] = fluidObjects;
 
@@ -55,7 +56,11 @@ export class NodeCodeLoader {
             fs.mkdirSync(packageDirectory, { recursive: true });
 
             // Copy over the root .npmrc (if present) to the directory where npm install will be executed.
-            if (fs.existsSync(`${this.packageDirectory}/.npmrc`)) {
+            if (this.useLocalDirectory) {
+                if (fs.existsSync(`${__dirname}/../.npmrc`)) {
+                    fs.copyFileSync(`${__dirname}/../.npmrc`, `${packageDirectory}/.npmrc`);
+                }
+            } else if (fs.existsSync(`${this.packageDirectory}/.npmrc`)) {
                 fs.copyFileSync(`${this.packageDirectory}/.npmrc`, `${packageDirectory}/.npmrc`);
             }
 
@@ -86,7 +91,7 @@ export class NodeCodeLoader {
             const waitTimer = setTimeout(() => {
                 watcher.close();
                 clearTimeout(waitTimer);
-                reject(`${fileName} in ${targetDirectory} was not generated within ${waitTimeout} msecs`);
+                reject(new Error(`${fileName} in ${targetDirectory} was not generated within ${waitTimeout} msecs`));
             }, waitTimeout);
 
             if (fs.existsSync(`${targetDirectory}/${fileName}`)) {

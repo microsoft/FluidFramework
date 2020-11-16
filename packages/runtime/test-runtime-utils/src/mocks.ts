@@ -377,7 +377,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly existing: boolean;
     public options: any = {};
     public clientId: string | undefined = uuid();
-    public readonly parentBranch: string;
     public readonly path = "";
     public readonly connected = true;
     public readonly leader: boolean;
@@ -452,10 +451,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
-    public async snapshot(message: string): Promise<void> {
-        return null;
-    }
-
     public save(message: string) {
         return;
     }
@@ -504,11 +499,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
-    public async snapshotInternal(): Promise<ITreeEntry[]> {
-        return [];
-    }
-
-    public async summarize(fullTree?: boolean): Promise<ISummaryTreeWithStats> {
+    public async summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats> {
         const stats = mergeStats();
         stats.treeNodeCount++;
         return {
@@ -522,6 +513,18 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public getAttachSnapshot(): ITreeEntry[] {
         return [];
+    }
+
+    public getAttachSummary(): ISummaryTreeWithStats {
+        const stats = mergeStats();
+        stats.treeNodeCount++;
+        return {
+            summary: {
+                type: SummaryType.Tree,
+                tree: {},
+            },
+            stats,
+        };
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {

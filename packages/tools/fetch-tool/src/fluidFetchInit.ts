@@ -127,7 +127,7 @@ async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
 export async function fluidFetchInit(urlStr: string) {
     const resolvedUrl = await resolveUrl(urlStr) as IFluidResolvedUrl;
     if (!resolvedUrl) {
-        return Promise.reject(`Unknown URL ${urlStr}`);
+        return Promise.reject(new Error(`Unknown URL ${urlStr}`));
     }
     const protocol = new URL(resolvedUrl.url).protocol;
     if (protocol === "fluid-odsp:") {
@@ -138,5 +138,5 @@ export async function fluidFetchInit(urlStr: string) {
         const server = url.hostname.toLowerCase();
         return initializeR11s(server, url.pathname, resolvedUrl);
     }
-    return Promise.reject(`Unknown resolved protocol ${protocol}`);
+    return Promise.reject(new Error(`Unknown resolved protocol ${protocol}`));
 }

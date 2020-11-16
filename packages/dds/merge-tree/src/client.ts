@@ -936,11 +936,10 @@ export class Client {
     public async load(
         runtime: IFluidDataStoreRuntime,
         storage: IChannelStorageService,
-        branchId?: string,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         const loader = new SnapshotLoader(runtime, this, this.mergeTree, this.logger);
 
-        return loader.initialize(branchId, storage);
+        return loader.initialize(storage);
     }
 
     getStackContext(startPos: number, rangeLabels: string[]) {

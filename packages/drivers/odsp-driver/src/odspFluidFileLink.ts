@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fromBase64ToUtf8, fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { OdspFluidDataStoreLocator } from "./contracts";
 import { OdcFileSiteOrigin, OdcApiSiteOrigin } from "./constants";
 
@@ -38,7 +39,7 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
             encodeURIComponent(locator.containerPackageName)}`;
     }
 
-    return btoa(locatorSerialized);
+    return fromUtf8ToBase64(locatorSerialized);
 }
 
 /**
@@ -52,7 +53,7 @@ function decodeOdspFluidDataStoreLocator(
     encodedLocatorValue: string,
     siteOriginUrl: string,
 ): OdspFluidDataStoreLocator | undefined {
-    const locatorInfo = new URLSearchParams(atob(encodedLocatorValue));
+    const locatorInfo = new URLSearchParams(fromBase64ToUtf8(encodedLocatorValue));
 
     const signatureValue = locatorInfo.get(fluidSignatureParamName);
     if (signatureValue !== "1") {

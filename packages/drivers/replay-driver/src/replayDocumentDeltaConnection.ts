@@ -64,11 +64,11 @@ export class ReplayControllerStatic extends ReplayController {
     }
 
     public async getSnapshotTree(version?: IVersion) {
-        return version ? Promise.reject("Invalid operation") : null;
+        return version ? Promise.reject(new Error("Invalid operation")) : null;
     }
 
     public async read(blobId: string): Promise<string> {
-        return Promise.reject("Invalid operation");
+        return Promise.reject(new Error("Invalid operation"));
     }
 
     public async getStartingOpSequence(): Promise<number> {
@@ -204,6 +204,7 @@ export class ReplayDocumentDeltaConnection
             initialClients: [],
             maxMessageSize: ReplayDocumentDeltaConnection.ReplayMaxMessageSize,
             mode: "write",
+            // Back-compat, removal tracked with issue #4346
             parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
@@ -237,7 +238,7 @@ export class ReplayDocumentDeltaConnection
             id: "",
         },
         iat: Math.round(new Date().getTime() / 1000),
-        exp: Math.round(new Date().getTime() / 1000) + 5 * 60, // 5 minute expiration
+        exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
         ver: "1.0",
     };
 
@@ -255,10 +256,6 @@ export class ReplayDocumentDeltaConnection
 
     public get existing(): boolean {
         return this.details.existing;
-    }
-
-    public get parentBranch(): string | null {
-        return this.details.parentBranch;
     }
 
     public get version(): string {

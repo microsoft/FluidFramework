@@ -4,7 +4,7 @@
  */
 
 import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidObjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreContext,
@@ -123,9 +123,6 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
  *      sharedDir = testFluidObject.getSharedObject<SharedDirectory>("sharedDirectory");
  */
 export class TestFluidObjectFactory implements IFluidDataStoreFactory {
-    public static readonly type = "TestFluidObjectFactory";
-    public readonly type = TestFluidObjectFactory.type;
-
     public get IFluidDataStoreFactory() { return this; }
 
     /**
@@ -134,7 +131,8 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
      * IChannelFactory. Entries with string ids are passed to the Fluid object so that it can create a shared object
      * for it.
      */
-    constructor(private readonly factoryEntries: ChannelFactoryRegistry) { }
+    constructor(private readonly factoryEntries: ChannelFactoryRegistry,
+        public readonly type = "TestFluidObjectFactory") { }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
         const dataTypes = new Map<string, IChannelFactory>();
@@ -149,11 +147,6 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
             dataTypes.set(factory.type, factory);
         }
 
-        const runtime = FluidDataStoreRuntime.load(
-            context,
-            dataTypes,
-        );
-
         // Create a map from the factory entries with entries that don't have the id as undefined. This will be
         // passed to the Fluid object.
         const factoryEntriesMapForObject = new Map<string, IChannelFactory>();
@@ -164,11 +157,14 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
             }
         }
 
-        const testFluidObjectP = TestFluidObject.load(runtime, runtime, context, factoryEntriesMapForObject);
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const testFluidObject = await testFluidObjectP;
-            return testFluidObject.request(request);
-        });
+        const runtimeClass = mixinRequestHandler(
+            async (request: IRequest) => {
+                const router = await routerP;
+                return router.request(request);
+            });
+
+        const runtime = new runtimeClass(context, dataTypes);
+        const routerP = TestFluidObject.load(runtime, runtime, context, factoryEntriesMapForObject);
 
         return runtime;
     }

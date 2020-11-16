@@ -64,9 +64,8 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
  */
 export interface IContainerRuntimeBase extends
     IEventProvider<IContainerRuntimeBaseEvents>,
-    IProvideFluidHandleContext,
-    /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
-    IProvideFluidDataStoreRegistry {
+    IProvideFluidHandleContext
+{
 
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
@@ -98,7 +97,7 @@ export interface IContainerRuntimeBase extends
      * @deprecated 0.16 Issue #1537, #3631
      * @internal
      */
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IFluidDataStoreChannel>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IFluidRouter>;
 
     /**
      * Creates data store. Returns router of data store. Data store is not bound to container,
@@ -113,7 +112,7 @@ export interface IContainerRuntimeBase extends
      * Creates detached data store context. only after context.attachRuntime() is called,
      * data store initialization is considered compete.
      */
-    createDetachedDataStore(): IFluidDataStoreContextDetached;
+    createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
 
     /**
      * Get an absolute url for a provided container-relative request.
@@ -125,6 +124,16 @@ export interface IContainerRuntimeBase extends
     getTaskManager(): Promise<ITaskManager>;
 
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+
+    /**
+     * Returns the current quorum.
+     */
+    getQuorum(): IQuorum;
+
+    /**
+     * Returns the current audience.
+     */
+    getAudience(): IAudience;
 }
 
 /**
@@ -135,7 +144,6 @@ export interface IContainerRuntimeBase extends
  */
 export interface IFluidDataStoreChannel extends
     IFluidRouter,
-    Partial<IProvideFluidDataStoreRegistry>,
     IDisposable {
 
     readonly id: string;
@@ -152,9 +160,15 @@ export interface IFluidDataStoreChannel extends
     bindToContext(): void;
 
     /**
+     * @deprecated - Replaced by getAttachSummary()
      * Retrieves the snapshot used as part of the initial snapshot message
      */
     getAttachSnapshot(): ITreeEntry[];
+
+    /**
+     * Retrieves the summary used as part of the initial summary message
+     */
+    getAttachSummary(): ISummaryTreeWithStats
 
     /**
      * Processes the op.
@@ -167,17 +181,12 @@ export interface IFluidDataStoreChannel extends
     processSignal(message: any, local: boolean): void;
 
     /**
-     * Generates a snapshot of the given data store
-     * @deprecated in 0.22 summarizerNode
-     */
-    snapshotInternal(fullTree?: boolean): Promise<ITreeEntry[]>;
-
-    /**
      * Generates a summary for the data store.
      * Introduced with summarizerNode - will be required in a future release.
-     * @param fullTree - true to bypass optimizations and force a full summary tree
+     * @param fullTree - true to bypass optimizations and force a full summary tree.
+     * @param trackState - This tells whether we should track state from this summary.
      */
-    summarize?(fullTree?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
      * Notifies this object about changes in the connection state.
@@ -264,7 +273,6 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string | undefined;
-    readonly parentBranch: string | null;
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -331,9 +339,8 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
 
     /**
      * Register the runtime to the container
-     * @param dataStoreRuntime - runtime to attach
      */
-    bindToContext(dataStoreRuntime: IFluidDataStoreChannel): void;
+    bindToContext(): void;
 
     /**
      * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
@@ -368,7 +375,6 @@ export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
      * Binds a runtime to the context.
      */
     attachRuntime(
-        packagePath: Readonly<string[]>,
         factory: IProvideFluidDataStoreFactory,
         dataStoreRuntime: IFluidDataStoreChannel,
     ): Promise<void>;

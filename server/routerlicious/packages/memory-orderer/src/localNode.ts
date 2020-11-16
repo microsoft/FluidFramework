@@ -207,7 +207,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                             clientId: connection.clientId,
                             existing: connection.existing,
                             maxMessageSize: this.maxMessageSize,
-                            parentBranch: connection.parentBranch,
+                            // Back-compat, removal tracked with issue #4346
+                            parentBranch: null,
                             serviceConfiguration: DefaultServiceConfiguration,
                         };
                         socket.send({ cid: message.cid, type: "connected", payload: connected });

@@ -26,7 +26,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         const blobOpP = new Promise((res, rej) => container.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                op.metadata?.blobId ? res() : rej("no op metadata");
+                op.metadata?.blobId ? res() : rej(new Error("no op metadata"));
             }
         }));
 
@@ -65,7 +65,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         await new Promise((res, rej) => container1.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                op.metadata?.blobId ? res() : rej("no op metadata");
+                op.metadata?.blobId ? res() : rej(new Error("no op metadata"));
             }
         }));
         const snapshot1 = (container1 as any).context.runtime.blobManager.snapshot();
@@ -79,7 +79,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                         resolve();
                     }
                 } else if (op.type === "summaryNack") {
-                    reject("summaryNack");
+                    reject(new Error("summaryNack"));
                 } else if (op.type === "summarize") {
                     summarized = true;
                 }
@@ -115,7 +115,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
                             resolve();
                         }
                     } else if (op.type === "summaryNack") {
-                        reject("summaryNack");
+                        reject(new Error("summaryNack"));
                     } else if (op.type === "summarize") {
                         summarized = true;
                     }

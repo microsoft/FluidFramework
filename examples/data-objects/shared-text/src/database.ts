@@ -118,7 +118,7 @@ export class GraphQLService {
                     resolve: (obj, { id, name }) => {
                         const key = `${prefix}${id}`;
                         if (!this.map.has(key)) {
-                            return Promise.reject("Hero not found");
+                            return Promise.reject(new Error("Hero not found"));
                         }
 
                         this.map.set(key, name);

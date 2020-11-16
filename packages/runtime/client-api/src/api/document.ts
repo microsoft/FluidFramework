@@ -81,13 +81,6 @@ export class Document extends EventEmitter {
     }
 
     /**
-     * Returns the parent branch for this document
-     */
-    public get parentBranch(): string | null {
-        return this.runtime.parentBranch;
-    }
-
-    /**
      * Flag indicating whether this document is fully connected.
      */
     public get isConnected(): boolean {
@@ -174,14 +167,6 @@ export class Document extends EventEmitter {
     public getClient(clientId: string): ISequencedClient {
         const quorum = this.runtime.getQuorum();
         return quorum.getMember(clientId);
-    }
-
-    /**
-     * Called to snapshot the given document
-     */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public snapshot(tagMessage: string = ""): Promise<void> {
-        return this.runtime.snapshot(tagMessage);
     }
 
     /**

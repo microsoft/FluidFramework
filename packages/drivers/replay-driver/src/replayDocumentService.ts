@@ -65,10 +65,6 @@ export class ReplayDocumentService implements api.IDocumentService {
         return this.deltaStorage;
     }
 
-    public async branch(): Promise<string> {
-        return Promise.reject("Invalid operation");
-    }
-
     public getErrorTrackingService() {
         return null;
     }

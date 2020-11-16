@@ -64,8 +64,6 @@ export interface IFluidDataStoreRuntime extends
 
     readonly existing: boolean;
 
-    readonly parentBranch: string | null;
-
     readonly connected: boolean;
 
     readonly loader: ILoader;
@@ -94,12 +92,6 @@ export interface IFluidDataStoreRuntime extends
      * is attached then we attach the channel to make it live.
      */
     bindChannel(channel: IChannel): void;
-
-    /**
-     * Api for generating the snapshot of the data store.
-     * @param message - Message for the snapshot.
-     */
-    snapshot(message: string): Promise<void>;
 
     // Blob related calls
     /**

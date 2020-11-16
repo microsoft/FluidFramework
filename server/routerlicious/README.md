@@ -40,6 +40,7 @@ below steps if you'd like to run a local version of the service or need to make 
 
 * [Node v12.x](https://nodejs.org/en/)
 * [Node-gyp](https://github.com/nodejs/node-gyp) dependencies
+    * If building on Windows, the easiest way to install the dependencies is with windows-build-tools: `npm install --global --production windows-build-tools`
 
 ### Development
 
@@ -282,12 +283,15 @@ Routerlicious uses [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) li
 ```javascript
     jwt.sign(
         {
-            documentId: <document_id>,
+            documentId: "<document_id>",
             scopes: ["doc:read", "doc:write", "summary:write"],
-            tenantId: <tenant_id>,
-            user: <user_id>,
+            tenantId: "<tenant_id>",
+            user: "<user_id>",
+            iat: Math.round(new Date().getTime() / 1000),
+            exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
+            ver: "1.0",
         },
-        <secret_key>);
+        "<secret_key>");
 ```
 
 ### Passing auth token to the API
