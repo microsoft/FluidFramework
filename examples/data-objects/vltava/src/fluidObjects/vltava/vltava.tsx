@@ -5,6 +5,7 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -12,6 +13,8 @@ import ReactDOM from "react-dom";
 import { TabsFluidObject } from "../tabs";
 import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
 import { VltavaView } from "./view";
+
+const defaultObjectId = "tabs-id";
 
 /**
  * Vltava is an application experience
@@ -36,14 +39,14 @@ export class Vltava extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
     protected async initializingFirstTime() {
-        const tabsFluidObject = await TabsFluidObject.getFactory().createChildInstance(this.context);
-        this.root.set("tabs-component-id", tabsFluidObject.handle);
+        const tabsFluidObject = await TabsFluidObject.getFactory().createInstance(this.context.containerRuntime);
+        this.root.set(defaultObjectId, tabsFluidObject.handle);
     }
 
     protected async hasInitialized() {
         this.dataModelInternal =
             new VltavaDataModel(
-                this.root,
+                this.root.get<IFluidHandle>(defaultObjectId),
                 this.context,
                 this.runtime);
     }

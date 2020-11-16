@@ -6,11 +6,12 @@
 import {
     DataObject,
     DataObjectFactory,
-    getFluidObjectFactoryFromInstance,
 } from "@fluidframework/aqueduct";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { IFluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -39,11 +40,6 @@ export class TabsFluidObject extends DataObject implements IFluidHTMLView {
 
     public get IFluidHTMLView() { return this; }
 
-    protected async initializingFirstTime() {
-        // create the tabs directory
-        this.root.createSubDirectory("tab-ids");
-    }
-
     protected async hasInitialized() {
         // TODO: This code should not rely on container globals (i.e. IContainerRuntime)
         // It should be refactored to pass dependencies in.
@@ -56,7 +52,10 @@ export class TabsFluidObject extends DataObject implements IFluidHTMLView {
             new TabsDataModel(
                 this.root,
                 registryDetails,
-                getFluidObjectFactoryFromInstance(this.context),
+                async (factory: IFluidDataStoreFactory) => {
+                    const router = await this.context.containerRuntime.createDataStore([factory.type]);
+                    return requestFluidObject<IFluidLoadable>(router, "/");
+                },
                 this.getFluidObjectFromDirectory.bind(this),
             );
     }

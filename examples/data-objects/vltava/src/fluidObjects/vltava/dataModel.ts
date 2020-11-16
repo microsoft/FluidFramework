@@ -9,7 +9,6 @@ import { IFluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidLastEditedTracker } from "@fluidframework/last-edited-experimental";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedDirectory } from "@fluidframework/map";
 import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
@@ -42,7 +41,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     }
 
     constructor(
-        private readonly root: ISharedDirectory,
+        private readonly defaultFluidObject: IFluidHandle,
         private readonly context: IFluidDataStoreContext,
         runtime: IFluidDataStoreRuntime,
     ) {
@@ -60,7 +59,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     }
 
     public async getDefaultFluidObject(): Promise<IFluidObject> {
-        return this.root.get<IFluidHandle>("tabs-id").get();
+        return this.defaultFluidObject.get();
     }
 
     public getTitle(): string {
