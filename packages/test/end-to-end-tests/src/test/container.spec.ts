@@ -200,6 +200,7 @@ describe("Container", () => {
         });
 
         container.forceReadonly(true);
+        assert.strictEqual(container.readonly, true);
 
         assert.strictEqual(runCount, 1);
     });
