@@ -48,8 +48,6 @@ export class MockDocumentDeltaConnection
 
     public readonly mode: ConnectionMode = "write";
     public readonly existing: boolean = true;
-    // eslint-disable-next-line no-null/no-null
-    public readonly parentBranch: string | null = null;
     public readonly maxMessageSize: number = 16 * 1024;
     public readonly version: string = "";
     public initialMessages: ISequencedDocumentMessage[] = [];

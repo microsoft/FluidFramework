@@ -332,10 +332,9 @@ export class DirectoryFactory {
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes): Promise<ISharedDirectory> {
         const directory = new SharedDirectory(id, runtime, attributes);
-        await directory.load(branchId, services);
+        await directory.load(services);
 
         return directory;
     }
@@ -646,9 +645,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
-    protected async loadCore(
-        branchId: string | undefined,
-        storage: IChannelStorageService) {
+    protected async loadCore(storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
         const data = JSON.parse(fromBase64ToUtf8(header));
         const newFormat = data as IDirectoryNewStorageFormat;

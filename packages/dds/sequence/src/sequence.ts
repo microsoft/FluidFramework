@@ -480,9 +480,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
     }
 
-    protected async loadCore(
-        branchId: string | undefined,
-        storage: IChannelStorageService) {
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+     */
+    protected async loadCore(storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 
         const data: string = header ? fromBase64ToUtf8(header) : undefined;
@@ -495,7 +496,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             const { catchupOpsP } = await this.client.load(
                 this.runtime,
                 new ObjectStoragePartition(storage, contentPath),
-                branchId);
+            );
 
             // setup a promise to process the
             // catch up ops, and finishing the loading process

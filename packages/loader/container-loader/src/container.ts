@@ -288,7 +288,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
     private service: IDocumentService | undefined;
-    private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
     private readonly _audience: Audience;
 
@@ -425,12 +424,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._audience;
     }
 
-    /**
-     * Returns the parent branch for this document
-     */
-    public get parentBranch(): string | null {
-        return this._parentBranch;
-    }
     private get serviceFactory() {return this.loader.services.documentServiceFactory;}
     private get urlResolver() {return this.loader.services.urlResolver;}
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -638,7 +631,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._attachState = AttachState.Attached;
             this.emit("attached");
             this.cachedAttachSummary = undefined;
-            this._parentBranch = this._id;
 
             // Propagate current connection state through the system.
             this.propagateConnectionState();
@@ -655,14 +647,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {
-        // TODO: Issue-2171 Support for Branch Snapshots
-        if (tagMessage.includes("ReplayTool Snapshot") === false && this.parentBranch !== null) {
-            // The below debug ruins the chrome debugging session
-            // Tracked (https://bugs.chromium.org/p/chromium/issues/detail?id=659515)
-            debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
-            return;
-        }
-
         // Only snapshot once a code quorum has been established
         if (!this.protocolHandler.quorum.has("code") && !this.protocolHandler.quorum.has("code2")) {
             this.logger.sendTelemetryEvent({ eventName: "SkipSnapshot" });
@@ -1046,7 +1030,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // the initial details
         if (maybeSnapshotTree !== undefined) {
             this._existing = true;
-            this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
             loadDetailsP = Promise.resolve();
         } else {
             if (startConnectionP === undefined) {
@@ -1055,7 +1038,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
             loadDetailsP = startConnectionP.then((details) => {
                 this._existing = details.existing;
-                this._parentBranch = details.parentBranch;
             });
         }
 

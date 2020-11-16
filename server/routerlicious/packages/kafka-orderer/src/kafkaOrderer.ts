@@ -18,7 +18,6 @@ import * as core from "@fluidframework/server-services-core";
 export class KafkaOrdererConnection implements core.IOrdererConnection {
     public static async create(
         existing: boolean,
-        document: core.IDocument,
         producer: core.IProducer,
         tenantId: string,
         documentId: string,
@@ -30,7 +29,6 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         // Create the connection
         return new KafkaOrdererConnection(
             existing,
-            document,
             producer,
             tenantId,
             documentId,
@@ -40,15 +38,13 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             serviceConfiguration);
     }
 
-    public get parentBranch(): string {
-        return this._parentBranch;
+    // Back-compat, removal tracked with issue #4346
+    public get parentBranch(): null {
+        return null;
     }
-
-    private readonly _parentBranch: string;
 
     constructor(
         public readonly existing: boolean,
-        document: core.IDocument,
         private readonly producer: core.IProducer,
         public readonly tenantId: string,
         public readonly documentId: string,
@@ -56,10 +52,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         private readonly client: IClient,
         public readonly maxMessageSize: number,
         public readonly serviceConfiguration: IServiceConfiguration,
-    ) {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        this._parentBranch = document.parent ? document.parent.documentId : null;
-    }
+    ) { }
 
     /**
      * Sends the client join op for this connection
@@ -192,7 +185,6 @@ export class KafkaOrderer implements core.IOrderer {
         this.existing = details.existing;
         const connection = KafkaOrdererConnection.create(
             this.existing,
-            details.value,
             this.producer,
             this.tenantId,
             this.documentId,

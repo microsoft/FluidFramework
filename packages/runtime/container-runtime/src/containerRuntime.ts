@@ -523,10 +523,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.id;
     }
 
-    public get parentBranch(): string | null {
-        return this.context.parentBranch;
-    }
-
     public get existing(): boolean {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.context.existing!;
@@ -1717,15 +1713,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
         const message =
             `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
-
-        // TODO: Issue-2171 Support for Branch Snapshots
-        if (this.parentBranch) {
-            this._logger.sendTelemetryEvent({
-                eventName: "SkipGenerateSummaryParentBranch",
-                parentBranch: this.parentBranch,
-            });
-            return;
-        }
 
         this.summarizerNode.startSummary(summaryRefSeqNum);
 

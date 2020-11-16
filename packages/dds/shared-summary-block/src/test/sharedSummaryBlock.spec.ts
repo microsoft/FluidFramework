@@ -93,7 +93,7 @@ describe("SharedSummaryBlock", () => {
 
             // Load another object from the snapshot and ensure that it has loaded the data from the original object.
             const sharedSummaryBlock2 = await factory.load(
-                dataStoreRuntime, "mapId", services, "branchId", factory.attributes,
+                dataStoreRuntime, "mapId", services, factory.attributes,
             ) as ISharedSummaryBlock;
             assert.equal(sharedSummaryBlock2.get(key1), value1);
             assert.equal(sharedSummaryBlock2.get(key2), value2);

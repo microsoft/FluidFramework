@@ -51,14 +51,16 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
         return SharedIntervalCollectionFactory.Attributes;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+     */
     public async load(
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes): Promise<SharedIntervalCollection> {
         const map = new SharedIntervalCollection(id, runtime, attributes);
-        await map.load(branchId, services);
+        await map.load(services);
 
         return map;
     }
@@ -173,9 +175,10 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         debug(`${this.id} is now disconnected`);
     }
 
-    protected async loadCore(
-        branchId: string | undefined,
-        storage: IChannelStorageService) {
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+     */
+    protected async loadCore(storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 
         const data: string = header ? fromBase64ToUtf8(header) : undefined;

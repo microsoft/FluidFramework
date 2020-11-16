@@ -239,15 +239,9 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
     }
 
     /**
-     * Load cell from snapshot
-     *
-     * @param branchId - Not used
-     * @param storage - the storage to get the snapshot from
-     * @returns - promise that resolved when the load is completed
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
-    protected async loadCore(
-        branchId: string | undefined,
-        storage: IChannelStorageService): Promise<void> {
+    protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const rawContent = await storage.read(snapshotFileName);
 
         const content = rawContent !== undefined

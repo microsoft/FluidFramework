@@ -75,7 +75,7 @@ describe("SharedCounter", () => {
                 // Load a new SharedCounter from the snapshot of the first one.
                 const services = MockSharedObjectServices.createFromTree(testCounter.snapshot());
                 const testCounter2 = factory.create(dataStoreRuntime, "counter2") as SharedCounter;
-                await testCounter2.load("branchId", services);
+                await testCounter2.load(services);
 
                 // Verify that the new SharedCounter has the correct value.
                 assert.equal(testCounter.value, 10, "The loaded SharedCounter does not have the correct value");

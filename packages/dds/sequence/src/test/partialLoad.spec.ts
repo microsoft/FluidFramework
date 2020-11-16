@@ -96,8 +96,7 @@ describe("SharedString Partial Load", () => {
         const localSharedString =
             new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
 
-        // eslint-disable-next-line no-null/no-null
-        await localSharedString.load(null, localServices);
+        await localSharedString.load(localServices);
 
         assert.equal(localSharedString.getText(), remoteSharedString.getText());
     });
@@ -117,8 +116,7 @@ describe("SharedString Partial Load", () => {
         const localSharedString =
             new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
 
-        // eslint-disable-next-line no-null/no-null
-        await localSharedString.load(null, localServices);
+        await localSharedString.load(localServices);
 
         assert.equal(localSharedString.getText(), remoteSharedString.getText());
     });
@@ -142,8 +140,7 @@ describe("SharedString Partial Load", () => {
         const localSharedString =
             new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
 
-        // eslint-disable-next-line no-null/no-null
-        await localSharedString.load(null, localServices);
+        await localSharedString.load(localServices);
 
         assert.notEqual(localSharedString.getText(), remoteSharedString.getText());
 
@@ -172,8 +169,7 @@ describe("SharedString Partial Load", () => {
         const localSharedString =
             new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
 
-        // eslint-disable-next-line no-null/no-null
-        await localSharedString.load(null, localServices);
+        await localSharedString.load(localServices);
 
         localDataStoreRuntime.deltaManager.lastSequenceNumber =
             containerRuntimeFactory.sequenceNumber;
@@ -217,8 +213,7 @@ describe("SharedString Partial Load", () => {
         const localSharedString =
             new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
 
-        // eslint-disable-next-line no-null/no-null
-        await localSharedString.load(null, localServices);
+        await localSharedString.load(localServices);
 
         localDataStoreRuntime.deltaManager.lastSequenceNumber =
             containerRuntimeFactory.sequenceNumber;
@@ -259,8 +254,7 @@ describe("SharedString Partial Load", () => {
         const localSharedString =
             new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
 
-        // eslint-disable-next-line no-null/no-null
-        await localSharedString.load(null, localServices);
+        await localSharedString.load(localServices);
 
         localDataStoreRuntime.deltaManager.lastSequenceNumber =
             containerRuntimeFactory.sequenceNumber;

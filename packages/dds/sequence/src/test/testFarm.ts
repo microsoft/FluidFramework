@@ -180,10 +180,6 @@ export function TestPack(verbose = true) {
 
     const checkIncr = false;
 
-    let getTextTime = 0;
-    let getTextCalls = 0;
-    let crossGetTextTime = 0;
-    let crossGetTextCalls = 0;
     // Let incrGetTextTime = 0;
     // let incrGetTextCalls = 0;
     // let catchUpTime = 0;
@@ -317,12 +313,8 @@ export function TestPack(verbose = true) {
 
         function checkTextMatch() {
             // Console.log(`checking text match @${server.getCurrentSeq()}`);
-            let clockStart = clock();
             const serverText = testServer.getText();
-            getTextTime += elapsedMicroseconds(clockStart);
-            getTextCalls++;
             if (checkIncr) {
-                clockStart = clock();
                 const serverIncrText = testServer.incrementalGetText();
                 // IncrGetTextTime += elapsedMicroseconds(clockStart);
                 // incrGetTextCalls++;
@@ -852,334 +844,6 @@ export function TestPack(verbose = true) {
         return errorCount;
     }
 
-    function clientServerBranch(startFile?: string, initRounds = 1000) {
-        const clientCountA = 2;
-        const clientCountB = 2;
-        const fileSegCount = 0;
-        const initString = "don't ask for whom the bell tolls; it tolls for thee";
-
-        const testServerA = new TestServer();
-        testServerA.measureOps = true;
-        const testServerB = new TestServer();
-        testServerB.measureOps = true;
-        if (startFile) {
-            loadTextFromFile(startFile, testServerA.mergeTree, fileSegCount);
-            loadTextFromFile(startFile, testServerB.mergeTree, fileSegCount);
-        } else {
-            testServerA.insertTextLocal(0, initString);
-            testServerB.insertTextLocal(0, initString);
-        }
-
-        const clientsA = new Array<TestClient>(clientCountA);
-        const clientsB = new Array<TestClient>(clientCountB);
-
-        for (let i = 0; i < clientCountA; i++) {
-            clientsA[i] = new TestClient();
-            clientsA[i].measureOps = true;
-            if (startFile) {
-                loadTextFromFile(startFile, clientsA[i].mergeTree, fileSegCount);
-            } else {
-                clientsA[i].insertTextLocal(0, initString);
-            }
-            clientsA[i].startOrUpdateCollaboration(`FredA${i}`);
-        }
-
-        for (let i = 0; i < clientCountB; i++) {
-            clientsB[i] = new TestClient();
-            clientsB[i].measureOps = true;
-            if (startFile) {
-                loadTextFromFile(startFile, clientsB[i].mergeTree, fileSegCount);
-            } else {
-                clientsB[i].insertTextLocal(0, initString);
-            }
-            clientsB[i].startOrUpdateCollaboration(`FredB${i}`, /* minSeq: */ 0, /* currentSeq: */ 0, /* branchId: */ 1);
-        }
-        for (let i = 0; i < clientCountB; i++) {
-            const clientB = clientsB[i];
-            testServerB.getOrAddShortClientId(clientB.longClientId, 1);
-            for (let j = 0; j < clientCountB; j++) {
-                const otherBClient = clientsB[j];
-                if (otherBClient !== clientB) {
-                    otherBClient.getOrAddShortClientId(clientB.longClientId, 1);
-                }
-            }
-        }
-        testServerA.startOrUpdateCollaboration("theServerA");
-        testServerA.addClients(clientsA);
-        testServerA.addListeners([testServerB]);
-        testServerB.startOrUpdateCollaboration("theServerB", /* minSeq: */ 0, /* currentSeq: */ 0, /* branchId: */ 1);
-        testServerB.addClients(clientsB);
-        testServerB.addUpstreamClients(clientsA);
-
-        function crossBranchTextMatch(serverA: TestServer, serverB: TestServer, aClientId: string) {
-            let clockStart = clock();
-            const serverAText = serverA.getText();
-            getTextTime += elapsedMicroseconds(clockStart);
-            getTextCalls++;
-            clockStart = clock();
-            // eslint-disable-next-line no-null/no-null
-            const serverBAText = new MergeTreeTextHelper(serverB.mergeTree).getText(serverB.getCurrentSeq(), serverB.getOrAddShortClientId(aClientId, null));
-            crossGetTextTime += elapsedMicroseconds(clockStart);
-            crossGetTextCalls++;
-            if (serverAText !== serverBAText) {
-                console.log(`cross mismatch @${serverA.getCurrentSeq()} serverB @${serverB.getCurrentSeq()}`);
-                return true;
-            }
-        }
-
-        function checkTextMatch(clients: TestClient[], server: TestServer) {
-            // Console.log(`checking text match @${server.getCurrentSeq()}`);
-            const clockStart = clock();
-            const serverText = server.getText();
-            getTextTime += elapsedMicroseconds(clockStart);
-            getTextCalls++;
-            for (const client of clients) {
-                const showDiff = true;
-                const cliText = client.getText();
-                if (cliText !== serverText) {
-                    console.log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
-                    // Console.log(serverText);
-                    // console.log(cliText);
-                    if (showDiff) {
-                        const diffParts = JsDiff.diffChars(serverText, cliText);
-                        for (const diffPart of diffParts) {
-                            let annotes = "";
-                            if (diffPart.added) {
-                                annotes += "added ";
-                            }
-                            else if (diffPart.removed) {
-                                annotes += "removed ";
-                            }
-                            if (diffPart.count) {
-                                annotes += `count: ${diffPart.count}`;
-                            }
-                            console.log(`text: ${diffPart.value} ${annotes}`);
-                        }
-                    }
-                    console.log(`Server MT ${server.longClientId}`);
-                    console.log(server.mergeTree.toString());
-                    console.log(`Client MT ${client.longClientId}`);
-                    console.log(client.mergeTree.toString());
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        const rounds = initRounds;
-
-        function clientProcessSome(client: TestClient, all = false) {
-            const cliMsgCount = client.getMessageCount();
-            let countToApply: number;
-            if (all) {
-                countToApply = cliMsgCount;
-            }
-            else {
-                countToApply = random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
-            }
-            client.applyMessages(countToApply);
-        }
-
-        function serverProcessSome(server: TestClient, all = false) {
-            const svrMsgCount = server.getMessageCount();
-            let countToApply: number;
-            if (all) {
-                countToApply = svrMsgCount;
-            }
-            else {
-                countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
-            }
-            return server.applyMessages(countToApply);
-        }
-
-        function randomSpateOfInserts(client: TestClient, server: TestServer, charIndex: number) {
-            const textLen = randTextLength();
-            const text = randomString(textLen, String.fromCharCode(zedCode + ((client.getCurrentSeq() + charIndex) % 50)));
-            const preLen = client.getLength();
-            const pos = random.integer(0, preLen)(mt);
-            const insertOp = client.insertTextLocal(pos, text);
-            server.enqueueMsg(client.makeOpMessage(insertOp, UnassignedSequenceNumber));
-            if (TestClient.useCheckQ) {
-                client.enqueueTestString();
-            }
-        }
-
-        function randomSpateOfRemoves(client: TestClient, server: TestServer) {
-            const dlen = randTextLength();
-            const preLen = client.getLength();
-            const pos = random.integer(0, preLen)(mt);
-            const removeOp = client.removeRangeLocal(pos, pos + dlen);
-            server.enqueueMsg(client.makeOpMessage(removeOp, UnassignedSequenceNumber));
-            if (TestClient.useCheckQ) {
-                client.enqueueTestString();
-            }
-        }
-
-        function randomWordMove(client: TestClient, server: TestServer) {
-            const word1 = client.findRandomWord();
-            if (word1) {
-                const removeStart = word1.pos;
-                const removeEnd = removeStart + word1.text.length;
-                const removeOp = client.removeRangeLocal(removeStart, removeEnd);
-                server.enqueueMsg(client.makeOpMessage(removeOp, UnassignedSequenceNumber));
-                if (TestClient.useCheckQ) {
-                    client.enqueueTestString();
-                }
-                let word2 = client.findRandomWord();
-                while (!word2) {
-                    word2 = client.findRandomWord();
-                }
-                const pos = word2.pos + word2.text.length;
-                const insertOp = client.insertTextLocal(pos, word1.text);
-                server.enqueueMsg(client.makeOpMessage(insertOp, UnassignedSequenceNumber));
-                if (TestClient.useCheckQ) {
-                    client.enqueueTestString();
-                }
-            }
-        }
-
-        let errorCount = 0;
-
-        function finishRound(roundCount: number) {
-            // Process remaining messages
-            if (serverProcessSome(testServerA, true)) {
-                return;
-            }
-            if (serverProcessSome(testServerB, true)) {
-                return;
-            }
-            for (const client of clientsA) {
-                clientProcessSome(client, true);
-            }
-            for (const client of clientsB) {
-                clientProcessSome(client, true);
-            }
-            const allRounds = false;
-            if (allRounds || (0 === (roundCount % 100))) {
-                const clockStart = clock();
-                if (crossBranchTextMatch(testServerA, testServerB, clientsA[0].longClientId)) {
-                    errorCount++;
-                }
-                if (checkTextMatch(clientsA, testServerA)) {
-                    console.log(`round: ${roundCount} BREAK`);
-                    errorCount++;
-                    return errorCount;
-                }
-                if (checkTextMatch(clientsB, testServerB)) {
-                    console.log(`round: ${roundCount} BREAK`);
-                    errorCount++;
-                    return errorCount;
-                }
-                checkTime += elapsedMicroseconds(clockStart);
-                if (verbose) {
-                    console.log(`wall clock is ${((Date.now() - startTime) / 1000.0).toFixed(1)}`);
-                }
-                const statsA = testServerA.mergeTree.getStats();
-                const statsB = testServerB.mergeTree.getStats();
-                const liveAve = (statsA.liveCount / statsA.nodeCount).toFixed(1);
-                const liveAveB = (statsB.liveCount / statsB.nodeCount).toFixed(1);
-
-                const posLeaves = statsA.leafCount - statsA.removedLeafCount;
-                const posLeavesB = statsB.leafCount - statsB.removedLeafCount;
-
-                console.log(`round: ${roundCount} A> seqA ${testServerA.seq} char count ${testServerA.getLength()} height ${statsA.maxHeight} lv ${statsA.leafCount} rml ${statsA.removedLeafCount} p ${posLeaves} nodes ${statsA.nodeCount} pop ${liveAve} histo ${statsA.histo}`);
-                console.log(`round: ${roundCount} B> seqB ${testServerB.seq} char count ${testServerB.getLength()} height ${statsB.maxHeight} lv ${statsB.leafCount} rml ${statsB.removedLeafCount} p ${posLeavesB} nodes ${statsB.nodeCount} pop ${liveAveB} histo ${statsB.histo}`);
-                reportTiming(testServerA);
-                reportTiming(testServerB);
-                reportTiming(clientsA[1]);
-                reportTiming(clientsB[1]);
-                const aveGetTextTime = (getTextTime / getTextCalls).toFixed(1);
-                const perLeafAveGetTextTime = ((getTextTime / getTextCalls) / statsA.leafCount).toFixed(1);
-                const perLeafAveCrossGetTextTime = ((crossGetTextTime / crossGetTextCalls) / statsB.leafCount).toFixed(1);
-                const aveCrossGetTextTime = (crossGetTextTime / crossGetTextCalls).toFixed(1);
-                // Let aveIncrGetTextTime = "off";
-                // let aveCatchUpTime = "off";
-                // if (catchUps > 0) {
-                //     aveCatchUpTime = (catchUpTime / catchUps).toFixed(1);
-                // }
-                // if (checkIncr) {
-                //     aveIncrGetTextTime = (incrGetTextTime / incrGetTextCalls).toFixed(1);
-                // }
-                console.log(`get text time: ${aveGetTextTime}; ${perLeafAveGetTextTime}/leaf cross: ${aveCrossGetTextTime}; ${perLeafAveCrossGetTextTime}/leaf`);
-
-                let totalTime = testServerA.accumTime + testServerA.accumWindowTime;
-                for (const client of clientsA) {
-                    totalTime += (client.accumTime + client.localTime + client.accumWindowTime);
-                }
-                for (const client of clientsB) {
-                    totalTime += (client.accumTime + client.localTime + client.accumWindowTime);
-                }
-                if (verbose) {
-                    console.log(`total time ${(totalTime / 1000000.0).toFixed(1)} check time ${(checkTime / 1000000.0).toFixed(1)}`);
-                }
-                // Console.log(server.getText());
-                // console.log(server.mergeTree.toString());
-            }
-            return errorCount;
-        }
-
-        function round(roundCount: number, clients: TestClient[], server: TestServer) {
-            const small = true;
-            for (const client of clients) {
-                let insertSegmentCount = randSmallSegmentCount();
-                if (small) {
-                    insertSegmentCount = 1;
-                }
-                for (let j = 0; j < insertSegmentCount; j++) {
-                    if (startFile) {
-                        randomWordMove(client, server);
-                    }
-                    else {
-                        randomSpateOfInserts(client, server, j);
-                    }
-                }
-                if (serverProcessSome(server)) {
-                    return;
-                }
-                clientProcessSome(client);
-
-                let removeSegmentCount = Math.floor(3 * insertSegmentCount / 4);
-                if (small || (removeSegmentCount < 1)) {
-                    removeSegmentCount = 1;
-                }
-                for (let j = 0; j < removeSegmentCount; j++) {
-                    if (startFile) {
-                        randomWordMove(client, server);
-                    }
-                    else {
-                        if (client.getLength() > 200) {
-                            randomSpateOfRemoves(client, server);
-                        }
-                    }
-                }
-                if (serverProcessSome(server)) {
-                    return;
-                }
-                clientProcessSome(client);
-            }
-        }
-
-        const startTime = Date.now();
-        let checkTime = 0;
-
-        for (let i = 0; i < rounds; i++) {
-            round(i, clientsA, testServerA);
-            round(i, clientsB, testServerB);
-            finishRound(i);
-            if (errorCount > 0) {
-                break;
-            }
-        }
-        tail();
-        function tail() {
-            reportTiming(testServerA);
-            reportTiming(clientsA[1]);
-            reportTiming(clientsB[1]);
-            // Console.log(server.getText());
-            // console.log(server.mergeTree.toString());
-        }
-        return errorCount;
-    }
     const clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];
 
     function firstTest() {
@@ -1405,7 +1069,6 @@ export function TestPack(verbose = true) {
     return {
         firstTest,
         clientServer,
-        clientServerBranch,
         manyMergeTrees,
     };
 }
@@ -2152,21 +1815,12 @@ if (docTree) {
 
 if (clientServerTest) {
     const ppTest = true;
-    const branch = false;
     const testPack = TestPack();
     const baseDir = "../../../merge-tree/src/test/literature";
     const filename = path.join(__dirname, baseDir, "pp.txt");
     if (ppTest) {
-        if (branch) {
-            testPack.clientServerBranch(filename, 100000);
-        } else {
-            testPack.clientServer(filename, 100000);
-        }
+        testPack.clientServer(filename, 100000);
     } else {
-        if (branch) {
-            testPack.clientServerBranch(undefined, 100000);
-        } else {
-            testPack.clientServer(undefined, 100000);
-        }
+        testPack.clientServer(undefined, 100000);
     }
 }
