@@ -214,7 +214,8 @@ export function convertToSummaryTree(
 }
 
 /**
- * Converts ISnapshotTree to ISummaryTree format and tracks stats.
+ * Converts ISnapshotTree to ISummaryTree format and tracks stats. This snapshot tree was
+ * was taken by serialize api in detached container.
  * @param snapshot - snapshot in ISnapshotTree format
  */
 export function convertSnapshotTreeToSummaryTree(
@@ -222,19 +223,16 @@ export function convertSnapshotTreeToSummaryTree(
 ): ISummaryTreeWithStats {
     assert(Object.keys(snapshot.commits).length === 0, "There should not be commit tree entries in snapshot");
 
-    const blobMapInitial = new Map(Object.entries(snapshot.blobs));
-    const blobMapFinal = new Map<string, string>();
-    for (const [key, value] of blobMapInitial.entries()) {
-        if (blobMapInitial.has(value)) {
-            blobMapFinal[key] = blobMapInitial.get(value);
+    const builder = new SummaryTreeBuilder();
+    for (const [key, value] of Object.entries(snapshot.blobs)) {
+        // The entries in blobs are supposed to be blobPath -> blobId and blobId -> blobValue
+        // and we want to push blobPath to blobValue in tree entries.
+        if (snapshot.blobs[value] !== undefined) {
+            const decoded = fromBase64ToUtf8(snapshot.blobs[value]);
+            builder.addBlob(key, decoded);
         }
     }
 
-    const builder = new SummaryTreeBuilder();
-    for (const [key, value] of Object.entries(blobMapFinal)) {
-        const decoded = fromBase64ToUtf8(value);
-        builder.addBlob(key, decoded);
-    }
     for (const [key, tree] of Object.entries(snapshot.trees)) {
         const subtree = convertSnapshotTreeToSummaryTree(tree);
         builder.addWithStats(key, subtree);

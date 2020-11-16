@@ -30,6 +30,7 @@ import {
     generateTestWithCompat,
     generateTest,
     ITestContainerConfig,
+    DataObjectFactoryType,
 } from "./compatUtils";
 
 const detachedContainerRefSeqNumber = 0;
@@ -59,7 +60,7 @@ const registry: ChannelFactoryRegistry = [
 ];
 
 const testContainerConfig: ITestContainerConfig = {
-    testFluidDataObject: true,
+    fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
 };
 

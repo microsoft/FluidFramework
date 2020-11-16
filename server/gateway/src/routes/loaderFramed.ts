@@ -16,9 +16,11 @@ import { Provider } from "nconf";
 import { v4 } from "uuid";
 import winston from "winston";
 import dotenv from "dotenv";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
-import { resolveUrl } from "../gatewayUrlResolver";
+import { FullTree, resolveR11sUrl, resolveSpoUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
+import { isSpoTenant } from "../odspUtils";
 import { getConfig, getUserDetails, queryParamAsString, getR11sToken } from "../utils";
 import { getUser, IExtendedUser } from "./utils";
 
@@ -81,9 +83,19 @@ export function create(
                 const search = parse(request.url).search;
                 const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
                 const user = getUser(request);
-                const accessToken = getR11sToken(tenantId, documentId, appTenants, scopes, user as IExtendedUser);
-                const [resolvedP, fullTreeP] =
-                    resolveUrl(config, alfred, tenantId, documentId, accessToken, request);
+                const isSpoTenantPath = isSpoTenant(tenantId);
+                let fullTreeP: Promise<undefined | FullTree>;
+                let resolvedP: Promise<IFluidResolvedUrl>;
+                let r11sAccessToken = "";
+                if (isSpoTenantPath) {
+                    [resolvedP, fullTreeP] =
+                        resolveSpoUrl(config, tenantId, documentId, request);
+                } else {
+                    r11sAccessToken = getR11sToken(
+                        tenantId, documentId, appTenants, scopes, user as IExtendedUser);
+                    [resolvedP, fullTreeP] =
+                        resolveR11sUrl(config, alfred, tenantId, documentId, r11sAccessToken, request);
+                }
 
                 const workerConfig = getConfig(
                     config.get("worker"),
@@ -182,8 +194,9 @@ export function create(
                                 clientId: _.isEmpty(configClientId)
                                     ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : configClientId,
                                 config: workerConfig,
+                                isSpoTenantPath,
                                 hostToken,
-                                accessToken,
+                                accessToken: r11sAccessToken,
                                 npm: config.get("worker:npm"),
                                 partials: {
                                     layoutFramed: "layoutFramed",
