@@ -74,7 +74,6 @@ export interface IContainerRuntime extends
     readonly options: any;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
-    readonly codeDetails: IFluidCodeDetails;
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
