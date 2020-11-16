@@ -14,7 +14,6 @@ import {
     IRequest,
     IResponse,
     IFluidHandleContext,
-    IFluidRoutingParent,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -368,11 +367,11 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public readonly IFluidSerializer = new FluidSerializer(this.channelsRoutingContext);
 
-    public get objectsRoutingContext(): IFluidHandleContext & IFluidRoutingParent {
+    public get objectsRoutingContext(): IFluidHandleContext {
         throw new Error("Not implemented");
     }
 
-    public get channelsRoutingContext(): IFluidHandleContext & IFluidRoutingParent {
+    public get channelsRoutingContext(): IFluidHandleContext {
         throw new Error("Not implemented");
     }
 

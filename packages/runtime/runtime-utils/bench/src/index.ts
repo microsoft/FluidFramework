@@ -5,10 +5,11 @@
 
 import { Suite } from "benchmark";
 import { ComponentSerializer } from "../../src";
-import { handle, makeJson, mockHandleContext as context } from "../../src/test/utils";
+import { handle, makeJson} from "../../src/test/utils";
+import { mockHandleContext } from "@framework/runtime-utils";
 import { consume, runSuites } from "./util";
 
-const serializer = new ComponentSerializer(context);
+const serializer = new ComponentSerializer(mockHandleContext);
 const deepNoHandles = makeJson(/* breadth: */ 8, /* depth: */ 8, () => ({}));
 const deepWithHandles = makeJson(/* breadth: */ 8, /* depth: */ 8, () => handle);
 

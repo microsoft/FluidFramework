@@ -14,3 +14,4 @@ export * from "./objectstorageutils";
 export * from "./requestParser";
 export * from "./dataStoreHelpers";
 export * from "./requestRouting";
+export * from "./mockHandleContext";

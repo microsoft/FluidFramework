@@ -4,23 +4,12 @@
  */
 import { strict as assert } from "assert";
 import {
-    IFluidHandleContext,
     IFluidHandle,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
+import { mockHandleContext } from "@fluidframework/runtime-utils";
 import { SummarizerHandle } from "../summarizerHandle";
 
-const mockHandleContext: IFluidHandleContext = {
-    absolutePath: "",
-    isAttached: false,
-
-    attachGraph: () => {
-        throw new Error("Method not implemented.");
-    },
-    request: () => {
-        throw new Error("Method not implemented.");
-    },
-};
 class MockSummarizer implements IFluidLoadable {
     public get IFluidLoadable() { return this; }
     public get handle() { return new SummarizerHandle(this, "", mockHandleContext); }

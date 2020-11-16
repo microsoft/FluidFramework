@@ -7,7 +7,7 @@ import { ITelemetryLogger, IDisposable, IEvent, IEventProvider } from "@fluidfra
 import {
     IFluidObject,
     IFluidRouter,
-    IFluidRoutingContextEx,
+    IFluidRoutingContext,
     IFluidHandle,
     IRequest,
     IResponse,
@@ -308,7 +308,7 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     /**
      * Context for handle resolution, represents a route to a data store
      */
-    readonly channelRoutingContext: IFluidRoutingContextEx;
+    readonly channelRoutingContext: IFluidRoutingContext;
 
     /**
      * Returns the current quorum.

@@ -9,7 +9,7 @@ import {
     IRequest,
     IFluidHandle,
     IFluidRouter,
-    IFluidRoutingContextEx,
+    IFluidRoutingContext,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -208,7 +208,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNode;
-    readonly channelRoutingContext: IFluidRoutingContextEx;
+    readonly channelRoutingContext: IFluidRoutingContext;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,

@@ -6,13 +6,12 @@
 import {
     IFluidHandle,
     IFluidRoutingContext,
-    IFluidRoutingContextEx,
     IRequest,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { generateHandleContextPath, FluidRoutingContext } from "@fluidframework/runtime-utils";
 import { AttachmentTreeEntry } from "@fluidframework/protocol-base";
 import { ISnapshotTree, ITree } from "@fluidframework/protocol-definitions";
+import { generateHandleContextPath, FluidRoutingContext } from "@fluidframework/runtime-utils";
 
 /**
  * This class represents blob (long string)
@@ -46,11 +45,11 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 
 export class BlobManager {
     public static readonly basePath = "_blobs";
-    protected readonly routeContext: IFluidRoutingContextEx;
+    protected readonly routeContext: IFluidRoutingContext;
     private readonly blobIds: Set<string> = new Set();
 
     constructor(
-        rootRoute: IFluidRoutingContextEx,
+        rootRoute: IFluidRoutingContext,
         private readonly getStorage: () => IDocumentStorageService,
         private readonly sendBlobAttachOp: (blobId: string) => void)
     {

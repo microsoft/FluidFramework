@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
+import { mockHandleContext } from "../mockHandleContext";
 import { FluidSerializer } from "../serializer";
 import {
     handle,
     makeJson,
-    mockHandleContext as context,
 } from "./utils";
 
 const serHandle = {
@@ -43,7 +43,7 @@ simple.push(
 // Add an array that contains each of our constructed test cases.
 simple.push([...simple]);
 
-const ser = new FluidSerializer(context);
+const ser = new FluidSerializer(mockHandleContext);
 
 describe("FluidSerializer", () => {
     describe("vanilla JSON", () => {

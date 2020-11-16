@@ -6,7 +6,6 @@
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandleContext,
-    IFluidRoutingParent,
     IFluidSerializer,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
@@ -47,8 +46,8 @@ export interface IFluidDataStoreRuntime extends
 
     readonly IFluidSerializer: IFluidSerializer;
 
-    readonly channelsRoutingContext: IFluidHandleContext & IFluidRoutingParent;
-    readonly objectsRoutingContext: IFluidHandleContext & IFluidRoutingParent;
+    readonly channelsRoutingContext: IFluidHandleContext;
+    readonly objectsRoutingContext: IFluidHandleContext;
 
     readonly options: any;
 

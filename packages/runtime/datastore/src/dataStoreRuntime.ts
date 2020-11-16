@@ -7,7 +7,6 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidHandleContext,
-    IFluidRoutingParent,
     IFluidSerializer,
     IRequest,
     IResponse,
@@ -133,8 +132,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
         return this._attachState;
     }
 
-    public readonly channelsRoutingContext: IFluidHandleContext & IFluidRoutingParent;
-    public readonly objectsRoutingContext: IFluidHandleContext & IFluidRoutingParent;
+    public readonly channelsRoutingContext: IFluidHandleContext;
+    public readonly objectsRoutingContext: IFluidHandleContext;
 
     public readonly IFluidSerializer: IFluidSerializer;
 

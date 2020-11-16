@@ -11,7 +11,6 @@ import {
     IFluidObject,
     IFluidRequestHandler,
     IFluidRoutingContext,
-    IFluidRoutingContextEx,
     defaultRoutePath,
 } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -21,18 +20,18 @@ import { RequestParser } from "./requestParser";
 /**
  * Represents a route in request routing
  */
-export class FluidRoutingContext implements IFluidRoutingContextEx {
+export class FluidRoutingContext implements IFluidRoutingContext {
     protected routes: Map<string, IFluidRequestHandler> = new Map();
     public readonly absolutePath: string;
 
     /**
      * Creates a new FluidHandleContext.
      * @param path - The path to this handle relative to the routeContext.
-     * @param routeContext - The parent IFluidRoutingContextEx that has a route to this handle.
+     * @param routeContext - The parent IFluidRoutingContext that has a route to this handle.
      */
     constructor(
         path: string,
-        public readonly routeContext?: IFluidRoutingContextEx,
+        public readonly routeContext?: IFluidRoutingContext,
         protected readonly realize: () => Promise<void> = async () => Promise.resolve(),
         protected readonly requestHandler?: (request: IRequest, route?: string) => Promise<IResponse>,
     ) {
@@ -70,11 +69,11 @@ export class TerminatingRoute implements IFluidRoutingContext
     /**
      * Creates a new FluidHandleContext.
      * @param path - The path to this handle relative to the routeContext.
-     * @param context - The parent IFluidRoutingContextEx that has a route to this handle.
+     * @param context - The parent IFluidRoutingContext that has a route to this handle.
      */
     constructor(
         path: string,
-        protected readonly context: IFluidRoutingContextEx,
+        protected readonly context: IFluidRoutingContext,
         public readonly value: () => Promise<IFluidObject>,
      ) {
         this.absolutePath = generateHandleContextPath(path, context);
@@ -86,6 +85,10 @@ export class TerminatingRoute implements IFluidRoutingContext
             return { status: 200, mimeType: "fluid/object", value: await this.value() };
         }
         return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+    }
+
+    public addRoute(path: string, route: IFluidRoutingContext) {
+        throw new Error(`Can't add route ${path} to ${this.absolutePath}`);
     }
 }
 
@@ -99,7 +102,7 @@ export interface IFluidLoadableObjectWithContext extends IFluidObject {
 }
 
 /**
- * An adapter over IFluidRoutingContextEx instance that exposes IFluidHandleContext
+ * An adapter over IFluidRoutingContext instance that exposes IFluidHandleContext
  * Used by IFluidLoadable objects as a base for handles
  */
 export class FluidHandleContext<T extends IFluidLoadableObjectWithContext>
@@ -113,7 +116,7 @@ export class FluidHandleContext<T extends IFluidLoadableObjectWithContext>
      */
     constructor(
         protected readonly value: T,
-        protected readonly context: IFluidRoutingContextEx,
+        protected readonly context: IFluidRoutingContext,
     ) {
     }
 
@@ -125,7 +128,7 @@ export class FluidHandleContext<T extends IFluidLoadableObjectWithContext>
         return this.value.attachState !== AttachState.Detached;
     }
 
-    // IFluidRoutingContextEx methods
+    // IFluidRoutingContext methods
     public get absolutePath() { return this.context.absolutePath; }
     public get routeContext() { return this.context.routeContext; }
     public async request(request: IRequest) { return this.context.request(request); }

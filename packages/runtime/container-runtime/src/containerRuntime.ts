@@ -12,7 +12,7 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
-    IFluidRoutingContextEx,
+    IFluidRoutingContext,
     IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
@@ -656,8 +656,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
-    public readonly rootRoute: IFluidRoutingContextEx;
-    public readonly channelsRoute: IFluidRoutingContextEx;
+    public readonly rootRoute: IFluidRoutingContext;
+    public readonly channelsRoute: IFluidRoutingContext;
 
     // Stores tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();

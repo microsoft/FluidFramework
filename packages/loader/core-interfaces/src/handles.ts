@@ -7,6 +7,8 @@ import { IFluidRequestHandler } from "./fluidRouter";
 import { IFluidObject } from "./fluidObject";
 import { IFluidLoadable } from "./fluidLoadable";
 
+// Default path - route setup for this path will be taken if request is empty
+// Should be empty, to match "" in generateHandleContextPath()
 export const defaultRoutePath = "";
 
 /**
@@ -24,13 +26,8 @@ export interface IFluidRoutingContext extends IFluidRequestHandler {
      * at the root.
      */
     readonly routeContext?: IFluidRoutingContext;
-}
 
-export interface IFluidRoutingParent {
     addRoute(path: string, route: IFluidRoutingContext): void;
-}
-
-export interface IFluidRoutingContextEx extends IFluidRoutingContext, IFluidRoutingParent {
 }
 
 /**
@@ -48,6 +45,9 @@ export interface IFluidHandleContext extends IFluidRoutingContext {
     attachGraph(): void;
 }
 
+/**
+ * IProvideFluidHandle - interface implementing accessor to IFluidHandle
+ */
 export const IFluidHandle: keyof IProvideFluidHandle = "IFluidHandle";
 
 export interface IProvideFluidHandle {
