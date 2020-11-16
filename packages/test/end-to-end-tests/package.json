@@ -122,6 +122,7 @@
     "old-container-definitions": "npm:@fluidframework/container-definitions@^0.28.0",
     "old-container-loader": "npm:@fluidframework/container-loader@^0.28.0",
     "old-container-runtime": "npm:@fluidframework/container-runtime@^0.28.0",
+    "old-core-interfaces": "npm:@fluidframework/core-interfaces@^0.28.0",
     "old-counter": "npm:@fluidframework/counter@^0.28.0",
     "old-datastore-definitions": "npm:@fluidframework/datastore-definitions@^0.28.0",
     "old-driver-definitions": "npm:@fluidframework/driver-definitions@^0.28.0",
