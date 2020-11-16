@@ -11,7 +11,6 @@
 
 ### OdspDriverUrlResolver2 renamed to OdspDriverUrlResolverForShareLink
 `OdspDriverUrlResolver2` renamed to `OdspDriverUrlResolverForShareLink`
->>>>>>> 584573b51c3fdb7b7009f8e7b2f83b1fb8975fa0
 
 ### removeAllEntriesForDocId api in host storage changed
 `removeAllEntriesForDocId` api in host storage is now an async api.
