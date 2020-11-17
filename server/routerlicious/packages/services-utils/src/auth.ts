@@ -16,7 +16,7 @@ export function validateTokenClaims(
     documentId: string,
     tenantId: string,
     maxTokenLifetimeSec: number,
-    isTokenExpiryEnabled: boolean): ITokenClaims {
+    isTokenExpiryEnabled: boolean): ITokenClaims | undefined {
     const claims = jwt.decode(token) as ITokenClaims;
 
     if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
