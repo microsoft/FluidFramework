@@ -294,7 +294,7 @@ export class RunningSummarizer implements IDisposable {
         private immediateSummary: boolean = false,
         private readonly raiseSummarizingError: (description: string) => void,
     ) {
-        this.logger = new ChildLogger(baseLogger, "Summary", undefined, { summarizeCount: () => this.summarizeCount });
+        this.logger = new ChildLogger(baseLogger, "Run", undefined, { summarizeRunTag: () => this.summarizeCount });
 
         this.heuristics = new SummarizerHeuristics(
             configuration,
@@ -310,9 +310,9 @@ export class RunningSummarizer implements IDisposable {
             this.configuration.maxAckWaitTime,
             () => {
                 this.raiseSummarizingError("SummaryAckWaitTimeout");
-                // Note: summarizeCount (from ChildLogger definition) may be 0,
+                // Note: summarizeRunTag (from ChildLogger definition) may be 0,
                 // since this code path is hit when RunningSummarizer first starts up,
-                // before this instance has kicked off a new summary.
+                // before this instance has kicked off a new summarize run.
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
@@ -332,12 +332,12 @@ export class RunningSummarizer implements IDisposable {
     }
 
     /**
-     * RunningSummarizer's logger includes the sequenced index of the current summary on each event.
+     * RunningSummarizer's logger includes the sequenced index of the current summary on each event (summarizerRunTag).
      * If some other Summarizer code wants that event on their logs they can get it here,
      * but only if they're logging about that same summary.
      * @param summaryOpRefSeq - RefSeq number of the summary op, to ensure the log correlation will be correct
      */
-    public getLoggerIfCorrelated = (summaryOpRefSeq) =>
+    public tryGetCorrelatedLogger = (summaryOpRefSeq) =>
         this.heuristics.lastAttempted.refSequenceNumber === summaryOpRefSeq
             ? this.logger
             : undefined;
@@ -524,7 +524,7 @@ export class RunningSummarizer implements IDisposable {
 
     private async generateSummaryWithLogging(message: string, safe: boolean): Promise<GenerateSummaryData | undefined> {
         const summarizingEvent = PerformanceEvent.start(this.logger, {
-            eventName: "Summarizing",
+            eventName: "SummarizerRun",
             message,
             timeSinceLastAttempt: Date.now() - this.heuristics.lastAttempted.summaryTime,
             timeSinceLastSummary: Date.now() - this.heuristics.lastAcked.summaryTime,
@@ -774,9 +774,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
 
             // Raise error to parent container.
-            this.emit("summarizingError", createSummarizingWarning("Summarizer: handleAckError", true));
+            this.emit("summarizingError", createSummarizingWarning("Summarizer: HandleSummaryAckFatalError", true));
 
-            this.stop("handleAckError");
+            this.stop("HandleSummaryAckFatalError");
         });
 
         // Listen for ops
@@ -834,7 +834,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     private async handleSummaryAcks() {
         let refSequenceNumber = this.summaryCollection.initialSequenceNumber;
         while (this.runningSummarizer) {
-            const summaryLogger = this.runningSummarizer.getLoggerIfCorrelated(refSequenceNumber) ?? this.logger;
+            const summaryLogger = this.runningSummarizer.tryGetCorrelatedLogger(refSequenceNumber) ?? this.logger;
             try {
                 const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
                 refSequenceNumber = ack.summaryOp.referenceSequenceNumber;

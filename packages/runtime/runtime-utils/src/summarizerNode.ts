@@ -261,23 +261,23 @@ export class SummarizerNode implements ISummarizerNode {
     private wipSkipRecursion = false;
 
     public startSummary(referenceSequenceNumber: number, summaryLogger) {
-        assert(this.summaryLogger === undefined, "summaryLogger should not be set yet in startSummary");
+        assert(this.wipSummaryLogger === undefined, "wipSummaryLogger should not be set yet in startSummary");
 
         assert(
             this.wipReferenceSequenceNumber === undefined,
             "Already tracking a summary",
         );
 
-        this.summaryLogger = summaryLogger;
+        this.wipSummaryLogger = summaryLogger;
 
         for (const child of this.children.values()) {
-            child.startSummary(referenceSequenceNumber, summaryLogger);
+            child.startSummary(referenceSequenceNumber, this.wipSummaryLogger);
         }
         this.wipReferenceSequenceNumber = referenceSequenceNumber;
     }
 
     public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
-        assert(this.summaryLogger !== undefined, "summaryLogger should have been set in startSummary");
+        assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary");
 
         // Try to reuse the tree if unchanged
         if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
@@ -332,7 +332,7 @@ export class SummarizerNode implements ISummarizerNode {
                 // No base summary to reference
                 throw error;
             }
-            this.summaryLogger.logException({
+            this.wipSummaryLogger.logException({
                 eventName: "SummarizingWithBasePlusOps",
                 category: "error",
             },
@@ -347,17 +347,22 @@ export class SummarizerNode implements ISummarizerNode {
         }
     }
 
+    /**
+     * Complete the WIP summary for the given proposalHandle
+     */
     public completeSummary(proposalHandle: string) {
-        assert(this.summaryLogger !== undefined, "summaryLogger should have been set in startSummary");
-        this.summaryLogger = undefined;
         this.completeSummaryCore(proposalHandle, undefined, false);
     }
 
+    /**
+     * Recursive implementation for completeSummary, with additional internal-only parameters
+     */
     private completeSummaryCore(
         proposalHandle: string,
         parentPath: EscapedPath | undefined,
         parentSkipRecursion: boolean,
     ) {
+        assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary");
         assert(this.wipReferenceSequenceNumber !== undefined, "Not tracking a summary");
         let localPathsToUse = this.wipLocalPaths;
 
@@ -418,7 +423,7 @@ export class SummarizerNode implements ISummarizerNode {
         this.wipReferenceSequenceNumber = undefined;
         this.wipLocalPaths = undefined;
         this.wipSkipRecursion = false;
-        this.summaryLogger = undefined;
+        this.wipSummaryLogger = undefined;
         for (const child of this.children.values()) {
             child.clearSummary();
         }
@@ -428,7 +433,7 @@ export class SummarizerNode implements ISummarizerNode {
         proposalHandle: string | undefined,
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
-        summaryLogger: ITelemetryLogger,
+        correlatedSummaryLogger: ITelemetryLogger,
     ): Promise<void> {
         if (proposalHandle !== undefined) {
             const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
@@ -446,7 +451,7 @@ export class SummarizerNode implements ISummarizerNode {
             snapshotTree,
             undefined,
             EscapedPath.create(""),
-            summaryLogger,
+            correlatedSummaryLogger,
         );
     }
 
@@ -488,11 +493,11 @@ export class SummarizerNode implements ISummarizerNode {
         snapshotTree: ISnapshotTree,
         basePath: EscapedPath | undefined,
         localPath: EscapedPath,
-        summaryLogger: ITelemetryLogger,
+        correlatedSummaryLogger: ITelemetryLogger,
     ): void {
         this.refreshLatestSummaryCore(referenceSequenceNumber);
 
-        const { baseSummary, pathParts } = decodeSummary(snapshotTree, summaryLogger);
+        const { baseSummary, pathParts } = decodeSummary(snapshotTree, correlatedSummaryLogger);
 
         this.latestSummary = new SummaryNode({
             referenceSequenceNumber,
@@ -515,7 +520,7 @@ export class SummarizerNode implements ISummarizerNode {
                     subtree,
                     pathForChildren,
                     EscapedPath.create(id),
-                    summaryLogger,
+                    correlatedSummaryLogger,
                 );
             }
         }
@@ -597,7 +602,7 @@ export class SummarizerNode implements ISummarizerNode {
         /** Undefined means created without summary */
         private latestSummary?: SummaryNode,
         private readonly initialSummary?: IInitialSummary,
-        private summaryLogger?: ITelemetryLogger,
+        private wipSummaryLogger?: ITelemetryLogger,
     ) {
         this.canReuseHandle = config.canReuseHandle ?? true;
         // BUGBUG: Seeing issues with differential summaries.
@@ -676,7 +681,7 @@ export class SummarizerNode implements ISummarizerNode {
                     createParam.sequenceNumber,
                     summaryNode,
                     initialSummary,
-                    this.summaryLogger,
+                    this.wipSummaryLogger,
                 );
                 break;
             }
@@ -719,7 +724,7 @@ export class SummarizerNode implements ISummarizerNode {
                     latestSummary?.referenceSequenceNumber ?? -1,
                     latestSummary?.createForChild(id),
                     childInitialSummary,
-                    this.summaryLogger,
+                    this.wipSummaryLogger,
                 );
                 break;
             }
