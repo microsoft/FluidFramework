@@ -6,6 +6,6 @@ The container package is an example of how a container author might pick and cho
 
 If you want to run this example follow the following steps:
 
-1. Run `npm install` from the `FluidFramework` root directory
+1. Run `npm install` and `npm run build:fast` from the `FluidFramework` root directory
 2. Navigate to this directory
 3. Run `npm run start`

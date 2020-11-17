@@ -13,7 +13,7 @@ There is another experimental implementation of Clicker using a WiP Fluid React 
 
 If you want to run this example follow the following steps:
 
-1. Run `npm install` from the `FluidFramework` root directory
+1. Run `npm install` and `npm run build:fast` from the `FluidFramework` root directoryFramework` root directory
 2. Navigate to this directory
 3. Run `npm run start`
 

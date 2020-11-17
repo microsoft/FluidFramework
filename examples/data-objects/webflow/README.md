@@ -6,7 +6,7 @@ WebFlow is an experimental collaborative rich text editor built on top of the Fl
 
 If you want to run this example follow the following steps:
 
-1. Run `npm install` from the `FluidFramework` root directory
+1. Run `npm install` and `npm run build:fast` from the `FluidFramework` root directory
 2. Navigate to this directory
 3. Run `npm run start`
 

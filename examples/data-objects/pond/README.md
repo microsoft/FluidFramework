@@ -6,7 +6,7 @@ The pond is a collection of simple Fluid scenarios used primarily for testing.
 
 If you want to run this container follow the following steps:
 
-1. Run `npm install` from the `FluidFramework` root directory
+1. Run `npm install` and `npm run build:fast` from the `FluidFramework` root directory
 2. Navigate to this directory
 3. Run `npm run start`
 
