@@ -235,9 +235,7 @@ export class LocalPersistentCache implements IPersistedCache {
 
     removeAllEntriesForDocId(docId: string): void {
         Array.from(this.cache)
-        .filter(([key]) => {
-            key.startsWith(docId);
-        })
+        .filter(([key]) => key.startsWith(docId))
         .map(([key]) => {
             this.cache.delete(key);
         });
