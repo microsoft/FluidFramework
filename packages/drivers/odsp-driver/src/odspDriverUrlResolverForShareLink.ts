@@ -24,6 +24,11 @@ import {
     tokenFromResponse,
 } from "./tokenFetch";
 
+/**
+ * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
+ * url format and the ones which have things like driveId, siteId, itemId etc encoded in nav param.
+ * This resolver also handles share links and try to generate one for the use by the app.
+ */
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     private readonly logger: ITelemetryLogger;
     private readonly sharingLinkCache = new PromiseCache<string, string>();
@@ -229,4 +234,28 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     public static createNavParam(locator: OdspFluidDataStoreLocator) {
         return encodeOdspFluidDataStoreLocator(locator);
     }
+}
+
+/**
+ * Utility to resolve urls like the ones created by createOdspUrl which is driver inner
+ * url format and the ones which have things like driveId, siteId, itemId etc encoded in nav param.
+ * @param request - Request to be resolved.
+ */
+export async function resolveNavParamUrlUtil(request: IRequest): Promise<IOdspResolvedUrl> {
+    const requestToBeResolved = { headers: request.headers, url: request.url };
+    try {
+        const url = new URL(request.url);
+        const odspFluidInfo = getLocatorFromOdspUrl(url);
+        if (odspFluidInfo) {
+            requestToBeResolved.url = createOdspUrl(
+                odspFluidInfo.siteUrl,
+                odspFluidInfo.driveId,
+                odspFluidInfo.fileId,
+                odspFluidInfo.dataStorePath,
+            );
+        }
+    } catch (error) {
+        // If the locator throws some error, then try to resolve the request as it is.
+    }
+    return new OdspDriverUrlResolver().resolve(requestToBeResolved);
 }
