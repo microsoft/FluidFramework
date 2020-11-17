@@ -6,6 +6,12 @@
   "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
+  "workspaces": [
+    "packages/**",
+    "examples/**",
+    "server/routerlicious/",
+    "common/lib/*"
+  ],
   "scripts": {
     "build": "npm run policy-check && npm run layer-check && npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",
     "build:ci": "npm run build:genver && lerna run build:compile --stream",
@@ -106,6 +112,7 @@
     "@fluidframework/test-tools": "^0.2.3074",
     "@mattetti/custom-api-documenter": "^0.3.3",
     "@microsoft/api-extractor": "^7.7.2",
+    "@yarnpkg/pnpify": "^2.3.3",
     "concurrently": "^5.2.0",
     "copyfiles": "^2.1.0",
     "forever": "^3.0.4",
@@ -137,12 +144,5 @@
       }
     },
     "generatorName": "generator-fluid"
-  },
-  "workspaces": [
-    "common/*/*",
-    "packages/*/*",
-    "examples/**",
-    "server/routerlicious/*",
-    "server/tinylicious"
-  ]
+  }
 }

@@ -15,5 +15,7 @@ yarn.lock                    merge=binary
 # Set the language for these files to json5 to ensure GitHub doesn't show the comments as errors
 /.vscode/*.json              linguist-language=JSON5
 
-# Hide docs from GitHub's language detection
+# Hide docs and yarn from GitHub's language detection
 /docs/**                     linguist-documentation
+.yarn/*                      linguist-vendored
+.pnp.js                      linguist-vendored

@@ -1,4 +1,5 @@
 {
+  "npmClient": "yarn",
   "packages": [
     "examples/**",
     "packages/**"

@@ -1,0 +1,1969 @@
+{
+    "location": ".",
+    "name": "root",
+    "workspaceDependencies": [],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/apps/collaborative-textarea",
+    "name": "@fluid-example/collaborative-textarea",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/loader/core-interfaces",
+        "examples/utils/get-tinylicious-container",
+        "examples/data-objects/react-inputs",
+        "packages/dds/sequence",
+        "packages/framework/view-interfaces",
+        "examples/utils/get-session-storage-container",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/apps/likes-and-comments",
+    "name": "@fluid-example/likes-and-comments",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/dds/counter",
+        "packages/runtime/datastore-definitions",
+        "examples/utils/get-tinylicious-container",
+        "packages/dds/map",
+        "packages/dds/merge-tree",
+        "packages/framework/react",
+        "examples/data-objects/react-inputs",
+        "packages/dds/sequence",
+        "packages/dds/shared-object-base",
+        "packages/framework/view-interfaces",
+        "examples/utils/get-session-storage-container"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "examples/apps/spaces",
+    "name": "@fluid-example/spaces",
+    "workspaceDependencies": [
+        "examples/data-objects/clicker",
+        "examples/data-objects/codemirror",
+        "examples/apps/collaborative-textarea",
+        "examples/data-objects/multiview/coordinate-model",
+        "examples/data-objects/multiview/slider-coordinate-view",
+        "examples/data-objects/prosemirror",
+        "packages/framework/aqueduct",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore-definitions",
+        "examples/utils/get-tinylicious-container",
+        "packages/runtime/runtime-definitions",
+        "packages/runtime/runtime-utils",
+        "packages/framework/view-adapters",
+        "packages/framework/view-interfaces",
+        "examples/utils/get-session-storage-container"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/badge",
+    "name": "@fluid-example/badge",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/dds/cell",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/map",
+        "packages/dds/sequence",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/canvas",
+    "name": "@fluid-example/canvas",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/loader/core-interfaces",
+        "packages/dds/ink",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/clicker",
+    "name": "@fluid-example/clicker",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/loader/core-interfaces",
+        "packages/dds/counter",
+        "packages/runtime/runtime-definitions",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/clicker-react/clicker-context",
+    "name": "@fluid-example/clicker-context",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/framework/react",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/clicker-react/clicker-function",
+    "name": "@fluid-example/clicker-function",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/framework/react",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/clicker-react/clicker-react",
+    "name": "@fluid-example/clicker-react",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/dds/counter",
+        "packages/framework/react",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/clicker-react/clicker-reducer",
+    "name": "@fluid-example/clicker-reducer",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/dds/counter",
+        "packages/framework/react",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/clicker-react/clicker-with-hook",
+    "name": "@fluid-example/clicker-with-hook",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/dds/counter",
+        "packages/framework/react",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/client-ui-lib",
+    "name": "@fluid-example/client-ui-lib",
+    "workspaceDependencies": [
+        "examples/utils/fluid-object-interfaces",
+        "examples/data-objects/search-menu",
+        "packages/runtime/client-api",
+        "packages/loader/container-definitions",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/ink",
+        "packages/dds/map",
+        "packages/dds/merge-tree",
+        "packages/framework/request-handler",
+        "packages/runtime/runtime-definitions",
+        "packages/runtime/runtime-utils",
+        "packages/dds/sequence",
+        "packages/framework/undo-redo",
+        "packages/framework/view-adapters",
+        "packages/framework/view-interfaces",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "examples/data-objects/codemirror",
+    "name": "@fluid-example/codemirror",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/loader/container-definitions",
+        "packages/runtime/container-runtime",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/map",
+        "packages/dds/merge-tree",
+        "packages/framework/request-handler",
+        "packages/runtime/runtime-definitions",
+        "packages/dds/sequence",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/diceroller",
+    "name": "@fluid-example/diceroller",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/dds/map",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/flow-util-lib",
+    "name": "@fluid-example/flow-util-lib",
+    "workspaceDependencies": [
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/image-collection",
+    "name": "@fluid-example/image-collection",
+    "workspaceDependencies": [
+        "examples/data-objects/client-ui-lib",
+        "examples/utils/fluid-object-interfaces",
+        "packages/loader/core-interfaces",
+        "packages/framework/data-object-base",
+        "packages/runtime/datastore",
+        "packages/dds/map",
+        "packages/runtime/runtime-definitions",
+        "packages/framework/view-interfaces"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/image-gallery",
+    "name": "@fluid-example/image-gallery",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/dds/map",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/key-value-cache",
+    "name": "@fluid-example/key-value-cache",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/loader/container-definitions",
+        "packages/runtime/container-runtime",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/map",
+        "packages/framework/request-handler",
+        "packages/runtime/runtime-definitions",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/math",
+    "name": "@fluid-example/math",
+    "workspaceDependencies": [
+        "examples/data-objects/client-ui-lib",
+        "examples/data-objects/flow-util-lib",
+        "examples/utils/fluid-object-interfaces",
+        "examples/data-objects/search-menu",
+        "packages/loader/core-interfaces",
+        "packages/framework/data-object-base",
+        "packages/runtime/datastore",
+        "packages/dds/map",
+        "packages/dds/merge-tree",
+        "packages/runtime/runtime-definitions",
+        "packages/dds/sequence",
+        "packages/framework/view-interfaces"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/monaco",
+    "name": "@fluid-example/monaco",
+    "workspaceDependencies": [
+        "examples/data-objects/client-ui-lib",
+        "packages/framework/aqueduct",
+        "packages/loader/container-definitions",
+        "packages/loader/core-interfaces",
+        "packages/dds/merge-tree",
+        "packages/runtime/runtime-definitions",
+        "packages/dds/sequence",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/multiview/constellation-model",
+    "name": "@fluid-example/multiview-constellation-model",
+    "workspaceDependencies": [
+        "examples/data-objects/multiview/interface",
+        "examples/data-objects/multiview/coordinate-model",
+        "packages/framework/aqueduct",
+        "packages/loader/core-interfaces",
+        "packages/dds/map",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/multiview/constellation-view",
+    "name": "@fluid-example/multiview-constellation-view",
+    "workspaceDependencies": [
+        "examples/data-objects/multiview/interface",
+        "examples/data-objects/multiview/slider-coordinate-view",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/multiview/container",
+    "name": "@fluid-example/multiview-container",
+    "workspaceDependencies": [
+        "examples/data-objects/multiview/constellation-model",
+        "examples/data-objects/multiview/constellation-view",
+        "examples/data-objects/multiview/interface",
+        "examples/data-objects/multiview/coordinate-model",
+        "examples/data-objects/multiview/plot-coordinate-view",
+        "examples/data-objects/multiview/slider-coordinate-view",
+        "examples/data-objects/multiview/triangle-view",
+        "packages/framework/aqueduct",
+        "packages/runtime/container-runtime",
+        "packages/runtime/container-runtime-definitions",
+        "packages/framework/request-handler",
+        "packages/runtime/runtime-utils",
+        "packages/framework/view-adapters",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/multiview/coordinate-model",
+    "name": "@fluid-example/multiview-coordinate-model",
+    "workspaceDependencies": [
+        "examples/data-objects/multiview/interface",
+        "packages/framework/aqueduct",
+        "packages/dds/map",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/multiview/interface",
+    "name": "@fluid-example/multiview-coordinate-interface",
+    "workspaceDependencies": [],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/multiview/plot-coordinate-view",
+    "name": "@fluid-example/multiview-plot-coordinate-view",
+    "workspaceDependencies": [
+        "examples/data-objects/multiview/interface",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/multiview/slider-coordinate-view",
+    "name": "@fluid-example/multiview-slider-coordinate-view",
+    "workspaceDependencies": [
+        "examples/data-objects/multiview/interface",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/multiview/triangle-view",
+    "name": "@fluid-example/multiview-triangle-view",
+    "workspaceDependencies": [
+        "examples/data-objects/multiview/interface",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/musica",
+    "name": "@fluid-example/musica",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/dds/map",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/pond",
+    "name": "@fluid-example/pond",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/runtime/container-runtime-definitions",
+        "packages/loader/core-interfaces",
+        "packages/dds/counter",
+        "packages/dds/map",
+        "packages/runtime/runtime-definitions",
+        "packages/framework/synthesize",
+        "packages/framework/view-adapters",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "examples/data-objects/primitives",
+    "name": "@fluid-example/primitives",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/loader/core-interfaces",
+        "packages/dds/map",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/progress-bars",
+    "name": "@fluid-example/progress-bars",
+    "workspaceDependencies": [
+        "examples/utils/fluid-object-interfaces",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/map",
+        "packages/runtime/runtime-definitions",
+        "packages/framework/view-interfaces"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/prosemirror",
+    "name": "@fluid-example/prosemirror",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/loader/container-definitions",
+        "packages/runtime/container-runtime",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/map",
+        "packages/dds/merge-tree",
+        "packages/framework/request-handler",
+        "packages/runtime/runtime-definitions",
+        "packages/dds/sequence",
+        "packages/framework/view-adapters",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/react-inputs",
+    "name": "@fluidframework/react-inputs",
+    "workspaceDependencies": [
+        "packages/dds/cell",
+        "packages/dds/sequence"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/scribe",
+    "name": "@fluid-example/scribe",
+    "workspaceDependencies": [
+        "examples/hosts/host-service-interfaces",
+        "packages/runtime/client-api",
+        "packages/framework/aqueduct",
+        "packages/loader/container-definitions",
+        "packages/runtime/container-runtime",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/map",
+        "packages/dds/merge-tree",
+        "packages/framework/request-handler",
+        "packages/runtime/runtime-definitions",
+        "packages/dds/sequence",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "examples/data-objects/search-menu",
+    "name": "@fluid-example/search-menu",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/dds/merge-tree"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/shared-text",
+    "name": "@fluid-example/shared-text",
+    "workspaceDependencies": [
+        "examples/data-objects/client-ui-lib",
+        "examples/data-objects/image-collection",
+        "packages/agents/intelligence-runner-agent",
+        "examples/data-objects/math",
+        "examples/data-objects/monaco",
+        "examples/data-objects/progress-bars",
+        "examples/data-objects/video-players",
+        "packages/runtime/client-api",
+        "packages/framework/aqueduct",
+        "packages/dds/cell",
+        "packages/loader/container-definitions",
+        "packages/runtime/container-runtime",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/ink",
+        "packages/dds/map",
+        "packages/dds/merge-tree",
+        "packages/framework/request-handler",
+        "packages/runtime/runtime-definitions",
+        "packages/runtime/runtime-utils",
+        "packages/dds/sequence",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/simple-fluidobject-embed",
+    "name": "@fluid-example/simple-fluidobject-embed",
+    "workspaceDependencies": [
+        "examples/data-objects/clicker",
+        "packages/framework/aqueduct",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/smde",
+    "name": "@fluid-example/smde",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/loader/container-definitions",
+        "packages/runtime/container-runtime",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/map",
+        "packages/dds/merge-tree",
+        "packages/framework/request-handler",
+        "packages/runtime/runtime-definitions",
+        "packages/dds/sequence",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/table-document",
+    "name": "@fluid-example/table-document",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/merge-tree",
+        "packages/runtime/runtime-definitions",
+        "packages/dds/sequence",
+        "packages/drivers/local-driver",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/runtime-utils",
+        "packages/runtime/test-runtime-utils",
+        "packages/test/test-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0",
+        "@fluidframework/server-local-server@^0.1015.0-0"
+    ]
+}
+{
+    "location": "examples/data-objects/table-view",
+    "name": "@fluid-example/table-view",
+    "workspaceDependencies": [
+        "examples/data-objects/flow-util-lib",
+        "examples/data-objects/table-document",
+        "packages/framework/aqueduct",
+        "packages/loader/container-definitions",
+        "packages/loader/core-interfaces",
+        "packages/runtime/runtime-utils",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/todo",
+    "name": "@fluid-example/todo",
+    "workspaceDependencies": [
+        "examples/data-objects/clicker",
+        "packages/framework/aqueduct",
+        "packages/dds/cell",
+        "packages/loader/core-interfaces",
+        "packages/dds/map",
+        "examples/data-objects/react-inputs",
+        "packages/runtime/runtime-definitions",
+        "packages/dds/sequence",
+        "packages/framework/view-adapters",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/video-players",
+    "name": "@fluid-example/video-players",
+    "workspaceDependencies": [
+        "examples/data-objects/client-ui-lib",
+        "examples/utils/fluid-object-interfaces",
+        "packages/loader/core-interfaces",
+        "packages/framework/data-object-base",
+        "packages/runtime/datastore",
+        "packages/dds/map",
+        "packages/runtime/runtime-definitions",
+        "packages/framework/view-interfaces"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/data-objects/vltava",
+    "name": "@fluid-example/vltava",
+    "workspaceDependencies": [
+        "examples/data-objects/clicker",
+        "examples/data-objects/codemirror",
+        "examples/utils/fluid-object-interfaces",
+        "examples/data-objects/prosemirror",
+        "examples/apps/spaces",
+        "packages/framework/aqueduct",
+        "packages/runtime/container-runtime",
+        "packages/runtime/container-runtime-definitions",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore-definitions",
+        "packages/framework/last-edited-experimental",
+        "packages/dds/map",
+        "packages/framework/request-handler",
+        "packages/runtime/runtime-definitions",
+        "packages/runtime/runtime-utils",
+        "packages/framework/view-adapters",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "examples/data-objects/webflow",
+    "name": "@fluid-example/webflow",
+    "workspaceDependencies": [
+        "examples/data-objects/flow-util-lib",
+        "packages/loader/core-interfaces",
+        "packages/framework/data-object-base",
+        "packages/dds/map",
+        "packages/dds/merge-tree",
+        "packages/runtime/runtime-definitions",
+        "packages/dds/sequence",
+        "packages/framework/view-interfaces",
+        "packages/drivers/local-driver",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/runtime-utils",
+        "packages/test/test-utils",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/server-local-server@^0.1015.0-0"
+    ]
+}
+{
+    "location": "examples/hosts/app-integration/container-views",
+    "name": "@fluid-example/app-integration-container-views",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/loader/container-loader",
+        "packages/loader/core-interfaces",
+        "examples/utils/get-tinylicious-container",
+        "packages/dds/map",
+        "packages/framework/view-adapters",
+        "packages/framework/view-interfaces"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/hosts/app-integration/external-views",
+    "name": "@fluid-example/app-integration-external-views",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "examples/utils/get-session-storage-container",
+        "examples/utils/get-tinylicious-container"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/hosts/host-service-interfaces",
+    "name": "@fluid-example/host-service-interfaces",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/core-interfaces"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/hosts/hosts-sample",
+    "name": "@fluid-internal/hosts-sample",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/container-loader",
+        "packages/loader/core-interfaces",
+        "packages/drivers/routerlicious-driver",
+        "packages/runtime/test-runtime-utils",
+        "packages/framework/view-interfaces",
+        "packages/loader/web-code-loader"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "examples/hosts/iframe-host",
+    "name": "@fluid-example/iframe-host",
+    "workspaceDependencies": [
+        "examples/data-objects/todo",
+        "packages/hosts/base-host",
+        "packages/loader/container-definitions",
+        "packages/loader/container-loader",
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "examples/utils/get-tinylicious-container",
+        "packages/drivers/iframe-driver",
+        "packages/drivers/routerlicious-driver",
+        "packages/runtime/test-runtime-utils",
+        "packages/framework/view-adapters",
+        "packages/loader/web-code-loader"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "examples/hosts/node-host",
+    "name": "@fluid-internal/node-host",
+    "workspaceDependencies": [
+        "examples/data-objects/key-value-cache",
+        "packages/loader/container-definitions",
+        "packages/loader/container-loader",
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions",
+        "packages/drivers/routerlicious-driver",
+        "packages/drivers/routerlicious-host",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "examples/utils/bundle-size-tests",
+    "name": "@fluid-example/bundle-size-tests",
+    "workspaceDependencies": [
+        "packages/runtime/container-runtime",
+        "packages/dds/map",
+        "packages/dds/matrix",
+        "packages/drivers/odsp-driver",
+        "packages/dds/sequence"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/utils/fluid-object-interfaces",
+    "name": "@fluid-example/fluid-object-interfaces",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "examples/utils/get-session-storage-container",
+    "name": "@fluidframework/get-session-storage-container",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/container-loader",
+        "packages/drivers/local-driver"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/server-local-server@^0.1015.0-0"
+    ]
+}
+{
+    "location": "examples/utils/get-tinylicious-container",
+    "name": "@fluidframework/get-tinylicious-container",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/container-loader",
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "packages/drivers/routerlicious-driver"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/agents/intelligence-runner-agent",
+    "name": "@fluid-example/intelligence-runner-agent",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/dds/map",
+        "packages/dds/sequence"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/dds/cell",
+    "name": "@fluidframework/cell",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/shared-object-base",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/dds/counter",
+    "name": "@fluidframework/counter",
+    "workspaceDependencies": [
+        "packages/runtime/datastore-definitions",
+        "packages/dds/shared-object-base",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/dds/ink",
+    "name": "@fluidframework/ink",
+    "workspaceDependencies": [
+        "packages/runtime/datastore-definitions",
+        "packages/dds/shared-object-base",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/dds/map",
+    "name": "@fluidframework/map",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/shared-object-base",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-base@^0.1015.0-0",
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/dds/matrix",
+    "name": "@fluidframework/matrix",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/merge-tree",
+        "packages/runtime/runtime-utils",
+        "packages/dds/shared-object-base",
+        "packages/utils/telemetry-utils",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/dds/merge-tree",
+    "name": "@fluidframework/merge-tree",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore-definitions",
+        "packages/utils/telemetry-utils",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/dds/ordered-collection",
+    "name": "@fluidframework/ordered-collection",
+    "workspaceDependencies": [
+        "packages/runtime/datastore-definitions",
+        "packages/dds/shared-object-base",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/dds/register-collection",
+    "name": "@fluidframework/register-collection",
+    "workspaceDependencies": [
+        "packages/runtime/datastore-definitions",
+        "packages/dds/shared-object-base",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/dds/sequence",
+    "name": "@fluidframework/sequence",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/map",
+        "packages/dds/merge-tree",
+        "packages/runtime/runtime-utils",
+        "packages/dds/shared-object-base",
+        "packages/utils/telemetry-utils",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0",
+        "@fluidframework/gitresources@^0.1015.0-0",
+        "@fluidframework/server-services-client@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/dds/shared-object-base",
+    "name": "@fluidframework/shared-object-base",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/runtime/datastore-definitions",
+        "packages/utils/telemetry-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/dds/shared-summary-block",
+    "name": "@fluidframework/shared-summary-block",
+    "workspaceDependencies": [
+        "packages/runtime/datastore-definitions",
+        "packages/dds/shared-object-base",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/drivers/debugger",
+    "name": "@fluidframework/debugger",
+    "workspaceDependencies": [
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "packages/drivers/replay-driver"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/drivers/driver-base",
+    "name": "@fluidframework/driver-base",
+    "workspaceDependencies": [
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/drivers/file-driver",
+    "name": "@fluidframework/file-driver",
+    "workspaceDependencies": [
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "packages/drivers/replay-driver"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/drivers/fluidapp-odsp-urlResolver",
+    "name": "@fluid-internal/fluidapp-odsp-urlresolver",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions",
+        "packages/drivers/odsp-driver",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/drivers/iframe-driver",
+    "name": "@fluidframework/iframe-driver",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "packages/utils/telemetry-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/drivers/local-driver",
+    "name": "@fluidframework/local-driver",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "packages/drivers/routerlicious-driver",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0",
+        "@fluidframework/server-local-server@^0.1015.0-0",
+        "@fluidframework/server-services-client@^0.1015.0-0",
+        "@fluidframework/server-services-core@^0.1015.0-0",
+        "@fluidframework/server-test-utils@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/drivers/odsp-driver",
+    "name": "@fluidframework/odsp-driver",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/drivers/driver-base",
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "packages/utils/odsp-doclib-utils",
+        "packages/utils/telemetry-utils",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/gitresources@^0.1015.0-0",
+        "@fluidframework/protocol-base@^0.1015.0-0",
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/drivers/odsp-urlResolver",
+    "name": "@fluidframework/odsp-urlresolver",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions",
+        "packages/drivers/odsp-driver",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/drivers/replay-driver",
+    "name": "@fluidframework/replay-driver",
+    "workspaceDependencies": [
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "packages/utils/telemetry-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/drivers/routerlicious-driver",
+    "name": "@fluidframework/routerlicious-driver",
+    "workspaceDependencies": [
+        "packages/drivers/driver-base",
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/gitresources@^0.1015.0-0",
+        "@fluidframework/protocol-base@^0.1015.0-0",
+        "@fluidframework/protocol-definitions@^0.1015.0-0",
+        "@fluidframework/server-services-client@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/drivers/routerlicious-host",
+    "name": "@fluidframework/routerlicious-host",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/drivers/routerlicious-urlResolver",
+    "name": "@fluidframework/routerlicious-urlresolver",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/framework/aqueduct",
+    "name": "@fluidframework/aqueduct",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/container-loader",
+        "packages/runtime/container-runtime",
+        "packages/runtime/container-runtime-definitions",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/map",
+        "packages/framework/request-handler",
+        "packages/runtime/runtime-definitions",
+        "packages/runtime/runtime-utils",
+        "packages/framework/synthesize",
+        "packages/framework/view-interfaces",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/framework/data-object-base",
+    "name": "@fluidframework/data-object-base",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/runtime/container-runtime",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/runtime/datastore-definitions",
+        "packages/framework/request-handler",
+        "packages/runtime/runtime-definitions",
+        "packages/runtime/runtime-utils",
+        "packages/dds/shared-object-base",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/framework/dds-interceptions",
+    "name": "@fluidframework/dds-interceptions",
+    "workspaceDependencies": [
+        "packages/dds/map",
+        "packages/dds/merge-tree",
+        "packages/runtime/runtime-definitions",
+        "packages/dds/sequence",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/framework/last-edited-experimental",
+    "name": "@fluidframework/last-edited-experimental",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/runtime/container-runtime",
+        "packages/runtime/container-runtime-definitions",
+        "packages/loader/core-interfaces",
+        "packages/runtime/runtime-utils",
+        "packages/dds/shared-summary-block",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/framework/react",
+    "name": "@fluidframework/react",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/loader/core-interfaces",
+        "packages/dds/counter",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/map",
+        "packages/dds/sequence",
+        "packages/dds/shared-object-base",
+        "packages/framework/view-interfaces"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/framework/request-handler",
+    "name": "@fluidframework/request-handler",
+    "workspaceDependencies": [
+        "packages/runtime/container-runtime-definitions",
+        "packages/loader/core-interfaces",
+        "packages/runtime/runtime-definitions",
+        "packages/runtime/runtime-utils",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/framework/synthesize",
+    "name": "@fluidframework/synthesize",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/framework/undo-redo",
+    "name": "@fluidframework/undo-redo",
+    "workspaceDependencies": [
+        "packages/dds/map",
+        "packages/dds/matrix",
+        "packages/dds/merge-tree",
+        "packages/dds/sequence",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/framework/view-adapters",
+    "name": "@fluidframework/view-adapters",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/framework/view-interfaces"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/framework/view-interfaces",
+    "name": "@fluidframework/view-interfaces",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/hosts/base-host",
+    "name": "@fluidframework/base-host",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/container-loader",
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions",
+        "packages/utils/telemetry-utils",
+        "packages/loader/web-code-loader",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/loader/container-definitions",
+    "name": "@fluidframework/container-definitions",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/loader/container-loader",
+    "name": "@fluidframework/container-loader",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/container-utils",
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "packages/utils/telemetry-utils",
+        "packages/loader/test-loader-utils",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-base@^0.1015.0-0",
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/loader/container-utils",
+    "name": "@fluidframework/container-utils",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/utils/telemetry-utils",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/loader/core-interfaces",
+    "name": "@fluidframework/core-interfaces",
+    "workspaceDependencies": [],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/loader/driver-definitions",
+    "name": "@fluidframework/driver-definitions",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/loader/driver-utils",
+    "name": "@fluidframework/driver-utils",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions",
+        "packages/utils/telemetry-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/gitresources@^0.1015.0-0",
+        "@fluidframework/protocol-base@^0.1015.0-0",
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/loader/execution-context-loader",
+    "name": "@fluidframework/execution-context-loader",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/loader/test-loader-utils",
+    "name": "@fluid-internal/test-loader-utils",
+    "workspaceDependencies": [
+        "packages/loader/driver-definitions"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/loader/web-code-loader",
+    "name": "@fluidframework/web-code-loader",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/core-interfaces"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/runtime/agent-scheduler",
+    "name": "@fluidframework/agent-scheduler",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/runtime/datastore-definitions",
+        "packages/dds/map",
+        "packages/dds/register-collection",
+        "packages/runtime/runtime-definitions"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/runtime/client-api",
+    "name": "@fluid-internal/client-api",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/dds/cell",
+        "packages/loader/container-definitions",
+        "packages/loader/container-loader",
+        "packages/runtime/container-runtime",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/loader/driver-definitions",
+        "packages/dds/ink",
+        "packages/dds/map",
+        "packages/dds/ordered-collection",
+        "packages/framework/request-handler",
+        "packages/runtime/runtime-definitions",
+        "packages/dds/sequence",
+        "packages/dds/shared-object-base"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/runtime/container-runtime",
+    "name": "@fluidframework/container-runtime",
+    "workspaceDependencies": [
+        "packages/runtime/agent-scheduler",
+        "packages/loader/container-definitions",
+        "packages/runtime/container-runtime-definitions",
+        "packages/loader/container-utils",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "packages/runtime/runtime-definitions",
+        "packages/runtime/runtime-utils",
+        "packages/utils/telemetry-utils",
+        "packages/test/mocha-test-setup",
+        "packages/runtime/test-runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-base@^0.1015.0-0",
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/runtime/container-runtime-definitions",
+    "name": "@fluidframework/container-runtime-definitions",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions",
+        "packages/runtime/runtime-definitions"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/runtime/datastore",
+    "name": "@fluidframework/datastore",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/container-utils",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore-definitions",
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "packages/runtime/runtime-definitions",
+        "packages/runtime/runtime-utils",
+        "packages/utils/telemetry-utils",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-base@^0.1015.0-0",
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/runtime/datastore-definitions",
+    "name": "@fluidframework/datastore-definitions",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/core-interfaces",
+        "packages/runtime/runtime-definitions"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/runtime/runtime-definitions",
+    "name": "@fluidframework/runtime-definitions",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/runtime/runtime-utils",
+    "name": "@fluidframework/runtime-utils",
+    "workspaceDependencies": [
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore-definitions",
+        "packages/runtime/runtime-definitions",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-base@^0.1015.0-0",
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/runtime/test-runtime-utils",
+    "name": "@fluidframework/test-runtime-utils",
+    "workspaceDependencies": [
+        "packages/loader/container-definitions",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore-definitions",
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "packages/drivers/routerlicious-driver",
+        "packages/runtime/runtime-definitions",
+        "packages/runtime/runtime-utils",
+        "packages/utils/telemetry-utils",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/test/end-to-end-tests",
+    "name": "@fluid-internal/end-to-end-tests",
+    "workspaceDependencies": [
+        "packages/loader/test-loader-utils",
+        "packages/runtime/agent-scheduler",
+        "packages/framework/aqueduct",
+        "packages/hosts/base-host",
+        "packages/dds/cell",
+        "packages/loader/container-definitions",
+        "packages/loader/container-loader",
+        "packages/runtime/container-runtime",
+        "packages/runtime/container-runtime-definitions",
+        "packages/loader/container-utils",
+        "packages/loader/core-interfaces",
+        "packages/dds/counter",
+        "packages/runtime/datastore",
+        "packages/runtime/datastore-definitions",
+        "packages/drivers/driver-base",
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "packages/dds/ink",
+        "packages/drivers/local-driver",
+        "packages/dds/map",
+        "packages/dds/matrix",
+        "packages/dds/merge-tree",
+        "packages/test/mocha-test-setup",
+        "packages/utils/odsp-doclib-utils",
+        "packages/dds/ordered-collection",
+        "packages/dds/register-collection",
+        "packages/framework/request-handler",
+        "packages/drivers/routerlicious-driver",
+        "packages/runtime/runtime-definitions",
+        "packages/runtime/runtime-utils",
+        "packages/dds/sequence",
+        "packages/dds/shared-object-base",
+        "packages/utils/telemetry-utils",
+        "packages/runtime/test-runtime-utils",
+        "packages/test/test-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0",
+        "@fluidframework/server-local-server@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/test/functional-tests",
+    "name": "@fluid-internal/functional-tests",
+    "workspaceDependencies": [
+        "packages/loader/test-loader-utils",
+        "packages/loader/container-loader",
+        "packages/runtime/container-runtime",
+        "packages/test/mocha-test-setup",
+        "packages/dds/sequence",
+        "packages/utils/telemetry-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/test/mocha-test-setup",
+    "name": "@fluidframework/mocha-test-setup",
+    "workspaceDependencies": [],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/test/service-load-test",
+    "name": "@fluid-internal/service-load-test",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/loader/container-definitions",
+        "packages/loader/container-loader",
+        "packages/loader/core-interfaces",
+        "packages/drivers/odsp-driver",
+        "packages/test/test-utils",
+        "packages/utils/tool-utils",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/test/snapshots",
+    "name": "@fluid-internal/test-snapshots",
+    "workspaceDependencies": [
+        "packages/tools/replay-tool",
+        "packages/dds/merge-tree",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/test/test-utils",
+    "name": "@fluidframework/test-utils",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/loader/container-definitions",
+        "packages/loader/container-loader",
+        "packages/runtime/container-runtime",
+        "packages/loader/core-interfaces",
+        "packages/runtime/datastore",
+        "packages/runtime/datastore-definitions",
+        "packages/loader/driver-definitions",
+        "packages/drivers/local-driver",
+        "packages/dds/map",
+        "packages/framework/request-handler",
+        "packages/runtime/runtime-definitions",
+        "packages/runtime/runtime-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0",
+        "@fluidframework/server-local-server@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/test/version-test-1",
+    "name": "@fluid-internal/version-test-1",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/hosts/base-host",
+        "packages/runtime/runtime-utils",
+        "packages/framework/view-interfaces",
+        "packages/tools/webpack-fluid-loader"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/tools/fetch-tool",
+    "name": "@fluid-internal/fetch-tool",
+    "workspaceDependencies": [
+        "packages/drivers/fluidapp-odsp-urlResolver",
+        "packages/runtime/container-runtime",
+        "packages/runtime/datastore",
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "packages/utils/odsp-doclib-utils",
+        "packages/drivers/odsp-driver",
+        "packages/drivers/odsp-urlResolver",
+        "packages/drivers/routerlicious-driver",
+        "packages/drivers/routerlicious-urlResolver",
+        "packages/runtime/runtime-definitions",
+        "packages/utils/tool-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/tools/merge-tree-client-replay",
+    "name": "@fluid-internal/merge-tree-client-replay",
+    "workspaceDependencies": [
+        "packages/runtime/container-runtime",
+        "packages/drivers/file-driver",
+        "packages/dds/merge-tree",
+        "packages/runtime/runtime-definitions",
+        "packages/dds/sequence"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/tools/replay-tool",
+    "name": "@fluid-internal/replay-tool",
+    "workspaceDependencies": [
+        "packages/runtime/client-api",
+        "packages/loader/container-definitions",
+        "packages/loader/container-loader",
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions",
+        "packages/drivers/file-driver",
+        "packages/drivers/replay-driver",
+        "packages/utils/telemetry-utils"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/tools/webpack-fluid-loader",
+    "name": "@fluidframework/webpack-fluid-loader",
+    "workspaceDependencies": [
+        "packages/framework/aqueduct",
+        "packages/loader/container-definitions",
+        "packages/loader/container-loader",
+        "packages/loader/core-interfaces",
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils",
+        "packages/drivers/local-driver",
+        "packages/utils/odsp-doclib-utils",
+        "packages/drivers/odsp-driver",
+        "packages/drivers/routerlicious-driver",
+        "packages/runtime/runtime-utils",
+        "packages/runtime/test-runtime-utils",
+        "packages/utils/tool-utils",
+        "packages/framework/view-adapters",
+        "packages/framework/view-interfaces",
+        "packages/loader/web-code-loader",
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": [
+        "@fluidframework/protocol-definitions@^0.1015.0-0",
+        "@fluidframework/server-local-server@^0.1015.0-0",
+        "@fluidframework/server-services-client@^0.1015.0-0"
+    ]
+}
+{
+    "location": "packages/utils/odsp-doclib-utils",
+    "name": "@fluidframework/odsp-doclib-utils",
+    "workspaceDependencies": [
+        "packages/loader/driver-definitions",
+        "packages/loader/driver-utils"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/utils/telemetry-utils",
+    "name": "@fluidframework/telemetry-utils",
+    "workspaceDependencies": [
+        "packages/test/mocha-test-setup"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "packages/utils/tool-utils",
+    "name": "@fluidframework/tool-utils",
+    "workspaceDependencies": [
+        "packages/utils/odsp-doclib-utils"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious",
+    "name": "routerlicious",
+    "workspaceDependencies": [],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/gitresources",
+    "name": "@fluidframework/gitresources",
+    "workspaceDependencies": [],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/kafka-orderer",
+    "name": "@fluidframework/server-kafka-orderer",
+    "workspaceDependencies": [
+        "server/routerlicious/packages/protocol-definitions",
+        "server/routerlicious/packages/services-core"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/lambdas",
+    "name": "@fluidframework/server-lambdas",
+    "workspaceDependencies": [
+        "server/routerlicious/packages/gitresources",
+        "server/routerlicious/packages/protocol-base",
+        "server/routerlicious/packages/protocol-definitions",
+        "server/routerlicious/packages/services-client",
+        "server/routerlicious/packages/services-core",
+        "server/routerlicious/packages/test-utils"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/lambdas-driver",
+    "name": "@fluidframework/server-lambdas-driver",
+    "workspaceDependencies": [
+        "server/routerlicious/packages/services",
+        "server/routerlicious/packages/services-core",
+        "server/routerlicious/packages/services-utils",
+        "server/routerlicious/packages/test-utils"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/local-server",
+    "name": "@fluidframework/server-local-server",
+    "workspaceDependencies": [
+        "server/routerlicious/packages/protocol-definitions",
+        "server/routerlicious/packages/lambdas",
+        "server/routerlicious/packages/memory-orderer",
+        "server/routerlicious/packages/services-client",
+        "server/routerlicious/packages/services-core",
+        "server/routerlicious/packages/test-utils"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/memory-orderer",
+    "name": "@fluidframework/server-memory-orderer",
+    "workspaceDependencies": [
+        "server/routerlicious/packages/protocol-base",
+        "server/routerlicious/packages/protocol-definitions",
+        "server/routerlicious/packages/lambdas",
+        "server/routerlicious/packages/services-client",
+        "server/routerlicious/packages/services-core"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/protocol-base",
+    "name": "@fluidframework/protocol-base",
+    "workspaceDependencies": [
+        "server/routerlicious/packages/gitresources",
+        "server/routerlicious/packages/protocol-definitions"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/protocol-definitions",
+    "name": "@fluidframework/protocol-definitions",
+    "workspaceDependencies": [],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/routerlicious",
+    "name": "@fluidframework/server-routerlicious",
+    "workspaceDependencies": [
+        "server/routerlicious/packages/gitresources",
+        "server/routerlicious/packages/protocol-definitions",
+        "server/routerlicious/packages/kafka-orderer",
+        "server/routerlicious/packages/lambdas",
+        "server/routerlicious/packages/lambdas-driver",
+        "server/routerlicious/packages/memory-orderer",
+        "server/routerlicious/packages/routerlicious-base",
+        "server/routerlicious/packages/services",
+        "server/routerlicious/packages/services-client",
+        "server/routerlicious/packages/services-core",
+        "server/routerlicious/packages/services-utils",
+        "server/routerlicious/packages/local-server",
+        "server/routerlicious/packages/test-utils"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/routerlicious-base",
+    "name": "@fluidframework/server-routerlicious-base",
+    "workspaceDependencies": [
+        "server/routerlicious/packages/gitresources",
+        "server/routerlicious/packages/protocol-definitions",
+        "server/routerlicious/packages/kafka-orderer",
+        "server/routerlicious/packages/lambdas",
+        "server/routerlicious/packages/memory-orderer",
+        "server/routerlicious/packages/services",
+        "server/routerlicious/packages/services-client",
+        "server/routerlicious/packages/services-core",
+        "server/routerlicious/packages/services-utils"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/services",
+    "name": "@fluidframework/server-services",
+    "workspaceDependencies": [
+        "server/routerlicious/packages/protocol-definitions",
+        "server/routerlicious/packages/services-client",
+        "server/routerlicious/packages/services-core",
+        "server/routerlicious/packages/services-shared",
+        "server/routerlicious/packages/services-utils"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/services-client",
+    "name": "@fluidframework/server-services-client",
+    "workspaceDependencies": [
+        "server/routerlicious/packages/gitresources",
+        "server/routerlicious/packages/protocol-base",
+        "server/routerlicious/packages/protocol-definitions"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/services-core",
+    "name": "@fluidframework/server-services-core",
+    "workspaceDependencies": [
+        "server/routerlicious/packages/gitresources",
+        "server/routerlicious/packages/protocol-definitions",
+        "server/routerlicious/packages/services-client"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/services-shared",
+    "name": "@fluidframework/server-services-shared",
+    "workspaceDependencies": [
+        "server/routerlicious/packages/gitresources",
+        "server/routerlicious/packages/protocol-base",
+        "server/routerlicious/packages/protocol-definitions",
+        "server/routerlicious/packages/services-client",
+        "server/routerlicious/packages/services-core"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/services-utils",
+    "name": "@fluidframework/server-services-utils",
+    "workspaceDependencies": [
+        "server/routerlicious/packages/protocol-definitions"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
+{
+    "location": "server/routerlicious/packages/test-utils",
+    "name": "@fluidframework/server-test-utils",
+    "workspaceDependencies": [
+        "server/routerlicious/packages/gitresources",
+        "server/routerlicious/packages/protocol-base",
+        "server/routerlicious/packages/protocol-definitions",
+        "server/routerlicious/packages/services-client",
+        "server/routerlicious/packages/services-core"
+    ],
+    "mismatchedWorkspaceDependencies": []
+}
