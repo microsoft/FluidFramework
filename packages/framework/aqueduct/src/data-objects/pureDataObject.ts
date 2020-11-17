@@ -126,6 +126,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     public async request(req: IRequest): Promise<IResponse> {
         const pathParts = RequestParser.getPathParts(req.url);
         const requestUrl = (pathParts.length > 0) ? pathParts[0] : req.url;
+        console.log("hello im here",requestUrl);
         if (requestUrl === "/" || requestUrl === "") {
             return {
                 mimeType: "fluid/object",
@@ -136,7 +137,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
         return {
             mimeType: "text/plain",
             status: 404,
-            value: `unknown request url: ${req.url}`,
+            value: `unknown request url: hello`,
         };
     }
 
