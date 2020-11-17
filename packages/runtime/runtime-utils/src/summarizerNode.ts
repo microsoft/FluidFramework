@@ -262,7 +262,7 @@ export class SummarizerNode implements ISummarizerNode {
 
     public startSummary(referenceSequenceNumber: number, summaryLogger) {
         assert(!this.disabled, "Unsupported: cannot call startSummary on disabled SummarizerNode");
-        assert(this.summaryLogger === undefined, "summaryLogger should not be set atop startSummary");
+        assert(this.summaryLogger === undefined, "summaryLogger should not be set yet in startSummary");
 
         assert(
             this.wipReferenceSequenceNumber === undefined,
@@ -419,7 +419,6 @@ export class SummarizerNode implements ISummarizerNode {
 
     public clearSummary() {
         assert(!this.disabled, "Unsupported: cannot call clearSummary on disabled SummarizerNode");
-        assert(this.summaryLogger !== undefined, "summaryLogger should have been set in startSummary");
 
         this.wipReferenceSequenceNumber = undefined;
         this.wipLocalPaths = undefined;

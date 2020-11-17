@@ -236,8 +236,11 @@ export class RunningSummarizer implements IDisposable {
         logger: ITelemetryLogger,
         summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
-        // eslint-disable-next-line max-len
-        generateSummary: (full: boolean, safe: boolean, summaryLogger: ITelemetryLogger) => Promise<GenerateSummaryData | undefined>,
+        generateSummary: (
+            full: boolean,
+            safe: boolean,
+            summaryLogger: ITelemetryLogger,
+        ) => Promise<GenerateSummaryData | undefined>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         immediateSummary: boolean,
@@ -607,8 +610,11 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         url: string,
         private readonly runtime: ISummarizerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
-        // eslint-disable-next-line max-len
-        private readonly generateSummaryCore: (full: boolean, safe: boolean, summaryLogger: ITelemetryLogger) => Promise<GenerateSummaryData | undefined>,
+        private readonly generateSummaryCore: (
+            full: boolean,
+            safe: boolean,
+            summaryLogger: ITelemetryLogger,
+        ) => Promise<GenerateSummaryData | undefined>,
         private readonly refreshLatestAck: (
             proposalHandle: string,
             ackHandle: string,
@@ -749,8 +755,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.logger,
             this.summaryCollection.createWatcher(startResult.clientId),
             this.configurationGetter(),
-            // eslint-disable-next-line max-len
-            async (full: boolean, safe: boolean, summaryLogger: ITelemetryLogger) => this.generateSummary(full, safe, summaryLogger),
+            async (...args) => this.generateSummary(...args),
             this.runtime.deltaManager.lastSequenceNumber,
             initialAttempt,
             this.immediateSummary,
