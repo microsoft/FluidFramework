@@ -290,6 +290,26 @@ export const generateLocalCompatTest = (
             await localTestObjectProvider.reset();
         });
     });
+
+    describe("compat - old ContainerRuntime, new DataStoreRuntime", function() {
+        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+            createOldRuntimeFactory(
+                TestDataObject.type,
+                getDataStoreFactory(containerOptions),
+                containerOptions?.runtimeOptions,
+            );
+
+        const localTestObjectProvider = new old.LocalTestObjectProvider(
+            runtimeFactory,
+            options.serviceConfiguration,
+        );
+
+        tests(localTestObjectProvider);
+
+        afterEach(async function() {
+            await localTestObjectProvider.reset();
+        });
+    });
 };
 
 export const generateLocalTest = (
@@ -304,47 +324,29 @@ export const generateLocalTest = (
 
 const generateTinyliciousTest = (
     tests: (compatArgs: ITestObjectProvider) => void,
-    options: ITestOptions = {},
+    options: ITestOptions,
 ) => {
-    describe("tinylicious", () => {
-        // Run with all current versions
-        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-            createRuntimeFactory(
-                TestDataObject.type,
-                getDataStoreFactory(containerOptions),
-                containerOptions?.runtimeOptions,
-            );
-
-        const testObjectProvider = new TinyliciousTestObjectProvider(
-            runtimeFactory,
-        );
-
-        tests(testObjectProvider);
-
-        afterEach(async () => {
-            await testObjectProvider.reset();
-        });
-
-        describe("old ContainerRuntime, new DataStoreRuntime", function() {
+    if (options.tinylicious) {
+        describe("tinylicious", () => {
+            // Run with all current versions
             const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-                createOldRuntimeFactory(
+                createRuntimeFactory(
                     TestDataObject.type,
                     getDataStoreFactory(containerOptions),
                     containerOptions?.runtimeOptions,
                 );
 
-            const localTestObjectProvider = new old.LocalTestObjectProvider(
+            const testObjectProvider = new TinyliciousTestObjectProvider(
                 runtimeFactory,
-                options.serviceConfiguration,
             );
 
-            tests(localTestObjectProvider);
+            tests(testObjectProvider);
 
-            afterEach(async function() {
-                await localTestObjectProvider.reset();
+            afterEach(async () => {
+                await testObjectProvider.reset();
             });
         });
-    });
+    }
 };
 
 export const generateTest = (
@@ -352,7 +354,5 @@ export const generateTest = (
     options: ITestOptions = {},
 ) => {
     generateLocalTest(tests, options);
-    if (options.tinylicious) {
-        generateTinyliciousTest(tests);
-    }
+    generateTinyliciousTest(tests, options);
 };

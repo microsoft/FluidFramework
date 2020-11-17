@@ -627,5 +627,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("Directory", () => {
-    generateTest(tests);
+    generateTest(tests, { tinylicious: process.argv.includes("--tinylicious") });
 });

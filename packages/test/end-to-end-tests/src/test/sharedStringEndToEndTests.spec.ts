@@ -67,5 +67,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("SharedString", () => {
-    generateTest(tests);
+    generateTest(tests, { tinylicious: process.argv.includes("--tinylicious") });
 });
