@@ -306,7 +306,7 @@ export class RunningSummarizer implements IDisposable {
         private immediateSummary: boolean = false,
         private readonly raiseSummarizingError: (description: string) => void,
     ) {
-        this.logger = new ChildLogger(baseLogger, "Run", undefined, { summarizeRunTag: () => this.summarizeCount });
+        this.logger = new ChildLogger(baseLogger, "Run", undefined, { summarizerRunTag: () => this.summarizeCount });
 
         this.heuristics = new SummarizerHeuristics(
             configuration,
@@ -322,7 +322,7 @@ export class RunningSummarizer implements IDisposable {
             this.configuration.maxAckWaitTime,
             () => {
                 this.raiseSummarizingError("SummaryAckWaitTimeout");
-                // Note: summarizeRunTag (from ChildLogger definition) may be 0,
+                // Note: summarizerRunTag (from ChildLogger definition) may be 0,
                 // since this code path is hit when RunningSummarizer first starts up,
                 // before this instance has kicked off a new summarize run.
                 this.logger.sendErrorEvent({
