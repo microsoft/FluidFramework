@@ -372,7 +372,6 @@ export function configureWebSocketServices(
             (clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
                 // Verify the user has subscription to the room.
                 if (!roomMap.has(clientId)) {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     const nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
                     socket.emit("nack", "", [nackMessage]);
                 } else {
