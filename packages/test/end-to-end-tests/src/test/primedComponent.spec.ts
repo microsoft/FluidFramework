@@ -33,7 +33,6 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
     it("Blob support", async () => {
         const handle = await dataObject.writeBlob("aaaa");
-
         assert(await handle.get() === "aaaa", "Could not write blob to dataObject");
         dataObject.root.set("key", handle);
 
@@ -42,15 +41,10 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         assert(value2 === "aaaa", "Could not get blob from shared object in the dataObject");
 
         const container2 = await args.loadTestContainer() as Container;
-
         const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
-        console.log("1 is here");
         const blobHandle = await dataObject2.root.wait<IFluidHandle<string>>("key");
-        console.log("2 is here");
         const value = await blobHandle.get();
-        console.log("3 is here");
         assert(value === "aaaa", "Blob value not synced across containers");
-        console.log("4 is here");
     });
 };
 
