@@ -64,7 +64,7 @@ function createConfig() {
       rules: [
         {
           test: /\.tsx?$/,
-          loader: 'ts-loader',
+          loader: require.resolve("ts-loader"),
         },
         {
           test: /\.css$/,

@@ -41,7 +41,7 @@ module.exports = env => {
                             },
                         },
                         {
-                        loader: "ts-loader",
+                            loader: require.resolve("ts-loader"),
                         options: {
                             compilerOptions: {
                                 declaration: false,
