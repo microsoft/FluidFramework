@@ -1761,7 +1761,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     undefined,
                     version.id,
                     this.summaryTracker.referenceSequenceNumber,
-                    new ChildLogger(summaryLogger, undefined, { preemptive: true }),
+                    new ChildLogger(summaryLogger, undefined, { safeSummary: true }),
                     version,
                 );
             }
