@@ -9,6 +9,7 @@ import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { Router } from "express";
 import safeStringify from "json-stringify-safe";
 import jwt from "jsonwebtoken";
@@ -17,9 +18,10 @@ import { v4 as uuid } from "uuid";
 import winston from "winston";
 import dotenv from "dotenv";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
-import { resolveUrl } from "../gatewayUrlResolver";
+import { FullTree, resolveR11sUrl, resolveSpoUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
 import { getConfig, getJWTClaims, getR11sToken, getUserDetails, queryParamAsString } from "../utils";
+import { isSpoTenant } from "../odspUtils";
 import { defaultPartials } from "./partials";
 import { getUser, IExtendedUser } from "./utils";
 
@@ -80,10 +82,19 @@ export function create(
                 const search = parse(request.url).search;
                 const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
                 const user = getUser(request);
-                const accessToken = getR11sToken(tenantId, documentId, appTenants, scopes, user as IExtendedUser);
-                const [resolvedP, fullTreeP] =
-                    resolveUrl(config, alfred, tenantId, documentId, accessToken, request, driveId);
-
+                const isSpoTenantPath = isSpoTenant(tenantId);
+                let fullTreeP: Promise<undefined | FullTree>;
+                let resolvedP: Promise<IFluidResolvedUrl>;
+                let r11sAccessToken = "";
+                if (isSpoTenantPath) {
+                    [resolvedP, fullTreeP] =
+                        resolveSpoUrl(config, tenantId, documentId, request, driveId);
+                } else {
+                    r11sAccessToken = getR11sToken(
+                        tenantId, documentId, appTenants, scopes, user as IExtendedUser);
+                    [resolvedP, fullTreeP] =
+                        resolveR11sUrl(config, alfred, tenantId, documentId, r11sAccessToken, request);
+                }
                 const workerConfig = getConfig(
                     config.get("worker"),
                     tenantId,
@@ -180,8 +191,9 @@ export function create(
                                 clientId: _.isEmpty(configClientId)
                                 ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : configClientId,
                                 config: workerConfig,
+                                isSpoTenantPath,
                                 hostToken,
-                                accessToken,
+                                accessToken: r11sAccessToken,
                                 partials: defaultPartials,
                                 resolved: JSON.stringify(resolved),
                                 scripts,

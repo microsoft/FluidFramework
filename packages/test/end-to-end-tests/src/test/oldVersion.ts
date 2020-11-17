@@ -10,6 +10,7 @@ export {
     DataObjectFactory,
 } from "old-aqueduct";
 export * from "old-container-definitions";
+export * from "old-core-interfaces";
 export { Container, Loader } from "old-container-loader";
 export { ContainerRuntime, IContainerRuntimeOptions } from "old-container-runtime";
 export { IDocumentServiceFactory } from "old-driver-definitions";
@@ -34,10 +35,7 @@ export { Ink } from "old-ink";
 export { SharedMatrix } from "old-matrix";
 export { ConsensusQueue } from "old-ordered-collection";
 
-import {
-    IFluidCodeDetails,
-    IProxyLoaderFactory,
-} from "old-container-definitions";
+import { IFluidCodeDetails } from "old-core-interfaces";
 import { Loader } from "old-container-loader";
 import { IDocumentServiceFactory } from "old-driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "old-local-driver";
@@ -123,13 +121,11 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
 
     private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         const codeLoader = new LocalCodeLoader(packageEntries);
-        return new Loader(
-            this.urlResolver,
-            this.documentServiceFactory,
+        return new Loader({
+            urlResolver: this.urlResolver,
+            documentServiceFactory: this.documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
     }
 
     /**

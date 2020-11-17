@@ -82,13 +82,14 @@ describe("Document Dirty", () => {
             [
                 [mapId, SharedMap.getFactory()],
             ],
+            "default",
         );
 
         const runtimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore(
-                "default",
+                factory,
                 [
-                    ["default", Promise.resolve(factory)],
+                    [factory.type, Promise.resolve(factory)],
                 ],
             );
 
@@ -310,7 +311,7 @@ describe("Document Dirty", () => {
             checkDirtyState("after value set while force readonly", true, 0);
 
             container.forceReadonly(false);
-            await ensureContainerConnected(container);
+            assert(container.connected, "Setting readonly to false should not cause disconnection");
 
             // Document should still be dirty right after turning off force readonly
             checkDirtyState("after clear readonly and replayed ops", true, 0);
@@ -338,7 +339,7 @@ describe("Document Dirty", () => {
                 checkDirtyState("after value set while force readonly", true, 0);
 
                 container.forceReadonly(false);
-                await ensureContainerConnected(container);
+                assert(container.connected, "Setting readonly to false should not cause disconnection");
 
                 // Document should still be dirty right after turning off force readonly
                 checkDirtyState("after reconnect and replayed ops", true, 0);

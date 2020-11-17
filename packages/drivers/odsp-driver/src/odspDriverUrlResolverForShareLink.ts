@@ -24,7 +24,7 @@ import {
     tokenFromResponse,
 } from "./tokenFetch";
 
-export class OdspDriverUrlResolver2 implements IUrlResolver {
+export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     private readonly logger: ITelemetryLogger;
     private readonly sharingLinkCache = new PromiseCache<string, string>();
     private readonly getSharingLinkToken:

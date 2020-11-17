@@ -24,7 +24,8 @@ import {
 import { ISubscriber } from "./pubsub";
 
 export class LocalOrdererConnection implements IOrdererConnection {
-    public readonly parentBranch: string;
+    // Back-compat, removal tracked with issue #4346
+    public readonly parentBranch = null;
 
     constructor(
         public socket: ISubscriber,
@@ -37,9 +38,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
         private readonly client: IClient,
         public readonly maxMessageSize: number,
         public readonly serviceConfiguration: IServiceConfiguration,
-    ) {
-        this.parentBranch = document.parent ? document.parent.documentId : null;
-    }
+    ) { }
 
     public async connect() {
         // Send the connect message

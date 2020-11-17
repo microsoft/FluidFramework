@@ -1,12 +1,12 @@
 {
   "name": "@fluidframework/undo-redo",
-  "version": "0.29.0",
+  "version": "0.30.0",
   "description": "Undo Redo",
   "homepage": "https://fluidframework.com",
-  "repository": "microsoft/FluidFramework",
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
-  "sideEffects": "false",
+  "sideEffects": false,
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -52,16 +52,16 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/map": "^0.29.0",
-    "@fluidframework/matrix": "^0.29.0",
-    "@fluidframework/merge-tree": "^0.29.0",
-    "@fluidframework/sequence": "^0.29.0"
+    "@fluidframework/map": "^0.30.0",
+    "@fluidframework/matrix": "^0.30.0",
+    "@fluidframework/merge-tree": "^0.30.0",
+    "@fluidframework/sequence": "^0.30.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.21.0-0",
-    "@fluidframework/mocha-test-setup": "^0.29.0",
-    "@fluidframework/test-runtime-utils": "^0.29.0",
+    "@fluidframework/mocha-test-setup": "^0.30.0",
+    "@fluidframework/test-runtime-utils": "^0.30.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/assert": "^1.5.1",
     "@types/diff": "^3.5.1",

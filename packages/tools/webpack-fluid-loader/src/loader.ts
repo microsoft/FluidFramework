@@ -26,14 +26,9 @@ import {
 import { IFluidObject, IFluidPackage, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { RequestParser } from "@fluidframework/runtime-utils";
+import { RequestParser, createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { MultiUrlResolver } from "./multiResolver";
 import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
-
-// SetImmediate is needed by broadcaster/lambdas, but is not available in the browser.
-// Need a polyfill until this issue is resolved https://github.com/microsoft/FluidFramework/issues/4040
-// eslint-disable-next-line import/no-unassigned-import
-import "setimmediate";
 
 export interface IDevServerUser extends IUser {
     name: string;
@@ -89,10 +84,12 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
     if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
         const dataStoreFactory = fluidModule.fluidExport.IFluidDataStoreFactory;
 
+        const defaultFactory = createDataStoreFactory(packageJson.name, dataStoreFactory);
+
         const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-            packageJson.name,
+            defaultFactory,
             new Map([
-                [packageJson.name, Promise.resolve(dataStoreFactory)],
+                [defaultFactory.type, Promise.resolve(defaultFactory)],
             ]),
         );
         return {

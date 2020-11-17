@@ -7,7 +7,6 @@ import { IEventProvider } from "@fluidframework/common-definitions";
 import {
     AttachState,
     ContainerWarning,
-    IAudience,
     IDeltaManager,
     ILoader,
 } from "@fluidframework/container-definitions";
@@ -24,13 +23,14 @@ import {
     IDocumentMessage,
     IHelpMessage,
     IPendingProposal,
-    IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
+    IFluidDataStoreContextDetached,
+    IProvideFluidDataStoreRegistry,
  } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
@@ -67,14 +67,13 @@ export type IContainerRuntimeBaseWithCombinedEvents =
 export interface IContainerRuntime extends
     IProvideContainerRuntime,
     Partial<IProvideContainerRuntimeDirtyable>,
+    IProvideFluidDataStoreRegistry,
     IContainerRuntimeBaseWithCombinedEvents {
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
-    readonly codeDetails: IFluidCodeDetails;
-    readonly parentBranch: string | null;
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -109,14 +108,12 @@ export interface IContainerRuntime extends
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
 
     /**
-     * Returns the current quorum.
+     * Creates detached data store context. Data store initialization is considered compete
+     * only after context.attachRuntime() is called.
+     * @param pkg - package path
+     * @param rootDataStoreId - data store ID (unique name)
      */
-    getQuorum(): IQuorum;
-
-    /**
-     * Returns the current audience.
-     */
-    getAudience(): IAudience;
+    createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
 
     /**
      * Used to raise an unrecoverable error on the runtime.
