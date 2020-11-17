@@ -34,7 +34,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         private readonly identityType: IdentityType = "Enterprise",
         logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
-        private msGraphOrigin?: string,
+        private readonly msGraphOrigin?: string,
     ) {
         this.logger = ChildLogger.create(logger, "OdspDriver");
         this.getSharingLinkToken = this.toInstrumentedSharingLinkTokenFetcher(this.logger, tokenFetcher);

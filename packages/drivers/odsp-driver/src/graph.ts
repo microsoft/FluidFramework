@@ -49,7 +49,7 @@ export async function getShareLink(
     }
 
     const origin = msGraphOrigin
-        ? msGraphOrigin.charAt(-1) === '/'
+        ? msGraphOrigin.charAt(-1) === "/"
         ? msGraphOrigin
         : `${msGraphOrigin}/`
         : "";
