@@ -671,7 +671,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             }
 
             const clientTime = networkTime ? overallTime - networkTime : undefined;
-            const isAfd = msEdge != undefined;
+            const isAfd = msEdge !== undefined;
 
             event.end({
                 trees: content.trees?.length ?? 0,
