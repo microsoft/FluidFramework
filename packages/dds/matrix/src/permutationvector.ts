@@ -281,12 +281,12 @@ export class PermutationVector extends Client {
         };
     }
 
-    public async load(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService, branchId?: string) {
+    public async load(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService) {
         const handleTableData = await deserializeBlob(runtime, storage, SnapshotPath.handleTable);
 
         this.handleTable = HandleTable.load<never>(handleTableData);
 
-        return super.load(runtime, new ObjectStoragePartition(storage, SnapshotPath.segments), branchId);
+        return super.load(runtime, new ObjectStoragePartition(storage, SnapshotPath.segments));
     }
 
     private readonly onDelta = (

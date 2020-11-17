@@ -141,7 +141,6 @@ export interface IChannelFactory {
      * @param runtime - Data store runtime containing state/info/helper methods about the data store.
      * @param id - ID of the channel.
      * @param services - Services to read objects at a given path using the delta connection.
-     * @param branchId - The branch ID.
      * @param channelAttributes - The attributes for the the channel to be loaded.
      * @returns The loaded object
      *
@@ -154,7 +153,6 @@ export interface IChannelFactory {
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string | undefined,
         channelAttributes: Readonly<IChannelAttributes>,
     ): Promise<IChannel>;
 

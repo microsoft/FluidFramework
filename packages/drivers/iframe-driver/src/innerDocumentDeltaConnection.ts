@@ -94,15 +94,6 @@ export class InnerDocumentDeltaConnection
     }
 
     /**
-     * Get the parent branch for the document
-     *
-     * @returns the parent branch
-     */
-    public get parentBranch(): string | null {
-        return this.details.parentBranch;
-    }
-
-    /**
      * Get the maximum size of a message before chunking is required
      *
      * @returns the maximum size of a message before chunking is required

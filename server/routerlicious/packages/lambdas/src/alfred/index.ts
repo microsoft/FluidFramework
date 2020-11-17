@@ -266,7 +266,8 @@ export function configureWebSocketServices(
                     existing: details.existing,
                     maxMessageSize: connection.maxMessageSize,
                     mode: "write",
-                    parentBranch: connection.parentBranch,
+                    // Back-compat, removal tracked with issue #4346
+                    parentBranch: null,
                     serviceConfiguration: connection.serviceConfiguration,
                     initialClients: clients,
                     initialMessages: [],
@@ -281,6 +282,7 @@ export function configureWebSocketServices(
                     existing: details.existing,
                     maxMessageSize: 1024, // Readonly client can't send ops.
                     mode: "read",
+                    // Back-compat, removal tracked with issue #4346
                     parentBranch: null, // Does not matter for now.
                     serviceConfiguration: DefaultServiceConfiguration,
                     initialClients: clients,

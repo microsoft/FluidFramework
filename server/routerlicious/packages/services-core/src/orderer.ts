@@ -36,7 +36,8 @@ export interface IOrdererConnection {
     // For now it maps to whether the connection is to an existing ordering context or a new one
     readonly existing: boolean;
 
-    readonly parentBranch: string;
+    // Back-compat, removal tracked with issue #4346
+    readonly parentBranch: null;
 
     readonly maxMessageSize: number;
 

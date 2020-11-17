@@ -109,10 +109,6 @@ export class ContainerContext implements IContainerContext {
         return this.attributes.branch;
     }
 
-    public get parentBranch(): string | null {
-        return this.container.parentBranch;
-    }
-
     public get runtimeVersion(): string | undefined {
         return this.runtime?.runtimeVersion;
     }
@@ -185,7 +181,7 @@ export class ContainerContext implements IContainerContext {
     constructor(
         private readonly container: Container,
         public readonly scope: IFluidObject,
-        public readonly codeLoader: ICodeLoader,
+        private readonly codeLoader: ICodeLoader,
         public readonly codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
         private readonly attributes: IDocumentAttributes,

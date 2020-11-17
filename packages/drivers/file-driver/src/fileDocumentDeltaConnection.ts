@@ -124,6 +124,7 @@ export class ReplayFileDeltaConnection
             initialClients: [],
             maxMessageSize: ReplayMaxMessageSize,
             mode,
+            // Back-compat, removal tracked with issue #4346
             parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
@@ -171,10 +172,6 @@ export class ReplayFileDeltaConnection
 
     public get existing(): boolean {
         return this.details.existing;
-    }
-
-    public get parentBranch(): string | null {
-        return this.details.parentBranch;
     }
 
     public get version(): string {

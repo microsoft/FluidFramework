@@ -273,7 +273,6 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string | undefined;
-    readonly parentBranch: string | null;
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

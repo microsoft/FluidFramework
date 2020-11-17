@@ -14,7 +14,6 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
-    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -523,10 +522,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.id;
     }
 
-    public get parentBranch(): string | null {
-        return this.context.parentBranch;
-    }
-
     public get existing(): boolean {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.context.existing!;
@@ -607,10 +602,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public readonly IFluidSerializer: IFluidSerializer;
 
     public readonly IFluidHandleContext: IFluidHandleContext;
-
-    public get codeDetails(): IFluidCodeDetails {
-        return this.context.codeDetails ?? this.getQuorum().get("code") as IFluidCodeDetails;
-    }
 
     // internal logger for ContainerRuntime
     private readonly _logger: ITelemetryLogger;
@@ -972,11 +963,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const requestParser = RequestParser.create(request);
         const id = requestParser.pathParts[0];
 
-        if (id === "_channel") {
+        if (id === "_channels") {
             return this.resolveHandle(requestParser.createSubRequest(1));
         }
 
-        if (id === this.blobManager.basePath && requestParser.isLeaf(2)) {
+        if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
             const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
             if (handle) {
                 return {
@@ -1056,7 +1047,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
         const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
-        summaryTreeBuilder.addWithStats(".blobs", blobsTree);
+        summaryTreeBuilder.addWithStats(blobsTreeName, blobsTree);
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
@@ -1717,15 +1708,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
         const message =
             `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
-
-        // TODO: Issue-2171 Support for Branch Snapshots
-        if (this.parentBranch) {
-            this._logger.sendTelemetryEvent({
-                eventName: "SkipGenerateSummaryParentBranch",
-                parentBranch: this.parentBranch,
-            });
-            return;
-        }
 
         this.summarizerNode.startSummary(summaryRefSeqNum);
 

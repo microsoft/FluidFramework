@@ -27,7 +27,7 @@ import {
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
-import { ICodeLoader, ILoader } from "./loader";
+import { ILoader } from "./loader";
 
 // Represents the attachment state of the entity.
 export enum AttachState {
@@ -119,7 +119,6 @@ export interface IContainerContext extends IDisposable {
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly codeDetails: IFluidCodeDetails;
-    readonly parentBranch: string | null;
     readonly storage: IDocumentStorageService | undefined | null;
     readonly connected: boolean;
     readonly branch: string;
@@ -132,7 +131,6 @@ export interface IContainerContext extends IDisposable {
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
-    readonly codeLoader: ICodeLoader;
     readonly logger: ITelemetryLogger;
     readonly serviceConfiguration: IServiceConfiguration | undefined;
     readonly version: string;

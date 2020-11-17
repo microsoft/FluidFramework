@@ -2355,7 +2355,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             currentPos++;
             segoff = undefined;
         } else if (asMarker && asMarker.hasRangeLabel("table")) {
-            // TODO: branches
             let tableView: Table.Table;
             if (asMarker.removedSeq === undefined) {
                 renderTable(asMarker, docContext, layoutContext, targetTranslation, deferredPGs);

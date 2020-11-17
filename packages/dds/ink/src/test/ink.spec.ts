@@ -100,7 +100,7 @@ describe("Ink", () => {
             // Load a new Ink from the snapshot of the first one.
             const services = MockSharedObjectServices.createFromTree(ink.snapshot());
             const ink2 = new Ink(dataStoreRuntime, "ink2", InkFactory.Attributes);
-            await ink2.load("branchId", services);
+            await ink2.load(services);
 
             // Verify that the new Ink has the stroke and the point.
             const stroke = ink2.getStroke(strokeId);
@@ -125,7 +125,7 @@ describe("Ink", () => {
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const ink2 = new Ink(dataStoreRuntime2, "ink2", InkFactory.Attributes);
-            await ink2.load("branchId", services2);
+            await ink2.load(services2);
 
             // Now connect the first Ink
             dataStoreRuntime.local = false;

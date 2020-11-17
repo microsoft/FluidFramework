@@ -11,7 +11,6 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-    LastEditedTrackerDataObject,
     setupLastEditedTrackerForContainer,
     IFluidLastEditedTracker,
 } from "@fluidframework/last-edited-experimental";
@@ -26,7 +25,6 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     Anchor,
     TabsFluidObject,
-    Vltava,
 } from "./fluidObjects";
 import {
     IFluidObjectInternalRegistry,
@@ -133,10 +131,8 @@ const generateFactory = () => {
         Anchor.getFactory(),
         [
             ...containerFluidObjects,
-            LastEditedTrackerDataObject.getFactory().registryEntry,
             // We don't want to include the default wrapper fluidObject in our list of available fluidObjects
             Anchor.getFactory().registryEntry,
-            Vltava.getFactory().registryEntry,
             ["internalRegistry", Promise.resolve(new InternalRegistry(containerFluidObjectsDefinition))],
         ],
     );
