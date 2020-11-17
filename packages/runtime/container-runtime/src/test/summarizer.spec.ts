@@ -99,7 +99,7 @@ describe("Runtime", () => {
                         new TelemetryNullLogger(),
                         summaryCollection.createWatcher(summarizerClientId),
                         summaryConfig,
-                        async () => {
+                        { generateSummary: async () => {
                             runCount++;
 
                             // immediate broadcast
@@ -121,7 +121,7 @@ describe("Runtime", () => {
                                 handle: "test-handle",
                                 clientSequenceNumber: lastClientSeq,
                             };
-                        },
+                        } },
                         0,
                         { refSequenceNumber: 0, summaryTime: Date.now() },
                         false,

@@ -462,7 +462,13 @@ class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
  * It will define the store level mappings.
  */
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
-    implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
+    implements
+        IContainerRuntime,
+        IContainerRuntimeDirtyable,
+        IRuntime,
+        ISummarizerRuntime,
+        ISummarizerInternalsProvider
+{
     public get IContainerRuntime() { return this; }
     public get IContainerRuntimeDirtyable() { return this; }
     public get IFluidRouter() { return this; }
@@ -832,7 +838,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // This will ensure we correctly convert old documents.
         this.summarizer = new Summarizer(
             "/_summarizer",
-            this,
+            this as ISummarizerRuntime,
             () => this.summaryConfiguration,
             this as ISummarizerInternalsProvider,
             this.IFluidHandleContext,
