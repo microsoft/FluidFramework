@@ -207,8 +207,8 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     // Snapshot if 1000 ops received since last snapshot.
     maxOps: 1000,
 
-    // Wait 10 minutes for summary ack
-    maxAckWaitTime: 600000,
+    // Wait 2 minutes for summary ack
+    maxAckWaitTime: 120000,
 };
 
 /**
