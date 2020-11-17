@@ -42,15 +42,22 @@ export async function getShareLink(
     logger?: ITelemetryLogger,
     scope: "anonymous" | "organization" | "default" | "existingAccess" = "existingAccess",
     type: "view" | "edit" = "edit",
+    msGraphOrigin?: string,
 ): Promise<string | undefined> {
     if (scope === "existingAccess") {
         return getFileDefaultUrl(getShareLinkToken, siteUrl, driveId, itemId, identityType, logger);
     }
 
+    const origin = msGraphOrigin
+        ? msGraphOrigin.charAt(-1) === '/'
+        ? msGraphOrigin
+        : `${msGraphOrigin}/`
+        : "";
+
     const createShareLinkResponse = await graphFetch(
         getShareLinkToken,
         siteUrl,
-        `drives/${driveId}/items/${itemId}/createLink`,
+        `${origin}drives/${driveId}/items/${itemId}/createLink`,
         `GetShareLink_${scope}_${type}`,
         logger,
         {
