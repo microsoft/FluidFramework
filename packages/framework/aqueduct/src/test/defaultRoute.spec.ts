@@ -24,7 +24,7 @@ class MockRuntime {
         if (id === "objectId") {
             return {
                 request: async (r) => {
-                    if (r.url === "" || r.url === "route") {
+                    if (r.url === "" || r.url === "/route") {
                         return createFluidObjectResponse({ route: r.url } as IFluidObject);
                     }
                     return { status: 404, mimeType: "text/plain", value: "not found" };
