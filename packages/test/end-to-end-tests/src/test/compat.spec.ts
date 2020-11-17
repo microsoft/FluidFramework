@@ -105,6 +105,9 @@ describe("loader/runtime compatibility", () => {
                 loadContainer( // new loader/container runtime, old data store runtime
                     { fluidExport: createRuntimeFactory(TestDataObject.type, createOldPrimedDataStoreFactory()) },
                     args.deltaConnectionServer),
+                loadContainerWithOldLoader( // old loader/container runtime, new data store runtime
+                    { fluidExport: createOldRuntimeFactory(TestDataObject.type, createPrimedDataStoreFactory()) },
+                    args.deltaConnectionServer),
             ];
 
             const dataObjects = await Promise.all(containersP.map(async (containerP) => containerP.then(
