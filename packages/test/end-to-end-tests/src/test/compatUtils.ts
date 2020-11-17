@@ -279,6 +279,26 @@ export const generateCompatTest = (
                 await localTestObjectProvider.reset();
             });
         });
+
+        describe("old ContainerRuntime, new DataStoreRuntime", function() {
+            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+                createOldRuntimeFactory(
+                    TestDataObject.type,
+                    getDataStoreFactory(containerOptions),
+                    containerOptions?.runtimeOptions,
+                );
+
+            const localTestObjectProvider = new old.LocalTestObjectProvider(
+                runtimeFactory,
+                options.serviceConfiguration,
+            );
+
+            tests(localTestObjectProvider);
+
+            afterEach(async function() {
+                await localTestObjectProvider.reset();
+            });
+        });
     });
 };
 
