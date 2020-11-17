@@ -38,6 +38,7 @@ import { SummarizerHandle } from "./summarizerHandle";
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
 const maxSummarizeTimeoutCount = 5; // Double and resend 5 times
+const maxSummarizeAckWaitTime = 120000; // 2 minutes
 
 const minOpsForLastSummary = 50;
 
@@ -298,13 +299,16 @@ export class RunningSummarizer implements IDisposable {
             maxSummarizeTimeoutTime,
             () => this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1));
 
+        // Cap the maximum amount of time client will wait for a summarize op ack to maxSummarizeAckWaitTime
+        const maxAckWaitTime = Math.min(this.configuration.maxAckWaitTime, maxSummarizeAckWaitTime);
+
         this.pendingAckTimer = new PromiseTimer(
-            this.configuration.maxAckWaitTime,
+            maxAckWaitTime,
             () => {
                 this.raiseSummarizingError("SummaryAckWaitTimeout");
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
-                    maxAckWaitTime: this.configuration.maxAckWaitTime,
+                    maxAckWaitTime,
                     refSequenceNumber: this.heuristics.lastAttempted.refSequenceNumber,
                     summarySequenceNumber: this.heuristics.lastAttempted.summarySequenceNumber,
                     timePending: Date.now() - this.heuristics.lastAttempted.summaryTime,
