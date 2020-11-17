@@ -52,6 +52,23 @@ export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }
 
+export interface ISummarizerInternalsProvider {
+    /** Encapsulates the work to walk the internals of the running container to generate a summary */
+    generateSummary(
+        full: boolean,
+        safe: boolean,
+        summaryLogger: ITelemetryLogger,
+    ): Promise<GenerateSummaryData | undefined>;
+
+    /** Callback whenever a new SummaryAck is received, to update internal tracking state */
+    refreshLatestSummaryAck(
+        proposalHandle: string,
+        ackHandle: string,
+        referenceSequenceNumber: number,
+        summaryLogger: ITelemetryLogger,
+    ): Promise<void>;
+}
+
 const summarizingError = "summarizingError";
 
 export interface ISummarizingWarning extends IErrorBase {
@@ -236,11 +253,7 @@ export class RunningSummarizer implements IDisposable {
         logger: ITelemetryLogger,
         summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
-        generateSummary: (
-            full: boolean,
-            safe: boolean,
-            summaryLogger: ITelemetryLogger,
-        ) => Promise<GenerateSummaryData | undefined>,
+        internalsProvider: Pick<ISummarizerInternalsProvider, "generateSummary">,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         immediateSummary: boolean,
@@ -252,7 +265,7 @@ export class RunningSummarizer implements IDisposable {
             logger,
             summaryWatcher,
             configuration,
-            generateSummary,
+            internalsProvider,
             lastOpSeqNumber,
             firstAck,
             immediateSummary,
@@ -287,8 +300,7 @@ export class RunningSummarizer implements IDisposable {
         baseLogger: ITelemetryLogger,
         private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
-        // eslint-disable-next-line max-len
-        private readonly generateSummary: (full: boolean, safe: boolean, summaryLogger: ITelemetryLogger) => Promise<GenerateSummaryData | undefined>,
+        private readonly internalsProvider: Pick<ISummarizerInternalsProvider, "generateSummary">,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         private immediateSummary: boolean = false,
@@ -534,7 +546,7 @@ export class RunningSummarizer implements IDisposable {
         // Wait for generate/send summary
         let summaryData: GenerateSummaryData | undefined;
         try {
-            summaryData = await this.generateSummary(this.immediateSummary, safe, this.logger);
+            summaryData = await this.internalsProvider.generateSummary(this.immediateSummary, safe, this.logger);
         } catch (error) {
             summarizingEvent.cancel({ category: "error" }, error);
             return;
@@ -610,17 +622,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         url: string,
         private readonly runtime: ISummarizerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
-        private readonly generateSummaryCore: (
-            full: boolean,
-            safe: boolean,
-            summaryLogger: ITelemetryLogger,
-        ) => Promise<GenerateSummaryData | undefined>,
-        private readonly refreshLatestAck: (
-            proposalHandle: string,
-            ackHandle: string,
-            referenceSequenceNumber: number,
-            summaryLogger: ITelemetryLogger,
-        ) => Promise<void>,
+        private readonly internalsProvider: ISummarizerInternalsProvider,
         handleContext: IFluidHandleContext,
         summaryCollection?: SummaryCollection,
     ) {
@@ -755,7 +757,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.logger,
             this.summaryCollection.createWatcher(startResult.clientId),
             this.configurationGetter(),
-            async (...args) => this.generateSummary(...args),
+            this as Pick<ISummarizerInternalsProvider, "generateSummary">,
             this.runtime.deltaManager.lastSequenceNumber,
             initialAttempt,
             this.immediateSummary,
@@ -816,7 +818,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         return this.runtime.nextSummarizerD.promise;
     }
 
-    private async generateSummary(
+    /** Implementation of SummarizerInternalsProvider.generateSummary */
+    public async generateSummary(
         full: boolean,
         safe: boolean,
         summaryLogger: ITelemetryLogger,
@@ -828,7 +831,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             return undefined;
         }
 
-        return this.generateSummaryCore(full, safe, summaryLogger);
+        return this.internalsProvider.generateSummary(full, safe, summaryLogger);
     }
 
     private async handleSummaryAcks() {
@@ -839,7 +842,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                 const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
                 refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
 
-                await this.refreshLatestAck(
+                await this.internalsProvider.refreshLatestSummaryAck(
                     ack.summaryOp.contents.handle,
                     ack.summaryAckNack.contents.handle,
                     refSequenceNumber,

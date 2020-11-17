@@ -119,7 +119,7 @@ import {
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
-import { ISummarizerRuntime, Summarizer } from "./summarizer";
+import { ISummarizerRuntime, ISummarizerInternalsProvider, Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
@@ -834,10 +834,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             "/_summarizer",
             this,
             () => this.summaryConfiguration,
-            // eslint-disable-next-line max-len
-            async (full: boolean, safe: boolean, summaryLogger: ITelemetryLogger) => this.generateSummary(full, safe, summaryLogger),
-            // eslint-disable-next-line max-len
-            async (propHandle, ackHandle, refSeq, summaryLogger) => this.refreshLatestSummaryAck(propHandle, ackHandle, refSeq, summaryLogger),
+            this as ISummarizerInternalsProvider,
             this.IFluidHandleContext,
             this.previousState.summaryCollection);
 
@@ -1703,7 +1700,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.getAbsoluteUrl(relativeUrl);
     }
 
-    private async generateSummary(
+    /** Implementation of SummarizerInternalsProvider.generateSummary */
+    public async generateSummary(
         fullTree: boolean = false,
         safe: boolean = false,
         summaryLogger: ITelemetryLogger,
@@ -2125,7 +2123,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    private async refreshLatestSummaryAck(
+    /** Implementation of SummarizerInternalsProvider.refreshLatestSummaryAck */
+    public async refreshLatestSummaryAck(
         proposalHandle: string | undefined,
         ackHandle: string,
         trackerRefSeqNum: number, // back-compat summarizerNode - remove when fully enabled
