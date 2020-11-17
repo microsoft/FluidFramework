@@ -12,7 +12,8 @@ export class CombinedProducer implements IProducer {
     constructor(private readonly producers: IProducer[]) {
     }
 
-    public async send(messages: Record<string, unknown>[], tenantId: string, documentId: string): Promise<any> {
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    public async send(messages: object[], tenantId: string, documentId: string): Promise<any> {
         const sendP = [];
         for (const producer of this.producers) {
             sendP.push(producer.send(messages, tenantId, documentId));
