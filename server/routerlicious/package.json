@@ -84,6 +84,6 @@
     "typescript": "~3.8.2"
   },
   "workspaces": [
-    "packages/**",
+    "packages/**"
   ]
 }

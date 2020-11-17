@@ -14,3 +14,11 @@ package-deps.json
 
 # Temporary api-extractor build artifacts
 _api-extractor-temp/**
+
+# Yarn 2
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
