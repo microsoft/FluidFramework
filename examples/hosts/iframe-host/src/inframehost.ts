@@ -4,9 +4,9 @@
  */
 
 import {
-    IFrameDocumentServiceProxyFactory,
+    DocumentServiceFactoryProxy,
 } from "@fluidframework/iframe-driver";
-import { Loader, Container } from "@fluidframework/container-loader";
+import { Container, Loader } from "@fluidframework/container-loader";
 import {
     ICodeLoader,
     IContainerContext,
@@ -16,7 +16,7 @@ import {
     AttachState,
     IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
-import { MultiUrlResolver, MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
+import { MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
 import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
@@ -62,7 +62,7 @@ class ProxyChaincode implements IRuntimeFactory {
     }
 }
 
-class ProxyCodeLoader implements ICodeLoader {
+export class ProxyCodeLoader implements ICodeLoader {
     async load() {
         return Promise.resolve({ fluidExport: new ProxyChaincode() });
     }
@@ -71,6 +71,7 @@ class ProxyCodeLoader implements ICodeLoader {
 export interface IFrameOuterHostConfig {
     documentServiceFactory: IDocumentServiceFactory;
     urlResolver: IUrlResolver;
+    codeLoader: ICodeLoader,
 
     // Any config to be provided to loader.
     options?: any;
@@ -90,29 +91,19 @@ export class IFrameOuterHost {
         // set as non-user client
         this.loader = new Loader({
             ...hostConfig,
-            codeLoader: new ProxyCodeLoader(),
         });
     }
 
-    public async load(request: IRequest, iframe: HTMLIFrameElement): Promise<Container> {
-        const proxy = await IFrameDocumentServiceProxyFactory.create(
+    public async loadOuterProxy(iframe: HTMLIFrameElement): Promise<void> {
+        const outerProxy =  new DocumentServiceFactoryProxy(
             MultiDocumentServiceFactory.create(this.hostConfig.documentServiceFactory),
-            iframe,
             this.hostConfig.options,
-            MultiUrlResolver.create(this.hostConfig.urlResolver));
+            iframe,
+        );
+        void outerProxy;
+    }
 
-        await proxy.createDocumentServiceFromRequest(request);
-
-        // don't try to connect until the iframe does, so they get existing false
-
-        await new Promise((resolve) => setTimeout(() => resolve(), 200));
-
-        const container = await this.loader.resolve(request);
-        if (!container.getQuorum().has("code")) {
-            // we'll never propose the code, so wait for them to do it
-            await new Promise((resolve) => container.once("contextChanged", () => resolve()));
-        }
-
-        return container;
+    public async getContainerForRequest(request: IRequest): Promise<Container> {
+        return this.loader.resolve(request);
     }
 }

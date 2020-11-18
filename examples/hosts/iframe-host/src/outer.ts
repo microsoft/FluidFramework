@@ -6,7 +6,6 @@
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidObject } from "@fluidframework/core-interfaces";
-import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import {
     RouterliciousDocumentServiceFactory,
 } from "@fluidframework/routerlicious-driver";
@@ -31,40 +30,37 @@ const getTinyliciousUrlResolver =
         "tinylicious",
         "bearer");
 
-export async function loadFrame(iframeId: string, logId: string) {
+export async function loadFrame(iframeDivId: string, divId: string, logId: string) {
     const documentId = getDocumentId();
-    const iframe = document.getElementById(iframeId) as HTMLIFrameElement;
+    const iframeDiv = document.getElementById(iframeDivId) as HTMLIFrameElement;
+    const iframe = document.createElement("iframe");
+    iframe.src = "/inner.html";
+    iframeDiv.appendChild(iframe);
 
     const urlResolver = getTinyliciousUrlResolver();
 
     const tokenProvider = new InsecureTokenProvider("tinylicious", documentId, "12345", { id: "userid0" });
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
 
+    const module = { fluidExport: TodoContainer };
+    const codeLoader = { load: async () => module };
+
     const host = new IFrameOuterHost({
         urlResolver,
         documentServiceFactory,
+        codeLoader,
     });
 
-    const proxyContainer = await host.load(
-        { url: getDocumentUrl(documentId) },
-        iframe,
-    );
+    await host.loadOuterProxy(iframe);
 
-    const text = document.getElementById(logId) as HTMLDivElement;
-    const quorum = proxyContainer.getQuorum();
-
-    const log =
-        (emitter: { on(event: string, listener: (...args: any[]) => void) }, name: string, ...events: string[]) => {
-            events.forEach((event) =>
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                emitter.on(event, (...args) => {
-                    text.innerHTML += `${name}: ${event}: ${JSON.stringify(args)}<br/>`;
-                }));
-        };
-
-    quorum.getMembers().forEach((client) => text.innerHTML += `Quorum: client: ${JSON.stringify(client)}<br/>`);
-    log(quorum, "Quorum", "error", "addMember", "removeMember");
-    log(proxyContainer, "Container", "error", "connected", "disconnected");
+    iframe.addEventListener("load", () => {
+        void (async () => {
+            await (iframe.contentWindow as any).loadFluidObject(documentId, createNew);
+            // don't try to connect until the iframe does, so they get existing false
+            const container = await host.getContainerForRequest({ url: getDocumentUrl(documentId) });
+            await loadOuterDataStoreAndLogDivs(container, logId, divId);
+        })();
+    });
 }
 
 async function getFluidObjectAndRender(container: Container, div: HTMLDivElement) {
@@ -83,25 +79,40 @@ async function getFluidObjectAndRender(container: Container, div: HTMLDivElement
     view.render(div, { display: "block" });
 }
 
-export async function loadDiv(divId: string) {
-    const div = document.getElementById(divId) as HTMLDivElement;
+async function loadOuterDataStoreAndLogDivs(
+    container: Container,
+    logDivId: string,
+    dataStoreDivId: string,
+): Promise<void> {
+    const logDiv = document.getElementById(logDivId) as HTMLDivElement;
 
-    const container = await getTinyliciousContainer(
-        getDocumentId(),
-        TodoContainer,
-        createNew,
-    );
+    if (!container.getQuorum().has("code")) {
+        // we'll never propose the code, so wait for them to do it
+        await new Promise((resolve) => container.once("contextChanged", () => resolve()));
+    }
 
-    await getFluidObjectAndRender(container, div).catch(() => { });
+    const quorum = container.getQuorum();
+    const log =
+        (emitter: { on(event: string, listener: (...args: any[]) => void) }, name: string, ...events: string[]) => {
+            events.forEach((event) =>
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                emitter.on(event, (...args) => {
+                    logDiv.innerHTML += `${name}: ${event}: ${JSON.stringify(args)}<br/>`;
+                }));
+        };
+
+    quorum.getMembers().forEach((client) => logDiv.innerHTML += `Quorum: client: ${JSON.stringify(client)}<br/>`);
+    log(quorum, "Quorum", "error", "addMember", "removeMember");
+    log(container, "Container", "error", "connected", "disconnected");
+
+    const dataStoreDiv = document.getElementById(dataStoreDivId) as HTMLDivElement;
+    getFluidObjectAndRender(container, dataStoreDiv).catch(() => {});
     // Handle the code upgrade scenario (which fires contextChanged)
     container.on("contextChanged", (value) => {
-        getFluidObjectAndRender(container, div).catch(() => { });
+        getFluidObjectAndRender(container, dataStoreDiv).catch(() => {});
     });
 }
 
-export async function runOuter(iframeId: string, divId: string, logId: string) {
-    await Promise.all([
-        loadFrame(iframeId, logId),
-        loadDiv(divId).catch(),
-    ]);
+export async function runOuter(iframeDivId: string, divId: string, logId: string) {
+    await loadFrame(iframeDivId, divId, logId);
 }
