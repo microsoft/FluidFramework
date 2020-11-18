@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
 import { ITaskManager } from "@fluidframework/runtime-definitions";
+import { RequestParser } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { IEvent } from "@fluidframework/common-definitions";
 import { BlobHandle } from "./blobHandle";
@@ -40,10 +41,20 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
 
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
-        if (url.startsWith(this.bigBlobs)) {
-            const value = this.root.get<string>(url);
+        const requestParser = RequestParser.create({ url: request.url });
+        const itemId = requestParser.pathParts[0];
+        if (itemId === "bigBlobs") {
+            let value = this.root.get<string>(url);
             if (value === undefined) {
-                return { mimeType: "text/plain", status: 404, value: `request ${url} not found` };
+                const value2 = this.root.get<string>(url.slice(1));
+                if (value2 === undefined) {
+                    return { mimeType: "text/plain", status: 404, value: `request ${url} not found` };
+                }
+                else {
+                    this.root.set(url.slice(1),value2);
+                    this.root.delete(url);
+                    value = value2;
+                }
             }
             return { mimeType: "fluid/object", status: 200, value };
         } else {

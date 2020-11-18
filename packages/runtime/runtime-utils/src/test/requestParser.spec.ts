@@ -77,6 +77,12 @@ describe("RequestParser", () => {
             assert.throws(() => testRequestParser.createSubRequest(1));
             assert.throws(() => testRequestParser.createSubRequest(-1));
         });
+        it("Create request for just query params", () => {
+            const testRequestParser = RequestParser.create({ url: "/?query" });
+            assert.strictEqual(testRequestParser.createSubRequest(0).url, "/?query");
+            assert.throws(() => testRequestParser.createSubRequest(1));
+            assert.throws(() => testRequestParser.createSubRequest(-1));
+        });
     });
 
     const testSubRequest = function(uri: string) {
