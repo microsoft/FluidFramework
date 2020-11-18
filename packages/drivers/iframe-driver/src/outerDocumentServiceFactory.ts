@@ -13,15 +13,12 @@ import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import { assert, Deferred } from "@fluidframework/common-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentServiceFactory,
     IDocumentStorageService,
-    IFluidResolvedUrl,
-    IUrlResolver,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
@@ -60,7 +57,6 @@ export interface IDocumentServiceFactoryProxy {
     clients: {
         [clientId: string]: ICombinedDriver;
     };
-    getFluidUrl(): Promise<IFluidResolvedUrl>;
     createDocumentService(
         resolvedUrlFn: () => Promise<IResolvedUrl>,
         // TODO: Create proxy ITelemetryBaseLogger (wrapping in getter fn is
@@ -88,7 +84,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     constructor(
         private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly options: any,
-        private readonly resolvedUrl: IFluidResolvedUrl,
         frame: HTMLIFrameElement,
     ) {
         this._clients = {};
@@ -175,15 +170,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         return;
     }
 
-    public async getFluidUrl(): Promise<IFluidResolvedUrl> {
-        return Promise.resolve<IFluidResolvedUrl>({
-            endpoints: {},
-            tokens: {},
-            type: "fluid",
-            url: this.resolvedUrl.url,
-        });
-    }
-
     private createProxy(frame: HTMLIFrameElement) {
         // Host guarantees that frame and contentWindow are both loaded
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -199,7 +185,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
                     return Comlink.proxy(this.createContainer(createNewSummary, resolvedUrl));
                 },
             ),
-            getFluidUrl: Comlink.proxy(async () => this.getFluidUrl()),
         };
 
         iframeContentWindow.window.postMessage("EndpointExposed", "*");
@@ -337,9 +322,8 @@ export class IFrameDocumentServiceProxyFactory {
         documentServiceFactory: IDocumentServiceFactory,
         frame: HTMLIFrameElement,
         options: any,
-        urlResolver: IUrlResolver,
     ) {
-        return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options, urlResolver);
+        return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options);
     }
 
     public readonly protocolName = "fluid-outer:";
@@ -348,24 +332,15 @@ export class IFrameDocumentServiceProxyFactory {
         private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly frame: HTMLIFrameElement,
         private readonly options: any,
-        private readonly urlResolver: IUrlResolver,
     ) {
 
     }
 
-    public async createDocumentService(resolvedUrl: IFluidResolvedUrl): Promise<IDocumentServiceFactoryProxy> {
+    public async createDocumentService(): Promise<IDocumentServiceFactoryProxy> {
         return new DocumentServiceFactoryProxy(
             this.documentServiceFactory,
             this.options,
-            resolvedUrl,
             this.frame,
         );
-    }
-
-    public async createDocumentServiceFromRequest(request: IRequest): Promise<IDocumentServiceFactoryProxy> {
-        const resolvedUrl = await this.urlResolver.resolve(request);
-        ensureFluidResolvedUrl(resolvedUrl);
-
-        return this.createDocumentService(resolvedUrl);
     }
 }

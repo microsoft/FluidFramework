@@ -8,13 +8,10 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IDocumentService,
     IDocumentServiceFactory,
-    IUrlResolver,
-    IFluidResolvedUrl,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { InnerDocumentService } from "./innerDocumentService";
-import { InnerUrlResolver } from "./innerUrlResolver";
 import { IDocumentServiceFactoryProxy } from "./outerDocumentServiceFactory";
 import { MakeThinProxy } from "./proxyUtils";
 
@@ -55,17 +52,14 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         // Remove eventListener if the create returns, the trigger was sent before inner was created
         // Leaving the eventListener will eat events.
         window.removeEventListener("message", evtListener);
-        const url = await rtnProxy.getFluidUrl();
-        return new InnerDocumentServiceFactory(rtnProxy, url);
+        return new InnerDocumentServiceFactory(rtnProxy);
     }
 
     public static readonly protocolName = "fluid:";
     public readonly protocolName = InnerDocumentServiceFactory.protocolName;
-    public readonly urlResolver: IUrlResolver;
     private constructor(
         private readonly outerProxy: Comlink.Remote<IDocumentServiceFactoryProxy>,
-        public readonly resolvedUrl: IFluidResolvedUrl) {
-        this.urlResolver = new InnerUrlResolver(resolvedUrl);
+    ) {
     }
 
     public async createDocumentService(
