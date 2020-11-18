@@ -95,7 +95,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         if (this.logger) {
             this.logger.sendTelemetryEvent({
                 eventName: "DeltaQueuePause",
-            },  `${this.userPause}`);
+            },  this.userPause);
         }
     }
 
@@ -108,7 +108,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         if (this.logger) {
             this.logger.sendTelemetryEvent({
                 eventName: "DeltaQueueResume",
-            },  `${this.userPause}`);
+            },  this.userPause);
         }
     }
 
@@ -122,7 +122,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         if (this.logger) {
             this.logger.sendTelemetryEvent({
                 eventName: "DeltaQueueSystemPause",
-            },  `${this.sysPause}`);
+            },  this.sysPause);
         }
     }
 
@@ -135,7 +135,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         if (this.logger) {
             this.logger.sendTelemetryEvent({
                 eventName: "DeltaQueueSystemResume",
-            },  `${this.sysPause}`);
+            },  this.sysPause);
         }
     }
 
