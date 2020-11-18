@@ -13,21 +13,25 @@
  * Packages using the v7 config must use these dependency versions:
  *
 
- {
-    "dependencies": {},
-    "devDependencies": {
-        "@typescript-eslint/eslint-plugin": "~4.2.0",
-        "@typescript-eslint/parser": "~4.2.0",
-        "eslint": "~7.9.0",
-        "eslint-plugin-eslint-comments": "~3.2.0",
-        "eslint-plugin-import": "~2.22.0",
-        "eslint-plugin-no-null": "~1.0.2",
-        "eslint-plugin-prefer-arrow": "~1.2.2",
-        "eslint-plugin-react": "~7.21.2",
-        "eslint-plugin-unicorn": "~22.0.0"
-    }
-}
+  "dependencies": {
+    "@rushstack/eslint-patch": "^1.0.6",
+    "@typescript-eslint/eslint-plugin": "~4.8.1",
+    "@typescript-eslint/parser": "~4.8.1",
+    "eslint-plugin-eslint-comments": "~3.2.0",
+    "eslint-plugin-import": "~2.22.1",
+    "eslint-plugin-no-null": "~1.0.2",
+    "eslint-plugin-optimize-regex": "~1.2.0",
+    "eslint-plugin-prefer-arrow": "~1.2.2",
+    "eslint-plugin-react": "~7.21.5",
+    "eslint-plugin-unicorn": "~23.0.0"
+  },
+  "devDependencies": {
+    "eslint": "~7.13.0"
+  },
 */
+
+// See readme here for more info: https://yarnpkg.com/package/@rushstack/eslint-patch
+require("@rushstack/eslint-patch/modern-module-resolution");
 
 module.exports = {
     "env": {

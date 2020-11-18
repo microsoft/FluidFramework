@@ -137,5 +137,12 @@
       }
     },
     "generatorName": "generator-fluid"
-  }
+  },
+  "workspaces": [
+    "common/*/*",
+    "packages/*/*",
+    "examples/**",
+    "server/routerlicious/*",
+    "server/tinylicious"
+  ]
 }

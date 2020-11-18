@@ -82,5 +82,8 @@
     "rimraf": "^2.6.2",
     "run-script-os": "^1.0.7",
     "typescript": "~3.8.2"
-  }
+  },
+  "workspaces": [
+    "packages/**",
+  ]
 }
