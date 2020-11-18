@@ -685,6 +685,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         // Normalize all the context's path of Fluid object references and prefix them with this channel's id.
         normalizeAndPrefixReferencesPath(references, this.id);
 
+        // Add a route to self to all the context references. This will ensure that if any of the contexts are
+        // referenced, this channel will be referenced as well.
+        addRouteToReferences(references, this.absolutePath);
+
         // Add Fluid objects referenced by this channel.
         references.push(this.getFluidObjectReferences());
 
