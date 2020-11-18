@@ -45,7 +45,7 @@ async function seqFromTree(
 }
 
 /** Path for nodes in a tree with escaped special characters */
-class EscapedPath {
+export class EscapedPath {
     private constructor(public readonly path: string) { }
     public static create(path: string): EscapedPath {
         return new EscapedPath(encodeURIComponent(path));
@@ -66,7 +66,7 @@ class EscapedPath {
 }
 
 /** Information about a summary relevant to a specific node in the tree */
-class SummaryNode {
+export class SummaryNode {
     public get referenceSequenceNumber(): number {
         return this.summary.referenceSequenceNumber;
     }
@@ -225,7 +225,7 @@ function encodeSummary(summaryParam: EncodeSummaryParam, outstandingOps: ISequen
     };
 }
 
-interface IInitialSummary {
+export interface IInitialSummary {
     sequenceNumber: number;
     id: string;
     summary: ISummaryTreeWithStats | undefined;
@@ -253,10 +253,10 @@ export class SummarizerNode implements ISummarizerNode {
         return this.latestSummary?.referenceSequenceNumber ?? 0;
     }
 
-    private readonly children = new Map<string, SummarizerNode>();
+    protected readonly children = new Map<string, SummarizerNode>();
     private readonly pendingSummaries = new Map<string, SummaryNode>();
     private readonly outstandingOps: ISequencedDocumentMessage[] = [];
-    private wipReferenceSequenceNumber: number | undefined;
+    protected wipReferenceSequenceNumber: number | undefined;
     private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
     private wipSkipRecursion = false;
 

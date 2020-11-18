@@ -4,32 +4,32 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { CreateContainerError } from "@fluidframework/container-utils";
-import { readAndParse } from "@fluidframework/driver-utils";
-import {
-    ISequencedDocumentMessage,
-    ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
 import {
     IChannel,
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
+import {
+    ISequencedDocumentMessage,
+    ISnapshotTree,
+} from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeFn,
+    IContextSummarizeResult,
     IFluidDataStoreContext,
     ISummarizeInternalResult,
-    ISummarizerNode,
-    ISummarizeResult,
+    ISummarizerNodeWithReferences,
     ISummaryTracker,
 } from "@fluidframework/runtime-definitions";
 import { createServiceEndpoints, IChannelContext, summarizeChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
+import { ChannelStorageService } from "./channelStorageService";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
 import { debug } from "./debug";
-import { ChannelStorageService } from "./channelStorageService";
 
 export class RemoteChannelContext implements IChannelContext {
     private isLoaded = false;
@@ -40,7 +40,7 @@ export class RemoteChannelContext implements IChannelContext {
         readonly deltaConnection: ChannelDeltaConnection,
         readonly objectStorage: ChannelStorageService,
     };
-    private readonly summarizerNode: ISummarizerNode;
+    private readonly summarizerNode: ISummarizerNodeWithReferences;
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -112,7 +112,7 @@ export class RemoteChannelContext implements IChannelContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IContextSummarizeResult> {
         // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
         // the summary. Else, get the summary tree directly.
         return trackState

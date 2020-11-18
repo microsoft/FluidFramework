@@ -42,19 +42,23 @@ import {
 import {
     CreateSummarizerNodeSource,
     IAttachMessage,
+    IChannelSummarizeResult,
     IEnvelope,
     IFluidDataStoreContext,
     IFluidDataStoreChannel,
+    IFluidObjectReferences,
     IInboundSignalMessage,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import {
+    addRouteToReferences,
     convertSnapshotTreeToSummaryTree,
     generateHandleContextPath,
     RequestParser,
     SummaryTreeBuilder,
     FluidSerializer,
     convertSummaryTreeToITree,
+    normalizeAndPrefixReferencesPath,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -564,11 +568,35 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
+     * Returns the Fluid objects referenced by this channel.
+     */
+    private getFluidObjectReferences(): IFluidObjectReferences {
+        /**
+         * Get the Fluid objects referenced by this channel. Currently, all contexts in this channel are considered
+         * as referenced. This will change will we have root and non-root channel contexts. Then only root contexts
+         * will be considered as referenced.
+         */
+        const referencedRoutes: string[] = [];
+        for (const [contextId] of this.contexts) {
+            // The referenced route of a context is the path to it relative to the Container.
+            referencedRoutes.push(`${this.absolutePath}/${contextId}`);
+        }
+
+        return {
+            path: this.id,
+            routes: referencedRoutes,
+        };
+    }
+
+    /**
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
+        // This will contain a list of all Fluid objects referenced by this channel. It accumulates the Fluid object
+        // references of all the channel contexts and adds its own Fluid references.
+        const references: IFluidObjectReferences[] = [];
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each data store and ask it to snapshot
@@ -581,11 +609,31 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // (i.e. it has a base mapping) - then we go ahead and snapshot
                 return isAttached;
             }).map(async ([key, value]) => {
-                const channelSummary = await value.summarize(fullTree, trackState);
-                builder.addWithStats(key, channelSummary);
+                const contextSummary = await value.summarize(fullTree, trackState);
+                builder.addWithStats(key, contextSummary);
+
+                // back-compat 0.30 - Older versions will not return references. Set it to empty array.
+                if (contextSummary.references === undefined) {
+                    contextSummary.references = [];
+                }
+                // Add the context's Fluid object references to the list of this channel's references.
+                references.push(...contextSummary.references);
             }));
 
-        return builder.getSummaryTree();
+        // Normalize all the context's path of Fluid object references and prefix them with this channel's id.
+        normalizeAndPrefixReferencesPath(references, this.id);
+
+        // Add a route to self to all the context references. This will ensure that if any of the contexts are
+        // referenced, this channel will be referenced as well.
+        addRouteToReferences(references, this.absolutePath);
+
+        // Add Fluid objects referenced by this channel.
+        references.push(this.getFluidObjectReferences());
+
+        return {
+            ...builder.getSummaryTree(),
+            references,
+        };
     }
 
     /**
@@ -598,9 +646,12 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return tree.entries;
     }
 
-    public getAttachSummary(): ISummaryTreeWithStats {
+    public getAttachSummary(): IChannelSummarizeResult {
         this.attachGraph();
 
+        // This will contain a list of all Fluid objects referenced by this channel. It accumulates the Fluid object
+        // references of all the channel contexts and adds its own Fluid references.
+        const references: IFluidObjectReferences[] = [];
         const builder = new SummaryTreeBuilder();
 
         // Craft the .attributes file for each shared object
@@ -610,22 +661,37 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             }
 
             if (!this.notBoundedChannelContextSet.has(objectId)) {
-                let summary: ISummaryTreeWithStats;
+                let summaryTree: ISummaryTreeWithStats;
                 if (value.isLoaded) {
-                    summary = value.getAttachSummary();
+                    const summarizeResult = value.getAttachSummary();
+                    assert(
+                        summarizeResult.summary.type === SummaryType.Tree,
+                        "getAttachSummary should always return a tree");
+                    summaryTree = { stats: summarizeResult.stats, summary: summarizeResult.summary };
+
+                    // Add the context's Fluid object references to the list of this channel's references.
+                    references.push(...summarizeResult.references);
                 } else {
                     // If this channel is not yet loaded, then there should be no changes in the snapshot from which
                     // it was created as it is detached container. So just use the previous snapshot.
                     assert(!!this.dataStoreContext.baseSnapshot,
                         "BaseSnapshot should be there as detached container loaded from snapshot");
-                    summary = convertSnapshotTreeToSummaryTree(this.dataStoreContext.baseSnapshot.trees[objectId]);
+                    summaryTree = convertSnapshotTreeToSummaryTree(this.dataStoreContext.baseSnapshot.trees[objectId]);
                 }
-
-                builder.addWithStats(objectId, summary);
+                builder.addWithStats(objectId, summaryTree);
             }
         }
 
-        return builder.getSummaryTree();
+        // Normalize all the context's path of Fluid object references and prefix them with this channel's id.
+        normalizeAndPrefixReferencesPath(references, this.id);
+
+        // Add Fluid objects referenced by this channel.
+        references.push(this.getFluidObjectReferences());
+
+        return {
+            ...builder.getSummaryTree(),
+            references,
+        };
     }
 
     public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {

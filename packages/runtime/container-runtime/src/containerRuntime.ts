@@ -77,6 +77,7 @@ import {
     FlushMode,
     IAttachMessage,
     InboundAttachMessage,
+    IFluidObjectReferences,
     IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
@@ -85,7 +86,6 @@ import {
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedFluidDataStoreRegistryEntries,
-    ISummaryTreeWithStats,
     ISummaryStats,
     ISummarizeInternalResult,
     SummarizeInternalFn,
@@ -94,17 +94,19 @@ import {
     IAgentScheduler,
     ITaskManager,
     ISummarizeResult,
+    IChannelSummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
     SummaryTracker,
     SummaryTreeBuilder,
-    SummarizerNode,
+    SummarizerNodeWithReferences,
     convertSummaryTreeToITree,
     convertToSummaryTree,
     RequestParser,
     requestFluidObject,
     convertSnapshotTreeToSummaryTree,
+    normalizeAndPrefixReferencesPath,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import {
@@ -604,7 +606,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // back-compat: summarizerNode - remove all summary trackers
     private readonly summaryTracker: SummaryTracker;
 
-    private readonly summarizerNode: SummarizerNode;
+    private readonly summarizerNode: SummarizerNodeWithReferences;
     private readonly notBoundContexts = new Set<string>();
     // 0.24 back-compat attachingBeforeSummary
     private readonly attachOpFiredForDataStore = new Set<string>();
@@ -699,10 +701,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
-        this.summarizerNode = SummarizerNode.createRoot(
+        this.summarizerNode = SummarizerNodeWithReferences.createRoot(
             this.logger,
             // Summarize function to call when summarize is called. Summarizer node always tracks summary state.
-            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */),
+            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState),
             // Latest change sequence number, no changes since summary applied yet
             loadedFromSequenceNumber,
             // Summary reference sequence number, undefined if no summary yet
@@ -1475,15 +1477,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
      */
-    private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
-        // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
-        // the summary. Else, get the summary tree directly.
-        return trackState
-            ? await this.summarizerNode.summarize(fullTree) as ISummaryTreeWithStats
-            : await this.summarizeInternal(fullTree, false /* trackState */) as ISummaryTreeWithStats;
+    private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
+        const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
+        assert(summarizeResult.summary.type === SummaryType.Tree,
+            "Container Runtime's summarize should always return a tree");
+        return summarizeResult as IChannelSummarizeResult;
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+        // This will contain a list of all Fluid objects referenced by this channel. It accumulates the Fluid object
+        // references of all the channel contexts and adds its own Fluid references.
+        const references: IFluidObjectReferences[] = [];
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
@@ -1495,11 +1499,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }).map(async ([key, value]) => {
                 const contextSummary = await value.summarize(fullTree, trackState);
                 builder.addWithStats(key, contextSummary);
+
+                // back-compat 0.30 - Older versions will not return references. Set it to empty array.
+                if (contextSummary.references === undefined) {
+                    contextSummary.references = [];
+                }
+                // Add the context's Fluid object references to the list of this channel's references.
+                references.push(...contextSummary.references);
             }));
+
+        // Normalize all the context's path of Fluid object references and prefix them with this channel's id.
+        normalizeAndPrefixReferencesPath(references, "");
 
         this.serializeContainerBlobs(builder);
         const summary = builder.getSummaryTree();
-        return { ...summary, id: "" };
+        return {
+            ...summary,
+            references,
+            id: "",
+        };
     }
 
     private processAttachMessage(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {

@@ -11,6 +11,21 @@ import {
     ITree,
 } from "@fluidframework/protocol-definitions";
 
+/**
+ * Represents routes from a Fluid object to other Fluid objects in the Container. This is used for garbage collection.
+ */
+export interface IFluidObjectReferences {
+    /**
+     * The path to this Fluid object relative to its parent.
+     */
+    path: string;
+    /**
+     * A list of routes to Fluid objects that are referenced by this Fluid object. These routes should be relative to
+     * the Container.
+     */
+    routes: string[];
+}
+
 export interface ISummaryStats {
     treeNodeCount: number;
     blobNodeCount: number;
@@ -23,16 +38,25 @@ export interface ISummaryTreeWithStats {
     summary: ISummaryTree;
 }
 
+export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
+    references: IFluidObjectReferences[];
+}
+
 export interface ISummarizeResult {
     stats: ISummaryStats;
     summary: SummaryTree;
 }
 
-export interface ISummarizeInternalResult extends ISummarizeResult {
+export interface IContextSummarizeResult extends ISummarizeResult {
+    references: IFluidObjectReferences[];
+}
+
+export interface ISummarizeInternalResult extends IContextSummarizeResult {
     id: string;
 }
 
-export type SummarizeInternalFn = (fullTree: boolean) => Promise<ISummarizeInternalResult>;
+export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
+
 export interface ISummarizerNodeConfig {
     /**
      * True to reuse previous handle when unchanged since last acked summary.
@@ -123,4 +147,34 @@ export interface ISummarizerNode {
     ): ISummarizerNode;
 
     getChild(id: string): ISummarizerNode | undefined
+}
+
+/**
+ * Extends the functionality of ISummarizerNode. It adds the following:
+ * - A trackState flag in summarize which indicates whether summarizer node should track the state of the
+ *   summary or not.
+ * - getInitialFluidObjectReferencesFn in createChild which can be used to get initial Fluid object references
+ *   for this node.
+ */
+export interface ISummarizerNodeWithReferences extends ISummarizerNode {
+    summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
+    createChild(
+        /** Summarize function */
+        summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+        /** Initial id or path part of this node */
+        id: string,
+        /**
+         * Information needed to create the node.
+         * If it is from a base summary, it will assert that a summary has been seen.
+         * Attach information if it is created from an attach op.
+         * If it is local, it will throw unsupported errors on calls to summarize.
+         */
+        createParam: CreateChildSummarizerNodeParam,
+        /** Optional configuration affecting summarize behavior */
+        config?: ISummarizerNodeConfig,
+        /** Function to get initial Fluid object references */
+        getInitialFluidObjectReferencesFn?: () => Promise<IFluidObjectReferences[]>,
+    ): ISummarizerNodeWithReferences;
+
+    getChild(id: string): ISummarizerNodeWithReferences | undefined
 }
