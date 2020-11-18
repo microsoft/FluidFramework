@@ -41,7 +41,7 @@ export class RequestParser implements IRequest {
     protected constructor(private readonly request: Readonly<IRequest>) {
         const queryStartIndex = this.request.url.indexOf("?");
         if (queryStartIndex >= 0) {
-            this.query = `/` + `${this.request.url.substring(queryStartIndex)}`;
+            this.query = `/${this.request.url.substring(queryStartIndex)}`;
         } else {
             this.query = "";
         }
@@ -96,9 +96,9 @@ export class RequestParser implements IRequest {
                 headers: this.headers,
             };
         }
-        const path = `/` + `${this.pathParts.slice(startingPathIndex).join("/")}`;
+        const path = `/${this.pathParts.slice(startingPathIndex).join("/")}`;
         return {
-            url: `${path}` + `${this.query}`,
+            url: `${path}${this.query}`,
             headers: this.headers,
         };
     }
