@@ -29,17 +29,6 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     private readonly sharingLinkCache = new PromiseCache<string, string>();
     private readonly getSharingLinkToken:
         (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => Promise<string | null>;
-
-    /**
-     * Construct a new OdspDriverUrlResolverForShareLink instance.
-     * 
-     * @param tokenFetcher 
-     * @param identityType 
-     * @param logger 
-     * @param appName 
-     * @param msGraphOrigin If provided, base of URL to use for MS Graph API calls.
-     * If not specified, https://graph.microsoft.com is used.
-     */
     public constructor(
         tokenFetcher: SharingLinkTokenFetcher,
         private readonly identityType: IdentityType = "Enterprise",
