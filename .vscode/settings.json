@@ -4,6 +4,7 @@
       "mode": "auto"
     }
   ],
+  "eslint.packageManager": "yarn",
   "typescript.format.enable": true,
   "typescript.format.insertSpaceAfterCommaDelimiter": true,
   "typescript.format.insertSpaceAfterSemicolonInForStatements": true,

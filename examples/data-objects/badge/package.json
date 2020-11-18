@@ -62,6 +62,7 @@
     "eslint-plugin-prefer-arrow": "~1.2.2",
     "eslint-plugin-react": "~7.21.2",
     "eslint-plugin-unicorn": "~22.0.0",
+    "pnp-webpack-plugin": "^1.6.4",
     "rimraf": "^2.6.2",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",

@@ -5,6 +5,7 @@
 
 const fluidRoute = require("@fluidframework/webpack-fluid-loader");
 const path = require("path");
+const PnpWebpackPlugin = require("pnp-webpack-plugin");
 const merge = require("webpack-merge");
 
 const pkg = require("./package.json");
@@ -19,6 +20,14 @@ module.exports = env => {
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
+            plugins: [
+                PnpWebpackPlugin,
+            ],
+        },
+        resolveLoader: {
+            plugins: [
+                PnpWebpackPlugin.moduleLoader(module),
+            ],
         },
         module: {
             rules: [{

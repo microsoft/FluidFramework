@@ -798,6 +798,7 @@ __metadata:
     eslint-plugin-react: ~7.21.2
     eslint-plugin-unicorn: ~22.0.0
     office-ui-fabric-react: ^7.28.1
+    pnp-webpack-plugin: ^1.6.4
     react: ^16.10.2
     react-dom: ^16.10.2
     rimraf: ^2.6.2
@@ -23545,6 +23546,15 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"pnp-webpack-plugin@npm:^1.6.4":
+  version: 1.6.4
+  resolution: "pnp-webpack-plugin@npm:1.6.4"
+  dependencies:
+    ts-pnp: ^1.1.6
+  checksum: 39a484182f8fc08cb1420d4a5ccf16457c6498a4546bfbad9e00df7238ba7d98796e9aa6f82a4e803a627860409ffed491a55c5a1384e09bed60cefeb618586d
+  languageName: node
+  linkType: hard
+
 "portfinder@npm:^1.0.26":
   version: 1.0.28
   resolution: "portfinder@npm:1.0.28"
@@ -27771,6 +27781,16 @@ resolve@~1.17.0:
   bin:
     ts-node: dist/bin.js
   checksum: a18a31d2cb16115fbea1afca35931e536f7d4eb894b9b40b0c2ff550da81cc55e89218d8cc23277fb2545201597447e67f093aecded1bc6bebc073a8dcb86ac6
+  languageName: node
+  linkType: hard
+
+"ts-pnp@npm:^1.1.6":
+  version: 1.2.0
+  resolution: "ts-pnp@npm:1.2.0"
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 78341a27939de565e2754ff65ebb689743c16e3295528089d143c08d91842cf9029c3d6b3c95a9a20854a114a7904329d02c710d63f7ce4dbf671b8a3e560ac1
   languageName: node
   linkType: hard
 
