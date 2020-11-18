@@ -55,7 +55,7 @@ export async function getShareLink(
     msGraphOrigin?: string,
 ): Promise<string | undefined> {
     if (scope === "existingAccess") {
-        return getFileDefaultUrl(getShareLinkToken, siteUrl, driveId, itemId, identityType, logger);
+        return getFileDefaultUrl(getShareLinkToken, siteUrl, driveId, itemId, identityType, logger, msGraphOrigin);
     }
 
     const createShareLinkResponse = await graphFetch(
