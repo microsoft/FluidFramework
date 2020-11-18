@@ -128,6 +128,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.deltaManager;
     }
 
+    public get minimumSequenceNumber(): number {
+        return this._containerRuntime.minimumSequenceNumber;
+    }
+
+    public get lastSequenceNumber(): number {
+        return this._containerRuntime.lastSequenceNumber;
+    }
+
     public get connected(): boolean {
         return this._containerRuntime.connected;
     }

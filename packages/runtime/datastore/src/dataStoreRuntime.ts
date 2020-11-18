@@ -118,6 +118,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.dataStoreContext.containerRuntime.clientDetails;
     }
 
+    public get minimumSequenceNumber(): number {
+        return this.dataStoreContext.minimumSequenceNumber;
+    }
+
+    public get lastSequenceNumber(): number {
+        return this.dataStoreContext.lastSequenceNumber;
+    }
+
     public get loader(): ILoader {
         return this.dataStoreContext.loader;
     }
