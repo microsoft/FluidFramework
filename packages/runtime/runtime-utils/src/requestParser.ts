@@ -98,7 +98,7 @@ export class RequestParser implements IRequest {
         }
         const path = `/` + `${this.pathParts.slice(startingPathIndex).join("/")}`;
         return {
-            url: `${path}` + `${this.query}`,
+            url: `${path}${this.query}`,
             headers: this.headers,
         };
     }
