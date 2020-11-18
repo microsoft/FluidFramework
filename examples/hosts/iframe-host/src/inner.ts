@@ -56,7 +56,7 @@ async function loadFluidObject(
 }
 
 export async function runInner(divId: string) {
-    // expose the entrypoint on the iframe window to load a fluid object
+    // expose the entrypoint on the iframe window to load a Fluid object
     (window as any).loadFluidObject = async (documentId, createNew) => {
         return loadFluidObject(divId, documentId, createNew);
     };
