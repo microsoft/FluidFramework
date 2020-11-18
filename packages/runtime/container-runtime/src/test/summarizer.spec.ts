@@ -38,6 +38,9 @@ class MockLogger extends TelemetryLogger implements ITelemetryLogger {
             }
         });
 
+        // Remove the events so far; next call will just compare subsequent events from here
+        this.events = [];
+
         // How many expected events were left over? Hopefully none.
         const unmatchedExpectedEventCount = expectedEvents.length - iExpectedEvent;
         assert(unmatchedExpectedEventCount >= 0);
@@ -182,6 +185,7 @@ describe("Runtime", () => {
                     assert(mockLogger.matchEvents([
                         { eventName: "Run:SummarizerRun_start", summarizerRunTag: runCount },
                         { eventName: "Run:SummarizerRun_end", summarizerRunTag: runCount },
+                        { eventName: "Run:SummaryOp", summarizerRunTag: runCount },
                     ]), "unexpected log sequence");
 
                     // should not run, because our summary hasnt been acked/nacked yet
@@ -190,12 +194,19 @@ describe("Runtime", () => {
 
                     // should run, because another op has come in, and our summary has been acked
                     await emitAck();
-                    await emitNextOp();
                     assert.strictEqual(runCount, 2);
                     assert(mockLogger.matchEvents([
+                        { eventName: "Run:SummaryAck", summarizerRunTag: (runCount - 1) }, // ack for previous run
                         { eventName: "Run:SummarizerRun_start", summarizerRunTag: runCount },
                         { eventName: "Run:SummarizerRun_end", summarizerRunTag: runCount },
+                        { eventName: "Run:SummaryOp", summarizerRunTag: runCount },
                     ]), "unexpected log sequence");
+
+                    await emitNextOp();
+                    assert.strictEqual(runCount, 2);
+                    assert(!mockLogger.matchEvents([
+                        { eventName: "Run:SummaryAck" },
+                    ]), "No ack expected yet");
                 });
 
                 it("Should summarize after configured idle time when not pending", async () => {
