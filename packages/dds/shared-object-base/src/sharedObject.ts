@@ -217,7 +217,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * backcompat 0.28 - This is deprecated. summarize() should be used instead.
+     * back-compat 0.30 - This is deprecated. summarize() should be used instead.
      */
     public snapshot(): ITree {
         return this.snapshotCore(this.serializer);

@@ -665,9 +665,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         // because if the graph is attaching, then it would get included in the data store snapshot.
         if (this.bindState === BindState.Bound && this.graphAttachState === AttachState.Attached) {
             const summarizeResult = summarizeChannel(channel, true /* fullTree */, false /* trackState */);
-            assert(
-                summarizeResult.summary.type === SummaryType.Tree,
-                "summarize should always return a tree when fullTree is true");
             // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
             const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
 

@@ -280,16 +280,14 @@ export class ConsensusOrderedCollection<T = any>
         assert(this.jobTracking.size === 0);
         const rawContentTracking = await storage.read(snapshotFileNameTracking);
         if (rawContentTracking !== undefined) {
-            const content =
-                this.deserializeValue(fromBase64ToUtf8(rawContentTracking), this.serializer);
+            const content = this.deserializeValue(fromBase64ToUtf8(rawContentTracking), this.serializer);
             this.jobTracking = new Map(content) as JobTrackingInfo<T>;
         }
 
         assert(this.data.size() === 0);
         const rawContentData = await storage.read(snapshotFileNameData);
         if (rawContentData !== undefined) {
-            const content =
-                this.deserializeValue(fromBase64ToUtf8(rawContentData), this.serializer) as T[];
+            const content = this.deserializeValue(fromBase64ToUtf8(rawContentData), this.serializer) as T[];
             this.data.loadFrom(content);
         }
     }
