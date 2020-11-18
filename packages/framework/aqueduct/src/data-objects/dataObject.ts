@@ -40,7 +40,7 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
 
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
-        if (url.startsWith(`/${this.bigBlobs}`)) {
+        if (url.startsWith(this.bigBlobs)) {
             const value = this.root.get<string>(url);
             if (value === undefined) {
                 return { mimeType: "text/plain", status: 404, value: `request ${url} not found` };
@@ -85,7 +85,7 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
             eventName: "WriteBlob",
             size: blob.length,
         });
-        const path = `/${this.bigBlobs}${uuid()}`;
+        const path = `${this.bigBlobs}${uuid()}`;
         this.root.set(path, blob);
         return new BlobHandle(path, this.root, this.runtime.objectsRoutingContext);
     }
