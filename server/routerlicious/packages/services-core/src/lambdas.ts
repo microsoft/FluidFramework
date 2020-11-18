@@ -74,6 +74,7 @@ export interface IPlugin {
 
 export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
     if (typeof message.value !== "string" && !Buffer.isBuffer(message.value)) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return message.value;
     }
 
@@ -82,7 +83,6 @@ export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
     const rawMessage = safelyParseJSON(messageContent);
     const parsedMessage = rawMessage as IMessage;
 
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!parsedMessage) {
         return {
             contents: [],
@@ -99,6 +99,7 @@ export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
 
         // Contents used to be a string - handle accordingly
         const contents = boxcarMessage.contents.length > 0 && typeof boxcarMessage.contents[0] === "string"
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             ? boxcarMessage.contents.map((content: any) => JSON.parse(content))
             : boxcarMessage.contents;
 

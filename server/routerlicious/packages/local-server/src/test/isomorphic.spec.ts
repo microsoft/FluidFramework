@@ -11,11 +11,11 @@ describe("Local server", () => {
     it("Isomorphic check - webpack build", async () => {
         return new Promise((resolve, reject) => {
             webpack(config, (err, stats) => {
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 if (err) {
                     assert.fail(err);
                     reject();
                 } else if (stats.hasErrors()) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     assert.fail(stats.compilation.errors.map((value) => value.stack).join("\n"));
                     reject();
                 } else {

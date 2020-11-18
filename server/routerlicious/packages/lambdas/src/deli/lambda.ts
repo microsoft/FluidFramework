@@ -99,7 +99,7 @@ export class DeliLambda implements IPartitionLambda {
     private idleTimer: any;
     private noopTimer: any;
     private noActiveClients = false;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     private canClose = false;
 
@@ -446,6 +446,7 @@ export class DeliLambda implements IPartitionLambda {
         if (isSystemType(message.operation.type)) {
             const operation = message.operation as IDocumentSystemMessage;
             if (operation.data) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return JSON.parse(operation.data);
             }
         }
