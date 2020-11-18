@@ -355,9 +355,11 @@ export class DeltaManager
         this._reconnectMode = reconnectAllowed ? ReconnectMode.Enabled : ReconnectMode.Never;
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
-            (op) => {
-                this.processInboundMessage(op);
-            });
+                (op) => {
+                    this.processInboundMessage(op);
+                },
+                logger,
+            );
 
         this._inbound.on("error", (error) => {
             this.close(CreateContainerError(error));

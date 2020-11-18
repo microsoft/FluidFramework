@@ -6,6 +6,7 @@
 import { IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions";
 import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import Deque from "double-ended-queue";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
 export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> implements IDeltaQueue<T> {
     private isDisposed: boolean = false;
@@ -56,6 +57,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
      */
     constructor(
         private readonly worker: (delta: T) => void,
+        private readonly logger?: ITelemetryLogger,
     ) {
         super();
     }
@@ -90,6 +92,11 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         if (this.processingDeferred !== undefined) {
             return this.processingDeferred.promise;
         }
+        if (this.logger) {
+            this.logger.sendTelemetryEvent({
+                eventName: "DeltaQueuePause",
+            },  `${this.userPause}`);
+        }
     }
 
     public resume(): void {
@@ -97,6 +104,11 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         this.userPause--;
         if (!this.paused) {
             this.ensureProcessing();
+        }
+        if (this.logger) {
+            this.logger.sendTelemetryEvent({
+                eventName: "DeltaQueueResume",
+            },  `${this.userPause}`);
         }
     }
 
@@ -107,6 +119,11 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         if (this.processingDeferred !== undefined) {
             return this.processingDeferred.promise;
         }
+        if (this.logger) {
+            this.logger.sendTelemetryEvent({
+                eventName: "DeltaQueueSystemPause",
+            },  `${this.sysPause}`);
+        }
     }
 
     public systemResume(): void {
@@ -114,6 +131,11 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         this.sysPause--;
         if (!this.paused) {
             this.ensureProcessing();
+        }
+        if (this.logger) {
+            this.logger.sendTelemetryEvent({
+                eventName: "DeltaQueueSystemResume",
+            },  `${this.sysPause}`);
         }
     }
 
