@@ -1140,10 +1140,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const storageService = await this.service.connectToStorage();
 
         // Enable prefetching for the service unless it has a caching policy set otherwise:
-        if (this.service.policies?.caching === ServiceCachingPolicy.NoCaching) {
-            return storageService;
+        const service = new PrefetchDocumentStorageService(storageService);
+        if (this.service.policies?.caching === LoaderCachingPolicy.NoCaching) {
+            service.stopPrefetch();
         }
-        return new PrefetchDocumentStorageService(storageService);
+        return service;
     }
 
     private async getDocumentAttributes(
