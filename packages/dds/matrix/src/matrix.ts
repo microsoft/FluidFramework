@@ -530,7 +530,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
             await this.rows.load(
                 this.runtime,
                 new ObjectStoragePartition(storage, SnapshotPath.rows),
-                this.serializer;
+                this.serializer);
             await this.cols.load(
                 this.runtime,
                 new ObjectStoragePartition(storage, SnapshotPath.cols),

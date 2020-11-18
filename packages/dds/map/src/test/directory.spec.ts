@@ -101,6 +101,21 @@ describe("Directory", () => {
                 assert.equal(serialized, "{}");
             });
 
+            it("Should serialize a directory without subdirectories as a JSON object", () => {
+                directory.set("first", "second");
+                directory.set("third", "fourth");
+                directory.set("fifth", "sixth");
+                const subMap = mapFactory.create(dataStoreRuntime, "subMap");
+                directory.set("object", subMap.handle);
+
+                const subMapHandleUrl = subMap.handle.absolutePath;
+
+                const serialized = serialize(directory);
+                // eslint-disable-next-line max-len
+                const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`;
+                assert.equal(serialized, expected);
+            });
+
             it("Should serialize a directory with subdirectories as a JSON object", () => {
                 directory.set("first", "second");
                 directory.set("third", "fourth");

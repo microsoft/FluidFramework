@@ -183,7 +183,7 @@ const tests = (args: ILocalTestObjectProvider) => {
         assert.strictEqual(testChannel2.isAttached(), testChannel1.isAttached(),
             "Value for isAttached should persist!!");
 
-        // back-compat for N-2 <= 0.28, remove the else part when N-2 >= 0.29
+        // back-compat for N-2 <= 0.29, remove the else part when N-2 >= 0.30
         if (testChannel1.summarize && testChannel2.summarize) {
             assert.strictEqual(JSON.stringify(testChannel2.summarize()), JSON.stringify(testChannel1.summarize()),
                 "Value for summarize should be same!!");
