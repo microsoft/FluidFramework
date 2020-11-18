@@ -6,9 +6,6 @@
 import { EventEmitter } from "events";
 import * as cell from "@fluidframework/cell";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
-import {
-    IDeltaManager,
-} from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { Deferred } from "@fluidframework/common-utils";
@@ -16,9 +13,7 @@ import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-de
 import * as ink from "@fluidframework/ink";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
 import {
-    IDocumentMessage,
     ISequencedClient,
-    ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
@@ -62,10 +57,6 @@ export class Document extends EventEmitter {
 
     public get id(): string {
         return this.runtime.documentId;
-    }
-
-    public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-        return this.runtime.deltaManager;
     }
 
     /**
