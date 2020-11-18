@@ -43,6 +43,7 @@ export async function getDeltas(
     const collection = await db.collection<any>(collectionName);
     const dbDeltas = await collection.find(query, { "operation.sequenceNumber": 1 });
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return dbDeltas.map((delta) => delta.operation);
 }
 
@@ -71,6 +72,7 @@ async function getDeltasFromStorage(
     const collection = await db.collection<any>(collectionName);
     const dbDeltas = await collection.find(query, { "operation.term": 1, "operation.sequenceNumber": 1 });
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return dbDeltas.map((delta) => delta.operation);
 }
 

@@ -159,7 +159,6 @@ export class LocalChannelContext implements IChannelContext {
             this.runtime,
             this.id,
             this.services.value,
-            undefined,
             attributes);
 
         // Commit changes.

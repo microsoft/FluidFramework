@@ -30,11 +30,6 @@ import { RequestParser, createDataStoreFactory } from "@fluidframework/runtime-u
 import { MultiUrlResolver } from "./multiResolver";
 import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 
-// SetImmediate is needed by broadcaster/lambdas, but is not available in the browser.
-// Need a polyfill until this issue is resolved https://github.com/microsoft/FluidFramework/issues/4040
-// eslint-disable-next-line import/no-unassigned-import
-import "setimmediate";
-
 export interface IDevServerUser extends IUser {
     name: string;
 }

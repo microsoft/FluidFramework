@@ -479,7 +479,6 @@ export class DeltaManager
             get initialClients() { return connection.initialClients; },
             maxMessageSize: connection.maxMessageSize,
             mode: connection.mode,
-            parentBranch: connection.parentBranch,
             serviceConfiguration: connection.serviceConfiguration,
             version: connection.version,
         };

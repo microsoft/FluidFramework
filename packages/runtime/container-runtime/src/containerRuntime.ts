@@ -14,7 +14,6 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
-    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -208,8 +207,8 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     // Snapshot if 1000 ops received since last snapshot.
     maxOps: 1000,
 
-    // Wait 10 minutes for summary ack
-    maxAckWaitTime: 600000,
+    // Wait 2 minutes for summary ack
+    maxAckWaitTime: 120000,
 };
 
 /**
@@ -269,8 +268,6 @@ export class ScheduleManager {
     private readonly deltaScheduler: DeltaScheduler;
     private pauseSequenceNumber: number | undefined;
     private pauseClientId: string | undefined;
-
-    private paused = false;
     private localPaused = false;
     private batchClientId: string | undefined;
 
@@ -373,19 +370,6 @@ export class ScheduleManager {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public pause(): Promise<void> {
-        this.paused = true;
-        return this.deltaManager.inbound.systemPause();
-    }
-
-    public resume() {
-        this.paused = false;
-        if (!this.localPaused) {
-            this.deltaManager.inbound.systemResume();
-        }
-    }
-
     private setPaused(localPaused: boolean) {
         // Return early if no change in value
         if (this.localPaused === localPaused) {
@@ -393,7 +377,7 @@ export class ScheduleManager {
         }
 
         this.localPaused = localPaused;
-        if (localPaused || this.paused) {
+        if (localPaused) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.deltaManager.inbound.systemPause();
         } else {
@@ -523,10 +507,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.id;
     }
 
-    public get parentBranch(): string | null {
-        return this.context.parentBranch;
-    }
-
     public get existing(): boolean {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.context.existing!;
@@ -607,10 +587,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public readonly IFluidSerializer: IFluidSerializer;
 
     public readonly IFluidHandleContext: IFluidHandleContext;
-
-    public get codeDetails(): IFluidCodeDetails {
-        return this.context.codeDetails ?? this.getQuorum().get("code") as IFluidCodeDetails;
-    }
 
     // internal logger for ContainerRuntime
     private readonly _logger: ITelemetryLogger;
@@ -972,11 +948,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const requestParser = RequestParser.create(request);
         const id = requestParser.pathParts[0];
 
-        if (id === "_channel") {
+        if (id === "_channels") {
             return this.resolveHandle(requestParser.createSubRequest(1));
         }
 
-        if (id === this.blobManager.basePath && requestParser.isLeaf(2)) {
+        if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
             const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
             if (handle) {
                 return {
@@ -1056,7 +1032,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
         const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
-        summaryTreeBuilder.addWithStats(".blobs", blobsTree);
+        summaryTreeBuilder.addWithStats(blobsTreeName, blobsTree);
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
@@ -1718,19 +1694,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const message =
             `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 
-        // TODO: Issue-2171 Support for Branch Snapshots
-        if (this.parentBranch) {
-            this._logger.sendTelemetryEvent({
-                eventName: "SkipGenerateSummaryParentBranch",
-                parentBranch: this.parentBranch,
-            });
-            return;
-        }
-
         this.summarizerNode.startSummary(summaryRefSeqNum);
 
         try {
-            await this.scheduleManager.pause();
+            await this.deltaManager.inbound.pause();
 
             const attemptData: Omit<IUnsubmittedSummaryData, "reason"> = {
                 referenceSequenceNumber: summaryRefSeqNum,
@@ -1818,7 +1785,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Cleanup wip summary in case of failure
             this.summarizerNode.clearSummary();
             // Restart the delta manager
-            this.scheduleManager.resume();
+            this.deltaManager.inbound.resume();
         }
     }
 

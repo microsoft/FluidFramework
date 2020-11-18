@@ -172,7 +172,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     public readonly documentId: string;
     public readonly id: string;
-    public readonly parentBranch: string | null;
     public existing: boolean;
     public readonly options: any;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -189,7 +188,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.logger = ChildLogger.create(dataStoreContext.containerRuntime.logger, undefined, { dataStoreId: uuid() });
         this.documentId = dataStoreContext.documentId;
         this.id = dataStoreContext.id;
-        this.parentBranch = dataStoreContext.parentBranch;
         this.existing = dataStoreContext.existing;
         this.options = dataStoreContext.options;
         this.deltaManager = dataStoreContext.deltaManager;
@@ -238,7 +236,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         tree.trees[path],
                         this.sharedObjectRegistry,
                         undefined /* extraBlobs */,
-                        dataStoreContext.branch,
                         this.dataStoreContext.summaryTracker.createOrGetChild(
                             path,
                             this.deltaManager.lastSequenceNumber,
@@ -284,7 +281,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         const parser = RequestParser.create(request);
         const id = parser.pathParts[0];
 
-        if (id === "_channels" || id === "_objects") {
+        if (id === "_channels" || id === "_custom") {
             return this.request(parser.createSubRequest(1));
         }
 
@@ -315,6 +312,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
     }
 
+    /**
+     * @deprecated
+     * Please use mixinRequestHandler() to override default behavior or request()
+     * // back-compat: remove in 0.30+
+     */
     public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
         this.requestHandler = handler;
     }
@@ -485,9 +487,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         is in pendingAttach set: ${this.pendingAttach.has(id)},
                         is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}`);
 
-                    // Create storage service that wraps the attach data
-                    const origin = message.origin?.id ?? this.documentId;
-
                     const flatBlobs = new Map<string, string>();
                     const snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
                     // flatBlobsP's validity is contingent on snapshotTreeP's resolution
@@ -503,7 +502,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         snapshotTreeP,
                         this.sharedObjectRegistry,
                         flatBlobsP,
-                        origin,
                         this.dataStoreContext.summaryTracker.createOrGetChild(
                             id,
                             message.sequenceNumber,
@@ -556,6 +554,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             // Removed when attach op is broadcast
             && !this.pendingAttach.has(id)
         );
+    }
+
+    // back-compat for N-2 <= 0.28, remove when N-2 >= 0.29
+    public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
+        const summaryTree = await this.summarize(fullTree);
+        const tree = convertSummaryTreeToITree(summaryTree.summary);
+        return tree.entries;
     }
 
     /**
@@ -769,13 +774,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
 /**
  * Mixin class that adds request handler to FluidDataStoreRuntime
+ * Request handler is only called when data store can't resolve request, i.e. for custom requests.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
  */
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function requestFluidDataStoreMixin(
-    Base: typeof FluidDataStoreRuntime,
-    requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>)
+export function mixinRequestHandler(
+    requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
+    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
 {
     return class RuntimeWithRequestHandler extends Base {
         public async request(request: IRequest) {

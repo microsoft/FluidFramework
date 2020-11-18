@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     IDocumentAttributes,
@@ -243,6 +242,7 @@ export class DocumentStorage implements IDocumentStorage {
         const collection: ICollection<any> = await this.databaseManager.getDocumentCollection();
         const document = await collection.findOne({ documentId, tenantId });
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return document.forks || [];
     }
 
@@ -312,6 +312,7 @@ export class DocumentStorage implements IDocumentStorage {
             name,
             this.producer);
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return name;
     }
 

@@ -75,10 +75,9 @@ export class MapFactory implements IChannelFactory {
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes): Promise<ISharedMap> {
         const map = new SharedMap(id, runtime, attributes);
-        await map.load(branchId, services);
+        await map.load(services);
 
         return map;
     }
@@ -329,9 +328,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
     */
-    protected async loadCore(
-        branchId: string | undefined,
-        storage: IChannelStorageService) {
+    protected async loadCore(storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 
         const data = fromBase64ToUtf8(header);

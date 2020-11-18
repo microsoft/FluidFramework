@@ -72,6 +72,7 @@ export interface IProducer {
     /**
      * Sends the message to a queue
      */
+    // eslint-disable-next-line @typescript-eslint/ban-types
     send(messages: object[], tenantId: string, documentId: string): Promise<void>;
 
     /**

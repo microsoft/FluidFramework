@@ -70,6 +70,7 @@ export class TenantManager implements core.ITenantManager {
 
     public async getKey(tenantId: string): Promise<string> {
         const result = await Axios.get(`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/key`);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return result.data;
     }
 }

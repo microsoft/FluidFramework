@@ -126,6 +126,8 @@ export class DocumentDeltaConnection
      */
     private earlyOpHandlerAttached: boolean = false;
 
+    private socketConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
+
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
 
     private _details: IConnected | undefined;
@@ -222,15 +224,6 @@ export class DocumentDeltaConnection
      */
     public get existing(): boolean {
         return this.details.existing;
-    }
-
-    /**
-     * Get the parent branch for the document
-     *
-     * @returns the parent branch
-     */
-    public get parentBranch(): string | null {
-        return this.details.parentBranch;
     }
 
     /**
@@ -432,7 +425,7 @@ export class DocumentDeltaConnection
             this.socket.emit("connect_document", connectMessage);
 
             // Give extra 2 seconds for handshake on top of socket connection timeout
-            setTimeout(() => {
+            this.socketConnectionTimeout = setTimeout(() => {
                 if (!success) {
                     fail(false, createErrorObject("Timeout waiting for handshake from ordering service"));
                 }
@@ -475,6 +468,8 @@ export class DocumentDeltaConnection
         }
         // removeTrackedListeners removes all listeners, including connection listeners
         this.removeConnectionListeners();
+
+        clearTimeout(this.socketConnectionTimeout);
 
         this.removeEarlyOpHandler();
         this.removeEarlySignalHandler();

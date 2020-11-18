@@ -22,8 +22,9 @@ class ProxySocketConnection implements IOrdererConnection {
         return this.details.existing;
     }
 
-    public get parentBranch(): string {
-        return this.details.parentBranch;
+    // Back-compat, removal tracked with issue #4346
+    public get parentBranch(): null {
+        return null;
     }
 
     public get maxMessageSize(): number {

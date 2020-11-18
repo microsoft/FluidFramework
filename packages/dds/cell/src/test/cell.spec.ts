@@ -53,7 +53,7 @@ describe("Cell", () => {
 
             const services = MockSharedObjectServices.createFromTree(cell.snapshot());
             const cell2 = new SharedCell("cell2", dataStoreRuntime, CellFactory.Attributes);
-            await cell2.load("branchId", services);
+            await cell2.load(services);
 
             assert.equal(cell2.get(), "testValue", "Could not load SharedCell from snapshot");
         });
@@ -76,7 +76,7 @@ describe("Cell", () => {
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const cell2 = new SharedCell("cell2", dataStoreRuntime2, CellFactory.Attributes);
-            await cell2.load("branchId", services2);
+            await cell2.load(services2);
 
             // Now connect the first SharedCell
             dataStoreRuntime.local = false;

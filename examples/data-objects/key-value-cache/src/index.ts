@@ -9,7 +9,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { mixinRequestHandler } from "@fluidframework/datastore";
 import {
     IContainerContext,
     IRuntime,
@@ -118,16 +118,14 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        const runtime = FluidDataStoreRuntime.load(
-            context,
-            dataTypes,
-        );
+        const runtimeClass = mixinRequestHandler(
+            async (request: IRequest) => {
+                const router = await routerP;
+                return router.request(request);
+            });
 
-        const keyValueP = KeyValue.load(runtime, context);
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const keyValue = await keyValueP;
-            return keyValue.request(request);
-        });
+        const runtime = new runtimeClass(context, dataTypes);
+        const routerP = KeyValue.load(runtime, context);
 
         return runtime;
     }

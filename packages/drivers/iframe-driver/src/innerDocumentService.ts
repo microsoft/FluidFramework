@@ -81,10 +81,6 @@ export class InnerDocumentService implements IDocumentService {
         return InnerDocumentDeltaConnection.create(connection, stream);
     }
 
-    public async branch(): Promise<string> {
-        return Promise.reject(new Error("Inner Document Service: branch not implemented"));
-    }
-
     public getErrorTrackingService() {
         throw new Error("Inner Document Service: getErrorTrackingService not implemented");
         return null;

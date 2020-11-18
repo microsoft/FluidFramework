@@ -162,10 +162,6 @@ export class StaticStorageDocumentService implements IDocumentService {
         return new Promise(() => { });
     }
 
-    public async branch(): Promise<string> {
-        return Promise.reject(new Error("Invalid operation"));
-    }
-
     public getErrorTrackingService() {
         return null;
     }
