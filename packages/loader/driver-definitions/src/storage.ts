@@ -178,7 +178,7 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     /**
      * Disconnects the given delta connection
      */
-    close();
+    close(): void;
 }
 
 export interface IDocumentService {
