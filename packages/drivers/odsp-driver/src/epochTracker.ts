@@ -48,7 +48,7 @@ export class EpochTracker {
             try {
                 this.validateEpochFromResponse(value.fluidEpoch);
             } catch (error) {
-                await this.checkForEpochError(error);
+                await this.checkForEpochError(error, value.fluidEpoch, true);
                 throw error;
             }
             return value.value as T;
@@ -68,14 +68,16 @@ export class EpochTracker {
     ): Promise<IOdspResponse<T>> {
         // Add epoch in fetch request.
         const request = this.addEpochInRequest(url, fetchOptions, addInBody);
+        let epochFromResponse: string | null | undefined;
         try {
             const response = await this.rateLimiter.schedule(
                 async () => fetchAndParseAsJSONHelper<T>(request.url, request.fetchOptions),
             );
-            this.validateEpochFromResponse(response.headers.get("x-fluid-epoch"));
+            epochFromResponse = response.headers.get("x-fluid-epoch");
+            this.validateEpochFromResponse(epochFromResponse);
             return response;
         } catch (error) {
-            await this.checkForEpochError(error);
+            await this.checkForEpochError(error, epochFromResponse);
             throw error;
         }
     }
@@ -93,14 +95,16 @@ export class EpochTracker {
     ): Promise<Response> {
         // Add epoch in fetch request.
         const request = this.addEpochInRequest(url, fetchOptions, addInBody);
+        let epochFromResponse: string | null | undefined;
         try {
             const response = await this.rateLimiter.schedule(
                 async () => fetchHelper(request.url, request.fetchOptions),
             );
-            this.validateEpochFromResponse(response.headers.get("x-fluid-epoch"));
+            epochFromResponse = response.headers.get("x-fluid-epoch");
+            this.validateEpochFromResponse(epochFromResponse);
             return response;
         } catch (error) {
-            await this.checkForEpochError(error);
+            await this.checkForEpochError(error, epochFromResponse);
             throw error;
         }
     }
@@ -153,9 +157,20 @@ export class EpochTracker {
         }
     }
 
-    private async checkForEpochError(error) {
+    private async checkForEpochError(
+        error: any,
+        epochFromResponse: string | null | undefined,
+        fromCache: boolean = false,
+    ) {
         if (error.errorType === OdspErrorType.epochVersionMismatch) {
-            this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, error);
+            this.logger.sendErrorEvent(
+                {
+                    eventName: "EpochVersionMismatch",
+                    fromCache,
+                    clientEpoch: this.fluidEpoch,
+                    epochFromResponse: epochFromResponse ?? undefined,
+                },
+            error);
             assert(!!this._hashedDocumentId, "DocId should be set to clear the cached entries!!");
             // If the epoch mismatches, then clear all entries for such document from cache.
             await this.persistedCache.removeAllEntriesForDocId(this._hashedDocumentId);
