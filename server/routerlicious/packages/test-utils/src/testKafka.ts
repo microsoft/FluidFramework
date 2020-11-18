@@ -97,7 +97,7 @@ export class TestProducer implements core.IProducer {
     constructor(private readonly kafka: TestKafka) {
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    // eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/promise-function-async
     public send(messages: object[], key: string): Promise<any> {
         for (const message of messages) {
             this.kafka.addMessage(message, key);

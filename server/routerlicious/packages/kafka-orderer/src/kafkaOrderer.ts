@@ -137,10 +137,8 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         // Add trace
         messages.forEach((message) => {
             const operation = message.operation;
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (operation && operation.traces === undefined) {
                 operation.traces = [];
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             } else if (operation && operation.traces && operation.traces.length > 1) {
                 operation.traces.push(
                     {

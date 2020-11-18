@@ -24,7 +24,7 @@ export class EventHubProducer implements IProducer {
     /**
      * Sends the provided message to Kafka
      */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
     public send(messages: object[], tenantId: string, documentId: string): Promise<any> {
         const key = `${tenantId}/${documentId}`;
 

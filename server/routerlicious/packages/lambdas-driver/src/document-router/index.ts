@@ -10,6 +10,7 @@ import { DocumentLambdaFactory } from "./lambdaFactory";
 export * from "./lambdaFactory";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
+    // eslint-disable-next-line @typescript-eslint/ban-types
     const pluginConfig = config.get("documentLambda") as string | object;
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const plugin = (typeof pluginConfig === "object" ? pluginConfig : require(pluginConfig)) as IPlugin;

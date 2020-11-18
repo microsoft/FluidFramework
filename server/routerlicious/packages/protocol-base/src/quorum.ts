@@ -140,6 +140,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     public get(key: string): any {
         const keyMap = this.values.get(key);
         if (keyMap !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return keyMap.value;
         }
     }
