@@ -24,7 +24,7 @@ We also recommend that you install the following:
 
 ### Installing Fluid Packages
 
-For this example we already have the necessary fluid packages in our package.json. Therefore, when you run `npm install`, they will be installed for you.
+For this example we already have the necessary Fluid packages in our package.json. Therefore, when you run `npm install`, they will be installed for you.
 However, if you wanted to start a new project on your own, available packages are labeled in the [Fluid API Section](https://fluidframework.com/apis/) of the documentation. 
 To install your packages you can follow this format `npm i package-name` if you use `npm` or `yarn add package-name` if you use `yarn`.
 
