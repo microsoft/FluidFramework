@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/multiview-coordinate-interface",
-  "version": "0.28.8",
+  "version": "0.28.9",
   "description": "Interface for multiview sample",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",

@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/version-test-2",
-  "version": "0.28.8",
+  "version": "0.28.9",
   "private": true,
   "description": "Fluid object to test version conversion.",
   "homepage": "https://fluidframework.com",
@@ -28,13 +28,13 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.28.8",
-    "@fluidframework/view-interfaces": "^0.28.8",
+    "@fluidframework/aqueduct": "^0.28.9",
+    "@fluidframework/view-interfaces": "^0.28.9",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@fluidframework/webpack-fluid-loader": "^0.28.8",
+    "@fluidframework/webpack-fluid-loader": "^0.28.9",
     "@types/node": "^10.17.24",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",
