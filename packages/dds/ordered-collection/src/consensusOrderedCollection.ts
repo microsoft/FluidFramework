@@ -217,23 +217,16 @@ export class ConsensusOrderedCollection<T = any>
         return tree;
     }
 
-    protected isActive() {
-        return this.runtime.connected && this.runtime.deltaManager.active;
-    }
-
     protected async complete(acquireId: string) {
         if (!this.isAttached()) {
             this.completeCore(acquireId);
             return;
         }
 
-        // if not active, this item already was released to queue (as observed by other clients)
-        if (this.isActive()) {
-            await this.submit<IConsensusOrderedCollectionCompleteOperation>({
-                opName: "complete",
-                acquireId,
-            });
-        }
+        await this.submit<IConsensusOrderedCollectionCompleteOperation>({
+            opName: "complete",
+            acquireId,
+        });
     }
 
     protected completeCore(acquireId: string) {
@@ -251,15 +244,12 @@ export class ConsensusOrderedCollection<T = any>
             return;
         }
 
-        // if not active, this item already was released to queue (as observed by other clients)
-        if (this.isActive()) {
-            this.submit<IConsensusOrderedCollectionReleaseOperation>({
-                opName: "release",
-                acquireId,
-            }).catch((error) => {
-                this.runtime.logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
-            });
-        }
+        this.submit<IConsensusOrderedCollectionReleaseOperation>({
+            opName: "release",
+            acquireId,
+        }).catch((error) => {
+            this.runtime.logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
+        });
     }
 
     protected releaseCore(acquireId: string) {
