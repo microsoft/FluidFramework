@@ -28,17 +28,13 @@ For this example we already have the necessary Fluid packages in our package.jso
 However, if you wanted to start a new project on your own, available packages are labeled in the [Fluid API Section](https://fluidframework.com/apis/) of the documentation. 
 To install your packages you can follow this format: `npm i package-name` if you use [npm](https://docs.npmjs.com/) or `yarn add package-name` if you use [yarn](https://yarnpkg.com/).
 
-Here are the packages we use for this tutorial, and how you can install them based on the package manager you use.
-- **@fluidframework/aqueduct** 
-   - `npm i @fluidframework/aqueduct` or `yarn add @fluidframework/aqueduct`
-- **@fluidframework/get-tinylicious-container** 
-   - `npm i @fluidframework/get-tinylicious-container` or `yarn add @fluidframework/get-tinylicious-container`
-- **@fluidframework/map** 
-   - `npm i @fluidframework/map` or `yarn add @fluidframework/map`
-- **tinylicious**
-   - `npm i tinylicious --save-dev` or `yarn add tinylicious --dev`
+We use the following Fluid packages in this tutorial:
 
-Tinylicious is only a development dependency, since it is the [service](http://localhost:1313/docs/concepts/service/) used when developing your Fluid app.
+- **@fluidframework/aqueduct** 
+- **@fluidframework/get-tinylicious-container** 
+- **@fluidframework/map** 
+- **tinylicious**
+   - Note: Tinylicious is only a development dependency, since it is the [service]({{ relref /docs/concepts/service/ }}) used when developing your Fluid app. You can install it as a development dependency using `npm i tinylicious --save-dev` or `yarn add tinylicious --dev`.
 
 ## Getting Started
 
