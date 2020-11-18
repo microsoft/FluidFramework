@@ -511,6 +511,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@eslint/eslintrc@npm:^0.2.1":
+  version: 0.2.1
+  resolution: "@eslint/eslintrc@npm:0.2.1"
+  dependencies:
+    ajv: ^6.12.4
+    debug: ^4.1.1
+    espree: ^7.3.0
+    globals: ^12.1.0
+    ignore: ^4.0.6
+    import-fresh: ^3.2.1
+    js-yaml: ^3.13.1
+    lodash: ^4.17.19
+    minimatch: ^3.0.4
+    strip-json-comments: ^3.1.1
+  checksum: 99310cddf0f1abb2de4b5278293db6e2639445aab4e525f3c5f5b3b8ad53a59d6003a306954fb7ad15edd2f8a02b658d43418fa8b52ae2d07e074b24d991de2a
+  languageName: node
+  linkType: hard
+
 "@evocateur/libnpmaccess@npm:^3.1.2":
   version: 3.1.2
   resolution: "@evocateur/libnpmaccess@npm:3.1.2"
@@ -4678,35 +4696,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fluidframework/eslint-config-fluid@npm:^0.19.1":
-  version: 0.19.1
-  resolution: "@fluidframework/eslint-config-fluid@npm:0.19.1"
-  dependencies:
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
-    eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
-  peerDependencies:
-    "@typescript-eslint/eslint-plugin": ">=2.17.0"
-    "@typescript-eslint/parser": ">=2.17.0"
-    eslint: ">=6.8.0"
-    eslint-plugin-eslint-comments: ">=3.1.2"
-    eslint-plugin-import: 2.20.0
-    eslint-plugin-no-null: ">=1.0.2"
-    eslint-plugin-prefer-arrow: ">=1.1.7"
-    eslint-plugin-react: ">=7.18.0"
-    eslint-plugin-unicorn: ">=15.0.1"
-  checksum: ddef719974fe952bc858bf93de3a876b3f8467ba909edb5396afdcbaff6b66fbcc54b256267ec2a38fd4eecb4d95f12357f107b8c44d119b18bf96097a9e8faa
-  languageName: node
-  linkType: hard
-
-"@fluidframework/eslint-config-fluid@npm:^0.20.0":
+"@fluidframework/eslint-config-fluid@npm:^0.20.0, @fluidframework/eslint-config-fluid@npm:^0.20.0-0":
   version: 0.20.0
   resolution: "@fluidframework/eslint-config-fluid@npm:0.20.0"
   dependencies:
@@ -4761,6 +4751,26 @@ __metadata:
   checksum: 023f7c9af0042427601991602e464d0d78eca8a6337bd24dd174ededa8ba553fb1ed6fd620139f4662c7aab9aab1f053dae2f377e7df2ffcddb77ca966165fd0
   languageName: node
   linkType: hard
+
+"@fluidframework/eslint-config-fluid@workspace:common/build/eslint-config-fluid":
+  version: 0.0.0-use.local
+  resolution: "@fluidframework/eslint-config-fluid@workspace:common/build/eslint-config-fluid"
+  dependencies:
+    "@rushstack/eslint-patch": ^1.0.6
+    "@typescript-eslint/eslint-plugin": ~4.8.1
+    "@typescript-eslint/parser": ~4.8.1
+    eslint: ~7.13.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.1
+    eslint-plugin-no-null: ~1.0.2
+    eslint-plugin-optimize-regex: ~1.2.0
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.5
+    eslint-plugin-unicorn: ~23.0.0
+  peerDependencies:
+    eslint: ">=7.0.0"
+  languageName: unknown
+  linkType: soft
 
 "@fluidframework/execution-context-loader@workspace:packages/loader/execution-context-loader":
   version: 0.0.0-use.local
@@ -4897,18 +4907,17 @@ __metadata:
   resolution: "@fluidframework/gitresources@workspace:server/routerlicious/packages/gitresources"
   dependencies:
     "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.19.1
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     rimraf: ^2.6.2
     typescript: ~3.8.2
     typescript-formatter: 7.1.0
@@ -5471,7 +5480,7 @@ __metadata:
   dependencies:
     "@fluidframework/build-common": ^0.19.2
     "@fluidframework/common-utils": ^0.25.0
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@microsoft/api-extractor": ^7.7.2
@@ -5479,19 +5488,18 @@ __metadata:
     "@types/lodash": ^4.14.118
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     assert: ^2.0.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     lodash: ^4.17.19
     mocha: ^8.1.1
     mocha-junit-reporter: ^1.18.0
@@ -5534,20 +5542,19 @@ __metadata:
   dependencies:
     "@fluidframework/build-common": ^0.19.2
     "@fluidframework/common-definitions": ^0.19.1
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@microsoft/api-extractor": ^7.7.2
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     rimraf: ^2.6.2
     typescript: ~3.8.2
     typescript-formatter: 7.1.0
@@ -6090,21 +6097,20 @@ __metadata:
   resolution: "@fluidframework/server-kafka-orderer@workspace:server/routerlicious/packages/kafka-orderer"
   dependencies:
     "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@fluidframework/server-services-core": ^0.1016.0
     "@types/node": ^10.17.24
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     rimraf: ^2.6.2
     typescript: ~3.8.2
     typescript-formatter: 7.1.0
@@ -6117,7 +6123,7 @@ __metadata:
   dependencies:
     "@fluidframework/build-common": ^0.19.2
     "@fluidframework/common-utils": ^0.25.0
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@fluidframework/server-services": ^0.1016.0
     "@fluidframework/server-services-core": ^0.1016.0
     "@fluidframework/server-services-utils": ^0.1016.0
@@ -6127,18 +6133,17 @@ __metadata:
     "@types/mocha": ^5.2.5
     "@types/nconf": ^0.0.37
     "@types/node": ^10.17.24
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     async: ^2.6.1
     concurrently: ^5.2.0
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     lodash: ^4.17.19
     mocha: ^8.1.1
     moniker: ^0.1.2
@@ -6157,7 +6162,7 @@ __metadata:
   dependencies:
     "@fluidframework/build-common": ^0.19.2
     "@fluidframework/common-utils": ^0.25.0
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-base": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
@@ -6172,19 +6177,18 @@ __metadata:
     "@types/node": ^10.17.24
     "@types/semver": ^6.0.1
     "@types/webpack": ^4.41.2
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     async: ^2.6.1
     concurrently: ^5.2.0
     double-ended-queue: ^2.1.0-0
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     json-stringify-safe: ^5.0.1
     jsonwebtoken: ^8.4.0
     lodash: ^4.17.19
@@ -6252,7 +6256,7 @@ __metadata:
   dependencies:
     "@fluidframework/build-common": ^0.19.2
     "@fluidframework/common-utils": ^0.25.0
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@fluidframework/server-lambdas": ^0.1016.0
     "@fluidframework/server-memory-orderer": ^0.1016.0
@@ -6264,18 +6268,17 @@ __metadata:
     "@types/nock": ^9.3.0
     "@types/node": ^10.17.24
     "@types/webpack": ^4.41.2
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     jsrsasign: ^10.0.2
     mocha: ^8.1.1
     mocha-junit-reporter: ^1.18.0
@@ -6331,7 +6334,7 @@ __metadata:
   dependencies:
     "@fluidframework/build-common": ^0.19.2
     "@fluidframework/common-utils": ^0.25.0
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@fluidframework/protocol-base": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@fluidframework/server-lambdas": ^0.1016.0
@@ -6343,19 +6346,18 @@ __metadata:
     "@types/node": ^10.17.24
     "@types/uuid": ^3.4.4
     "@types/ws": ^6.0.1
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     debug: ^4.1.1
     double-ended-queue: ^2.1.0-0
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     lodash: ^4.17.19
     moniker: ^0.1.2
     rimraf: ^2.6.2
@@ -6422,7 +6424,7 @@ __metadata:
   dependencies:
     "@fluidframework/build-common": ^0.19.2
     "@fluidframework/common-utils": ^0.25.0
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@fluidframework/server-kafka-orderer": ^0.1016.0
@@ -6447,22 +6449,21 @@ __metadata:
     "@types/request": ^2.47.1
     "@types/split": ^0.3.28
     "@types/ws": ^6.0.1
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     body-parser: ^1.17.1
     bytes: ^3.0.0
     compression: ^1.7.2
     concurrently: ^5.2.0
     cookie-parser: ^1.4.3
     cors: ^2.8.4
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     express: ^4.16.3
     json-stringify-safe: ^5.0.1
     jsonwebtoken: ^8.4.0
@@ -6487,7 +6488,7 @@ __metadata:
   dependencies:
     "@fluidframework/build-common": ^0.19.2
     "@fluidframework/common-utils": ^0.25.0
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@fluidframework/server-kafka-orderer": ^0.1016.0
@@ -6519,8 +6520,8 @@ __metadata:
     "@types/split": ^0.3.28
     "@types/supertest": ^2.0.5
     "@types/ws": ^6.0.1
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     body-parser: ^1.17.1
     bytes: ^3.0.0
     cache-loader: ^1.2.2
@@ -6531,14 +6532,13 @@ __metadata:
     cors: ^2.8.4
     css-loader: ^1.0.0
     diff: ^3.5.0
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     express: ^4.16.3
     hjs: ^0.0.6
     html-loader: ^0.5.5
@@ -6578,7 +6578,7 @@ __metadata:
   dependencies:
     "@fluidframework/build-common": ^0.19.2
     "@fluidframework/common-utils": ^0.25.0
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-base": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
@@ -6587,19 +6587,18 @@ __metadata:
     "@types/jwt-decode": ^2.2.1
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     axios: ^0.18.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     jsrsasign: ^10.0.2
     jwt-decode: ^3.0.0
     mocha: ^8.1.1
@@ -6657,24 +6656,23 @@ __metadata:
   dependencies:
     "@fluidframework/build-common": ^0.19.2
     "@fluidframework/common-utils": ^0.25.0
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@fluidframework/server-services-client": ^0.1016.0
     "@types/nconf": ^0.0.37
     "@types/node": ^10.17.24
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     nconf: ^0.10.0
     rimraf: ^2.6.2
     typescript: ~3.8.2
@@ -6720,7 +6718,7 @@ __metadata:
   dependencies:
     "@fluidframework/build-common": ^0.19.2
     "@fluidframework/common-utils": ^0.25.0
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-base": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
@@ -6731,18 +6729,17 @@ __metadata:
     "@types/node": ^10.17.24
     "@types/redis": ^2.8.8
     "@types/socket.io": ^2.1.1
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     lodash: ^4.17.19
     moniker: ^0.1.2
     redis: ^2.8.0
@@ -6760,25 +6757,24 @@ __metadata:
   resolution: "@fluidframework/server-services-utils@workspace:server/routerlicious/packages/services-utils"
   dependencies:
     "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@sentry/node": ^5.6.2
     "@types/debug": ^4.1.5
     "@types/jsonwebtoken": ^8.3.0
     "@types/nconf": ^0.0.37
     "@types/node": ^10.17.24
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     jsonwebtoken: ^8.4.0
     nconf: ^0.10.0
     rimraf: ^2.6.2
@@ -6798,7 +6794,7 @@ __metadata:
     "@azure/event-processor-host": ^1.0.6
     "@fluidframework/build-common": ^0.19.2
     "@fluidframework/common-utils": ^0.25.0
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@fluidframework/server-services-client": ^0.1016.0
     "@fluidframework/server-services-core": ^0.1016.0
@@ -6811,20 +6807,19 @@ __metadata:
     "@types/node-zookeeper-client": 0.2.7
     "@types/redis": ^2.8.8
     "@types/socket.io": ^2.1.1
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     amqplib: ^0.5.5
     axios: ^0.18.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     kafka-node: ^5.0.0
     mongodb: 3.1.13
     node-rdkafka: ^2.9.0
@@ -6846,7 +6841,7 @@ __metadata:
   dependencies:
     "@fluidframework/build-common": ^0.19.2
     "@fluidframework/common-utils": ^0.25.0
-    "@fluidframework/eslint-config-fluid": ^0.19.1
+    "@fluidframework/eslint-config-fluid": ^0.20.0-0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-base": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
@@ -6856,18 +6851,17 @@ __metadata:
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
     "@types/string-hash": ^1.1.1
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
+    "@typescript-eslint/eslint-plugin": ~4.2.0
+    "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
+    eslint: ~7.9.0
+    eslint-plugin-eslint-comments: ~3.2.0
+    eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
+    eslint-plugin-prefer-arrow: ~1.2.2
+    eslint-plugin-react: ~7.21.2
+    eslint-plugin-unicorn: ~22.0.0
     lodash: ^4.17.19
     mocha: ^8.1.1
     mocha-junit-reporter: ^1.18.0
@@ -8884,6 +8878,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rushstack/eslint-patch@npm:^1.0.6":
+  version: 1.0.6
+  resolution: "@rushstack/eslint-patch@npm:1.0.6"
+  checksum: cc01301f09d881da550a2f3c6a3f10b72dfb4c422b7a00a4b2e8bfc90d998aee06f08a6e7c9d03db89d5b286318d533435dc6c8c500884fe6ab05cb1309dfcc7
+  languageName: node
+  linkType: hard
+
 "@rushstack/node-core-library@npm:3.32.0":
   version: 3.32.0
   resolution: "@rushstack/node-core-library@npm:3.32.0"
@@ -10116,6 +10117,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@typescript-eslint/eslint-plugin@npm:~4.8.1":
+  version: 4.8.1
+  resolution: "@typescript-eslint/eslint-plugin@npm:4.8.1"
+  dependencies:
+    "@typescript-eslint/experimental-utils": 4.8.1
+    "@typescript-eslint/scope-manager": 4.8.1
+    debug: ^4.1.1
+    functional-red-black-tree: ^1.0.1
+    regexpp: ^3.0.0
+    semver: ^7.3.2
+    tsutils: ^3.17.1
+  peerDependencies:
+    "@typescript-eslint/parser": ^4.0.0
+    eslint: ^5.0.0 || ^6.0.0 || ^7.0.0
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: d3ab0d7e184ecbb55a0c4404ebd906f4988f6df87447641229938048160963add34f257f0b012ee2ed9a7c0c4b1e3e6377cf9e0fe229eba33b5470883141d5eb
+  languageName: node
+  linkType: hard
+
 "@typescript-eslint/experimental-utils@npm:2.17.0":
   version: 2.17.0
   resolution: "@typescript-eslint/experimental-utils@npm:2.17.0"
@@ -10142,6 +10164,22 @@ __metadata:
   peerDependencies:
     eslint: "*"
   checksum: dc7cb0ab8637d934565fd406f347f229c81e6d5ae3ed958108616c89ed7e7e528a95b69b3e07fd3b38ffee8ba8f611ebe05af0eb30c2d3b297a3fd5c0e2b87b7
+  languageName: node
+  linkType: hard
+
+"@typescript-eslint/experimental-utils@npm:4.8.1":
+  version: 4.8.1
+  resolution: "@typescript-eslint/experimental-utils@npm:4.8.1"
+  dependencies:
+    "@types/json-schema": ^7.0.3
+    "@typescript-eslint/scope-manager": 4.8.1
+    "@typescript-eslint/types": 4.8.1
+    "@typescript-eslint/typescript-estree": 4.8.1
+    eslint-scope: ^5.0.0
+    eslint-utils: ^2.0.0
+  peerDependencies:
+    eslint: "*"
+  checksum: ddebd9ab65b775d3ce11fd1f9bbd76e11e0a545ef64e31b0eac6a0fccab337e86b946c60ff6ee0df60ea0aa9f315b10ac824a054ba49614ddef78f476c64fdd5
   languageName: node
   linkType: hard
 
@@ -10179,6 +10217,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@typescript-eslint/parser@npm:~4.8.1":
+  version: 4.8.1
+  resolution: "@typescript-eslint/parser@npm:4.8.1"
+  dependencies:
+    "@typescript-eslint/scope-manager": 4.8.1
+    "@typescript-eslint/types": 4.8.1
+    "@typescript-eslint/typescript-estree": 4.8.1
+    debug: ^4.1.1
+  peerDependencies:
+    eslint: ^5.0.0 || ^6.0.0 || ^7.0.0
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: c3a61efc48e79e6fdcc9686fb6011a7f462ff213741689e58a0c5e303282c745e982c9d699baea397a4c81eb11493c43b816d1299f1dd55854e7dfa3f870b949
+  languageName: node
+  linkType: hard
+
 "@typescript-eslint/scope-manager@npm:4.2.0":
   version: 4.2.0
   resolution: "@typescript-eslint/scope-manager@npm:4.2.0"
@@ -10189,10 +10244,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@typescript-eslint/scope-manager@npm:4.8.1":
+  version: 4.8.1
+  resolution: "@typescript-eslint/scope-manager@npm:4.8.1"
+  dependencies:
+    "@typescript-eslint/types": 4.8.1
+    "@typescript-eslint/visitor-keys": 4.8.1
+  checksum: 40d9fff9178ae94af407d194e022e2a3f8b2e683779fcfd33c0f10de8a111d70f8c7c85bd813250f1fe6fbaa8bad2e6d6039189e3138a3d3610f33df28a4db2f
+  languageName: node
+  linkType: hard
+
 "@typescript-eslint/types@npm:4.2.0":
   version: 4.2.0
   resolution: "@typescript-eslint/types@npm:4.2.0"
   checksum: 137cadfdbbe908d6366ed226473e3166875a99a3db038280ff8cd7645aebe994a737962b340f1eb0171203d4a2c12394267d0c6f8b59db41b86473a6a07a9afb
+  languageName: node
+  linkType: hard
+
+"@typescript-eslint/types@npm:4.8.1":
+  version: 4.8.1
+  resolution: "@typescript-eslint/types@npm:4.8.1"
+  checksum: ccb647f35828aaa7991bde8a46c40c7ab48fdb1cc6ad6837a5e0f234dbbbd256babd23d83f0516ca797bd0060ca0950e4a5fd9104242ba2a83f74d06cfce59c5
   languageName: node
   linkType: hard
 
@@ -10233,6 +10305,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@typescript-eslint/typescript-estree@npm:4.8.1":
+  version: 4.8.1
+  resolution: "@typescript-eslint/typescript-estree@npm:4.8.1"
+  dependencies:
+    "@typescript-eslint/types": 4.8.1
+    "@typescript-eslint/visitor-keys": 4.8.1
+    debug: ^4.1.1
+    globby: ^11.0.1
+    is-glob: ^4.0.1
+    lodash: ^4.17.15
+    semver: ^7.3.2
+    tsutils: ^3.17.1
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: c49c39ea1368b95b00c40ec903d5dfe1316b58f024b023e317f5583d4c068290f989d698198b63464c5b6125d4a0ddf80e9e4c800b2c3bcfa89206db29079448
+  languageName: node
+  linkType: hard
+
 "@typescript-eslint/visitor-keys@npm:4.2.0":
   version: 4.2.0
   resolution: "@typescript-eslint/visitor-keys@npm:4.2.0"
@@ -10240,6 +10331,16 @@ __metadata:
     "@typescript-eslint/types": 4.2.0
     eslint-visitor-keys: ^2.0.0
   checksum: a8cfced7b0cc5b2d2fd8b5706bacef9cd748f3cf4ae31a9f25c7cd21e4c2bdaeb418d13202fc65a138265f33e8b658f7ddfee3f2685f13e8915e8406448289da
+  languageName: node
+  linkType: hard
+
+"@typescript-eslint/visitor-keys@npm:4.8.1":
+  version: 4.8.1
+  resolution: "@typescript-eslint/visitor-keys@npm:4.8.1"
+  dependencies:
+    "@typescript-eslint/types": 4.8.1
+    eslint-visitor-keys: ^2.0.0
+  checksum: 318bfa2a4645fa52d1826de2c7b5c7ac49f4df2fcbe73dbbc7ed6d9d091cbb253ce4762919606ea717744d6b6978cfe966963786eb16877b70b87ad6eadbf7e0
   languageName: node
   linkType: hard
 
@@ -15260,7 +15361,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-import@npm:~2.22.0":
+"eslint-plugin-import@npm:~2.22.0, eslint-plugin-import@npm:~2.22.1":
   version: 2.22.1
   resolution: "eslint-plugin-import@npm:2.22.1"
   dependencies:
@@ -15298,6 +15399,15 @@ __metadata:
   dependencies:
     regexp-tree: 0.1.11
   checksum: 164d0226a10c08baaca3e621386221271b24b24d94201917839fe5968e555154512eab3d046e7a3c971d652b422568e5ed9a55a0dcbebf31396e80d922308e4a
+  languageName: node
+  linkType: hard
+
+"eslint-plugin-optimize-regex@npm:~1.2.0":
+  version: 1.2.0
+  resolution: "eslint-plugin-optimize-regex@npm:1.2.0"
+  dependencies:
+    regexp-tree: ^0.1.20
+  checksum: 7ae57d7c415a2d851cb354b4fee7a286dd7558a6578e6ea2d2e38def11f9d09e34fe85915bed826d0b35d1d64d55543b986be235ce1b02c673a406633ad42975
   languageName: node
   linkType: hard
 
@@ -15339,7 +15449,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react@npm:~7.21.2":
+"eslint-plugin-react@npm:~7.21.2, eslint-plugin-react@npm:~7.21.5":
   version: 7.21.5
   resolution: "eslint-plugin-react@npm:7.21.5"
   dependencies:
@@ -15409,6 +15519,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-unicorn@npm:~23.0.0":
+  version: 23.0.0
+  resolution: "eslint-plugin-unicorn@npm:23.0.0"
+  dependencies:
+    ci-info: ^2.0.0
+    clean-regexp: ^1.0.0
+    eslint-ast-utils: ^1.1.0
+    eslint-template-visitor: ^2.2.1
+    eslint-utils: ^2.1.0
+    import-modules: ^2.0.0
+    lodash: ^4.17.20
+    pluralize: ^8.0.0
+    read-pkg-up: ^7.0.1
+    regexp-tree: ^0.1.21
+    reserved-words: ^0.1.2
+    safe-regex: ^2.1.1
+    semver: ^7.3.2
+  peerDependencies:
+    eslint: ">=7.11.0"
+  checksum: 655c90e72f0aa4a7f9dd6250ce95f187ddb85a7e1e3ac46091f21025c1c6c2b308a520a7f5abfb14866b6926fee1023e3ceb7882c5b1fb63a4f0698b25f0d7e6
+  languageName: node
+  linkType: hard
+
 "eslint-scope@npm:^4.0.3":
   version: 4.0.3
   resolution: "eslint-scope@npm:4.0.3"
@@ -15419,7 +15552,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-scope@npm:^5.0.0, eslint-scope@npm:^5.1.0":
+"eslint-scope@npm:^5.0.0, eslint-scope@npm:^5.1.0, eslint-scope@npm:^5.1.1":
   version: 5.1.1
   resolution: "eslint-scope@npm:5.1.1"
   dependencies:
@@ -15532,6 +15665,53 @@ __metadata:
   bin:
     eslint: ./bin/eslint.js
   checksum: 796be0e038188d4cd8062541394d29f35606a7cee00cead5f6c8e3f9db932f0d19ee946df16fd593e0bcd614f896a416afa916bf82d9420576537ac349f2a06d
+  languageName: node
+  linkType: hard
+
+"eslint@npm:~7.13.0":
+  version: 7.13.0
+  resolution: "eslint@npm:7.13.0"
+  dependencies:
+    "@babel/code-frame": ^7.0.0
+    "@eslint/eslintrc": ^0.2.1
+    ajv: ^6.10.0
+    chalk: ^4.0.0
+    cross-spawn: ^7.0.2
+    debug: ^4.0.1
+    doctrine: ^3.0.0
+    enquirer: ^2.3.5
+    eslint-scope: ^5.1.1
+    eslint-utils: ^2.1.0
+    eslint-visitor-keys: ^2.0.0
+    espree: ^7.3.0
+    esquery: ^1.2.0
+    esutils: ^2.0.2
+    file-entry-cache: ^5.0.1
+    functional-red-black-tree: ^1.0.1
+    glob-parent: ^5.0.0
+    globals: ^12.1.0
+    ignore: ^4.0.6
+    import-fresh: ^3.0.0
+    imurmurhash: ^0.1.4
+    is-glob: ^4.0.0
+    js-yaml: ^3.13.1
+    json-stable-stringify-without-jsonify: ^1.0.1
+    levn: ^0.4.1
+    lodash: ^4.17.19
+    minimatch: ^3.0.4
+    natural-compare: ^1.4.0
+    optionator: ^0.9.1
+    progress: ^2.0.0
+    regexpp: ^3.1.0
+    semver: ^7.2.1
+    strip-ansi: ^6.0.0
+    strip-json-comments: ^3.1.0
+    table: ^5.2.3
+    text-table: ^0.2.0
+    v8-compile-cache: ^2.0.3
+  bin:
+    eslint: bin/eslint.js
+  checksum: 6ea6c763f1b1e484ec5da67e10125cc9b6ccef5c355470cb71a2e29c70b24c0ef325dd45e775800dd78dbcfba2a9c85b9096f438cdb468b32b6680c2ddebb459
   languageName: node
   linkType: hard
 
@@ -25036,7 +25216,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"regexp-tree@npm:^0.1.17, regexp-tree@npm:^0.1.21, regexp-tree@npm:~0.1.1":
+"regexp-tree@npm:^0.1.17, regexp-tree@npm:^0.1.20, regexp-tree@npm:^0.1.21, regexp-tree@npm:~0.1.1":
   version: 0.1.21
   resolution: "regexp-tree@npm:0.1.21"
   bin:
