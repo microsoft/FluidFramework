@@ -46,6 +46,7 @@ describe("Data Store Context Tests", () => {
                 (() => undefined) as unknown as SummarizeInternalFn,
                 0,
                 0);
+            summarizerNode.startSummary(0, new TelemetryNullLogger());
             createSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
                 summarizeInternal,
                 dataStoreId,
@@ -190,6 +191,7 @@ describe("Data Store Context Tests", () => {
                 (() => undefined) as unknown as SummarizeInternalFn,
                 0,
                 0);
+            summarizerNode.startSummary(0, new TelemetryNullLogger());
             createSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
                 summarizeInternal,
                 dataStoreId,
