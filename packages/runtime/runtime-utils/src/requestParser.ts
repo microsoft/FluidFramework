@@ -41,7 +41,7 @@ export class RequestParser implements IRequest {
     protected constructor(private readonly request: Readonly<IRequest>) {
         const queryStartIndex = this.request.url.indexOf("?");
         if (queryStartIndex >= 0) {
-            this.query = `/` + `${this.request.url.substring(queryStartIndex)}`;
+            this.query = `/${this.request.url.substring(queryStartIndex)}`;
         } else {
             this.query = "";
         }
