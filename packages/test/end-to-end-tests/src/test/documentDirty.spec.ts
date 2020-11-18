@@ -115,7 +115,7 @@ describe("Document Dirty", () => {
         containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
         sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
         opProcessingController = new OpProcessingController(deltaConnectionServer);
-        opProcessingController.addDeltaManagers(dataObject.runtime.deltaManager);
+        opProcessingController.addDeltaManagers(container.deltaManager);
 
         // Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
         // re-sent. Do it here so that the extra events don't mess with rest of the test.
