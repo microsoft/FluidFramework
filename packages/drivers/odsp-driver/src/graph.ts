@@ -235,12 +235,13 @@ export async function getGraphItemLite(
     driveId: string,
     itemId: string,
     logger?: ITelemetryLogger,
-    msGraphOrigin?: string
+    msGraphOrigin?: string,
 ): Promise<GraphItemLite | undefined> {
     const cacheKey = `${driveId}_${itemId}`;
     if (graphItemLiteCache.has(cacheKey) === false) {
         const valueGenerator = async function() {
-            const partialUrl = `${slashTerminatedOriginOrEmptyString(msGraphOrigin)}drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,name`;
+            const partialUrl = `${slashTerminatedOriginOrEmptyString(msGraphOrigin)
+                }drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,name`;
 
             let response: Response | undefined;
             try {
