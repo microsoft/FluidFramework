@@ -79,7 +79,7 @@ export class RequestParser implements IRequest {
      * e.g. original url is /a/b/?queryParams, createSubRequest(0) is /a/b/?queryParams
      * createSubRequest(1) is /b/?queryParams
      * createSubRequest(2) is /?queryParams
-     * createSubRequest(n) where n > parts length, in this case, 2, or n < 0 will throw an exception
+     * createSubRequest(n) where n is bigger than parts length, e.g. 2, or n is less than 0 will throw an exception
      *
      * note: query params are not counted towards path parts.
      *
