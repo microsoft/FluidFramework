@@ -121,9 +121,9 @@ export interface IPersistedCache {
 
     /**
      * Removes all the entries from the cache for given docId.
-     * @param docId - DocId for which all entries needs to be deleted from cache.
+     * @param entry - cache entry.
      */
-    removeAllEntriesForDocId(docId: string): Promise<void>;
+    removeEntries(entry: ICacheEntry): Promise<void>;
 }
 
 /**
@@ -194,11 +194,17 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
         }
     }
 
-    async removeAllEntriesForDocId(docId: string): Promise<void> {
+    async removeEntries(entry: ICacheEntry): Promise<void> {
         try {
-            await this.cache.removeAllEntriesForDocId(docId);
+            await this.cache.removeEntries(entry);
         } catch (error) {
-            this.logger.sendErrorEvent({ eventName: "removeAllEntriesForDocId", docId }, error);
+            this.logger.sendErrorEvent(
+                {
+                    eventName: "removeCacheEntries",
+                    docId: entry.file.docId,
+                    type: entry.type,
+                },
+            error);
         }
     }
 }
@@ -233,9 +239,9 @@ export class LocalPersistentCache implements IPersistedCache {
     updateUsage(entry: ICacheEntry, seqNumber: number): void {
     }
 
-    async removeAllEntriesForDocId(docId: string): Promise<void> {
+    async removeEntries(entry: ICacheEntry): Promise<void> {
         Array.from(this.cache)
-        .filter(([key]) => key.startsWith(docId))
+        .filter(([key]) => key.startsWith(`${entry.file.docId}_${entry.type}`))
         .map(([key]) => {
             this.cache.delete(key);
         });
@@ -326,8 +332,8 @@ export class LocalPersistentCacheAdapter implements IPersistedCache {
         this.cache.updateUsage(entry, seqNumber);
     }
 
-    async removeAllEntriesForDocId(docId: string): Promise<void> {
+    async removeEntries(entry: ICacheEntry): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.cache.removeAllEntriesForDocId(docId);
+        this.cache.removeEntries(entry);
     }
 }

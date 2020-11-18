@@ -1,9 +1,14 @@
 ## 0.30 Breaking Changes
 
 - [Branching removed](#Branching-removed)
+- [removeAllEntriesForDocId api name and signature change](#removeAllEntriesForDocId-api-name-and-signature-change)
 
 ### Branching removed
 The branching feature has been removed.  This includes all related members, methods, etc. such as `parentBranch`, `branchId`, `branch()`, etc.
+
+### removeAllEntriesForDocId api name and signature change
+`removeAllEntriesForDocId` api renamed to `removeEntries`. Now it takes ICacheEntry as argument instead of just docId so that specific type of entries
+can be removed for cache like all `snapshot` entries for a given docId. 
 
 ## 0.29 Breaking Changes
 

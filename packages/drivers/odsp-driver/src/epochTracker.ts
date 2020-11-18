@@ -9,6 +9,7 @@ import { fluidEpochMismatchError, OdspErrorType, throwOdspNetworkError } from "@
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, LocalPersistentCacheAdapter } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
+import { IOdspResolvedUrl } from "./contracts";
 
 /**
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
@@ -158,7 +159,16 @@ export class EpochTracker {
             this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, error);
             assert(!!this._hashedDocumentId, "DocId should be set to clear the cached entries!!");
             // If the epoch mismatches, then clear all entries for such document from cache.
-            await this.persistedCache.removeAllEntriesForDocId(this._hashedDocumentId);
+            const entry: ICacheEntry = {
+                file: {
+                    docId: this._hashedDocumentId,
+                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                    resolvedUrl: {} as IOdspResolvedUrl,
+                },
+                type: "snapshot",
+                key: "",
+            };
+            await this.persistedCache.removeEntries(entry);
         }
     }
 }
