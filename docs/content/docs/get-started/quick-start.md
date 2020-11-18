@@ -26,7 +26,7 @@ We also recommend that you install the following:
 
 For this example we already have the necessary Fluid packages in our package.json. Therefore, when you run `npm install`, they will be installed for you.
 However, if you wanted to start a new project on your own, available packages are labeled in the [Fluid API Section](https://fluidframework.com/apis/) of the documentation. 
-To install your packages you can follow this format `npm i package-name` if you use `npm` or `yarn add package-name` if you use `yarn`.
+To install your packages you can follow this format: `npm i package-name` if you use [npm](https://docs.npmjs.com/) or `yarn add package-name` if you use [yarn](https://yarnpkg.com/).
 
 Here are the packages we use for this tutorial, and how you can install them based on the package manager you use.
 - **@fluidframework/aqueduct** 
