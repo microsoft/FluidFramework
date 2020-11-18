@@ -34,6 +34,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         private readonly identityType: IdentityType = "Enterprise",
         logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
+        private readonly msGraphOrigin?: string,
     ) {
         this.logger = ChildLogger.create(logger, "OdspDriver");
         this.getSharingLinkToken = this.toInstrumentedSharingLinkTokenFetcher(this.logger, tokenFetcher);
@@ -152,6 +153,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             this.identityType,
             this.logger,
             "existingAccess",
+            undefined,
+            this.msGraphOrigin,
         ).then((shareLink) => {
                 if (!shareLink) {
                     throw new Error("Failed to get share link");
