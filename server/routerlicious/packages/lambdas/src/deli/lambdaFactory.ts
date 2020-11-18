@@ -136,7 +136,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             tenantId,
             documentId,
             newCheckpoint,
-            dbObject,
             // It probably shouldn't take the collection - I can manage that
             this.collection,
             // The producer as well it shouldn't take. Maybe it just gives an output stream?

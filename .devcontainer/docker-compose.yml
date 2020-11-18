@@ -73,14 +73,6 @@ services:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
-    routemanager:
-        image: prague.azurecr.io/prague:12579
-        command: node dist/kafka-service/index.js routemanager /usr/src/server/packages/server/lambdas-driver/dist/document-router/index.js
-        environment:
-            - DEBUG=fluid:*
-            - NODE_ENV=development
-            - documentLambda=/usr/src/server/packages/server/routerlicious/dist/routemanager/index.js
-        restart: always
     riddler:
         image: prague.azurecr.io/prague:12579
         ports:

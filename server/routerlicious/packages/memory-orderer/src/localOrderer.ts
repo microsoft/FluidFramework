@@ -285,7 +285,6 @@ export class LocalOrderer implements IOrderer {
                     this.tenantId,
                     this.documentId,
                     lastCheckpoint,
-                    this.dbObject,
                     documentCollection,
                     this.deltasKafka,
                     this.rawDeltasKafka,

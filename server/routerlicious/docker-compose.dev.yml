@@ -18,9 +18,6 @@ services:
     foreman:
         volumes:
             - .:/usr/src/server
-    routemanager:
-        volumes:
-            - .:/usr/src/server
     riddler:
         volumes:
             - .:/usr/src/server
