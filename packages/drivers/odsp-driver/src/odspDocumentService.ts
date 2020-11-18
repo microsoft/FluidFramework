@@ -91,7 +91,7 @@ export class OdspDocumentService implements IDocumentService {
 
     readonly policies = {
         // Disable prefetching when using ODSP by default.
-        caching: ServiceCachingPolicy.None,
+        caching: ServiceCachingPolicy.NoCaching,
     };
 
     /**

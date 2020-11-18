@@ -185,7 +185,7 @@ export enum ServiceCachingPolicy {
     /**
      * Driver does not implement any prefetching or caching policy.
      */
-    None,
+    NoCaching,
 
     /**
      * Driver implements prefetching policy, i.e. it prefetches resources from the latest snapshot.
