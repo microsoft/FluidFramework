@@ -312,35 +312,3 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         };
     }
 }
-
-/**
- * Creates a proxy outerdocumentservice from either a resolvedURL or a request
- * Remotes the real connection to an iframe
- */
-export class IFrameDocumentServiceProxyFactory {
-    public static async create(
-        documentServiceFactory: IDocumentServiceFactory,
-        frame: HTMLIFrameElement,
-        options: any,
-    ) {
-        return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options);
-    }
-
-    public readonly protocolName = "fluid-outer:";
-
-    constructor(
-        private readonly documentServiceFactory: IDocumentServiceFactory,
-        private readonly frame: HTMLIFrameElement,
-        private readonly options: any,
-    ) {
-
-    }
-
-    public async createDocumentService(): Promise<IDocumentServiceFactoryProxy> {
-        return new DocumentServiceFactoryProxy(
-            this.documentServiceFactory,
-            this.options,
-            this.frame,
-        );
-    }
-}
