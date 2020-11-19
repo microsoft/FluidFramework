@@ -10,11 +10,13 @@ import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     events: ITelemetryBaseEvent[] = [];
 
+    constructor() { super(); }
+
     send(event: ITelemetryBaseEvent): void {
         this.events.push(event);
     }
 
-    matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]) {
+    matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
         let iExpectedEvent = 0;
         this.events.forEach((event) => {
             if (iExpectedEvent < expectedEvents.length &&
