@@ -8,7 +8,6 @@ export * from "./baseTestObjectProvider";
 export * from "./localLoader";
 export * from "./localCodeLoader";
 export * from "./localTestObjectProvider";
-export * from "./mockLogger";
 export * from "./opProcessingController";
 export * from "./testContainerRuntimeFactory";
 export * from "./testFluidObject";

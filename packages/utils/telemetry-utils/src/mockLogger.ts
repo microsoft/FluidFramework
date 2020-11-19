@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryLogger } from "./logger";
 
 export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     events: ITelemetryBaseEvent[] = [];
