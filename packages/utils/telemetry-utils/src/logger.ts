@@ -274,7 +274,7 @@ export class ChildLogger extends TelemetryLogger {
                     : `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
 
             return new ChildLogger(
-                baseLogger.logger,
+                baseLogger.baseLogger,
                 combinedNamespace,
                 combinedProperties,
                 combinedGetters,
