@@ -4,7 +4,7 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
- import {
+import {
     IDocumentStorageService,
     ISummaryContext,
 } from "@fluidframework/driver-definitions";
