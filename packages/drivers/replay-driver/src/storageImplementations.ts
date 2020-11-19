@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -94,6 +94,11 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
         }
         throw new Error(`Unknown blob ID: ${blobId}`);
     }
+
+    public async readString(blobId: string): Promise<string> {
+        const base64Result = await this.read(blobId);
+        return fromBase64ToUtf8(base64Result);
+    }
 }
 
 export class SnapshotStorage extends ReadDocumentStorageServiceBase {
@@ -125,6 +130,10 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
     public async read(blobId: string): Promise<string> {
         return this.storage.read(blobId);
     }
+
+    public async readString(blobId: string): Promise<string> {
+        return this.storage.readString(blobId);
+    }
 }
 
 export class OpStorage extends ReadDocumentStorageServiceBase {
@@ -137,6 +146,10 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
     }
 
     public async read(blobId: string): Promise<string> {
+        throw new Error(`Unknown blob ID: ${blobId}`);
+    }
+
+    public async readString(blobId: string): Promise<string> {
         throw new Error(`Unknown blob ID: ${blobId}`);
     }
 }

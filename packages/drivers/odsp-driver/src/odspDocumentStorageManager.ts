@@ -221,52 +221,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     public async read(blobid: string): Promise<string> {
-        let blob = this.blobCache.get(blobid);
-        // Reset the timer on attempted cache read
-        this.scheduleClearBlobsCache();
-        if (blob === undefined) {
-            this.checkSnapshotUrl();
-
-            const response = await getWithRetryForTokenRefresh(async (options) => {
-                const storageToken = await this.getStorageToken(options, "GetBlob");
-
-                const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/blobs/${blobid}`, storageToken);
-
-                return PerformanceEvent.timedExecAsync(
-                    this.logger,
-                    {
-                        eventName: "readBlob",
-                        headers: Object.keys(headers).length !== 0 ? true : undefined,
-                        waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
-                    },
-                    async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }),
-                );
-            });
-            blob = response.content;
-        }
-
-        if (this.attributesBlobHandles.has(blobid)) {
-            // ODSP document ids are random guids (different per session)
-            // fix the branch name in attributes
-            // this prevents issues when generating summaries
-            if (blob.encoding === "base64") {
-                const documentAttributes: api.IDocumentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
-                documentAttributes.branch = this.documentId;
-
-                blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
-            }
-            else {
-                const documentAttributes: api.IDocumentAttributes = JSON.parse(blob.content);
-                documentAttributes.branch = this.documentId;
-
-                blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
-            }
-        }
-
-        return blob.content;
+        return this.readWithEncodingOutput(blobid, "base64");
     }
 
     public async readString(blobid: string): Promise<string> {
+        return this.readWithEncodingOutput(blobid, "utf8");
+    }
+
+    private async readWithEncodingOutput(blobid: string, outputFormat: string) {
         let blob = this.blobCache.get(blobid);
         // Reset the timer on attempted cache read
         this.scheduleClearBlobsCache();
@@ -299,13 +261,22 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 const documentAttributes: api.IDocumentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
                 documentAttributes.branch = this.documentId;
 
-                blob.content = JSON.stringify(documentAttributes);
+                if (outputFormat === "base64") {
+                    blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
+                }
+                else {
+                    blob.content = JSON.stringify(documentAttributes);}
             }
             else {
                 const documentAttributes: api.IDocumentAttributes = JSON.parse(blob.content);
                 documentAttributes.branch = this.documentId;
 
-                blob.content = JSON.stringify(documentAttributes);
+                if (outputFormat === "base64") {
+                    blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
+                }
+                else {
+                    blob.content = JSON.stringify(documentAttributes);
+                }
             }
         }
 
