@@ -2,11 +2,14 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable @typescript-eslint/no-floating-promises */
+
 import {
     ISnapshotTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
+import { DocumentStorageServiceProxy, readWithRetry } from "@fluidframework/driver-utils";
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
@@ -15,10 +18,9 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     private prefetchEnabled = true;
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-        const p = this.internalStorageService.getSnapshotTree(version);
+        const p = readWithRetry(async () => this.internalStorageService.getSnapshotTree(version));
         if (this.prefetchEnabled) {
             // We don't care if the prefetch succeed
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             p.then((tree: ISnapshotTree | null | undefined) => {
                 if (tree === null || tree === undefined) { return; }
                 this.prefetchTree(tree);
@@ -28,7 +30,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     }
 
     public async read(blobId: string): Promise<string> {
-        return this.cachedRead(blobId);
+        return readWithRetry(async () => this.cachedRead(blobId));
     }
 
     public stopPrefetch() {
@@ -36,8 +38,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         this.prefetchCache.clear();
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private cachedRead(blobId: string): Promise<string> {
+    private async cachedRead(blobId: string): Promise<string> {
         if (this.prefetchEnabled) {
             const prefetchedBlobP: Promise<string> | undefined = this.prefetchCache.get(blobId);
             if (prefetchedBlobP !== undefined) {
@@ -56,7 +57,6 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 
         for (const blob of secondary) {
             // We don't care if the prefetch succeed
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.cachedRead(blob);
         }
     }
@@ -67,7 +67,6 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
             if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
                 if (blob !== null) {
                     // We don't care if the prefetch succeed
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.cachedRead(blob);
                 }
             } else if (!blobKey.startsWith("deltas")) {
@@ -79,8 +78,13 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 
         for (const commit of Object.keys(tree.commits)) {
             this.getVersions(tree.commits[commit], 1)
-                // eslint-disable-next-line @typescript-eslint/promise-function-async
-                .then((moduleCommit) => this.getSnapshotTree(moduleCommit[0]))
+                .then((moduleCommit) => {
+                    this.internalStorageService.getSnapshotTree(moduleCommit[0])
+                    .then((snapshotTree: ISnapshotTree | null | undefined) => {
+                        if (snapshotTree === null || snapshotTree === undefined) { return; }
+                        this.prefetchTree(snapshotTree);
+                    });
+                })
                 .catch((error) => debug("Ignored cached read error", error));
         }
 
