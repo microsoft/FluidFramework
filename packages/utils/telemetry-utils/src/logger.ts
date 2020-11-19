@@ -253,15 +253,15 @@ export class ChildLogger extends TelemetryLogger {
         // the callstack overhead, just generate a new logger that includes everything from the previous
         if (baseLogger instanceof ChildLogger) {
             const combinedProperties =
-                baseLogger.properties === undefined && properties === undefined ?
-                    undefined
+                baseLogger.properties === undefined && properties === undefined
+                    ? undefined
                     : {
                         ...baseLogger.properties,
                         ... properties,
                     };
             const combinedGetters =
-                baseLogger.propertyGetters === undefined && propertyGetters === undefined ?
-                    undefined
+                baseLogger.propertyGetters === undefined && propertyGetters === undefined
+                    ? undefined
                     : {
                         ...baseLogger.propertyGetters,
                         ... propertyGetters,
