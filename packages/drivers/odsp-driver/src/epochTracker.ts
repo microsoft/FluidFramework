@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fluidEpochMismatchError, OdspErrorType, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
-import { ICacheEntry, LocalPersistentCacheAdapter } from "./odspCache";
+import { ICacheEntry, IFileEntry, LocalPersistentCacheAdapter } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
 
 /**
@@ -18,7 +18,7 @@ import { RateLimiter } from "./rateLimiter";
  */
 export class EpochTracker {
     private _fluidEpoch: string | undefined;
-    private _hashedDocumentId: string | undefined;
+    private _fileEntry: IFileEntry | undefined;
     public readonly rateLimiter: RateLimiter;
     constructor(
         private readonly persistedCache: LocalPersistentCacheAdapter,
@@ -28,14 +28,14 @@ export class EpochTracker {
         this.rateLimiter = new RateLimiter(24);
     }
 
-    public set hashedDocumentId(docId: string | undefined) {
-        assert(this._hashedDocumentId === undefined, "DocId should be set only once");
-        assert(docId !== undefined, "Passed docId should not be undefined");
-        this._hashedDocumentId = docId;
+    public set fileEntry(fileEntry: IFileEntry | undefined) {
+        assert(this._fileEntry === undefined, "File Entry should be set only once");
+        assert(fileEntry !== undefined, "Passed file entry should not be undefined");
+        this._fileEntry = fileEntry;
     }
 
-    public get hashedDocumentId(): string | undefined {
-        return this._hashedDocumentId;
+    public get fileEntry(): IFileEntry | undefined {
+        return this._fileEntry;
     }
 
     public get fluidEpoch() {
@@ -195,9 +195,9 @@ export class EpochTracker {
                     fetchType,
                 },
             error);
-            assert(!!this._hashedDocumentId, "DocId should be set to clear the cached entries!!");
-            // If the epoch mismatches, then clear all entries for such document from cache.
-            await this.persistedCache.removeAllEntriesForDocId(this._hashedDocumentId);
+            assert(!!this.fileEntry, "File Entry should be set to clear the cached entries!!");
+            // If the epoch mismatches, then clear all entries for such file entry from cache.
+            await this.persistedCache.removeEntries(this.fileEntry);
         }
     }
 }
