@@ -108,7 +108,8 @@ export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocat
 }
 
 /**
- * Extract ODSP Fluid data store locator object from given ODSP url
+ * Extract ODSP Fluid data store locator object from given ODSP url. This extracts things like
+ * driveId, ItemId, siteUrl etc from a url where these are encoded in nav query param.
  * @param url - ODSP url representing Fluid file link
  * @returns object representing Fluid data store location in ODSP terms
  */
