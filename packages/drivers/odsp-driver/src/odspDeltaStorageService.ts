@@ -7,7 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import * as api from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
-import { EpochTracker, FetchEpochFor } from "./epochTracker";
+import { EpochTracker, FetchType } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
 import { TokenFetchOptions } from "./tokenFetch";
@@ -46,7 +46,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
             const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, storageToken);
 
             const response = await this.epochTracker
-                .fetchAndParseAsJSON<IDeltaStorageGetResponse>(url, { headers }, FetchEpochFor.ops);
+                .fetchAndParseAsJSON<IDeltaStorageGetResponse>(url, { headers }, FetchType.ops);
             const deltaStorageResponse = response.content;
             if (this.logger) {
                 this.logger.sendTelemetryEvent({

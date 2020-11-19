@@ -59,7 +59,7 @@ import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { getQueryString } from "./getQueryString";
-import { EpochTracker, FetchEpochFor } from "./epochTracker";
+import { EpochTracker, FetchType } from "./epochTracker";
 
 /* eslint-disable max-len */
 
@@ -189,7 +189,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         headers,
                         method: "POST",
                     },
-                    FetchEpochFor.createBlob,
+                    FetchType.createBlob,
                 ),
             );
         });
@@ -212,7 +212,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
                 async (event) => {
-                    const res = await this.epochTracker.fetchResponse(url, { headers }, FetchEpochFor.blob);
+                    const res = await this.epochTracker.fetchResponse(url, { headers }, FetchType.blob);
                     const content = await res.arrayBuffer();
                     event.end({ size: content.byteLength });
                     return content;
@@ -240,7 +240,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         headers: Object.keys(headers).length !== 0 ? true : undefined,
                         waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
                     },
-                    async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }, FetchEpochFor.blob),
+                    async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }, FetchType.blob),
                 );
             });
             blob = response.content;
@@ -378,7 +378,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     key: "",
                                 },
                                 this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
-                                FetchEpochFor.treesLatest,
+                                FetchType.treesLatest,
                             );
 
                             let method: string;
@@ -498,7 +498,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     eventName: "getVersions",
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
-                async () => this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }, FetchEpochFor.treesLatest),
+                async () => this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }, FetchType.treesLatest),
             );
             const versionsResponse = response.content;
             if (!versionsResponse) {
@@ -631,10 +631,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         signal: controller?.signal,
                         method: "POST",
                     },
-                    FetchEpochFor.treesLatest,
+                    FetchType.treesLatest,
                     true);
             } else {
-                response = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers, signal: controller?.signal }, FetchEpochFor.treesLatest);
+                response = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers, signal: controller?.signal }, FetchType.treesLatest);
             }
             const endTime = performance.now();
             const overallTime = endTime - startTime;
@@ -961,7 +961,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                             headers,
                             method: "POST",
                         },
-                        FetchEpochFor.uploadSummary);
+                        FetchType.uploadSummary);
                     return { result: response.content, blobsShaToPathCacheLatest };
                 });
         });

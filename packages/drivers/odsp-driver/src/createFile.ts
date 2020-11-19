@@ -28,7 +28,7 @@ import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
-import { EpochTracker, FetchEpochFor } from "./epochTracker";
+import { EpochTracker, FetchType } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 
 const isInvalidFileName = (fileName: string): boolean => {
@@ -78,7 +78,7 @@ export async function createNewFluidFile(
                         headers,
                         method: "POST",
                     },
-                    FetchEpochFor.createFile);
+                    FetchType.createFile);
 
                 const content = fetchResponse.content;
                 if (!content || !content.itemId) {

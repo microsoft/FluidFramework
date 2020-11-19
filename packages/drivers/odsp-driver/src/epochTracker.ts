@@ -45,14 +45,14 @@ export class EpochTracker {
     public async fetchFromCache<T>(
         entry: ICacheEntry,
         maxOpCount: number | undefined,
-        fetchEpochFor: FetchEpochFor,
+        fetchType: FetchType,
     ): Promise<T | undefined> {
         const value = await this.persistedCache.get(entry, maxOpCount);
         if (value !== undefined) {
             try {
                 this.validateEpochFromResponse(value.fluidEpoch);
             } catch (error) {
-                await this.checkForEpochError(error, value.fluidEpoch, fetchEpochFor, true);
+                await this.checkForEpochError(error, value.fluidEpoch, fetchType, true);
                 throw error;
             }
             return value.value as T;
@@ -63,13 +63,13 @@ export class EpochTracker {
      * Api to fetch the response for given request and parse it as json.
      * @param url - url of the request
      * @param fetchOptions - fetch options for request containing body, headers etc.
-     * @param fetchEpochFor - method for which fetch is called.
+     * @param fetchType - method for which fetch is called.
      * @param addInBody - Pass True if caller wants to add epoch in post body.
      */
     public async fetchAndParseAsJSON<T>(
         url: string,
         fetchOptions: {[index: string]: any},
-        fetchEpochFor: FetchEpochFor,
+        fetchType: FetchType,
         addInBody: boolean = false,
     ): Promise<IOdspResponse<T>> {
         // Add epoch in fetch request.
@@ -83,7 +83,7 @@ export class EpochTracker {
             this.validateEpochFromResponse(epochFromResponse);
             return response;
         } catch (error) {
-            await this.checkForEpochError(error, epochFromResponse, fetchEpochFor);
+            await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
         }
     }
@@ -92,13 +92,13 @@ export class EpochTracker {
      * Api to fetch the response as it is for given request.
      * @param url - url of the request
      * @param fetchOptions - fetch options for request containing body, headers etc.
-     * @param fetchEpochFor - method for which fetch is called.
+     * @param fetchType - method for which fetch is called.
      * @param addInBody - Pass True if caller wants to add epoch in post body.
      */
     public async fetchResponse(
         url: string,
         fetchOptions: {[index: string]: any},
-        fetchEpochFor: FetchEpochFor,
+        fetchType: FetchType,
         addInBody: boolean = false,
     ): Promise<Response> {
         // Add epoch in fetch request.
@@ -112,7 +112,7 @@ export class EpochTracker {
             this.validateEpochFromResponse(epochFromResponse);
             return response;
         } catch (error) {
-            await this.checkForEpochError(error, epochFromResponse, fetchEpochFor);
+            await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
         }
     }
@@ -171,7 +171,7 @@ export class EpochTracker {
     private async checkForEpochError(
         error: any,
         epochFromResponse: string | null | undefined,
-        fetchEpochFor: FetchEpochFor,
+        fetchType: FetchType,
         fromCache: boolean = false,
     ) {
         if (error.errorType === OdspErrorType.epochVersionMismatch) {
@@ -180,8 +180,8 @@ export class EpochTracker {
                     eventName: "EpochVersionMismatch",
                     fromCache,
                     clientEpoch: this.fluidEpoch,
-                    epochFromResponse: epochFromResponse ?? undefined,
-                    fetchEpochFor,
+                    serverEpoch: epochFromResponse ?? undefined,
+                    fetchType,
                 },
             error);
             assert(!!this._hashedDocumentId, "DocId should be set to clear the cached entries!!");
@@ -191,7 +191,7 @@ export class EpochTracker {
     }
 }
 
-export enum FetchEpochFor {
+export enum FetchType {
     blob = "blob",
     createBlob = "createBlob",
     createFile = "createFile",
