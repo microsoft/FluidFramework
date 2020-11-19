@@ -152,7 +152,10 @@ export class OdspDocumentService implements IDocumentService {
         hostPolicy: HostStoragePolicy,
         private readonly epochTracker: EpochTracker,
     ) {
-        epochTracker.hashedDocumentId = odspResolvedUrl.hashedDocumentId;
+        epochTracker.fileEntry = {
+            resolvedUrl: odspResolvedUrl,
+            docId: odspResolvedUrl.hashedDocumentId,
+        };
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
         this.logger = ChildLogger.create(logger,

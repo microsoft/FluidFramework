@@ -480,7 +480,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 // Clear the cache on 401/403/404 on snapshot fetch from network because this means either the user doesn't have permissions
                 // permissions for the file or it was deleted. So the user will again try to fetch from cache on any failure in future.
                 if (errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
-                    await this.cache.persistedCache.removeEntries(cacheEntry);
+                    await this.cache.persistedCache.removeEntries(cacheEntry.file, cacheEntry.type, cacheEntry.key);
                 }
                 throw error;
             });
