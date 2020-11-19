@@ -257,7 +257,7 @@ export class ChildLogger extends TelemetryLogger {
                     ? undefined
                     : {
                         ...baseLogger.properties,
-                        ... properties,
+                        ...properties,
                     };
             const combinedGetters =
                 baseLogger.propertyGetters === undefined && propertyGetters === undefined
