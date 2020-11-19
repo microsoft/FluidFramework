@@ -22,7 +22,11 @@ describe("Tests for Epoch Tracker", () => {
     beforeEach(() => {
         cache = new LocalPersistentCacheAdapter(new LocalPersistentCache());
         epochTracker = new EpochTracker(cache, new TelemetryNullLogger());
-        epochTracker.hashedDocumentId = hashedDocumentId;
+        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
+        epochTracker.fileEntry = {
+            docId: hashedDocumentId,
+            resolvedUrl,
+        };
     });
 
     it("Epoch error when fetch error from cache should throw epoch error and clear cache", async () => {
