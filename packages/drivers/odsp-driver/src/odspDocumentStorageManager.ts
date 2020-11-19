@@ -59,7 +59,7 @@ import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { getQueryString } from "./getQueryString";
-import { EpochTracker } from "./epochTracker";
+import { EpochTracker, FetchType } from "./epochTracker";
 
 /* eslint-disable max-len */
 
@@ -189,6 +189,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         headers,
                         method: "POST",
                     },
+                    FetchType.createBlob,
                 ),
             );
         });
@@ -211,7 +212,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
                 async (event) => {
-                    const res = await this.epochTracker.fetchResponse(url, { headers });
+                    const res = await this.epochTracker.fetchResponse(url, { headers }, FetchType.blob);
                     const content = await res.arrayBuffer();
                     event.end({ size: content.byteLength });
                     return content;
@@ -239,7 +240,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         headers: Object.keys(headers).length !== 0 ? true : undefined,
                         waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
                     },
-                    async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }),
+                    async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }, FetchType.blob),
                 );
             });
             blob = response.content;
@@ -377,6 +378,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     key: "",
                                 },
                                 this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
+                                FetchType.treesLatest,
                             );
 
                             let method: string;
@@ -496,7 +498,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     eventName: "getVersions",
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
-                async () => this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }),
+                async () => this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }, FetchType.treesLatest),
             );
             const versionsResponse = response.content;
             if (!versionsResponse) {
@@ -629,9 +631,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         signal: controller?.signal,
                         method: "POST",
                     },
+                    FetchType.treesLatest,
                     true);
             } else {
-                response = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers, signal: controller?.signal });
+                response = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers, signal: controller?.signal }, FetchType.treesLatest);
             }
             const endTime = performance.now();
             const overallTime = endTime - startTime;
@@ -957,7 +960,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                             body: postBody,
                             headers,
                             method: "POST",
-                        });
+                        },
+                        FetchType.uploadSummary);
                     return { result: response.content, blobsShaToPathCacheLatest };
                 });
         });
