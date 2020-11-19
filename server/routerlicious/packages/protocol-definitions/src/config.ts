@@ -30,5 +30,9 @@ export interface IServiceConfiguration {
     // Server defined ideal block size for storing snapshots
     blockSize: number;
 
+    // Summary algorithm configuration. This is sent to clients when they connect
     summary: ISummaryConfiguration;
+
+    // Enable adding a traces array to operation messages
+    enableTraces: boolean;
 }

@@ -39,6 +39,7 @@ const DefaultServiceConfiguration: IServiceConfiguration = {
         maxTime: 5000 * 12,
         maxAckWaitTime: 600000,
     },
+    enableTraces: true,
 };
 
 class RemoteSubscriber implements ISubscriber {
