@@ -126,6 +126,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.dataStoreContext.lastSequenceNumber;
     }
 
+    public get active(): boolean {
+        return this.dataStoreContext.active;
+    }
+
     public get loader(): ILoader {
         return this.dataStoreContext.loader;
     }

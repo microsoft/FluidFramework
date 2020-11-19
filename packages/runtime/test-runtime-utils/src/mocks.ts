@@ -415,6 +415,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return this.deltaManager.lastSequenceNumber;
     }
 
+    public get active(): boolean {
+        return this.deltaManager.active;
+    }
+
     public async getChannel(id: string): Promise<IChannel> {
         return null;
     }
