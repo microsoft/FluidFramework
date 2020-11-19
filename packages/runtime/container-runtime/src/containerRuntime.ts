@@ -838,9 +838,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // This will ensure we correctly convert old documents.
         this.summarizer = new Summarizer(
             "/_summarizer",
-            this as ISummarizerRuntime,
+            this /* ISummarizerRuntime */,
             () => this.summaryConfiguration,
-            this as ISummarizerInternalsProvider,
+            this /* ISummarizerInternalsProvider */,
             this.IFluidHandleContext,
             this.previousState.summaryCollection);
 

@@ -183,9 +183,9 @@ describe("Runtime", () => {
                     await emitNextOp(1);
                     assert.strictEqual(runCount, 1);
                     assert(mockLogger.matchEvents([
-                        { eventName: "Run:SummarizerRun_start", summarizerRunTag: runCount },
-                        { eventName: "Run:SummarizerRun_end", summarizerRunTag: runCount },
-                        { eventName: "Run:SummaryOp", summarizerRunTag: runCount },
+                        { eventName: "Running:GenerateSummary_start", summaryGenTag: runCount },
+                        { eventName: "Running:GenerateSummary_end", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
                     ]), "unexpected log sequence");
 
                     // should not run, because our summary hasnt been acked/nacked yet
@@ -196,16 +196,16 @@ describe("Runtime", () => {
                     await emitAck();
                     assert.strictEqual(runCount, 2);
                     assert(mockLogger.matchEvents([
-                        { eventName: "Run:SummaryAck", summarizerRunTag: (runCount - 1) }, // ack for previous run
-                        { eventName: "Run:SummarizerRun_start", summarizerRunTag: runCount },
-                        { eventName: "Run:SummarizerRun_end", summarizerRunTag: runCount },
-                        { eventName: "Run:SummaryOp", summarizerRunTag: runCount },
+                        { eventName: "Running:SummaryAck", summaryGenTag: (runCount - 1) }, // ack for previous run
+                        { eventName: "Running:GenerateSummary_start", summaryGenTag: runCount },
+                        { eventName: "Running:GenerateSummary_end", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
                     ]), "unexpected log sequence");
 
                     await emitNextOp();
                     assert.strictEqual(runCount, 2);
                     assert(!mockLogger.matchEvents([
-                        { eventName: "Run:SummaryAck" },
+                        { eventName: "Running:SummaryAck" },
                     ]), "No ack expected yet");
                 });
 

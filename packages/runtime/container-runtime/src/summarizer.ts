@@ -306,7 +306,7 @@ export class RunningSummarizer implements IDisposable {
         private immediateSummary: boolean = false,
         private readonly raiseSummarizingError: (description: string) => void,
     ) {
-        this.logger = new ChildLogger(baseLogger, "Run", undefined, { summarizerRunTag: () => this.summarizeCount });
+        this.logger = new ChildLogger(baseLogger, "Running", undefined, { summaryGenTag: () => this.summarizeCount });
 
         this.heuristics = new SummarizerHeuristics(
             configuration,
@@ -536,7 +536,7 @@ export class RunningSummarizer implements IDisposable {
 
     private async generateSummaryWithLogging(message: string, safe: boolean): Promise<GenerateSummaryData | undefined> {
         const summarizingEvent = PerformanceEvent.start(this.logger, {
-            eventName: "SummarizerRun",
+            eventName: "GenerateSummary",
             message,
             timeSinceLastAttempt: Date.now() - this.heuristics.lastAttempted.summaryTime,
             timeSinceLastSummary: Date.now() - this.heuristics.lastAcked.summaryTime,

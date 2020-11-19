@@ -70,7 +70,7 @@ describe("context reload", () => {
 
         const summMessage = new Deferred<void>();
         page.on("console", (msg) => {
-            if (/Summarizing_end.*message.*immediate/.test(msg.text())) {
+            if (/GenerateSummary_end.*message.*immediate/.test(msg.text())) {
                 summMessage.resolve();
             }
         });
