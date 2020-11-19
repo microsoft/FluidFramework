@@ -50,7 +50,7 @@ export class EpochTracker {
         const value = await this.persistedCache.get(entry, maxOpCount);
         if (value !== undefined) {
             try {
-                this.validateEpochFromResponse(value.fluidEpoch);
+                this.validateEpochFromResponse(value.fluidEpoch, fetchType, true);
             } catch (error) {
                 await this.checkForEpochError(error, value.fluidEpoch, fetchType, true);
                 throw error;
@@ -80,7 +80,7 @@ export class EpochTracker {
                 async () => fetchAndParseAsJSONHelper<T>(request.url, request.fetchOptions),
             );
             epochFromResponse = response.headers.get("x-fluid-epoch");
-            this.validateEpochFromResponse(epochFromResponse);
+            this.validateEpochFromResponse(epochFromResponse, fetchType);
             return response;
         } catch (error) {
             await this.checkForEpochError(error, epochFromResponse, fetchType);
@@ -109,7 +109,7 @@ export class EpochTracker {
                 async () => fetchHelper(request.url, request.fetchOptions),
             );
             epochFromResponse = response.headers.get("x-fluid-epoch");
-            this.validateEpochFromResponse(epochFromResponse);
+            this.validateEpochFromResponse(epochFromResponse, fetchType);
             return response;
         } catch (error) {
             await this.checkForEpochError(error, epochFromResponse, fetchType);
@@ -153,7 +153,11 @@ export class EpochTracker {
         return { url, fetchOptions };
     }
 
-    private validateEpochFromResponse(epochFromResponse: string | undefined | null) {
+    private validateEpochFromResponse(
+        epochFromResponse: string | undefined | null,
+        fetchType: FetchType,
+        fromCache: boolean = false,
+    ) {
         // If epoch is undefined, then don't compare it because initially for createNew or TreesLatest
         // initializes this value. Sometimes response does not contain epoch as it is still in
         // implementation phase at server side. In that case also, don't compare it with our epoch value.
@@ -162,7 +166,14 @@ export class EpochTracker {
         }
         if (epochFromResponse) {
             if (this._fluidEpoch === undefined) {
-                this.logger.sendTelemetryEvent({ eventName: "EpochLearnedFirstTime", epoch: epochFromResponse });
+                this.logger.sendTelemetryEvent(
+                    {
+                        eventName: "EpochLearnedFirstTime",
+                        epoch: epochFromResponse,
+                        fetchType,
+                        fromCache,
+                    },
+                );
             }
             this._fluidEpoch = epochFromResponse;
         }
