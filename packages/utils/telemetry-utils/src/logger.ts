@@ -264,7 +264,7 @@ export class ChildLogger extends TelemetryLogger {
                     ? undefined
                     : {
                         ...baseLogger.propertyGetters,
-                        ... propertyGetters,
+                        ...propertyGetters,
                     };
 
             const combinedNamespace = baseLogger.namespace === undefined
