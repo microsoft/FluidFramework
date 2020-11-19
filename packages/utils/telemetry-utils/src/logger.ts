@@ -267,9 +267,15 @@ export class ChildLogger extends TelemetryLogger {
                         ... propertyGetters,
                     };
 
+            const combinedNamespace = baseLogger.namespace === undefined
+                ? namespace
+                : namespace === undefined
+                    ? baseLogger.namespace
+                    : `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
+
             return new ChildLogger(
                 baseLogger.logger,
-                `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`,
+                combinedNamespace,
                 combinedProperties,
                 combinedGetters,
             );

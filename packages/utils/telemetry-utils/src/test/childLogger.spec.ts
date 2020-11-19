@@ -140,4 +140,69 @@ describe("ChildLogger", () => {
         childLogger2.send({ category:"generic", eventName:"testEvent" });
         assert(sent, "event should be sent");
     });
+
+    it("Undefined initial namespace",()=>{
+        let sent = false;
+        const logger: ITelemetryBaseLogger = {
+            send(event: ITelemetryBaseEvent): void {
+                if (event.eventName !== "test2:testEvent") {
+                    throw new Error("expected combined namespace");
+                }
+                sent = true;
+            },
+        };
+        const childLogger1 = ChildLogger.create(
+            logger);
+
+        sent = false;
+        const childLogger2 = ChildLogger.create(
+            childLogger1,
+            "test2");
+
+        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        assert(sent, "event should be sent");
+    });
+
+    it("Undefined second child namespace",()=>{
+        let sent = false;
+        const logger: ITelemetryBaseLogger = {
+            send(event: ITelemetryBaseEvent): void {
+                if (event.eventName !== "test1:testEvent") {
+                    throw new Error("expected combined namespace");
+                }
+                sent = true;
+            },
+        };
+        const childLogger1 = ChildLogger.create(
+            logger,
+            "test1");
+
+        sent = false;
+        const childLogger2 = ChildLogger.create(
+            childLogger1);
+
+        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        assert(sent, "event should be sent");
+    });
+
+    it("Undefined namespace",()=>{
+        let sent = false;
+        const logger: ITelemetryBaseLogger = {
+            send(event: ITelemetryBaseEvent): void {
+                if (event.eventName !== "testEvent") {
+                    throw new Error("expected combined namespace");
+                }
+                sent = true;
+            },
+        };
+        const childLogger1 = ChildLogger.create(
+            logger);
+
+        sent = false;
+        const childLogger2 = ChildLogger.create(
+            childLogger1);
+
+        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        assert(sent, "event should be sent");
+    });
 });
