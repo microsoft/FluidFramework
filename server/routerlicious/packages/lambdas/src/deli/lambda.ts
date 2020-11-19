@@ -18,6 +18,7 @@ import {
     ITrace,
     MessageType,
     NackErrorType,
+    IServiceConfiguration,
 } from "@fluidframework/protocol-definitions";
 import { canSummarize } from "@fluidframework/server-services-client";
 import {
@@ -113,7 +114,8 @@ export class DeliLambda implements IPartitionLambda {
         private readonly reverseProducer: IProducer,
         private readonly clientTimeout: number,
         private readonly activityTimeout: number,
-        private readonly noOpConsolidationTimeout: number) {
+        private readonly noOpConsolidationTimeout: number,
+        private readonly serviceConfiguration: IServiceConfiguration) {
         // Instantiate existing clients
         if (lastCheckpoint.clients) {
             for (const client of lastCheckpoint.clients) {
@@ -556,7 +558,7 @@ export class DeliLambda implements IPartitionLambda {
             contents: null,
             data: JSON.stringify(clientId),
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientLeave,
         };
         const leaveMessage: IRawOperationMessage = {
@@ -612,7 +614,7 @@ export class DeliLambda implements IPartitionLambda {
                 clientSequenceNumber: -1,
                 contents: null,
                 referenceSequenceNumber: -1,
-                traces: [],
+                traces: this.serviceConfiguration.enableTraces ? [] : undefined,
                 type,
             },
             tenantId: this.tenantId,
