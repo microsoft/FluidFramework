@@ -2,8 +2,6 @@
 
 This package contains utilities for writing end-to-end tests in Fluid Framework. It helps in the creation of a simple hosting application to test Fluid objects and other functionalities of the system.
 
-You'll also find some general-purpose utilities for unit tests in here.
-
 ## Local Code Loader
 
 `LocalCodeLoader` in `localCodeLoader.ts` is a simple code loader that can load a Fluid package with a given entry point. It can be used to load multiple different Fluid packages with different sources (`IFluidCodeDetails`).
