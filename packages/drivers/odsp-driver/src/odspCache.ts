@@ -122,10 +122,8 @@ export interface IPersistedCache {
     /**
      * Removes the entries from the cache for given parametres.
      * @param file - file entry to be deleted.
-     * @param type - Type of entry to be deleted for a given file.
-     * @param key - Specific entry containing this key to be deleted.
      */
-    removeEntries(file?: IFileEntry, type?: CacheContentType, key?: string): Promise<void>;
+    removeEntries(file: IFileEntry): Promise<void>;
 }
 
 /**
@@ -196,16 +194,14 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
         }
     }
 
-    async removeEntries(file?: IFileEntry, type?: CacheContentType, key?: string): Promise<void> {
+    async removeEntries(file: IFileEntry): Promise<void> {
         try {
-            await this.cache.removeEntries(file, type, key);
+            await this.cache.removeEntries(file);
         } catch (error) {
             this.logger.sendErrorEvent(
                 {
                     eventName: "removeCacheEntries",
-                    docId: file?.docId,
-                    type,
-                    key,
+                    docId: file.docId,
                 },
             error);
         }
@@ -242,11 +238,11 @@ export class LocalPersistentCache implements IPersistedCache {
     updateUsage(entry: ICacheEntry, seqNumber: number): void {
     }
 
-    async removeEntries(file?: IFileEntry, type?: CacheContentType, key?: string): Promise<void> {
+    async removeEntries(file: IFileEntry): Promise<void> {
         Array.from(this.cache)
         .filter(([cachekey]) => {
-            const keyToBeDeleted = `${file?.docId}_${type ? `${type}_${key ? key : ""}` : ""}`;
-            if (cachekey.startsWith(keyToBeDeleted)) {
+            const docIdFromKey = cachekey.split("_");
+            if (docIdFromKey[0] === file.docId) {
                 return true;
             }
         })
@@ -340,8 +336,8 @@ export class LocalPersistentCacheAdapter implements IPersistedCache {
         this.cache.updateUsage(entry, seqNumber);
     }
 
-    async removeEntries(file?: IFileEntry, type?: CacheContentType, key?: string): Promise<void> {
+    async removeEntries(file: IFileEntry): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.cache.removeEntries(file, type, key);
+        this.cache.removeEntries(file);
     }
 }
