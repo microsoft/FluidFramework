@@ -186,9 +186,30 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     close();
 }
 
+export enum LoaderCachingPolicy {
+    /**
+     * The loader should not implement any prefetching or caching policy.
+     */
+    NoCaching,
+
+    /**
+     * The loader should implement prefetching policy, i.e. it should prefetch resources from the latest snapshot.
+     */
+    Prefetch,
+}
+
+export interface IDocumentServicePolicies {
+    readonly caching?: LoaderCachingPolicy;
+}
+
 export interface IDocumentService {
 
     resolvedUrl: IResolvedUrl;
+
+    /**
+     * Policies implemented/instructed by driver.
+     */
+    policies?: IDocumentServicePolicies;
 
     /**
      * Access to storage associated with the document...
