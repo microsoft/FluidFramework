@@ -246,7 +246,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         undefined /* extraBlobs */,
                         this.dataStoreContext.summaryTracker.createOrGetChild(
                             path,
-                            this.deltaManager.lastSequenceNumber,
+                            dataStoreContext.lastSequenceNumber,
                         ),
                         this.dataStoreContext.getCreateChildSummarizerNodeFn(
                             path,

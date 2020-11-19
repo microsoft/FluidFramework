@@ -537,6 +537,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.deltaManager.lastSequenceNumber;
     }
 
+    public get active(): boolean {
+        return this.context.deltaManager.active;
+    }
+
     public get storage(): IDocumentStorageService {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.context.storage!;

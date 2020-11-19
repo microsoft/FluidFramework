@@ -114,7 +114,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         // TaskManager. In the future, as new usage shows up, we may need to reconsider that.
         // I'm adding assert here to catch that case and make decision on which way we go - push requirements
         // to consumers to make a choice, or centrally make this call here.
-        assert(this.context.deltaManager.clientDetails.capabilities.interactive);
+        assert(this.context.containerRuntime.clientDetails.capabilities.interactive);
 
         // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
         if (this.isActive()) {
@@ -313,7 +313,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         // I'm adding assert in pick() to catch that case and make decision on which way we go - push requirements
         // to consumers to make a choice, or centrally make this call here.
 
-        return this.context.deltaManager.active;
+        return this.context.active;
     }
 
     private initializeCore() {
@@ -419,7 +419,7 @@ export class TaskManager implements ITaskManager {
      * {@inheritDoc ITaskManager.pick}
      */
     public async pick(taskId: string, worker?: boolean): Promise<void> {
-        if (!this.context.deltaManager.clientDetails.capabilities.interactive) {
+        if (!this.context.containerRuntime.clientDetails.capabilities.interactive) {
             return Promise.reject(new Error("Picking not allowed on secondary copy"));
         } else if (this.runtime.attachState !== AttachState.Attached) {
             return Promise.reject(new Error("Picking not allowed in detached container in task manager"));
@@ -440,7 +440,7 @@ export class TaskManager implements ITaskManager {
                     type: "agent",
                 },
                 [LoaderHeader.reconnect]: false,
-                [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
+                [LoaderHeader.sequenceNumber]: this.context.lastSequenceNumber,
                 [LoaderHeader.executionContext]: worker ? "worker" : undefined,
             },
             url,

@@ -136,6 +136,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.lastSequenceNumber;
     }
 
+    public get active(): boolean {
+        return this._containerRuntime.active;
+    }
+
     public get connected(): boolean {
         return this._containerRuntime.connected;
     }
@@ -434,7 +438,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.verifyNotClosed();
 
         // Get the latest sequence number.
-        const latestSequenceNumber = this.deltaManager.lastSequenceNumber;
+        const latestSequenceNumber = this.lastSequenceNumber;
 
         // Update our summary tracker's latestSequenceNumber.
         this.summaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
