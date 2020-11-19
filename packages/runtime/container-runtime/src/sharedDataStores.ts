@@ -1,4 +1,4 @@
-import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { BlobCacheStorageService, buildSnapshotTree, readAndParseFromBlobs } from "@fluidframework/driver-utils";
@@ -14,7 +14,6 @@ import {
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
     IAttachMessage,
-    IFluidDataStoreContext,
     IProvideFluidDataStoreRegistry,
     IInboundSignalMessage,
     ISignalEnvelop,
@@ -25,7 +24,7 @@ import {
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import uuid from "uuid";
-import { IDisposable, IEvent, ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     convertSnapshotTreeToSummaryTree,
@@ -48,10 +47,7 @@ import {
      createAttributesBlob,
 } from "./dataStoreContext";
 
-export type ISharedDataStoresEvents = IEvent;
-
-export class SharedDataStores extends TypedEventEmitter<ISharedDataStoresEvents>
-implements IDisposable, IFluidRouter, IProvideFluidDataStoreRegistry {
+export class SharedDataStores implements IDisposable, IFluidRouter, IProvideFluidDataStoreRegistry {
     // Stores tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
 
@@ -76,8 +72,6 @@ implements IDisposable, IFluidRouter, IProvideFluidDataStoreRegistry {
         private readonly summaryTracker: SummaryTracker,
         private readonly summarizerNode: SummarizerNode,
         baseLogger: ITelemetryBaseLogger) {
-        super();
-
         this._logger = ChildLogger.create(baseLogger, "DataStore");
 
         // Extract stores stored inside the snapshot
@@ -335,13 +329,6 @@ implements IDisposable, IFluidRouter, IProvideFluidDataStoreRegistry {
         return context.realize();
     }
 
-    public notifyDataStoreInstantiated(context: IFluidDataStoreContext) {
-        const fluidDataStorePkgName = context.packagePath[context.packagePath.length - 1];
-        const registryPath =
-            `/${context.packagePath.slice(0, context.packagePath.length - 1).join("/")}`;
-        this.emit("fluidDataStoreInstantiated", fluidDataStorePkgName, registryPath, !context.existing);
-    }
-
     public get disposed() {return this._disposed;}
     public dispose(): void {
         if (this._disposed) {
@@ -361,9 +348,6 @@ implements IDisposable, IFluidRouter, IProvideFluidDataStoreRegistry {
                     contextError);
             });
         }
-
-        this.emit("dispose");
-        this.removeAllListeners();
     }
 
     private verifyNotClosed() {

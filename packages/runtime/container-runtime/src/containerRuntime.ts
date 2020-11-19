@@ -84,6 +84,7 @@ import {
     ITaskManager,
     IFluidDataStoreContextDetached,
     IFluidDataStoreChannel,
+    IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
@@ -1060,8 +1061,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.processSignal(message, local);
     }
 
-    async getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter> {
+    public async getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter> {
         return this.dataStores.getRootDataStore(id, wait);
+    }
+
+    public notifyDataStoreInstantiated(context: IFluidDataStoreContext) {
+        const fluidDataStorePkgName = context.packagePath[context.packagePath.length - 1];
+        const registryPath =
+            `/${context.packagePath.slice(0, context.packagePath.length - 1).join("/")}`;
+        this.emit("fluidDataStoreInstantiated", fluidDataStorePkgName, registryPath, !context.existing);
     }
 
     public setFlushMode(mode: FlushMode): void {
