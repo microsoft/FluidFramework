@@ -42,13 +42,17 @@ export class EpochTracker {
         return this._fluidEpoch;
     }
 
-    public async fetchFromCache<T>(entry: ICacheEntry, maxOpCount: number | undefined): Promise<T | undefined> {
+    public async fetchFromCache<T>(
+        entry: ICacheEntry,
+        maxOpCount: number | undefined,
+        fetchType: FetchType,
+    ): Promise<T | undefined> {
         const value = await this.persistedCache.get(entry, maxOpCount);
         if (value !== undefined) {
             try {
-                this.validateEpochFromResponse(value.fluidEpoch);
+                this.validateEpochFromResponse(value.fluidEpoch, fetchType, true);
             } catch (error) {
-                await this.checkForEpochError(error);
+                await this.checkForEpochError(error, value.fluidEpoch, fetchType, true);
                 throw error;
             }
             return value.value as T;
@@ -59,23 +63,27 @@ export class EpochTracker {
      * Api to fetch the response for given request and parse it as json.
      * @param url - url of the request
      * @param fetchOptions - fetch options for request containing body, headers etc.
+     * @param fetchType - method for which fetch is called.
      * @param addInBody - Pass True if caller wants to add epoch in post body.
      */
     public async fetchAndParseAsJSON<T>(
         url: string,
         fetchOptions: {[index: string]: any},
+        fetchType: FetchType,
         addInBody: boolean = false,
     ): Promise<IOdspResponse<T>> {
         // Add epoch in fetch request.
         const request = this.addEpochInRequest(url, fetchOptions, addInBody);
+        let epochFromResponse: string | null | undefined;
         try {
             const response = await this.rateLimiter.schedule(
                 async () => fetchAndParseAsJSONHelper<T>(request.url, request.fetchOptions),
             );
-            this.validateEpochFromResponse(response.headers.get("x-fluid-epoch"));
+            epochFromResponse = response.headers.get("x-fluid-epoch");
+            this.validateEpochFromResponse(epochFromResponse, fetchType);
             return response;
         } catch (error) {
-            await this.checkForEpochError(error);
+            await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
         }
     }
@@ -84,23 +92,27 @@ export class EpochTracker {
      * Api to fetch the response as it is for given request.
      * @param url - url of the request
      * @param fetchOptions - fetch options for request containing body, headers etc.
+     * @param fetchType - method for which fetch is called.
      * @param addInBody - Pass True if caller wants to add epoch in post body.
      */
     public async fetchResponse(
         url: string,
         fetchOptions: {[index: string]: any},
+        fetchType: FetchType,
         addInBody: boolean = false,
     ): Promise<Response> {
         // Add epoch in fetch request.
         const request = this.addEpochInRequest(url, fetchOptions, addInBody);
+        let epochFromResponse: string | null | undefined;
         try {
             const response = await this.rateLimiter.schedule(
                 async () => fetchHelper(request.url, request.fetchOptions),
             );
-            this.validateEpochFromResponse(response.headers.get("x-fluid-epoch"));
+            epochFromResponse = response.headers.get("x-fluid-epoch");
+            this.validateEpochFromResponse(epochFromResponse, fetchType);
             return response;
         } catch (error) {
-            await this.checkForEpochError(error);
+            await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
         }
     }
@@ -141,7 +153,11 @@ export class EpochTracker {
         return { url, fetchOptions };
     }
 
-    private validateEpochFromResponse(epochFromResponse: string | undefined | null) {
+    private validateEpochFromResponse(
+        epochFromResponse: string | undefined | null,
+        fetchType: FetchType,
+        fromCache: boolean = false,
+    ) {
         // If epoch is undefined, then don't compare it because initially for createNew or TreesLatest
         // initializes this value. Sometimes response does not contain epoch as it is still in
         // implementation phase at server side. In that case also, don't compare it with our epoch value.
@@ -149,16 +165,51 @@ export class EpochTracker {
             throwOdspNetworkError("Epoch Mismatch", fluidEpochMismatchError);
         }
         if (epochFromResponse) {
+            if (this._fluidEpoch === undefined) {
+                this.logger.sendTelemetryEvent(
+                    {
+                        eventName: "EpochLearnedFirstTime",
+                        epoch: epochFromResponse,
+                        fetchType,
+                        fromCache,
+                    },
+                );
+            }
             this._fluidEpoch = epochFromResponse;
         }
     }
 
-    private async checkForEpochError(error) {
+    private async checkForEpochError(
+        error: any,
+        epochFromResponse: string | null | undefined,
+        fetchType: FetchType,
+        fromCache: boolean = false,
+    ) {
         if (error.errorType === OdspErrorType.epochVersionMismatch) {
-            this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, error);
+            this.logger.sendErrorEvent(
+                {
+                    eventName: "EpochVersionMismatch",
+                    fromCache,
+                    clientEpoch: this.fluidEpoch,
+                    serverEpoch: epochFromResponse ?? undefined,
+                    fetchType,
+                },
+            error);
             assert(!!this._hashedDocumentId, "DocId should be set to clear the cached entries!!");
             // If the epoch mismatches, then clear all entries for such document from cache.
             await this.persistedCache.removeAllEntriesForDocId(this._hashedDocumentId);
         }
     }
+}
+
+export enum FetchType {
+    blob = "blob",
+    createBlob = "createBlob",
+    createFile = "createFile",
+    joinSession = "joinSession",
+    ops = "ops",
+    other = "other",
+    snaphsotTree = "snapshotTree",
+    treesLatest = "treesLatest",
+    uploadSummary = "uploadSummary",
 }

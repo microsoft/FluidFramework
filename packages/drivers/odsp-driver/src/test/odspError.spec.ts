@@ -11,6 +11,7 @@ import {
     fetchIncorrectResponse,
     invalidFileNameStatusCode,
     OdspError,
+    OdspErrorType,
 } from "@fluidframework/odsp-doclib-utils";
 import { IOdspSocketError } from "../contracts";
 import { getWithRetryForTokenRefresh } from "../odspUtils";
@@ -215,5 +216,12 @@ describe("Odsp Error", () => {
             }
         });
         assert.equal(res, 1, "did not successfully retried with claims");
+    });
+
+    it("Check Epoch Mismatch error props", async () => {
+        const error: any = createOdspNetworkErrorWithResponse("Epoch Mismatch", 409);
+        assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error type should be epoch mismatch");
+        const errorBag = { ...error.getCustomProperties() };
+        assert.strictEqual(errorBag.errorType, OdspErrorType.epochVersionMismatch, "Error type should exist in prop bag");
     });
 });
