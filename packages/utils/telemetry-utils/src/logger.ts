@@ -100,9 +100,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     protected constructor(
-        private readonly namespace?: string,
-        private readonly properties?: ITelemetryProperties,
-        private readonly propertyGetters?: ITelemetryPropertyGetters) {
+        protected readonly namespace?: string,
+        protected readonly properties?: ITelemetryProperties,
+        protected readonly propertyGetters?: ITelemetryPropertyGetters) {
     }
 
     /**
@@ -249,6 +249,38 @@ export class ChildLogger extends TelemetryLogger {
         namespace?: string,
         properties?: ITelemetryProperties,
         propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
+        // if we are creating a child of a child, rather than nest, which will increase
+        // the callstack overhead, just generate a new logger that includes everything from the previous
+        if (baseLogger instanceof ChildLogger) {
+            const combinedProperties =
+                baseLogger.properties === undefined && properties === undefined
+                    ? undefined
+                    : {
+                        ...baseLogger.properties,
+                        ...properties,
+                    };
+            const combinedGetters =
+                baseLogger.propertyGetters === undefined && propertyGetters === undefined
+                    ? undefined
+                    : {
+                        ...baseLogger.propertyGetters,
+                        ...propertyGetters,
+                    };
+
+            const combinedNamespace = baseLogger.namespace === undefined
+                ? namespace
+                : namespace === undefined
+                    ? baseLogger.namespace
+                    : `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
+
+            return new ChildLogger(
+                baseLogger.logger,
+                combinedNamespace,
+                combinedProperties,
+                combinedGetters,
+            );
+        }
+
         return new ChildLogger(
             baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
             namespace,

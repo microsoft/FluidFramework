@@ -136,6 +136,7 @@
     "old-sequence": "npm:@fluidframework/sequence@^0.28.0",
     "old-test-utils": "npm:@fluidframework/test-utils@^0.28.0",
     "rimraf": "^2.6.2",
+    "tinylicious": "^0.2.3810",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
     "typescript-formatter": "7.1.0",
