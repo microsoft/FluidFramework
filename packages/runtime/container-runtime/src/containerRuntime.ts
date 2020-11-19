@@ -1706,7 +1706,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.getAbsoluteUrl(relativeUrl);
     }
 
-    /** Implementation of SummarizerInternalsProvider.generateSummary */
+    /** Implementation of ISummarizerInternalsProvider.generateSummary */
     public async generateSummary(
         fullTree: boolean = false,
         safe: boolean = false,
@@ -2129,7 +2129,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    /** Implementation of SummarizerInternalsProvider.refreshLatestSummaryAck */
+    /** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
     public async refreshLatestSummaryAck(
         proposalHandle: string | undefined,
         ackHandle: string,

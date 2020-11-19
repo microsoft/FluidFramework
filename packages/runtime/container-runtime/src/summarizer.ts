@@ -322,7 +322,7 @@ export class RunningSummarizer implements IDisposable {
             this.configuration.maxAckWaitTime,
             () => {
                 this.raiseSummarizingError("SummaryAckWaitTimeout");
-                // Note: summarizerRunTag (from ChildLogger definition) may be 0,
+                // Note: summaryGenTag (from ChildLogger definition) may be 0,
                 // since this code path is hit when RunningSummarizer first starts up,
                 // before this instance has kicked off a new summarize run.
                 this.logger.sendErrorEvent({
@@ -344,7 +344,7 @@ export class RunningSummarizer implements IDisposable {
     }
 
     /**
-     * RunningSummarizer's logger includes the sequenced index of the current summary on each event (summarizerRunTag).
+     * RunningSummarizer's logger includes the sequenced index of the current summary on each event.
      * If some other Summarizer code wants that event on their logs they can get it here,
      * but only if they're logging about that same summary.
      * @param summaryOpRefSeq - RefSeq number of the summary op, to ensure the log correlation will be correct
@@ -757,7 +757,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.logger,
             this.summaryCollection.createWatcher(startResult.clientId),
             this.configurationGetter(),
-            this as Pick<ISummarizerInternalsProvider, "generateSummary">,
+            this /* Pick<ISummarizerInternalsProvider, "generateSummary"> */,
             this.runtime.deltaManager.lastSequenceNumber,
             initialAttempt,
             this.immediateSummary,

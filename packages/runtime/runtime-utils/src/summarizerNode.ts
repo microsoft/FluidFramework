@@ -277,7 +277,7 @@ export class SummarizerNode implements ISummarizerNode {
     }
 
     public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
-        assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary");
+        assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary or ctor");
 
         // Try to reuse the tree if unchanged
         if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
@@ -362,7 +362,7 @@ export class SummarizerNode implements ISummarizerNode {
         parentPath: EscapedPath | undefined,
         parentSkipRecursion: boolean,
     ) {
-        assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary");
+        assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary or ctor");
         assert(this.wipReferenceSequenceNumber !== undefined, "Not tracking a summary");
         let localPathsToUse = this.wipLocalPaths;
 
