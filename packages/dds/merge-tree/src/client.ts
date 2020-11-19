@@ -899,14 +899,13 @@ export class Client {
     // TODO: Remove `catchUpMsgs` once new snapshot format is adopted as default.
     //       (See https://github.com/microsoft/FluidFramework/issues/84)
     public snapshot(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
-        const deltaManager = runtime.deltaManager;
-        const minSeq = deltaManager.minimumSequenceNumber;
+        const minSeq = runtime.minimumSequenceNumber;
 
         // Catch up to latest MSN, if we have not had a chance to do it.
         // Required for case where FluidDataStoreRuntime.attachChannel()
         // generates snapshot right after loading data store.
 
-        this.updateSeqNumbers(minSeq, deltaManager.lastSequenceNumber);
+        this.updateSeqNumbers(minSeq, runtime.lastSequenceNumber);
 
         // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
         // Not sure why - need to catch it sooner

@@ -145,7 +145,7 @@ export class ConsensusRegisterCollection<T>
             key,
             type: "write",
             serializedValue,
-            refSeq: this.runtime.deltaManager.lastSequenceNumber,
+            refSeq: this.runtime.lastSequenceNumber,
         };
 
         return this.newAckBasedPromise<boolean>((resolve) => {
