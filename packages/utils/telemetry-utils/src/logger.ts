@@ -274,7 +274,7 @@ export class ChildLogger extends TelemetryLogger {
                     : `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
 
             return new ChildLogger(
-                baseLogger.logger,
+                baseLogger.baseLogger,
                 combinedNamespace,
                 combinedProperties,
                 combinedGetters,
@@ -289,7 +289,7 @@ export class ChildLogger extends TelemetryLogger {
     }
 
     constructor(
-        protected readonly logger: ITelemetryBaseLogger,
+        protected readonly baseLogger: ITelemetryBaseLogger,
         namespace?: string,
         properties?: ITelemetryProperties,
         propertyGetters?: ITelemetryPropertyGetters) {
@@ -302,7 +302,7 @@ export class ChildLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
-        this.logger.send(this.prepareEvent(event));
+        this.baseLogger.send(this.prepareEvent(event));
     }
 }
 
