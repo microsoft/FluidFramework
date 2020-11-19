@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+ import {
     IDocumentStorageService,
     ISummaryContext,
 } from "@fluidframework/driver-definitions";
@@ -33,6 +34,11 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 
     public async read(blobId: string): Promise<string> {
         return this.internalStorageService.read(blobId);
+    }
+
+    public async readString(blobId: string): Promise<string> {
+        const base64Result = await this.read(blobId);
+        return fromBase64ToUtf8(base64Result);
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
