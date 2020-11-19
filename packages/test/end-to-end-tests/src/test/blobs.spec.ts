@@ -12,14 +12,14 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import uuid from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
-import { generateTest, ICompatLocalTestObjectProvider, ITestContainerConfig, TestDataObject } from "./compatUtils";
+import { generateLocalNonCompatTest, ITestObjectProvider, ITestContainerConfig, TestDataObject } from "./compatUtils";
 
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: { initialSummarizerDelayMs: 20 },
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     it("attach sends an op", async function() {
         const container = await args.makeTestContainer(testContainerConfig);
 
@@ -139,7 +139,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
 describe("blobs", () => {
     // TODO: add back compat test once N-2 is 0.28
-    generateTest(tests, {
+    generateLocalNonCompatTest(tests, {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         serviceConfiguration: { summary: { maxOps: 1 } as ISummaryConfiguration },
     });
