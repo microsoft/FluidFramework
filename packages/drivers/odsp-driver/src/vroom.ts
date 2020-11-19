@@ -9,7 +9,7 @@ import { ISocketStorageDiscovery } from "./contracts";
 import { getWithRetryForTokenRefresh, getOrigin } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
-import { EpochTracker } from "./epochTracker";
+import { EpochTracker, FetchEpochFor } from "./epochTracker";
 
 /**
  * Makes join session call on SPO to get information about the web socket for a document
@@ -48,6 +48,7 @@ export async function fetchJoinSession(
             const response = await epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
                 `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
                 { method, headers },
+                FetchEpochFor.joinSession,
             );
 
             // TODO SPO-specific telemetry
