@@ -12,7 +12,7 @@ export class MongoCollection<T> implements core.ICollection<T> {
     constructor(private readonly collection: Collection<T>) {
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
     public find(query: object, sort: any, limit = MaxFetchSize): Promise<T[]> {
         return this.collection
             .find(query)
@@ -21,7 +21,7 @@ export class MongoCollection<T> implements core.ICollection<T> {
             .toArray();
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
     public findOne(query: object): Promise<T> {
         return this.collection.findOne(query);
     }
@@ -31,10 +31,12 @@ export class MongoCollection<T> implements core.ICollection<T> {
         return this.collection.find({}).toArray();
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public async update(filter: object, set: any, addToSet: any): Promise<void> {
         return this.updateCore(filter, set, addToSet, false);
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public async upsert(filter: object, set: any, addToSet: any): Promise<void> {
         return this.updateCore(filter, set, addToSet, true);
     }

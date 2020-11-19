@@ -207,8 +207,8 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     // Snapshot if 1000 ops received since last snapshot.
     maxOps: 1000,
 
-    // Wait 10 minutes for summary ack
-    maxAckWaitTime: 600000,
+    // Wait 2 minutes for summary ack
+    maxAckWaitTime: 120000,
 };
 
 /**
@@ -268,8 +268,6 @@ export class ScheduleManager {
     private readonly deltaScheduler: DeltaScheduler;
     private pauseSequenceNumber: number | undefined;
     private pauseClientId: string | undefined;
-
-    private paused = false;
     private localPaused = false;
     private batchClientId: string | undefined;
 
@@ -372,19 +370,6 @@ export class ScheduleManager {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public pause(): Promise<void> {
-        this.paused = true;
-        return this.deltaManager.inbound.systemPause();
-    }
-
-    public resume() {
-        this.paused = false;
-        if (!this.localPaused) {
-            this.deltaManager.inbound.systemResume();
-        }
-    }
-
     private setPaused(localPaused: boolean) {
         // Return early if no change in value
         if (this.localPaused === localPaused) {
@@ -392,7 +377,7 @@ export class ScheduleManager {
         }
 
         this.localPaused = localPaused;
-        if (localPaused || this.paused) {
+        if (localPaused) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.deltaManager.inbound.systemPause();
         } else {
@@ -1719,7 +1704,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
 
         try {
-            await this.scheduleManager.pause();
+            await this.deltaManager.inbound.pause();
 
             const attemptData: Omit<IUnsubmittedSummaryData, "reason"> = {
                 referenceSequenceNumber: summaryRefSeqNum,
@@ -1808,7 +1793,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Cleanup wip summary in case of failure
             this.summarizerNode.clearSummary();
             // Restart the delta manager
-            this.scheduleManager.resume();
+            this.deltaManager.inbound.resume();
         }
     }
 

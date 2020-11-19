@@ -290,7 +290,7 @@ describe("context reload", function() {
                 this.dataStoreV1 = await requestFluidObject<OldTestDataStore>(this.container, "default");
                 assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 
-                this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
+                this.opProcessingController = new old.OpProcessingController(this.deltaConnectionServer);
                 this.opProcessingController.addDeltaManagers(this.container.deltaManager);
             });
 

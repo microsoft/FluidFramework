@@ -71,7 +71,7 @@ describe("Runtime", () => {
                     idleTime: 5000, // 5 sec (idle)
                     maxTime: 5000 * 12, // 1 min (active)
                     maxOps: 1000, // 1k ops (active)
-                    maxAckWaitTime: 600000, // 10 min
+                    maxAckWaitTime: 120000, // 2 min
                 };
                 let shouldDeferGenerateSummary: boolean = false;
                 let deferGenerateSummary: Deferred<void>;

@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
-    IDocumentAttributes,
-    IDocumentSystemMessage,
-    MessageType,
     ITreeEntry,
     ICommittedProposal,
     ISequencedDocumentMessage,
@@ -24,12 +20,8 @@ import {
     IDatabaseManager,
     IDocumentDetails,
     IDocumentStorage,
-    IForkOperation,
-    IProducer,
-    IRawOperationMessage,
     IScribe,
     ITenantManager,
-    RawOperationType,
     SequencedOperationType,
     ISequencedOperationMessage,
     IDocument,
@@ -41,18 +33,14 @@ import {
     getGitMode,
     mergeAppAndProtocolTree,
 } from "@fluidframework/protocol-base";
-import * as moniker from "moniker";
 import * as winston from "winston";
-import { fromBase64ToUtf8, gitHashFile, IsoBuffer, toUtf8, Uint8ArrayToString } from "@fluidframework/common-utils";
-
-const StartingSequenceNumber = 0;
+import { gitHashFile, IsoBuffer, toUtf8, Uint8ArrayToString } from "@fluidframework/common-utils";
 
 export class DocumentStorage implements IDocumentStorage {
     constructor(
         private readonly databaseManager: IDatabaseManager,
         private readonly tenantManager: ITenantManager,
-        private readonly producer: IProducer) {
-    }
+    ) { }
 
     /**
      * Retrieves database details for the given document
@@ -154,8 +142,6 @@ export class DocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: JSON.stringify(deli),
                 documentId,
-                forks: [],
-                parent: null,
                 scribe: JSON.stringify(scribe),
                 tenantId,
                 version: "0.1",
@@ -236,85 +222,6 @@ export class DocumentStorage implements IDocumentStorage {
         };
     }
 
-    /**
-     * Retrieves the forks for the given document
-     */
-    public async getForks(tenantId: string, documentId: string): Promise<string[]> {
-        const collection: ICollection<any> = await this.databaseManager.getDocumentCollection();
-        const document = await collection.findOne({ documentId, tenantId });
-
-        return document.forks || [];
-    }
-
-    public async createFork(tenantId: string, id: string): Promise<string> {
-        const name = moniker.choose();
-        const tenant = await this.tenantManager.getTenant(tenantId);
-
-        // Load in the latest snapshot
-        const gitManager = tenant.gitManager;
-        const head = await gitManager.getRef(id);
-
-        let sequenceNumber: number;
-        let minimumSequenceNumber: number;
-        if (head === null) {
-            // Set the Seq# and MSN# to StartingSequenceNumber
-            minimumSequenceNumber = StartingSequenceNumber;
-            sequenceNumber = StartingSequenceNumber;
-        } else {
-            // Create a new commit, referecing the ref head, but swap out the metadata to indicate the branch details
-            const attributesContentP = gitManager.getContent(head.object.sha, "attributes");
-            const branchP = gitManager.upsertRef(name, head.object.sha);
-            const [attributesContent] = await Promise.all([attributesContentP, branchP]);
-
-            const attributesJson = fromBase64ToUtf8(attributesContent.content);
-            const attributes = JSON.parse(attributesJson) as IDocumentAttributes;
-            minimumSequenceNumber = attributes.minimumSequenceNumber;
-            sequenceNumber = attributes.sequenceNumber;
-        }
-
-        // Access to the documents collection to update the route tables
-        const collection = await this.databaseManager.getDocumentCollection();
-
-        // Insert the fork entry and update the parent to prep storage for both objects
-        const insertFork = collection.insertOne(
-            {
-                createTime: Date.now(),
-                deli: undefined,
-                documentId: name,
-                forks: [],
-                parent: {
-                    documentId: id,
-                    minimumSequenceNumber,
-                    sequenceNumber,
-                    tenantId,
-                },
-                scribe: undefined,
-                tenantId,
-                version: "0.1",
-            });
-        const updateParent = await collection.update(
-            {
-                documentId: id,
-                tenantId,
-            },
-            null,
-            {
-                forks: { documentId: name, tenantId },
-            });
-        await Promise.all([insertFork, updateParent]);
-
-        // Notify the parent branch of the fork and the desire to integrate changes
-        await this.sendIntegrateStream(
-            tenantId,
-            id,
-            sequenceNumber,
-            minimumSequenceNumber,
-            name,
-            this.producer);
-
-        return name;
-    }
-
     private async createObject(
         collection: ICollection<IDocument>,
         tenantId: string,
@@ -325,8 +232,6 @@ export class DocumentStorage implements IDocumentStorage {
             createTime: Date.now(),
             deli,
             documentId,
-            forks: [],
-            parent: null,
             scribe,
             tenantId,
             version: "0.1",
@@ -402,44 +307,6 @@ export class DocumentStorage implements IDocumentStorage {
         } else {
             return false;
         }
-    }
-
-    /**
-     * Sends a stream integration message which will forward messages after sequenceNumber from id to name.
-     */
-    private async sendIntegrateStream(
-        tenantId: string,
-        id: string,
-        sequenceNumber: number,
-        minSequenceNumber: number,
-        name: string,
-        producer: IProducer): Promise<void> {
-        const contents: IForkOperation = {
-            documentId: name,
-            minSequenceNumber,
-            sequenceNumber,
-            tenantId,
-        };
-
-        const operation: IDocumentSystemMessage = {
-            clientSequenceNumber: -1,
-            contents: null,
-            data: JSON.stringify(contents),
-            referenceSequenceNumber: -1,
-            traces: [],
-            type: MessageType.Fork,
-        };
-
-        const integrateMessage: IRawOperationMessage = {
-            clientId: null,
-            documentId: id,
-            operation,
-            tenantId,
-            timestamp: Date.now(),
-            type: RawOperationType,
-        };
-
-        await producer.send([integrateMessage], tenantId, id);
     }
 }
 

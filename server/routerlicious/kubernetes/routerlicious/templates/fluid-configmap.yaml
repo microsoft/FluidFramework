@@ -90,24 +90,10 @@ data:
             "maxTokenLifetimeSec": 3600,
             "enableTokenExpiration": false
         },
-        "routemanager": {
-            "topics": {
-                "receive": "{{ .Values.kafka.topics.deltas }}",
-                "send": "{{ .Values.kafka.topics.rawdeltas }}"
-            },
-            "clientId": "{{ template "routemanager.fullname" . }}",
-            "groupId": "{{ template "routemanager.fullname" . }}",
-            "checkpointBatchSize": 10,
-            "checkpointTimeIntervalMsec": 1000
-        },
         "lambdas": {
             "deli": {
                 "group": "{{ template "deli.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.rawdeltas }}"
-            },
-            "routemanager": {
-                "group": "{{ template "routemanager.fullname" . }}",
-                "topic": "{{ .Values.kafka.topics.deltas }}"
             },
             "scriptorium": {
                 "group": "{{ template "scriptorium.fullname" . }}",

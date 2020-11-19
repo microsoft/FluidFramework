@@ -131,8 +131,6 @@ export class TestDocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: JSON.stringify(deli),
                 documentId,
-                forks: [],
-                parent: null,
                 scribe: JSON.stringify(scribe),
                 tenantId,
                 version: "0.1",
@@ -177,19 +175,6 @@ export class TestDocumentStorage implements IDocumentStorage {
         throw new Error("Method not implemented.");
     }
 
-    /**
-     * Retrieves the forks for the given document
-     */
-    public async getForks(tenantId: string, documentId: string): Promise<string[]> {
-        // Not implemented for testDocumentstorage
-        return [];
-    }
-
-    public async createFork(tenantId: string, id: string): Promise<string> {
-        // Not implemented for testDocumentstorage
-        return "";
-    }
-
     private async getOrCreateObject(tenantId: string, documentId: string): Promise<IDocumentDetails> {
         const collection = await this.databaseManager.getDocumentCollection();
         const result = await collection.findOrCreate(
@@ -201,8 +186,6 @@ export class TestDocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: undefined,
                 documentId,
-                forks: [],
-                parent: null,
                 scribe: undefined,
                 tenantId,
                 version: "0.1",

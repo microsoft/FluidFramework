@@ -174,7 +174,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             deltasCollectionName,
             scribeCollectionName);
 
-        const storage = new services.DocumentStorage(databaseManager, tenantManager, producer);
+        const storage = new services.DocumentStorage(databaseManager, tenantManager);
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
         const address = `${await utils.getHostIp()}:4000`;

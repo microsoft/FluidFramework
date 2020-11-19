@@ -245,7 +245,7 @@ describe("ConsensusRegisterCollection", () => {
                 const winner = await writeP;
                 assert.equal(winner, true, "Write was not successful");
 
-                // Verify that the remote register collection recieved the write.
+                // Verify that the remote register collection received the write.
                 assert.equal(receivedKey, testKey, "The remote client did not receive the key");
                 assert.equal(receivedValue, testValue, "The remote client did not receive the value");
                 assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");

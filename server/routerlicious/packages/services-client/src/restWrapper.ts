@@ -10,13 +10,16 @@ import { debug } from "./debug";
 export class RestWrapper {
     constructor(
         private readonly baseurl?: string,
+        // eslint-disable-next-line @typescript-eslint/ban-types
         private readonly defaultHeaders?: {},
+        // eslint-disable-next-line @typescript-eslint/ban-types
         private readonly defaultQueryString?: {},
         private readonly cacheBust = false,
         private readonly maxContentLength = 1000 * 1024 * 1024,
         private readonly axios: AxiosInstance = Axios) {
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public async get<T>(url: string, queryString?: {}, headers?: {}): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -28,6 +31,7 @@ export class RestWrapper {
         return this.request<T>(options, 200);
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public async post<T>(url: string, requestBody: any, queryString?: {}, headers?: {}): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -40,6 +44,7 @@ export class RestWrapper {
         return this.request<T>(options, 201);
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public async delete<T>(url: string, queryString?: {}, headers?: {}): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -51,6 +56,7 @@ export class RestWrapper {
         return this.request<T>(options, 204);
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public async patch<T>(url: string, requestBody: any, queryString?: {}, headers?: {}): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -84,6 +90,7 @@ export class RestWrapper {
         return response.data;
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     private generateQueryString(queryStringValues: {}) {
         if (this.defaultQueryString || queryStringValues) {
             const queryStringMap = this.cacheBust

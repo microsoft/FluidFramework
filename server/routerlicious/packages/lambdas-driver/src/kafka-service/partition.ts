@@ -72,7 +72,6 @@ export class Partition extends EventEmitter {
                 this.q.kill();
             });
 
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         this.q.error = (error) => {
             this.emit("error", error, true);
         };

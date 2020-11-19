@@ -122,20 +122,6 @@ export interface ISequencedOperationMessage extends ITicketedMessage {
     operation: ISequencedDocumentMessage;
 }
 
-export interface IForkOperation {
-    // The minimum sequence number for the fork
-    minSequenceNumber: number;
-
-    // The ID of messages after which we want to integrate
-    sequenceNumber: number;
-
-    // The name of the target branch
-    documentId: string;
-
-    // The name of the target tenant
-    tenantId: string;
-}
-
 export interface IBoxcarMessage extends ITicketedMessage {
     contents: IMessage[];
 }
