@@ -32,7 +32,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, GenericError } from "@fluidframework/container-utils";
 import {
-    ServiceCachingPolicy,
+    LoaderCachingPolicy,
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
