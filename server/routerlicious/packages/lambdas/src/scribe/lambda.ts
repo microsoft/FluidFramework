@@ -16,6 +16,7 @@ import {
     MessageType,
     ISequencedDocumentAugmentedMessage,
     IProtocolState,
+    IServiceConfiguration,
 } from "@fluidframework/protocol-definitions";
 import {
     ControlMessageType,
@@ -67,6 +68,7 @@ export class ScribeLambda extends SequencedLambda {
         private readonly summaryReader: ISummaryReader,
         private readonly checkpointManager: ICheckpointManager,
         scribe: IScribe,
+        private readonly serviceConfiguration: IServiceConfiguration,
         private readonly producer: IProducer | undefined,
         private protocolHandler: ProtocolOpHandler,
         private term: number,
@@ -377,7 +379,7 @@ export class ScribeLambda extends SequencedLambda {
             clientSequenceNumber: -1,
             contents,
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.SummaryAck,
         };
 
@@ -389,7 +391,7 @@ export class ScribeLambda extends SequencedLambda {
             clientSequenceNumber: -1,
             contents,
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.SummaryNack,
         };
 
@@ -414,7 +416,7 @@ export class ScribeLambda extends SequencedLambda {
             contents: null,
             data: JSON.stringify(controlMessage),
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.Control,
         };
 
