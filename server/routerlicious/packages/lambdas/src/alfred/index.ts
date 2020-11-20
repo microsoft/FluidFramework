@@ -34,13 +34,23 @@ import {
 export const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
     maxMessageSize: 16 * 1024,
+    enableTraces: true,
     summary: {
         idleTime: 5000,
         maxOps: 1000,
         maxTime: 5000 * 12,
         maxAckWaitTime: 600000,
     },
-    enableTraces: true,
+    deli: {
+        clientTimeout: 5 * 60 * 1000,
+        activityTimeout: 30 * 1000,
+        noOpConsolidationTimeout: 250,
+    },
+    scribe: {
+        generateServiceSummary: true,
+        clearCacheAfterServiceSummary: false,
+        ignoreStorageException: false,
+    },
 };
 
 interface IRoom {

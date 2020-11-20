@@ -112,9 +112,6 @@ export class DeliLambda implements IPartitionLambda {
         collection: ICollection<IDocument>,
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
-        private readonly clientTimeout: number,
-        private readonly activityTimeout: number,
-        private readonly noOpConsolidationTimeout: number,
         private readonly serviceConfiguration: IServiceConfiguration) {
         // Instantiate existing clients
         if (lastCheckpoint.clients) {
@@ -671,7 +668,7 @@ export class DeliLambda implements IPartitionLambda {
     private getIdleClient(timestamp: number): IClientSequenceNumber {
         if (this.clientSeqManager.count() > 0) {
             const client = this.clientSeqManager.peek();
-            if (client.canEvict && (timestamp - client.lastUpdate > this.clientTimeout)) {
+            if (client.canEvict && (timestamp - client.lastUpdate > this.serviceConfiguration.deli.clientTimeout)) {
                 return client;
             }
         }
@@ -686,7 +683,7 @@ export class DeliLambda implements IPartitionLambda {
                 const noOpMessage = this.createOpMessage(MessageType.NoOp);
                 this.sendToAlfred(noOpMessage);
             }
-        }, this.activityTimeout);
+        }, this.serviceConfiguration.deli.activityTimeout);
     }
 
     private clearIdleTimer() {
@@ -705,7 +702,7 @@ export class DeliLambda implements IPartitionLambda {
                 const noOpMessage = this.createOpMessage(MessageType.NoOp);
                 this.sendToAlfred(noOpMessage);
             }
-        }, this.noOpConsolidationTimeout);
+        }, this.serviceConfiguration.deli.noOpConsolidationTimeout);
     }
 
     private clearNoopConsolidationTimer() {
