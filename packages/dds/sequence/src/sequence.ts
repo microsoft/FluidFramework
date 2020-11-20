@@ -243,7 +243,12 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return this.client.getLength();
     }
 
-    public getPosition(segment): number {
+    /**
+     * Returns the current position of a segment, and -1 if the segment
+     * does not exist in this sequence
+     * @param segment - The segment to get the position of
+     */
+    public getPosition(segment: T): number {
         return this.client.getPosition(segment);
     }
 

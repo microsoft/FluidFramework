@@ -41,7 +41,7 @@ import {
 
 export class Client {
     public verboseOps = false;
-    public noVerboseRemoteAnnote = false;
+    public noVerboseRemoteAnnotate = false;
     public measureOps = false;
     public registerCollection = new RegisterCollection();
     public accumTime = 0;
@@ -287,7 +287,15 @@ export class Client {
         return this.mergeTree.getCollabWindow();
     }
 
+    /**
+     * Returns the current position of a segment, and -1 if the segment
+     * does not exist in this sequence
+     * @param segment - The segment to get the position of
+     */
     public getPosition(segment: ISegment): number {
+        if(segment?.parent === undefined) {
+            return -1;
+        }
         return this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId());
     }
 
@@ -468,7 +476,7 @@ export class Client {
                 this.accumWindow += (this.getCurrentSeq() - this.getCollabWindow().minSeq);
             }
         }
-        if (this.verboseOps && (!opArgs.sequencedMessage || !this.noVerboseRemoteAnnote)) {
+        if (this.verboseOps && (!opArgs.sequencedMessage || !this.noVerboseRemoteAnnotate)) {
             console.log(
                 `@cli ${this.getLongClientId(this.getCollabWindow().clientId)} ` +
                 `seq ${clientArgs.sequenceNumber} ${opArgs.op.type} local ${!opArgs.sequencedMessage} ` +
@@ -547,8 +555,8 @@ export class Client {
     }
 
     /**
-     * Get's the client args from the op if remote, otherwise uses the local clients info
-     * @param opArgs - The op arge to get the client sequence args for
+     * Gets the client args from the op if remote, otherwise uses the local clients info
+     * @param opArgs - The op arg to get the client sequence args for
      */
     private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
         // If there this no sequenced message, then the op is local
@@ -714,8 +722,8 @@ export class Client {
 
         const opList = [];
         // We need to sort the segments by ordinal, as the segments are not sorted in the segment group.
-        // The reason they need them sorted, as they have the same local sequnence number and which means
-        // farther segments will  take into account nearer segements when calcualting their position.
+        // The reason they need them sorted, as they have the same local sequence number and which means
+        // farther segments will  take into account nearer segments when calculating their position.
         // By sorting we ensure the nearer segment will be applied and sequenced before the father segments
         // so their recalulated positions will be correct.
         for (const segment of segmentGroup.segments.sort((a, b) => a.ordinal < b.ordinal ? -1 : 1)) {
