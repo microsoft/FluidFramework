@@ -5,7 +5,6 @@
 
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readWithRetry } from "@fluidframework/driver-utils";
 import { AttachmentTreeEntry } from "@fluidframework/protocol-base";
 import { ISnapshotTree, ITree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
@@ -54,7 +53,7 @@ export class BlobManager {
         return new BlobHandle(
             `${BlobManager.basePath}/${blobId}`,
             this.routeContext,
-            async () => readWithRetry(async () => this.getStorage().readBlob(blobId)),
+            async () => this.getStorage().readBlob(blobId),
             () => null,
         );
     }

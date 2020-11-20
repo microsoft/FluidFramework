@@ -29,6 +29,10 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         return p;
     }
 
+    public async readBlob(id: string): Promise<ArrayBufferLike> {
+        return readWithRetry(async () => this.internalStorageService.readBlob(id));
+    }
+
     public async read(blobId: string): Promise<string> {
         return readWithRetry(async () => this.cachedRead(blobId));
     }
