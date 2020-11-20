@@ -338,7 +338,7 @@ function generate(
     };
 
     describe(name, () => {
-        generateTest(tests, { tinylicious: process.argv.includes("--tinylicious") });
+        generateTest(tests, { tinylicious: true });
     });
 }
 
