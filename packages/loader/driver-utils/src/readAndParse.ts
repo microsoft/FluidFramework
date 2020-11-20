@@ -14,7 +14,7 @@ import { DriverErrorType, IDocumentStorageService, IThrottlingWarning } from "@f
  * @returns the object that we decoded and JSON.parse
  */
 export async function readAndParse<T>(storage: Pick<IDocumentStorageService, "read">, id: string): Promise<T> {
-    const encoded = await readWithRetry(async () => storage.read(id));
+    const encoded = await storage.read(id);
     const decoded = fromBase64ToUtf8(encoded);
     return JSON.parse(decoded) as T;
 }
