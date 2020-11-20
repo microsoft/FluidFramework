@@ -11,26 +11,28 @@ import {
     ISummarizeInternalResult,
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
-import { SummarizerNodeWithReferences } from "../summarizerNodeWithReferences";
+import { SummarizerNodeWithGC } from "../summarizerNodeWithGc";
 import { mergeStats } from "../summaryUtils";
 
-describe("SummarizerNodeWithReferences Tests", () => {
-    const nodeId = "testNode";
-    const subNodeId = "subNode";
-    const subNodeId2 = "subNode2";
+describe("SummarizerNodeWithGC Tests", () => {
+    const summarizerNodeId = "testNode";
+    const node1Id = "/gcNode1";
+    const node2Id = "/gcNode1/subNode1";
+    const node3Id = "/gcNode1/subNode2";
 
-    let summarizeReferences = [
-        { path: nodeId, routes: [`${nodeId}/${subNodeId}`] },
-        { path: `${nodeId}/${subNodeId}`, routes: [nodeId] },
+    let summarizeGCNodes = [
+        { id: node1Id, outboundRoutes: [ node2Id ] },
+        { id: node2Id, outboundRoutes: [ node1Id ] },
     ];
-    let rootSummarizerNode: SummarizerNodeWithReferences;
+    let rootSummarizerNode: SummarizerNodeWithGC;
 
     beforeEach(async () => {
-        rootSummarizerNode = SummarizerNodeWithReferences.createRoot(
+        rootSummarizerNode = SummarizerNodeWithGC.createRoot(
             new TelemetryNullLogger(),
             (() => undefined) as unknown as SummarizeInternalFn,
             0,
             0);
+        rootSummarizerNode.startSummary(0, new TelemetryNullLogger());
     });
 
     async function summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
@@ -42,56 +44,56 @@ describe("SummarizerNodeWithReferences Tests", () => {
                 tree: {},
             },
             stats,
-            references: summarizeReferences,
-            id: nodeId,
+            gcNodes: summarizeGCNodes,
+            id: summarizerNodeId,
         };
     }
 
-    it("can return fluid object references from summarize internal", async () => {
+    it("can return correct garbage collection nodes from summarize internal", async () => {
         const summarizerNode = rootSummarizerNode.createChild(
             summarizeInternal,
-            nodeId,
+            summarizerNodeId,
             { type: CreateSummarizerNodeSource.FromSummary },
         );
 
         // Call summarize with fullTree as true. This will force the summarizer node to call summarizeInternal.
         const summarizeResult = await summarizerNode.summarize(true /* fullTree */, true /* trackState */);
         assert.deepStrictEqual(
-            summarizeResult.references,
-            summarizeReferences,
-            "Summarizer node did not return correct summarize internal references",
+            summarizeResult.gcNodes,
+            summarizeGCNodes,
+            "Summarizer node did not return correct GC nodes from summarize internal",
         );
     });
 
-    it("can return initial fluid object references", async () => {
-        const initialReferences = [
-            { path: nodeId, routes: [`${nodeId}/${subNodeId2}`] },
-            { path: `${nodeId}/${subNodeId2}`, routes: [nodeId] },
+    it("can return initial garbage collection nodes", async () => {
+        const initialGCNodes = [
+            { id: node1Id, outboundRoutes: [ node3Id ] },
+            { id: node3Id, outboundRoutes: [ node2Id, node1Id ] },
         ];
-        const getInitialFluidObjectReferences = async () => { return Promise.resolve(initialReferences); };
+        const getInitialGCNodes = async () => { return Promise.resolve(initialGCNodes); };
 
         const summarizerNode = rootSummarizerNode.createChild(
             summarizeInternal,
-            nodeId,
+            summarizerNodeId,
             { type: CreateSummarizerNodeSource.FromSummary },
             undefined,
-            getInitialFluidObjectReferences,
+            getInitialGCNodes,
         );
 
         // Call summarize with fullTree as false. The summarizer node will not attempt to call summarizeInternal.
-        // It should instead call getInitialFluidObjectReferences to get the initial references.
+        // It should instead call getInitialGCNodes to get the initial GC nodes.
         const summarizeResult = await summarizerNode.summarize(false /* fullTree */, true /* trackState */);
         assert.deepStrictEqual(
-            summarizeResult.references,
-            initialReferences,
-            "Summarizer node did not return correct initial references",
+            summarizeResult.gcNodes,
+            initialGCNodes,
+            "Summarizer node did not return correct initial GC nodes",
         );
     });
 
-    it("can return cached fluid object references", async () => {
+    it("can return cached garbage collection nodes", async () => {
         const summarizerNode = rootSummarizerNode.createChild(
             summarizeInternal,
-            nodeId,
+            summarizerNodeId,
             { type: CreateSummarizerNodeSource.FromSummary },
             undefined,
         );
@@ -99,25 +101,25 @@ describe("SummarizerNodeWithReferences Tests", () => {
         // Call summarize with fullTree as true. This will force the summarizer node to call summarizeInternal.
         let summarizeResult = await summarizerNode.summarize(true /* fullTree */, true /* trackState */);
         assert.deepStrictEqual(
-            summarizeResult.references,
-            summarizeReferences,
-            "Summarizer node did not return correct initial references",
+            summarizeResult.gcNodes,
+            summarizeGCNodes,
+            "Summarizer node did not return correct GC nodes from summarize Internal",
         );
 
         // Call summarize with fullTree as false. The summarizer node will not attempt to call summarizeInternal.
-        // It should instead use the cached value of references from the previous run.
+        // It should instead use the cached value of GC nodes from the previous run.
         summarizeResult = await summarizerNode.summarize(false /* fullTree */, true /* trackState */);
         assert.deepStrictEqual(
-            summarizeResult.references,
-            summarizeReferences,
-            "Summarizer node did not return correct cached references",
+            summarizeResult.gcNodes,
+            summarizeGCNodes,
+            "Summarizer node did not return correct cached GC nodes",
         );
     });
 
-    it("can return updated fluid object references when not tracking state", async () => {
+    it("can return updated garbage collection nodes when not tracking state", async () => {
         const summarizerNode = rootSummarizerNode.createChild(
             summarizeInternal,
-            nodeId,
+            summarizerNodeId,
             { type: CreateSummarizerNodeSource.FromSummary },
             undefined,
         );
@@ -125,24 +127,24 @@ describe("SummarizerNodeWithReferences Tests", () => {
         // Call summarize with trackState as false. This will force the summarizer node to call summarizeInternal.
         let summarizeResult = await summarizerNode.summarize(false /* fullTree */, false /* trackState */);
         assert.deepStrictEqual(
-            summarizeResult.references,
-            summarizeReferences,
-            "Summarizer node did not return correct summarize internal references",
+            summarizeResult.gcNodes,
+            summarizeGCNodes,
+            "Summarizer node did not return correct GC nodes from summarize internal",
         );
 
-        // Update the references returned by summarizeInternal.
-        summarizeReferences = [
-            { path: nodeId, routes: [`${nodeId}/${subNodeId2}`] },
-            { path: `${nodeId}/${subNodeId2}`, routes: [nodeId] },
+        // Update the GC nodes returned by summarizeInternal.
+        summarizeGCNodes = [
+            { id: node1Id, outboundRoutes: [ node3Id ] },
+            { id: node3Id, outboundRoutes: [] },
         ];
 
-        // The above summarize call would have cached the returned references. Call summarize again with trackState
-        // as false. This will force it to call summarizeInternal again and we should get the updated references.
+        // The above summarize call would have cached the returned GC nodes. Call summarize again with trackState
+        // as false. This will force it to call summarizeInternal again and we should get the updated GC nodes.
         summarizeResult = await summarizerNode.summarize(false /* fullTree */, false /* trackState */);
         assert.deepStrictEqual(
-            summarizeResult.references,
-            summarizeReferences,
-            "Summarizer node did not return updated summarize internal references",
+            summarizeResult.gcNodes,
+            summarizeGCNodes,
+            "Summarizer node did not return updated GC nodes from summarize internal",
         );
     });
 });

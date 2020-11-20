@@ -5,13 +5,13 @@
 
 export * from "./dataStoreHandleContextUtils";
 export * from "./dataStoreHelpers";
-export * from "./fluidObjectReferencesUtils";
+export * from "./garbageCollectionUtils";
 export * from "./objectstoragepartition";
 export * from "./objectstorageutils";
 export * from "./requestParser";
 export * from "./serializer";
 export * from "./summarizerNode";
-export * from "./summarizerNodeWithReferences";
+export * from "./summarizerNodeWithGc";
 export * from "./summaryTracker";
 export * from "./summaryUtils";
 export * from "./utils";

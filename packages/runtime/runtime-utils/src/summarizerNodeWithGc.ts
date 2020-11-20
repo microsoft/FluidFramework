@@ -7,26 +7,25 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import {
     IContextSummarizeResult,
-    IFluidObjectReferences,
+    IGraphNode,
     ISummarizeInternalResult,
     ISummarizerNodeConfig,
-    ISummarizerNodeWithReferences,
+    ISummarizerNodeWithGC,
     CreateChildSummarizerNodeParam,
 } from "@fluidframework/runtime-definitions";
 import { ICreateChildDetails, IInitialSummary, SummarizerNode, SummaryNode } from "./summarizerNode";
-import { cloneFluidObjectReferences } from "./fluidObjectReferencesUtils";
+import { cloneGCNodes } from "./garbageCollectionUtils";
 
 /**
- * Extends the functionality of SummarizerNode to manage a list of references to Fluid objects from this node.
- * These references are used in garbage collection. It adds the following functionalities:
- * - Caches the list of Fluid object references returned by caller's summarizeInternal method.
- * - Gets the initial value for the references if required.
- * - Adds the cached list of references to the result of SummarizerNode's summarize.
+ * Extends the functionality of SummarizerNode to manage this node's garbage collection data:
+ * - It caches the list of GC nodes returned by the summarizeInternal method.
+ * - Gets the initial value of the GC nodes if required.
+ * - Adds the cached list of GC nodes to the result of SummarizerNode's summarize.
  * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
- *   directly into caller's summarizeInternal method.
+ *   directly into summarizeInternal method.
  */
-export class SummarizerNodeWithReferences extends SummarizerNode implements ISummarizerNodeWithReferences {
-    private references: IFluidObjectReferences[] | undefined;
+export class SummarizerNodeWithGC extends SummarizerNode implements ISummarizerNodeWithGC {
+    private gcNodes: IGraphNode[] | undefined;
     protected constructor(
         logger: ITelemetryLogger,
         private readonly summarizeFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
@@ -36,8 +35,8 @@ export class SummarizerNodeWithReferences extends SummarizerNode implements ISum
         latestSummary?: SummaryNode,
         initialSummary?: IInitialSummary,
         wipSummaryLogger?: ITelemetryLogger,
-        /** Function to get initial Fluid object references */
-        private readonly getInitialFluidObjectReferencesFn?: () => Promise<IFluidObjectReferences[]>,
+        /** Function to get the initial value of garbage collection nodes */
+        private readonly getInitialGCNodesFn?: () => Promise<IGraphNode[]>,
     ) {
         super(
             logger,
@@ -52,25 +51,25 @@ export class SummarizerNodeWithReferences extends SummarizerNode implements ISum
 
     public async summarize(fullTree: boolean, trackState: boolean = true): Promise<IContextSummarizeResult> {
         /**
-         * If trackState is true, call summarizer node to get the summary since it tracks the state from summary. It
-         * may update the Fluid object references cache if the node's data has changed since last summary.
+         * If trackState is true, call parent summarizer node to get the summary since it tracks the state from summary.
+         * It may update the GC nodes cache if data has changed since last summary.
          * If trackState is false, get the summary directly from the summarizeInternal method which will update the
-         * Fluid object references cache.
+         * GC nodes cache.
          */
         if (trackState) {
             const summarizeResult = await super.summarize(fullTree);
 
             // If this is the first time we are summarizing and nothing has changed since the last summary, we would
-            // not have updated the references cache. So, we need to get its initial value.
-            if (this.references === undefined) {
-                this.references = this.getInitialFluidObjectReferencesFn
-                    ? await this.getInitialFluidObjectReferencesFn()
+            // not have updated the GC nodes cache. So, we need to get its initial value.
+            if (this.gcNodes === undefined) {
+                this.gcNodes = this.getInitialGCNodesFn
+                    ? await this.getInitialGCNodesFn()
                     : [];
             }
 
             return {
                 ...summarizeResult,
-                references: cloneFluidObjectReferences(this.references),
+                gcNodes: cloneGCNodes(this.gcNodes),
             };
         } else {
             return this.summarizeInternal(fullTree, trackState);
@@ -79,18 +78,18 @@ export class SummarizerNodeWithReferences extends SummarizerNode implements ISum
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const summarizeResult = await this.summarizeFn(fullTree, trackState);
-        // back-compat 0.30 - Older versions will not return references. Set it to empty array.
-        if (summarizeResult.references === undefined) {
-            summarizeResult.references = [];
+        // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
+        if (summarizeResult.gcNodes === undefined) {
+            summarizeResult.gcNodes = [];
         }
-        // Clone and cache the Fluid object references. This will be used when a node's data hasn't changed and this
+        // Clone and cache the GC nodes. This will be used when a node's data hasn't changed and this
         // method is not called.
-        this.references = cloneFluidObjectReferences(summarizeResult.references);
+        this.gcNodes = cloneGCNodes(summarizeResult.gcNodes);
         return summarizeResult;
     }
 
     /**
-     * Override the createRoot method to return an instance of SummarizerNodeWithReferences.
+     * Override the createRoot method to return an instance of SummarizerNodeWithGC.
      */
     public static createRoot(
         logger: ITelemetryLogger,
@@ -104,10 +103,10 @@ export class SummarizerNodeWithReferences extends SummarizerNode implements ISum
          */
         referenceSequenceNumber: number | undefined,
         config: ISummarizerNodeConfig = {},
-        /** Function to get initial Fluid object references */
-        getInitialFluidObjectReferencesFn?: () => Promise<IFluidObjectReferences[]>,
-    ): SummarizerNodeWithReferences {
-        return new SummarizerNodeWithReferences(
+        /** Function to get the initial value of garbage collection nodes */
+        getInitialGCNodesFn?: () => Promise<IGraphNode[]>,
+    ): SummarizerNodeWithGC {
+        return new SummarizerNodeWithGC(
             logger,
             summarizeInternalFn,
             config,
@@ -115,12 +114,12 @@ export class SummarizerNodeWithReferences extends SummarizerNode implements ISum
             referenceSequenceNumber === undefined ? undefined : SummaryNode.createForRoot(referenceSequenceNumber),
             undefined /* initialSummary */,
             undefined /* wipSummaryLogger */,
-            getInitialFluidObjectReferencesFn,
+            getInitialGCNodesFn,
         );
     }
 
     /**
-     * Override the createChild method to return an instance of SummarizerNodeWithReferences.
+     * Override the createChild method to return an instance of SummarizerNodeWithGC.
      */
     public createChild(
         /** Summarize function */
@@ -134,13 +133,13 @@ export class SummarizerNodeWithReferences extends SummarizerNode implements ISum
          */
         createParam: CreateChildSummarizerNodeParam,
         config: ISummarizerNodeConfig = {},
-        /** Function to get initial Fluid object references */
-        getInitialFluidObjectReferencesFn?: () => Promise<IFluidObjectReferences[]>,
-    ): ISummarizerNodeWithReferences {
+        /** Function to get the initial value of garbage collection nodes */
+        getInitialGCNodesFn?: () => Promise<IGraphNode[]>,
+    ): ISummarizerNodeWithGC {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
 
         const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
-        const child = new SummarizerNodeWithReferences(
+        const child = new SummarizerNodeWithGC(
             this.defaultLogger,
             summarizeInternalFn,
             config,
@@ -148,7 +147,7 @@ export class SummarizerNodeWithReferences extends SummarizerNode implements ISum
             createDetails.latestSummary,
             createDetails.initialSummary,
             this.wipSummaryLogger,
-            getInitialFluidObjectReferencesFn,
+            getInitialGCNodesFn,
         );
         this.initializeChild(child);
 
@@ -157,9 +156,9 @@ export class SummarizerNodeWithReferences extends SummarizerNode implements ISum
     }
 
     /**
-     * Override the getChild method to return an instance of SummarizerNodeWithReferences.
+     * Override the getChild method to return an instance of SummarizerNodeWithGC.
      */
-    public getChild(id: string): ISummarizerNodeWithReferences | undefined {
-        return this.children.get(id) as SummarizerNodeWithReferences;
+    public getChild(id: string): ISummarizerNodeWithGC | undefined {
+        return this.children.get(id) as SummarizerNodeWithGC;
     }
 }

@@ -45,7 +45,7 @@ import {
     IInboundSignalMessage,
     IProvideFluidDataStoreFactory,
     ISummarizeInternalResult,
-    ISummarizerNodeWithReferences,
+    ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
@@ -189,7 +189,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected channelDeferred: Deferred<IFluidDataStoreChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
-    protected readonly summarizerNode: ISummarizerNodeWithReferences;
+    protected readonly summarizerNode: ISummarizerNodeWithGC;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,

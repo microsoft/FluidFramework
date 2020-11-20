@@ -77,7 +77,7 @@ import {
     FlushMode,
     IAttachMessage,
     InboundAttachMessage,
-    IFluidObjectReferences,
+    IGraphNode,
     IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
@@ -100,13 +100,13 @@ import {
     FluidSerializer,
     SummaryTracker,
     SummaryTreeBuilder,
-    SummarizerNodeWithReferences,
+    SummarizerNodeWithGC,
     convertSummaryTreeToITree,
     convertToSummaryTree,
     RequestParser,
     requestFluidObject,
     convertSnapshotTreeToSummaryTree,
-    normalizeAndPrefixReferencesPath,
+    normalizeAndPrefixGCNodeIds,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import {
@@ -606,7 +606,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // back-compat: summarizerNode - remove all summary trackers
     private readonly summaryTracker: SummaryTracker;
 
-    private readonly summarizerNode: SummarizerNodeWithReferences;
+    private readonly summarizerNode: SummarizerNodeWithGC;
     private readonly notBoundContexts = new Set<string>();
     // 0.24 back-compat attachingBeforeSummary
     private readonly attachOpFiredForDataStore = new Set<string>();
@@ -701,7 +701,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
-        this.summarizerNode = SummarizerNodeWithReferences.createRoot(
+        this.summarizerNode = SummarizerNodeWithGC.createRoot(
             this.logger,
             // Summarize function to call when summarize is called. Summarizer node always tracks summary state.
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState),
@@ -1473,6 +1473,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
+     * Returns this channel's garbage collection node.
+     */
+    private getGCNode(): IGraphNode {
+        /**
+         * Get the outbound routes of this channel. This will be updated to only consider root data stores
+         * as referenced and hence outbound.
+         */
+        const outboundRoutes: string[] = [];
+        for (const [contextId] of this.contexts) {
+            outboundRoutes.push(`/${contextId}`);
+        }
+
+        return {
+            id: "/",
+            outboundRoutes,
+        };
+    }
+
+    /**
      * Returns a summary of the runtime at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
@@ -1485,38 +1504,44 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
-        // This will contain a list of all Fluid objects referenced by this channel. It accumulates the Fluid object
-        // references of all the channel contexts and adds its own Fluid references.
-        const references: IFluidObjectReferences[] = [];
+        // This will contain a list of this channel's gc nodes. It accumulates the GC nodes references of all the
+        // channel contexts and adds its own GC node.
+        const gcNodes: IGraphNode[] = [];
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
-            .filter(([_, value]) => {
+            .filter(([_, context]) => {
                 // Summarizer works only with clients with no local changes!
-                assert(value.attachState !== AttachState.Attaching);
-                return value.attachState === AttachState.Attached;
-            }).map(async ([key, value]) => {
-                const contextSummary = await value.summarize(fullTree, trackState);
-                builder.addWithStats(key, contextSummary);
+                assert(context.attachState !== AttachState.Attaching);
+                return context.attachState === AttachState.Attached;
+            }).map(async ([contextId, context]) => {
+                const contextSummary = await context.summarize(fullTree, trackState);
+                builder.addWithStats(contextId, contextSummary);
 
-                // back-compat 0.30 - Older versions will not return references. Set it to empty array.
-                if (contextSummary.references === undefined) {
-                    contextSummary.references = [];
+                // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
+                if (contextSummary.gcNodes === undefined) {
+                    contextSummary.gcNodes = [];
                 }
-                // Add the context's Fluid object references to the list of this channel's references.
-                references.push(...contextSummary.references);
+
+                // Prefix the context's id to the ids of GC nodes returned by it.
+                normalizeAndPrefixGCNodeIds(contextSummary.gcNodes, contextId);
+                gcNodes.push(...contextSummary.gcNodes);
             }));
 
-        // Normalize all the context's path of Fluid object references and prefix them with this channel's id.
-        normalizeAndPrefixReferencesPath(references, "");
+        // Add this channel's GC node to the list.
+        gcNodes.push(this.getGCNode());
+
+        for (const node of gcNodes) {
+            console.log(`id: ${node.id}. Routes: ${node.outboundRoutes}`);
+        }
 
         this.serializeContainerBlobs(builder);
         const summary = builder.getSummaryTree();
         return {
             ...summary,
-            references,
             id: "",
+            gcNodes,
         };
     }
 

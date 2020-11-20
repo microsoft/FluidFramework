@@ -17,7 +17,7 @@ import {
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SummaryTracker, SummarizerNodeWithReferences } from "@fluidframework/runtime-utils";
+import { SummaryTracker, SummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { LocalFluidDataStoreContext } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
@@ -98,7 +98,7 @@ describe("Data Store Creation Tests", () => {
                 on: (event, listener) => { },
             } as ContainerRuntime;
             summaryTracker = new SummaryTracker("", 0, 0);
-            const summarizerNode = SummarizerNodeWithReferences.createRoot(
+            const summarizerNode = SummarizerNodeWithGC.createRoot(
                 new TelemetryNullLogger(),
                 (() => { }) as unknown as SummarizeInternalFn,
                 0,

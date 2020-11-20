@@ -22,7 +22,7 @@ import {
     IContextSummarizeResult,
     IFluidDataStoreContext,
     ISummarizeInternalResult,
-    ISummarizerNodeWithReferences,
+    ISummarizerNodeWithGC,
     ISummaryTracker,
 } from "@fluidframework/runtime-definitions";
 import { createServiceEndpoints, IChannelContext, summarizeChannel } from "./channelContext";
@@ -40,7 +40,7 @@ export class RemoteChannelContext implements IChannelContext {
         readonly deltaConnection: ChannelDeltaConnection,
         readonly objectStorage: ChannelStorageService,
     };
-    private readonly summarizerNode: ISummarizerNodeWithReferences;
+    private readonly summarizerNode: ISummarizerNodeWithGC;
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -112,11 +112,7 @@ export class RemoteChannelContext implements IChannelContext {
      * @param trackState - This tells whether we should track state from this summary.
      */
     public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IContextSummarizeResult> {
-        // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
-        // the summary. Else, get the summary tree directly.
-        return trackState
-            ? this.summarizerNode.summarize(fullTree)
-            : this.summarizeInternal(fullTree, false /* trackState */);
+        return this.summarizerNode.summarize(fullTree, trackState);
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {

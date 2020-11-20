@@ -506,7 +506,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
                 tree: {},
             },
             stats,
-            references: [],
+            gcNodes: [],
         };
     }
 
@@ -523,7 +523,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
                 tree: {},
             },
             stats,
-            references: [],
+            gcNodes: [],
         };
     }
 

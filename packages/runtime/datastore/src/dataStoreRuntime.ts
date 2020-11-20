@@ -46,19 +46,18 @@ import {
     IEnvelope,
     IFluidDataStoreContext,
     IFluidDataStoreChannel,
-    IFluidObjectReferences,
+    IGraphNode,
     IInboundSignalMessage,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import {
-    addRouteToReferences,
     convertSnapshotTreeToSummaryTree,
     generateHandleContextPath,
     RequestParser,
     SummaryTreeBuilder,
     FluidSerializer,
     convertSummaryTreeToITree,
-    normalizeAndPrefixReferencesPath,
+    normalizeAndPrefixGCNodeIds,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -568,43 +567,23 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
-     * Returns the Fluid objects referenced by this channel.
+     * Returns this channel's garbage collection node.
      */
-    private getFluidObjectReferences(): IFluidObjectReferences {
+    private getGCNode(): IGraphNode {
         /**
-         * Get the Fluid objects referenced by this channel. Currently, all contexts in this channel are considered
-         * as referenced. This will change when we have root and non-root channel contexts. Then only root contexts
-         * will be considered as referenced.
+         * Get the outbound routes of this channel. Currently, all contexts in this channel are considered referenced
+         * and are hence outbound. This will change when we have root and non-root channel contexts. Then only root
+         * contexts will be considered as referenced.
          */
-        const referencedRoutes: string[] = [];
+        const outboundRoutes: string[] = [];
         for (const [contextId] of this.contexts) {
-            // The referenced route of a context is the path to it relative to the Container.
-            referencedRoutes.push(`${this.absolutePath}/${contextId}`);
+            outboundRoutes.push(`${this.absolutePath}/${contextId}`);
         }
 
         return {
-            path: this.id,
-            routes: referencedRoutes,
+            id: "/",
+            outboundRoutes,
         };
-    }
-
-    /**
-     * Update the fluid object references as per this node. It does the following:
-     * 1. Updates the path of each reference by adding its own id as prefix.
-     * 2. Adds a back route to itself to each of its child's references.
-     * 3. Adds a node for itself to the references.
-     * @param references - The references to be updated.
-     */
-    private updateFluidObjectReferences(references: IFluidObjectReferences[]) {
-        // Normalize all the context's path of Fluid object references and prefix them with this channel's id.
-        normalizeAndPrefixReferencesPath(references, this.id);
-
-        // Add a back route to self to all the child references. This will ensure that if any of the children are
-        // referenced, this node will be referenced as well.
-        addRouteToReferences(references, this.absolutePath);
-
-        // Add Fluid objects referenced by this channel.
-        references.push(this.getFluidObjectReferences());
     }
 
     /**
@@ -613,38 +592,40 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @param trackState - This tells whether we should track state from this summary.
      */
     public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
-        // This will contain a list of all Fluid objects referenced by this channel. It accumulates the Fluid object
-        // references of all the channel contexts and adds its own Fluid references.
-        const references: IFluidObjectReferences[] = [];
+        // This will contain a list of this channel's gc nodes. It accumulates the GC nodes references of all the
+        // channel contexts and adds its own GC node.
+        const gcNodes: IGraphNode[] = [];
         const builder = new SummaryTreeBuilder();
 
-        // Iterate over each data store and ask it to snapshot
+        // Iterate over each data store and ask it to summarize
         await Promise.all(Array.from(this.contexts)
-            .filter(([key, _]) => {
-                const isAttached = this.isChannelAttached(key);
+            .filter(([contextId, _]) => {
+                const isAttached = this.isChannelAttached(contextId);
                 // We are not expecting local dds! Summary may not capture local state.
                 assert(isAttached, "Not expecting detached channels during summarize");
                 // If the object is registered - and we have received the sequenced op creating the object
-                // (i.e. it has a base mapping) - then we go ahead and snapshot
+                // (i.e. it has a base mapping) - then we go ahead and summarize
                 return isAttached;
-            }).map(async ([key, value]) => {
-                const contextSummary = await value.summarize(fullTree, trackState);
-                builder.addWithStats(key, contextSummary);
+            }).map(async ([contextId, context]) => {
+                const contextSummary = await context.summarize(fullTree, trackState);
+                builder.addWithStats(contextId, contextSummary);
 
-                // back-compat 0.30 - Older versions will not return references. Set it to empty array.
-                if (contextSummary.references === undefined) {
-                    contextSummary.references = [];
+                // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
+                if (contextSummary.gcNodes === undefined) {
+                    contextSummary.gcNodes = [];
                 }
-                // Add the context's Fluid object references to the list of this channel's references.
-                references.push(...contextSummary.references);
+
+                // Prefix the context's id to the ids of GC nodes returned by it.
+                normalizeAndPrefixGCNodeIds(contextSummary.gcNodes, contextId);
+                gcNodes.push(...contextSummary.gcNodes);
             }));
 
-        // Update the fluid object references as per this node.
-        this.updateFluidObjectReferences(references);
+        // Add this channel's GC node to the list.
+        gcNodes.push(this.getGCNode());
 
         return {
             ...builder.getSummaryTree(),
-            references,
+            gcNodes,
         };
     }
 
@@ -661,45 +642,51 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public getAttachSummary(): IChannelSummarizeResult {
         this.attachGraph();
 
-        // This will contain a list of all Fluid objects referenced by this channel. It accumulates the Fluid object
-        // references of all the channel contexts and adds its own Fluid references.
-        const references: IFluidObjectReferences[] = [];
+        // This will contain a list of this channel's gc nodes. It accumulates the GC nodes references of all the
+        // channel contexts and adds its own GC node.
+        const gcNodes: IGraphNode[] = [];
         const builder = new SummaryTreeBuilder();
 
         // Craft the .attributes file for each shared object
-        for (const [objectId, value] of this.contexts) {
-            if (!(value instanceof LocalChannelContext)) {
+        for (const [contextId, context] of this.contexts) {
+            if (!(context instanceof LocalChannelContext)) {
                 throw new Error("Should only be called with local channel handles");
             }
 
-            if (!this.notBoundedChannelContextSet.has(objectId)) {
+            if (!this.notBoundedChannelContextSet.has(contextId)) {
                 let summaryTree: ISummaryTreeWithStats;
-                if (value.isLoaded) {
-                    const summarizeResult = value.getAttachSummary();
+                if (context.isLoaded) {
+                    const contextSummary = context.getAttachSummary();
                     assert(
-                        summarizeResult.summary.type === SummaryType.Tree,
+                        contextSummary.summary.type === SummaryType.Tree,
                         "getAttachSummary should always return a tree");
-                    summaryTree = { stats: summarizeResult.stats, summary: summarizeResult.summary };
+                    summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
 
-                    // Add the context's Fluid object references to the list of this channel's references.
-                    references.push(...summarizeResult.references);
+                    // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
+                    if (contextSummary.gcNodes === undefined) {
+                        contextSummary.gcNodes = [];
+                    }
+
+                    // Prefix the context's id to the ids of GC nodes returned by it.
+                    normalizeAndPrefixGCNodeIds(contextSummary.gcNodes, contextId);
+                    gcNodes.push(...contextSummary.gcNodes);
                 } else {
                     // If this channel is not yet loaded, then there should be no changes in the snapshot from which
                     // it was created as it is detached container. So just use the previous snapshot.
                     assert(!!this.dataStoreContext.baseSnapshot,
                         "BaseSnapshot should be there as detached container loaded from snapshot");
-                    summaryTree = convertSnapshotTreeToSummaryTree(this.dataStoreContext.baseSnapshot.trees[objectId]);
+                    summaryTree = convertSnapshotTreeToSummaryTree(this.dataStoreContext.baseSnapshot.trees[contextId]);
                 }
-                builder.addWithStats(objectId, summaryTree);
+                builder.addWithStats(contextId, summaryTree);
             }
         }
 
-        // Update the fluid object references as per this node.
-        this.updateFluidObjectReferences(references);
+        // Add this channel's GC node to the list.
+        gcNodes.push(this.getGCNode());
 
         return {
             ...builder.getSummaryTree(),
-            references,
+            gcNodes,
         };
     }
 

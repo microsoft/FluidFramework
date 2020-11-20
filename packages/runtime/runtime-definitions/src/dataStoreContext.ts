@@ -34,7 +34,7 @@ import { IInboundSignalMessage } from "./protocol";
 import {
     CreateChildSummarizerNodeParam,
     IChannelSummarizeResult,
-    ISummarizerNodeWithReferences,
+    ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "./summary";
 import { ITaskManager } from "./agent";
@@ -245,7 +245,7 @@ export interface ISummaryTracker {
     getChild(key: string): ISummaryTracker | undefined;
 }
 
-export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => ISummarizerNodeWithReferences;
+export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
     (event: "leader" | "notleader" | "attaching" | "attached", listener: () => void);
