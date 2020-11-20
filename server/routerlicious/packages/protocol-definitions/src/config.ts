@@ -19,7 +19,7 @@ export interface ISummaryConfiguration {
 }
 
 // Deli lambda configuration
-export interface IDeliConfiguration {
+export interface IDeliServerConfiguration {
     // Expire clients after this amount of inactivity
     clientTimeout: number;
 
@@ -31,7 +31,7 @@ export interface IDeliConfiguration {
 }
 
 // Scribe lambda configuration
-export interface IScribeConfiguration {
+export interface IScribeServerConfiguration {
     // Enables generating service summaries
     generateServiceSummary: boolean;
 
@@ -43,11 +43,16 @@ export interface IScribeConfiguration {
 }
 
 /**
- * Key value store of service configuration properties provided as part of connection
+ * Key value store of service configuration properties
  */
-export interface IServiceConfiguration {
+export interface IServiceConfiguration extends IClientConfiguration, IServerConfiguration {
     [key: string]: any;
+}
 
+/**
+ * Key value store of service configuration properties provided to the client as part of connection
+ */
+export interface IClientConfiguration {
     // Max message size the server will accept before requiring chunking
     maxMessageSize: number;
 
@@ -56,12 +61,17 @@ export interface IServiceConfiguration {
 
     // Summary algorithm configuration. This is sent to clients when they connect
     summary: ISummaryConfiguration;
+}
 
+/**
+ * Key value store of service configuration properties for the server
+ */
+export interface IServerConfiguration {
     // Deli lambda configuration
-    deli: IDeliConfiguration;
+    deli: IDeliServerConfiguration;
 
     // Scribe lambda configuration
-    scribe: IScribeConfiguration;
+    scribe: IScribeServerConfiguration;
 
     // Enable adding a traces array to operation messages
     enableTraces: boolean;

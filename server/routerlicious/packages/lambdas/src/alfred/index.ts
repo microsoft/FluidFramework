@@ -279,7 +279,11 @@ export function configureWebSocketServices(
                     mode: "write",
                     // Back-compat, removal tracked with issue #4346
                     parentBranch: null,
-                    serviceConfiguration: connection.serviceConfiguration,
+                    serviceConfiguration: {
+                        blockSize: connection.serviceConfiguration.blockSize,
+                        maxMessageSize: connection.serviceConfiguration.maxMessageSize,
+                        summary: connection.serviceConfiguration.summary,
+                    },
                     initialClients: clients,
                     initialMessages: [],
                     initialSignals: [],
@@ -295,7 +299,11 @@ export function configureWebSocketServices(
                     mode: "read",
                     // Back-compat, removal tracked with issue #4346
                     parentBranch: null, // Does not matter for now.
-                    serviceConfiguration: DefaultServiceConfiguration,
+                    serviceConfiguration: {
+                        blockSize: DefaultServiceConfiguration.blockSize,
+                        maxMessageSize: DefaultServiceConfiguration.maxMessageSize,
+                        summary: DefaultServiceConfiguration.summary,
+                    },
                     initialClients: clients,
                     initialMessages: [],
                     initialSignals: [],
