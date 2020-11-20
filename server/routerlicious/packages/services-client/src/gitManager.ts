@@ -8,7 +8,7 @@ import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
-import { IGitManager, IHistorian } from "./storage";
+import { ICreateRefParamsExternal, IPatchRefParamsExternal, IGitManager, IHistorian } from "./storage";
 
 export class GitManager implements IGitManager {
     private readonly blobCache = new Map<string, resources.IBlob>();
@@ -155,9 +155,10 @@ export class GitManager implements IGitManager {
     }
 
     public async createRef(branch: string, sha: string): Promise<resources.IRef> {
-        const createRefParams: resources.ICreateRefParams = {
+        const createRefParams: ICreateRefParamsExternal = {
             ref: `refs/heads/${branch}`,
             sha,
+            config: { enabled: true },
         };
 
         return this.historian.createRef(createRefParams);
@@ -165,9 +166,10 @@ export class GitManager implements IGitManager {
 
     public async upsertRef(branch: string, commitSha: string): Promise<resources.IRef> {
         // Update (force) the ref to the new commit
-        const ref: resources.IPatchRefParams = {
+        const ref: IPatchRefParamsExternal = {
             force: true,
             sha: commitSha,
+            config: { enabled: true },
         };
 
         return this.historian.updateRef(`heads/${branch}`, ref);
