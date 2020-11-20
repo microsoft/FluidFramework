@@ -160,6 +160,7 @@ export function configureWebSocketServices(
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
             if (!message.token) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject("Must provide an authorization token");
             }
 
@@ -171,12 +172,14 @@ export function configureWebSocketServices(
                 maxTokenLifetimeSec,
                 isTokenExpiryEnabled);
             if (!claims) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject("Invalid claims");
             }
 
             try {
                 await tenantManager.verifyToken(claims.tenantId, token);
             } catch (err) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject("Invalid token");
             }
 
@@ -206,6 +209,7 @@ export function configureWebSocketServices(
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
             if (!version) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject(
                     `Unsupported client protocol.` +
                     `Server: ${protocolVersions}. ` +
@@ -218,6 +222,7 @@ export function configureWebSocketServices(
             const [details, clients] = await Promise.all([detailsP, clientsP]);
 
             if (clients.length > maxNumberOfClientsPerDocument) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject({
                     code: 400,
                     message: "Too many clients are already connected to this document.",
@@ -236,6 +241,7 @@ export function configureWebSocketServices(
                 if (lifeTimeMSec > 0) {
                     setExpirationTimer(lifeTimeMSec);
                 } else {
+                    // eslint-disable-next-line prefer-promise-reject-errors
                     return Promise.reject("Invalid token expiry");
                 }
             }
