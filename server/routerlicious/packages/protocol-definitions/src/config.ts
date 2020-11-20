@@ -32,7 +32,6 @@ export interface IDeliConfiguration {
 
 // Scribe lambda configuration
 export interface IScribeConfiguration {
-
     // Enables generating service summaries
     generateServiceSummary: boolean;
 
