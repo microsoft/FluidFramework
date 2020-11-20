@@ -289,7 +289,7 @@ export class Client {
 
     /**
      * Returns the current position of a segment, and -1 if the segment
-     * does not exist in this sequence
+     * does not exist in this merge tree
      * @param segment - The segment to get the position of
      */
     public getPosition(segment: ISegment): number {
