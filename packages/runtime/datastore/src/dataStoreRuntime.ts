@@ -51,13 +51,14 @@ import {
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import {
+    addRouteToAllGCNodes,
     convertSnapshotTreeToSummaryTree,
+    convertSummaryTreeToITree,
+    FluidSerializer,
     generateHandleContextPath,
+    normalizeAndPrefixGCNodeIds,
     RequestParser,
     SummaryTreeBuilder,
-    FluidSerializer,
-    convertSummaryTreeToITree,
-    normalizeAndPrefixGCNodeIds,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -567,7 +568,27 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
-     * Returns this channel's garbage collection node.
+     * Updates the garbage collection nodes of this node's children:
+     * - Prefixs the child's id to the id of each node returned by the child.
+     * - Adds a back route to self to the outbound routes of each child.
+     * @param chilGCNodes - The child's garabage collection nodes.
+     * @param childId - The id of the child node.
+     * @returns the updated GC nodes of the child.
+     */
+    private updateChildGCNodes(chilGCNodes: IGraphNode[], childId: string): IGraphNode[] {
+        // Normalize the child's nodes and prefix the child's id to the ids of GC nodes returned by it.
+        // This gradually builds the id of each node to be a path from the root.
+        normalizeAndPrefixGCNodeIds(chilGCNodes, childId);
+
+        // Add a back route to self in each child's outbound routes. If any child is referenced, then its parent
+        // should be considered referenced as well.
+        addRouteToAllGCNodes(chilGCNodes, this.absolutePath);
+
+        return chilGCNodes;
+    }
+
+    /**
+     * @returns this channel's garbage collection node.
      */
     private getGCNode(): IGraphNode {
         /**
@@ -592,9 +613,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @param trackState - This tells whether we should track state from this summary.
      */
     public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
-        // This will contain a list of this channel's gc nodes. It accumulates the GC nodes references of all the
-        // channel contexts and adds its own GC node.
-        const gcNodes: IGraphNode[] = [];
+        // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
+        // channel contexts.
+        const gcNodes: IGraphNode[] = [ this.getGCNode() ];
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each data store and ask it to summarize
@@ -615,13 +636,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                     contextSummary.gcNodes = [];
                 }
 
-                // Prefix the context's id to the ids of GC nodes returned by it.
-                normalizeAndPrefixGCNodeIds(contextSummary.gcNodes, contextId);
-                gcNodes.push(...contextSummary.gcNodes);
+                // Update and add the child context's GC nodes to the main list.
+                gcNodes.push(...this.updateChildGCNodes(contextSummary.gcNodes, contextId));
             }));
-
-        // Add this channel's GC node to the list.
-        gcNodes.push(this.getGCNode());
 
         return {
             ...builder.getSummaryTree(),
@@ -642,9 +659,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public getAttachSummary(): IChannelSummarizeResult {
         this.attachGraph();
 
-        // This will contain a list of this channel's gc nodes. It accumulates the GC nodes references of all the
-        // channel contexts and adds its own GC node.
-        const gcNodes: IGraphNode[] = [];
+        // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
+        // channel contexts.
+        const gcNodes: IGraphNode[] = [ this.getGCNode() ];
         const builder = new SummaryTreeBuilder();
 
         // Craft the .attributes file for each shared object
@@ -667,9 +684,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         contextSummary.gcNodes = [];
                     }
 
-                    // Prefix the context's id to the ids of GC nodes returned by it.
-                    normalizeAndPrefixGCNodeIds(contextSummary.gcNodes, contextId);
-                    gcNodes.push(...contextSummary.gcNodes);
+                    // Update and add the child context's GC nodes to the main list.
+                    gcNodes.push(...this.updateChildGCNodes(contextSummary.gcNodes, contextId));
                 } else {
                     // If this channel is not yet loaded, then there should be no changes in the snapshot from which
                     // it was created as it is detached container. So just use the previous snapshot.
@@ -680,9 +696,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 builder.addWithStats(contextId, summaryTree);
             }
         }
-
-        // Add this channel's GC node to the list.
-        gcNodes.push(this.getGCNode());
 
         return {
             ...builder.getSummaryTree(),

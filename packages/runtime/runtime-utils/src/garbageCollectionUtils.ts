@@ -34,7 +34,7 @@ export function normalizeAndPrefixGCNodeIds(gcNodes: IGraphNode[], prefixId: str
 /**
  * Helper function that clones the given list of garbage collection nodes.
  * @param gcNodes - The list of GC nodes to clone.
- * @returns - A cloned list of the given GC nodes list.
+ * @returns a cloned list of the given GC nodes list.
  */
 export function cloneGCNodes(gcNodes: IGraphNode[]): IGraphNode[] {
     const clonedNodes: IGraphNode[] = [];

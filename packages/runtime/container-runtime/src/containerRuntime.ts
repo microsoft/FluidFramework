@@ -1473,7 +1473,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Returns this channel's garbage collection node.
+     * Updates the garbage collection nodes of this node's children:
+     * - Prefixs the child's id to the id of each node returned by the child.
+     * @param chilGCNodes - The child's garabage collection nodes.
+     * @param childId - The id of the child node.
+     * @returns the updated GC nodes of the child.
+     */
+    private updateChildGCNodes(chilGCNodes: IGraphNode[], childId: string): IGraphNode[] {
+        // Normalize the child's nodes and prefix the child's id to the ids of GC nodes returned by it.
+        // This gradually builds the id of each node to be a path from the root.
+        normalizeAndPrefixGCNodeIds(chilGCNodes, childId);
+        return chilGCNodes;
+    }
+
+    /**
+     * @returns this channel's garbage collection node.
      */
     private getGCNode(): IGraphNode {
         /**
@@ -1504,9 +1518,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
-        // This will contain a list of this channel's gc nodes. It accumulates the GC nodes references of all the
-        // channel contexts and adds its own GC node.
-        const gcNodes: IGraphNode[] = [];
+        // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
+        // channel contexts.
+        const gcNodes: IGraphNode[] = [ this.getGCNode() ];
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
@@ -1524,13 +1538,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     contextSummary.gcNodes = [];
                 }
 
-                // Prefix the context's id to the ids of GC nodes returned by it.
-                normalizeAndPrefixGCNodeIds(contextSummary.gcNodes, contextId);
-                gcNodes.push(...contextSummary.gcNodes);
+                // Update and add the child context's GC nodes to the main list.
+                gcNodes.push(...this.updateChildGCNodes(contextSummary.gcNodes, contextId));
             }));
-
-        // Add this channel's GC node to the list.
-        gcNodes.push(this.getGCNode());
 
         for (const node of gcNodes) {
             console.log(`id: ${node.id}. Routes: ${node.outboundRoutes}`);

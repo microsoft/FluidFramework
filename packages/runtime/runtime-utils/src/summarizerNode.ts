@@ -690,7 +690,7 @@ export class SummarizerNode implements ISummarizerNode {
      * Returns the details needed to create a child node.
      * @param id - Initial id or path part of the child node.
      * @param createParam - Information needed to create the node.
-     * @returns - The details needed to create the child node.
+     * @returns the details needed to create the child node.
      */
     protected getCreateDetailsForChild(id: string, createParam: CreateChildSummarizerNodeParam): ICreateChildDetails {
         let initialSummary: IInitialSummary | undefined;
