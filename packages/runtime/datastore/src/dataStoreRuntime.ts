@@ -573,7 +573,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private getFluidObjectReferences(): IFluidObjectReferences {
         /**
          * Get the Fluid objects referenced by this channel. Currently, all contexts in this channel are considered
-         * as referenced. This will change will we have root and non-root channel contexts. Then only root contexts
+         * as referenced. This will change when we have root and non-root channel contexts. Then only root contexts
          * will be considered as referenced.
          */
         const referencedRoutes: string[] = [];
@@ -586,6 +586,25 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             path: this.id,
             routes: referencedRoutes,
         };
+    }
+
+    /**
+     * Update the fluid object references as per this node. It does the following:
+     * 1. Updates the path of each reference by adding its own id as prefix.
+     * 2. Adds a back route to itself to each of its child's references.
+     * 3. Adds a node for itself to the references.
+     * @param references - The references to be updated.
+     */
+    private updateFluidObjectReferences(references: IFluidObjectReferences[]) {
+        // Normalize all the context's path of Fluid object references and prefix them with this channel's id.
+        normalizeAndPrefixReferencesPath(references, this.id);
+
+        // Add a back route to self to all the child references. This will ensure that if any of the children are
+        // referenced, this node will be referenced as well.
+        addRouteToReferences(references, this.absolutePath);
+
+        // Add Fluid objects referenced by this channel.
+        references.push(this.getFluidObjectReferences());
     }
 
     /**
@@ -620,15 +639,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 references.push(...contextSummary.references);
             }));
 
-        // Normalize all the context's path of Fluid object references and prefix them with this channel's id.
-        normalizeAndPrefixReferencesPath(references, this.id);
-
-        // Add a route to self to all the context references. This will ensure that if any of the contexts are
-        // referenced, this channel will be referenced as well.
-        addRouteToReferences(references, this.absolutePath);
-
-        // Add Fluid objects referenced by this channel.
-        references.push(this.getFluidObjectReferences());
+        // Update the fluid object references as per this node.
+        this.updateFluidObjectReferences(references);
 
         return {
             ...builder.getSummaryTree(),
@@ -682,15 +694,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             }
         }
 
-        // Normalize all the context's path of Fluid object references and prefix them with this channel's id.
-        normalizeAndPrefixReferencesPath(references, this.id);
-
-        // Add a route to self to all the context references. This will ensure that if any of the contexts are
-        // referenced, this channel will be referenced as well.
-        addRouteToReferences(references, this.absolutePath);
-
-        // Add Fluid objects referenced by this channel.
-        references.push(this.getFluidObjectReferences());
+        // Update the fluid object references as per this node.
+        this.updateFluidObjectReferences(references);
 
         return {
             ...builder.getSummaryTree(),

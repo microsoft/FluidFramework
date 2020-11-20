@@ -4,20 +4,16 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/common-utils";
 import {
     IContextSummarizeResult,
     IFluidObjectReferences,
     ISummarizeInternalResult,
     ISummarizerNodeConfig,
     ISummarizerNodeWithReferences,
-    ISummaryTreeWithStats,
     CreateChildSummarizerNodeParam,
-    CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { EscapedPath, IInitialSummary, SummarizerNode, SummaryNode } from "./summarizerNode";
-import { convertToSummaryTree, calculateStats } from "./summaryUtils";
+import { ICreateChildDetails, IInitialSummary, SummarizerNode, SummaryNode } from "./summarizerNode";
 import { cloneFluidObjectReferences } from "./fluidObjectReferencesUtils";
 
 /**
@@ -39,6 +35,7 @@ export class SummarizerNodeWithReferences extends SummarizerNode implements ISum
         /** Undefined means created without summary */
         latestSummary?: SummaryNode,
         initialSummary?: IInitialSummary,
+        wipSummaryLogger?: ITelemetryLogger,
         /** Function to get initial Fluid object references */
         private readonly getInitialFluidObjectReferencesFn?: () => Promise<IFluidObjectReferences[]>,
     ) {
@@ -49,6 +46,7 @@ export class SummarizerNodeWithReferences extends SummarizerNode implements ISum
             changeSequenceNumber,
             latestSummary,
             initialSummary,
+            wipSummaryLogger,
         );
     }
 
@@ -109,18 +107,14 @@ export class SummarizerNodeWithReferences extends SummarizerNode implements ISum
         /** Function to get initial Fluid object references */
         getInitialFluidObjectReferencesFn?: () => Promise<IFluidObjectReferences[]>,
     ): SummarizerNodeWithReferences {
-        const maybeSummaryNode = referenceSequenceNumber === undefined ? undefined : new SummaryNode({
-            referenceSequenceNumber,
-            basePath: undefined,
-            localPath: EscapedPath.create(""), // root hard-coded to ""
-        });
         return new SummarizerNodeWithReferences(
             logger,
             summarizeInternalFn,
             config,
             changeSequenceNumber,
-            maybeSummaryNode,
+            referenceSequenceNumber === undefined ? undefined : SummaryNode.createForRoot(referenceSequenceNumber),
             undefined /* initialSummary */,
+            undefined /* wipSummaryLogger */,
             getInitialFluidObjectReferencesFn,
         );
     }
@@ -145,90 +139,19 @@ export class SummarizerNodeWithReferences extends SummarizerNode implements ISum
     ): ISummarizerNodeWithReferences {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
 
-        const latestSummary = this.latestSummary;
-        let child: SummarizerNodeWithReferences;
-        switch (createParam.type) {
-            case CreateSummarizerNodeSource.FromAttach: {
-                let summaryNode: SummaryNode | undefined;
-                let initialSummary: IInitialSummary | undefined;
-                if (
-                    latestSummary !== undefined
-                    && createParam.sequenceNumber <= latestSummary.referenceSequenceNumber
-                ) {
-                    // Prioritize latest summary if it was after this node was attached.
-                    summaryNode = latestSummary.createForChild(id);
-                } else {
-                    const summary = convertToSummaryTree(createParam.snapshot) as ISummaryTreeWithStats;
-                    initialSummary = {
-                        sequenceNumber: createParam.sequenceNumber,
-                        id,
-                        summary,
-                    };
-                }
-                child = new SummarizerNodeWithReferences(
-                    this.logger,
-                    summarizeInternalFn,
-                    config,
-                    createParam.sequenceNumber,
-                    summaryNode,
-                    initialSummary,
-                    getInitialFluidObjectReferencesFn,
-                );
-                break;
-            }
-            case CreateSummarizerNodeSource.FromSummary: {
-                if (this.initialSummary === undefined) {
-                    assert(!!latestSummary, "Cannot create child from summary if parent does not have latest summary");
-                }
-                // fallthrough to local
-            }
-            case CreateSummarizerNodeSource.Local: {
-                const initialSummary = this.initialSummary;
-                let childInitialSummary: IInitialSummary | undefined;
-                if (initialSummary !== undefined) {
-                    const childSummary = initialSummary.summary?.summary.tree[id];
-                    if (createParam.type === CreateSummarizerNodeSource.FromSummary) {
-                        // Locally created would not have subtree.
-                        assert(!!childSummary, "Missing child summary tree");
-                    }
-                    let childSummaryWithStats: ISummaryTreeWithStats | undefined;
-                    if (childSummary !== undefined) {
-                        assert(
-                            childSummary.type === SummaryType.Tree,
-                            "Child summary object is not a tree",
-                        );
-                        childSummaryWithStats = {
-                            summary: childSummary,
-                            stats: calculateStats(childSummary),
-                        };
-                    }
-                    childInitialSummary = {
-                        sequenceNumber: initialSummary.sequenceNumber,
-                        id,
-                        summary: childSummaryWithStats,
-                    };
-                }
-                child = new SummarizerNodeWithReferences(
-                    this.logger,
-                    summarizeInternalFn,
-                    config,
-                    latestSummary?.referenceSequenceNumber ?? -1,
-                    latestSummary?.createForChild(id),
-                    childInitialSummary,
-                    getInitialFluidObjectReferencesFn,
-                );
-                break;
-            }
-            default: {
-                const type = (createParam as unknown as CreateChildSummarizerNodeParam).type;
-                unreachableCase(createParam, `Unexpected CreateSummarizerNodeSource: ${type}`);
-            }
-        }
+        const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
+        const child = new SummarizerNodeWithReferences(
+            this.defaultLogger,
+            summarizeInternalFn,
+            config,
+            createDetails.changeSequenceNumber,
+            createDetails.latestSummary,
+            createDetails.initialSummary,
+            this.wipSummaryLogger,
+            getInitialFluidObjectReferencesFn,
+        );
+        this.initializeChild(child);
 
-        // If created while summarizing, relay that information down
-        if (this.wipReferenceSequenceNumber !== undefined) {
-            child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
-        }
         this.children.set(id, child);
         return child;
     }
