@@ -1520,7 +1520,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
         // channel contexts.
-        const gcNodes: IGraphNode[] = [ this.getGCNode() ];
+        let gcNodes: IGraphNode[] = [ this.getGCNode() ];
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
@@ -1539,7 +1539,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
 
                 // Update and add the child context's GC nodes to the main list.
-                gcNodes.push(...this.updateChildGCNodes(contextSummary.gcNodes, contextId));
+                gcNodes = gcNodes.concat(this.updateChildGCNodes(contextSummary.gcNodes, contextId));
             }));
 
         this.serializeContainerBlobs(builder);

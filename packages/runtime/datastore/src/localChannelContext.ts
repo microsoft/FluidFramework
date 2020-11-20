@@ -6,7 +6,7 @@
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     IChannel,
     IFluidDataStoreRuntime,
@@ -133,11 +133,7 @@ export class LocalChannelContext implements IChannelContext {
 
     public getAttachSummary(): IContextSummarizeResult {
         assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to take snapshot");
-        const summarizeResult = summarizeChannel(this.channel, true /* fullTree */, false /* trackState */);
-        assert(
-            summarizeResult.summary.type === SummaryType.Tree,
-            "summarize should always return a tree when fullTree is true");
-        return summarizeResult;
+        return summarizeChannel(this.channel, true /* fullTree */, false /* trackState */);
     }
 
     private async loadChannel(): Promise<IChannel> {

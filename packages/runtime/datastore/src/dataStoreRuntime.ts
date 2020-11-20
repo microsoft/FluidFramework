@@ -615,7 +615,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
         // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
         // channel contexts.
-        const gcNodes: IGraphNode[] = [ this.getGCNode() ];
+        let gcNodes: IGraphNode[] = [ this.getGCNode() ];
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each data store and ask it to summarize
@@ -637,7 +637,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 }
 
                 // Update and add the child context's GC nodes to the main list.
-                gcNodes.push(...this.updateChildGCNodes(contextSummary.gcNodes, contextId));
+                gcNodes = gcNodes.concat(this.updateChildGCNodes(contextSummary.gcNodes, contextId));
             }));
 
         return {
@@ -661,7 +661,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
         // channel contexts.
-        const gcNodes: IGraphNode[] = [ this.getGCNode() ];
+        let gcNodes: IGraphNode[] = [ this.getGCNode() ];
         const builder = new SummaryTreeBuilder();
 
         // Craft the .attributes file for each shared object
@@ -685,7 +685,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                     }
 
                     // Update and add the child context's GC nodes to the main list.
-                    gcNodes.push(...this.updateChildGCNodes(contextSummary.gcNodes, contextId));
+                    gcNodes = gcNodes.concat(this.updateChildGCNodes(contextSummary.gcNodes, contextId));
                 } else {
                     // If this channel is not yet loaded, then there should be no changes in the snapshot from which
                     // it was created as it is detached container. So just use the previous snapshot.
