@@ -24,6 +24,8 @@ let metrics: IScribeMetrics;
 
 const ackCounter = new Counter();
 const latencyCounter = new Counter();
+const pingCounter = new Counter();
+const processCounter = new Counter();
 const typingCounter = new Counter();
 const serverOrderCounter = new Counter();
 
@@ -31,6 +33,7 @@ export interface IAuthor {
     ackCounter: Counter;
     latencyCounter: Counter;
     typingCounter: Counter;
+    pingCounter: Counter;
     metrics: IScribeMetrics;
     ss: ISharedString;
 }
@@ -79,6 +82,10 @@ export interface IScribeMetrics {
     time: number;
     textLength: number;
 
+    pingAverage: number;
+    pingMaximum: number;
+    processAverage: number;
+
     typingInterval: number;
     writers: number;
 }
@@ -116,6 +123,9 @@ export async function typeFile(
         latencyMaximum: undefined,
         latencyMinimum: undefined,
         latencyStdDev: undefined,
+        pingAverage: undefined,
+        pingMaximum: undefined,
+        processAverage: undefined,
         serverAverage: undefined,
         textLength: fileText.length,
         time: 0,
@@ -133,6 +143,9 @@ export async function typeFile(
         latencyMaximum: undefined,
         latencyMinimum: undefined,
         latencyStdDev: undefined,
+        pingAverage: undefined,
+        pingMaximum: undefined,
+        processAverage: undefined,
         serverAverage: undefined,
         textLength: fileText.length,
         time: 0,
@@ -147,6 +160,7 @@ export async function typeFile(
         ackCounter: new Counter(),
         latencyCounter: new Counter(),
         metrics: clone(m),
+        pingCounter: new Counter(),
         ss,
         typingCounter: new Counter(),
     };
@@ -158,6 +172,7 @@ export async function typeFile(
             ackCounter: new Counter(),
             latencyCounter: new Counter(),
             metrics: clone(m),
+            pingCounter: new Counter(),
             ss: sharedString,
             typingCounter: new Counter(),
         };
@@ -169,6 +184,7 @@ export async function typeFile(
         typingCounter.reset();
         ackCounter.reset();
         latencyCounter.reset();
+        pingCounter.reset();
 
         // Wait a second before beginning to allow for quiescing
         await new Promise((resolve) => setTimeout(() => resolve(), 1000));
@@ -184,6 +200,7 @@ export async function typeFile(
         typingCounter.reset();
         ackCounter.reset();
         latencyCounter.reset();
+        pingCounter.reset();
 
         return new Promise((resolve, reject) => {
             q = queue(async (chunkKey, queueCallback) => {
@@ -237,6 +254,14 @@ export async function typeChunk(
         let mean = 0;
         let stdDev = 0;
 
+        runtime.deltaManager.on("pong", (latency) => {
+            pingCounter.increment(latency);
+        });
+
+        runtime.deltaManager.on("op", (_, time) => {
+            processCounter.increment(time);
+        });
+
         a.ss.on("op", (message: ISequencedDocumentMessage, local) => {
             totalOps++;
             if (message.traces &&
@@ -271,6 +296,10 @@ export async function typeChunk(
                 const roundTrip = clientEnd - clientStart;
                 latencyCounter.increment(roundTrip);
                 serverOrderCounter.increment(orderEnd - orderBegin);
+
+                metrics.pingAverage = pingCounter.getValue() / pingCounter.getSamples();
+                metrics.pingMaximum = pingCounter.getMaximum();
+                metrics.processAverage = processCounter.getValue() / processCounter.getSamples();
 
                 histogram.add(roundTrip);
                 const samples = latencyCounter.getSamples();

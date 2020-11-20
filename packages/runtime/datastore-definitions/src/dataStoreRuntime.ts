@@ -57,9 +57,6 @@ export interface IFluidDataStoreRuntime extends
     readonly options: any;
 
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly minimumSequenceNumber: number;
-    readonly lastSequenceNumber: number;
-    readonly active: boolean;
 
     readonly clientId: string | undefined;
 

@@ -118,18 +118,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.dataStoreContext.containerRuntime.clientDetails;
     }
 
-    public get minimumSequenceNumber(): number {
-        return this.dataStoreContext.minimumSequenceNumber;
-    }
-
-    public get lastSequenceNumber(): number {
-        return this.dataStoreContext.lastSequenceNumber;
-    }
-
-    public get active(): boolean {
-        return this.dataStoreContext.active;
-    }
-
     public get loader(): ILoader {
         return this.dataStoreContext.loader;
     }
@@ -250,7 +238,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         undefined /* extraBlobs */,
                         this.dataStoreContext.summaryTracker.createOrGetChild(
                             path,
-                            dataStoreContext.lastSequenceNumber,
+                            this.deltaManager.lastSequenceNumber,
                         ),
                         this.dataStoreContext.getCreateChildSummarizerNodeFn(
                             path,

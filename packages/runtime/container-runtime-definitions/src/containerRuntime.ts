@@ -77,9 +77,6 @@ export interface IContainerRuntime extends
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly minimumSequenceNumber: number;
-    readonly lastSequenceNumber: number;
-    readonly active: boolean;
     readonly storage: IDocumentStorageService;
     readonly branch: string;
     readonly loader: ILoader;

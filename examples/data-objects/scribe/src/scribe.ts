@@ -113,9 +113,19 @@ function updateMetrics(
             `Server latency (local orderer only): ${(metrics.serverAverage).toFixed(2)} ms`;
     }
 
+    if (metrics.pingAverage) {
+        (div.getElementsByClassName("avg-ping")[0] as HTMLDivElement).innerText =
+            `Ping: ${(metrics.pingAverage).toFixed(2)} ms`;
+    }
+
     if (metrics.totalOps) {
         (div.getElementsByClassName("total-ops")[0] as HTMLDivElement).innerText =
             `Total Ops: ${(metrics.totalOps).toFixed(2)}`;
+    }
+
+    if (metrics.processAverage) {
+        (div.getElementsByClassName("avg-process")[0] as HTMLDivElement).innerText =
+            `Process time: ${(metrics.processAverage).toFixed(2)}`;
     }
 }
 
@@ -361,6 +371,8 @@ const html =
             <span class="avg-latency"></span><br/>
             <span class="stddev-latency"></span><br/>
             <span class="server-latency"></span><br/>
+            <span class="avg-process"></span><br/>
+            <span class="avg-ping"></span><br/>
             <span class="total-ops"></span>
         </p>
 

@@ -407,18 +407,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         this._disposed = true;
     }
 
-    public get minimumSequenceNumber(): number {
-        return this.deltaManager.minimumSequenceNumber;
-    }
-
-    public get lastSequenceNumber(): number {
-        return this.deltaManager.lastSequenceNumber;
-    }
-
-    public get active(): boolean {
-        return this.deltaManager.active;
-    }
-
     public async getChannel(id: string): Promise<IChannel> {
         return null;
     }

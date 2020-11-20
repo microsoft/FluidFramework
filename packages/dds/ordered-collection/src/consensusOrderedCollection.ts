@@ -218,7 +218,7 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     protected isActive() {
-        return this.runtime.connected && this.runtime.active;
+        return this.runtime.connected && this.runtime.deltaManager.active;
     }
 
     protected async complete(acquireId: string) {
