@@ -248,7 +248,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      * does not exist in this sequence
      * @param segment - The segment to get the position of
      */
-    public getPosition(segment: T): number {
+    public getPosition(segment: MergeTree.ISegment): number {
         return this.client.getPosition(segment);
     }
 
