@@ -40,7 +40,7 @@ describe("client.getPosition", () => {
 
     it("Detached Segment",()=>{
         client.applyMsg(client.makeOpMessage(client.removeRangeLocal(segPos, segPos + 1), 1));
-        // so some work and move the client's min seq forward, so zamboni runs
+        // do some work and move the client's min seq forward, so zamboni runs
         for(const c of "hello world") {
             client.applyMsg(
                 client.makeOpMessage(
