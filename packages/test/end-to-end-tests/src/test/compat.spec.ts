@@ -11,12 +11,12 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalTestObjectProvider, ChannelFactoryRegistry } from "@fluidframework/test-utils";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-    generateCompatTest,
+    generateLocalCompatTest,
     createOldPrimedDataStoreFactory,
     createOldRuntimeFactory,
     createPrimedDataStoreFactory,
     createRuntimeFactory,
-    ICompatLocalTestObjectProvider,
+    ILocalTestObjectProvider,
     OldTestDataObject,
     TestDataObject,
 } from "./compatUtils";
@@ -41,7 +41,7 @@ async function loadContainerWithOldLoader(
 }
 
 describe("loader/runtime compatibility", () => {
-    const tests = function(args: ICompatLocalTestObjectProvider) {
+    const tests = function(args: ILocalTestObjectProvider) {
         let container: IContainer | old.IContainer;
         let dataObject: TestDataObject | OldTestDataObject;
         let containerError: boolean = false;
@@ -105,6 +105,9 @@ describe("loader/runtime compatibility", () => {
                 loadContainer( // new loader/container runtime, old data store runtime
                     { fluidExport: createRuntimeFactory(TestDataObject.type, createOldPrimedDataStoreFactory()) },
                     args.deltaConnectionServer),
+                loadContainerWithOldLoader( // old loader/container runtime, new data store runtime
+                    { fluidExport: createOldRuntimeFactory(TestDataObject.type, createPrimedDataStoreFactory()) },
+                    args.deltaConnectionServer),
             ];
 
             const dataObjects = await Promise.all(containersP.map(async (containerP) => containerP.then(
@@ -127,7 +130,7 @@ describe("loader/runtime compatibility", () => {
         });
     };
 
-    generateCompatTest(tests, {
+    generateLocalCompatTest(tests, {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         serviceConfiguration: { summary: { maxOps: 1 } as ISummaryConfiguration },
     });

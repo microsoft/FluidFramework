@@ -81,22 +81,10 @@
         "maxTokenLifetimeSec": 3600,
         "enableTokenExpiration": false
     },
-    "routemanager": {
-        "topics": {
-            "receive": "deltas",
-            "send": "rawdeltas"
-        },
-        "clientId": "routemanager",
-        "groupId": "routemanager"
-    },
     "lambdas": {
         "deli": {
             "group": "deli",
             "topic": "rawdeltas"
-        },
-        "routemanager": {
-            "group": "routemanager",
-            "topic": "deltas"
         },
         "scriptorium": {
             "group": "scriptorium",

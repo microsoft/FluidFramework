@@ -68,7 +68,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             contents: null,
             data: JSON.stringify(clientDetail),
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientJoin,
         };
 
@@ -114,7 +114,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             contents: null,
             data: JSON.stringify(this.clientId),
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientLeave,
         };
         const message: core.IRawOperationMessage = {
@@ -134,22 +134,22 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
     }
 
     private async submitRawOperation(messages: core.IRawOperationMessage[]): Promise<void> {
-        // Add trace
-        messages.forEach((message) => {
-            const operation = message.operation;
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            if (operation && operation.traces === undefined) {
-                operation.traces = [];
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            } else if (operation && operation.traces && operation.traces.length > 1) {
-                operation.traces.push(
-                    {
-                        action: "end",
-                        service: "alfred",
-                        timestamp: Date.now(),
-                    });
-            }
-        });
+        if (this.serviceConfiguration.enableTraces) {
+            // Add trace
+            messages.forEach((message) => {
+                const operation = message.operation;
+                if (operation && operation.traces === undefined) {
+                    operation.traces = [];
+                } else if (operation && operation.traces && operation.traces.length > 1) {
+                    operation.traces.push(
+                        {
+                            action: "end",
+                            service: "alfred",
+                            timestamp: Date.now(),
+                        });
+                }
+            });
+        }
 
         return this.producer.send(messages, this.tenantId, this.documentId);
     }

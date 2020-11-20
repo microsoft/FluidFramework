@@ -23,6 +23,7 @@ import {
 import { strict as assert } from "assert";
 import * as _ from "lodash";
 import nconf from "nconf";
+import { DefaultServiceConfiguration } from "../../alfred";
 import { ClientSequenceTimeout, DeliLambdaFactory } from "../../deli/lambdaFactory";
 
 const MinSequenceNumberWindow = 2000;
@@ -85,7 +86,8 @@ describe("Routerlicious", () => {
                     testCollection,
                     testTenantManager,
                     testForwardProducer,
-                    testReverseProducer);
+                    testReverseProducer,
+                    DefaultServiceConfiguration);
 
                 testContext = new TestContext();
                 const config = (new nconf.Provider({})).defaults({ documentId: testId, tenantId: testTenantId })

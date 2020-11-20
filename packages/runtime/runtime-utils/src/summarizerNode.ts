@@ -260,19 +260,25 @@ export class SummarizerNode implements ISummarizerNode {
     private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
     private wipSkipRecursion = false;
 
-    public startSummary(referenceSequenceNumber: number) {
+    public startSummary(referenceSequenceNumber: number, summaryLogger) {
+        assert(this.wipSummaryLogger === undefined, "wipSummaryLogger should not be set yet in startSummary");
+
         assert(
             this.wipReferenceSequenceNumber === undefined,
             "Already tracking a summary",
         );
 
+        this.wipSummaryLogger = summaryLogger;
+
         for (const child of this.children.values()) {
-            child.startSummary(referenceSequenceNumber);
+            child.startSummary(referenceSequenceNumber, this.wipSummaryLogger);
         }
         this.wipReferenceSequenceNumber = referenceSequenceNumber;
     }
 
     public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
+        assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary or ctor");
+
         // Try to reuse the tree if unchanged
         if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
             const latestSummary = this.latestSummary;
@@ -326,7 +332,7 @@ export class SummarizerNode implements ISummarizerNode {
                 // No base summary to reference
                 throw error;
             }
-            this.logger.logException({
+            this.wipSummaryLogger.logException({
                 eventName: "SummarizingWithBasePlusOps",
                 category: "error",
             },
@@ -341,15 +347,22 @@ export class SummarizerNode implements ISummarizerNode {
         }
     }
 
+    /**
+     * Complete the WIP summary for the given proposalHandle
+     */
     public completeSummary(proposalHandle: string) {
         this.completeSummaryCore(proposalHandle, undefined, false);
     }
 
+    /**
+     * Recursive implementation for completeSummary, with additional internal-only parameters
+     */
     private completeSummaryCore(
         proposalHandle: string,
         parentPath: EscapedPath | undefined,
         parentSkipRecursion: boolean,
     ) {
+        assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary or ctor");
         assert(this.wipReferenceSequenceNumber !== undefined, "Not tracking a summary");
         let localPathsToUse = this.wipLocalPaths;
 
@@ -410,6 +423,7 @@ export class SummarizerNode implements ISummarizerNode {
         this.wipReferenceSequenceNumber = undefined;
         this.wipLocalPaths = undefined;
         this.wipSkipRecursion = false;
+        this.wipSummaryLogger = undefined;
         for (const child of this.children.values()) {
             child.clearSummary();
         }
@@ -419,6 +433,7 @@ export class SummarizerNode implements ISummarizerNode {
         proposalHandle: string | undefined,
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
+        correlatedSummaryLogger: ITelemetryLogger,
     ): Promise<void> {
         if (proposalHandle !== undefined) {
             const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
@@ -436,6 +451,7 @@ export class SummarizerNode implements ISummarizerNode {
             snapshotTree,
             undefined,
             EscapedPath.create(""),
+            correlatedSummaryLogger,
         );
     }
 
@@ -477,10 +493,11 @@ export class SummarizerNode implements ISummarizerNode {
         snapshotTree: ISnapshotTree,
         basePath: EscapedPath | undefined,
         localPath: EscapedPath,
+        correlatedSummaryLogger: ITelemetryLogger,
     ): void {
         this.refreshLatestSummaryCore(referenceSequenceNumber);
 
-        const { baseSummary, pathParts } = decodeSummary(snapshotTree, this.logger);
+        const { baseSummary, pathParts } = decodeSummary(snapshotTree, correlatedSummaryLogger);
 
         this.latestSummary = new SummaryNode({
             referenceSequenceNumber,
@@ -503,6 +520,7 @@ export class SummarizerNode implements ISummarizerNode {
                     subtree,
                     pathForChildren,
                     EscapedPath.create(id),
+                    correlatedSummaryLogger,
                 );
             }
         }
@@ -528,7 +546,7 @@ export class SummarizerNode implements ISummarizerNode {
         snapshot: ISnapshotTree,
         readAndParseBlob: ReadAndParseBlob,
     ): Promise<{ baseSummary: ISnapshotTree, outstandingOps: ISequencedDocumentMessage[] }> {
-        const decodedSummary = decodeSummary(snapshot, this.logger);
+        const decodedSummary = decodeSummary(snapshot, this.defaultLogger);
         const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 
         if (outstandingOps.length > 0) {
@@ -577,13 +595,14 @@ export class SummarizerNode implements ISummarizerNode {
     private readonly throwOnError: boolean;
     private trackingSequenceNumber: number;
     private constructor(
-        private readonly logger: ITelemetryLogger,
+        private readonly defaultLogger: ITelemetryLogger,
         private readonly summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         config: ISummarizerNodeConfig,
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
         private latestSummary?: SummaryNode,
         private readonly initialSummary?: IInitialSummary,
+        private wipSummaryLogger?: ITelemetryLogger,
     ) {
         this.canReuseHandle = config.canReuseHandle ?? true;
         // BUGBUG: Seeing issues with differential summaries.
@@ -656,12 +675,13 @@ export class SummarizerNode implements ISummarizerNode {
                     };
                 }
                 child = new SummarizerNode(
-                    this.logger,
+                    this.defaultLogger,
                     summarizeInternalFn,
                     config,
                     createParam.sequenceNumber,
                     summaryNode,
                     initialSummary,
+                    this.wipSummaryLogger,
                 );
                 break;
             }
@@ -698,12 +718,13 @@ export class SummarizerNode implements ISummarizerNode {
                     };
                 }
                 child = new SummarizerNode(
-                    this.logger,
+                    this.defaultLogger,
                     summarizeInternalFn,
                     config,
                     latestSummary?.referenceSequenceNumber ?? -1,
                     latestSummary?.createForChild(id),
                     childInitialSummary,
+                    this.wipSummaryLogger,
                 );
                 break;
             }

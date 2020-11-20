@@ -11,6 +11,7 @@ export function normalizePort(val) {
 
     if (isNaN(normalizedPort)) {
         // Named pipe
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return val;
     }
 

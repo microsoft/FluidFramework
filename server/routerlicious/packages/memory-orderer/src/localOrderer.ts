@@ -285,13 +285,13 @@ export class LocalOrderer implements IOrderer {
                     this.tenantId,
                     this.documentId,
                     lastCheckpoint,
-                    this.dbObject,
                     documentCollection,
                     this.deltasKafka,
                     this.rawDeltasKafka,
                     this.clientTimeout,
                     ActivityCheckingTimeout,
-                    NoopConsolidationTimeout);
+                    NoopConsolidationTimeout,
+                    this.serviceConfiguration);
             });
     }
 
@@ -344,6 +344,7 @@ export class LocalOrderer implements IOrderer {
             summaryReader,
             checkpointManager,
             scribe,
+            this.serviceConfiguration,
             this.rawDeltasKafka,
             protocolHandler,
             1, // TODO (Change when local orderer also ticks epoch)

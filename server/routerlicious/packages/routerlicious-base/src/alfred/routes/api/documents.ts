@@ -25,38 +25,6 @@ export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): 
     });
 
     /**
-     * Lists all forks of the specified document
-     */
-    router.get("/:tenantId?/:id/forks", (request, response, next) => {
-        const forksP = storage.getForks(
-            getParam(request.params, "tenantId") || appTenants[0].id,
-            getParam(request.params, "id"));
-        forksP.then(
-            (forks) => {
-                response.status(200).json(forks);
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
-    });
-
-    /**
-     * Creates a new fork for the specified document
-     */
-    router.post("/:tenantId?/:id/forks", (request, response, next) => {
-        const forkIdP = storage.createFork(
-            getParam(request.params, "tenantId") || appTenants[0].id,
-            getParam(request.params, "id"));
-        forkIdP.then(
-            (forkId) => {
-                response.status(201).json(forkId);
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
-    });
-
-    /**
      * Creates a new document with initial summary.
      */
     router.post("/:tenantId", (request, response, next) => {

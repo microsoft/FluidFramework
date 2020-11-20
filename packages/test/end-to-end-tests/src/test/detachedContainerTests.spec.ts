@@ -26,9 +26,9 @@ import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ICompatLocalTestObjectProvider,
-    generateTestWithCompat,
-    generateTest,
+    ILocalTestObjectProvider,
+    generateLocalTest,
+    generateLocalNonCompatTest,
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "./compatUtils";
@@ -64,7 +64,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ILocalTestObjectProvider) => {
     let request: IRequest;
     let loader: Loader;
     const pkg = args.defaultCodeDetails;
@@ -578,31 +578,30 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("Detached Container", () => {
-    generateTestWithCompat(tests);
+    generateLocalTest(tests);
 
-    describe("Non-Compat Tests", () => {
-        generateTest((args: ICompatLocalTestObjectProvider) => {
-            let request: IRequest;
-            let loader: Loader;
-            const pkg = args.defaultCodeDetails;
+    // non compat test
+    generateLocalNonCompatTest((args: ILocalTestObjectProvider) => {
+        let request: IRequest;
+        let loader: Loader;
+        const pkg = args.defaultCodeDetails;
 
-            beforeEach(async () => {
-                request = args.urlResolver.createCreateNewRequest(documentId);
-                loader = args.makeTestLoader(testContainerConfig) as Loader;
-            });
+        beforeEach(async () => {
+            request = args.urlResolver.createCreateNewRequest(documentId);
+            loader = args.makeTestLoader(testContainerConfig) as Loader;
+        });
 
-            it("Load attached container from cache and check if they are same", async () => {
-                const container = await loader.createDetachedContainer(pkg);
+        it("Load attached container from cache and check if they are same", async () => {
+            const container = await loader.createDetachedContainer(pkg);
 
-                // Now attach the container and get the sub dataStore.
-                await container.attach(request);
+            // Now attach the container and get the sub dataStore.
+            await container.attach(request);
 
-                // Create a new request url from the resolvedUrl of the first container.
-                assert(container.resolvedUrl);
-                const requestUrl2 = await args.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
-                const container2 = await loader.resolve({ url: requestUrl2 });
-                assert.strictEqual(container, container2, "Both containers should be same");
-            });
+            // Create a new request url from the resolvedUrl of the first container.
+            assert(container.resolvedUrl);
+            const requestUrl2 = await args.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
+            const container2 = await loader.resolve({ url: requestUrl2 });
+            assert.strictEqual(container, container2, "Both containers should be same");
         });
     });
 });

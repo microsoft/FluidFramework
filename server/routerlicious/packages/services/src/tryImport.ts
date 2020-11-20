@@ -7,9 +7,10 @@
 export function tryImportNodeRdkafka() {
     let module;
     try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         module = require("node-rdkafka");
     } catch (e) {
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return module;
 }

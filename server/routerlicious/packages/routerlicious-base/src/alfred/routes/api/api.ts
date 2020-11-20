@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-use-before-define */
-
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
@@ -84,6 +82,7 @@ function mapSetBuilder(request: Request): any[] {
     for (const reqOp of reqOps) {
         ops.push(craftMapSet(reqOp));
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return ops;
 }
 

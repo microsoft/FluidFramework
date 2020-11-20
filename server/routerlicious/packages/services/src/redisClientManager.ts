@@ -27,12 +27,14 @@ export class ClientManager implements IClientManager {
 
     public async addClient(tenantId: string, documentId: string, clientId: string, details: IClient): Promise<void> {
         const result = await this.addAsync(this.getKey(tenantId, documentId), clientId, JSON.stringify(details));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return result !== "OK" ?
             Promise.reject(result) :
             this.expire(this.getKey(tenantId, documentId), this.expireAfterSeconds);
     }
 
     public async removeClient(tenantId: string, documentId: string, clientId: string): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.removeAsync(this.getKey(tenantId, documentId), clientId);
     }
 

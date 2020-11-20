@@ -119,7 +119,7 @@ import {
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
-import { ISummarizerRuntime, Summarizer } from "./summarizer";
+import { ISummarizerRuntime, ISummarizerInternalsProvider, Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
@@ -268,8 +268,6 @@ export class ScheduleManager {
     private readonly deltaScheduler: DeltaScheduler;
     private pauseSequenceNumber: number | undefined;
     private pauseClientId: string | undefined;
-
-    private paused = false;
     private localPaused = false;
     private batchClientId: string | undefined;
 
@@ -372,19 +370,6 @@ export class ScheduleManager {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public pause(): Promise<void> {
-        this.paused = true;
-        return this.deltaManager.inbound.systemPause();
-    }
-
-    public resume() {
-        this.paused = false;
-        if (!this.localPaused) {
-            this.deltaManager.inbound.systemResume();
-        }
-    }
-
     private setPaused(localPaused: boolean) {
         // Return early if no change in value
         if (this.localPaused === localPaused) {
@@ -392,7 +377,7 @@ export class ScheduleManager {
         }
 
         this.localPaused = localPaused;
-        if (localPaused || this.paused) {
+        if (localPaused) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.deltaManager.inbound.systemPause();
         } else {
@@ -462,7 +447,13 @@ class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
  * It will define the store level mappings.
  */
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
-    implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
+    implements
+        IContainerRuntime,
+        IContainerRuntimeDirtyable,
+        IRuntime,
+        ISummarizerRuntime,
+        ISummarizerInternalsProvider
+{
     public get IContainerRuntime() { return this; }
     public get IContainerRuntimeDirtyable() { return this; }
     public get IFluidRouter() { return this; }
@@ -832,10 +823,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // This will ensure we correctly convert old documents.
         this.summarizer = new Summarizer(
             "/_summarizer",
-            this,
+            this /* ISummarizerRuntime */,
             () => this.summaryConfiguration,
-            async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
-            async (propHandle, ackHandle, refSeq) => this.refreshLatestSummaryAck(propHandle, ackHandle, refSeq),
+            this /* ISummarizerInternalsProvider */,
             this.IFluidHandleContext,
             this.previousState.summaryCollection);
 
@@ -1701,18 +1691,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.getAbsoluteUrl(relativeUrl);
     }
 
-    private async generateSummary(
+    /** Implementation of ISummarizerInternalsProvider.generateSummary */
+    public async generateSummary(
         fullTree: boolean = false,
         safe: boolean = false,
+        summaryLogger: ITelemetryLogger,
     ): Promise<GenerateSummaryData | undefined> {
         const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
         const message =
             `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 
-        this.summarizerNode.startSummary(summaryRefSeqNum);
+        this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
 
         try {
-            await this.scheduleManager.pause();
+            await this.deltaManager.inbound.pause();
 
             const attemptData: Omit<IUnsubmittedSummaryData, "reason"> = {
                 referenceSequenceNumber: summaryRefSeqNum,
@@ -1754,6 +1746,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     undefined,
                     version.id,
                     this.summaryTracker.referenceSequenceNumber,
+                    new ChildLogger(summaryLogger, undefined, { safeSummary: true }),
                     version,
                 );
             }
@@ -1800,7 +1793,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Cleanup wip summary in case of failure
             this.summarizerNode.clearSummary();
             // Restart the delta manager
-            this.scheduleManager.resume();
+            this.deltaManager.inbound.resume();
         }
     }
 
@@ -2121,10 +2114,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    private async refreshLatestSummaryAck(
+    /** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
+    public async refreshLatestSummaryAck(
         proposalHandle: string | undefined,
         ackHandle: string,
         trackerRefSeqNum: number, // back-compat summarizerNode - remove when fully enabled
+        summaryLogger: ITelemetryLogger,
         version?: IVersion,
     ) {
         if (trackerRefSeqNum < this.summaryTracker.referenceSequenceNumber) {
@@ -2137,7 +2132,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summaryTracker.refreshLatestSummary(trackerRefSeqNum);
 
         const getSnapshot = async () => {
-            const perfEvent = PerformanceEvent.start(this.logger, {
+            const perfEvent = PerformanceEvent.start(summaryLogger, {
                 eventName: "RefreshLatestSummaryGetSnapshot",
                 hasVersion: !!version, // expected in this case
             });
@@ -2164,6 +2159,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 proposalHandle,
                 getSnapshot,
                 async <T>(id: string) => readAndParse<T>(this.storage, id),
+                summaryLogger,
             );
         }
 

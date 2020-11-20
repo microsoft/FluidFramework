@@ -40,6 +40,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         maxTime: 5000 * 12,
         maxAckWaitTime: 600000,
     },
+    enableTraces: true,
 };
 
 interface IRoom {
@@ -66,7 +67,7 @@ function getRoomId(room: IRoom) {
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
     // Trace sampling.
-    if (getRandomInt(100) === 0 && message.operation && message.operation.traces) {
+    if (message.operation && message.operation.traces && getRandomInt(100) === 0) {
         message.operation.traces.push(
             {
                 action: "start",

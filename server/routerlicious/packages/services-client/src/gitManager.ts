@@ -114,6 +114,7 @@ export class GitManager implements IGitManager {
      */
     /* eslint-disable @typescript-eslint/promise-function-async */
     public getContent(commit: string, path: string): Promise<resources.IBlob> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.historian.getContent(path, commit);
     }
 

@@ -19,7 +19,7 @@ import {
     MongoManager,
 } from "@fluidframework/server-services-core";
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
-import { FileMode } from "@fluidframework/protocol-definitions";
+import { FileMode, IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
@@ -56,7 +56,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         private readonly collection: ICollection<IDocument>,
         private readonly tenantManager: ITenantManager,
         private readonly forwardProducer: IProducer,
-        private readonly reverseProducer: IProducer) {
+        private readonly reverseProducer: IProducer,
+        private readonly serviceConfiguration: IServiceConfiguration) {
         super();
     }
 
@@ -136,7 +137,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             tenantId,
             documentId,
             newCheckpoint,
-            dbObject,
             // It probably shouldn't take the collection - I can manage that
             this.collection,
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
@@ -144,7 +144,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             this.reverseProducer,
             ClientSequenceTimeout,
             ActivityCheckingTimeout,
-            NoopConsolidationTimeout);
+            NoopConsolidationTimeout,
+            this.serviceConfiguration);
     }
 
     public async dispose(): Promise<void> {
