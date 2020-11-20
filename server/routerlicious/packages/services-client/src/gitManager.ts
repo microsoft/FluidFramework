@@ -261,7 +261,7 @@ export class GitManager implements IGitManager {
                     break;
 
                 default:
-                    return Promise.reject("Unknown entry type");
+                    return Promise.reject(new Error("Unknown entry type"));
             }
             /* eslint-enable no-case-declarations */
         }
