@@ -135,14 +135,6 @@ export function toLatestVersion(
     chunk: VersionedMergeTreeChunk,
     logger: ITelemetryLogger,
     options: PropertySet | undefined): MergeTreeChunkV1 {
-    if (chunk.version !== "1") {
-        logger.send({
-            eventName: "MergeTreeChunk:toLatestVersion",
-            category: "generic",
-            fromChunkVersion: chunk.version,
-            toChunkVersion: "1",
-        });
-    }
     switch (chunk.version) {
         case undefined: {
             const chunkLegacy = chunk as MergeTreeChunkLegacy;
