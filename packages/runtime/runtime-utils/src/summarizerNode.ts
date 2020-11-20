@@ -45,7 +45,7 @@ async function seqFromTree(
 }
 
 /** Path for nodes in a tree with escaped special characters */
-class EscapedPath {
+export class EscapedPath {
     private constructor(public readonly path: string) { }
     public static create(path: string): EscapedPath {
         return new EscapedPath(encodeURIComponent(path));
