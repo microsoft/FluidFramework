@@ -44,17 +44,9 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
         const requestParser = RequestParser.create({ url: request.url });
         const itemId = requestParser.pathParts[0];
         if (itemId === "bigBlobs") {
-            let value = this.root.get<string>(url);
+            const value = this.root.get<string>(requestParser.pathParts.join("/"));
             if (value === undefined) {
-                const value2 = this.root.get<string>(url.slice(1));
-                if (value2 === undefined) {
-                    return { mimeType: "text/plain", status: 404, value: `request ${url} not found` };
-                }
-                else {
-                    this.root.set(url.slice(1),value2);
-                    this.root.delete(url);
-                    value = value2;
-                }
+                return { mimeType: "text/plain", status: 404, value: `request ${url} not found` };
             }
             return { mimeType: "fluid/object", status: 200, value };
         } else {

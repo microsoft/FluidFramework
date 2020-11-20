@@ -65,7 +65,6 @@ describe("defaultRouteRequestHandler", () => {
         const handler = defaultRouteRequestHandler("objectId");
 
         const requestParser = RequestParser.create({ url: "", headers: {} });
-        console.log(requestParser);
         const response = await handler(requestParser, runtime);
         assert(response);
         assert.equal(response.status, 200);
