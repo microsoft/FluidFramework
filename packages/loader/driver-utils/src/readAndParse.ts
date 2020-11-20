@@ -41,6 +41,10 @@ export async function readWithRetry<T>(api: () => Promise<T>): Promise<T> {
     try {
         result = await api();
     } catch (error) {
+        // If it is not retriable, then just throw the error.
+        if (typeof error !== "object" || error.canRetry !== true) {
+            throw error;
+        }
         let retryAfter = 0;
         // If the error is throttling error, then wait for the specified time before retrying.
         // eslint-disable-next-line no-null/no-null
