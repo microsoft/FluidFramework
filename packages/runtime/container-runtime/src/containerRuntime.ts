@@ -77,6 +77,7 @@ import {
     FlushMode,
     IAttachMessage,
     InboundAttachMessage,
+    IGraphNode,
     IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
@@ -85,7 +86,6 @@ import {
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedFluidDataStoreRegistryEntries,
-    ISummaryTreeWithStats,
     ISummaryStats,
     ISummarizeInternalResult,
     SummarizeInternalFn,
@@ -94,17 +94,19 @@ import {
     IAgentScheduler,
     ITaskManager,
     ISummarizeResult,
+    IChannelSummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
     SummaryTracker,
     SummaryTreeBuilder,
-    SummarizerNode,
+    SummarizerNodeWithGC,
     convertSummaryTreeToITree,
     convertToSummaryTree,
     RequestParser,
     requestFluidObject,
     convertSnapshotTreeToSummaryTree,
+    normalizeAndPrefixGCNodeIds,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import {
@@ -604,7 +606,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // back-compat: summarizerNode - remove all summary trackers
     private readonly summaryTracker: SummaryTracker;
 
-    private readonly summarizerNode: SummarizerNode;
+    private readonly summarizerNode: SummarizerNodeWithGC;
     private readonly notBoundContexts = new Set<string>();
     // 0.24 back-compat attachingBeforeSummary
     private readonly attachOpFiredForDataStore = new Set<string>();
@@ -699,10 +701,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
-        this.summarizerNode = SummarizerNode.createRoot(
+        this.summarizerNode = SummarizerNodeWithGC.createRoot(
             this.logger,
             // Summarize function to call when summarize is called. Summarizer node always tracks summary state.
-            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */),
+            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState),
             // Latest change sequence number, no changes since summary applied yet
             loadedFromSequenceNumber,
             // Summary reference sequence number, undefined if no summary yet
@@ -1472,35 +1474,82 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
+     * Updates the garbage collection nodes of this node's children:
+     * - Prefixs the child's id to the id of each node returned by the child.
+     * @param childGCNodes - The child's garabage collection nodes.
+     * @param childId - The id of the child node.
+     * @returns the updated GC nodes of the child.
+     */
+    private updateChildGCNodes(childGCNodes: IGraphNode[], childId: string): IGraphNode[] {
+        // Normalize the child's nodes and prefix the child's id to the ids of GC nodes returned by it.
+        // This gradually builds the id of each node to be a path from the root.
+        normalizeAndPrefixGCNodeIds(childGCNodes, childId);
+        return childGCNodes;
+    }
+
+    /**
+     * @returns this channel's garbage collection node.
+     */
+    private getGCNode(): IGraphNode {
+        /**
+         * Get the outbound routes of this channel. This will be updated to only consider root data stores
+         * as referenced and hence outbound.
+         */
+        const outboundRoutes: string[] = [];
+        for (const [contextId] of this.contexts) {
+            outboundRoutes.push(`/${contextId}`);
+        }
+
+        return {
+            id: "/",
+            outboundRoutes,
+        };
+    }
+
+    /**
      * Returns a summary of the runtime at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
      */
-    private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
-        // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
-        // the summary. Else, get the summary tree directly.
-        return trackState
-            ? await this.summarizerNode.summarize(fullTree) as ISummaryTreeWithStats
-            : await this.summarizeInternal(fullTree, false /* trackState */) as ISummaryTreeWithStats;
+    private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
+        const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
+        assert(summarizeResult.summary.type === SummaryType.Tree,
+            "Container Runtime's summarize should always return a tree");
+        return summarizeResult as IChannelSummarizeResult;
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+        // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
+        // channel contexts.
+        let gcNodes: IGraphNode[] = [ this.getGCNode() ];
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
-            .filter(([_, value]) => {
+            .filter(([_, context]) => {
                 // Summarizer works only with clients with no local changes!
-                assert(value.attachState !== AttachState.Attaching);
-                return value.attachState === AttachState.Attached;
-            }).map(async ([key, value]) => {
-                const contextSummary = await value.summarize(fullTree, trackState);
-                builder.addWithStats(key, contextSummary);
+                assert(context.attachState !== AttachState.Attaching);
+                return context.attachState === AttachState.Attached;
+            }).map(async ([contextId, context]) => {
+                const contextSummary = await context.summarize(fullTree, trackState);
+                builder.addWithStats(contextId, contextSummary);
+
+                // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
+                if (contextSummary.gcNodes === undefined) {
+                    contextSummary.gcNodes = [];
+                }
+
+                // Update and add the child context's GC nodes to the main list.
+                gcNodes = gcNodes.concat(this.updateChildGCNodes(contextSummary.gcNodes, contextId));
             }));
 
         this.serializeContainerBlobs(builder);
         const summary = builder.getSummaryTree();
-        return { ...summary, id: "" };
+        return {
+            ...summary,
+            id: "",
+            gcNodes,
+        };
     }
 
     private processAttachMessage(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {

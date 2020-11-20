@@ -14,9 +14,8 @@ import {
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
-    ISummarizeResult,
+    IContextSummarizeResult,
     IFluidDataStoreContext,
-    ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
@@ -127,12 +126,12 @@ export class LocalChannelContext implements IChannelContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummarizeResult> {
+    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<IContextSummarizeResult> {
         assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to summarize");
         return summarizeChannel(this.channel, fullTree, trackState);
     }
 
-    public getAttachSummary(): ISummaryTreeWithStats {
+    public getAttachSummary(): IContextSummarizeResult {
         assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to take snapshot");
         return summarizeChannel(this.channel, true /* fullTree */, false /* trackState */);
     }

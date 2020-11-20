@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { IChannel } from "@fluidframework/datastore-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { IChannelSummarizeResult, IContextSummarizeResult } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
@@ -20,7 +20,7 @@ export interface IChannelContext {
 
     processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
 
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummarizeResult>;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 }
@@ -51,9 +51,12 @@ export function summarizeChannel(
     channel: IChannel,
     fullTree: boolean = false,
     trackState: boolean = false,
-): ISummaryTreeWithStats {
+): IChannelSummarizeResult {
     const summarizeResult = channel.summarize(fullTree, trackState);
-    // Add the channel attributes to the returned tree
+    // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
-    return summarizeResult;
+    return {
+        ...summarizeResult,
+        gcNodes: [],
+    };
 }
