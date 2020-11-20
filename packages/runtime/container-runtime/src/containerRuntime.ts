@@ -978,6 +978,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             const dataStore = await this.getDataStore(id, wait);
             const subRequest = requestParser.createSubRequest(1);
+            subRequest.url = subRequest.url.slice(1);
             return dataStore.IFluidRouter.request(subRequest);
         }
 

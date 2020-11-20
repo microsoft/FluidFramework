@@ -144,7 +144,7 @@ describe("Routerlicious", () => {
                 assert(response, "Response returned");
                 assert(response?.status === 200, "Returned 200 Status Code");
                 assert(response?.value === service1, "Returned expected service");
-                assert((response?.value as ContainerServiceMock).route === "sub1", "sub-route persisted");
+                assert((response?.value as ContainerServiceMock).route === "/sub1", "sub-route persisted");
             });
         });
     });
