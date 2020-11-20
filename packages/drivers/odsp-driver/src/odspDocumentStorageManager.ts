@@ -101,6 +101,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     // Save the timeout so we can cancel and reschedule it as needed
     private blobCacheTimeout: ReturnType<typeof setTimeout> | undefined;
+    // If the defer flag is set when the timeout fires, we'll reschedule rather than clear immediately
+    private deferBlobCacheClear: boolean = false;
 
     private readonly attributesBlobHandles: Set<string> = new Set();
 
@@ -784,14 +786,28 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     /**
-     * Stop the current timer for clearing the blob cache (if any) and schedule a new one
+     * Schedule a timer for clearing the blob cache or defer the current one.
      */
     private scheduleClearBlobsCache() {
         const blobCacheTimeoutDuration = 10000;
+        // When the timer runs out, decide whether to proceed with the cache clear or reset the timer
+        const clearCacheOrDefer = () => {
+            this.blobCacheTimeout = undefined;
+            if (this.deferBlobCacheClear) {
+                this.deferBlobCacheClear = false;
+                this.scheduleClearBlobsCache();
+            } else {
+                this.blobCache.clear();
+            }
+        };
+
         if (this.blobCacheTimeout !== undefined) {
-            clearTimeout(this.blobCacheTimeout);
+            // If we already have an outstanding timer, just signal that we should defer the clear
+            this.deferBlobCacheClear = true;
+        } else {
+            // If we don't have an outstanding timer, schedule a clear
+            this.blobCacheTimeout = setTimeout(clearCacheOrDefer, blobCacheTimeoutDuration);
         }
-        this.blobCacheTimeout = setTimeout(() => { this.blobCache.clear(); }, blobCacheTimeoutDuration);
     }
 
     private checkSnapshotUrl() {
