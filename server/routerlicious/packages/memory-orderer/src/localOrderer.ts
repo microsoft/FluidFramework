@@ -92,7 +92,6 @@ export class LocalOrderer implements IOrderer {
         taskMessageSender: ITaskMessageSender,
         tenantManager: ITenantManager,
         permission: any,
-        maxMessageSize: number,
         tokenGenerator: TokenGenerator,
         logger: ILogger,
         gitManager?: IGitManager,
@@ -121,7 +120,6 @@ export class LocalOrderer implements IOrderer {
             tenantManager,
             gitManager,
             permission,
-            maxMessageSize,
             tokenGenerator,
             pubSub,
             broadcasterContext,
@@ -154,7 +152,6 @@ export class LocalOrderer implements IOrderer {
         private readonly tenantManager: ITenantManager,
         private readonly gitManager: IGitManager | undefined,
         private readonly permission: any,
-        private readonly maxMessageSize: number,
         private readonly foremanTokenGenrator: TokenGenerator,
         private readonly pubSub: IPubSub,
         private readonly broadcasterContext: IContext,
@@ -198,7 +195,6 @@ export class LocalOrderer implements IOrderer {
             this.documentId,
             clientId,
             client,
-            this.maxMessageSize,
             this.serviceConfiguration);
 
         // Document is now existing regardless of the original value

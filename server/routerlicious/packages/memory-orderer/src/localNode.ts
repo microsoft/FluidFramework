@@ -269,7 +269,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             this.taskMessageSender,
             this.tenantManager,
             this.permission,
-            this.maxMessageSize,
             this.tokenGenerator,
             this.logger);
         assert(!this.orderMap.has(fullId));

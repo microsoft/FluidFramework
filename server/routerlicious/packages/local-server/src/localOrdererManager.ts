@@ -26,7 +26,6 @@ export class LocalOrdererManager implements IOrdererManager {
         private readonly tenantManager: ITenantManager,
         private readonly taskMessageSender: ITaskMessageSender,
         private readonly permission: any, // Can probably remove
-        private readonly maxMessageSize: number,
         private readonly tokenGenerator: TokenGenerator,
         private readonly createHistorian: (tenant: string) => Promise<IHistorian>,
         private readonly logger: ILogger,
@@ -73,7 +72,6 @@ export class LocalOrdererManager implements IOrdererManager {
             this.taskMessageSender,
             this.tenantManager,
             this.permission,
-            this.maxMessageSize,
             this.tokenGenerator,
             this.logger,
             gitManager,
