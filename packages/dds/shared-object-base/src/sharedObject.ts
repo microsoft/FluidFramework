@@ -83,6 +83,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     protected get serializer(): IFluidSerializer {
+        /**
+         * During summarize, the SummarySerializer keeps track of IFluidHandles that are serialized. These handles
+         * represent references to other Fluid objects and are used for garbage collection.
+         *
+         * This is fine for now. However, if we implement delay loading in DDss, they may load and de-serialize content
+         * in summarize. When that happens, they may incorrectly hit this assert and we will have to change this.
+         */
         assert(!this._isSummarizing, "SummarySerializer should be used for serializing data during summary.");
         return this._serializer;
     }

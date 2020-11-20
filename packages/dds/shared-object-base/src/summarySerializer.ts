@@ -10,13 +10,13 @@ import { FluidSerializer } from "@fluidframework/runtime-utils";
  * Serializer implementation for serializing handles during summary.
  */
 export class SummarySerializer extends FluidSerializer {
-    private readonly _serializedRoutes: Set<string> = new Set();
-    public get serializedRoutes(): string[] {
-        return Array.from(this._serializedRoutes);
+    private readonly serializedRoutes: Set<string> = new Set();
+    public getSerializedRoutes(): string[] {
+        return Array.from(this.serializedRoutes);
     }
 
     protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle) {
-        this._serializedRoutes.add(handle.absolutePath);
+        this.serializedRoutes.add(handle.absolutePath);
         return super.serializeHandle(handle, bind);
     }
 }
