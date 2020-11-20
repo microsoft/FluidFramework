@@ -131,6 +131,9 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
         return this.storage.read(blobId);
     }
 
+    /**
+     * {@inheritDoc IDocumentStorageService.readString}
+     */
     public async readString(blobId: string): Promise<string> {
         return this.storage.readString(blobId);
     }

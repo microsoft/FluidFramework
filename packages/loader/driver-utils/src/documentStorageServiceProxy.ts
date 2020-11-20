@@ -36,6 +36,9 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.internalStorageService.read(blobId);
     }
 
+    /**
+     * {@inheritDoc IDocumentStorageService.readString}
+     */
     public async readString(blobId: string): Promise<string> {
         const base64Result = await this.read(blobId);
         return fromBase64ToUtf8(base64Result);

@@ -224,8 +224,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return this.readWithEncodingOutput(blobid, "base64");
     }
 
+    /**
+     * {@inheritDoc IDocumentStorageService.readString}
+     */
     public async readString(blobid: string): Promise<string> {
-        return this.readWithEncodingOutput(blobid, "utf8");
+        return this.readWithEncodingOutput(blobid, "string");
     }
 
     private async readWithEncodingOutput(blobid: string, outputFormat: string) {

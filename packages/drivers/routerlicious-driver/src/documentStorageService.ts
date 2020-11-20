@@ -64,6 +64,9 @@ export class DocumentStorageService implements IDocumentStorageService {
         return value.content;
     }
 
+    /**
+     * {@inheritDoc IDocumentStorageService.readString}
+     */
     public async readString(blobId: string): Promise<string> {
         const base64Result = await this.read(blobId);
         return fromBase64ToUtf8(base64Result);
