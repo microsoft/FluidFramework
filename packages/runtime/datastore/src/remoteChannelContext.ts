@@ -18,15 +18,14 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import {
-    IFluidDataStoreContext,
-    ISummaryTracker,
-    ISummarizeResult,
-    ISummarizerNode,
     CreateChildSummarizerNodeFn,
+    IFluidDataStoreContext,
     ISummarizeInternalResult,
+    ISummarizerNode,
+    ISummarizeResult,
+    ISummaryTracker,
 } from "@fluidframework/runtime-definitions";
-import { convertToSummaryTree } from "@fluidframework/runtime-utils";
-import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
+import { createServiceEndpoints, IChannelContext, summarizeChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
 import { debug } from "./debug";
@@ -123,9 +122,8 @@ export class RemoteChannelContext implements IChannelContext {
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const channel = await this.getChannel();
-        const snapshotTree = snapshotChannel(channel);
-        const summaryResult = convertToSummaryTree(snapshotTree, fullTree);
-        return { ...summaryResult, id: this.id };
+        const summarizeResult = summarizeChannel(channel, fullTree, trackState);
+        return { ...summarizeResult, id: this.id };
     }
 
     private async loadChannel(): Promise<IChannel> {

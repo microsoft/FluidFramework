@@ -4,7 +4,7 @@
  */
 
 import { assert , fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
-
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -128,12 +128,12 @@ export class ConsensusOrderedCollection<T = any>
      * Add a value to the consensus collection.
      */
     public async add(value: T): Promise<void> {
-        const valueSer = this.serializeValue(value);
+        const valueSer = this.serializeValue(value, this.serializer);
 
         if (!this.isAttached()) {
             // For the case where this is not attached yet, explicitly JSON
             // clone the value to match the behavior of going thru the wire.
-            const addValue = this.deserializeValue(valueSer) as T;
+            const addValue = this.deserializeValue(valueSer, this.serializer) as T;
             this.addCore(addValue);
             return;
         }
@@ -184,7 +184,7 @@ export class ConsensusOrderedCollection<T = any>
         } while (!(await this.acquire(callback)));
     }
 
-    public snapshot(): ITree {
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
         // If we are transitioning from unattached to attached mode,
         // then we are losing all checked out work!
         this.removeClient(idForLocalUnattachedClient);
@@ -196,7 +196,7 @@ export class ConsensusOrderedCollection<T = any>
                     path: snapshotFileNameData,
                     type: TreeEntry.Blob,
                     value: {
-                        contents: this.serializeValue(this.data.asArray()),
+                        contents: this.serializeValue(this.data.asArray(), serializer),
                         encoding: "utf-8",
                     },
                 },
@@ -210,10 +210,11 @@ export class ConsensusOrderedCollection<T = any>
             path: snapshotFileNameTracking,
             type: TreeEntry.Blob,
             value: {
-                contents: this.serializeValue(Array.from(this.jobTracking.entries())),
+                contents: this.serializeValue(Array.from(this.jobTracking.entries()), serializer),
                 encoding: "utf-8",
             },
         });
+
         return tree;
     }
 
@@ -279,14 +280,14 @@ export class ConsensusOrderedCollection<T = any>
         assert(this.jobTracking.size === 0);
         const rawContentTracking = await storage.read(snapshotFileNameTracking);
         if (rawContentTracking !== undefined) {
-            const content = this.deserializeValue(fromBase64ToUtf8(rawContentTracking));
+            const content = this.deserializeValue(fromBase64ToUtf8(rawContentTracking), this.serializer);
             this.jobTracking = new Map(content) as JobTrackingInfo<T>;
         }
 
         assert(this.data.size() === 0);
         const rawContentData = await storage.read(snapshotFileNameData);
         if (rawContentData !== undefined) {
-            const content = this.deserializeValue(fromBase64ToUtf8(rawContentData)) as T[];
+            const content = this.deserializeValue(fromBase64ToUtf8(rawContentData), this.serializer) as T[];
             this.data.loadFrom(content);
         }
     }
@@ -309,7 +310,7 @@ export class ConsensusOrderedCollection<T = any>
             let value: IConsensusOrderedCollectionValue<T> | undefined;
             switch (op.opName) {
                 case "add":
-                    this.addCore(this.deserializeValue(op.value) as T);
+                    this.addCore(this.deserializeValue(op.value, this.serializer) as T);
                     break;
 
                 case "acquire":
@@ -395,12 +396,12 @@ export class ConsensusOrderedCollection<T = any>
         added.map((value) => this.emit("add", value, false /* newlyAdded */));
     }
 
-    private serializeValue(value) {
-        return this.runtime.IFluidSerializer.stringify(value, this.handle);
+    private serializeValue(value, serializer: IFluidSerializer) {
+        return serializer.stringify(value, this.handle);
     }
 
-    private deserializeValue(content: string) {
+    private deserializeValue(content: string, serializer: IFluidSerializer) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.runtime.IFluidSerializer.parse(content);
+        return serializer.parse(content);
     }
 }

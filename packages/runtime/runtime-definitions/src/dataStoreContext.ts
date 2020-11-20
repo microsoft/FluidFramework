@@ -31,7 +31,12 @@ import {
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
 import { IInboundSignalMessage } from "./protocol";
-import { ISummaryTreeWithStats, ISummarizerNode, SummarizeInternalFn, CreateChildSummarizerNodeParam } from "./summary";
+import {
+    CreateChildSummarizerNodeParam,
+    ISummarizerNode,
+    ISummaryTreeWithStats,
+    SummarizeInternalFn,
+} from "./summary";
 import { ITaskManager } from "./agent";
 
 /**
@@ -168,7 +173,7 @@ export interface IFluidDataStoreChannel extends
     /**
      * Retrieves the summary used as part of the initial summary message
      */
-    getAttachSummary(): ISummaryTreeWithStats
+    getAttachSummary(): ISummaryTreeWithStats;
 
     /**
      * Processes the op.

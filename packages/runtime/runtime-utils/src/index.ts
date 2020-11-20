@@ -11,5 +11,6 @@ export * from "./summaryUtils";
 export * from "./utils";
 export * from "./objectstoragepartition";
 export * from "./objectstorageutils";
+export * from "./remoteFluidObjectHandle";
 export * from "./requestParser";
 export * from "./dataStoreHelpers";

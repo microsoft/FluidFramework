@@ -32,21 +32,21 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
+    CreateChildSummarizerNodeFn,
+    CreateChildSummarizerNodeParam,
     FluidDataStoreRegistryEntry,
-    IFluidDataStoreChannel,
     IAttachMessage,
+    IFluidDataStoreChannel,
     IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
+    IFluidDataStoreContextEvents,
     IFluidDataStoreRegistry,
     IInboundSignalMessage,
-    ISummarizeResult,
-    ISummarizerNode,
-    ISummarizeInternalResult,
-    CreateChildSummarizerNodeFn,
-    SummarizeInternalFn,
-    CreateChildSummarizerNodeParam,
     IProvideFluidDataStoreFactory,
-    IFluidDataStoreContextEvents,
+    ISummarizeInternalResult,
+    ISummarizerNode,
+    ISummarizeResult,
+    SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
@@ -385,8 +385,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const channel = this.channel!;
-        const summary = await channel.summarize(fullTree, trackState);
+        const summary = await this.channel!.summarize(fullTree, trackState);
         const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
         addBlobToSummary(summary, attributesBlobKey, JSON.stringify(attributes));
         return { ...summary, id: this.id };
