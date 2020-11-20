@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import process from "process";
 import { assert } from "@fluidframework/common-utils";
 
 export class RateLimiter {
@@ -40,7 +39,8 @@ export class RateLimiter {
                 });
             };
             this.tasks.push(task);
-            process.nextTick(this.sched.bind(this));
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            Promise.resolve().then(async () => this.sched());
         });
     }
 
