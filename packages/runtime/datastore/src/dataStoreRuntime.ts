@@ -571,20 +571,20 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * Updates the garbage collection nodes of this node's children:
      * - Prefixs the child's id to the id of each node returned by the child.
      * - Adds a back route to self to the outbound routes of each child.
-     * @param chilGCNodes - The child's garabage collection nodes.
+     * @param childGCNodes - The child's garabage collection nodes.
      * @param childId - The id of the child node.
      * @returns the updated GC nodes of the child.
      */
-    private updateChildGCNodes(chilGCNodes: IGraphNode[], childId: string): IGraphNode[] {
+    private updateChildGCNodes(childGCNodes: IGraphNode[], childId: string): IGraphNode[] {
         // Normalize the child's nodes and prefix the child's id to the ids of GC nodes returned by it.
         // This gradually builds the id of each node to be a path from the root.
-        normalizeAndPrefixGCNodeIds(chilGCNodes, childId);
+        normalizeAndPrefixGCNodeIds(childGCNodes, childId);
 
         // Add a back route to self in each child's outbound routes. If any child is referenced, then its parent
         // should be considered referenced as well.
-        addRouteToAllGCNodes(chilGCNodes, this.absolutePath);
+        addRouteToAllGCNodes(childGCNodes, this.absolutePath);
 
-        return chilGCNodes;
+        return childGCNodes;
     }
 
     /**

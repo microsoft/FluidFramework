@@ -1475,15 +1475,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * Updates the garbage collection nodes of this node's children:
      * - Prefixs the child's id to the id of each node returned by the child.
-     * @param chilGCNodes - The child's garabage collection nodes.
+     * @param childGCNodes - The child's garabage collection nodes.
      * @param childId - The id of the child node.
      * @returns the updated GC nodes of the child.
      */
-    private updateChildGCNodes(chilGCNodes: IGraphNode[], childId: string): IGraphNode[] {
+    private updateChildGCNodes(childGCNodes: IGraphNode[], childId: string): IGraphNode[] {
         // Normalize the child's nodes and prefix the child's id to the ids of GC nodes returned by it.
         // This gradually builds the id of each node to be a path from the root.
-        normalizeAndPrefixGCNodeIds(chilGCNodes, childId);
-        return chilGCNodes;
+        normalizeAndPrefixGCNodeIds(childGCNodes, childId);
+        return childGCNodes;
     }
 
     /**
@@ -1541,10 +1541,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Update and add the child context's GC nodes to the main list.
                 gcNodes.push(...this.updateChildGCNodes(contextSummary.gcNodes, contextId));
             }));
-
-        for (const node of gcNodes) {
-            console.log(`id: ${node.id}. Routes: ${node.outboundRoutes}`);
-        }
 
         this.serializeContainerBlobs(builder);
         const summary = builder.getSummaryTree();
