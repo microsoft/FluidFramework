@@ -27,6 +27,7 @@ import {
     ISummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
+    IGraphNode,
 } from "@fluidframework/runtime-definitions";
 import uuid from "uuid";
 import { IDisposable, ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -35,8 +36,9 @@ import {
     convertSnapshotTreeToSummaryTree,
     convertSummaryTreeToITree,
     convertToSummaryTree,
+    normalizeAndPrefixGCNodeIds,
     RequestParser,
-    SummarizerNode,
+    SummarizerNodeWithGC,
     SummaryTracker,
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
@@ -75,7 +77,7 @@ export class SharedDataStores implements IDisposable, IFluidRouter, IProvideFlui
         private readonly submitFn: (type: ContainerMessageType, content: any) => void,
         private readonly registry: IFluidDataStoreRegistry,
         private readonly summaryTracker: SummaryTracker,
-        private readonly summarizerNode: SummarizerNode,
+        private readonly summarizerNode: SummarizerNodeWithGC,
         baseLogger: ITelemetryBaseLogger) {
         this._logger = ChildLogger.create(baseLogger, "DataStore");
 
@@ -420,17 +422,61 @@ export class SharedDataStores implements IDisposable, IFluidRouter, IProvideFlui
     public async summarizeInternal(
         builder: SummaryTreeBuilder,
         fullTree: boolean,
-        trackState: boolean) {
+        trackState: boolean): Promise<IGraphNode[]> {
+        const gcNodes: IGraphNode[] = [ this.getGCNode() ];
         // Iterate over each store and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
-            .filter(([_, value]) => {
+            .filter(([_, context]) => {
                 // Summarizer works only with clients with no local changes!
-                assert(value.attachState !== AttachState.Attaching);
-                return value.attachState === AttachState.Attached;
-            }).map(async ([key, value]) => {
-                const contextSummary = await value.summarize(fullTree, trackState);
-                builder.addWithStats(key, contextSummary);
+                assert(context.attachState !== AttachState.Attaching);
+                return context.attachState === AttachState.Attached;
+            }).map(async ([contextId, context]) => {
+                const contextSummary = await context.summarize(fullTree, trackState);
+                builder.addWithStats(contextId, contextSummary);
+
+                // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
+                if (contextSummary.gcNodes === undefined) {
+                    contextSummary.gcNodes = [];
+                }
+
+                // Update and add the child context's GC nodes to the main list.
+               gcNodes.push(... this.updateChildGCNodes(contextSummary.gcNodes, contextId));
             }));
+
+        return gcNodes;
+    }
+
+    /**
+     * Updates the garbage collection nodes of this node's children:
+     * - Prefixes the child's id to the id of each node returned by the child.
+     * @param childGCNodes - The child's garbage collection nodes.
+     * @param childId - The id of the child node.
+     * @returns the updated GC nodes of the child.
+     */
+    private updateChildGCNodes(childGCNodes: IGraphNode[], childId: string): IGraphNode[] {
+        // Normalize the child's nodes and prefix the child's id to the ids of GC nodes returned by it.
+        // This gradually builds the id of each node to be a path from the root.
+        normalizeAndPrefixGCNodeIds(childGCNodes, childId);
+        return childGCNodes;
+    }
+
+    /**
+     * @returns this channel's garbage collection node.
+     */
+    private getGCNode(): IGraphNode {
+        /**
+         * Get the outbound routes of this channel. This will be updated to only consider root data stores
+         * as referenced and hence outbound.
+         */
+        const outboundRoutes: string[] = [];
+        for (const [contextId] of this.contexts) {
+            outboundRoutes.push(`/${contextId}`);
+        }
+
+        return {
+            id: "/",
+            outboundRoutes,
+        };
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {

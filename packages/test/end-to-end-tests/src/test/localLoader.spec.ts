@@ -150,8 +150,8 @@ describe("LocalLoader", () => {
             assert(dataObject1 !== dataObject2, "Each container must return a separate TestDataObject instance.");
 
             opProcessingController.addDeltaManagers(
-                dataObject1.runtime.deltaManager,
-                dataObject2.runtime.deltaManager);
+                container1.deltaManager,
+                container2.deltaManager);
 
             dataObject1.increment();
             assert.equal(dataObject1.value, 1, "Local update by 'dataObject1' must be promptly observable");
@@ -181,8 +181,8 @@ describe("LocalLoader", () => {
             assert(dataObject1 !== dataObject2, "Each container must return a separate TestDataObject instance.");
 
             opProcessingController.addDeltaManagers(
-                dataObject1.runtime.deltaManager,
-                dataObject2.runtime.deltaManager);
+                container1.deltaManager,
+                container2.deltaManager);
 
             await opProcessingController.process();
             assert.equal(
@@ -242,8 +242,8 @@ describe("LocalLoader", () => {
                 text2 = await dataObject2.getSharedObject<SharedString>("text");
 
                 opProcessingController.addDeltaManagers(
-                    dataObject1.runtime.deltaManager,
-                    dataObject2.runtime.deltaManager);
+                    container1.deltaManager,
+                    container2.deltaManager);
             });
 
             it("edits propagate", async () => {
@@ -264,6 +264,8 @@ describe("LocalLoader", () => {
         });
 
         describe("Controlling dataObject coauth via OpProcessingController", () => {
+            let container1: IContainer;
+            let container2: IContainer;
             let dataObject1: TestDataObject;
             let dataObject2: TestDataObject;
 
@@ -271,18 +273,18 @@ describe("LocalLoader", () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
                 urlResolver = new LocalResolver();
 
-                const container1 = await createContainer(testDataObjectFactory);
+                container1 = await createContainer(testDataObjectFactory);
                 dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
-                const container2 = await loadContainer(testDataObjectFactory);
+                container2 = await loadContainer(testDataObjectFactory);
                 dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
             });
 
             it("Controlled inbounds and outbounds", async () => {
                 opProcessingController = new OpProcessingController(deltaConnectionServer);
                 opProcessingController.addDeltaManagers(
-                    dataObject1.runtime.deltaManager,
-                    dataObject2.runtime.deltaManager);
+                    container1.deltaManager,
+                    container2.deltaManager);
 
                 await opProcessingController.pauseProcessing();
 
@@ -291,11 +293,11 @@ describe("LocalLoader", () => {
                 assert.equal(dataObject2.value, 0,
                     "Expected user 2 NOT to see the increment due to pauseProcessing call");
 
-                await opProcessingController.process(dataObject1.runtime.deltaManager);
+                await opProcessingController.process(container1.deltaManager);
                 assert.equal(dataObject2.value, 0,
                     "Expected user 2 NOT to see the increment due to no processIncoming call yet");
 
-                await opProcessingController.processIncoming(dataObject2.runtime.deltaManager);
+                await opProcessingController.processIncoming(container2.deltaManager);
                 assert.equal(dataObject2.value, 1, "Expected user 2 to see the increment now");
 
                 dataObject2.increment();
@@ -303,11 +305,11 @@ describe("LocalLoader", () => {
                 assert.equal(dataObject1.value, 1,
                     "Expected user 1 NOT to see the increment due to pauseProcessing call");
 
-                await opProcessingController.processOutgoing(dataObject2.runtime.deltaManager);
+                await opProcessingController.processOutgoing(container2.deltaManager);
                 assert.equal(dataObject1.value, 1,
                     "Expected user 1 NOT to see the increment due to no processIncoming call yet");
 
-                await opProcessingController.processIncoming(dataObject1.runtime.deltaManager);
+                await opProcessingController.processIncoming(container1.deltaManager);
                 assert.equal(dataObject1.value, 2, "Expected user 1 to see the increment now");
             });
 

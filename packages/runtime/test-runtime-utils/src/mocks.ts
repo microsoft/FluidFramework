@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { assert ,
-    Deferred,
+import {
+    assert,
     fromUtf8ToBase64,
 } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -44,7 +44,10 @@ import {
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
 import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
-import { IFluidDataStoreChannel, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import {
+    IChannelSummarizeResult,
+    IFluidDataStoreChannel,
+} from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 
@@ -383,7 +386,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public deltaManager = new MockDeltaManager();
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
-    private readonly activeDeferred = new Deferred<void>();
     public readonly quorum = new MockQuorum();
 
     public get absolutePath() {
@@ -406,10 +408,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public dispose(): void {
         this._disposed = true;
-    }
-
-    public get active(): Promise<void> {
-        return this.activeDeferred.promise;
     }
 
     public async getChannel(id: string): Promise<IChannel> {
@@ -499,7 +497,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
-    public async summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats> {
+    public async summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult> {
         const stats = mergeStats();
         stats.treeNodeCount++;
         return {
@@ -508,6 +506,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
                 tree: {},
             },
             stats,
+            gcNodes: [],
         };
     }
 
@@ -515,7 +514,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return [];
     }
 
-    public getAttachSummary(): ISummaryTreeWithStats {
+    public getAttachSummary(): IChannelSummarizeResult {
         const stats = mergeStats();
         stats.treeNodeCount++;
         return {
@@ -524,6 +523,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
                 tree: {},
             },
             stats,
+            gcNodes: [],
         };
     }
 

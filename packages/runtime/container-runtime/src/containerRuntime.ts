@@ -68,29 +68,31 @@ import {
     ITree,
     MessageType,
     IVersion,
+    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
     InboundAttachMessage,
+    IGraphNode,
+    IFluidDataStoreContext,
+    IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedFluidDataStoreRegistryEntries,
-    ISummaryTreeWithStats,
     ISummaryStats,
     ISummarizeInternalResult,
     IAgentScheduler,
     ITaskManager,
-    IFluidDataStoreContextDetached,
+    IChannelSummarizeResult,
     IFluidDataStoreChannel,
-    IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
     SummaryTracker,
     SummaryTreeBuilder,
-    SummarizerNode,
+    SummarizerNodeWithGC,
     convertToSummaryTree,
     RequestParser,
     requestFluidObject,
@@ -585,7 +587,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // back-compat: summarizerNode - remove all summary trackers
     private readonly summaryTracker: SummaryTracker;
 
-    private readonly summarizerNode: SummarizerNode;
+    private readonly summarizerNode: SummarizerNodeWithGC;
 
     private tasks: string[] = [];
 
@@ -671,10 +673,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
-        this.summarizerNode = SummarizerNode.createRoot(
+        this.summarizerNode = SummarizerNodeWithGC.createRoot(
             this.logger,
             // Summarize function to call when summarize is called. Summarizer node always tracks summary state.
-            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */),
+            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState),
             // Latest change sequence number, no changes since summary applied yet
             loadedFromSequenceNumber,
             // Summary reference sequence number, undefined if no summary yet
@@ -1252,23 +1254,28 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
      */
-    private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
-        // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
-        // the summary. Else, get the summary tree directly.
-        return trackState
-            ? await this.summarizerNode.summarize(fullTree) as ISummaryTreeWithStats
-            : await this.summarizeInternal(fullTree, false /* trackState */) as ISummaryTreeWithStats;
+    private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
+        const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
+        assert(summarizeResult.summary.type === SummaryType.Tree,
+            "Container Runtime's summarize should always return a tree");
+        return summarizeResult as IChannelSummarizeResult;
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const builder = new SummaryTreeBuilder();
-        await this.dataStores.summarizeInternal(
-            builder,
-            fullTree,
-            trackState);
+
+        // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
+        // channel contexts.
+        const gcNodes: IGraphNode[] =
+            await this.dataStores.summarizeInternal(builder, fullTree, trackState);
+
         this.serializeContainerBlobs(builder);
         const summary = builder.getSummaryTree();
-        return { ...summary, id: "" };
+        return {
+            ...summary,
+            id: "",
+            gcNodes,
+        };
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {

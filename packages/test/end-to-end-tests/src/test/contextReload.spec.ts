@@ -216,7 +216,7 @@ describe("context reload", function() {
             assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 
             this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
-            this.opProcessingController.addDeltaManagers(this.dataStoreV1._runtime.deltaManager);
+            this.opProcessingController.addDeltaManagers(this.container.deltaManager);
         });
 
         tests();

@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { IBlob } from "@fluidframework/protocol-definitions";
 import { MockFluidDataStoreRuntime, MockSharedObjectServices } from "@fluidframework/test-runtime-utils";
 import { ISharedSummaryBlock } from "../interfaces";
+import { SharedSummaryBlock } from "../sharedSummaryBlock";
 import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory";
 
 interface ITestInterface {
@@ -75,7 +76,7 @@ describe("SharedSummaryBlock", () => {
             const value3 = { value: "testValue3" };
             sharedSummaryBlock.set(key3, value3);
 
-            const tree = sharedSummaryBlock.snapshot();
+            const tree = (sharedSummaryBlock as SharedSummaryBlock).snapshot();
             const contents = JSON.stringify({
                 testKey1: value1,
                 testKey2: value2,

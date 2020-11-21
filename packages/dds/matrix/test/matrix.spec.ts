@@ -267,6 +267,7 @@ describe("Matrix", () => {
         let matrix2: SharedMatrix;
         let consumer1: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
         let consumer2: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
+        let dataStoreRuntime: MockFluidDataStoreRuntime;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
 
         const expect = async (expected?: readonly (readonly any[])[]) => {
@@ -290,11 +291,11 @@ describe("Matrix", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
 
             // Create and connect the first SharedMatrix.
-            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-            matrix1 = new SharedMatrix(dataStoreRuntime1, "matrix1", SharedMatrixFactory.Attributes);
+            dataStoreRuntime = new MockFluidDataStoreRuntime();
+            matrix1 = new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);
             matrix1.connect({
                 deltaConnection: containerRuntimeFactory
-                    .createContainerRuntime(dataStoreRuntime1)
+                    .createContainerRuntime(dataStoreRuntime)
                     .createDeltaConnection(),
                 objectStorage: new MockStorage(),
             });
@@ -312,14 +313,14 @@ describe("Matrix", () => {
             consumer2 = new TestConsumer(matrix2);
         });
 
-        afterEach(async () => {
-            await expect();
-
-            matrix1.closeMatrix(consumer1);
-            matrix2.closeMatrix(consumer2);
-        });
-
         describe("conflict", () => {
+            afterEach(async () => {
+                await expect();
+    
+                matrix1.closeMatrix(consumer1);
+                matrix2.closeMatrix(consumer2);
+            });
+
             it("setCell", async () => {
                 matrix1.insertCols(0, 1);
                 matrix1.insertRows(0, 1);

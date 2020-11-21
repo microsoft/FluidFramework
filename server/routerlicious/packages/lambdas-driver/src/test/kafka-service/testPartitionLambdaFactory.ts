@@ -54,7 +54,7 @@ export class TestPartitionLambdaFactory extends EventEmitter implements IPartiti
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         if (this.failCreate) {
-            return Promise.reject("Set to fail create");
+            return Promise.reject(new Error("Set to fail create"));
         }
 
         const lambda = new TestLambda(this, this.throwHandler, context);

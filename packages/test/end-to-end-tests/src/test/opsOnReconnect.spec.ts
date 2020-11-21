@@ -130,7 +130,7 @@ describe("Ops on Reconnect", () => {
         const container2Object1 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
             container2,
             "default");
-        opProcessingController.addDeltaManagers(container2Object1.runtime.deltaManager);
+        opProcessingController.addDeltaManagers(container2.deltaManager);
 
         return container2Object1;
     }
@@ -151,7 +151,7 @@ describe("Ops on Reconnect", () => {
         container1Object1String = await container1Object1.getSharedObject<SharedString>(stringId);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
-        opProcessingController.addDeltaManagers(container1Object1.runtime.deltaManager);
+        opProcessingController.addDeltaManagers(container1.deltaManager);
 
         // Wait for the attach ops to get processed.
         await opProcessingController.process();

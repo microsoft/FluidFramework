@@ -4,6 +4,7 @@
  */
 
 import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
@@ -231,7 +232,7 @@ export interface IDirectoryNewStorageFormat {
     content: IDirectoryDataObject;
 }
 
-function serializeDirectory(root: SubDirectory): ITree {
+function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): ITree {
     const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
     const tree: ITree = { entries: [], id: null };
@@ -244,7 +245,7 @@ function serializeDirectory(root: SubDirectory): ITree {
 
     while (stack.length > 0) {
         const [currentSubDir, currentSubDirObject] = stack.pop();
-        for (const [key, value] of currentSubDir.getSerializedStorage()) {
+        for (const [key, value] of currentSubDir.getSerializedStorage(serializer)) {
             if (!currentSubDirObject.storage) {
                 currentSubDirObject.storage = {};
             }
@@ -405,7 +406,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * Root of the SharedDirectory, most operations on the SharedDirectory itself act on the root.
      */
-    private readonly root: SubDirectory = new SubDirectory(this, this.runtime, posix.sep);
+    private readonly root: SubDirectory = new SubDirectory(this, this.runtime, this.serializer, posix.sep);
 
     /**
      * Mapping of op types to message handlers.
@@ -425,7 +426,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
-        this.localValueMaker = new LocalValueMaker(runtime);
+        this.localValueMaker = new LocalValueMaker(this.serializer);
         this.setMessageHandlers();
     }
 
@@ -579,10 +580,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
      */
-    public snapshot(): ITree {
-        return serializeDirectory(this.root);
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
+        return serializeDirectory(this.root, serializer);
     }
 
     /**
@@ -680,6 +681,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         newSubDir = new SubDirectory(
                             this,
                             this.runtime,
+                            this.serializer,
                             posix.join(currentSubDir.absolutePath, subdirName),
                         );
                         currentSubDir.populateSubDirectory(subdirName, newSubDir);
@@ -887,7 +889,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
-                    const translatedValue = this.runtime.IFluidSerializer.parse(JSON.stringify(op.value.value));
+                    const translatedValue = this.serializer.parse(JSON.stringify(op.value.value));
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
                     this.emit("valueChanged", event, local, message);
@@ -945,11 +947,13 @@ class SubDirectory implements IDirectory {
      * Constructor.
      * @param directory - Reference back to the SharedDirectory to perform operations
      * @param runtime - The data store runtime this directory is associated with
+     * @param serializer - The serializer to serialize / parse handles
      * @param absolutePath - The absolute path of this IDirectory
      */
     constructor(
         private readonly directory: SharedDirectory,
         private readonly runtime: IFluidDataStoreRuntime,
+        private readonly serializer: IFluidSerializer,
         public readonly absolutePath: string) {
     }
 
@@ -1008,7 +1012,7 @@ class SubDirectory implements IDirectory {
         const localValue = this.directory.localValueMaker.fromInMemory(value);
         const serializableValue = makeSerializable(
             localValue,
-            this.runtime.IFluidSerializer,
+            this.serializer,
             this.directory.handle);
 
         // Set the value locally.
@@ -1387,14 +1391,13 @@ class SubDirectory implements IDirectory {
 
     /**
      * Get the storage of this subdirectory in a serializable format, to be used in snapshotting.
+     * @param serializer - The serializer to use to serialize handles in its values.
      * @returns The JSONable string representing the storage of this subdirectory
      * @internal
      */
-    public *getSerializedStorage() {
+    public *getSerializedStorage(serializer: IFluidSerializer) {
         for (const [key, localValue] of this._storage) {
-            const value = localValue.makeSerialized(
-                this.runtime.IFluidSerializer,
-                this.directory.handle);
+            const value = localValue.makeSerialized(serializer, this.directory.handle);
             const res: [string, ISerializedValue] = [key, value];
             yield res;
         }
@@ -1583,7 +1586,11 @@ class SubDirectory implements IDirectory {
         if (!this._subdirectories.has(subdirName)) {
             this._subdirectories.set(
                 subdirName,
-                new SubDirectory(this.directory, this.runtime, posix.join(this.absolutePath, subdirName)),
+                new SubDirectory(
+                    this.directory,
+                    this.runtime,
+                    this.serializer,
+                    posix.join(this.absolutePath, subdirName)),
             );
         }
     }
