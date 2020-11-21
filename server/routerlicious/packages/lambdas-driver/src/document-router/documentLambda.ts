@@ -15,21 +15,28 @@ import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";
 
 // Expire document partitions after 10 minutes of no activity
-const ActivityTimeout = 10 * 60 * 1000;
+const PartitionActivityTimeout = 10 * 60 * 1000;
+
+// How often to check the partitions for inacitivty
+const PartitionActivityCheckInterval = 60 * 1000;
 
 export class DocumentLambda implements IPartitionLambda {
     private readonly documents = new Map<string, DocumentPartition>();
     private readonly contextManager: DocumentContextManager;
 
+    private activityCheckTimer: NodeJS.Timeout | undefined;
+
     constructor(
         private readonly factory: IPartitionLambdaFactory,
         private readonly config: Provider,
         context: IContext,
-        private readonly activityTimeout = ActivityTimeout) {
+        private readonly partitionActivityTimeout = PartitionActivityTimeout,
+        partitionActivityCheckInterval = PartitionActivityCheckInterval) {
         this.contextManager = new DocumentContextManager(context);
         this.contextManager.on("error", (error, restart) => {
             context.error(error, restart);
         });
+        this.activityCheckTimer = setInterval(this.inactivityCheck.bind(this), partitionActivityCheckInterval);
     }
 
     public handler(message: IQueuedMessage): void {
@@ -39,6 +46,11 @@ export class DocumentLambda implements IPartitionLambda {
     }
 
     public close() {
+        if (this.activityCheckTimer !== undefined) {
+            clearInterval(this.activityCheckTimer);
+            this.activityCheckTimer = undefined;
+        }
+
         this.contextManager.close();
 
         for (const [, partition] of this.documents) {
@@ -72,13 +84,7 @@ export class DocumentLambda implements IPartitionLambda {
                 boxcar.tenantId,
                 boxcar.documentId,
                 documentContext,
-                this.activityTimeout);
-            document.on("inactive", () => {
-                // Close and remove the inactive document
-                document.close();
-                this.documents.delete(routingKey);
-            });
-
+                this.partitionActivityTimeout);
             this.documents.set(routingKey, document);
         } else {
             document = this.documents.get(routingKey);
@@ -89,5 +95,21 @@ export class DocumentLambda implements IPartitionLambda {
 
         // Forward the message to the document queue and then resolve the promise to begin processing more messages
         document.process(message);
+    }
+
+    /**
+     * Closes inactive documents
+     */
+    private inactivityCheck() {
+        const now = Date.now();
+
+        const documentPartitions = Array.from(this.documents);
+        for (const [routingKey, documentPartition] of documentPartitions) {
+            if (documentPartition.isInactive(now)) {
+                // Close and remove the inactive document
+                documentPartition.close();
+                this.documents.delete(routingKey);
+            }
+        }
     }
 }
