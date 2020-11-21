@@ -13,7 +13,8 @@ import {
     ISummarizerNodeWithGC,
     CreateChildSummarizerNodeParam,
 } from "@fluidframework/runtime-definitions";
-import { ICreateChildDetails, IInitialSummary, SummarizerNode, SummaryNode } from "./summarizerNode";
+import { SummarizerNode } from "./summarizerNode";
+import { ICreateChildDetails, IInitialSummary, SummaryNode } from "./summarizerNodeUtils";
 import { cloneGCNodes } from "./garbageCollectionUtils";
 
 /**

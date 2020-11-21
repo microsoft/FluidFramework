@@ -98,15 +98,16 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
+    IRootSummarizerNodeWithGC,
     SummaryTracker,
     SummaryTreeBuilder,
-    SummarizerNodeWithGC,
     convertSummaryTreeToITree,
     convertToSummaryTree,
     RequestParser,
     requestFluidObject,
     convertSnapshotTreeToSummaryTree,
     normalizeAndPrefixGCNodeIds,
+    createRootSummarizerNodeWithGC,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import {
@@ -606,7 +607,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // back-compat: summarizerNode - remove all summary trackers
     private readonly summaryTracker: SummaryTracker;
 
-    private readonly summarizerNode: SummarizerNodeWithGC;
+    private readonly summarizerNode: IRootSummarizerNodeWithGC;
     private readonly notBoundContexts = new Set<string>();
     // 0.24 back-compat attachingBeforeSummary
     private readonly attachOpFiredForDataStore = new Set<string>();
@@ -701,7 +702,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
-        this.summarizerNode = SummarizerNodeWithGC.createRoot(
+        this.summarizerNode = createRootSummarizerNodeWithGC(
             this.logger,
             // Summarize function to call when summarize is called. Summarizer node always tracks summary state.
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState),
