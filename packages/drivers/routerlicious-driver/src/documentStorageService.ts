@@ -65,7 +65,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     }
 
     /**
-     * {@inheritDoc IDocumentStorageService.readString}
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
      */
     public async readString(blobId: string): Promise<string> {
         const base64Result = await this.read(blobId);

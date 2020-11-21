@@ -252,7 +252,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     /**
-     * {@inheritDoc IDocumentStorageService.readString}
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
      */
     public async readString(blobId: string): Promise<string> {
         if (this.storage !== undefined) {
