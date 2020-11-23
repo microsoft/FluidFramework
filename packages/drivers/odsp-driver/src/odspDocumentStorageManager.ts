@@ -225,7 +225,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     /**
-     * {@inheritDoc IDocumentStorageService.readString}
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
      */
     public async readString(blobid: string): Promise<string> {
         return this.readWithEncodingOutput(blobid, "string");

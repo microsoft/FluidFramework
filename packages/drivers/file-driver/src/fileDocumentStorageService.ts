@@ -105,7 +105,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
     }
 
     /**
-     * {@inheritDoc IDocumentStorageService.readString}
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
      */
     public async readString(sha: string): Promise<string> {
         const base64Result = await this.read(sha);

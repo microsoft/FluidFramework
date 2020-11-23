@@ -95,6 +95,9 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
         throw new Error(`Unknown blob ID: ${blobId}`);
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
+     */
     public async readString(blobId: string): Promise<string> {
         const base64Result = await this.read(blobId);
         return fromBase64ToUtf8(base64Result);
