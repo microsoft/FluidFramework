@@ -3,14 +3,8 @@
 **Like and Comments** is a Fluid object that displays how to use a combination of Fluid DDS hooks and local React hooks together.
 It uses a SharedString, SharedCounter, and a SharedObjectSequence as part of its synced state. This shows how a React view can access multiple DDSes without any handlers or event listeners by accessing the respective synced hooks: useSyncedString, useSyncedCounter, and useSyncedArray.
 
-## Getting Started
-
-If you want to run this example follow the following steps:
-
-1. Run `npm install` from the `FluidFramework` root directory
-2. Start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious)
-3. On another terminal, navigate to this likes-and-comments directory
-4. Run `npm run start` from this directory and open localhost:8080 on the browser to see the app running
+<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Files
 

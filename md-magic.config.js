@@ -28,9 +28,9 @@ To update them, edit markdown.config.js and run npm run readme:update in the roo
 
 You can run this example using the following steps:
 
-1. Run \`npm install\` and \`npm run build:fast\` from the \`FluidFramework\` root directory.
+1. Run \`npm install\` and \`npm run build:fast -- --nolint\` from the \`FluidFramework\` root directory.
    a. For an even faster build, you can add the package name to the build command, like this:
-      \`npm run build:fast ${getPackageName(path)}\``;
+      \`npm run build:fast -- --nolint ${getPackageName(path)}\``;
 
     const defaultSteps = `
 1. Navigate to this directory (${getPackagePath(path)}).

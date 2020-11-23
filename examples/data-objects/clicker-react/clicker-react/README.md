@@ -5,13 +5,8 @@ increments the counter. This is a basic example built using the new FluidReactVi
 
 **Clicker-React** demonstrates how you can prepare the configuration for the Fluid object for the React view to enjoy state updates from Fluid DDSes like SharedCounter without event listeners.
 
-## Getting Started
-
-If you want to run this example follow the following steps:
-
-1. Run `npm install` from the `FluidFramework` root directory
-2. Navigate to this directory
-3. Run `npm run start`
+<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Testing
 

@@ -4,19 +4,8 @@
 
 This implementation demonstrates plugging that Container into a standalone application, rather than using the webpack-fluid-loader environment that most of our packages use.  This implementation relies on [Tinylicious](/server/tinylicious), so there are a few extra steps to get started.  We bring our own view that we will bind to the data in the container.
 
-## Getting Started
-
-If you want to run this container follow the following steps:
-
-### Start Tinylicious
-
-Go to [/server/tinylicious](/server/tinylicious) and follow the instructions there to start the Tinylicious server.
-
-### Start the app server
-
-1. Run `npm install` and `npm run build:fast` from the `FluidFramework` root directory
-2. Navigate to this directory
-3. Run `npm run start`
+<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Testing
 
