@@ -500,5 +500,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("Batching", () => {
-    generateTest(tests, { tinylicious: process.argv.includes("--tinylicious") });
+    generateTest(tests, { tinylicious: true });
 });

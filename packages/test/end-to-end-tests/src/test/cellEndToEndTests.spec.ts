@@ -215,5 +215,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("Cell", () => {
-    generateTest(tests, { tinylicious: process.argv.includes("--tinylicious") });
+    generateTest(tests, { tinylicious: true });
 });
