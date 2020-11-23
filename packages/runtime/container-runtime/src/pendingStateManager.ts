@@ -94,6 +94,10 @@ export class PendingStateManager {
         return this.pendingMessagesCount !== 0;
     }
 
+    public snapshot() {
+        return this.pendingStates.toArray();
+    }
+
     constructor(private readonly containerRuntime: ContainerRuntime) { }
 
     /**
