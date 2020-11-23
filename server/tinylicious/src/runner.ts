@@ -33,14 +33,20 @@ export class TinyliciousRunner implements utils.IRunner {
         private readonly tenantManager: ITenantManager,
         private readonly storage: IDocumentStorage,
         private readonly mongoManager: MongoManager,
-    ) {}
+    ) { }
 
     public async start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
 
         // Make sure provided port is unoccupied
-        if (!await this.ensurePortIsFree(this.config.get("exitOnPortConflict"))) {
-            return;
+        try {
+            await this.ensurePortIsFree();
+        } catch (e) {
+            if (this.config.get("exitOnPortConflict")) {
+                winston.info(e.message);
+                return;
+            }
+            throw e;
         }
 
         const alfred = app.create(this.config, this.storage, this.mongoManager);
@@ -84,24 +90,18 @@ export class TinyliciousRunner implements utils.IRunner {
     /**
      * Ensure provided port is free
      */
-    private async ensurePortIsFree(exitOnPortConflict: boolean): Promise<boolean> {
+    private async ensurePortIsFree(): Promise<void> {
         // If port is a named pipe resolve immediately
         if (typeof this.port === "string") {
-            return true;
+            return;
         }
 
         const freePort = await detect(this.port);
         if (this.port === freePort) {
-            return true;
+            return;
         }
 
-        const errorMessage = `Port: ${this.port} is occupied. Try port: ${freePort}`;
-
-        if (exitOnPortConflict) {
-            winston.info(errorMessage);
-            return false;
-        }
-        throw new Error(errorMessage);
+        throw new Error(`Port: ${this.port} is occupied. Try port: ${freePort}`);
     }
 
     /**
