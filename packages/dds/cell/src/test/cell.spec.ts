@@ -51,7 +51,7 @@ describe("Cell", () => {
             cell.set("testValue");
             assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
 
-            const services = MockSharedObjectServices.createFromTree(cell.snapshot());
+            const services = MockSharedObjectServices.createFromSummary(cell.summarize().summary);
             const cell2 = new SharedCell("cell2", dataStoreRuntime, CellFactory.Attributes);
             await cell2.load(services);
 
@@ -72,7 +72,7 @@ describe("Cell", () => {
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-            const services2 = MockSharedObjectServices.createFromTree(cell.snapshot());
+            const services2 = MockSharedObjectServices.createFromSummary(cell.summarize().summary);
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const cell2 = new SharedCell("cell2", dataStoreRuntime2, CellFactory.Attributes);

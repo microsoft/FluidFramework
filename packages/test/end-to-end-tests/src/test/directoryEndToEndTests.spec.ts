@@ -541,7 +541,7 @@ const tests = (args: ITestObjectProvider) => {
              * https://github.com/microsoft/FluidFramework/issues/2400
              *
              * - A SharedDirectory in local state performs a set or directory operation.
-             * - A second SharedDirectory is then created from the snapshot of the first one.
+             * - A second SharedDirectory is then created from the summary of the first one.
              * - The second SharedDirectory performs the same operation as the first one but with a different value.
              * - The expected behavior is that the first SharedDirectory updates the key with the new value. But in the
              *   bug, the first SharedDirectory stores the key in its pending state even though it does not send out an

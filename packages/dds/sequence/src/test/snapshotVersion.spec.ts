@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
     MockContainerRuntimeFactory,
     MockFluidDataStoreRuntime,
@@ -87,10 +88,14 @@ describe("SharedString Snapshot Version", () => {
             const filename = `${filebase}${name}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
             const data = fs.readFileSync(filename, "utf8").trim();
-            const testData = JSON.stringify(testString.snapshot(), undefined, 1).trim();
-            if (data !== testData) {
-                assert(false, `${message}\n\t${diff(data, testData)}\n\t${diff(testData, data)}`);
-            }
+            const dataObject = JSON.parse(data);
+
+            const summaryTree = testString.summarize().summary;
+            const snapshotTree = convertSummaryTreeToITree(summaryTree);
+            const testData = JSON.stringify(snapshotTree, undefined, 1).trim();
+            const testDataObject = JSON.parse(testData);
+
+            assert.deepStrictEqual(dataObject, testDataObject, message);
         });
     }
 
@@ -102,12 +107,4 @@ describe("SharedString Snapshot Version", () => {
         });
     }
     generateSnapshotDiffTests();
-
-    function diff(s1: string, s2: string): string {
-        let i = 0;
-        while (i < s1.length && i < s2.length && s1[i] === s2[i]) {
-            ++i;
-        }
-        return `... ${s1.slice(Math.max(i - 20, 0), Math.min(i + 200, s1.length - 1))} ...`;
-    }
 });
