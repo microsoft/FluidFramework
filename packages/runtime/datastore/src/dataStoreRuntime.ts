@@ -40,21 +40,25 @@ import {
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import {
+    CreateSummarizerNodeSource,
     IAttachMessage,
+    IChannelSummarizeResult,
+    IEnvelope,
     IFluidDataStoreContext,
     IFluidDataStoreChannel,
-    IEnvelope,
+    IGraphNode,
     IInboundSignalMessage,
     ISummaryTreeWithStats,
-    CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
 import {
+    addRouteToAllGCNodes,
     convertSnapshotTreeToSummaryTree,
+    convertSummaryTreeToITree,
+    FluidSerializer,
     generateHandleContextPath,
+    normalizeAndPrefixGCNodeIds,
     RequestParser,
     SummaryTreeBuilder,
-    FluidSerializer,
-    convertSummaryTreeToITree,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -64,7 +68,7 @@ import {
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
-import { IChannelContext, snapshotChannel } from "./channelContext";
+import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
 
@@ -564,28 +568,82 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
+     * Updates the garbage collection nodes of this node's children:
+     * - Prefixs the child's id to the id of each node returned by the child.
+     * - Adds a back route to self to the outbound routes of each child.
+     * @param childGCNodes - The child's garabage collection nodes.
+     * @param childId - The id of the child node.
+     * @returns the updated GC nodes of the child.
+     */
+    private updateChildGCNodes(childGCNodes: IGraphNode[], childId: string): IGraphNode[] {
+        // Normalize the child's nodes and prefix the child's id to the ids of GC nodes returned by it.
+        // This gradually builds the id of each node to be a path from the root.
+        normalizeAndPrefixGCNodeIds(childGCNodes, childId);
+
+        // Add a back route to self in each child's outbound routes. If any child is referenced, then its parent
+        // should be considered referenced as well.
+        addRouteToAllGCNodes(childGCNodes, this.absolutePath);
+
+        return childGCNodes;
+    }
+
+    /**
+     * @returns this channel's garbage collection node.
+     */
+    private getGCNode(): IGraphNode {
+        /**
+         * Get the outbound routes of this channel. Currently, all contexts in this channel are considered referenced
+         * and are hence outbound. This will change when we have root and non-root channel contexts. Then only root
+         * contexts will be considered as referenced.
+         */
+        const outboundRoutes: string[] = [];
+        for (const [contextId] of this.contexts) {
+            outboundRoutes.push(`${this.absolutePath}/${contextId}`);
+        }
+
+        return {
+            id: "/",
+            outboundRoutes,
+        };
+    }
+
+    /**
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
+        // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
+        // channel contexts.
+        let gcNodes: IGraphNode[] = [ this.getGCNode() ];
         const builder = new SummaryTreeBuilder();
 
-        // Iterate over each data store and ask it to snapshot
+        // Iterate over each data store and ask it to summarize
         await Promise.all(Array.from(this.contexts)
-            .filter(([key, _]) => {
-                const isAttached = this.isChannelAttached(key);
+            .filter(([contextId, _]) => {
+                const isAttached = this.isChannelAttached(contextId);
                 // We are not expecting local dds! Summary may not capture local state.
                 assert(isAttached, "Not expecting detached channels during summarize");
                 // If the object is registered - and we have received the sequenced op creating the object
-                // (i.e. it has a base mapping) - then we go ahead and snapshot
+                // (i.e. it has a base mapping) - then we go ahead and summarize
                 return isAttached;
-            }).map(async ([key, value]) => {
-                const channelSummary = await value.summarize(fullTree, trackState);
-                builder.addWithStats(key, channelSummary);
+            }).map(async ([contextId, context]) => {
+                const contextSummary = await context.summarize(fullTree, trackState);
+                builder.addWithStats(contextId, contextSummary);
+
+                // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
+                if (contextSummary.gcNodes === undefined) {
+                    contextSummary.gcNodes = [];
+                }
+
+                // Update and add the child context's GC nodes to the main list.
+                gcNodes = gcNodes.concat(this.updateChildGCNodes(contextSummary.gcNodes, contextId));
             }));
 
-        return builder.getSummaryTree();
+        return {
+            ...builder.getSummaryTree(),
+            gcNodes,
+        };
     }
 
     /**
@@ -598,34 +656,51 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return tree.entries;
     }
 
-    public getAttachSummary(): ISummaryTreeWithStats {
+    public getAttachSummary(): IChannelSummarizeResult {
         this.attachGraph();
 
+        // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
+        // channel contexts.
+        let gcNodes: IGraphNode[] = [ this.getGCNode() ];
         const builder = new SummaryTreeBuilder();
 
         // Craft the .attributes file for each shared object
-        for (const [objectId, value] of this.contexts) {
-            if (!(value instanceof LocalChannelContext)) {
+        for (const [contextId, context] of this.contexts) {
+            if (!(context instanceof LocalChannelContext)) {
                 throw new Error("Should only be called with local channel handles");
             }
 
-            if (!this.notBoundedChannelContextSet.has(objectId)) {
-                let summary: ISummaryTreeWithStats;
-                if (value.isLoaded) {
-                    summary = value.getAttachSummary();
+            if (!this.notBoundedChannelContextSet.has(contextId)) {
+                let summaryTree: ISummaryTreeWithStats;
+                if (context.isLoaded) {
+                    const contextSummary = context.getAttachSummary();
+                    assert(
+                        contextSummary.summary.type === SummaryType.Tree,
+                        "getAttachSummary should always return a tree");
+                    summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
+
+                    // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
+                    if (contextSummary.gcNodes === undefined) {
+                        contextSummary.gcNodes = [];
+                    }
+
+                    // Update and add the child context's GC nodes to the main list.
+                    gcNodes = gcNodes.concat(this.updateChildGCNodes(contextSummary.gcNodes, contextId));
                 } else {
                     // If this channel is not yet loaded, then there should be no changes in the snapshot from which
                     // it was created as it is detached container. So just use the previous snapshot.
                     assert(!!this.dataStoreContext.baseSnapshot,
                         "BaseSnapshot should be there as detached container loaded from snapshot");
-                    summary = convertSnapshotTreeToSummaryTree(this.dataStoreContext.baseSnapshot.trees[objectId]);
+                    summaryTree = convertSnapshotTreeToSummaryTree(this.dataStoreContext.baseSnapshot.trees[contextId]);
                 }
-
-                builder.addWithStats(objectId, summary);
+                builder.addWithStats(contextId, summaryTree);
             }
         }
 
-        return builder.getSummaryTree();
+        return {
+            ...builder.getSummaryTree(),
+            gcNodes,
+        };
     }
 
     public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
@@ -664,7 +739,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         // Get the object snapshot only if the data store is Bound and its graph is attached too,
         // because if the graph is attaching, then it would get included in the data store snapshot.
         if (this.bindState === BindState.Bound && this.graphAttachState === AttachState.Attached) {
-            const snapshot = snapshotChannel(channel);
+            const summarizeResult = summarizeChannel(channel, true /* fullTree */, false /* trackState */);
+            // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
+            const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
 
             const message: IAttachMessage = {
                 id: channel.id,

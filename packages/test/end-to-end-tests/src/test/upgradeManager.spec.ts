@@ -105,7 +105,7 @@ describe("UpgradeManager", () => {
         const dataObjects = await Promise.all(containers.map(
             async (container) => requestFluidObject<TestDataObject>(container, "default")));
 
-        opProcessingController.addDeltaManagers(...dataObjects.map((c) => c._runtime.deltaManager));
+        opProcessingController.addDeltaManagers(...containers.map((c) => c.deltaManager));
 
         dataObjects.map((c, i) => {
             c._runtime.getQuorum().on("addProposal", () => { ++addCounts[i]; });
@@ -143,7 +143,7 @@ describe("UpgradeManager", () => {
         const container = await createContainer(TestDataObject.getFactory());
         const dataObject = await requestFluidObject<TestDataObject>(container, "default");
 
-        opProcessingController.addDeltaManagers(dataObject._runtime.deltaManager);
+        opProcessingController.addDeltaManagers(container.deltaManager);
         const upgradeManager = new UpgradeManager((container as any).context.runtime);
 
         const upgradeP = new Promise<void>((resolve) => {
@@ -182,7 +182,7 @@ describe("UpgradeManager", () => {
         });
 
         const dataObject = await requestFluidObject<TestDataObject>(container1, "default");
-        opProcessingController.addDeltaManagers(dataObject._runtime.deltaManager);
+        opProcessingController.addDeltaManagers(container1.deltaManager);
 
         // Set a key in the root map of the first container's dataObject. The Container is created in "read" mode so the
         // first op it sends will get nack'd and it reconnects.

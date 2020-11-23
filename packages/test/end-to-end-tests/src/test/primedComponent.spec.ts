@@ -49,5 +49,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("DataObject", () => {
-    generateTest(tests, { tinylicious: process.argv.includes("--tinylicious") });
+    generateTest(tests, { tinylicious: true });
 });

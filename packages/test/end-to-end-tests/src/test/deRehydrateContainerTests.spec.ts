@@ -360,7 +360,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const sharedMap3 = await dataStore3.getSharedObject<SharedMap>(sharedMapId);
 
         const opProcessingController = new OpProcessingController(testDeltaConnectionServer);
-        opProcessingController.addDeltaManagers(dataStore3.runtime.deltaManager, dataStore2FromRC.runtime.deltaManager);
+        opProcessingController.addDeltaManagers(container2.deltaManager, rehydratedContainer.deltaManager);
 
         await opProcessingController.process();
         assert.strictEqual(sharedMap3.get("1"), "B", "Contents should be as required");
@@ -405,7 +405,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const sharedMapFromRC = await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
 
         const opProcessingController = new OpProcessingController(testDeltaConnectionServer);
-        opProcessingController.addDeltaManagers(dataStore3.runtime.deltaManager, dataStore2FromRC.runtime.deltaManager);
+        opProcessingController.addDeltaManagers(container2.deltaManager, rehydratedContainer.deltaManager);
 
         await opProcessingController.process();
         assert.strictEqual(sharedMapFromRC.get("1"), "B", "Changes should be reflected in other map");

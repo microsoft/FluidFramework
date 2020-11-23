@@ -27,6 +27,8 @@ export class LocalOrdererConnection implements IOrdererConnection {
     // Back-compat, removal tracked with issue #4346
     public readonly parentBranch = null;
 
+    public readonly maxMessageSize: number;
+
     constructor(
         public socket: ISubscriber,
         public readonly existing: boolean,
@@ -36,9 +38,10 @@ export class LocalOrdererConnection implements IOrdererConnection {
         public readonly documentId: string,
         public readonly clientId: string,
         private readonly client: IClient,
-        public readonly maxMessageSize: number,
         public readonly serviceConfiguration: IServiceConfiguration,
-    ) { }
+    ) {
+        this.maxMessageSize = serviceConfiguration.maxMessageSize;
+    }
 
     public async connect() {
         // Send the connect message

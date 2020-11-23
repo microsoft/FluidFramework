@@ -34,13 +34,23 @@ import {
 export const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
     maxMessageSize: 16 * 1024,
+    enableTraces: true,
     summary: {
         idleTime: 5000,
         maxOps: 1000,
         maxTime: 5000 * 12,
         maxAckWaitTime: 600000,
     },
-    enableTraces: true,
+    deli: {
+        clientTimeout: 5 * 60 * 1000,
+        activityTimeout: 30 * 1000,
+        noOpConsolidationTimeout: 250,
+    },
+    scribe: {
+        generateServiceSummary: true,
+        clearCacheAfterServiceSummary: false,
+        ignoreStorageException: false,
+    },
 };
 
 interface IRoom {
@@ -160,6 +170,7 @@ export function configureWebSocketServices(
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
             if (!message.token) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject("Must provide an authorization token");
             }
 
@@ -171,12 +182,14 @@ export function configureWebSocketServices(
                 maxTokenLifetimeSec,
                 isTokenExpiryEnabled);
             if (!claims) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject("Invalid claims");
             }
 
             try {
                 await tenantManager.verifyToken(claims.tenantId, token);
             } catch (err) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject("Invalid token");
             }
 
@@ -206,6 +219,7 @@ export function configureWebSocketServices(
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
             if (!version) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject(
                     `Unsupported client protocol.` +
                     `Server: ${protocolVersions}. ` +
@@ -218,6 +232,7 @@ export function configureWebSocketServices(
             const [details, clients] = await Promise.all([detailsP, clientsP]);
 
             if (clients.length > maxNumberOfClientsPerDocument) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject({
                     code: 400,
                     message: "Too many clients are already connected to this document.",
@@ -236,6 +251,7 @@ export function configureWebSocketServices(
                 if (lifeTimeMSec > 0) {
                     setExpirationTimer(lifeTimeMSec);
                 } else {
+                    // eslint-disable-next-line prefer-promise-reject-errors
                     return Promise.reject("Invalid token expiry");
                 }
             }
@@ -269,7 +285,11 @@ export function configureWebSocketServices(
                     mode: "write",
                     // Back-compat, removal tracked with issue #4346
                     parentBranch: null,
-                    serviceConfiguration: connection.serviceConfiguration,
+                    serviceConfiguration: {
+                        blockSize: connection.serviceConfiguration.blockSize,
+                        maxMessageSize: connection.serviceConfiguration.maxMessageSize,
+                        summary: connection.serviceConfiguration.summary,
+                    },
                     initialClients: clients,
                     initialMessages: [],
                     initialSignals: [],
@@ -285,7 +305,11 @@ export function configureWebSocketServices(
                     mode: "read",
                     // Back-compat, removal tracked with issue #4346
                     parentBranch: null, // Does not matter for now.
-                    serviceConfiguration: DefaultServiceConfiguration,
+                    serviceConfiguration: {
+                        blockSize: DefaultServiceConfiguration.blockSize,
+                        maxMessageSize: DefaultServiceConfiguration.maxMessageSize,
+                        summary: DefaultServiceConfiguration.summary,
+                    },
                     initialClients: clients,
                     initialMessages: [],
                     initialSignals: [],
