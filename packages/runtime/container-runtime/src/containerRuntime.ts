@@ -130,6 +130,7 @@ import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager } from "./blobManager";
+import { DataStoreContexts } from "./dataStoreContexts";
 
 const chunksBlobName = ".chunks";
 const blobsTreeName = ".blobs";
@@ -607,7 +608,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summaryTracker: SummaryTracker;
 
     private readonly summarizerNode: SummarizerNodeWithGC;
-    private readonly notBoundContexts = new Set<string>();
     // 0.24 back-compat attachingBeforeSummary
     private readonly attachOpFiredForDataStore = new Set<string>();
 
@@ -659,11 +659,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Local copy of incomplete received chunks.
     private readonly chunkMap: Map<string, string[]>;
 
-    // Attached and loaded context proxies
-    private readonly contexts = new Map<string, FluidDataStoreContext>();
-    // List of pending contexts (for the case where a client knows a store will exist and is waiting
-    // on its creation). This is a superset of contexts.
-    private readonly contextsDeferred = new Map<string, Deferred<FluidDataStoreContext>>();
+    private readonly datastoreContexts: DataStoreContexts;
 
     private constructor(
         private readonly context: IContainerContext,
@@ -689,6 +685,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
+
+        this.datastoreContexts = new DataStoreContexts(this._logger);
 
         this.latestSummaryAck = {
             proposalHandle: undefined,
@@ -783,7 +781,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     snapshotTree,
                     isRootDataStore ?? true);
             }
-            this.setNewContext(key, dataStoreContext);
+            this.datastoreContexts.setNew(key, dataStoreContext);
         }
 
         this.blobManager = new BlobManager(
@@ -890,18 +888,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summaryManager.dispose();
         this.summarizer.dispose();
 
-        // close/stop all store contexts
-        for (const [fluidDataStoreId, contextD] of this.contextsDeferred) {
-            contextD.promise.then((context) => {
-                context.dispose();
-            }).catch((contextError) => {
-                this._logger.sendErrorEvent({
-                    eventName: "FluidDataStoreContextDisposeError",
-                    fluidDataStoreId,
-                },
-                    contextError);
-            });
-        }
+        this.datastoreContexts.dispose();
 
         this.emit("dispose");
         this.removeAllListeners();
@@ -997,7 +984,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async snapshot(): Promise<ITree> {
         // Iterate over each store and ask it to snapshot
-        const fluidDataStoreSnapshotsP = Array.from(this.contexts).map(async ([fluidDataStoreId, value]) => {
+        const fluidDataStoreSnapshotsP = Array.from(this.datastoreContexts).map(async ([fluidDataStoreId, value]) => {
             const summaryTree = await value.summarize(true /* fullTree */, false /* trackState */);
             assert(
                 summaryTree.summary.type === SummaryType.Tree,
@@ -1018,7 +1005,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStoreSnapshots = await Promise.all(fluidDataStoreSnapshotsP);
 
         // Sort for better diffing of snapshots (in replay tool, used to find bugs in snapshotting logic)
-        fluidDataStoreSnapshots.sort((a, b) => a.fluidDataStoreId.localeCompare(b.fluidDataStoreId));
+        fluidDataStoreSnapshots.sort((a, b) => a?.fluidDataStoreId.localeCompare(b.fluidDataStoreId));
 
         for (const fluidDataStoreSnapshot of fluidDataStoreSnapshots) {
             root.entries.push(new TreeTreeEntry(
@@ -1099,7 +1086,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
            this.replayPendingStates();
         }
 
-        for (const [fluidDataStore, context] of this.contexts) {
+        for (const [fluidDataStore, context] of this.datastoreContexts) {
             try {
                 context.setConnectionState(connected, clientId);
             } catch (error) {
@@ -1201,7 +1188,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
-        const context = this.contexts.get(envelope.address);
+        const context = this.datastoreContexts.tryGet(envelope.address);
         if (!context) {
             // Attach message may not have been processed yet
             assert(!local);
@@ -1221,7 +1208,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
         // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
-        const deferredContext = this.ensureContextDeferred(id);
+        const deferredContext = this.datastoreContexts.ensureDeferred(id);
 
         if (!wait && !deferredContext.isCompleted) {
             return Promise.reject(new Error(`DataStore ${id} does not exist`));
@@ -1342,7 +1329,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             undefined,
             isRoot,
         );
-        this.setupNewContext(context);
+        this.datastoreContexts.setupNew(context);
         return context;
     }
 
@@ -1378,18 +1365,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             isRoot,
             props,
         );
-        this.setupNewContext(context);
+        this.datastoreContexts.setupNew(context);
         return context;
-    }
-
-    private setupNewContext(context) {
-        this.verifyNotClosed();
-        const id = context.id;
-        assert(!this.contexts.has(id), "Creating store with existing ID");
-        this.notBoundContexts.add(id);
-        const deferred = new Deferred<FluidDataStoreContext>();
-        this.contextsDeferred.set(id, deferred);
-        this.contexts.set(id, context);
     }
 
     public getQuorum(): IQuorum {
@@ -1475,8 +1452,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /**
      * Updates the garbage collection nodes of this node's children:
-     * - Prefixs the child's id to the id of each node returned by the child.
-     * @param childGCNodes - The child's garabage collection nodes.
+     * - Prefixes the child's id to the id of each node returned by the child.
+     * @param childGCNodes - The child's garbage collection nodes.
      * @param childId - The id of the child node.
      * @returns the updated GC nodes of the child.
      */
@@ -1496,7 +1473,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          * as referenced and hence outbound.
          */
         const outboundRoutes: string[] = [];
-        for (const [contextId] of this.contexts) {
+        for (const [contextId] of this.datastoreContexts) {
             outboundRoutes.push(`/${contextId}`);
         }
 
@@ -1525,7 +1502,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
-        await Promise.all(Array.from(this.contexts)
+        await Promise.all(Array.from(this.datastoreContexts)
             .filter(([_, context]) => {
                 // Summarizer works only with clients with no local changes!
                 assert(context.attachState !== AttachState.Attaching);
@@ -1557,13 +1534,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // The local object has already been attached
         if (local) {
             assert(this.pendingAttach.has(attachMessage.id));
-            this.contexts.get(attachMessage.id)?.emit("attached");
+            this.datastoreContexts.tryGet(attachMessage.id)?.emit("attached");
             this.pendingAttach.delete(attachMessage.id);
             return;
         }
 
          // If a non-local operation then go and create the object, otherwise mark it as officially attached.
-        if (this.contexts.has(attachMessage.id)) {
+        if (this.datastoreContexts.has(attachMessage.id)) {
             const error = new Error("DataCorruption: Duplicate data store created with existing ID");
             this.logger.sendErrorEvent({
                 eventName: "DuplicateDataStoreId",
@@ -1606,7 +1583,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             pkg);
 
         // Resolve pending gets and store off any new ones
-        this.setNewContext(attachMessage.id, remotedFluidDataStoreContext);
+       this.datastoreContexts.setNew(attachMessage.id, remotedFluidDataStoreContext);
 
         // Equivalent of nextTick() - Prefetch once all current ops have completed
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -1616,16 +1593,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private processFluidDataStoreOp(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {
         const envelope = message.contents as IEnvelope;
         const transformed = { ...message, contents: envelope.contents };
-        const context = this.getContext(envelope.address);
+        const context = this.datastoreContexts.get(envelope.address);
         context.process(transformed, local, localMessageMetadata);
     }
 
     private bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
         this.verifyNotClosed();
-        assert(this.notBoundContexts.has(fluidDataStoreRuntime.id),
+        assert(this.datastoreContexts.notBoundContexts.has(fluidDataStoreRuntime.id),
             "Store to be bound should be in not bounded set");
-        this.notBoundContexts.delete(fluidDataStoreRuntime.id);
-        const context = this.getContext(fluidDataStoreRuntime.id) as LocalFluidDataStoreContext;
+        this.datastoreContexts.notBoundContexts.delete(fluidDataStoreRuntime.id);
+        const context = this.datastoreContexts.get(fluidDataStoreRuntime.id) as LocalFluidDataStoreContext;
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients.
@@ -1639,38 +1616,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         // Resolve the deferred so other local stores can access it.
-        const deferred = this.getContextDeferred(fluidDataStoreRuntime.id);
+        const deferred = this.datastoreContexts.getDeferred(fluidDataStoreRuntime.id);
         deferred.resolve(context);
-    }
-
-    private ensureContextDeferred(id: string): Deferred<FluidDataStoreContext> {
-        const deferred = this.contextsDeferred.get(id);
-        if (deferred) { return deferred; }
-        const newDeferred = new Deferred<FluidDataStoreContext>();
-        this.contextsDeferred.set(id, newDeferred);
-        return newDeferred;
-    }
-
-    private getContextDeferred(id: string): Deferred<FluidDataStoreContext> {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const deferred = this.contextsDeferred.get(id)!;
-        assert(!!deferred);
-        return deferred;
-    }
-
-    private setNewContext(id: string, context?: FluidDataStoreContext) {
-        assert(!!context);
-        assert(!this.contexts.has(id));
-        this.contexts.set(id, context);
-        const deferred = this.ensureContextDeferred(id);
-        deferred.resolve(context);
-    }
-
-    private getContext(id: string): FluidDataStoreContext {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const context = this.contexts.get(id)!;
-        assert(!!context);
-        return context;
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
@@ -1683,9 +1630,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             assert(this.attachState === AttachState.Attached, "Container Context should already be in attached state");
             eventName = "attached";
         }
-        for (const context of this.contexts.values()) {
+        for (const [,context] of this.datastoreContexts) {
             // Fire only for bounded stores.
-            if (!this.notBoundContexts.has(context.id)) {
+            if (!this.datastoreContexts.notBoundContexts.has(context.id)) {
                 context.emit(eventName);
             }
         }
@@ -1699,14 +1646,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         let notBoundContextsLength: number;
         do {
             const builderTree = builder.summary.tree;
-            notBoundContextsLength = this.notBoundContexts.size;
+            notBoundContextsLength = this.datastoreContexts.notBoundContexts.size;
             // Iterate over each data store and ask it to snapshot
-            Array.from(this.contexts)
+            Array.from(this.datastoreContexts)
                 .filter(([key, _]) =>
                     // Take summary of bounded data stores only, make sure we haven't summarized them already
                     // and no attach op has been fired for that data store because for loader versions <= 0.24
                     // we set attach state as "attaching" before taking createNew summary.
-                    !(this.notBoundContexts.has(key)
+                    !(this.datastoreContexts.notBoundContexts.has(key)
                         || builderTree[key]
                         || this.attachOpFiredForDataStore.has(key)),
                 )
@@ -1724,7 +1671,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     }
                     builder.addWithStats(key, dataStoreSummary);
                 });
-        } while (notBoundContextsLength !== this.notBoundContexts.size);
+        } while (notBoundContextsLength !== this.datastoreContexts.notBoundContexts.size);
 
         this.serializeContainerBlobs(builder);
 
@@ -2065,7 +2012,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
-        const context = this.getContext(envelope.address);
+        const context = this.datastoreContexts.get(envelope.address);
         assert(!!context, "There should be a store context for the op");
         context.reSubmit(envelope.contents, localOpMetadata);
     }
@@ -2121,7 +2068,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.emit("notleader");
         }
 
-        for (const [, context] of this.contexts) {
+        for (const [, context] of this.datastoreContexts) {
             context.updateLeader(this.leader);
         }
 
