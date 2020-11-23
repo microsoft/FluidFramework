@@ -34,16 +34,19 @@ export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRoo
 
 export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISummarizerNodeRootContract {}
 
+/**
+ * Creates a root summarizer node.
+ * @param logger - Logger to use within SummarizerNode
+ * @param summarizeInternalFn - Function to generate summary
+ * @param changeSequenceNumber - Sequence number of latest change to new node/subtree
+ * @param referenceSequenceNumber - Reference sequence number of last acked summary,
+ * or undefined if not loaded from summary
+ * @param config - Configure behavior of summarizer node
+ */
 export const createRootSummarizerNode = (
     logger: ITelemetryLogger,
-    /** Summarize function */
     summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
-    /** Sequence number of latest change to new node/subtree */
     changeSequenceNumber: number,
-    /**
-     * Reference sequence number of last acked summary,
-     * or undefined if not loaded from summary.
-     */
     referenceSequenceNumber: number | undefined,
     config: ISummarizerNodeConfig = {},
 ): IRootSummarizerNode => SummarizerNode.createRoot(
@@ -54,19 +57,22 @@ export const createRootSummarizerNode = (
         config,
     );
 
+/**
+ * Creates a root summarizer node with GC functionality built-in.
+ * @param logger - Logger to use within SummarizerNode
+ * @param summarizeInternalFn - Function to generate summary
+ * @param changeSequenceNumber - Sequence number of latest change to new node/subtree
+ * @param referenceSequenceNumber - Reference sequence number of last acked summary,
+ * or undefined if not loaded from summary
+ * @param config - Configure behavior of summarizer node
+ * @param getInitialGCNodesFn - Function to get the initial value of garbage collection nodes
+ */
 export const createRootSummarizerNodeWithGC = (
     logger: ITelemetryLogger,
-    /** Summarize function */
     summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
-    /** Sequence number of latest change to new node/subtree */
     changeSequenceNumber: number,
-    /**
-     * Reference sequence number of last acked summary,
-     * or undefined if not loaded from summary.
-     */
     referenceSequenceNumber: number | undefined,
     config: ISummarizerNodeConfig = {},
-    /** Function to get the initial value of garbage collection nodes */
     getInitialGCNodesFn?: () => Promise<IGraphNode[]>,
 ): IRootSummarizerNodeWithGC => SummarizerNodeWithGC.createRoot(
         logger,
