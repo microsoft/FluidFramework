@@ -269,8 +269,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 } else {
                     blob.content = JSON.stringify(documentAttributes);
                 }
-            }
-            else {
+            } else {
                 const documentAttributes: api.IDocumentAttributes = JSON.parse(blob.content);
                 documentAttributes.branch = this.documentId;
 
