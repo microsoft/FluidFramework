@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ITelemetryLogger, ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
