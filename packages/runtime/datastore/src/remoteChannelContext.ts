@@ -137,7 +137,7 @@ export class RemoteChannelContext implements IChannelContext {
         // the attributes. Since old attach messages
         // will not have attributes we need to keep
         // this as long as we support old attach messages
-        if (attributes) {
+        if (attributes == undefined) {
             if (this.attachMessageType === undefined) {
                 // TODO: Strip out potential PII content #1920
                 throw new DataCorruptionError("Channel type not available", {
