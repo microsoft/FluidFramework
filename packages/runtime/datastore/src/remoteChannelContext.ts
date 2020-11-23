@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { CreateContainerError } from "@fluidframework/container-utils";
+import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     ISequencedDocumentMessage,
@@ -147,17 +147,34 @@ export class RemoteChannelContext implements IChannelContext {
         // this as long as we support old attach messages
         if (attributes === undefined) {
             if (this.attachMessageType === undefined) {
-                throw new Error("Channel type not available");
+                // TODO: Strip out potential PII content #1920
+                throw new DataCorruptionError("Channel type not available", {
+                    channelId: this.id,
+                    dataStoreId: this.dataStoreContext.id,
+                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                });
             }
             factory = this.registry.get(this.attachMessageType);
             if (factory === undefined) {
-                throw new Error(`Channel Factory ${this.attachMessageType} for attach not registered`);
+                // TODO: Strip out potential PII content #1920
+                throw new DataCorruptionError(`Channel Factory ${this.attachMessageType} for attach not registered`, {
+                    channelId: this.id,
+                    dataStoreId: this.dataStoreContext.id,
+                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                    channelFactoryType: this.attachMessageType,
+                });
             }
             attributes = factory.attributes;
         } else {
             factory = this.registry.get(attributes.type);
             if (factory === undefined) {
-                throw new Error(`Channel Factory ${attributes.type} not registered`);
+                // TODO: Strip out potential PII content #1920
+                throw new DataCorruptionError(`Channel Factory ${attributes.type} not registered`, {
+                    channelId: this.id,
+                    dataStoreId: this.dataStoreContext.id,
+                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                    channelFactoryType: attributes.type,
+                });
             }
         }
 
