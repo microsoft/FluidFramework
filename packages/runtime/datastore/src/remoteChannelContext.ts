@@ -151,6 +151,7 @@ export class RemoteChannelContext implements IChannelContext {
                     channelId: this.id,
                     dataStoreId: this.dataStoreContext.id,
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                    dataStoreFactoryType: this.attachMessageType
                 });
             }
             attributes = factory.attributes;
@@ -161,6 +162,7 @@ export class RemoteChannelContext implements IChannelContext {
                     channelId: this.id,
                     dataStoreId: this.dataStoreContext.id,
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                    dataStoreFactoryType: attributes.type,
                 });
             }
         }
