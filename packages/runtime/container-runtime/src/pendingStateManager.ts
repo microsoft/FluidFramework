@@ -4,27 +4,13 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IErrorBase } from "@fluidframework/container-definitions";
-import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { DataCorruptionError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import Deque from "double-ended-queue";
 import { ContainerRuntime, ContainerMessageType } from "./containerRuntime";
-
-export class DataCorruptionError extends CustomErrorWithProps implements IErrorBase {
-    readonly errorType = "dataCorruptionError";
-    readonly canRetry = false;
-
-    constructor(
-        errorMessage: string,
-        props: ITelemetryProperties,
-    ) {
-        super(errorMessage, props);
-    }
-}
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
