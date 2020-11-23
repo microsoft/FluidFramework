@@ -5,11 +5,10 @@
 
 import { merge } from "lodash";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
-import { IClient, IServiceConfiguration } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 import {
     BroadcasterLambda,
     CheckpointManager,
-    DefaultServiceConfiguration,
     DeliLambda,
     ForemanLambda,
     ScribeLambda,
@@ -19,6 +18,7 @@ import {
 } from "@fluidframework/server-lambdas";
 import { IGitManager } from "@fluidframework/server-services-client";
 import {
+    DefaultServiceConfiguration,
     IContext,
     IDeliState,
     IDatabaseManager,
@@ -29,6 +29,7 @@ import {
     IOrdererConnection,
     IPublisher,
     IScribe,
+    IServiceConfiguration,
     ITaskMessageSender,
     ITenantManager,
     ITopic,

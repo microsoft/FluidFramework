@@ -10,7 +10,6 @@ import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
-    IServiceConfiguration,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
@@ -24,7 +23,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         client: IClient,
         maxMessageSize: number,
         clientId: string,
-        serviceConfiguration: IServiceConfiguration,
+        serviceConfiguration: core.IServiceConfiguration,
     ): Promise<KafkaOrdererConnection> {
         // Create the connection
         return new KafkaOrdererConnection(
@@ -51,7 +50,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         public readonly clientId: string,
         private readonly client: IClient,
         public readonly maxMessageSize: number,
-        public readonly serviceConfiguration: IServiceConfiguration,
+        public readonly serviceConfiguration: core.IServiceConfiguration,
     ) { }
 
     /**
@@ -161,7 +160,7 @@ export class KafkaOrderer implements core.IOrderer {
         tenantId: string,
         documentId: string,
         maxMessageSize: number,
-        serviceConfiguration: IServiceConfiguration,
+        serviceConfiguration: core.IServiceConfiguration,
     ): Promise<KafkaOrderer> {
         return new KafkaOrderer(producer, tenantId, documentId, maxMessageSize, serviceConfiguration);
     }
@@ -173,7 +172,7 @@ export class KafkaOrderer implements core.IOrderer {
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly maxMessageSize: number,
-        private readonly serviceConfiguration: IServiceConfiguration,
+        private readonly serviceConfiguration: core.IServiceConfiguration,
     ) {
     }
 
@@ -211,7 +210,7 @@ export class KafkaOrdererFactory {
     constructor(
         private readonly producer: core.IProducer,
         private readonly maxMessageSize: number,
-        private readonly serviceConfiguration: IServiceConfiguration,
+        private readonly serviceConfiguration: core.IServiceConfiguration,
     ) {
     }
 
