@@ -52,110 +52,198 @@ describe("ConsensusOrderedCollection", () => {
                 testCollection = creator();
             });
 
-            it("Can create a collection", () => {
-                assert.ok(testCollection);
-            });
-
-            it("Can add and remove data", async () => {
-                assert.strictEqual(await removeItem(), undefined);
-                await addItem("testValue");
-                assert.strictEqual(await removeItem(), "testValue");
-                assert.strictEqual(await removeItem(), undefined);
-            });
-
-            it("Can add and remove a handle", async () => {
-                assert.strictEqual(await removeItem(), undefined);
-                const handle = testCollection.handle;
-                assert(handle, "Need an actual handle to test this case");
-                await addItem(handle);
-
-                const acquiredValue = await removeItem();
-                assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
-                const dataStore = await handle.get();
-                assert.strictEqual(dataStore.handle.absolutePath, testCollection.handle.absolutePath);
-
-                assert.strictEqual(await removeItem(), undefined);
-            });
-
-            it("Can add and release data", async () => {
-                await addItem("testValue");
-                const promise = testCollection.acquire(async (value) => {
-                    assert.strictEqual(value, "testValue");
-                    return ConsensusResult.Release;
-                });
-                processMessages();
-                await promise;
-                assert.strictEqual(await waitAndRemoveItem(), "testValue");
-                assert.strictEqual(await removeItem(), undefined);
-            });
-
-            it("Can wait for data", async () => {
-                let added = false;
-                let res: any;
-                const p = testCollection.waitAndAcquire(async (value) => {
-                    assert(added, "Wait resolved before value is added");
-                    res = value;
-                    return ConsensusResult.Complete;
+            describe("APIs", () => {
+                it("Can create a collection", () => {
+                    assert.ok(testCollection);
                 });
 
-                const p2 = addItem("testValue");
-                processMessages();
-                added = true;
-                await p2;
-                // There are two hops here - one "acquire" message, another "release" message.
-                processMessages();
-                setImmediate(() => processMessages());
-                await p;
-                assert.strictEqual(res, "testValue");
+                it("Can add and remove data", async () => {
+                    assert.strictEqual(await removeItem(), undefined);
+                    await addItem("testValue");
+                    assert.strictEqual(await removeItem(), "testValue");
+                    assert.strictEqual(await removeItem(), undefined);
+                });
+
+                it("Can add and remove a handle", async () => {
+                    assert.strictEqual(await removeItem(), undefined);
+                    const handle = testCollection.handle;
+                    assert(handle, "Need an actual handle to test this case");
+                    await addItem(handle);
+
+                    const acquiredValue = await removeItem();
+                    assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
+                    const dataStore = await handle.get();
+                    assert.strictEqual(dataStore.handle.absolutePath, testCollection.handle.absolutePath);
+
+                    assert.strictEqual(await removeItem(), undefined);
+                });
+
+                it("Can add and release data", async () => {
+                    await addItem("testValue");
+                    const promise = testCollection.acquire(async (value) => {
+                        assert.strictEqual(value, "testValue");
+                        return ConsensusResult.Release;
+                    });
+                    processMessages();
+                    await promise;
+                    assert.strictEqual(await waitAndRemoveItem(), "testValue");
+                    assert.strictEqual(await removeItem(), undefined);
+                });
+
+                it("Can wait for data", async () => {
+                    let added = false;
+                    let res: any;
+                    const p = testCollection.waitAndAcquire(async (value) => {
+                        assert(added, "Wait resolved before value is added");
+                        res = value;
+                        return ConsensusResult.Complete;
+                    });
+
+                    const p2 = addItem("testValue");
+                    processMessages();
+                    added = true;
+                    await p2;
+                    // There are two hops here - one "acquire" message, another "release" message.
+                    processMessages();
+                    setImmediate(() => processMessages());
+                    await p;
+                    assert.strictEqual(res, "testValue");
+                });
+
+                it("Data ordering", async () => {
+                    for (const item of input) {
+                        await addItem(item);
+                    }
+
+                    for (const item of output) {
+                        assert.strictEqual(await removeItem(), item);
+                    }
+                    assert.strictEqual(await removeItem(), undefined,
+                        "Remove from empty collection should undefined");
+                });
+
+                it("Event", async () => {
+                    let addCount = 0;
+                    let removeCount = 0;
+                    testCollection.on("add", (value) => {
+                        assert.strictEqual(value, input[addCount], "Added event value not matched");
+                        addCount += 1;
+                    });
+                    testCollection.on("acquire", (value) => {
+                        assert.strictEqual(value, output[removeCount], "Remove event value not matched");
+                        removeCount += 1;
+                    });
+                    for (const item of input) {
+                        await addItem(item);
+                    }
+
+                    processMessages();
+
+                    let count = output.length;
+                    while (count > 0) {
+                        await removeItem();
+                        count -= 1;
+                    }
+                    assert.strictEqual(await removeItem(), undefined,
+                        "Remove from empty collection should undefined");
+
+                    assert.strictEqual(addCount, input.length, "Incorrect number add event");
+                    assert.strictEqual(removeCount, output.length, "Incorrect number remove event");
+                });
+
+                it("can clone object value", async () => {
+                    const obj = { x: 1 };
+                    await addItem(obj);
+                    const result = await removeItem();
+                    assert.notStrictEqual(result, obj);
+                    assert.strictEqual(result.x, 1);
+                });
             });
 
-            it("Data ordering", async () => {
-                for (const item of input) {
-                    await addItem(item);
-                }
+            describe("Garbage Collection", () => {
+                it("can generate GC nodes with handles in data", async () => {
+                    const testCollection2 = creator();
+                    await addItem(testCollection2.handle);
 
-                for (const item of output) {
-                    assert.strictEqual(await removeItem(), item);
-                }
-                assert.strictEqual(await removeItem(), undefined,
-                    "Remove from empty collection should undefined");
-            });
-
-            it("Event", async () => {
-                let addCount = 0;
-                let removeCount = 0;
-                testCollection.on("add", (value) => {
-                    assert.strictEqual(value, input[addCount], "Added event value not matched");
-                    addCount += 1;
+                    // Verify the GC nodes returned by summarize.
+                    const gcNodes = testCollection.summarize().gcNodes;
+                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                    assert.deepStrictEqual(
+                        gcNodes[0].outboundRoutes,
+                        [testCollection2.handle.absolutePath],
+                        "GC node's outbound routes is incorrect");
                 });
-                testCollection.on("acquire", (value) => {
-                    assert.strictEqual(value, output[removeCount], "Remove event value not matched");
-                    removeCount += 1;
-                });
-                for (const item of input) {
-                    await addItem(item);
-                }
 
-                processMessages();
+                it("can generate GC nodes when handles are removed from data", async () => {
+                    const testCollection2 = creator();
+                    await addItem(testCollection2.handle);
 
-                let count = output.length;
-                while (count > 0) {
+                    // Verify the GC nodes returned by summarize.
+                    let gcNodes = testCollection.summarize().gcNodes;
+                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                    assert.deepStrictEqual(
+                        gcNodes[0].outboundRoutes,
+                        [testCollection2.handle.absolutePath],
+                        "GC node's outbound routes is incorrect");
+
+                    // Verify that removed handle updates GC nodes correctly.
                     await removeItem();
-                    count -= 1;
-                }
-                assert.strictEqual(await removeItem(), undefined,
-                    "Remove from empty collection should undefined");
+                    gcNodes = testCollection.summarize().gcNodes;
+                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                    assert.deepStrictEqual(
+                        gcNodes[0].outboundRoutes,
+                        [],
+                        "GC node's outbound routes is incorrect");
+                });
 
-                assert.strictEqual(addCount, input.length, "Incorrect number add event");
-                assert.strictEqual(removeCount, output.length, "Incorrect number remove event");
-            });
+                it("can generate GC nodes when handles are added to data", async () => {
+                    // Verify the GC nodes returned by summarize.
+                    let gcNodes = testCollection.summarize().gcNodes;
+                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                    assert.deepStrictEqual(
+                        gcNodes[0].outboundRoutes,
+                        [],
+                        "GC node's outbound routes is incorrect");
 
-            it("Object value needs to be cloned", async () => {
-                const obj = { x: 1 };
-                await addItem(obj);
-                const result = await removeItem();
-                assert.notStrictEqual(result, obj);
-                assert.strictEqual(result.x, 1);
+                    // Verify that added handle updates GC nodes correctly.
+                    const testCollection2 = creator();
+                    await addItem(testCollection2.handle);
+                    gcNodes = testCollection.summarize().gcNodes;
+                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                    assert.deepStrictEqual(
+                        gcNodes[0].outboundRoutes,
+                        [testCollection2.handle.absolutePath],
+                        "GC node's outbound routes is incorrect");
+                });
+
+                it("can generate GC nodes with nested handles in data", async () => {
+                    const testCollection2 = creator();
+                    const testCollection3 = creator();
+                    const containingObject = {
+                        collection1Handle: testCollection2.handle,
+                        nestedObj: {
+                            collection2Handle: testCollection3.handle,
+                        },
+                    };
+                    await addItem(containingObject);
+
+                    // Verify the GC nodes returned by summarize.
+                    const gcNodes = testCollection.summarize().gcNodes;
+                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                    assert.deepStrictEqual(
+                        gcNodes[0].outboundRoutes,
+                        [
+                            testCollection2.handle.absolutePath,
+                            testCollection3.handle.absolutePath,
+                        ],
+                        "GC node's outbound routes is incorrect");
+                });
             });
         });
     }

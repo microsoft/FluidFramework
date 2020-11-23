@@ -456,5 +456,113 @@ describe("Map", () => {
                 assert.equal(await waitP2, "resolved", "promise not resolved after key is available in remote map");
             });
         });
+
+        describe("Garbage Collection", () => {
+            it("can generate GC nodes with handles in data", () => {
+                const subMap = factory.create(dataStoreRuntime, "subMap");
+                map.set("object", subMap.handle);
+
+                containerRuntimeFactory.processAllMessages();
+
+                // Verify the GC nodes returned by summarize.
+                const gcNodes = map2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [subMap.handle.absolutePath],
+                    "GC node's outbound routes is incorrect");
+            });
+
+            it("can generate GC nodes when handles are removed from data", () => {
+                const subMap = factory.create(dataStoreRuntime, "subMap");
+                const subMap2 = factory.create(dataStoreRuntime, "subMap2");
+                map.set("object", subMap.handle);
+                map.set("object2", subMap2.handle);
+
+                containerRuntimeFactory.processAllMessages();
+
+                // Verify the GC nodes returned by summarize.
+                let gcNodes = map2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [
+                        subMap.handle.absolutePath,
+                        subMap2.handle.absolutePath,
+                    ],
+                    "GC node's outbound routes is incorrect");
+
+                map.delete("object");
+                containerRuntimeFactory.processAllMessages();
+
+                gcNodes = map2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [subMap2.handle.absolutePath],
+                    "GC node's outbound routes is incorrect");
+            });
+
+            it("can generate GC nodes when handles are added to data", () => {
+                const subMap = factory.create(dataStoreRuntime, "subMap");
+                map.set("object", subMap.handle);
+
+                containerRuntimeFactory.processAllMessages();
+
+                // Verify the GC nodes returned by summarize.
+                let gcNodes = map2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [subMap.handle.absolutePath],
+                    "GC node's outbound routes is incorrect");
+
+                const subMap2 = factory.create(dataStoreRuntime, "subMap2");
+                map.set("object2", subMap2.handle);
+                containerRuntimeFactory.processAllMessages();
+
+                gcNodes = map2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [
+                        subMap.handle.absolutePath,
+                        subMap2.handle.absolutePath,
+
+                    ],
+                    "GC node's outbound routes is incorrect");
+            });
+
+            it("can generate GC nodes with nested handles in data", () => {
+                const subMap = factory.create(dataStoreRuntime, "subMap");
+                const subMap2 = factory.create(dataStoreRuntime, "subMap2");
+                const containingObject = {
+                    subMapHandle: subMap.handle,
+                    nestedObj: {
+                        subMap2Handle: subMap2.handle,
+                    },
+                };
+                map.set("object", containingObject);
+
+                containerRuntimeFactory.processAllMessages();
+
+                // Verify the GC nodes returned by summarize.
+                const gcNodes = map2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [
+                        subMap.handle.absolutePath,
+                        subMap2.handle.absolutePath,
+                    ],
+                    "GC node's outbound routes is incorrect");
+            });
+        });
     });
 });

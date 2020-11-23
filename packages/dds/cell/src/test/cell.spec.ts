@@ -132,29 +132,133 @@ describe("Cell", () => {
             cell2.connect(services2);
         });
 
-        it("Can set and get cell data", () => {
-            cell.set("testValue");
+        describe("SharedCell APIs", () => {
+            it("Can set and get cell data", () => {
+                cell.set("testValue");
 
-            containerRuntimeFactory.processAllMessages();
+                containerRuntimeFactory.processAllMessages();
 
-            assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
-            assert.equal(cell2.get(), "testValue", "Could not retrieve cell value from remote client");
+                assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
+                assert.equal(cell2.get(), "testValue", "Could not retrieve cell value from remote client");
+            });
+
+            it("can delete cell data", () => {
+                cell.set("testValue");
+
+                containerRuntimeFactory.processAllMessages();
+
+                assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
+                assert.equal(cell2.get(), "testValue", "Could not retrieve cell value from remote client");
+
+                cell.delete();
+
+                containerRuntimeFactory.processAllMessages();
+
+                assert.equal(cell.get(), undefined, "Could not delete cell value");
+                assert.equal(cell2.get(), undefined, "Could not delete cell value from remote client");
+            });
         });
 
-        it("can delete cell data", () => {
-            cell.set("testValue");
+        describe("Garbage Collection", () => {
+            it("can generate GC nodes with handles in data", () => {
+                const factory = new CellFactory();
+                const subCell = factory.create(dataStoreRuntime, "subCell");
+                cell.set(subCell.handle);
 
-            containerRuntimeFactory.processAllMessages();
+                containerRuntimeFactory.processAllMessages();
 
-            assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
-            assert.equal(cell2.get(), "testValue", "Could not retrieve cell value from remote client");
+                // Verify the GC nodes returned by summarize.
+                const gcNodes = cell2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [subCell.handle.absolutePath],
+                    "GC node's outbound routes is incorrect");
+            });
 
-            cell.delete();
+            it("can generate GC nodes when handles are removed from data", () => {
+                const factory = new CellFactory();
+                const subCell = factory.create(dataStoreRuntime, "subCell");
+                cell.set(subCell.handle);
 
-            containerRuntimeFactory.processAllMessages();
+                containerRuntimeFactory.processAllMessages();
 
-            assert.equal(cell.get(), undefined, "Could not delete cell value");
-            assert.equal(cell2.get(), undefined, "Could not delete cell value from remote client");
+                // Verify the GC nodes returned by summarize.
+                let gcNodes = cell2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [subCell.handle.absolutePath],
+                    "GC node's outbound routes is incorrect");
+
+                // Verify that removed handle updates GC node's routes correctly.
+                cell.delete();
+                containerRuntimeFactory.processAllMessages();
+
+                gcNodes = cell2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [],
+                    "GC node's outbound routes should now be empty");
+            });
+
+            it("can generate GC nodes when handles are added to data", () => {
+                const factory = new CellFactory();
+                const subCell = factory.create(dataStoreRuntime, "subCell");
+                cell.set(subCell.handle);
+
+                containerRuntimeFactory.processAllMessages();
+
+                // Verify the GC nodes returned by summarize.
+                let gcNodes = cell2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [subCell.handle.absolutePath],
+                    "GC node's outbound routes is incorrect");
+
+                // Verify that new handle updates GC node's routes correctly.
+                const subCell2 = factory.create(dataStoreRuntime, "subCell2");
+                cell.set(subCell2.handle);
+                containerRuntimeFactory.processAllMessages();
+
+                gcNodes = cell2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [subCell2.handle.absolutePath],
+                    "GC node's outbound routes should have updated handle route");
+            });
+
+            it("can generate GC nodes with nested handles in data", () => {
+                const factory = new CellFactory();
+                const subCell = factory.create(dataStoreRuntime, "subCell");
+                const subCell2 = factory.create(dataStoreRuntime, "subCell2");
+                const containingObject = {
+                    subcellHandle: subCell.handle,
+                    nestedObj: {
+                        subcell2Handle: subCell2.handle,
+                    },
+                };
+                cell.set(containingObject);
+
+                containerRuntimeFactory.processAllMessages();
+
+                // Verify the GC nodes returned by summarize.
+                const gcNodes = cell2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [subCell.handle.absolutePath, subCell2.handle.absolutePath],
+                    "GC node's outbound routes is incorrect");
+            });
         });
     });
 

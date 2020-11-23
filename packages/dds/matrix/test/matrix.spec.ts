@@ -602,6 +602,132 @@ describe("Matrix", () => {
                 ]);
             });
         });
+
+        describe("Garbage Collection", () => {
+            it("can generate GC nodes with handles in data", () => {
+                const factory = new SharedMatrixFactory();
+                const submatrix = factory.create(dataStoreRuntime, "subMatrix");
+                const submatrix2 = factory.create(dataStoreRuntime, "subMatrix2");
+                matrix1.insertCols(0, 2);
+                matrix1.insertRows(0, 2);
+                matrix1.setCell(0, 0, submatrix.handle);
+                matrix1.setCell(1, 1, submatrix2.handle);
+
+                containerRuntimeFactory.processAllMessages();
+
+                // Verify the GC nodes returned by summarize.
+                const gcNodes = matrix2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [
+                        submatrix.handle.absolutePath,
+                        submatrix2.handle.absolutePath,
+                    ],
+                    "GC node's outbound routes is incorrect");
+            });
+
+            it("can generate GC nodes when handles are removed from data", () => {
+                const factory = new SharedMatrixFactory();
+                const submatrix = factory.create(dataStoreRuntime, "subMatrix");
+                const submatrix2 = factory.create(dataStoreRuntime, "subMatrix2");
+                matrix1.insertCols(0, 2);
+                matrix1.insertRows(0, 2);
+                matrix1.setCell(0, 0, submatrix.handle);
+                matrix1.setCell(1, 1, submatrix2.handle);
+
+                containerRuntimeFactory.processAllMessages();
+
+                // Verify the GC nodes returned by summarize.
+                let gcNodes = matrix2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [
+                        submatrix.handle.absolutePath,
+                        submatrix2.handle.absolutePath,
+                    ],
+                    "GC node's outbound routes is incorrect");
+
+                // Verify that removed handle updates GC nodes correctly.
+                matrix1.setCell(0, 0, undefined);
+                containerRuntimeFactory.processAllMessages();
+
+                gcNodes = matrix2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [submatrix2.handle.absolutePath],
+                    "GC node's outbound routes is incorrect");
+            });
+
+            it("can generate GC nodes when handles are added to data", () => {
+                const factory = new SharedMatrixFactory();
+                const submatrix = factory.create(dataStoreRuntime, "subMatrix");
+                matrix1.insertCols(0, 2);
+                matrix1.insertRows(0, 2);
+                matrix1.setCell(0, 0, submatrix.handle);
+
+                containerRuntimeFactory.processAllMessages();
+
+                // Verify the GC nodes returned by summarize.
+                let gcNodes = matrix2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [submatrix.handle.absolutePath],
+                    "GC node's outbound routes is incorrect");
+
+                // Verify that added handle updates GC nodes correctly.
+                const submatrix2 = factory.create(dataStoreRuntime, "subMatrix2");
+                matrix1.setCell(1, 1, submatrix2.handle);
+                containerRuntimeFactory.processAllMessages();
+
+                gcNodes = matrix2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [
+                        submatrix.handle.absolutePath,
+                        submatrix2.handle.absolutePath,
+                    ],
+                    "GC node's outbound routes is incorrect");
+            });
+
+            it("can generate GC nodes with nested handles in data", () => {
+                const factory = new SharedMatrixFactory();
+                const submatrix = factory.create(dataStoreRuntime, "subMatrix");
+                const submatrix2 = factory.create(dataStoreRuntime, "subMatrix2");
+                const containingObject = {
+                    subcellHandle: submatrix.handle,
+                    nestedObj: {
+                        subcell2Handle: submatrix2.handle,
+                    },
+                };
+                matrix1.insertCols(0, 1);
+                matrix1.insertRows(0, 1);
+                matrix1.setCell(0, 0, containingObject);
+
+                containerRuntimeFactory.processAllMessages();
+
+                // Verify the GC nodes returned by summarize.
+                const gcNodes = matrix2.summarize().gcNodes;
+                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                assert.deepStrictEqual(
+                    gcNodes[0].outboundRoutes,
+                    [
+                        submatrix.handle.absolutePath,
+                        submatrix2.handle.absolutePath,
+                    ],
+                    "GC node's outbound routes is incorrect");
+            });
+        });
     });
 
     describe("SharedMatrix reconnection", () => {

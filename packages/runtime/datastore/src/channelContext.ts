@@ -55,8 +55,5 @@ export function summarizeChannel(
     const summarizeResult = channel.summarize(fullTree, trackState);
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
-    return {
-        ...summarizeResult,
-        gcNodes: [],
-    };
+    return summarizeResult;
 }

@@ -43,8 +43,8 @@ describe("ConsensusRegisterCollection", () => {
         });
 
         describe("Attached, connected", () => {
-            async function writeAndProcessMsg(k, v) {
-                const waitP = crc.write(k, v);
+            async function writeAndProcessMsg(key: string, value: any) {
+                const waitP = crc.write(key, value);
                 containerRuntimeFactory.processAllMessages();
                 return waitP;
             }
@@ -155,6 +155,7 @@ describe("ConsensusRegisterCollection", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
         let containerRuntime1: MockContainerRuntimeForReconnection;
         let containerRuntime2: MockContainerRuntimeForReconnection;
+        let dataStoreRuntime1: MockFluidDataStoreRuntime;
         let deltaConnection1: IDeltaConnection;
         let deltaConnection2: IDeltaConnection;
         let testCollection1: IConsensusRegisterCollection;
@@ -164,20 +165,20 @@ describe("ConsensusRegisterCollection", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Create first ConsensusOrderedCollection
-            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+            dataStoreRuntime1 = new MockFluidDataStoreRuntime();
             containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
             deltaConnection1 = containerRuntime1.createDeltaConnection();
-            testCollection1 = crcFactory.create(dataStoreRuntime1, "consenses-register-collection1");
+            testCollection1 = crcFactory.create(dataStoreRuntime1, "consensus-register-collection1");
 
             // Create second ConsensusOrderedCollection
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             deltaConnection2 = containerRuntime2.createDeltaConnection();
-            testCollection2 = crcFactory.create(dataStoreRuntime2, "consenses-register-collection2");
+            testCollection2 = crcFactory.create(dataStoreRuntime2, "consensus-register-collection2");
         });
 
-        describe("Object not connected", () => {
-            it("should not send ops when DDS is not connected", async () => {
+        describe("Detached", () => {
+            it("should not send ops when the collection is not connected", async () => {
                 // Add a listener to the second collection. This is used to verify that the written value reaches
                 // the remote client.
                 let receivedValue: string = "";
@@ -201,13 +202,7 @@ describe("ConsensusRegisterCollection", () => {
             });
         });
 
-        describe("reconnect", () => {
-            const testKey: string = "testKey";
-            const testValue: string = "testValue";
-            let receivedKey: string = "";
-            let receivedValue: string = "";
-            let receivedLocalStatus: boolean = true;
-
+        describe("Attached, Connected", () => {
             beforeEach(() => {
                 // Connect the collections.
                 const services1: IChannelServices = {
@@ -220,64 +215,182 @@ describe("ConsensusRegisterCollection", () => {
                 };
                 testCollection1.connect(services1);
                 testCollection2.connect(services2);
+            });
 
-                // Add a listener to the second collection. This is used to verify that the written value reaches
-                // the remote client.
-                testCollection2.on("atomicChanged", (key: string, value: string, local: boolean) => {
-                    receivedKey = key;
-                    receivedValue = value;
-                    receivedLocalStatus = local;
+            describe("reconnect", () => {
+                const testKey: string = "testKey";
+                const testValue: string = "testValue";
+                let receivedKey: string = "";
+                let receivedValue: string = "";
+                let receivedLocalStatus: boolean = true;
+
+                beforeEach(() => {
+                    // Add a listener to the second collection. This is used to verify that the written value reaches
+                    // the remote client.
+                    testCollection2.on("atomicChanged", (key: string, value: string, local: boolean) => {
+                        receivedKey = key;
+                        receivedValue = value;
+                        receivedLocalStatus = local;
+                    });
+                });
+
+                it("can resend unacked ops on reconnection", async () => {
+                    // Write to the first register collection.
+                    const writeP = testCollection1.write(testKey, testValue);
+
+                    // Disconnect and reconnect the first collection.
+                    containerRuntime1.connected = false;
+                    containerRuntime1.connected = true;
+
+                    // Process the messages.
+                    containerRuntimeFactory.processAllMessages();
+
+                    // Verify that the first collection successfully writes and is the winner.
+                    const winner = await writeP;
+                    assert.equal(winner, true, "Write was not successful");
+
+                    // Verify that the remote register collection received the write.
+                    assert.equal(receivedKey, testKey, "The remote client did not receive the key");
+                    assert.equal(receivedValue, testValue, "The remote client did not receive the value");
+                    assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");
+                });
+
+                it("can store ops in disconnected state and resend them on reconnection", async () => {
+                    // Disconnect the first collection.
+                    containerRuntime1.connected = false;
+
+                    // Write to the first register collection.
+                    const writeP = testCollection1.write(testKey, testValue);
+
+                    // Reconnect the first collection.
+                    containerRuntime1.connected = true;
+
+                    // Process the messages.
+                    containerRuntimeFactory.processAllMessages();
+
+                    // Verify that the first collection successfully writes and is the winner.
+                    const winner = await writeP;
+                    assert.equal(winner, true, "Write was not successful");
+
+                    // Verify that the remote register collection recieved the write.
+                    assert.equal(receivedKey, testKey, "The remote client did not receive the key");
+                    assert.equal(receivedValue, testValue, "The remote client did not receive the value");
+                    assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");
+                });
+
+                afterEach(() => {
+                    receivedKey = "";
+                    receivedValue = "";
+                    receivedLocalStatus = true;
                 });
             });
 
-            it("can resend unacked ops on reconnection", async () => {
-                // Write to the first register collection.
-                const writeP = testCollection1.write(testKey, testValue);
+            describe("Garbage Collection", () => {
+                async function writeAndProcessMsg(key: string, value: any) {
+                    const waitP = testCollection1.write(key, value);
+                    containerRuntimeFactory.processAllMessages();
+                    return waitP;
+                }
 
-                // Disconnect and reconnect the first collection.
-                containerRuntime1.connected = false;
-                containerRuntime1.connected = true;
+                it("can generate GC nodes with handles in data", async () => {
+                    const gcTestCollection = crcFactory.create(dataStoreRuntime1, "gcTestCollection");
+                    await writeAndProcessMsg("key", gcTestCollection.handle);
 
-                // Process the messages.
-                containerRuntimeFactory.processAllMessages();
+                    // Verify the GC nodes returned by summarize.
+                    const gcNodes = testCollection2.summarize().gcNodes;
+                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                    assert.deepStrictEqual(
+                        gcNodes[0].outboundRoutes,
+                        [
+                            gcTestCollection.handle.absolutePath,
+                        ],
+                        "GC node's outbound routes is incorrect");
+                });
 
-                // Verify that the first collection successfully writes and is the winner.
-                const winner = await writeP;
-                assert.equal(winner, true, "Write was not successful");
+                it("can generate GC nodes when handles are added to data", async () => {
+                    const gcTestCollection1 = crcFactory.create(dataStoreRuntime1, "gcTestCollection1");
+                    await writeAndProcessMsg("key", gcTestCollection1.handle);
 
-                // Verify that the remote register collection received the write.
-                assert.equal(receivedKey, testKey, "The remote client did not receive the key");
-                assert.equal(receivedValue, testValue, "The remote client did not receive the value");
-                assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");
-            });
+                    // Verify the GC nodes returned by summarize.
+                    let gcNodes = testCollection2.summarize().gcNodes;
+                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                    assert.deepStrictEqual(
+                        gcNodes[0].outboundRoutes,
+                        [
+                            gcTestCollection1.handle.absolutePath,
+                        ],
+                        "GC node's outbound routes is incorrect");
 
-            it("can store ops in disconnected state and resend them on reconnection", async () => {
-                // Disconnect the first collection.
-                containerRuntime1.connected = false;
+                    // Add a new handle to data.
+                    const gcTestCollection2 = crcFactory.create(dataStoreRuntime1, "gcTestCollection2");
+                    await writeAndProcessMsg("key2", gcTestCollection2.handle);
 
-                // Write to the first register collection.
-                const writeP = testCollection1.write(testKey, testValue);
+                    // Verify that added handle updates GC nodes correctly.
+                    gcNodes = testCollection2.summarize().gcNodes;
+                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                    assert.deepStrictEqual(
+                        gcNodes[0].outboundRoutes,
+                        [
+                            gcTestCollection1.handle.absolutePath,
+                            gcTestCollection2.handle.absolutePath,
+                        ],
+                        "GC node's outbound routes is incorrect");
+                });
 
-                // Reconnect the first collection.
-                containerRuntime1.connected = true;
+                it("can generate GC nodes when handles are removed from data", async () => {
+                    const gcTestCollection1 = crcFactory.create(dataStoreRuntime1, "gcTestCollection1");
+                    await writeAndProcessMsg("key", gcTestCollection1.handle);
 
-                // Process the messages.
-                containerRuntimeFactory.processAllMessages();
+                    // Verify the GC nodes returned by summarize.
+                    let gcNodes = testCollection2.summarize().gcNodes;
+                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                    assert.deepStrictEqual(
+                        gcNodes[0].outboundRoutes,
+                        [
+                            gcTestCollection1.handle.absolutePath,
+                        ],
+                        "GC node's outbound routes is incorrect");
 
-                // Verify that the first collection successfully writes and is the winner.
-                const winner = await writeP;
-                assert.equal(winner, true, "Write was not successful");
+                    // Remove the handle from data.
+                    await writeAndProcessMsg("key", "nonHandleValue");
 
-                // Verify that the remote register collection recieved the write.
-                assert.equal(receivedKey, testKey, "The remote client did not receive the key");
-                assert.equal(receivedValue, testValue, "The remote client did not receive the value");
-                assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");
-            });
+                    // Verify that added handle updates GC nodes correctly.
+                    gcNodes = testCollection2.summarize().gcNodes;
+                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                    assert.deepStrictEqual(
+                        gcNodes[0].outboundRoutes,
+                        [],
+                        "GC node's outbound routes is incorrect");
+                });
 
-            afterEach(() => {
-                receivedKey = "";
-                receivedValue = "";
-                receivedLocalStatus = true;
+                it("can generate GC nodes with nested handles in data", async () => {
+                    const gcTestCollection1 = crcFactory.create(dataStoreRuntime1, "gcTestCollection1");
+                    const gcTestCollection2 = crcFactory.create(dataStoreRuntime1, "gcTestCollection2");
+                    const containingObject = {
+                        collection1Handle: gcTestCollection1.handle,
+                        nestedObj: {
+                            collection2Handle: gcTestCollection2.handle,
+                        },
+                    };
+                    await writeAndProcessMsg("key", containingObject);
+
+                    // Verify the GC nodes returned by summarize.
+                    const gcNodes = testCollection2.summarize().gcNodes;
+                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
+                    assert.deepStrictEqual(
+                        gcNodes[0].outboundRoutes,
+                        [
+                            gcTestCollection1.handle.absolutePath,
+                            gcTestCollection2.handle.absolutePath,
+                        ],
+                        "GC node's outbound routes is incorrect");
+                });
             });
         });
     });
