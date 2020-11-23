@@ -12,7 +12,7 @@ import { FluidDataStoreContext } from "./dataStoreContext";
     public readonly notBoundContexts = new Set<string>();
 
     // Attached and loaded context proxies
-    public readonly contexts = new Map<string, FluidDataStoreContext>();
+    private readonly _contexts = new Map<string, FluidDataStoreContext>();
     // List of pending contexts (for the case where a client knows a store will exist and is waiting
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<FluidDataStoreContext>>();
@@ -38,17 +38,21 @@ import { FluidDataStoreContext } from "./dataStoreContext";
         this._logger = ChildLogger.create(baseLogger);
     }
 
+    public get contexts(): ReadonlyMap<string, FluidDataStoreContext> {
+        return this._contexts;
+    }
+
     public get disposed() { return this.disposeOnce.evaluated;}
     public readonly dispose = () => this.disposeOnce.value;
 
     public setupNewContext(context) {
         this.verifyNotDisposed();
         const id = context.id;
-        assert(!this.contexts.has(id), "Creating store with existing ID");
+        assert(!this._contexts.has(id), "Creating store with existing ID");
         this.notBoundContexts.add(id);
         const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
-        this.contexts.set(id, context);
+        this._contexts.set(id, context);
     }
 
     public ensureContextDeferred(id: string): Deferred<FluidDataStoreContext> {
@@ -71,8 +75,8 @@ import { FluidDataStoreContext } from "./dataStoreContext";
     public setNewContext(id: string, context?: FluidDataStoreContext) {
         this.verifyNotDisposed();
         assert(!!context);
-        assert(!this.contexts.has(id));
-        this.contexts.set(id, context);
+        assert(!this._contexts.has(id));
+        this._contexts.set(id, context);
         const deferred = this.ensureContextDeferred(id);
         deferred.resolve(context);
     }
@@ -80,7 +84,7 @@ import { FluidDataStoreContext } from "./dataStoreContext";
     public getContext(id: string): FluidDataStoreContext {
         this.verifyNotDisposed();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const context = this.contexts.get(id)!;
+        const context = this._contexts.get(id)!;
         assert(!!context);
         return context;
     }
