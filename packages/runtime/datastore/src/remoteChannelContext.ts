@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { CreateContainerError } from "@fluidframework/container-utils";
+import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
     IChannel,
     IChannelAttributes,
@@ -139,17 +139,29 @@ export class RemoteChannelContext implements IChannelContext {
         // this as long as we support old attach messages
         if (attributes === undefined) {
             if (this.attachMessageType === undefined) {
-                throw new Error("Channel type not available");
+                throw new DataCorruptionError("Channel type not available", {
+                    channelId: this.id,
+                    dataStoreId: this.dataStoreContext.id,
+                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                });
             }
             factory = this.registry.get(this.attachMessageType);
             if (factory === undefined) {
-                throw new Error(`Channel Factory ${this.attachMessageType} for attach not registered`);
+                throw new DataCorruptionError(`Channel Factory ${this.attachMessageType} for attach not registered`, {
+                    channelId: this.id,
+                    dataStoreId: this.dataStoreContext.id,
+                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                });
             }
             attributes = factory.attributes;
         } else {
             factory = this.registry.get(attributes.type);
             if (factory === undefined) {
-                throw new Error(`Channel Factory ${attributes.type} not registered`);
+                throw new DataCorruptionError(`Channel Factory ${attributes.type} not registered`, {
+                    channelId: this.id,
+                    dataStoreId: this.dataStoreContext.id,
+                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                });
             }
         }
 
