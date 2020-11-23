@@ -33,13 +33,23 @@ import { Socket } from "./socket";
 const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
     maxMessageSize: 16 * 1024,
+    enableTraces: true,
     summary: {
         idleTime: 5000,
         maxOps: 1000,
         maxTime: 5000 * 12,
         maxAckWaitTime: 600000,
     },
-    enableTraces: true,
+    deli: {
+        clientTimeout: 5 * 60 * 1000,
+        activityTimeout: 30 * 1000,
+        noOpConsolidationTimeout: 250,
+    },
+    scribe: {
+        generateServiceSummary: true,
+        clearCacheAfterServiceSummary: false,
+        ignoreStorageException: false,
+    },
 };
 
 class RemoteSubscriber implements ISubscriber {
@@ -259,7 +269,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             this.taskMessageSender,
             this.tenantManager,
             this.permission,
-            this.maxMessageSize,
             this.tokenGenerator,
             this.logger);
         assert(!this.orderMap.has(fullId));

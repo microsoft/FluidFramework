@@ -74,9 +74,6 @@ export class ScribeLambda extends SequencedLambda {
         private term: number,
         private protocolHead: number,
         messages: ISequencedDocumentMessage[],
-        private readonly generateServiceSummary: boolean,
-        private readonly clearCacheAfterServiceSummary: boolean,
-        private readonly ignoreStorageException?: boolean,
     ) {
         super(context);
 
@@ -210,7 +207,7 @@ export class ScribeLambda extends SequencedLambda {
                             this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                             // If this flag is set, we should ignore any storage speciic error and move forward
                             // to process the next message.
-                            if (this.ignoreStorageException) {
+                            if (this.serviceConfiguration.scribe.ignoreStorageException) {
                                 await this.sendSummaryNack(
                                     {
                                         errorMessage: "Failed to summarize the document.",
@@ -232,7 +229,7 @@ export class ScribeLambda extends SequencedLambda {
                         value.operation.minimumSequenceNumber === value.operation.sequenceNumber,
                         `${value.operation.minimumSequenceNumber} != ${value.operation.sequenceNumber}`);
 
-                    if (this.generateServiceSummary) {
+                    if (this.serviceConfiguration.scribe.generateServiceSummary) {
                         const operation = value.operation as ISequencedDocumentAugmentedMessage;
                         const scribeCheckpoint = this.generateCheckpoint(this.lastOffset);
                         try {
@@ -244,19 +241,19 @@ export class ScribeLambda extends SequencedLambda {
                             );
 
                             if (summaryResponse) {
-                                if (this.clearCacheAfterServiceSummary) {
+                                if (this.serviceConfiguration.scribe.clearCacheAfterServiceSummary) {
                                     this.clearCache = true;
                                 }
                                 await this.sendSummaryConfirmationMessage(
                                     operation.sequenceNumber,
-                                    this.clearCacheAfterServiceSummary);
+                                    this.serviceConfiguration.scribe.clearCacheAfterServiceSummary);
                                 this.context.log.info(
                                     `Service summary success @${operation.sequenceNumber}`, { messageMetaData });
                             }
                         } catch (ex) {
                             // If this flag is set, we should ignore any storage speciic error and move forward
                             // to process the next message.
-                            if (this.ignoreStorageException) {
+                            if (this.serviceConfiguration.scribe.ignoreStorageException) {
                                 this.context.log.error(
                                     `Service summary failure @${operation.sequenceNumber}`, { messageMetaData });
                             } else {

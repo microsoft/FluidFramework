@@ -34,13 +34,23 @@ import {
 export const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
     maxMessageSize: 16 * 1024,
+    enableTraces: true,
     summary: {
         idleTime: 5000,
         maxOps: 1000,
         maxTime: 5000 * 12,
         maxAckWaitTime: 600000,
     },
-    enableTraces: true,
+    deli: {
+        clientTimeout: 5 * 60 * 1000,
+        activityTimeout: 30 * 1000,
+        noOpConsolidationTimeout: 250,
+    },
+    scribe: {
+        generateServiceSummary: true,
+        clearCacheAfterServiceSummary: false,
+        ignoreStorageException: false,
+    },
 };
 
 interface IRoom {
@@ -275,7 +285,11 @@ export function configureWebSocketServices(
                     mode: "write",
                     // Back-compat, removal tracked with issue #4346
                     parentBranch: null,
-                    serviceConfiguration: connection.serviceConfiguration,
+                    serviceConfiguration: {
+                        blockSize: connection.serviceConfiguration.blockSize,
+                        maxMessageSize: connection.serviceConfiguration.maxMessageSize,
+                        summary: connection.serviceConfiguration.summary,
+                    },
                     initialClients: clients,
                     initialMessages: [],
                     initialSignals: [],
@@ -291,7 +305,11 @@ export function configureWebSocketServices(
                     mode: "read",
                     // Back-compat, removal tracked with issue #4346
                     parentBranch: null, // Does not matter for now.
-                    serviceConfiguration: DefaultServiceConfiguration,
+                    serviceConfiguration: {
+                        blockSize: DefaultServiceConfiguration.blockSize,
+                        maxMessageSize: DefaultServiceConfiguration.maxMessageSize,
+                        summary: DefaultServiceConfiguration.summary,
+                    },
                     initialClients: clients,
                     initialMessages: [],
                     initialSignals: [],

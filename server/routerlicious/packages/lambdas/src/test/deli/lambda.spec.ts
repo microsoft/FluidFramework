@@ -24,7 +24,7 @@ import { strict as assert } from "assert";
 import * as _ from "lodash";
 import nconf from "nconf";
 import { DefaultServiceConfiguration } from "../../alfred";
-import { ClientSequenceTimeout, DeliLambdaFactory } from "../../deli/lambdaFactory";
+import { DeliLambdaFactory } from "../../deli/lambdaFactory";
 
 const MinSequenceNumberWindow = 2000;
 
@@ -181,12 +181,12 @@ describe("Routerlicious", () => {
                     assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 10);
 
                     await lambda.handler(
-                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(20, 1 + ClientSequenceTimeout),
+                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(20, 1 + DefaultServiceConfiguration.deli.clientTimeout),
                             testId));
                     await lambda.handler(kafkaMessageFactory.sequenceMessage(
                         secondMessageFactory.create(
                             20,
-                            ClientSequenceTimeout + 2 * MinSequenceNumberWindow),
+                            DefaultServiceConfiguration.deli.clientTimeout + 2 * MinSequenceNumberWindow),
                         testId));
                     await quiesce();
                     // assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 20);
