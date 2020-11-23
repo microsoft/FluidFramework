@@ -132,7 +132,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
     }
 
     /**
-     * {@inheritDoc IDocumentStorageService.readString}
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
      */
     public async readString(blobId: string): Promise<string> {
         return this.storage.readString(blobId);
