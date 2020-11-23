@@ -4,6 +4,18 @@ An example of taking the open source [react-image-gallery](https://www.npmjs.com
 and making it collaborative using the Fluid Framework.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
+<!-- The getting started instructions are automatically generated.
+To update them, edit markdown.config.js and run npm run readme:update in the root of the repo -->
+
+## Getting Started
+
+You can run this example using the following steps:
+
+1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
+   a. For an even faster build, you can add the package name to the build command, like this:
+      `npm run build:fast -- --nolint @fluid-example/image-gallery`
+1. Navigate to this directory (examples/data-objects/image-gallery).
+1. Run `npm run start`.
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Data model
