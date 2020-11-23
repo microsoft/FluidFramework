@@ -22,7 +22,7 @@ const getPackagePath = (path) => {
 
 const getStartedInfo = (path, includeTinylicious = false) => {
     const preamble = `<!-- The getting started instructions are automatically generated.
-To update them, edit markdown.config.js and run npm run readme:update in the root of the repo -->
+To update them, edit md-magic.config.js in the root of the repo, then run npm run readme:update -->
 
 ## Getting Started
 
