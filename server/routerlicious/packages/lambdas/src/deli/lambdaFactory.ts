@@ -25,15 +25,6 @@ import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { DeliLambda } from "./lambda";
 
-// We expire clients after 5 minutes of no activity
-export const ClientSequenceTimeout = 5 * 60 * 1000;
-
-// Timeout for sending no-ops to trigger inactivity checker.
-export const ActivityCheckingTimeout = 30 * 1000;
-
-// Timeout for sending consolidated no-ops.
-export const NoopConsolidationTimeout = 250;
-
 // Epoch should never tick in our current setting. This flag is just for being extra cautious.
 // TODO: Remove when everything is up to date.
 const FlipTerm = false;
@@ -142,9 +133,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
             this.forwardProducer,
             this.reverseProducer,
-            ClientSequenceTimeout,
-            ActivityCheckingTimeout,
-            NoopConsolidationTimeout,
             this.serviceConfiguration);
     }
 

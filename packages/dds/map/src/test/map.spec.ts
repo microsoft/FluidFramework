@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IBlob } from "@fluidframework/protocol-definitions";
+import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
@@ -145,9 +145,11 @@ describe("Map", () => {
             it("new serialization format for small maps", async () => {
                 map.set("key", "value");
 
-                const tree = map.snapshot();
-                assert(tree.entries.length === 1);
-                const content = JSON.stringify({
+                const summaryTree = map.summarize().summary;
+                assert.strictEqual(
+                    Object.keys(summaryTree.tree).length, 1, "summary tree should only have one blob");
+                const summaryContent = (summaryTree.tree.header as ISummaryBlob)?.content;
+                const expectedContent = JSON.stringify({
                     blobs: [],
                     content: {
                         key: {
@@ -156,10 +158,9 @@ describe("Map", () => {
                         },
                     },
                 });
-                assert(tree.entries.length === 1);
-                assert((tree.entries[0].value as IBlob).contents === content);
+                assert.strictEqual(summaryContent, expectedContent, "The summary content is not as expected");
 
-                const services = new MockSharedObjectServices({ header: content });
+                const services = new MockSharedObjectServices({ header: summaryContent });
                 const loadedMap = await factory.load(
                     dataStoreRuntime, "mapId", services, factory.attributes,
                 );
@@ -177,9 +178,10 @@ describe("Map", () => {
                 map.set("longValue", longString);
                 map.set("zzz", "the end");
 
-                const tree = map.snapshot();
-                assert(tree.entries.length === 2);
-                const content1 = JSON.stringify({
+                const summaryTree = map.summarize().summary;
+                assert.strictEqual(
+                    Object.keys(summaryTree.tree).length, 2, "There should be 2 entries in the summary tree");
+                const expectedContent1 = JSON.stringify({
                     blobs: ["blob0"],
                     content: {
                         key: {
@@ -192,23 +194,21 @@ describe("Map", () => {
                         },
                     },
                 });
-                const content2 = JSON.stringify({
+                const expectedContent2 = JSON.stringify({
                     longValue: {
                         type: "Plain",
                         value: longString,
                     },
                 });
 
-                assert(tree.entries.length === 2);
-                assert(tree.entries[1].path === "header");
-                assert((tree.entries[1].value as IBlob).contents === content1);
-
-                assert(tree.entries[0].path === "blob0");
-                assert((tree.entries[0].value as IBlob).contents === content2);
+                const header = summaryTree.tree.header as ISummaryBlob;
+                const blob0 = summaryTree.tree.blob0 as ISummaryBlob;
+                assert.strictEqual(header?.content, expectedContent1, "header content is not as expected");
+                assert.strictEqual(blob0?.content, expectedContent2, "blob0 content is not as expected");
 
                 const services = new MockSharedObjectServices({
-                    header: content1,
-                    blob0: content2,
+                    header: header.content,
+                    blob0: blob0.content,
                 });
                 const loadedMap = await factory.load(
                     dataStoreRuntime, "mapId", services, factory.attributes,
@@ -245,7 +245,7 @@ describe("Map", () => {
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-            const services2 = MockSharedObjectServices.createFromTree(map.snapshot());
+            const services2 = MockSharedObjectServices.createFromSummary(map.summarize().summary);
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const map2 = new SharedMap("testMap2", dataStoreRuntime2, MapFactory.Attributes);

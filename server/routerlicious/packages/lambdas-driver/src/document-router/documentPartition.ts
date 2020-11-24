@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { IPartitionLambda, IPartitionLambdaFactory, IQueuedMessage } from "@fluidframework/server-services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
@@ -11,13 +10,13 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { DocumentContext } from "./documentContext";
 
-export class DocumentPartition extends EventEmitter {
+export class DocumentPartition {
     private readonly q: AsyncQueue<IQueuedMessage>;
     private readonly lambdaP: Promise<IPartitionLambda>;
     private lambda: IPartitionLambda;
     private corrupt = false;
-    private activityTimer: NodeJS.Timeout | undefined;
     private closed = false;
+    private activityTimeoutTime: number;
 
     constructor(
         factory: IPartitionLambdaFactory,
@@ -26,7 +25,7 @@ export class DocumentPartition extends EventEmitter {
         documentId: string,
         public readonly context: DocumentContext,
         private readonly activityTimeout: number) {
-        super();
+        this.updateActivityTime();
 
         // Default to the git tenant if not specified
         const clonedConfig = _.cloneDeep((config as any).get());
@@ -85,7 +84,7 @@ export class DocumentPartition extends EventEmitter {
         }
 
         this.q.push(message);
-        this.updateActivityTimer();
+        this.updateActivityTime();
     }
 
     public close() {
@@ -94,10 +93,6 @@ export class DocumentPartition extends EventEmitter {
         }
 
         this.closed = true;
-
-        this.clearActivityTimer();
-
-        this.removeAllListeners();
 
         // Stop any future processing
         this.q.kill();
@@ -115,18 +110,11 @@ export class DocumentPartition extends EventEmitter {
         }
     }
 
-    private updateActivityTimer() {
-        this.clearActivityTimer();
-
-        this.activityTimer = setTimeout(() => {
-            this.emit("inactive");
-        }, this.activityTimeout);
+    public isInactive(now: number = Date.now()) {
+        return now > this.activityTimeoutTime;
     }
 
-    private clearActivityTimer() {
-        if (this.activityTimer !== undefined) {
-            clearTimeout(this.activityTimer);
-            this.activityTimer = undefined;
-        }
+    private updateActivityTime() {
+        this.activityTimeoutTime = Date.now() + this.activityTimeout;
     }
 }
