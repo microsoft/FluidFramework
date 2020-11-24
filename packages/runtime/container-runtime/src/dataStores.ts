@@ -12,6 +12,7 @@ import {
     IAttachMessage,
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
+    InboundAttachMessage,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -31,6 +32,10 @@ import {
     LocalDetachedFluidDataStoreContext,
  } from "./dataStoreContext";
 
+ /**
+  * This class encapsulates data store handling. Currently it is only used by the container runtime,
+  * but eventually could be hosted on any channel once we formalize the channel api boundary.
+  */
 export class DataStores implements IDisposable {
     // Stores tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -50,7 +55,7 @@ export class DataStores implements IDisposable {
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         baseLogger: ITelemetryBaseLogger,
         public readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
-        ) {
+    ) {
         this.logger = ChildLogger.create(baseLogger);
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree | string>();
@@ -120,7 +125,7 @@ export class DataStores implements IDisposable {
     }
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
-        const attachMessage = message.contents;
+        const attachMessage = message.contents as InboundAttachMessage;
         // The local object has already been attached
         if (local) {
             assert(this.pendingAttach.has(attachMessage.id));
