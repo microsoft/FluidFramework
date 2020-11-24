@@ -7,55 +7,37 @@ import { assert } from "@fluidframework/common-utils";
 
 export class RateLimiter {
     private readonly tasks: (() => void)[] = [];
-    constructor(private maxRequests: number) {}
+    constructor(private maxRequests: number) {
+        assert(maxRequests > 0);
+    }
 
     public get waitQueueLength(): number {
-        const diff = this.tasks.length - this.maxRequests;
-        if (diff > 0) {
-            return diff;
-        }
-        return 0;
+        return this.tasks.length;
     }
 
-    private sched() {
-        if (this.maxRequests > 0 && this.tasks.length > 0) {
+    // Run when one of the tasks finished running.
+    // Release next task if we have one, or allow more tasks to run in future.
+    protected readonly release = () => {
+        const task = this.tasks.shift();
+        if (task !== undefined) {
+            return task();
+        }
+        this.maxRequests--;
+    };
+
+    protected async acquire() {
+        if (this.maxRequests > 0) {
             this.maxRequests--;
-            const task = this.tasks.shift();
-            assert(task !== undefined, "Unexpected task value in tasks list");
-            task();
+            return;
         }
-    }
 
-    public async acquire() {
-        return new Promise<() => void>((res, rej) => {
-            const task = () => {
-                let released = false;
-                res(() => {
-                    if (!released) {
-                        released = true;
-                        this.maxRequests++;
-                        this.sched();
-                    }
-                });
-            };
-            this.tasks.push(task);
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.resolve().then(async () => this.sched());
+        return new Promise<void>((res) => {
+            this.tasks.push(res);
         });
     }
 
     public async schedule<T>(work: () => Promise<T>) {
-        return this.acquire()
-        .then(async (release) => {
-            return work()
-            .then((res) => {
-                release();
-                return res;
-            })
-            .catch((error) => {
-                release();
-                throw error;
-            });
-        });
+        await this.acquire();
+        return work().finally(this.release);
     }
 }

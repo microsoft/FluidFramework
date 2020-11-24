@@ -1,6 +1,6 @@
 # @fluidframework/test-runtime-utils
 
-Test utilities for the Fluid Framework Runtime.  Include mock implementation of various runtime interfaces.
+Test utilities for the Fluid Framework Runtime.  Include mock implementation of various runtime interfaces, as well as a mock logger for validating a particular log sequence.
 
 ## Writing unit test for a DDS
 
