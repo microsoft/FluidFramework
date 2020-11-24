@@ -1214,15 +1214,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         const boundContext = await deferredBind.promise;
-
-        if (!this.datastoreContexts.has(id) || this.datastoreContexts.isNotBound(id)) {
-            this.logger.sendErrorEvent({
-                eventName: "DataStoreBindingStateMismatch",
-                message: "datastoreContexts should contain the bound context since deferredBind has completed",
-                contextId: id,
-            });
-        }
-
         return boundContext.realize();
     }
 
@@ -1609,8 +1600,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
         this.verifyNotClosed();
 
-        this.datastoreContexts.notifyOnBeforeBind(fluidDataStoreRuntime.id);
-        const context = this.datastoreContexts.get(fluidDataStoreRuntime.id) as LocalFluidDataStoreContext;
+        const id = fluidDataStoreRuntime.id;
+        this.datastoreContexts.notifyOnBeforeBind(id);
+        const context = this.datastoreContexts.get(id) as LocalFluidDataStoreContext;
         assert(!!context, "Attempting to bind to a context that hasn't been added yet");
 
         // If the container is detached, we don't need to send OP or add to pending attach because
@@ -1620,13 +1612,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             context.emit("attaching");
             const message = context.generateAttachMessage();
 
-            this.pendingAttach.set(fluidDataStoreRuntime.id, message);
+            this.pendingAttach.set(id, message);
             this.submit(ContainerMessageType.Attach, message);
-            this.attachOpFiredForDataStore.add(fluidDataStoreRuntime.id);
+            this.attachOpFiredForDataStore.add(id);
         }
 
         // Resolve the deferred so other local stores can access it now that the context is bound
-        this.datastoreContexts.resolveDeferredBind(fluidDataStoreRuntime.id, context);
+        this.datastoreContexts.resolveDeferredBind(id);
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {

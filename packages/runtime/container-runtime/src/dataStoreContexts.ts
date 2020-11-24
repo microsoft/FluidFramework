@@ -102,12 +102,13 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
 
     /**
      * Triggers the deferred to resolve, indicating the context has been bound
-     * @param id - The id of the newly-bound context
-     * @param context - The context (Redundant with existing context that was previously added)
+     * @param id - The id of the context to resolve to
      */
-    public resolveDeferredBind(id: string, context: FluidDataStoreContext) {
-        assert(this._contexts.get(id) === context, "context mismatch for context being bound");
+    public resolveDeferredBind(id: string) {
+        const context = this._contexts.get(id);
+        assert(!!context, "Cannot find context we've bound");
         assert(!this.notBoundContexts.has(id), "Expected this id to already be removed from notBoundContexts");
+
         const deferredBind = this.deferredContextBinds.get(id);
         assert(!!deferredBind, "Cannot find deferredBind to resolve");
         deferredBind.resolve(context);
