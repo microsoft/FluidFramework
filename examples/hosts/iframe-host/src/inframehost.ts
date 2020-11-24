@@ -3,15 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import * as Comlink from "comlink";
 import {
     DocumentServiceFactoryProxy,
+    IDocumentServiceFactoryProxyKey,
+    IUrlResolverProxyKey,
+    OuterUrlResolver,
 } from "@fluidframework/iframe-driver";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
     ICodeLoader,
     IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
-import { MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
+import {
+    MultiDocumentServiceFactory,
+    MultiUrlResolver,
+} from "@fluidframework/driver-utils";
 import { IRequest, IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 
@@ -42,12 +49,23 @@ export class IFrameOuterHost {
     }
 
     public async loadOuterProxy(iframe: HTMLIFrameElement): Promise<void> {
-        const outerProxy =  new DocumentServiceFactoryProxy(
+        const combinedProxy = {};
+
+        const outerDocumentServiceProxy =  new DocumentServiceFactoryProxy(
             MultiDocumentServiceFactory.create(this.hostConfig.documentServiceFactory),
             this.hostConfig.options,
-            iframe,
         );
-        void outerProxy;
+        combinedProxy[IDocumentServiceFactoryProxyKey] = outerDocumentServiceProxy.createProxy();
+
+        const outerUrlResolverProxy = new OuterUrlResolver(
+            MultiUrlResolver.create(this.hostConfig.urlResolver),
+        );
+        combinedProxy[IUrlResolverProxyKey] = outerUrlResolverProxy.createProxy();
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const iframeContentWindow = iframe.contentWindow!;
+        iframeContentWindow.window.postMessage("EndpointExposed", "*");
+        Comlink.expose(combinedProxy, Comlink.windowEndpoint(iframeContentWindow));
     }
 
     public async getContainerForRequest(request: IRequest): Promise<Container> {

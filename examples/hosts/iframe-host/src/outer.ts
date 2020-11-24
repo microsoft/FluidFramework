@@ -7,10 +7,15 @@ import { fluidExport as TodoContainer } from "@fluid-example/todo";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
+    InsecureTinyliciousUrlResolver,
+ } from "@fluidframework/get-tinylicious-container";
+import {
     RouterliciousDocumentServiceFactory,
 } from "@fluidframework/routerlicious-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { InsecureTokenProvider, InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
+import {
+    InsecureTokenProvider,
+} from "@fluidframework/test-runtime-utils";
 import { IFrameOuterHost } from "./inframehost";
 
 let createNew = false;
@@ -21,14 +26,6 @@ const getDocumentId = () => {
     }
     return window.location.hash.substring(1);
 };
-const getDocumentUrl = (documentId: string) => `${window.location.origin}/${documentId}`;
-const getTinyliciousUrlResolver =
-    () => new InsecureUrlResolver(
-        "http://localhost:3000",
-        "http://localhost:3000",
-        "http://localhost:3000",
-        "tinylicious",
-        "bearer");
 
 export async function loadFrame(iframeDivId: string, divId: string, logId: string) {
     const documentId = getDocumentId();
@@ -37,7 +34,7 @@ export async function loadFrame(iframeDivId: string, divId: string, logId: strin
     iframe.src = "/inner.html";
     iframeDiv.appendChild(iframe);
 
-    const urlResolver = getTinyliciousUrlResolver();
+    const urlResolver = new InsecureTinyliciousUrlResolver();
 
     const tokenProvider = new InsecureTokenProvider("tinylicious", documentId, "12345", { id: "userid0" });
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
@@ -57,7 +54,7 @@ export async function loadFrame(iframeDivId: string, divId: string, logId: strin
         void (async () => {
             await (iframe.contentWindow as any).loadFluidObject(documentId, createNew);
             // don't try to connect until the iframe does, so they get existing false
-            const container = await host.getContainerForRequest({ url: getDocumentUrl(documentId) });
+            const container = await host.getContainerForRequest({ url: documentId });
             await loadOuterDataStoreAndLogDivs(container, logId, divId);
         })();
     });

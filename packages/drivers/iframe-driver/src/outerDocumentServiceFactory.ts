@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
-import Axios from "axios";
 import * as Comlink from "comlink";
 import {
     IEventProvider,
@@ -12,7 +10,7 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { assert, Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -21,11 +19,6 @@ import {
     IDocumentStorageService,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import {
-    ensureFluidResolvedUrl,
-    getDocAttributesFromProtocolSummary,
-    getQuorumValuesFromProtocolSummary,
-} from "@fluidframework/driver-utils";
 import {
     IClient,
     IDocumentMessage,
@@ -71,24 +64,22 @@ export interface IDocumentServiceFactoryProxy {
     connected(): Promise<void>;
 }
 
+export const IDocumentServiceFactoryProxyKey = "IDocumentServiceFactoryProxy";
+
 /**
  * Proxy of the Document Service Factory that gets sent to the innerFrame
  */
 export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy {
     private _clients: {
         [clientId: string]: ICombinedDriver,
-    };
+    } = {};
 
     public get clients() { return Comlink.proxy(this._clients); }
 
     constructor(
         private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly options: any,
-        frame: HTMLIFrameElement,
-    ) {
-        this._clients = {};
-        this.createProxy(frame);
-    }
+    ) { }
 
     public async createDocumentService(
         resolvedUrlFn: () => Promise<IResolvedUrl>,
@@ -98,6 +89,48 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         const connectedDocumentService: IDocumentService =
             await this.documentServiceFactory.createDocumentService(resolvedUrl, outerProxyLogger);
 
+        return this.getDocumentServiceProxy(connectedDocumentService, resolvedUrl, outerProxyLogger);
+    }
+
+    public async createContainer(
+        createNewSummaryFn: () => Promise<ISummaryTree>,
+        resolvedUrlFn: () => Promise<IResolvedUrl>,
+    ): Promise<string> {
+        const createNewSummary = await createNewSummaryFn();
+        const resolvedUrl = await resolvedUrlFn();
+        const outerProxyLogger = ChildLogger.create(undefined, "OuterProxyIFrameDriver");
+        const connectedDocumentService: IDocumentService =
+            await this.documentServiceFactory.createContainer(createNewSummary, resolvedUrl, outerProxyLogger);
+
+        return this.getDocumentServiceProxy(connectedDocumentService, resolvedUrl, outerProxyLogger);
+    }
+
+    public async connected(): Promise<void> {
+        debug("IFrame Connection Succeeded");
+        return;
+    }
+
+    public createProxy(): IDocumentServiceFactoryProxy {
+        const proxy: IDocumentServiceFactoryProxy = {
+            connected: Comlink.proxy(async () => this.connected()),
+            clients: Comlink.proxy(this._clients),
+            // Continue investigation of scope after feature check in
+            createDocumentService: Comlink.proxy(async (resolvedUrl) => this.createDocumentService(resolvedUrl)),
+            createContainer: Comlink.proxy(
+                async (createNewSummary, resolvedUrl) => {
+                    return Comlink.proxy(this.createContainer(createNewSummary, resolvedUrl));
+                },
+            ),
+        };
+
+        return proxy;
+    }
+
+    private async getDocumentServiceProxy(
+        connectedDocumentService: IDocumentService,
+        resolvedUrl: IResolvedUrl,
+        outerProxyLogger: ITelemetryLogger,
+    ): Promise<string> {
         const clientDetails: IClient = this.options?.client ?
             (this.options.client as IClient) :
             {
@@ -129,66 +162,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         this._clients[clientId] = combinedDriver;
 
         return clientId;
-    }
-
-    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
-    // Currently this is mostly copied from RouterliciousDocumentServiceFactory
-    public async createContainer(
-        createNewSummaryFn: () => Promise<ISummaryTree>,
-        resolvedUrlFn: () => Promise<IResolvedUrl>,
-    ): Promise<string> {
-        const createNewSummary = await createNewSummaryFn();
-        const resolvedUrl = await resolvedUrlFn();
-        ensureFluidResolvedUrl(resolvedUrl);
-        assert(resolvedUrl.endpoints.ordererUrl !== undefined);
-        const parsedUrl = parse(resolvedUrl.url);
-        if (!parsedUrl.pathname) {
-            throw new Error("Parsed url should contain tenant and doc Id!!");
-        }
-        const [, tenantId, id] = parsedUrl.pathname.split("/");
-        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-        const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-        if (!(protocolSummary && appSummary)) {
-            throw new Error("Protocol and App Summary required in the full summary");
-        }
-        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
-        const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
-        await Axios.post(
-            `${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}`,
-            {
-                id,
-                summary: appSummary,
-                sequenceNumber: documentAttributes.sequenceNumber,
-                values: quorumValues,
-            });
-
-        return this.createDocumentService(async () => resolvedUrl);
-    }
-
-    public async connected(): Promise<void> {
-        debug("IFrame Connection Succeeded");
-        return;
-    }
-
-    private createProxy(frame: HTMLIFrameElement) {
-        // Host guarantees that frame and contentWindow are both loaded
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const iframeContentWindow = frame.contentWindow!;
-
-        const proxy: IDocumentServiceFactoryProxy = {
-            connected: Comlink.proxy(async () => this.connected()),
-            clients: Comlink.proxy(this._clients),
-            // Continue investigation of scope after feature check in
-            createDocumentService: Comlink.proxy(async (resolvedUrl) => this.createDocumentService(resolvedUrl)),
-            createContainer: Comlink.proxy(
-                async (createNewSummary, resolvedUrl) => {
-                    return Comlink.proxy(this.createContainer(createNewSummary, resolvedUrl));
-                },
-            ),
-        };
-
-        iframeContentWindow.window.postMessage("EndpointExposed", "*");
-        Comlink.expose(proxy, Comlink.windowEndpoint(iframeContentWindow));
     }
 
     private getStorage(storage: IDocumentStorageService): IDocumentStorageService {

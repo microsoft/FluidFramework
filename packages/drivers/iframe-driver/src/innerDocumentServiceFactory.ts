@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { InnerDocumentService } from "./innerDocumentService";
-import { IDocumentServiceFactoryProxy } from "./outerDocumentServiceFactory";
+import { IDocumentServiceFactoryProxy, IDocumentServiceFactoryProxyKey } from "./outerDocumentServiceFactory";
 import { MakeThinProxy } from "./proxyUtils";
 
 /**
@@ -20,39 +20,13 @@ import { MakeThinProxy } from "./proxyUtils";
  */
 export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
     public static async create(): Promise<InnerDocumentServiceFactory> {
-        let outerProxy: Comlink.Remote<IDocumentServiceFactoryProxy>;
-        const create = async () => {
-            // If the parent endpoint does not exist, returns empty proxy silently (no connection/failure case)
-            if (outerProxy === undefined) {
-                outerProxy = Comlink.wrap<IDocumentServiceFactoryProxy>(Comlink.windowEndpoint(window.parent));
-            }
-            if (outerProxy) {
-                await outerProxy.connected();
-                return outerProxy;
-            }
-        };
-        // If innerFactory is created second, the outerFactory will trigger the connection
-        const evtListener = (resolve) => {
-            create()
-                .then((value) => {
-                    if (value) {
-                        resolve(value);
-                    }
-                })
-                .catch(() => { });
-        };
-
-        const eventP = new Promise<Comlink.Remote<IDocumentServiceFactoryProxy>>(
-            (resolve) => window.addEventListener("message", () => evtListener(resolve), { once: true }));
-
-        // Attempt to connect, does not connect if innerDocumentServiceFactory
-        // is created before outerDocumentServiceFactory
-        const rtnProxy = await create() ?? await eventP;
-
-        // Remove eventListener if the create returns, the trigger was sent before inner was created
-        // Leaving the eventListener will eat events.
-        window.removeEventListener("message", evtListener);
-        return new InnerDocumentServiceFactory(rtnProxy);
+        // The outer host is responsible for setting up the iframe, so the proxy connection
+        // is expected to exist when running any inner iframe code.
+        const combinedProxy = Comlink.wrap(Comlink.windowEndpoint(window.parent));
+        const outerProxy =
+            combinedProxy[IDocumentServiceFactoryProxyKey] as Comlink.Remote<IDocumentServiceFactoryProxy>;
+        await outerProxy.connected();
+        return new InnerDocumentServiceFactory(outerProxy);
     }
 
     public static readonly protocolName = "fluid:";
