@@ -261,32 +261,40 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             blob = response.content;
         }
 
-        if (this.attributesBlobHandles.has(blobid)) {
+        assert(blob.encoding === "base64" || blob.encoding === undefined, "wrong blob encoding format");
+        const inputFormat = blob.encoding;
+        if (!this.attributesBlobHandles.has(blobid)) {
+            if (outputFormat === inputFormat || (outputFormat === "string" && inputFormat === undefined))  {
+                return blob.content;
+            }
+            else if (outputFormat === "base64") {
+                return fromUtf8ToBase64(blob.content);
+            }
+            else {
+                return fromBase64ToUtf8(blob.content);
+            }
+        }
+        else {
             // ODSP document ids are random guids (different per session)
             // fix the branch name in attributes
             // this prevents issues when generating summaries
-            if (blob.encoding === "base64") {
-                const documentAttributes: api.IDocumentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
-                documentAttributes.branch = this.documentId;
+            const docId = this.documentId;
+            let documentAttributes: api.IDocumentAttributes;
+            if (inputFormat === "base64") {
+                documentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
+                documentAttributes.branch = docId;
+            }
+            else {
+                documentAttributes = JSON.parse(blob.content);
+                documentAttributes.branch = docId;
+            }
 
-                if (outputFormat === "base64") {
-                    blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
-                } else {
-                    blob.content = JSON.stringify(documentAttributes);
-                }
+            if (outputFormat === "base64") {
+                return fromUtf8ToBase64(JSON.stringify(documentAttributes));
             } else {
-                const documentAttributes: api.IDocumentAttributes = JSON.parse(blob.content);
-                documentAttributes.branch = this.documentId;
-
-                if (outputFormat === "base64") {
-                    blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
-                } else {
-                    blob.content = JSON.stringify(documentAttributes);
-                }
+                return JSON.stringify(documentAttributes);
             }
         }
-
-        return blob.content;
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
