@@ -4,7 +4,7 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { DriverErrorType, IDocumentStorageService, IThrottlingWarning } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
 /**
  * Read a blob from IDocumentStorageService, decode it (from "base64") and JSON.parse it into object of type T
@@ -30,30 +30,4 @@ export function readAndParseFromBlobs<T>(blobs: {[index: string]: string}, id: s
     const encoded = blobs[id];
     const decoded = fromBase64ToUtf8(encoded);
     return JSON.parse(decoded) as T;
-}
-
-/**
- * Utility to retry the read or fetch until it succeeds in it.
- * @param api - Method to be retried.
- */
-export async function readWithRetry<T>(api: () => Promise<T>): Promise<T> {
-    let result: T;
-    try {
-        result = await api();
-    } catch (error) {
-        // If it is not retriable, then just throw the error.
-        if (typeof error !== "object" || error.canRetry !== true) {
-            throw error;
-        }
-        let retryAfter = 0;
-        // If the error is throttling error, then wait for the specified time before retrying.
-        // eslint-disable-next-line no-null/no-null
-        if (error !== null && typeof error === "object" && error.errorType === DriverErrorType.throttlingError) {
-            retryAfter = (error as IThrottlingWarning).retryAfterSeconds;
-        }
-        result = await new Promise((resolve) => setTimeout(async () => {
-            resolve(await readWithRetry(api));
-        }, retryAfter));
-    }
-    return result;
 }

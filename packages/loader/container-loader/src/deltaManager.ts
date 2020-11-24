@@ -46,6 +46,7 @@ import { CreateContainerError } from "@fluidframework/container-utils";
 import { debug } from "./debug";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
+import { Container } from "./container";
 
 const MaxReconnectDelaySeconds = 8;
 const InitialReconnectDelaySeconds = 1;
@@ -58,7 +59,22 @@ const DefaultChunkSize = 16 * 1024;
 const ImmediateNoOpResponse = "";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds;
+export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds;
+
+export function emitThrottlingWarning(
+    delayTime: number,
+    error: ICriticalContainerError,
+    emitter: Container | DeltaManager,
+) {
+    if (delayTime > 0) {
+        const throttlingError: IThrottlingWarning = {
+            errorType: ContainerErrorType.throttlingError,
+            message: `Service busy/throttled: ${error.message}`,
+            retryAfterSeconds: delayTime,
+        };
+        emitter.emit("throttled", throttlingError);
+    }
+}
 
 function getNackReconnectInfo(nackContent: INackContent) {
     const reason = `Nack: ${nackContent.message}`;
@@ -939,14 +955,7 @@ export class DeltaManager
         }
 
         const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
-        if (delayTime > 0) {
-            const throttlingError: IThrottlingWarning = {
-                errorType: ContainerErrorType.throttlingError,
-                message: `Service busy/throttled: ${error.message}`,
-                retryAfterSeconds: delayTime,
-            };
-            this.emit("throttled", throttlingError);
-        }
+        emitThrottlingWarning(delayTime, error, this);
     }
 
     private readonly opHandler = (documentId: string, messages: ISequencedDocumentMessage[]) => {

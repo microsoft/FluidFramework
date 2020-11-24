@@ -21,7 +21,7 @@ import {
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IDeltaManager } from "./deltas";
-import { ICriticalContainerError, ContainerWarning } from "./error";
+import { ICriticalContainerError, ContainerWarning, IThrottlingWarning } from "./error";
 import { IFluidModule } from "./fluidModule";
 import { AttachState } from "./runtime";
 
@@ -93,6 +93,7 @@ export interface IContainerEvents extends IEvent {
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
+    (event: "throttled", listener: (error: IThrottlingWarning) => void);
 }
 
 /**

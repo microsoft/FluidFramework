@@ -9,7 +9,7 @@ import {
     ISnapshotTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { DocumentStorageServiceProxy, readWithRetry } from "@fluidframework/driver-utils";
+import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
@@ -18,7 +18,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     private prefetchEnabled = true;
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-        const p = readWithRetry(async () => this.internalStorageService.getSnapshotTree(version));
+        const p = this.internalStorageService.getSnapshotTree(version);
         if (this.prefetchEnabled) {
             // We don't care if the prefetch succeed
             p.then((tree: ISnapshotTree | null | undefined) => {
@@ -30,11 +30,11 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
-        return readWithRetry(async () => this.internalStorageService.readBlob(id));
+        return this.internalStorageService.readBlob(id);
     }
 
     public async read(blobId: string): Promise<string> {
-        return readWithRetry(async () => this.cachedRead(blobId));
+        return this.cachedRead(blobId);
     }
 
     public stopPrefetch() {

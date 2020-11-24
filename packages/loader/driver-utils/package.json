@@ -23,10 +23,6 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "test": "npm run test:mocha",
-    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "test:mocha": "mocha --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
@@ -64,7 +60,6 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
-    "@fluidframework/mocha-test-setup": "^0.30.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/assert": "^1.5.1",
     "@types/mocha": "^5.2.5",

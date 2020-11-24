@@ -94,6 +94,7 @@ import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
+import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -275,6 +276,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     // Active chaincode and associated runtime
     private _storageService: IDocumentStorageService | undefined;
+    private retriableStorageService: RetriableDocumentStorageService | undefined;
     private get storageService() {
         if (this._storageService === undefined) {
             throw new Error("Attempted to access storageService before it was defined");
@@ -500,6 +502,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._closed = true;
 
         this._deltaManager.close(error);
+
+        this.retriableStorageService?.stopRetry();
 
         this._protocolHandler?.close();
 
@@ -1140,11 +1144,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const storageService = await this.service.connectToStorage();
 
         // Enable prefetching for the service unless it has a caching policy set otherwise:
-        const service = new PrefetchDocumentStorageService(storageService);
+        const prefetchStorageService = new PrefetchDocumentStorageService(storageService);
         if (this.service.policies?.caching === LoaderCachingPolicy.NoCaching) {
-            service.stopPrefetch();
+            prefetchStorageService.stopPrefetch();
         }
-        return service;
+
+        this.retriableStorageService = new RetriableDocumentStorageService(prefetchStorageService, this);
+        return this.retriableStorageService;
     }
 
     private async getDocumentAttributes(
