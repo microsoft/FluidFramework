@@ -1013,17 +1013,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
            this.replayPendingStates();
         }
 
-        for (const [fluidDataStore, context] of this.dataStores.contexts) {
-            try {
-                context.setConnectionState(connected, clientId);
-            } catch (error) {
-                this._logger.sendErrorEvent({
-                    eventName: "SetConnectionStateError",
-                    clientId,
-                    fluidDataStore,
-                }, error);
-            }
-        }
+        this.dataStores.setConnectionState(connected, clientId);
 
         raiseConnectedEvent(this._logger, this, connected, clientId);
 
@@ -1083,7 +1073,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.dataStores.processAttachMessage(message, local);
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
-                    this.processFluidDataStoreOp(message, local, localMessageMetadata);
+                    this.dataStores.processFluidDataStoreOp(message, local, localMessageMetadata);
                     break;
                 case ContainerMessageType.BlobAttach:
                     assert(message?.metadata?.blobId);
@@ -1115,33 +1105,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
-        const context = this.dataStores.contexts.get(envelope.address);
-        if (!context) {
-            // Attach message may not have been processed yet
-            assert(!local);
-            this._logger.sendTelemetryEvent({
-                eventName: "SignalFluidDataStoreNotFound",
-                fluidDataStoreId: envelope.address,
-            });
-            return;
-        }
-
-        context.processSignal(transformed, local);
+        this.dataStores.processSignal(envelope.address, transformed, local);
     }
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        return this.getDataStore(id, wait);
+        return this.dataStores.getDataStore(id, wait);
     }
 
     protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        const deferredContext = this.dataStores.contexts.prepDeferredContext(id);
-
-        if (!wait && !deferredContext.isCompleted) {
-            throw new Error(`DataStore ${id} does not exist`);
-        }
-
-        const context = await deferredContext.promise;
-        return context.realize();
+        return this.dataStores.getDataStore(id, wait);
     }
 
     public notifyDataStoreInstantiated(context: IFluidDataStoreContext) {
@@ -1416,30 +1388,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
     }
 
-    private processFluidDataStoreOp(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {
-        const envelope = message.contents as IEnvelope;
-        const transformed = { ...message, contents: envelope.contents };
-        const context = this.dataStores.contexts.get(envelope.address);
-        assert(!!context, "There should be a store context for the op");
-        context.process(transformed, local, localMessageMetadata);
-    }
-
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-        let eventName: string;
         if (attachState === AttachState.Attaching) {
             assert(this.attachState === AttachState.Attaching,
                 "Container Context should already be in attaching state");
-            eventName = "attaching";
         } else {
             assert(this.attachState === AttachState.Attached, "Container Context should already be in attached state");
-            eventName = "attached";
         }
-        for (const [,context] of this.dataStores.contexts) {
-            // Fire only for bounded stores.
-            if (!this.dataStores.contexts.isNotBound(context.id)) {
-                context.emit(eventName);
-            }
-        }
+        this.dataStores.setAttachState(attachState);
     }
 
     public createSummary(): ISummaryTree {
@@ -1791,7 +1747,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             case ContainerMessageType.FluidDataStoreOp:
                 // For Operations, call resubmitDataStoreOp which will find the right store
                 // and trigger resubmission on it.
-                this.resubmitDataStoreOp(content, localOpMetadata);
+                this.dataStores.resubmitDataStoreOp(content, localOpMetadata);
                 break;
             case ContainerMessageType.Attach:
                 this.submit(type, content, localOpMetadata);
@@ -1804,13 +1760,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }
-    }
-
-    private resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
-        const envelope = content as IEnvelope;
-        const context = this.dataStores.contexts.get(envelope.address);
-        assert(!!context, "There should be a store context for the op");
-        context.reSubmit(envelope.contents, localOpMetadata);
     }
 
     private subscribeToLeadership() {
@@ -1864,9 +1813,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.emit("notleader");
         }
 
-        for (const [, context] of this.dataStores.contexts) {
-            context.updateLeader(this.leader);
-        }
+        this.dataStores.updateLeader();
 
         if (this.leader) {
             this.runTaskAnalyzer();

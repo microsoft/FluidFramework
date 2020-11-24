@@ -10,8 +10,10 @@ import {
     CreateChildSummarizerNodeParam,
     CreateSummarizerNodeSource,
     IAttachMessage,
+    IEnvelope,
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
+    IInboundSignalMessage,
     InboundAttachMessage,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
@@ -245,4 +247,80 @@ export class DataStores implements IDisposable {
 
     public get disposed() {return this.disposeOnce.evaluated;}
     public readonly dispose = () => this.disposeOnce.value;
+
+    public updateLeader() {
+        for (const [, context] of this.contexts) {
+            context.updateLeader(this.runtime.leader);
+        }
+    }
+
+    public resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
+        const envelope = content as IEnvelope;
+        const context = this.contexts.get(envelope.address);
+        assert(!!context, "There should be a store context for the op");
+        context.reSubmit(envelope.contents, localOpMetadata);
+    }
+
+    public processFluidDataStoreOp(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {
+        const envelope = message.contents as IEnvelope;
+        const transformed = { ...message, contents: envelope.contents };
+        const context = this.contexts.get(envelope.address);
+        assert(!!context, "There should be a store context for the op");
+        context.process(transformed, local, localMessageMetadata);
+    }
+
+    public async getDataStore(id: string, wait: boolean): Promise<IFluidDataStoreChannel> {
+        const deferredContext = this.contexts.prepDeferredContext(id);
+
+        if (!wait && !deferredContext.isCompleted) {
+            throw new Error(`DataStore ${id} does not exist`);
+        }
+
+        const context = await deferredContext.promise;
+        return context.realize();
+    }
+
+    public processSignal(address: string, message: IInboundSignalMessage, local: boolean) {
+        const context = this.contexts.get(address);
+        if (!context) {
+            // Attach message may not have been processed yet
+            assert(!local);
+            this.logger.sendTelemetryEvent({
+                eventName: "SignalFluidDataStoreNotFound",
+                fluidDataStoreId: address,
+            });
+            return;
+        }
+
+        context.processSignal(message, local);
+    }
+
+    public setConnectionState(connected: boolean, clientId?: string) {
+        for (const [fluidDataStore, context] of this.contexts) {
+            try {
+                context.setConnectionState(connected, clientId);
+            } catch (error) {
+                this.logger.sendErrorEvent({
+                    eventName: "SetConnectionStateError",
+                    clientId,
+                    fluidDataStore,
+                }, error);
+            }
+        }
+    }
+
+    public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+        let eventName: "attaching" | "attached";
+        if (attachState === AttachState.Attaching) {
+            eventName = "attaching";
+        } else {
+            eventName = "attached";
+        }
+        for (const [,context] of this.contexts) {
+            // Fire only for bounded stores.
+            if (!this.contexts.isNotBound(context.id)) {
+                context.emit(eventName);
+            }
+        }
+    }
 }
