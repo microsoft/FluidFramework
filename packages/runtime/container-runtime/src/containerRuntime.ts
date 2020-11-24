@@ -1188,7 +1188,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
-        const context = this.datastoreContexts.tryGet(envelope.address);
+        const context = this.datastoreContexts.get(envelope.address);
         if (!context) {
             // Attach message may not have been processed yet
             assert(!local);
@@ -1213,9 +1213,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             throw new Error(`DataStore ${id} does not exist`);
         }
 
-        if (deferredBind.isCompleted &&
-            (!this.datastoreContexts.has(id) || this.datastoreContexts.isNotBound(id))
-        ) {
+        const boundContext = await deferredBind.promise;
+
+        if (!this.datastoreContexts.has(id) || this.datastoreContexts.isNotBound(id)) {
             this.logger.sendErrorEvent({
                 eventName: "DataStoreBindingStateMismatch",
                 message: "datastoreContexts should contain the bound context since deferredBind has completed",
@@ -1223,7 +1223,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             });
         }
 
-        const boundContext = await deferredBind.promise;
         return boundContext.realize();
     }
 
@@ -1543,7 +1542,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // The local object has already been attached
         if (local) {
             assert(this.pendingAttach.has(attachMessage.id));
-            this.datastoreContexts.tryGet(attachMessage.id)?.emit("attached");
+            this.datastoreContexts.get(attachMessage.id)?.emit("attached");
             this.pendingAttach.delete(attachMessage.id);
             return;
         }
