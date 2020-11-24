@@ -95,6 +95,7 @@ import {
     ITaskManager,
     ISummarizeResult,
     IChannelSummarizeResult,
+    IContextSummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
@@ -1207,6 +1208,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
+        //* If the deferrecContext is completed, assert that it's present and bound
+
         // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
         const deferredContext = this.datastoreContexts.ensureDeferred(id);
 
@@ -1461,6 +1464,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Normalize the child's nodes and prefix the child's id to the ids of GC nodes returned by it.
         // This gradually builds the id of each node to be a path from the root.
         normalizeAndPrefixGCNodeIds(childGCNodes, childId);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return childGCNodes;
     }
 
@@ -1489,9 +1493,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param trackState - This tells whether we should track state from this summary.
      */
     private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
-        const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
+        const summarizeResult: IContextSummarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
         assert(summarizeResult.summary.type === SummaryType.Tree,
             "Container Runtime's summarize should always return a tree");
+            // eslint-disable-next-line max-len
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-return
         return summarizeResult as IChannelSummarizeResult;
     }
 
@@ -1599,9 +1605,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
         this.verifyNotClosed();
-        assert(this.datastoreContexts.notBoundContexts.has(fluidDataStoreRuntime.id),
-            "Store to be bound should be in not bounded set");
-        this.datastoreContexts.notBoundContexts.delete(fluidDataStoreRuntime.id);
+        this.datastoreContexts.notifyOnBind(fluidDataStoreRuntime.id);
         const context = this.datastoreContexts.get(fluidDataStoreRuntime.id) as LocalFluidDataStoreContext;
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
@@ -1632,7 +1636,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
         for (const [,context] of this.datastoreContexts) {
             // Fire only for bounded stores.
-            if (!this.datastoreContexts.notBoundContexts.has(context.id)) {
+            if (!this.datastoreContexts.isNotBound(context.id)) {
                 context.emit(eventName);
             }
         }
@@ -1646,14 +1650,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         let notBoundContextsLength: number;
         do {
             const builderTree = builder.summary.tree;
-            notBoundContextsLength = this.datastoreContexts.notBoundContexts.size;
+            notBoundContextsLength = this.datastoreContexts.notBoundLength();
             // Iterate over each data store and ask it to snapshot
             Array.from(this.datastoreContexts)
                 .filter(([key, _]) =>
                     // Take summary of bounded data stores only, make sure we haven't summarized them already
                     // and no attach op has been fired for that data store because for loader versions <= 0.24
                     // we set attach state as "attaching" before taking createNew summary.
-                    !(this.datastoreContexts.notBoundContexts.has(key)
+                    !(this.datastoreContexts.isNotBound(key)
                         || builderTree[key]
                         || this.attachOpFiredForDataStore.has(key)),
                 )
@@ -1671,7 +1675,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     }
                     builder.addWithStats(key, dataStoreSummary);
                 });
-        } while (notBoundContextsLength !== this.datastoreContexts.notBoundContexts.size);
+        } while (notBoundContextsLength !== this.datastoreContexts.notBoundLength());
 
         this.serializeContainerBlobs(builder);
 
@@ -1972,6 +1976,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
             summarizeInternal,
             id,

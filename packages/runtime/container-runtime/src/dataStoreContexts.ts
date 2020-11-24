@@ -9,7 +9,7 @@ import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreContext } from "./dataStoreContext";
 
  export class DataStoreContexts implements Iterable<[string,FluidDataStoreContext]>, IDisposable {
-    public readonly notBoundContexts = new Set<string>();
+    private readonly notBoundContexts = new Set<string>();
 
     // Attached and loaded context proxies
     private readonly _contexts = new Map<string, FluidDataStoreContext>();
@@ -45,8 +45,51 @@ import { FluidDataStoreContext } from "./dataStoreContext";
     public get disposed() { return this.disposeOnce.evaluated;}
     public readonly dispose = () => this.disposeOnce.value;
 
+    public notBoundLength() {
+        return this.notBoundContexts.size;
+    }
+
+    public isNotBound(id: string) {
+        return this.notBoundContexts.has(id);
+    }
+
     public has(id: string) {
         return this._contexts.has(id);
+    }
+
+    public async getContextUponBinding(id: string) {
+        // return this.pendingBindPs.addOrGet(id, this.waitForContextBind(id));
+    }
+
+    public notifyOnBind(id: string) {
+        assert(this.notBoundContexts.has(id), "Store being bound should be in not bounded set");
+        this.notBoundContexts.delete(id);
+
+        // const cb = this.allContexts.get(id);
+        // assert(cb !== undefined && cb.bound !== true);
+
+        // this.emit("bind", { id });
+        // this.allContexts.set(id, { ...cb, bound: true });
+    }
+
+    private readonly waitForContextBind = (id: string) => async () => new Promise<FluidDataStoreContext>((res, rej) => {
+        this.addPendingBind(id); //* delete
+        // this.on("bind", (args) => {
+        //     if (args.id === id) {
+        //         const cb = this.allContexts.get(id);
+        //         if (cb === undefined) {
+        //             rej(new Error("bind called for missing context"));
+        //             return;
+        //         }
+        //         this.allContexts.set(id, { ...cb, bound: true });
+        //         res(cb.context);
+        //     }
+        // });
+    });
+
+    private addPendingBind(id: string) {
+        this.waitForContextBind(id); //* delete
+        // this.pendingBindPs.add(id, this.waitForContextBind(id));
     }
 
     public setupNew(context: FluidDataStoreContext) {
@@ -56,6 +99,8 @@ import { FluidDataStoreContext } from "./dataStoreContext";
         const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
         this._contexts.set(id, context);
+
+        //* Not bound yet
     }
 
     public ensureDeferred(id: string): Deferred<FluidDataStoreContext> {
@@ -73,12 +118,15 @@ import { FluidDataStoreContext } from "./dataStoreContext";
         return deferred;
     }
 
-    public setNew(id: string, context?: FluidDataStoreContext) {
+    public setNew(id: string, context: FluidDataStoreContext) {
         assert(!!context);
+        assert(id === context.id);
         assert(!this._contexts.has(id));
         this._contexts.set(id, context);
         const deferred = this.ensureDeferred(id);
         deferred.resolve(context);
+
+        //* Assume it's bound (?)
     }
 
     public get(id: string): FluidDataStoreContext {
