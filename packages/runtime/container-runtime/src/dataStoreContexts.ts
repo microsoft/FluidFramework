@@ -6,7 +6,7 @@
 import { IDisposable, ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred, Lazy } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { FluidDataStoreContext } from "./dataStoreContext";
+import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext";
 
  export class DataStoreContexts implements Iterable<[string,FluidDataStoreContext]>, IDisposable {
     private readonly notBoundContexts = new Set<string>();
@@ -17,8 +17,7 @@ import { FluidDataStoreContext } from "./dataStoreContext";
     /**
      * List of pending context needing to be bound, for the case where a client
      * knows a store will exist and is waiting on its creation.
-     * This is a superset of contexts.
-     * Each deferred bind completes when the context exists in _contexts and is bound
+     * This also includes bound contexts, in the completed state, so this is a superset of contexts.
      */
     private readonly deferredContextBinds = new Map<string, Deferred<FluidDataStoreContext>>();
 
@@ -62,6 +61,10 @@ import { FluidDataStoreContext } from "./dataStoreContext";
         return this._contexts.has(id);
     }
 
+    public get(id: string): FluidDataStoreContext | undefined {
+        return this._contexts.get(id);
+    }
+
     /**
      * When a context of the given id is about to be bound/attached, call this to update internal tracking
      */
@@ -73,7 +76,7 @@ import { FluidDataStoreContext } from "./dataStoreContext";
     /**
      * Add the given context, marking it as to-be-bound
      */
-    public addUnboundContext(context: FluidDataStoreContext) {
+    public addUnboundContext(context: LocalFluidDataStoreContext) {
         const id = context.id;
         assert(!this._contexts.has(id), "Creating store with existing ID");
 
@@ -124,14 +127,4 @@ import { FluidDataStoreContext } from "./dataStoreContext";
         const deferredBind = this.prepDeferredBind(id);
         deferredBind.resolve(context);
     }
-
-    public get(id: string): FluidDataStoreContext {
-        const context = this._contexts.get(id);
-        assert(!!context);
-        return context;
-    }
-
-    public tryGet(id: string): FluidDataStoreContext | undefined {
-        return this._contexts.get(id);
-    }
- }
+}

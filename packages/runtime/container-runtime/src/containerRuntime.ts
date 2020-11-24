@@ -1603,6 +1603,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const envelope = message.contents as IEnvelope;
         const transformed = { ...message, contents: envelope.contents };
         const context = this.datastoreContexts.get(envelope.address);
+        assert(!!context, "There should be a store context for the op");
         context.process(transformed, local, localMessageMetadata);
     }
 
@@ -1611,6 +1612,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.datastoreContexts.notifyOnBeforeBind(fluidDataStoreRuntime.id);
         const context = this.datastoreContexts.get(fluidDataStoreRuntime.id) as LocalFluidDataStoreContext;
+        assert(!!context, "Attempting to bind to a context that hasn't been added yet");
 
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
