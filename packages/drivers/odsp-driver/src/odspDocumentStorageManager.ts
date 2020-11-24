@@ -273,18 +273,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             documentAttributes.branch = this.documentId;
         }
 
-        if (blob.encoding === "base64") {
-            if (outputFormat === "base64") {
-                blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
-            } else {
-                blob.content = JSON.stringify(documentAttributes);
-            }
+        if (outputFormat === "base64") {
+            blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
         } else {
-            if (outputFormat === "base64") {
-                blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
-            } else {
-                blob.content = JSON.stringify(documentAttributes);
-            }
+            blob.content = JSON.stringify(documentAttributes);
         }
 
         return blob.content;
