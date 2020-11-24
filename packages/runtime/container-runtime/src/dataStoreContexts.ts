@@ -15,15 +15,17 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     private readonly _contexts = new Map<string, FluidDataStoreContext>();
 
     /**
-     * List of pending context needing to be bound, for the case where a client
-     * knows a store will exist and is waiting on its creation.
-     * This also includes bound contexts, in the completed state, so this is a superset of contexts.
+     * List of pending context waiting either to be bound or to arrive from another client.
+     * This covers the case where a local context has been created but not yet bound,
+     * or the case where a client knows a store will exist and is waiting on its creation,
+     * so that a caller may await the deferred's promise until such a time as the context is fully ready.
+     * This is a superset of _contexts, since contexts remain here once the Deferred resolves.
      */
-    private readonly deferredContextBinds = new Map<string, Deferred<FluidDataStoreContext>>();
+    private readonly deferredContexts = new Map<string, Deferred<FluidDataStoreContext>>();
 
     private readonly disposeOnce = new Lazy<void>(()=>{
         // close/stop all store contexts
-        for (const [fluidDataStoreId, contextD] of this.deferredContextBinds) {
+        for (const [fluidDataStoreId, contextD] of this.deferredContexts) {
             contextD.promise.then((context) => {
                 context.dispose();
             }).catch((contextError) => {
@@ -66,37 +68,40 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     }
 
     /**
-     * When a context of the given id is about to be bound/attached, call this to update internal tracking
+     * Prepare and return the unbound context with the given id so it can be bound.
      */
-    public notifyOnBeforeBind(id: string) {
+    public prepContextForBind(id: string): LocalFluidDataStoreContext {
         assert(this.notBoundContexts.has(id), "Store being bound should be in not bounded set");
+        assert(this._contexts.has(id), "Attempting to bind to a context that hasn't been added yet");
+
         this.notBoundContexts.delete(id);
+        return this._contexts.get(id) as LocalFluidDataStoreContext;
     }
 
     /**
      * Add the given context, marking it as to-be-bound
      */
-    public addUnboundContext(context: LocalFluidDataStoreContext) {
+    public addUnbound(context: LocalFluidDataStoreContext) {
         const id = context.id;
         assert(!this._contexts.has(id), "Creating store with existing ID");
 
         this._contexts.set(id, context);
 
         this.notBoundContexts.add(id);
-        this.prepDeferredBind(id);
+        this.prepDeferredContext(id);
     }
 
     /**
-     * This returns a Deferred that will resolve when a context with the given id is bound.
-     * We may or may not have this context locally already.
+     * This returns a Deferred that will resolve when a context with the given id is bound,
+     * or added as remote from another client.
      * @param id The id of the context to defer binding on
      */
-    public prepDeferredBind(id: string): Deferred<FluidDataStoreContext> {
-        const deferred = this.deferredContextBinds.get(id);
+    public prepDeferredContext(id: string): Deferred<FluidDataStoreContext> {
+        const deferred = this.deferredContexts.get(id);
         if (deferred) { return deferred; }
 
         const newDeferred = new Deferred<FluidDataStoreContext>();
-        this.deferredContextBinds.set(id, newDeferred);
+        this.deferredContexts.set(id, newDeferred);
         return newDeferred;
     }
 
@@ -109,24 +114,25 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
         assert(!!context, "Cannot find context we've bound");
         assert(!this.notBoundContexts.has(id), "Expected this id to already be removed from notBoundContexts");
 
-        const deferredBind = this.deferredContextBinds.get(id);
+        const deferredBind = this.deferredContexts.get(id);
         assert(!!deferredBind, "Cannot find deferredBind to resolve");
         deferredBind.resolve(context);
     }
 
     /**
-     * Add the given context, marking it as bound
+     * Add the given context, marking it as already bound.
+     * This could be because it's a local context that's been bound, or because it's a remote context.
      * @param id - id of context to add. Redundant with context.id
      * @param context - The context to add
      */
-    public addBoundContext(id: string, context: FluidDataStoreContext) {
+    public addBoundOrRemote(id: string, context: FluidDataStoreContext) {
         assert(id === context.id, "id mismatch for context being added");
         assert(!this._contexts.has(id), "Creating store with existing ID");
 
         this._contexts.set(id, context);
 
-        // Resolve the deferred immediately since this context is already bound
-        const deferredBind = this.prepDeferredBind(id);
-        deferredBind.resolve(context);
+        // Resolve the deferred immediately since this context is not unbound
+        const deferred = this.prepDeferredContext(id);
+        deferred.resolve(context);
     }
 }
