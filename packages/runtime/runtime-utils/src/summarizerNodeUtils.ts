@@ -21,6 +21,18 @@ const maxDecodeDepth = 100;
 /** Reads a blob from storage and parses it from JSON. */
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
 
+export interface ISummarizerNodeRootContract {
+    startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
+    completeSummary(proposalHandle: string): void;
+    clearSummary(): void;
+    refreshLatestSummary(
+        proposalHandle: string | undefined,
+        getSnapshot: () => Promise<ISnapshotTree>,
+        readAndParseBlob: ReadAndParseBlob,
+        correlatedSummaryLogger: ITelemetryLogger,
+    ): Promise<void>;
+}
+
 /**
  * Fetches the sequence number of the snapshot tree by examining the protocol.
  * @param tree - snapshot tree to examine

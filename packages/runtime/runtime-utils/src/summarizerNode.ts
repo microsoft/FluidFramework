@@ -27,10 +27,13 @@ import {
     EscapedPath,
     ICreateChildDetails,
     IInitialSummary,
+    ISummarizerNodeRootContract,
     ReadAndParseBlob,
     seqFromTree,
     SummaryNode,
 } from "./summarizerNodeUtils";
+
+export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
 
 /**
  * Encapsulates the summarizing work and state of an individual tree node in the
@@ -45,7 +48,7 @@ import {
  * call refreshLatestSummary to inform the tree of SummarizerNodes of the new baseline
  * latest successful summary.
  */
-export class SummarizerNode implements ISummarizerNode {
+export class SummarizerNode implements IRootSummarizerNode {
     /**
      * The reference sequence number of the most recent acked summary.
      * Returns 0 if there is not yet an acked summary.
@@ -395,7 +398,12 @@ export class SummarizerNode implements ISummarizerNode {
     private readonly canReuseHandle: boolean;
     private readonly throwOnError: boolean;
     private trackingSequenceNumber: number;
-    protected constructor(
+
+    /**
+     * Do not call constructor directly.
+     * Use createRootSummarizerNode to create root node, or createChild to create child nodes.
+     */
+    public constructor(
         protected readonly defaultLogger: ITelemetryLogger,
         private readonly summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         config: ISummarizerNodeConfig,
@@ -411,28 +419,6 @@ export class SummarizerNode implements ISummarizerNode {
         // while we continue to investigate
         this.throwOnError = true; // config.throwOnFailure ?? false;
         this.trackingSequenceNumber = this._changeSequenceNumber;
-    }
-
-    public static createRoot(
-        logger: ITelemetryLogger,
-        /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
-        /** Sequence number of latest change to new node/subtree */
-        changeSequenceNumber: number,
-        /**
-         * Reference sequence number of last acked summary,
-         * or undefined if not loaded from summary.
-         */
-        referenceSequenceNumber: number | undefined,
-        config: ISummarizerNodeConfig = {},
-    ): SummarizerNode {
-        return new SummarizerNode(
-            logger,
-            summarizeInternalFn,
-            config,
-            changeSequenceNumber,
-            referenceSequenceNumber === undefined ? undefined : SummaryNode.createForRoot(referenceSequenceNumber),
-        );
     }
 
     public createChild(
@@ -562,3 +548,32 @@ export class SummarizerNode implements ISummarizerNode {
         }
     }
 }
+
+/**
+ * Creates a root summarizer node.
+ * @param logger - Logger to use within SummarizerNode
+ * @param summarizeInternalFn - Function to generate summary
+ * @param changeSequenceNumber - Sequence number of latest change to new node/subtree
+ * @param referenceSequenceNumber - Reference sequence number of last acked summary,
+ * or undefined if not loaded from summary
+ * @param config - Configure behavior of summarizer node
+ */
+export const createRootSummarizerNode = (
+    logger: ITelemetryLogger,
+    /** Summarize function */
+    summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+    /** Sequence number of latest change to new node/subtree */
+    changeSequenceNumber: number,
+    /**
+     * Reference sequence number of last acked summary,
+     * or undefined if not loaded from summary.
+     */
+    referenceSequenceNumber: number | undefined,
+    config: ISummarizerNodeConfig = {},
+): IRootSummarizerNode => new SummarizerNode(
+        logger,
+        summarizeInternalFn,
+        config,
+        changeSequenceNumber,
+        referenceSequenceNumber === undefined ? undefined : SummaryNode.createForRoot(referenceSequenceNumber),
+    );

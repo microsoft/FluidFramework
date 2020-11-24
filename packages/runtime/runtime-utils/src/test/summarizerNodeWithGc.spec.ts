@@ -11,8 +11,9 @@ import {
     ISummarizeInternalResult,
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
-import { SummarizerNodeWithGC } from "../summarizerNodeWithGc";
+import { IRootSummarizerNodeWithGC } from "../summarizerNodeWithGc";
 import { mergeStats } from "../summaryUtils";
+import { createRootSummarizerNodeWithGC } from "../summarizerNodeContract";
 
 describe("SummarizerNodeWithGC Tests", () => {
     const summarizerNodeId = "testNode";
@@ -24,10 +25,10 @@ describe("SummarizerNodeWithGC Tests", () => {
         { id: node1Id, outboundRoutes: [ node2Id ] },
         { id: node2Id, outboundRoutes: [ node1Id ] },
     ];
-    let rootSummarizerNode: SummarizerNodeWithGC;
+    let rootSummarizerNode: IRootSummarizerNodeWithGC;
 
     beforeEach(async () => {
-        rootSummarizerNode = SummarizerNodeWithGC.createRoot(
+        rootSummarizerNode = createRootSummarizerNodeWithGC(
             new TelemetryNullLogger(),
             (() => undefined) as unknown as SummarizeInternalFn,
             0,
