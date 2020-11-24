@@ -284,7 +284,7 @@ export class DataStores implements IDisposable {
         const context = this.contexts.get(address);
         if (!context) {
             // Attach message may not have been processed yet
-            assert(!local);
+            assert(!local, "Missing datastore for local signal");
             this.logger.sendTelemetryEvent({
                 eventName: "SignalFluidDataStoreNotFound",
                 fluidDataStoreId: address,
