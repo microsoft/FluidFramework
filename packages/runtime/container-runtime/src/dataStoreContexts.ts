@@ -11,11 +11,15 @@ import { FluidDataStoreContext } from "./dataStoreContext";
  export class DataStoreContexts implements Iterable<[string,FluidDataStoreContext]>, IDisposable {
     private readonly notBoundContexts = new Set<string>();
 
-    // Attached and loaded context proxies
+    /** Attached and loaded context proxies */
     private readonly _contexts = new Map<string, FluidDataStoreContext>();
-    // List of pending contexts (for the case where a client knows a store will exist and is waiting
-    // on its creation). This is a superset of contexts.
-    // The Deferreds complete when the context exists in _contexts and is bound
+
+    /**
+     * List of pending context needing to be bound, for the case where a client
+     * knows a store will exist and is waiting on its creation.
+     * This is a superset of contexts.
+     * Each deferred bind completes when the context exists in _contexts and is bound
+     */
     private readonly deferredContextBinds = new Map<string, Deferred<FluidDataStoreContext>>();
 
     private readonly disposeOnce = new Lazy<void>(()=>{
@@ -80,7 +84,8 @@ import { FluidDataStoreContext } from "./dataStoreContext";
     }
 
     /**
-     * This returns a Deferred that will resolve when a context with the given id is bound
+     * This returns a Deferred that will resolve when a context with the given id is bound.
+     * We may or may not have this context locally already.
      * @param id The id of the context to defer binding on
      */
     public prepDeferredBind(id: string): Deferred<FluidDataStoreContext> {
@@ -98,10 +103,10 @@ import { FluidDataStoreContext } from "./dataStoreContext";
      * @param context - The context (Redundant with existing context that was previously set)
      */
     public resolveDeferredBind(id: string, context: FluidDataStoreContext) {
-        assert(this._contexts.get(id) === context);
-        const deferred = this.deferredContextBinds.get(id);
-        assert(!!deferred);
-        deferred.resolve(context);
+        assert(this._contexts.get(id) === context, "id mismatch for context being bound");
+        const deferredBind = this.deferredContextBinds.get(id);
+        assert(!!deferredBind, "Cannot find deferredBind");
+        deferredBind.resolve(context);
     }
 
     /**

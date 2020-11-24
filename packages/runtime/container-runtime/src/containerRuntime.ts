@@ -1209,12 +1209,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
         const deferredBind = this.datastoreContexts.prepDeferredBind(id);
 
-        if (deferredBind.isCompleted) {
-            assert(this.datastoreContexts.has(id) && !this.datastoreContexts.isNotBound(id));
+        if (!wait && !deferredBind.isCompleted) {
+            throw new Error(`DataStore ${id} does not exist`);
         }
 
-        if (!wait && !deferredBind.isCompleted) {
-            return Promise.reject(new Error(`DataStore ${id} does not exist`));
+        if (deferredBind.isCompleted &&
+            (!this.datastoreContexts.has(id) || this.datastoreContexts.isNotBound(id))
+        ) {
+            this.logger.sendErrorEvent({
+                eventName: "DataStoreBindingStateMismatch",
+                message: "datastoreContexts should contain the bound context since deferredBind has completed",
+                contextId: id,
+            });
         }
 
         const boundContext = await deferredBind.promise;
@@ -1974,7 +1980,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
             summarizeInternal,
             id,
