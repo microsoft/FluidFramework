@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IDeltaConnection, IChannelServices } from "@fluidframework/datastore-definitions";
 import {
     FileMode,
     ISummaryBlob,
@@ -17,44 +16,67 @@ import {
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
+    MockEmptyDeltaConnection,
     MockFluidDataStoreRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection } from "../interfaces";
 
-describe("ConsensusRegisterCollection", () => {
+function createConnectedCollection(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+    const dataStoreRuntime = new MockFluidDataStoreRuntime();
+    const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+    const services = {
+        deltaConnection: containerRuntime.createDeltaConnection(),
+        objectStorage: new MockStorage(),
+    };
+
     const crcFactory = new ConsensusRegisterCollectionFactory();
-    describe("Api", () => {
-        const dataStoreId = "consensus-register-collection";
+    const collection = crcFactory.create(dataStoreRuntime, id);
+    collection.connect(services);
+    return collection;
+}
+
+function createLocalCollection(id: string) {
+    const factory = new ConsensusRegisterCollectionFactory();
+    return factory.create(new MockFluidDataStoreRuntime(), id);
+}
+
+function createCollectionForReconnection(
+    id: string,
+    runtimeFactory: MockContainerRuntimeFactoryForReconnection,
+) {
+    const dataStoreRuntime = new MockFluidDataStoreRuntime();
+    const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+    const services = {
+        deltaConnection: containerRuntime.createDeltaConnection(),
+        objectStorage: new MockStorage(),
+    };
+
+    const crcFactory = new ConsensusRegisterCollectionFactory();
+    const collection = crcFactory.create(dataStoreRuntime, id);
+    collection.connect(services);
+    return { collection, containerRuntime };
+}
+
+describe("ConsensusRegisterCollection", () => {
+    describe("Single connected client", () => {
+        const collectionId = "consensus-register-collection";
         let crc: IConsensusRegisterCollection;
-        let dataStoreRuntime: MockFluidDataStoreRuntime;
-        let services: IChannelServices;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
 
         beforeEach(() => {
-            dataStoreRuntime = new MockFluidDataStoreRuntime();
             containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-            services = {
-                deltaConnection: containerRuntime.createDeltaConnection(),
-                objectStorage: new MockStorage(),
-            };
-
-            crc = crcFactory.create(dataStoreRuntime, dataStoreId);
+            crc = createConnectedCollection(collectionId, containerRuntimeFactory);
         });
 
-        describe("Attached, connected", () => {
-            async function writeAndProcessMsg(key: string, value: any) {
-                const waitP = crc.write(key, value);
-                containerRuntimeFactory.processAllMessages();
-                return waitP;
-            }
+        async function writeAndProcessMsg(key: string, value: any) {
+            const waitP = crc.write(key, value);
+            containerRuntimeFactory.processAllMessages();
+            return waitP;
+        }
 
-            beforeEach(() => {
-                crc.connect(services);
-            });
-
+        describe("API", () => {
             it("Can create a collection", () => {
                 assert.ok(crc);
             });
@@ -93,14 +115,14 @@ describe("ConsensusRegisterCollection", () => {
             const snapshotFileName = "header";
             const expectedSerialization = JSON.stringify({
                 key1: {
-                    atomic: { sequenceNumber: 0, value: { type: "Plain", value: "val1.1" } },
-                    versions: [{ sequenceNumber: 0, value: { type: "Plain", value: "val1.1" } }],
+                    atomic: { sequenceNumber: 1, value: { type: "Plain", value: "val1.1" } },
+                    versions: [{ sequenceNumber: 1, value: { type: "Plain", value: "val1.1" } }],
                 },
             });
             const legacySharedObjectSerialization = JSON.stringify({
                 key1: {
-                    atomic: { sequenceNumber: 0, value: { type: "Shared", value: "sharedObjId" } },
-                    versions: [{ sequenceNumber: 0, value: { type: "Shared", value: "sharedObjId" } }],
+                    atomic: { sequenceNumber: 1, value: { type: "Shared", value: "sharedObjId" } },
+                    versions: [{ sequenceNumber: 1, value: { type: "Shared", value: "sharedObjId" } }],
                 },
             });
             const buildTree = (serialized: string) => ({
@@ -120,7 +142,7 @@ describe("ConsensusRegisterCollection", () => {
             });
 
             it("summarize", async () => {
-                await crc.write("key1", "val1.1");
+                await writeAndProcessMsg("key1", "val1.1");
                 const summaryTree = crc.summarize().summary;
                 assert(Object.keys(summaryTree.tree).length === 1, "summarize should return a tree with single blob");
                 const serialized = (summaryTree.tree.header as ISummaryBlob)?.content as string;
@@ -130,10 +152,14 @@ describe("ConsensusRegisterCollection", () => {
 
             it("load", async () => {
                 const tree: ITree = buildTree(expectedSerialization);
-                services.objectStorage = new MockStorage(tree);
+                const services = {
+                    deltaConnection: new MockEmptyDeltaConnection(),
+                    objectStorage: new MockStorage(tree),
+                };
+                const crcFactory = new ConsensusRegisterCollectionFactory();
                 const loadedCrc = await crcFactory.load(
-                    dataStoreRuntime,
-                    dataStoreId,
+                    new MockFluidDataStoreRuntime(),
+                    collectionId,
                     services,
                     ConsensusRegisterCollectionFactory.Attributes,
                 );
@@ -142,10 +168,14 @@ describe("ConsensusRegisterCollection", () => {
 
             it("load with SharedObject not supported", async () => {
                 const tree: ITree = buildTree(legacySharedObjectSerialization);
-                services.objectStorage = new MockStorage(tree);
+                const services = {
+                    deltaConnection: new MockEmptyDeltaConnection(),
+                    objectStorage: new MockStorage(tree),
+                };
+                const crcFactory = new ConsensusRegisterCollectionFactory();
                 await assert.rejects(crcFactory.load(
-                    dataStoreRuntime,
-                    dataStoreId,
+                    new MockFluidDataStoreRuntime(),
+                    collectionId,
                     services,
                     ConsensusRegisterCollectionFactory.Attributes,
                 ), "SharedObjects contained in ConsensusRegisterCollection can no longer be deserialized");
@@ -154,32 +184,17 @@ describe("ConsensusRegisterCollection", () => {
     });
 
     describe("Multiple Clients", () => {
-        let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
-        let containerRuntime1: MockContainerRuntimeForReconnection;
-        let containerRuntime2: MockContainerRuntimeForReconnection;
-        let dataStoreRuntime1: MockFluidDataStoreRuntime;
-        let deltaConnection1: IDeltaConnection;
-        let deltaConnection2: IDeltaConnection;
-        let testCollection1: IConsensusRegisterCollection;
-        let testCollection2: IConsensusRegisterCollection;
+        describe("Local state", () => {
+            let containerRuntimeFactory: MockContainerRuntimeFactory;
+            let testCollection1: IConsensusRegisterCollection;
+            let testCollection2: IConsensusRegisterCollection;
 
-        beforeEach(async () => {
-            containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+            beforeEach(() => {
+                containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+                testCollection1 = createLocalCollection("collection1");
+                testCollection2 = createLocalCollection("collection2");
+            });
 
-            // Create first ConsensusOrderedCollection
-            dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
-            deltaConnection1 = containerRuntime1.createDeltaConnection();
-            testCollection1 = crcFactory.create(dataStoreRuntime1, "consensus-register-collection1");
-
-            // Create second ConsensusOrderedCollection
-            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-            deltaConnection2 = containerRuntime2.createDeltaConnection();
-            testCollection2 = crcFactory.create(dataStoreRuntime2, "consensus-register-collection2");
-        });
-
-        describe("Detached", () => {
             it("should not send ops when the collection is not connected", async () => {
                 // Add a listener to the second collection. This is used to verify that the written value reaches
                 // the remote client.
@@ -204,153 +219,154 @@ describe("ConsensusRegisterCollection", () => {
             });
         });
 
-        describe("Attached, Connected", () => {
+        describe("Reconnection", () => {
+            const testKey: string = "testKey";
+            const testValue: string = "testValue";
+            let receivedKey: string = "";
+            let receivedValue: string = "";
+            let receivedLocalStatus: boolean = true;
+
+            let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+            let containerRuntime1: MockContainerRuntimeForReconnection;
+            let testCollection1: IConsensusRegisterCollection;
+            let testCollection2: IConsensusRegisterCollection;
+
             beforeEach(() => {
-                // Connect the collections.
-                const services1: IChannelServices = {
-                    deltaConnection: deltaConnection1,
-                    objectStorage: new MockStorage(),
-                };
-                const services2: IChannelServices = {
-                    deltaConnection: deltaConnection2,
-                    objectStorage: new MockStorage(),
-                };
-                testCollection1.connect(services1);
-                testCollection2.connect(services2);
-            });
+                containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+                const response1 = createCollectionForReconnection("colllection1", containerRuntimeFactory);
+                testCollection1 = response1.collection;
+                containerRuntime1 = response1.containerRuntime;
 
-            describe("reconnect", () => {
-                const testKey: string = "testKey";
-                const testValue: string = "testValue";
-                let receivedKey: string = "";
-                let receivedValue: string = "";
-                let receivedLocalStatus: boolean = true;
+                const response2 = createCollectionForReconnection("collection2", containerRuntimeFactory);
+                testCollection2 = response2.collection;
 
-                beforeEach(() => {
-                    // Add a listener to the second collection. This is used to verify that the written value reaches
-                    // the remote client.
-                    testCollection2.on("atomicChanged", (key: string, value: string, local: boolean) => {
-                        receivedKey = key;
-                        receivedValue = value;
-                        receivedLocalStatus = local;
-                    });
-                });
-
-                it("can resend unacked ops on reconnection", async () => {
-                    // Write to the first register collection.
-                    const writeP = testCollection1.write(testKey, testValue);
-
-                    // Disconnect and reconnect the first collection.
-                    containerRuntime1.connected = false;
-                    containerRuntime1.connected = true;
-
-                    // Process the messages.
-                    containerRuntimeFactory.processAllMessages();
-
-                    // Verify that the first collection successfully writes and is the winner.
-                    const winner = await writeP;
-                    assert.equal(winner, true, "Write was not successful");
-
-                    // Verify that the remote register collection received the write.
-                    assert.equal(receivedKey, testKey, "The remote client did not receive the key");
-                    assert.equal(receivedValue, testValue, "The remote client did not receive the value");
-                    assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");
-                });
-
-                it("can store ops in disconnected state and resend them on reconnection", async () => {
-                    // Disconnect the first collection.
-                    containerRuntime1.connected = false;
-
-                    // Write to the first register collection.
-                    const writeP = testCollection1.write(testKey, testValue);
-
-                    // Reconnect the first collection.
-                    containerRuntime1.connected = true;
-
-                    // Process the messages.
-                    containerRuntimeFactory.processAllMessages();
-
-                    // Verify that the first collection successfully writes and is the winner.
-                    const winner = await writeP;
-                    assert.equal(winner, true, "Write was not successful");
-
-                    // Verify that the remote register collection recieved the write.
-                    assert.equal(receivedKey, testKey, "The remote client did not receive the key");
-                    assert.equal(receivedValue, testValue, "The remote client did not receive the value");
-                    assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");
-                });
-
-                afterEach(() => {
-                    receivedKey = "";
-                    receivedValue = "";
-                    receivedLocalStatus = true;
+                // Add a listener to the second collection. This is used to verify that the written value reaches
+                // the remote client.
+                testCollection2.on("atomicChanged", (key: string, value: string, local: boolean) => {
+                    receivedKey = key;
+                    receivedValue = value;
+                    receivedLocalStatus = local;
                 });
             });
 
-            describe("Garbage Collection", () => {
-                class GCRegistedCollectionProvider implements IGCTestProvider {
-                    private subCollectionCount = 0;
-                    private _expectedRoutes: string[] = [];
+            it("can resend unacked ops on reconnection", async () => {
+                // Write to the first register collection.
+                const writeP = testCollection1.write(testKey, testValue);
 
-                    private async writeAndProcessMsg(key: string, value: any) {
-                        const waitP = testCollection1.write(key, value);
-                        containerRuntimeFactory.processAllMessages();
-                        return waitP;
-                    }
+                // Disconnect and reconnect the first collection.
+                containerRuntime1.connected = false;
+                containerRuntime1.connected = true;
 
-                    constructor() {
-                        this.subCollectionCount = 0;
-                        this._expectedRoutes = [];
-                    }
+                // Process the messages.
+                containerRuntimeFactory.processAllMessages();
 
-                    public get sharedObject() {
-                        // Return the remote collection because we want to verify its summary data.
-                        return testCollection2;
-                    }
+                // Verify that the first collection successfully writes and is the winner.
+                const winner = await writeP;
+                assert.equal(winner, true, "Write was not successful");
 
-                    public get expectedOutboundRoutes() {
-                        return this._expectedRoutes;
-                    }
+                // Verify that the remote register collection received the write.
+                assert.equal(receivedKey, testKey, "The remote client did not receive the key");
+                assert.equal(receivedValue, testValue, "The remote client did not receive the value");
+                assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");
+            });
 
-                    public async addOutboundRoutes() {
-                        const subCollectionId = `subCollection-${++this.subCollectionCount}`;
-                        const subTestCollection = crcFactory.create(dataStoreRuntime1, subCollectionId);
-                        await this.writeAndProcessMsg(subCollectionId, subTestCollection.handle);
-                        this._expectedRoutes.push(subTestCollection.handle.absolutePath);
-                    }
+            it("can store ops in disconnected state and resend them on reconnection", async () => {
+                // Disconnect the first collection.
+                containerRuntime1.connected = false;
 
-                    public async deleteOutboundRoutes() {
-                        const subCollectionId = `subCollection-${this.subCollectionCount}`;
-                        const deletedHandle = testCollection1.read(subCollectionId) as IFluidHandle;
-                        assert(deletedHandle, "Route must be added before deleting");
+                // Write to the first register collection.
+                const writeP = testCollection1.write(testKey, testValue);
 
-                        // Delete the last handle that was added.
-                        await this.writeAndProcessMsg(subCollectionId, "nonHandleValue");
-                        // Remove deleted handle's route from expected routes.
-                        this._expectedRoutes =
-                            this._expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
-                    }
+                // Reconnect the first collection.
+                containerRuntime1.connected = true;
 
-                    public async addNestedHandles() {
-                        const subCollectionId1 = `subCollection-${++this.subCollectionCount}`;
-                        const subCollectionId2 = `subCollection-${++this.subCollectionCount}`;
-                        const subTestCollection1 = crcFactory.create(dataStoreRuntime1, subCollectionId1);
-                        const subTestCollection2 = crcFactory.create(dataStoreRuntime1, subCollectionId2);
-                        const containingObject = {
-                            collection1Handle: subTestCollection1.handle,
-                            nestedObj: {
-                                collection2Handle: subTestCollection2.handle,
-                            },
-                        };
-                        await this.writeAndProcessMsg(subCollectionId2, containingObject);
-                        this._expectedRoutes.push(
-                            subTestCollection1.handle.absolutePath,
-                            subTestCollection2.handle.absolutePath);
-                    }
-                }
+                // Process the messages.
+                containerRuntimeFactory.processAllMessages();
 
-                runGCTests(GCRegistedCollectionProvider);
+                // Verify that the first collection successfully writes and is the winner.
+                const winner = await writeP;
+                assert.equal(winner, true, "Write was not successful");
+
+                // Verify that the remote register collection recieved the write.
+                assert.equal(receivedKey, testKey, "The remote client did not receive the key");
+                assert.equal(receivedValue, testValue, "The remote client did not receive the value");
+                assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");
+            });
+
+            afterEach(() => {
+                receivedKey = "";
+                receivedValue = "";
+                receivedLocalStatus = true;
             });
         });
+    });
+
+    describe("Garbage Collection", () => {
+        class GCRegistedCollectionProvider implements IGCTestProvider {
+            private subCollectionCount = 0;
+            private _expectedRoutes: string[] = [];
+            private readonly collection1: IConsensusRegisterCollection;
+            private readonly collection2: IConsensusRegisterCollection;
+            private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
+
+            constructor() {
+                this.containerRuntimeFactory = new MockContainerRuntimeFactory();
+                this.collection1 = createConnectedCollection("collection1", this.containerRuntimeFactory);
+                this.collection2 = createConnectedCollection("collection2", this.containerRuntimeFactory);
+            }
+
+            private async writeAndProcessMsg(key: string, value: any) {
+                const waitP = this.collection1.write(key, value);
+                this.containerRuntimeFactory.processAllMessages();
+                return waitP;
+            }
+
+            public get sharedObject() {
+                // Return the remote collection because we want to verify its summary data.
+                return this.collection2;
+            }
+
+            public get expectedOutboundRoutes() {
+                return this._expectedRoutes;
+            }
+
+            public async addOutboundRoutes() {
+                const subCollectionId = `subCollection-${++this.subCollectionCount}`;
+                const subTestCollection = createLocalCollection(subCollectionId);
+                await this.writeAndProcessMsg(subCollectionId, subTestCollection.handle);
+                this._expectedRoutes.push(subTestCollection.handle.absolutePath);
+            }
+
+            public async deleteOutboundRoutes() {
+                const subCollectionId = `subCollection-${this.subCollectionCount}`;
+                const deletedHandle = this.collection1.read(subCollectionId) as IFluidHandle;
+                assert(deletedHandle, "Route must be added before deleting");
+
+                // Delete the last handle that was added.
+                await this.writeAndProcessMsg(subCollectionId, "nonHandleValue");
+                // Remove deleted handle's route from expected routes.
+                this._expectedRoutes =
+                    this._expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
+            }
+
+            public async addNestedHandles() {
+                const subCollectionId1 = `subCollection-${++this.subCollectionCount}`;
+                const subCollectionId2 = `subCollection-${++this.subCollectionCount}`;
+                const subTestCollection1 = createLocalCollection(subCollectionId1);
+                const subTestCollection2 = createLocalCollection(subCollectionId2);
+                const containingObject = {
+                    collection1Handle: subTestCollection1.handle,
+                    nestedObj: {
+                        collection2Handle: subTestCollection2.handle,
+                    },
+                };
+                await this.writeAndProcessMsg(subCollectionId2, containingObject);
+                this._expectedRoutes.push(
+                    subTestCollection1.handle.absolutePath,
+                    subTestCollection2.handle.absolutePath);
+            }
+        }
+
+        runGCTests(GCRegistedCollectionProvider);
     });
 });

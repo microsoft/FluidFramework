@@ -21,6 +21,36 @@ import { fill, check, insertFragmented, extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
+function createConnectedMatrix(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+    const dataStoreRuntime = new MockFluidDataStoreRuntime();
+    const matrix = new SharedMatrix(dataStoreRuntime, id, SharedMatrixFactory.Attributes);
+    matrix.connect({
+        deltaConnection: runtimeFactory
+            .createContainerRuntime(dataStoreRuntime)
+            .createDeltaConnection(),
+        objectStorage: new MockStorage(),
+    });
+    return matrix;
+}
+
+function createLocalMatrix(id: string) {
+    const factory = new SharedMatrixFactory();
+    return factory.create(new MockFluidDataStoreRuntime(), id);
+}
+
+function createMatrixForReconnection(id: string, runtimeFactory: MockContainerRuntimeFactoryForReconnection) {
+    const dataStoreRuntime = new MockFluidDataStoreRuntime();
+    const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+    const services = {
+        deltaConnection: containerRuntime.createDeltaConnection(),
+        objectStorage: new MockStorage(),
+    };
+
+    const matrix = new SharedMatrix(dataStoreRuntime, id, SharedMatrixFactory.Attributes);
+    matrix.connect(services);
+    return { matrix, containerRuntime };
+}
+
 describe("Matrix", () => {
     describe("local client", () => {
         let matrix: SharedMatrix<number>;
@@ -269,7 +299,6 @@ describe("Matrix", () => {
         let matrix2: SharedMatrix;
         let consumer1: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
         let consumer2: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
-        let dataStoreRuntime: MockFluidDataStoreRuntime;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
 
         const expect = async (expected?: readonly (readonly any[])[]) => {
@@ -292,26 +321,12 @@ describe("Matrix", () => {
         beforeEach(async () => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
 
-            // Create and connect the first SharedMatrix.
-            dataStoreRuntime = new MockFluidDataStoreRuntime();
-            matrix1 = new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);
-            matrix1.connect({
-                deltaConnection: containerRuntimeFactory
-                    .createContainerRuntime(dataStoreRuntime)
-                    .createDeltaConnection(),
-                objectStorage: new MockStorage(),
-            });
+            // Create the first SharedMatrix.
+            matrix1 = createConnectedMatrix("matrix1", containerRuntimeFactory);
             consumer1 = new TestConsumer(matrix1);
 
-            // Create and connect the second SharedMatrix.
-            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-            matrix2 = new SharedMatrix(dataStoreRuntime2, "matrix2", SharedMatrixFactory.Attributes);
-            matrix2.connect({
-                deltaConnection: containerRuntimeFactory
-                    .createContainerRuntime(dataStoreRuntime2)
-                    .createDeltaConnection(),
-                objectStorage: new MockStorage(),
-            });
+            // Create a second SharedMatrix.
+            matrix2 = createConnectedMatrix("matrix2", containerRuntimeFactory);
             consumer2 = new TestConsumer(matrix2);
         });
 
@@ -604,76 +619,9 @@ describe("Matrix", () => {
                 ]);
             });
         });
-
-        describe("Garbage Collection", () => {
-            class GCSharedMatrixProvider implements IGCTestProvider {
-                private colCount = 0;
-                private subMatrixCount = 0;
-                private _expectedRoutes: string[] = [];
-                private readonly factory = new SharedMatrixFactory();
-
-                constructor() {
-                    matrix1.insertRows(0, 1);
-                    this.colCount = 0;
-                    this.subMatrixCount = 0;
-                    this._expectedRoutes = [];
-                }
-
-                public get sharedObject() {
-                    // Return the remote SharedMatrix because we want to verify its summary data.
-                    return matrix2;
-                }
-
-                public get expectedOutboundRoutes() {
-                    return this._expectedRoutes;
-                }
-
-                public async addOutboundRoutes() {
-                    const newSubMatrixId = `subMatrix-${++this.subMatrixCount}`;
-                    const subMatrix = this.factory.create(dataStoreRuntime, newSubMatrixId);
-
-                    matrix1.insertCols(this.colCount, 1);
-                    matrix1.setCell(0, this.colCount, subMatrix.handle);
-                    this.colCount++;
-                    this._expectedRoutes.push(subMatrix.handle.absolutePath);
-                    containerRuntimeFactory.processAllMessages();
-                }
-
-                public async deleteOutboundRoutes() {
-                    // Delete the last handle that was added.
-                    const lastAddedCol = this.colCount - 1;
-                    const deletedHandle = matrix1.getCell(0, lastAddedCol) as IFluidHandle;
-                    assert(deletedHandle, "Route must be added before deleting");
-
-                    matrix1.setCell(0, lastAddedCol, undefined);
-                    // Remove deleted handle's route from expected routes.
-                    this._expectedRoutes = this._expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
-                    containerRuntimeFactory.processAllMessages();
-                }
-
-                public async addNestedHandles() {
-                    const subMatrix = this.factory.create(dataStoreRuntime, `subMatrix-${++this.subMatrixCount}`);
-                    const subMatrix2 = this.factory.create(dataStoreRuntime, `subMatrix-${++this.subMatrixCount}`);
-                    const containingObject = {
-                        subMatrixHandle: subMatrix.handle,
-                        nestedObj: {
-                            subMatrix2Handle: subMatrix2.handle,
-                        },
-                    };
-
-                    matrix1.insertCols(this.colCount, 1);
-                    matrix1.setCell(0, this.colCount, containingObject);
-                    this.colCount++;
-                    this._expectedRoutes.push(subMatrix.handle.absolutePath, subMatrix2.handle.absolutePath);
-                    containerRuntimeFactory.processAllMessages();
-                }
-            }
-
-            runGCTests(GCSharedMatrixProvider);
-        });
     });
 
-    describe("SharedMatrix reconnection", () => {
+    describe("Reconnection", () => {
         let matrix1: SharedMatrix;
         let matrix2: SharedMatrix;
         let consumer1: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
@@ -702,24 +650,16 @@ describe("Matrix", () => {
         beforeEach(async () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
-            // Create and connect the first SharedMatrix.
-            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
-            matrix1 = new SharedMatrix(dataStoreRuntime1, "matrix1", SharedMatrixFactory.Attributes);
-            matrix1.connect({
-                deltaConnection: containerRuntime1.createDeltaConnection(),
-                objectStorage: new MockStorage(),
-            });
+            // Create the first SharedMatrix.
+            const response1 = createMatrixForReconnection("matrix1", containerRuntimeFactory);
+            matrix1 = response1.matrix;
+            containerRuntime1 = response1.containerRuntime;
             consumer1 = new TestConsumer(matrix1);
 
-            // Create and connect the second SharedMatrix.
-            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-            matrix2 = new SharedMatrix(dataStoreRuntime2, "matrix2", SharedMatrixFactory.Attributes);
-            matrix2.connect({
-                deltaConnection: containerRuntime2.createDeltaConnection(),
-                objectStorage: new MockStorage(),
-            });
+            // Create a second SharedMatrix.
+            const response2 = createMatrixForReconnection("matrix2", containerRuntimeFactory);
+            matrix2 = response2.matrix;
+            containerRuntime2 = response2.containerRuntime;
             consumer2 = new TestConsumer(matrix2);
         });
 
@@ -896,5 +836,75 @@ describe("Matrix", () => {
                 [undefined, 0],
             ]);
         });
+    });
+
+    describe("Garbage Collection", () => {
+        class GCSharedMatrixProvider implements IGCTestProvider {
+            private colCount = 0;
+            private subMatrixCount = 0;
+            private _expectedRoutes: string[] = [];
+            private readonly matrix1: SharedMatrix;
+            private readonly matrix2: SharedMatrix;
+            private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
+
+            constructor() {
+                this.containerRuntimeFactory = new MockContainerRuntimeFactory();
+                this.matrix1 = createConnectedMatrix("matrix1", this.containerRuntimeFactory);
+                this.matrix2 = createConnectedMatrix("matrix2", this.containerRuntimeFactory);
+                // Insert a row into the matrix where we will set cells.
+                this.matrix1.insertRows(0, 1);
+            }
+
+            public get sharedObject() {
+                // Return the remote SharedMatrix because we want to verify its summary data.
+                return this.matrix2;
+            }
+
+            public get expectedOutboundRoutes() {
+                return this._expectedRoutes;
+            }
+
+            public async addOutboundRoutes() {
+                const newSubMatrixId = `subMatrix-${++this.subMatrixCount}`;
+                const subMatrix = createLocalMatrix(newSubMatrixId);
+
+                this.matrix1.insertCols(this.colCount, 1);
+                this.matrix1.setCell(0, this.colCount, subMatrix.handle);
+                this.colCount++;
+                this._expectedRoutes.push(subMatrix.handle.absolutePath);
+                this.containerRuntimeFactory.processAllMessages();
+            }
+
+            public async deleteOutboundRoutes() {
+                // Delete the last handle that was added.
+                const lastAddedCol = this.colCount - 1;
+                const deletedHandle = this.matrix1.getCell(0, lastAddedCol) as IFluidHandle;
+                assert(deletedHandle, "Route must be added before deleting");
+
+                this.matrix1.setCell(0, lastAddedCol, undefined);
+                // Remove deleted handle's route from expected routes.
+                this._expectedRoutes = this._expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
+                this.containerRuntimeFactory.processAllMessages();
+            }
+
+            public async addNestedHandles() {
+                const subMatrix = createLocalMatrix(`subMatrix-${++this.subMatrixCount}`);
+                const subMatrix2 = createLocalMatrix(`subMatrix-${++this.subMatrixCount}`);
+                const containingObject = {
+                    subMatrixHandle: subMatrix.handle,
+                    nestedObj: {
+                        subMatrix2Handle: subMatrix2.handle,
+                    },
+                };
+
+                this.matrix1.insertCols(this.colCount, 1);
+                this.matrix1.setCell(0, this.colCount, containingObject);
+                this.colCount++;
+                this._expectedRoutes.push(subMatrix.handle.absolutePath, subMatrix2.handle.absolutePath);
+                this.containerRuntimeFactory.processAllMessages();
+            }
+        }
+
+        runGCTests(GCSharedMatrixProvider);
     });
 });
