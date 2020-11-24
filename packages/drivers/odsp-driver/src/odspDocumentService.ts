@@ -272,10 +272,6 @@ export class OdspDocumentService implements IDocumentService {
         });
     }
 
-    public async branch(): Promise<string> {
-        return "";
-    }
-
     public getErrorTrackingService(): IErrorTrackingService {
         return { track: () => null };
     }

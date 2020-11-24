@@ -33,22 +33,16 @@ export class SnapshotLoader {
     }
 
     public async initialize(
-        branchId: string,
         services: IChannelStorageService,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
-        // Override branch by default which is derived from document id,
-        // as document id isn't stable for spo
-        // which leads to branch id being in correct
-        const branch = this.runtime.options && this.runtime.options.enableBranching
-            ? branchId : this.runtime.documentId;
         const headerLoadedP =
             services.read(SnapshotLegacy.header).then((header) => {
                 assert(!!header);
-                return this.loadHeader(header, branch);
+                return this.loadHeader(header);
             });
 
         const catchupOpsP =
-            this.loadBodyAndCatchupOps(headerLoadedP, services, branch);
+            this.loadBodyAndCatchupOps(headerLoadedP, services);
 
         await headerLoadedP;
 
@@ -58,7 +52,6 @@ export class SnapshotLoader {
     private async loadBodyAndCatchupOps(
         headerChunkP: Promise<MergeTreeChunkV1>,
         services: IChannelStorageService,
-        branch: string,
     ): Promise<ISequencedDocumentMessage[]> {
         const blobsP = services.list("");
         const headerChunk = await headerChunkP;
@@ -75,7 +68,7 @@ export class SnapshotLoader {
 
             // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
-            return this.loadCatchupOps(services.read(blobs[0]), branch);
+            return this.loadCatchupOps(services.read(blobs[0]));
         } else if (blobs.length !== headerChunk.headerMetadata.orderedChunkMetadata.length) {
             throw new Error("Unexpected blobs in snapshot");
         }
@@ -116,9 +109,7 @@ export class SnapshotLoader {
         return seg;
     };
 
-    private loadHeader(
-        header: string,
-        branchId: string): MergeTreeChunkV1 {
+    private loadHeader(header: string): MergeTreeChunkV1 {
         const chunk = SnapshotV1.processChunk(
             SnapshotLegacy.header,
             header,
@@ -127,8 +118,6 @@ export class SnapshotLoader {
             this.runtime.IFluidSerializer);
         const segs = chunk.segments.map(this.specToSegment);
         this.mergeTree.reloadFromSegments(segs);
-        // TODO currently only assumes two levels of branching
-        const branching = branchId === this.runtime.documentId ? 0 : 1;
 
         if (chunk.headerMetadata === undefined) {
             throw new Error("header metadata not available");
@@ -150,7 +139,7 @@ export class SnapshotLoader {
                     ? chunk.headerMetadata.minSequenceNumber
                     : chunk.headerMetadata.sequenceNumber,
                 /* currentSeq: */ chunk.headerMetadata.sequenceNumber,
-                branching);
+            );
         }
 
         return chunk;
@@ -227,27 +216,11 @@ export class SnapshotLoader {
     /**
      * If loading from a snapshot, get the catchup messages.
      * @param rawMessages - The messages in original encoding
-     * @param branchId - The document branch
      * @returns The decoded messages, but handles aren't parsed.  Matches the format that will be passed in
      * SharedObject.processCore.
      */
-    private async loadCatchupOps(
-        rawMessages: Promise<string>,
-        branchId: string,
-    ): Promise<ISequencedDocumentMessage[]> {
+    private async loadCatchupOps(rawMessages: Promise<string>): Promise<ISequencedDocumentMessage[]> {
         const utf8 = fromBase64ToUtf8(await rawMessages);
-        const messages = JSON.parse(utf8) as ISequencedDocumentMessage[];
-        if (branchId !== this.runtime.documentId) {
-            for (const message of messages) {
-                // Append branch information when transforming for the case of messages stashed with the snapshot
-                message.origin = {
-                    id: branchId,
-                    minimumSequenceNumber: message.minimumSequenceNumber,
-                    sequenceNumber: message.sequenceNumber,
-                };
-            }
-        }
-
-        return messages;
+        return JSON.parse(utf8) as ISequencedDocumentMessage[];
     }
 }

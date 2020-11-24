@@ -80,11 +80,7 @@ export class FlowContainer extends ui.Component {
             this.initSpellcheck(value);
         });
 
-        // For now only allow one level deep of branching
         this.status.addButton("Versions", `/sharedText/${this.collabDocument.id}/commits`, false);
-        if (!this.collabDocument.parentBranch) {
-            this.status.addButton("Branch", `/sharedText/${this.collabDocument.id}/fork`, true);
-        }
 
         // Add flowView to the panel
         this.layerPanel.addChild(this.flowView);

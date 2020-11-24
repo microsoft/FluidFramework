@@ -33,14 +33,16 @@ export class CounterFactory implements IChannelFactory {
         return CounterFactory.Attributes;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+     */
     public async load(
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes): Promise<ISharedCounter> {
         const counter = new SharedCounter(id, runtime, attributes);
-        await counter.load(branchId, services);
+        await counter.load(services);
         return counter;
     }
 

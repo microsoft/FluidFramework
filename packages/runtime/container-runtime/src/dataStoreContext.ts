@@ -115,10 +115,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.pkg;
     }
 
-    public get parentBranch(): string | null {
-        return this._containerRuntime.parentBranch;
-    }
-
     public get options(): any {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this._containerRuntime.options;

@@ -50,8 +50,7 @@ describe("SharedString", () => {
                 dataStoreRuntime2,
                 "shared-string-2",
                 SharedStringFactory.Attributes);
-            // eslint-disable-next-line no-null/no-null
-            await sharedString2.load(null/* branchId */, services);
+            await sharedString2.load(services);
             await sharedString2.loaded;
 
             assert.equal(sharedString.getText(), sharedString2.getText(), "Could not correctly load from snapshot");
@@ -266,8 +265,7 @@ describe("SharedString", () => {
 
             const sharedString2 =
                 new SharedString(dataStoreRuntime2, "shared-string-2", SharedStringFactory.Attributes);
-            // eslint-disable-next-line no-null/no-null
-            await sharedString2.load(null, services2);
+            await sharedString2.load(services2);
 
             // Now connect the first Ink
             dataStoreRuntime1.local = false;

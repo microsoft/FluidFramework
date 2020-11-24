@@ -52,7 +52,6 @@ export class RemoteChannelContext implements IChannelContext {
         baseSnapshot: Promise<ISnapshotTree> | ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
         extraBlobs: Promise<Map<string, string>> | undefined,
-        private readonly branch: string,
         private readonly summaryTracker: ISummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private readonly attachMessageType?: string,
@@ -177,7 +176,6 @@ export class RemoteChannelContext implements IChannelContext {
             this.runtime,
             this.id,
             this.services,
-            this.branch,
             attributes);
 
         // Send all pending messages to the channel

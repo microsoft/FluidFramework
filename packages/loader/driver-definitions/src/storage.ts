@@ -127,11 +127,6 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     existing: boolean;
 
     /**
-     * The parent branch for the document
-     */
-    parentBranch: string | null;
-
-    /**
      * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.
      */
     maxMessageSize: number;
@@ -204,11 +199,6 @@ export interface IDocumentService {
      * Subscribes to the document delta stream
      */
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
-
-    /**
-     * Creates a branch of the document with the given ID. Returns the new ID.
-     */
-    branch(): Promise<string>;
 
     /**
      * Returns the error tracking service

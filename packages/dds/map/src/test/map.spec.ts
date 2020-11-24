@@ -137,7 +137,7 @@ describe("Map", () => {
 
                 const services = new MockSharedObjectServices({ header: content });
                 const loadedMap = await factory.load(
-                    dataStoreRuntime, "mapId", services, "branchId", factory.attributes,
+                    dataStoreRuntime, "mapId", services, factory.attributes,
                 );
                 assert(loadedMap.get("key") === "value");
             });
@@ -161,7 +161,7 @@ describe("Map", () => {
 
                 const services = new MockSharedObjectServices({ header: content });
                 const loadedMap = await factory.load(
-                    dataStoreRuntime, "mapId", services, "branchId", factory.attributes,
+                    dataStoreRuntime, "mapId", services, factory.attributes,
                 );
                 assert(loadedMap.get("key") === "value");
             });
@@ -211,7 +211,7 @@ describe("Map", () => {
                     blob0: content2,
                 });
                 const loadedMap = await factory.load(
-                    dataStoreRuntime, "mapId", services, "branchId", factory.attributes,
+                    dataStoreRuntime, "mapId", services, factory.attributes,
                 );
                 assert(loadedMap.get("key") === "value");
                 assert(loadedMap.get("longValue") === longString);
@@ -249,7 +249,7 @@ describe("Map", () => {
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const map2 = new SharedMap("testMap2", dataStoreRuntime2, MapFactory.Attributes);
-            await map2.load("branchId", services2);
+            await map2.load(services2);
 
             // Now connect the first SharedMap
             dataStoreRuntime.local = false;

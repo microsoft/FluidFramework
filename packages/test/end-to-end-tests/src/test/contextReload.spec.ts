@@ -80,8 +80,7 @@ describe("context reload", function() {
     const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const codeDetails = (version: string): old.IFluidCodeDetails => {
         return {
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            package: { name: TestDataStore.type, version } as old.IFluidPackage,
+            package: { name: TestDataStore.type, version } as unknown as old.IFluidPackage,
             config: {},
         };
     };

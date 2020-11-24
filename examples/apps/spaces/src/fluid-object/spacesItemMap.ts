@@ -5,7 +5,10 @@
 
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { AsSerializable, Serializable } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import {
+    IFluidDataStoreFactory,
+    IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { CollaborativeText } from "@fluid-example/collaborative-textarea";
@@ -13,7 +16,7 @@ import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import { IFluidDataObjectFactory } from "@fluidframework/aqueduct";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import * as React from "react";
 import { Layout } from "react-grid-layout";
@@ -24,8 +27,10 @@ interface ISingleHandleItem {
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function createSingleHandleItem(subFactory: IFluidDataStoreFactory) {
-    return async (dataObjectFactory: IFluidDataObjectFactory): Promise<ISingleHandleItem> => {
-        const object = await dataObjectFactory.createAnonymousChildInstance<IFluidLoadable>(subFactory);
+    return async (context: IFluidDataStoreContext): Promise<ISingleHandleItem> => {
+        const packagePath = [...context.packagePath, subFactory.type];
+        const router = await context.containerRuntime.createDataStore(packagePath);
+        const object = await requestFluidObject<IFluidLoadable>(router, "/");
         return {
             handle: object.handle,
         };
@@ -50,7 +55,7 @@ const getSliderCoordinateView = async (serializableObject: ISingleHandleItem) =>
 export interface ISpacesItemEntry<T extends Serializable = AsSerializable<any>> {
     // Would be better if items to bring their own subregistries, and their own ability to create components
     // This might be done by integrating these items with the Spaces subcomponent registry?
-    create: (createSubObject: IFluidDataObjectFactory) => Promise<T>;
+    create: (context: IFluidDataStoreContext) => Promise<T>;
     getView: (serializableObject: T) => Promise<JSX.Element>;
     friendlyName: string;
     fabricIconName: string;

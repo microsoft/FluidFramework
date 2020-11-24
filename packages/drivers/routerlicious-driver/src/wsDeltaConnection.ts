@@ -82,10 +82,6 @@ export class WSDeltaConnection
         return this.details!.existing;
     }
 
-    public get parentBranch(): string | null {
-        return this.details!.parentBranch;
-    }
-
     public get maxMessageSize(): number {
         return this.details!.maxMessageSize;
     }

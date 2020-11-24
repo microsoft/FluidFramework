@@ -172,7 +172,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     public readonly documentId: string;
     public readonly id: string;
-    public readonly parentBranch: string | null;
     public existing: boolean;
     public readonly options: any;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -189,7 +188,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.logger = ChildLogger.create(dataStoreContext.containerRuntime.logger, undefined, { dataStoreId: uuid() });
         this.documentId = dataStoreContext.documentId;
         this.id = dataStoreContext.id;
-        this.parentBranch = dataStoreContext.parentBranch;
         this.existing = dataStoreContext.existing;
         this.options = dataStoreContext.options;
         this.deltaManager = dataStoreContext.deltaManager;
@@ -238,7 +236,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         tree.trees[path],
                         this.sharedObjectRegistry,
                         undefined /* extraBlobs */,
-                        dataStoreContext.branch,
                         this.dataStoreContext.summaryTracker.createOrGetChild(
                             path,
                             this.deltaManager.lastSequenceNumber,
@@ -490,9 +487,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         is in pendingAttach set: ${this.pendingAttach.has(id)},
                         is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}`);
 
-                    // Create storage service that wraps the attach data
-                    const origin = message.origin?.id ?? this.documentId;
-
                     const flatBlobs = new Map<string, string>();
                     const snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
                     // flatBlobsP's validity is contingent on snapshotTreeP's resolution
@@ -508,7 +502,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         snapshotTreeP,
                         this.sharedObjectRegistry,
                         flatBlobsP,
-                        origin,
                         this.dataStoreContext.summaryTracker.createOrGetChild(
                             id,
                             message.sequenceNumber,

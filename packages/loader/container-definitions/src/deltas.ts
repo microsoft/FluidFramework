@@ -25,7 +25,6 @@ export interface IConnectionDetails {
     claims: ITokenClaims;
     existing: boolean;
     mode: ConnectionMode;
-    parentBranch: string | null;
     version: string;
     initialClients: ISignalClient[];
     maxMessageSize: number;
