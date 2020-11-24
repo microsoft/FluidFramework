@@ -15,11 +15,12 @@ import { FluidDataStoreContext } from "./dataStoreContext";
     private readonly _contexts = new Map<string, FluidDataStoreContext>();
     // List of pending contexts (for the case where a client knows a store will exist and is waiting
     // on its creation). This is a superset of contexts.
-    private readonly contextsDeferred = new Map<string, Deferred<FluidDataStoreContext>>();
+    // The Deferreds complete when the context exists in _contexts and is bound
+    private readonly deferredContextBinds = new Map<string, Deferred<FluidDataStoreContext>>();
 
     private readonly disposeOnce = new Lazy<void>(()=>{
         // close/stop all store contexts
-        for (const [fluidDataStoreId, contextD] of this.contextsDeferred) {
+        for (const [fluidDataStoreId, contextD] of this.deferredContextBinds) {
             contextD.promise.then((context) => {
                 context.dispose();
             }).catch((contextError) => {
@@ -57,81 +58,70 @@ import { FluidDataStoreContext } from "./dataStoreContext";
         return this._contexts.has(id);
     }
 
-    public async getContextUponBinding(id: string) {
-        // return this.pendingBindPs.addOrGet(id, this.waitForContextBind(id));
-    }
-
-    public notifyOnBind(id: string) {
+    /**
+     * When a context of the given id is about to be bound/attached, call this to update internal tracking
+     */
+    public notifyOnBeforeBind(id: string) {
         assert(this.notBoundContexts.has(id), "Store being bound should be in not bounded set");
         this.notBoundContexts.delete(id);
-
-        // const cb = this.allContexts.get(id);
-        // assert(cb !== undefined && cb.bound !== true);
-
-        // this.emit("bind", { id });
-        // this.allContexts.set(id, { ...cb, bound: true });
     }
 
-    private readonly waitForContextBind = (id: string) => async () => new Promise<FluidDataStoreContext>((res, rej) => {
-        this.addPendingBind(id); //* delete
-        // this.on("bind", (args) => {
-        //     if (args.id === id) {
-        //         const cb = this.allContexts.get(id);
-        //         if (cb === undefined) {
-        //             rej(new Error("bind called for missing context"));
-        //             return;
-        //         }
-        //         this.allContexts.set(id, { ...cb, bound: true });
-        //         res(cb.context);
-        //     }
-        // });
-    });
-
-    private addPendingBind(id: string) {
-        this.waitForContextBind(id); //* delete
-        // this.pendingBindPs.add(id, this.waitForContextBind(id));
-    }
-
-    public setupNew(context: FluidDataStoreContext) {
+    /**
+     * Add the given context, marking it as to-be-bound
+     */
+    public addUnboundContext(context: FluidDataStoreContext) {
         const id = context.id;
         assert(!this._contexts.has(id), "Creating store with existing ID");
-        this.notBoundContexts.add(id);
-        const deferred = new Deferred<FluidDataStoreContext>();
-        this.contextsDeferred.set(id, deferred);
+
         this._contexts.set(id, context);
 
-        //* Not bound yet
+        this.notBoundContexts.add(id);
+        this.prepDeferredBind(id);
     }
 
-    public ensureDeferred(id: string): Deferred<FluidDataStoreContext> {
-        const deferred = this.contextsDeferred.get(id);
+    /**
+     * This returns a Deferred that will resolve when a context with the given id is bound
+     * @param id The id of the context to defer binding on
+     */
+    public prepDeferredBind(id: string): Deferred<FluidDataStoreContext> {
+        const deferred = this.deferredContextBinds.get(id);
         if (deferred) { return deferred; }
+
         const newDeferred = new Deferred<FluidDataStoreContext>();
-        this.contextsDeferred.set(id, newDeferred);
+        this.deferredContextBinds.set(id, newDeferred);
         return newDeferred;
     }
 
-    public getDeferred(id: string): Deferred<FluidDataStoreContext> {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const deferred = this.contextsDeferred.get(id)!;
+    /**
+     * Triggers the deferred to resolve, indicating the context has been bound
+     * @param id - The id of the newly-bound context
+     * @param context - The context (Redundant with existing context that was previously set)
+     */
+    public resolveDeferredBind(id: string, context: FluidDataStoreContext) {
+        assert(this._contexts.get(id) === context);
+        const deferred = this.deferredContextBinds.get(id);
         assert(!!deferred);
-        return deferred;
+        deferred.resolve(context);
     }
 
-    public setNew(id: string, context: FluidDataStoreContext) {
-        assert(!!context);
-        assert(id === context.id);
-        assert(!this._contexts.has(id));
-        this._contexts.set(id, context);
-        const deferred = this.ensureDeferred(id);
-        deferred.resolve(context);
+    /**
+     * Add the given context, marking it as bound
+     * @param id - id of context to add. Redundant with context.id
+     * @param context - The context to add
+     */
+    public addBoundContext(id: string, context: FluidDataStoreContext) {
+        assert(id === context.id, "id mismatch for context being added");
+        assert(!this._contexts.has(id), "Creating store with existing ID");
 
-        //* Assume it's bound (?)
+        this._contexts.set(id, context);
+
+        // Resolve the deferred immediately since this context is already bound
+        const deferredBind = this.prepDeferredBind(id);
+        deferredBind.resolve(context);
     }
 
     public get(id: string): FluidDataStoreContext {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const context = this._contexts.get(id)!;
+        const context = this._contexts.get(id);
         assert(!!context);
         return context;
     }

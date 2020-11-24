@@ -782,7 +782,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     snapshotTree,
                     isRootDataStore ?? true);
             }
-            this.datastoreContexts.setNew(key, dataStoreContext);
+            this.datastoreContexts.addBoundContext(key, dataStoreContext);
         }
 
         this.blobManager = new BlobManager(
@@ -1208,17 +1208,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        //* If the deferrecContext is completed, assert that it's present and bound
+        const deferredBind = this.datastoreContexts.prepDeferredBind(id);
 
-        // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
-        const deferredContext = this.datastoreContexts.ensureDeferred(id);
+        if (deferredBind.isCompleted) {
+            assert(this.datastoreContexts.has(id) && !this.datastoreContexts.isNotBound(id));
+        }
 
-        if (!wait && !deferredContext.isCompleted) {
+        if (!wait && !deferredBind.isCompleted) {
             return Promise.reject(new Error(`DataStore ${id} does not exist`));
         }
 
-        const context = await deferredContext.promise;
-        return context.realize();
+        const boundContext = await deferredBind.promise;
+        return boundContext.realize();
     }
 
     public notifyDataStoreInstantiated(context: IFluidDataStoreContext) {
@@ -1332,7 +1333,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             undefined,
             isRoot,
         );
-        this.datastoreContexts.setupNew(context);
+        this.datastoreContexts.addUnboundContext(context);
         return context;
     }
 
@@ -1368,7 +1369,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             isRoot,
             props,
         );
-        this.datastoreContexts.setupNew(context);
+        this.datastoreContexts.addUnboundContext(context);
         return context;
     }
 
@@ -1589,7 +1590,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             pkg);
 
         // Resolve pending gets and store off any new ones
-       this.datastoreContexts.setNew(attachMessage.id, remotedFluidDataStoreContext);
+       this.datastoreContexts.addBoundContext(attachMessage.id, remotedFluidDataStoreContext);
 
         // Equivalent of nextTick() - Prefetch once all current ops have completed
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -1605,8 +1606,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
         this.verifyNotClosed();
-        this.datastoreContexts.notifyOnBind(fluidDataStoreRuntime.id);
+
+        this.datastoreContexts.notifyOnBeforeBind(fluidDataStoreRuntime.id);
         const context = this.datastoreContexts.get(fluidDataStoreRuntime.id) as LocalFluidDataStoreContext;
+
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients.
@@ -1619,9 +1622,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.attachOpFiredForDataStore.add(fluidDataStoreRuntime.id);
         }
 
-        // Resolve the deferred so other local stores can access it.
-        const deferred = this.datastoreContexts.getDeferred(fluidDataStoreRuntime.id);
-        deferred.resolve(context);
+        // Resolve the deferred so other local stores can access it now that the context is bound
+        this.datastoreContexts.resolveDeferredBind(fluidDataStoreRuntime.id, context);
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
