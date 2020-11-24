@@ -1,0 +1,68 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import * as util from "util";
+import {
+    IThrottleManager,
+    IRequestMetrics,
+    ThrottlerRequestType,
+} from "@fluidframework/server-services-core";
+import { RedisClient } from "redis";
+
+export class RedisThrottleManager implements IThrottleManager {
+    private readonly setAsync: any;
+    private readonly getAsync: any;
+    private readonly expire: any;
+
+    constructor(
+        client: RedisClient,
+        private readonly expireAfterSeconds = 60 * 60 * 24,
+        private readonly prefix = "throttle",
+    ) {
+        this.setAsync = util.promisify(client.hmset.bind(client));
+        this.getAsync = util.promisify(client.hgetall.bind(client));
+        this.expire = util.promisify(client.expire.bind(client));
+    }
+
+    public async setRequestMetric(
+        id: string,
+        requestType: ThrottlerRequestType,
+        requestMetric: IRequestMetrics,
+    ): Promise<void> {
+        const key = this.getKey(id, requestType);
+        const result = await this.setAsync(key,
+            "count", requestMetric.count,
+            "lastCoolDownAt", requestMetric.lastCoolDownAt,
+            "throttleStatus", requestMetric.throttleStatus,
+            "throttleReason", requestMetric.throttleReason,
+            "retryAfterInMs", requestMetric.retryAfterInMs,
+        );
+
+        if (result !== "OK") {
+            return Promise.reject(result);
+        }
+        await this.expire(key, this.expireAfterSeconds);
+    }
+
+    public async getRequestMetric(id: string, requestType: ThrottlerRequestType): Promise<IRequestMetrics> {
+        const requestMetric = await this.getAsync(this.getKey(id, requestType));
+
+        if (!requestMetric) {
+            return undefined;
+        }
+
+        return {
+            count: Number.parseInt(requestMetric.count, 10),
+            lastCoolDownAt: Number.parseInt(requestMetric.lastCoolDownAt, 10),
+            throttleStatus: requestMetric.throttleStatus === "true",
+            throttleReason: requestMetric.throttleReason,
+            retryAfterInMs: Number.parseInt(requestMetric.retryAfterInMs, 10),
+        };
+    }
+
+    private getKey(id: string, requestType: ThrottlerRequestType): string {
+        return `${this.prefix}:${id}:${requestType}`;
+    }
+}
