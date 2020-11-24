@@ -339,7 +339,7 @@ export class DataStores implements IDisposable {
         }
     }
 
-        /**
+    /**
      * Notifies this object to take the snapshot of the container.
      * @deprecated - Use summarize to get summary of the container runtime.
      */
