@@ -698,9 +698,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
-        this.dataStores = new DataStores(context.baseSnapshot,
+        this.dataStores = new DataStores(
+            context.baseSnapshot,
             this,
-            (attachMsg)=>this.submit(ContainerMessageType.Attach, attachMsg),
+            (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             this.summaryTracker,
             (id: string, createParam: CreateChildSummarizerNodeParam) =>
                 (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
@@ -1079,7 +1080,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             switch (message.type) {
                 case ContainerMessageType.Attach:
-                    this.dataStores.processAttachMessage(message, local);
+                    this.dataStores.processAttachMessage(message, local, localMessageMetadata);
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
                     this.processFluidDataStoreOp(message, local, localMessageMetadata);
