@@ -261,8 +261,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             blob = response.content;
         }
 
+        assert(blob.encoding === "base64" || blob.encoding === undefined, "wrong blob encoding format");
+        const inputFormat = blob.encoding;
         if (!this.attributesBlobHandles.has(blobid)) {
-            if (outputFormat === blob.encoding) {
+            if (outputFormat === inputFormat || (outputFormat === "string" && inputFormat === undefined))  {
                 return blob.content;
             }
             else if (outputFormat === "base64") {
@@ -278,7 +280,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             // this prevents issues when generating summaries
             const docId = this.documentId;
             let documentAttributes: api.IDocumentAttributes;
-            if (blob.encoding === "base64") {
+            if (inputFormat === "base64") {
                 documentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
                 documentAttributes.branch = docId;
             }
@@ -286,6 +288,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 documentAttributes = JSON.parse(blob.content);
                 documentAttributes.branch = docId;
             }
+
             if (outputFormat === "base64") {
                 return fromUtf8ToBase64(JSON.stringify(documentAttributes));
             } else {
