@@ -36,7 +36,7 @@
     "@fluidframework/aqueduct": "^0.30.0",
     "@fluidframework/get-session-storage-container": "^0.30.0",
     "@fluidframework/get-tinylicious-container": "^0.30.0",
-    "@fluidframework/runtime-utils": "^0.29.0"
+    "@fluidframework/runtime-utils": "^0.30.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",

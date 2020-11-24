@@ -35,7 +35,7 @@
     "@fluid-example/clicker": "^0.30.0",
     "@fluidframework/aqueduct": "^0.30.0",
     "@fluidframework/runtime-utils": "^0.30.0",
-    "@fluidframework/view-interfaces": "^0.29.0"
+    "@fluidframework/view-interfaces": "^0.30.0"
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.21.0",

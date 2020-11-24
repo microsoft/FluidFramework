@@ -86,7 +86,6 @@ import {
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelop,
-    ISummaryTreeWithStats,
     ISummaryStats,
     ISummarizeInternalResult,
     SummarizeInternalFn,

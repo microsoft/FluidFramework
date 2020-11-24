@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { requestFluidObject, createDataStoreRegistry } from "@fluidframework/runtime-utils";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 import {
     FluidObjectSymbolProvider,
     DependencyContainer,
