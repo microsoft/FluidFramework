@@ -9,6 +9,7 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { IMergeTreeOp } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
+import { TestSerializer } from "./testSerializer";
 import { TestClient } from ".";
 
 // Reconstitutes a MergeTree client from a snapshot
@@ -20,7 +21,7 @@ async function loadSnapshot(tree: ITree) {
         clientId: "1",
     };
 
-    const { catchupOpsP } = await client2.load(runtime as IFluidDataStoreRuntime, services);
+    const { catchupOpsP } = await client2.load(runtime as IFluidDataStoreRuntime, services, new TestSerializer());
     await catchupOpsP;
     return client2;
 }
@@ -78,7 +79,7 @@ class TestString {
     public getSnapshot() {
         const snapshot = new SnapshotV1(this.client.mergeTree, this.client.logger);
         snapshot.extractSync();
-        return snapshot.emit();
+        return snapshot.emit(TestClient.serializer);
     }
 
     public getText() { return this.client.getText(); }

@@ -28,6 +28,7 @@ describe("document-router", () => {
             it("Should create a new IPartitionLambda", async () => {
                 const lambda = await factory.create(config, testContext);
                 assert.ok(lambda);
+                lambda.close();
             });
         });
 

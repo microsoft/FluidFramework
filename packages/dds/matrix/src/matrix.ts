@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -16,7 +17,11 @@ import {
     Serializable,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import { makeHandlesSerializable, parseHandles, SharedObject } from "@fluidframework/shared-object-base";
+import {
+    makeHandlesSerializable,
+    parseHandles,
+    SharedObject,
+} from "@fluidframework/shared-object-base";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     IMatrixProducer,
@@ -397,28 +402,34 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
     }
 
-    public snapshot(): ITree {
-        return {
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
+        const tree: ITree = {
             entries: [
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.rows,
                     type: TreeEntry.Tree,
-                    value: this.rows.snapshot(this.runtime, this.handle),
+                    value: this.rows.snapshot(this.runtime, this.handle, serializer),
                 },
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.cols,
                     type: TreeEntry.Tree,
-                    value: this.cols.snapshot(this.runtime, this.handle),
+                    value: this.cols.snapshot(this.runtime, this.handle, serializer),
                 },
-                serializeBlob(this.runtime, this.handle, SnapshotPath.cells, [
-                    this.cells.snapshot(),
-                    this.pending.snapshot(),
-                ]),
+                serializeBlob(
+                    this.handle,
+                    SnapshotPath.cells,
+                    [
+                        this.cells.snapshot(),
+                        this.pending.snapshot(),
+                    ],
+                    serializer),
             ],
             id: null,   // eslint-disable-line no-null/no-null
         };
+
+        return tree;
     }
 
     /**
@@ -442,14 +453,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         //       (See https://github.com/microsoft/FluidFramework/issues/2559)
         assert(this.isAttached() === true);
 
-        super.submitLocalMessage(
-            makeHandlesSerializable(
-                message,
-                this.runtime.IFluidSerializer,
-                this.handle,
-            ),
-            localOpMetadata,
-        );
+        super.submitLocalMessage(makeHandlesSerializable(message, this.serializer, this.handle), localOpMetadata);
 
         // Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
         assert(
@@ -523,9 +527,15 @@ export class SharedMatrix<T extends Serializable = Serializable>
      */
     protected async loadCore(storage: IChannelStorageService) {
         try {
-            await this.rows.load(this.runtime, new ObjectStoragePartition(storage, SnapshotPath.rows));
-            await this.cols.load(this.runtime, new ObjectStoragePartition(storage, SnapshotPath.cols));
-            const [cellData, pendingCliSeqData] = await deserializeBlob(this.runtime, storage, SnapshotPath.cells);
+            await this.rows.load(
+                this.runtime,
+                new ObjectStoragePartition(storage, SnapshotPath.rows),
+                this.serializer);
+            await this.cols.load(
+                this.runtime,
+                new ObjectStoragePartition(storage, SnapshotPath.cols),
+                this.serializer);
+            const [cellData, pendingCliSeqData] = await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
 
             this.cells = SparseArray2D.load(cellData);
             this.annotations = new SparseArray2D();
@@ -536,7 +546,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        const msg = parseHandles(rawMessage, this.runtime.IFluidSerializer);
+        const msg = parseHandles(rawMessage, this.serializer);
 
         const contents = msg.contents;
 

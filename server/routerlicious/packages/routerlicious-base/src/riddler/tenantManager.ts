@@ -75,7 +75,7 @@ export class TenantManager {
         const tenant = await this.getTenantDocument(tenantId);
         if (!tenant) {
             winston.error("Tenant is disabled or does not exist.");
-            return Promise.reject("Tenant is disabled or does not exist.");
+            return Promise.reject(new Error("Tenant is disabled or does not exist."));
         }
 
         return {
@@ -123,7 +123,7 @@ export class TenantManager {
         const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
         if (encryptedTenantKey == null) {
             winston.error("Tenant key encryption failed.");
-            return Promise.reject("Tenant key encryption failed.");
+            return Promise.reject(new Error("Tenant key encryption failed."));
         }
 
         const id = await collection.insertOne({
@@ -183,7 +183,7 @@ export class TenantManager {
         const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
         if (tenantKey == null) {
             winston.error("Tenant key decryption failed.");
-            return Promise.reject("Tenant key decryption failed.");
+            return Promise.reject(new Error("Tenant key decryption failed."));
         }
 
         return tenantKey;
@@ -200,7 +200,7 @@ export class TenantManager {
         const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
         if (encryptedTenantKey == null) {
             winston.error("Tenant key encryption failed.");
-            return Promise.reject("Tenant key encryption failed.");
+            return Promise.reject(new Error("Tenant key encryption failed."));
         }
 
         await collection.update({ _id: tenantId }, { key: encryptedTenantKey }, null);

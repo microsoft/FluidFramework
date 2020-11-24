@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import {
     FileMode,
-    IBlob,
+    ISummaryBlob,
     ITree,
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
@@ -117,12 +117,12 @@ describe("ConsensusRegisterCollection", () => {
                 id: null,
             });
 
-            it("snapshot", async () => {
+            it("summarize", async () => {
                 await crc.write("key1", "val1.1");
-                const tree: ITree = crc.snapshot();
-                assert(tree.entries.length === 1, "snapshot should return a tree with blob");
-                const serialized: string = (tree.entries[0]?.value as IBlob)?.contents;
-                assert(serialized, "snapshot should return a tree with blob with contents");
+                const summaryTree = crc.summarize().summary;
+                assert(Object.keys(summaryTree.tree).length === 1, "summarize should return a tree with single blob");
+                const serialized = (summaryTree.tree.header as ISummaryBlob)?.content as string;
+                assert(serialized, "summarize should return a tree with blob with contents");
                 assert.strictEqual(serialized, expectedSerialization);
             });
 
@@ -245,7 +245,7 @@ describe("ConsensusRegisterCollection", () => {
                 const winner = await writeP;
                 assert.equal(winner, true, "Write was not successful");
 
-                // Verify that the remote register collection recieved the write.
+                // Verify that the remote register collection received the write.
                 assert.equal(receivedKey, testKey, "The remote client did not receive the key");
                 assert.equal(receivedValue, testValue, "The remote client did not receive the value");
                 assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");

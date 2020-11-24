@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { ITree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedStringFactory, SharedString } from "..";
 
 function applyOperations(sharedString: SharedString, content = sharedString.getLength().toString()) {
@@ -42,10 +42,10 @@ function applyOperations(sharedString: SharedString, content = sharedString.getL
 
 const mergeTreeSnapshotChunkSize = 5;
 
-function generateSnapshotTree(
+function generateSummaryTree(
     containerRuntimeFactory: MockContainerRuntimeFactory,
     options: any = {},
-): [SharedString, ITree] {
+): [SharedString, ISummaryTree] {
     const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
     dataStoreRuntime1.options = options;
     // Connect the first SharedString.
@@ -75,23 +75,23 @@ function generateSnapshotTree(
         containerRuntimeFactory.processAllMessages();
     }
     assert.equal(sharedString2.getText(), sharedString.getText());
-    const snapshotTree = sharedString2.snapshot();
-    assert(snapshotTree);
-    return [sharedString2, snapshotTree];
+    const summaryTree = sharedString2.summarize().summary;
+    assert(summaryTree);
+    return [sharedString2, summaryTree];
 }
 
 describe("SharedString Partial Load", () => {
     it("Validate Full Load", async () => {
         const containerRuntimeFactory = new MockContainerRuntimeFactory();
         const options = { mergeTreeSnapshotChunkSize };
-        const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
+        const [remoteSharedString, summaryTree] = generateSummaryTree(containerRuntimeFactory, options);
 
         const localDataStoreRuntime = new MockFluidDataStoreRuntime();
         localDataStoreRuntime.options = options;
         const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
         const localServices = {
             deltaConnection: localContainerRuntime.createDeltaConnection(),
-            objectStorage: new MockStorage(snapshotTree),
+            objectStorage: MockStorage.createFromSummary(summaryTree),
         };
         const localSharedString =
             new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
@@ -104,14 +104,14 @@ describe("SharedString Partial Load", () => {
     it("Validate New Format Load", async () => {
         const containerRuntimeFactory = new MockContainerRuntimeFactory();
         const options = { newMergeTreeSnapshotFormat: true, mergeTreeSnapshotChunkSize };
-        const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
+        const [remoteSharedString, summaryTree] = generateSummaryTree(containerRuntimeFactory, options);
 
         const localDataStoreRuntime = new MockFluidDataStoreRuntime();
         localDataStoreRuntime.options = options;
         const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
         const localServices = {
             deltaConnection: localContainerRuntime.createDeltaConnection(),
-            objectStorage: new MockStorage(snapshotTree),
+            objectStorage: MockStorage.createFromSummary(summaryTree),
         };
         const localSharedString =
             new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
@@ -128,14 +128,14 @@ describe("SharedString Partial Load", () => {
             sequenceInitializeFromHeaderOnly: true,
             mergeTreeSnapshotChunkSize,
         };
-        const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
+        const [remoteSharedString, summaryTree] = generateSummaryTree(containerRuntimeFactory, options);
 
         const localDataStoreRuntime = new MockFluidDataStoreRuntime();
         localDataStoreRuntime.options = options;
         const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
         const localServices = {
             deltaConnection: localContainerRuntime.createDeltaConnection(),
-            objectStorage: new MockStorage(snapshotTree),
+            objectStorage: MockStorage.createFromSummary(summaryTree),
         };
         const localSharedString =
             new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
@@ -157,14 +157,14 @@ describe("SharedString Partial Load", () => {
             sequenceInitializeFromHeaderOnly: true,
             mergeTreeSnapshotChunkSize,
         };
-        const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
+        const [remoteSharedString, summaryTree] = generateSummaryTree(containerRuntimeFactory, options);
 
         const localDataStoreRuntime = new MockFluidDataStoreRuntime();
         localDataStoreRuntime.options = options;
         const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
         const localServices = {
             deltaConnection: localContainerRuntime.createDeltaConnection(),
-            objectStorage: new MockStorage(snapshotTree),
+            objectStorage: MockStorage.createFromSummary(summaryTree),
         };
         const localSharedString =
             new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
@@ -201,14 +201,14 @@ describe("SharedString Partial Load", () => {
             sequenceInitializeFromHeaderOnly: true,
             mergeTreeSnapshotChunkSize,
         };
-        const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
+        const [remoteSharedString, summaryTree] = generateSummaryTree(containerRuntimeFactory, options);
 
         const localDataStoreRuntime = new MockFluidDataStoreRuntime();
         localDataStoreRuntime.options = options;
         const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
         const localServices = {
             deltaConnection: localContainerRuntime.createDeltaConnection(),
-            objectStorage: new MockStorage(snapshotTree),
+            objectStorage: MockStorage.createFromSummary(summaryTree),
         };
         const localSharedString =
             new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
@@ -242,14 +242,14 @@ describe("SharedString Partial Load", () => {
             sequenceInitializeFromHeaderOnly: true,
             mergeTreeSnapshotChunkSize,
         };
-        const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
+        const [remoteSharedString, summaryTree] = generateSummaryTree(containerRuntimeFactory, options);
 
         const localDataStoreRuntime = new MockFluidDataStoreRuntime();
         localDataStoreRuntime.options = options;
         const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
         const localServices = {
             deltaConnection: localContainerRuntime.createDeltaConnection(),
-            objectStorage: new MockStorage(snapshotTree),
+            objectStorage: MockStorage.createFromSummary(summaryTree),
         };
         const localSharedString =
             new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);

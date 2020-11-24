@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-use-before-define */
-
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
@@ -84,6 +82,7 @@ function mapSetBuilder(request: Request): any[] {
     for (const reqOp of reqOps) {
         ops.push(craftMapSet(reqOp));
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return ops;
 }
 
@@ -146,13 +145,13 @@ const verifyRequest = async (
 async function verifyToken(request: Request, tenantManager: core.ITenantManager, maxTokenLifetimeSec: number, isTokenExpiryEnabled: boolean): Promise<void> {
     const token = request.headers["access-token"] as string;
     if (!token) {
-        return Promise.reject("Missing access token");
+        return Promise.reject(new Error("Missing access token"));
     }
     const tenantId = getParam(request.params, "tenantId");
     const documentId = getParam(request.params, "id");
     const claims = validateTokenClaims(token, documentId, tenantId, maxTokenLifetimeSec, isTokenExpiryEnabled);
     if (!claims) {
-        return Promise.reject("Invalid access token");
+        return Promise.reject(new Error("Invalid access token"));
     }
     return tenantManager.verifyToken(claims.tenantId, token);
 }
@@ -161,7 +160,7 @@ async function checkDocumentExistence(request: Request, storage: core.IDocumentS
     const tenantId = getParam(request.params, "tenantId");
     const documentId = getParam(request.params, "id");
     if (!tenantId || !documentId) {
-        return Promise.reject("Invalid tenant or document id");
+        return Promise.reject(new Error("Invalid tenant or document id"));
     }
     return storage.getDocument(tenantId, documentId);
 }

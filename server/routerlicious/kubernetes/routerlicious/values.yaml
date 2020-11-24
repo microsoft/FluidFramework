@@ -29,10 +29,6 @@ scribe:
   name: scribe
   replicas: 8
 
-routemanager:
-  name: routemanager
-  replicas: 8
-
 foreman:
   name: foreman
   replicas: 8

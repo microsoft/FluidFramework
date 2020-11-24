@@ -61,7 +61,7 @@ describe("context reload", () => {
     });
 
     it("is followed by an immediate summary", async () => {
-        await page.evaluate(() => localStorage.debug = "fluid:telemetry:Summarizer");
+        await page.evaluate(() => localStorage.debug = "fluid:telemetry:Summarizer*");
         // await page.reload({ waitUntil: "load" });
         await page.goto(globals.PATH, { waitUntil: "load" });
         await page.evaluate(() => localStorage.debug = undefined);
@@ -70,7 +70,7 @@ describe("context reload", () => {
 
         const summMessage = new Deferred<void>();
         page.on("console", (msg) => {
-            if (/Summarizing_end.*message.*immediate/.test(msg.text())) {
+            if (/GenerateSummary_end.*message.*immediate/.test(msg.text())) {
                 summMessage.resolve();
             }
         });

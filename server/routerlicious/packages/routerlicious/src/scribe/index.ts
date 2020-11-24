@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ScribeLambdaFactory } from "@fluidframework/server-lambdas";
+import { DefaultServiceConfiguration, ScribeLambdaFactory } from "@fluidframework/server-lambdas";
 import { create as createDocumentRouter } from "@fluidframework/server-lambdas-driver";
 import { createProducer, MongoDbFactory, TenantManager } from "@fluidframework/server-services";
 import {
@@ -62,7 +62,8 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         collection,
         scribeDeltas,
         producer,
-        tenantManager);
+        tenantManager,
+        DefaultServiceConfiguration);
 }
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {

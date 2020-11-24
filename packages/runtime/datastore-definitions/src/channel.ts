@@ -4,7 +4,8 @@
  */
 
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
@@ -19,9 +20,10 @@ export interface IChannel extends IFluidLoadable {
     readonly attributes: IChannelAttributes;
 
     /**
-     * Generates snapshot of the channel.
+     * Generates summary of the channel.
+     * @returns A tree representing the summary of the channel.
      */
-    snapshot(): ITree;
+    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
 
     /**
      * True if the data structure is attached to storage.

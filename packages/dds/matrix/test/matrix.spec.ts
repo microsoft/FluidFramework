@@ -24,17 +24,17 @@ describe("Matrix", () => {
         let matrix: SharedMatrix<number>;
         let consumer: TestConsumer<undefined | null | number>;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
 
-        // Snapshots the given `SharedMatrix`, loads the snapshot into a 2nd SharedMatrix, vets that the two are
+        // Summarizes the given `SharedMatrix`, loads the summarize into a 2nd SharedMatrix, vets that the two are
         // equivalent, and then returns the 2nd matrix.
-        async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
-            // Create a snapshot
-            const objectStorage = new MockStorage(matrix.snapshot());
+        async function summarize<T extends Serializable>(matrix: SharedMatrix<T>) {
+            // Create a summary
+            const objectStorage = MockStorage.createFromSummary(matrix.summarize().summary);
 
-            // Create a local DataStoreRuntime since we only want to load the snapshot for a local client.
+            // Create a local DataStoreRuntime since we only want to load the summary for a local client.
             const dataStoreRuntime = new MockFluidDataStoreRuntime();
             dataStoreRuntime.local = true;
 
-            // Load the snapshot into a newly created 2nd SharedMatrix.
+            // Load the summmary into a newly created 2nd SharedMatrix.
             const matrix2 = new SharedMatrix<T>(dataStoreRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
             await matrix2.load({
                 deltaConnection: new MockEmptyDeltaConnection(),
@@ -43,7 +43,7 @@ describe("Matrix", () => {
 
             // Vet that the 2nd matrix is equivalent to the original.
             expectSize(matrix2, matrix.rowCount, matrix.colCount);
-            assert.deepEqual(extract(matrix), extract(matrix2), 'Matrix must round-trip through snapshot/load.');
+            assert.deepEqual(extract(matrix), extract(matrix2), 'Matrix must round-trip through summarize/load.');
 
             return matrix2;
         }
@@ -52,7 +52,7 @@ describe("Matrix", () => {
             const actual = extract(matrix);
             assert.deepEqual(actual, expected, "Matrix must match expected.");
             assert.deepEqual(extract(consumer), actual, "Matrix must notify IMatrixConsumers of all changes.");
-            return await snapshot(matrix);
+            return await summarize(matrix);
         }
 
         beforeEach(async () => {
@@ -63,10 +63,10 @@ describe("Matrix", () => {
         });
 
         afterEach(async () => {
-            // Paranoid check that ensures that the SharedMatrix loaded from the snapshot also
-            // round-trips through snapshot/load.  (Also, may help detect snapshot/loaded bugs
+            // Paranoid check that ensures that the SharedMatrix loaded from the summary also
+            // round-trips through summarize/load.  (Also, may help detect summarize/loaded bugs
             // in the event that the test case forgets to call/await `expect()`.)
-            await snapshot(await snapshot(matrix));
+            await summarize(await summarize(matrix));
 
             assert.deepEqual(extract(consumer), extract(matrix),
                 "Matrix must notify IMatrixConsumers of all changes.");
@@ -223,7 +223,7 @@ describe("Matrix", () => {
             });
         });
 
-        describe("snapshot", () => {
+        describe("summarize", () => {
             it("mutate after load", async () => {
                 matrix.insertCols(0, 2);
                 matrix.insertRows(0, 2);
@@ -232,7 +232,7 @@ describe("Matrix", () => {
                     2, 3,
                 ]);
 
-                // The 'matrix' returned by 'expect' is the result of snapshotting and loading 'matrix'.
+                // The 'matrix' returned by 'expect' is the result of summarizeting and loading 'matrix'.
                 const matrix2 = await expect([
                     [0, 1],
                     [2, 3],
@@ -267,6 +267,7 @@ describe("Matrix", () => {
         let matrix2: SharedMatrix;
         let consumer1: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
         let consumer2: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
+        let dataStoreRuntime: MockFluidDataStoreRuntime;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
 
         const expect = async (expected?: readonly (readonly any[])[]) => {
@@ -290,11 +291,11 @@ describe("Matrix", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
 
             // Create and connect the first SharedMatrix.
-            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-            matrix1 = new SharedMatrix(dataStoreRuntime1, "matrix1", SharedMatrixFactory.Attributes);
+            dataStoreRuntime = new MockFluidDataStoreRuntime();
+            matrix1 = new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);
             matrix1.connect({
                 deltaConnection: containerRuntimeFactory
-                    .createContainerRuntime(dataStoreRuntime1)
+                    .createContainerRuntime(dataStoreRuntime)
                     .createDeltaConnection(),
                 objectStorage: new MockStorage(),
             });
@@ -312,14 +313,14 @@ describe("Matrix", () => {
             consumer2 = new TestConsumer(matrix2);
         });
 
-        afterEach(async () => {
-            await expect();
-
-            matrix1.closeMatrix(consumer1);
-            matrix2.closeMatrix(consumer2);
-        });
-
         describe("conflict", () => {
+            afterEach(async () => {
+                await expect();
+    
+                matrix1.closeMatrix(consumer1);
+                matrix2.closeMatrix(consumer2);
+            });
+
             it("setCell", async () => {
                 matrix1.insertCols(0, 1);
                 matrix1.insertRows(0, 1);

@@ -8,7 +8,6 @@ import {
     IFluidSerializer,
     ISerializedHandle,
 } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     parseHandles,
     serializeHandles,
@@ -163,9 +162,9 @@ export class LocalValueMaker {
 
     /**
      * Create a new LocalValueMaker.
-     * @param runtime - The runtime this maker will be associated with
+     * @param serializer - The serializer to serialize / parse handles.
      */
-    constructor(private readonly runtime: IFluidDataStoreRuntime) {
+    constructor(private readonly serializer: IFluidSerializer) {
     }
 
     /**
@@ -194,17 +193,13 @@ export class LocalValueMaker {
                 serializable.value = handle;
             }
 
-            const translatedValue = parseHandles(
-                serializable.value,
-                this.runtime.IFluidSerializer);
+            const translatedValue = parseHandles(serializable.value, this.serializer);
 
             return new PlainLocalValue(translatedValue);
         } else if (this.valueTypes.has(serializable.type)) {
             const valueType = this.valueTypes.get(serializable.type);
 
-            serializable.value = parseHandles(
-                serializable.value,
-                this.runtime.IFluidSerializer);
+            serializable.value = parseHandles(serializable.value, this.serializer);
 
             const localValue = valueType.factory.load(emitter, serializable.value);
             return new ValueTypeLocalValue(localValue, valueType);

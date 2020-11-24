@@ -103,6 +103,14 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
         }
         throw new Error(`Can't find blob ${sha}`);
     }
+
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
+     */
+    public async readString(sha: string): Promise<string> {
+        const base64Result = await this.read(sha);
+        return fromBase64ToUtf8(base64Result);
+    }
 }
 
 export interface ISnapshotWriterStorage extends IDocumentStorageService {

@@ -4,10 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-    IBlob,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
@@ -27,12 +24,14 @@ async function populate(directory: SharedDirectory, content: object) {
 }
 
 function serialize(directory: SharedDirectory): string {
-    const tree = directory.snapshot();
-    assert(tree.entries.length === 1);
-    assert(tree.entries[0].path === "header");
-    assert(tree.entries[0].type === TreeEntry.Blob);
-    const contents = (tree.entries[0].value as IBlob).contents;
-    return JSON.stringify((JSON.parse(contents) as IDirectoryNewStorageFormat).content);
+    const summaryTree = directory.summarize().summary;
+    const summaryObjectKeys = Object.keys(summaryTree.tree);
+    assert.strictEqual(summaryObjectKeys.length, 1, "summary tree should only have one blob");
+    assert.strictEqual(summaryObjectKeys[0], "header", "summary should have a header blob");
+    assert.strictEqual(summaryTree.tree.header.type, SummaryType.Blob, "header is not of SummaryType.Blob");
+
+    const content = (summaryTree.tree.header as ISummaryBlob).content as string;
+    return JSON.stringify((JSON.parse(content) as IDirectoryNewStorageFormat).content);
 }
 
 describe("Directory", () => {
@@ -288,17 +287,29 @@ describe("Directory", () => {
                 nestedDirectory.set("deepKey1", "deepValue1");
                 nestedDirectory.set("long2", logWord2);
 
-                const tree = directory.snapshot();
-                assert(tree.entries.length === 3);
-                assert(tree.entries[0].path === "blob0");
-                assert(tree.entries[1].path === "blob1");
-                assert(tree.entries[2].path === "header");
-                assert((tree.entries[0].value as IBlob).contents.length >= 1024);
-                assert((tree.entries[1].value as IBlob).contents.length >= 1024);
-                assert((tree.entries[2].value as IBlob).contents.length <= 200);
+                const summarizeResult = directory.summarize();
+                const summaryTree = summarizeResult.summary;
+                assert.strictEqual(summaryTree.type, SummaryType.Tree, "summary should be a tree");
+
+                assert.strictEqual(Object.keys(summaryTree.tree).length, 3, "number of blobs in summary is incorrect");
+
+                const blob0 = summaryTree.tree.blob0 as ISummaryBlob;
+                assert(blob0 !== undefined, "blob0 not present in summary");
+                assert.strictEqual(blob0.type, SummaryType.Blob, "blob0 is not of SummaryType.Blob");
+                assert(blob0.content.length >= 1024, "blob0's length is incorrect");
+
+                const blob1 = summaryTree.tree.blob1 as ISummaryBlob;
+                assert(blob1 !== undefined, "blob1 not present in summary");
+                assert.strictEqual(blob1.type, SummaryType.Blob, "blob1 is not of SummaryType.Blob");
+                assert(blob1.content.length >= 1024, "blob1's length is incorrect");
+
+                const header = summaryTree.tree.header as ISummaryBlob;
+                assert(header !== undefined, "header not present in summary");
+                assert.strictEqual(header.type, SummaryType.Blob, "header is not of SummaryType.Blob");
+                assert(header.content.length <= 200, "header's length is incorrect");
 
                 const directory2 = new SharedDirectory("test", dataStoreRuntime, DirectoryFactory.Attributes);
-                const storage = MockSharedObjectServices.createFromTree(tree);
+                const storage = MockSharedObjectServices.createFromSummary(summarizeResult.summary);
                 await directory2.load(storage);
 
                 assert.equal(directory2.get("first"), "second");
@@ -315,7 +326,7 @@ describe("Directory", () => {
          * https://github.com/microsoft/FluidFramework/issues/2400
          *
          * - A SharedDirectory in local state performs a set or directory operation.
-         * - A second SharedDirectory is then created from the snapshot of the first one.
+         * - A second SharedDirectory is then created from the summarize of the first one.
          * - The second SharedDirectory performs the same operation as the first one but with a different value.
          * - The expected behavior is that the first SharedDirectory updates the key with the new value. But in the
          *   bug, the first SharedDirectory stores the key in its pending state even though it does not send out an
@@ -331,11 +342,11 @@ describe("Directory", () => {
             const value = "testValue";
             directory.set(key, value);
 
-            // Load a new SharedDirectory in connected state from the snapshot of the first one.
+            // Load a new SharedDirectory in connected state from the summarize of the first one.
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-            const services2 = MockSharedObjectServices.createFromTree(directory.snapshot());
+            const services2 = MockSharedObjectServices.createFromSummary(directory.summarize().summary);
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);
@@ -374,11 +385,11 @@ describe("Directory", () => {
             const subDirName = "testSubDir";
             directory.createSubDirectory(subDirName);
 
-            // Load a new SharedDirectory in connected state from the snapshot of the first one.
+            // Load a new SharedDirectory in connected state from the summarize of the first one.
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-            const services2 = MockSharedObjectServices.createFromTree(directory.snapshot());
+            const services2 = MockSharedObjectServices.createFromSummary(directory.summarize().summary);
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);

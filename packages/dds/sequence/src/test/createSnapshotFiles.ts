@@ -4,8 +4,11 @@
  */
 
 import fs from "fs";
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { generateStrings, LocationBase } from "./generateSharedStrings";
 
 for (const s of generateStrings()) {
-    fs.writeFileSync(`${LocationBase}${s[0]}.json`, JSON.stringify(s[1].snapshot(), undefined, 1));
+    const summaryTree = s[1].summarize().summary;
+    const snapshotTree = convertSummaryTreeToITree(summaryTree);
+    fs.writeFileSync(`${LocationBase}${s[0]}.json`, JSON.stringify(snapshotTree, undefined, 1));
 }
