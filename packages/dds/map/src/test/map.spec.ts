@@ -459,62 +459,62 @@ describe("Map", () => {
         });
 
         describe("Garbage Collection", () => {
-            let subMapCount = 0;
-            let expectedRoutes: string[] = [];
+            class GCSharedMapProvider implements IGCTestProvider {
+                private subMapCount = 0;
+                private _expectedRoutes: string[] = [];
 
-            beforeEach(() => {
-                subMapCount = 0;
-                expectedRoutes = [];
-            });
+                constructor() {
+                    this.subMapCount = 0;
+                    this._expectedRoutes = [];
+                }
 
-            // Return the remote SharedMap because we want to verify its summary data.
-            const getSharedObject = () => map2;
+                public get sharedObject() {
+                    // Return the remote SharedMap because we want to verify its summary data.
+                    return map2;
+                }
 
-            async function addOutboundRoutes() {
-                const newSubMapId = `subMap-${++subMapCount}`;
-                const subMap = factory.create(dataStoreRuntime, newSubMapId);
-                map.set(newSubMapId, subMap.handle);
-                expectedRoutes.push(subMap.handle.absolutePath);
-                containerRuntimeFactory.processAllMessages();
+                public get expectedOutboundRoutes() {
+                    return this._expectedRoutes;
+                }
+
+                public async addOutboundRoutes() {
+                    const newSubMapId = `subMap-${++this.subMapCount}`;
+                    const subMap = factory.create(dataStoreRuntime, newSubMapId);
+                    map.set(newSubMapId, subMap.handle);
+                    this._expectedRoutes.push(subMap.handle.absolutePath);
+                    containerRuntimeFactory.processAllMessages();
+                }
+
+                public async deleteOutboundRoutes() {
+                    // Delete the last handle that was added.
+                    const subMapId = `subMap-${this.subMapCount}`;
+                    const deletedHandle = map.get<IFluidHandle>(subMapId);
+                    assert(deletedHandle, "Route must be added before deleting");
+
+                    map.delete(subMapId);
+                    // Remove deleted handle's route from expected routes.
+                    this._expectedRoutes = this._expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
+                    containerRuntimeFactory.processAllMessages();
+                }
+
+                public async addNestedHandles() {
+                    const subMapId1 = `subMap-${++this.subMapCount}`;
+                    const subMapId2 = `subMap-${++this.subMapCount}`;
+                    const subMap = factory.create(dataStoreRuntime, subMapId1);
+                    const subMap2 = factory.create(dataStoreRuntime, subMapId2);
+                    const containingObject = {
+                        subMapHandle: subMap.handle,
+                        nestedObj: {
+                            subMap2Handle: subMap2.handle,
+                        },
+                    };
+                    map.set(subMapId2, containingObject);
+                    this._expectedRoutes.push(subMap.handle.absolutePath, subMap2.handle.absolutePath);
+                    containerRuntimeFactory.processAllMessages();
+                }
             }
 
-            async function deleteOutboundRoutes() {
-                // Delete the last handle that was added.
-                const subMapId = `subMap-${subMapCount}`;
-                const deletedHandle = map.get<IFluidHandle>(subMapId);
-                assert(deletedHandle, "Route must be added before deleting");
-
-                map.delete(subMapId);
-                // Remove deleted handle's route from expected routes.
-                expectedRoutes = expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
-                containerRuntimeFactory.processAllMessages();
-            }
-
-            async function addNestedHandles() {
-                const subMapId1 = `subMap-${++subMapCount}`;
-                const subMapId2 = `subMap-${++subMapCount}`;
-                const subMap = factory.create(dataStoreRuntime, subMapId1);
-                const subMap2 = factory.create(dataStoreRuntime, subMapId2);
-                const containingObject = {
-                    subMapHandle: subMap.handle,
-                    nestedObj: {
-                        subMap2Handle: subMap2.handle,
-                    },
-                };
-                map.set(subMapId2, containingObject);
-                expectedRoutes.push(subMap.handle.absolutePath, subMap2.handle.absolutePath);
-                containerRuntimeFactory.processAllMessages();
-            }
-
-            const gcTestProvider: IGCTestProvider = {
-                getSharedObject,
-                addOutboundRoutes,
-                deleteOutboundRoutes,
-                addNestedHandles,
-                getExpectedOutboundRoutes: () => expectedRoutes,
-            };
-
-            runGCTests(gcTestProvider);
+            runGCTests(GCSharedMapProvider);
         });
     });
 });

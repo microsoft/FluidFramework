@@ -161,55 +161,55 @@ describe("Cell", () => {
         });
 
         describe("Garbage Collection", () => {
-            let subCellCount = 0;
-            let expectedRoutes: string[] = [];
+            class GCSharedCellProvider implements IGCTestProvider {
+                private subCellCount = 0;
+                private _expectedRoutes: string[] = [];
 
-            beforeEach(() => {
-                subCellCount = 0;
-                expectedRoutes = [];
-            });
+                constructor() {
+                    this.subCellCount = 0;
+                    this._expectedRoutes = [];
+                }
 
-            // Return the remote SharedCell because we want to verify its summary data.
-            const getSharedObject = () => cell2;
+                public get sharedObject() {
+                    // Return the remote SharedCell because we want to verify its summary data.
+                    return cell2;
+                }
 
-            async function addOutboundRoutes() {
-                const factory = new CellFactory();
-                const newSubCell = factory.create(dataStoreRuntime, `subCell-${++subCellCount}`);
-                cell.set(newSubCell.handle);
-                expectedRoutes = [ newSubCell.handle.absolutePath ];
-                containerRuntimeFactory.processAllMessages();
+                public get expectedOutboundRoutes() {
+                    return this._expectedRoutes;
+                }
+
+                public async addOutboundRoutes() {
+                    const factory = new CellFactory();
+                    const newSubCell = factory.create(dataStoreRuntime, `subCell-${++this.subCellCount}`);
+                    cell.set(newSubCell.handle);
+                    this._expectedRoutes = [ newSubCell.handle.absolutePath ];
+                    containerRuntimeFactory.processAllMessages();
+                }
+
+                public async deleteOutboundRoutes() {
+                    cell.delete();
+                    this._expectedRoutes = [];
+                    containerRuntimeFactory.processAllMessages();
+                }
+
+                public async addNestedHandles() {
+                    const factory = new CellFactory();
+                    const newSubCell = factory.create(dataStoreRuntime, `subCell-${++this.subCellCount}`);
+                    const newSubCell2 = factory.create(dataStoreRuntime, `subCell-${++this.subCellCount}`);
+                    const containingObject = {
+                        subcellHandle: newSubCell.handle,
+                        nestedObj: {
+                            subcell2Handle: newSubCell2.handle,
+                        },
+                    };
+                    cell.set(containingObject);
+                    this._expectedRoutes = [ newSubCell.handle.absolutePath, newSubCell2.handle.absolutePath ];
+                    containerRuntimeFactory.processAllMessages();
+                }
             }
 
-            async function deleteOutboundRoutes() {
-                cell.delete();
-                expectedRoutes = [];
-                containerRuntimeFactory.processAllMessages();
-            }
-
-            async function addNestedHandles() {
-                const factory = new CellFactory();
-                const newSubCell = factory.create(dataStoreRuntime, `subCell-${++subCellCount}`);
-                const newSubCell2 = factory.create(dataStoreRuntime, `subCell-${++subCellCount}`);
-                const containingObject = {
-                    subcellHandle: newSubCell.handle,
-                    nestedObj: {
-                        subcell2Handle: newSubCell2.handle,
-                    },
-                };
-                cell.set(containingObject);
-                expectedRoutes = [ newSubCell.handle.absolutePath, newSubCell2.handle.absolutePath ];
-                containerRuntimeFactory.processAllMessages();
-            }
-
-            const gcTestProvider: IGCTestProvider = {
-                getSharedObject,
-                addOutboundRoutes,
-                deleteOutboundRoutes,
-                addNestedHandles,
-                getExpectedOutboundRoutes: () => expectedRoutes,
-            };
-
-            runGCTests(gcTestProvider);
+            runGCTests(GCSharedCellProvider);
         });
     });
 

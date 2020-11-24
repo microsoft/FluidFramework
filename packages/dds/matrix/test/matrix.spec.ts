@@ -606,70 +606,70 @@ describe("Matrix", () => {
         });
 
         describe("Garbage Collection", () => {
-            let colCount = 0;
-            let subMatrixCount = 0;
-            let expectedRoutes: string[] = [];
-            const factory = new SharedMatrixFactory();
+            class GCSharedMatrixProvider implements IGCTestProvider {
+                private colCount = 0;
+                private subMatrixCount = 0;
+                private _expectedRoutes: string[] = [];
+                private readonly factory = new SharedMatrixFactory();
 
-            beforeEach(() => {
-                matrix1.insertRows(0, 1);
-                colCount = 0;
-                subMatrixCount = 0;
-                expectedRoutes = [];
-            });
+                constructor() {
+                    matrix1.insertRows(0, 1);
+                    this.colCount = 0;
+                    this.subMatrixCount = 0;
+                    this._expectedRoutes = [];
+                }
 
-            // Return the remote SharedMatrix because we want to verify its summary data.
-            const getSharedObject = () => matrix2;
+                public get sharedObject() {
+                    // Return the remote SharedMatrix because we want to verify its summary data.
+                    return matrix2;
+                }
 
-            async function addOutboundRoutes() {
-                const newSubMatrixId = `subMatrix-${++subMatrixCount}`;
-                const subMatrix = factory.create(dataStoreRuntime, newSubMatrixId);
+                public get expectedOutboundRoutes() {
+                    return this._expectedRoutes;
+                }
 
-                matrix1.insertCols(colCount, 1);
-                matrix1.setCell(0, colCount, subMatrix.handle);
-                colCount++;
-                expectedRoutes.push(subMatrix.handle.absolutePath);
-                containerRuntimeFactory.processAllMessages();
+                public async addOutboundRoutes() {
+                    const newSubMatrixId = `subMatrix-${++this.subMatrixCount}`;
+                    const subMatrix = this.factory.create(dataStoreRuntime, newSubMatrixId);
+
+                    matrix1.insertCols(this.colCount, 1);
+                    matrix1.setCell(0, this.colCount, subMatrix.handle);
+                    this.colCount++;
+                    this._expectedRoutes.push(subMatrix.handle.absolutePath);
+                    containerRuntimeFactory.processAllMessages();
+                }
+
+                public async deleteOutboundRoutes() {
+                    // Delete the last handle that was added.
+                    const lastAddedCol = this.colCount - 1;
+                    const deletedHandle = matrix1.getCell(0, lastAddedCol) as IFluidHandle;
+                    assert(deletedHandle, "Route must be added before deleting");
+
+                    matrix1.setCell(0, lastAddedCol, undefined);
+                    // Remove deleted handle's route from expected routes.
+                    this._expectedRoutes = this._expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
+                    containerRuntimeFactory.processAllMessages();
+                }
+
+                public async addNestedHandles() {
+                    const subMatrix = this.factory.create(dataStoreRuntime, `subMatrix-${++this.subMatrixCount}`);
+                    const subMatrix2 = this.factory.create(dataStoreRuntime, `subMatrix-${++this.subMatrixCount}`);
+                    const containingObject = {
+                        subMatrixHandle: subMatrix.handle,
+                        nestedObj: {
+                            subMatrix2Handle: subMatrix2.handle,
+                        },
+                    };
+
+                    matrix1.insertCols(this.colCount, 1);
+                    matrix1.setCell(0, this.colCount, containingObject);
+                    this.colCount++;
+                    this._expectedRoutes.push(subMatrix.handle.absolutePath, subMatrix2.handle.absolutePath);
+                    containerRuntimeFactory.processAllMessages();
+                }
             }
 
-            async function deleteOutboundRoutes() {
-                // Delete the last handle that was added.
-                const lastAddedCol = colCount - 1;
-                const deletedHandle = matrix1.getCell(0, lastAddedCol) as IFluidHandle;
-                assert(deletedHandle, "Route must be added before deleting");
-
-                matrix1.setCell(0, lastAddedCol, undefined);
-                // Remove deleted handle's route from expected routes.
-                expectedRoutes = expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
-                containerRuntimeFactory.processAllMessages();
-            }
-
-            async function addNestedHandles() {
-                const subMatrix = factory.create(dataStoreRuntime, `subMatrix-${++subMatrixCount}`);
-                const subMatrix2 = factory.create(dataStoreRuntime, `subMatrix-${++subMatrixCount}`);
-                const containingObject = {
-                    subMatrixHandle: subMatrix.handle,
-                    nestedObj: {
-                        subMatrix2Handle: subMatrix2.handle,
-                    },
-                };
-
-                matrix1.insertCols(colCount, 1);
-                matrix1.setCell(0, colCount, containingObject);
-                colCount++;
-                expectedRoutes.push(subMatrix.handle.absolutePath, subMatrix2.handle.absolutePath);
-                containerRuntimeFactory.processAllMessages();
-            }
-
-            const gcTestProvider: IGCTestProvider = {
-                getSharedObject,
-                addOutboundRoutes,
-                deleteOutboundRoutes,
-                addNestedHandles,
-                getExpectedOutboundRoutes: () => expectedRoutes,
-            };
-
-            runGCTests(gcTestProvider);
+            runGCTests(GCSharedMatrixProvider);
         });
     });
 

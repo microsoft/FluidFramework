@@ -3,28 +3,28 @@
 Utilities for writing unit tests for DDS in Fluid Framework.
 
 ## Garbage Collection (GC) unit tests
-The [gcTestRunner](./src/gcTestRunner.ts) file provides a set of tests for validating that the DDSs return correct GC nodes.
+[gcTestRunner](./src/gcTestRunner.ts) provides a set of tests for validating that the DDSs return correct GC nodes.
 
-To write GC tests for a DDS, call `runGCTests` with an object that implements the following interface:
+To write GC tests for a DDS, call `runGCTests` with a class that implements the following interface:
 ```typescript
 export interface IGCTestProvider {
-    /** Returns the DDS whose GC data is to be verified */
-    getSharedObject(): ISharedObject;
+    /** The DDS whose GC data is to be verified */
+    readonly sharedObject: ISharedObject;
+    /** The expected list of outbound routes from this DDS */
+    readonly expectedOutboundRoutes: string[];
     /** Function that adds routes to Fluid objects to the DDS' data */
     addOutboundRoutes(): Promise<void>;
     /** Function that deletes routes to Fluid objects to the DDS' data */
     deleteOutboundRoutes(): Promise<void>;
     /** Function that adds nested handles to the DDS' data */
     addNestedHandles(): Promise<void>;
-    /** Returns the expected list of outbound routes from this DDS */
-    getExpectedOutboundRoutes(): string[];
 }
 ```
 
 The caller is responsible for the following:
 1. Adding and deleting routes to Fluid objects to the DDS which is being tested.
 2. Adding nested handles to the DDS' data.
-3. Maintaining the list of expected routes. The tests query this and validates that the GC data returned by the DDS matches these routes.
+3. Maintaining the list of expected outbound routes. The tests query this and validates that the GC data returned by the DDS matches these routes.
 
 ### Examples
 [SharedCell](../cell/src/test/cell.spec.ts) and [SharedDirectory](../map/src/test/directory.spec.ts) have tests that use the gcTestRunner for validating GC data.

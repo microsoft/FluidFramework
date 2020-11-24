@@ -163,50 +163,53 @@ describe("ConsensusOrderedCollection", () => {
             });
 
             describe("Garbage Collection", () => {
-                let expectedRoutes: string[] = [];
+                class GCOrderedCollectionProvider implements IGCTestProvider {
+                    private _expectedRoutes: string[] = [];
 
-                beforeEach(() => {
-                    testCollection = creator();
-                    expectedRoutes = [];
-                });
+                    constructor() {
+                        testCollection = creator();
+                        this._expectedRoutes = [];
+                    }
 
-                const getSharedObject = () => testCollection;
+                    public get sharedObject() {
+                        return testCollection;
+                    }
 
-                async function addOutboundRoutes() {
-                    const subTestCollection = creator();
-                    await addItem(subTestCollection.handle);
-                    expectedRoutes.push(subTestCollection.handle.absolutePath);
+                    public get expectedOutboundRoutes() {
+                        return this._expectedRoutes;
+                    }
+
+                    public async addOutboundRoutes() {
+                        const subTestCollection = creator();
+                        await addItem(subTestCollection.handle);
+                        this._expectedRoutes.push(subTestCollection.handle.absolutePath);
+                    }
+
+                    public async deleteOutboundRoutes() {
+                        const deletedHandle = await removeItem() as IFluidHandle;
+                        assert(deletedHandle, "Route must be added before deleting");
+                        // Remove deleted handle's route from expected routes.
+                        this._expectedRoutes =
+                            this._expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
+                    }
+
+                    public async addNestedHandles() {
+                        const subTestCollection1 = creator();
+                        const subTestCollection2 = creator();
+                        const containingObject = {
+                            collection1Handle: subTestCollection1.handle,
+                            nestedObj: {
+                                collection2Handle: subTestCollection2.handle,
+                            },
+                        };
+                        await addItem(containingObject);
+                        this._expectedRoutes.push(
+                            subTestCollection1.handle.absolutePath,
+                            subTestCollection2.handle.absolutePath);
+                    }
                 }
 
-                async function deleteOutboundRoutes() {
-                    const deletedHandle = await removeItem() as IFluidHandle;
-                    assert(deletedHandle, "Route must be added before deleting");
-                    // Remove deleted handle's route from expected routes.
-                    expectedRoutes = expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
-                }
-
-                async function addNestedHandles() {
-                    const subTestCollection1 = creator();
-                    const subTestCollection2 = creator();
-                    const containingObject = {
-                        collection1Handle: subTestCollection1.handle,
-                        nestedObj: {
-                            collection2Handle: subTestCollection2.handle,
-                        },
-                    };
-                    await addItem(containingObject);
-                    expectedRoutes.push(subTestCollection1.handle.absolutePath, subTestCollection2.handle.absolutePath);
-                }
-
-                const gcTestProvider: IGCTestProvider = {
-                    getSharedObject,
-                    addOutboundRoutes,
-                    deleteOutboundRoutes,
-                    addNestedHandles,
-                    getExpectedOutboundRoutes: () => expectedRoutes,
-                };
-
-                runGCTests(gcTestProvider);
+                runGCTests(GCOrderedCollectionProvider);
             });
         });
     }

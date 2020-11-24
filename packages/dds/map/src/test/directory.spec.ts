@@ -1050,74 +1050,74 @@ describe("Directory", () => {
         });
 
         describe("Garbage Collection", () => {
-            let subMapCount = 0;
-            let expectedRoutes: string[] = [];
+            class GCSharedDirectoryProvider implements IGCTestProvider {
+                private subMapCount = 0;
+                private _expectedRoutes: string[] = [];
 
-            beforeEach(() => {
-                subMapCount = 0;
-                expectedRoutes = [];
-            });
+                constructor() {
+                    this.subMapCount = 0;
+                    this._expectedRoutes = [];
+                }
 
-            // Return the remote SharedDirectory because we want to verify its summary data.
-            const getSharedObject = () => directory2;
+                public get sharedObject() {
+                    // Return the remote SharedDirectory because we want to verify its summary data.
+                    return directory2;
+                }
 
-            async function addOutboundRoutes() {
-                const subMapId1 = `subMap-${++subMapCount}`;
-                const subMap1 = mapFactory.create(dataStoreRuntime, subMapId1);
-                directory.set(subMapId1, subMap1.handle);
-                expectedRoutes.push(subMap1.handle.absolutePath);
+                public get expectedOutboundRoutes() {
+                    return this._expectedRoutes;
+                }
 
-                const fooDirectory = directory.getSubDirectory("foo") ?? directory.createSubDirectory("foo");
-                const subMapId2 = `subMap-${++subMapCount}`;
-                const subMap2 = mapFactory.create(dataStoreRuntime, subMapId2);
-                fooDirectory.set(subMapId2, subMap2.handle);
-                expectedRoutes.push(subMap2.handle.absolutePath);
+                public async addOutboundRoutes() {
+                    const subMapId1 = `subMap-${++this.subMapCount}`;
+                    const subMap1 = mapFactory.create(dataStoreRuntime, subMapId1);
+                    directory.set(subMapId1, subMap1.handle);
+                    this._expectedRoutes.push(subMap1.handle.absolutePath);
 
-                containerRuntimeFactory.processAllMessages();
+                    const fooDirectory = directory.getSubDirectory("foo") ?? directory.createSubDirectory("foo");
+                    const subMapId2 = `subMap-${++this.subMapCount}`;
+                    const subMap2 = mapFactory.create(dataStoreRuntime, subMapId2);
+                    fooDirectory.set(subMapId2, subMap2.handle);
+                    this._expectedRoutes.push(subMap2.handle.absolutePath);
+
+                    containerRuntimeFactory.processAllMessages();
+                }
+
+                public async deleteOutboundRoutes() {
+                    // Delete the last handle that was added.
+                    const fooDirectory = directory.getSubDirectory("foo");
+                    assert(fooDirectory, "Route must be added before deleting");
+
+                    const subMapId = `subMap-${this.subMapCount}`;
+                    const deletedHandle = fooDirectory.get(subMapId);
+                    assert(deletedHandle, "Route must be added before deleting");
+
+                    fooDirectory.delete(subMapId);
+                    // Remove deleted handle's route from expected routes.
+                    this._expectedRoutes = this._expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
+
+                    containerRuntimeFactory.processAllMessages();
+                }
+
+                public async addNestedHandles() {
+                    const fooDirectory = directory.getSubDirectory("foo") ?? directory.createSubDirectory("foo");
+                    const subMapId1 = `subMap-${++this.subMapCount}`;
+                    const subMapId2 = `subMap-${++this.subMapCount}`;
+                    const subMap = mapFactory.create(dataStoreRuntime, subMapId1);
+                    const subMap2 = mapFactory.create(dataStoreRuntime, subMapId2);
+                    const containingObject = {
+                        subMapHandle: subMap.handle,
+                        nestedObj: {
+                            subMap2Handle: subMap2.handle,
+                        },
+                    };
+                    fooDirectory.set(subMapId2, containingObject);
+                    containerRuntimeFactory.processAllMessages();
+                    this._expectedRoutes.push(subMap.handle.absolutePath, subMap2.handle.absolutePath);
+                }
             }
 
-            async function deleteOutboundRoutes() {
-                // Delete the last handle that was added.
-                const fooDirectory = directory.getSubDirectory("foo");
-                assert(fooDirectory, "Route must be added before deleting");
-
-                const subMapId = `subMap-${subMapCount}`;
-                const deletedHandle = fooDirectory.get(subMapId);
-                assert(deletedHandle, "Route must be added before deleting");
-
-                fooDirectory.delete(subMapId);
-                // Remove deleted handle's route from expected routes.
-                expectedRoutes = expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
-
-                containerRuntimeFactory.processAllMessages();
-            }
-
-            async function addNestedHandles() {
-                const fooDirectory = directory.getSubDirectory("foo") ?? directory.createSubDirectory("foo");
-                const subMapId1 = `subMap-${++subMapCount}`;
-                const subMapId2 = `subMap-${++subMapCount}`;
-                const subMap = mapFactory.create(dataStoreRuntime, subMapId1);
-                const subMap2 = mapFactory.create(dataStoreRuntime, subMapId2);
-                const containingObject = {
-                    subMapHandle: subMap.handle,
-                    nestedObj: {
-                        subMap2Handle: subMap2.handle,
-                    },
-                };
-                fooDirectory.set(subMapId2, containingObject);
-                containerRuntimeFactory.processAllMessages();
-                expectedRoutes.push(subMap.handle.absolutePath, subMap2.handle.absolutePath);
-            }
-
-            const gcTestProvider: IGCTestProvider = {
-                getSharedObject,
-                addOutboundRoutes,
-                deleteOutboundRoutes,
-                addNestedHandles,
-                getExpectedOutboundRoutes: () => expectedRoutes,
-            };
-
-            runGCTests(gcTestProvider);
+            runGCTests(GCSharedDirectoryProvider);
         });
     });
 });

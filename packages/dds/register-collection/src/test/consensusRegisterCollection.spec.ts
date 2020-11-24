@@ -288,65 +288,68 @@ describe("ConsensusRegisterCollection", () => {
             });
 
             describe("Garbage Collection", () => {
-                let subCollectionCount = 0;
-                let expectedRoutes: string[] = [];
+                class GCRegistedCollectionProvider implements IGCTestProvider {
+                    private subCollectionCount = 0;
+                    private _expectedRoutes: string[] = [];
 
-                async function writeAndProcessMsg(key: string, value: any) {
-                    const waitP = testCollection1.write(key, value);
-                    containerRuntimeFactory.processAllMessages();
-                    return waitP;
+                    private async writeAndProcessMsg(key: string, value: any) {
+                        const waitP = testCollection1.write(key, value);
+                        containerRuntimeFactory.processAllMessages();
+                        return waitP;
+                    }
+
+                    constructor() {
+                        this.subCollectionCount = 0;
+                        this._expectedRoutes = [];
+                    }
+
+                    public get sharedObject() {
+                        // Return the remote collection because we want to verify its summary data.
+                        return testCollection2;
+                    }
+
+                    public get expectedOutboundRoutes() {
+                        return this._expectedRoutes;
+                    }
+
+                    public async addOutboundRoutes() {
+                        const subCollectionId = `subCollection-${++this.subCollectionCount}`;
+                        const subTestCollection = crcFactory.create(dataStoreRuntime1, subCollectionId);
+                        await this.writeAndProcessMsg(subCollectionId, subTestCollection.handle);
+                        this._expectedRoutes.push(subTestCollection.handle.absolutePath);
+                    }
+
+                    public async deleteOutboundRoutes() {
+                        const subCollectionId = `subCollection-${this.subCollectionCount}`;
+                        const deletedHandle = testCollection1.read(subCollectionId) as IFluidHandle;
+                        assert(deletedHandle, "Route must be added before deleting");
+
+                        // Delete the last handle that was added.
+                        await this.writeAndProcessMsg(subCollectionId, "nonHandleValue");
+                        // Remove deleted handle's route from expected routes.
+                        this._expectedRoutes =
+                            this._expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
+                    }
+
+                    public async addNestedHandles() {
+                        const subCollectionId1 = `subCollection-${++this.subCollectionCount}`;
+                        const subCollectionId2 = `subCollection-${++this.subCollectionCount}`;
+                        const subTestCollection1 = crcFactory.create(dataStoreRuntime1, subCollectionId1);
+                        const subTestCollection2 = crcFactory.create(dataStoreRuntime1, subCollectionId2);
+                        const containingObject = {
+                            collection1Handle: subTestCollection1.handle,
+                            nestedObj: {
+                                collection2Handle: subTestCollection2.handle,
+                            },
+                        };
+                        await this.writeAndProcessMsg(subCollectionId2, containingObject);
+                        this._expectedRoutes.push(
+                            subTestCollection1.handle.absolutePath,
+                            subTestCollection2.handle.absolutePath);
+                    }
                 }
 
-                beforeEach(() => {
-                    subCollectionCount = 0;
-                    expectedRoutes = [];
-                });
-
-                // Return the remote collection because we want to verify its summary data.
-                const getSharedObject = () => testCollection2;
-
-                async function addOutboundRoutes() {
-                    const subCollectionId = `subCollection-${++subCollectionCount}`;
-                    const subTestCollection = crcFactory.create(dataStoreRuntime1, subCollectionId);
-                    await writeAndProcessMsg(subCollectionId, subTestCollection.handle);
-                    expectedRoutes.push(subTestCollection.handle.absolutePath);
-                }
-
-                async function deleteOutboundRoutes() {
-                    const subCollectionId = `subCollection-${subCollectionCount}`;
-                    const deletedHandle = testCollection1.read(subCollectionId) as IFluidHandle;
-                    assert(deletedHandle, "Route must be added before deleting");
-
-                    // Delete the last handle that was added.
-                    await writeAndProcessMsg(subCollectionId, "nonHandleValue");
-                    // Remove deleted handle's route from expected routes.
-                    expectedRoutes = expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
-                }
-
-                async function addNestedHandles() {
-                    const subCollectionId1 = `subCollection-${++subCollectionCount}`;
-                    const subCollectionId2 = `subCollection-${++subCollectionCount}`;
-                    const subTestCollection1 = crcFactory.create(dataStoreRuntime1, subCollectionId1);
-                    const subTestCollection2 = crcFactory.create(dataStoreRuntime1, subCollectionId2);
-                    const containingObject = {
-                        collection1Handle: subTestCollection1.handle,
-                        nestedObj: {
-                            collection2Handle: subTestCollection2.handle,
-                        },
-                    };
-                    await writeAndProcessMsg(subCollectionId2, containingObject);
-                    expectedRoutes.push(subTestCollection1.handle.absolutePath, subTestCollection2.handle.absolutePath);
-                }
-
-                const gcTestProvider: IGCTestProvider = {
-                    getSharedObject,
-                    addOutboundRoutes,
-                    deleteOutboundRoutes,
-                    addNestedHandles,
-                    getExpectedOutboundRoutes: () => expectedRoutes,
-                };
-
-                runGCTests(gcTestProvider);
+                runGCTests(GCRegistedCollectionProvider);
             });
         });
     });
