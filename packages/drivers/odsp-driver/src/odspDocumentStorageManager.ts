@@ -261,25 +261,37 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             blob = response.content;
         }
 
-        let documentAttributes: api.IDocumentAttributes = JSON.parse(blob.content);
-        if (blob.encoding === "base64") {
-            documentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
+        if (!this.attributesBlobHandles.has(blobid)) {
+            if (outputFormat === blob.encoding) {
+                return blob.content;
+            }
+            else if (outputFormat === "base64") {
+                return fromUtf8ToBase64(blob.content);
+            }
+            else {
+                return fromBase64ToUtf8(blob.content);
+            }
         }
-
-        if (this.attributesBlobHandles.has(blobid)) {
+        else {
             // ODSP document ids are random guids (different per session)
             // fix the branch name in attributes
             // this prevents issues when generating summaries
-            documentAttributes.branch = this.documentId;
+            const docId = this.documentId;
+            let documentAttributes: api.IDocumentAttributes;
+            if (blob.encoding === "base64") {
+                documentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
+                documentAttributes.branch = docId;
+            }
+            else {
+                documentAttributes = JSON.parse(blob.content);
+                documentAttributes.branch = docId;
+            }
+            if (outputFormat === "base64") {
+                return fromUtf8ToBase64(JSON.stringify(documentAttributes));
+            } else {
+                return JSON.stringify(documentAttributes);
+            }
         }
-
-        if (outputFormat === "base64") {
-            blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
-        } else {
-            blob.content = JSON.stringify(documentAttributes);
-        }
-
-        return blob.content;
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
