@@ -16,8 +16,10 @@ import {
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
-import { LocalCodeLoader } from "@fluidframework/test-utils";
+import { LocalCodeLoader, LocalTestObjectProvider } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { createPrimedDataStoreFactory, createRuntimeFactory, TestDataObject } from "./compatUtils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -179,6 +181,28 @@ describe("Container", () => {
             "Container should be in Disconnected state");
         assert.strictEqual(container.closed, true, "Container should be closed");
         deltaConnection.removeAllListeners();
+    });
+
+    it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
+        const runtimeFactory = (_?: unknown) => createRuntimeFactory(
+            TestDataObject.type,
+            createPrimedDataStoreFactory());
+
+        const localTestObjectProvider = new LocalTestObjectProvider(runtimeFactory, {});
+
+        const container = await localTestObjectProvider.makeTestContainer() as Container;
+        const dataObject = await requestFluidObject<TestDataObject>(container, "default");
+
+        let runCount = 0;
+
+        dataObject._context.deltaManager.on("readonly", () => {
+            runCount++;
+        });
+
+        container.forceReadonly(true);
+        assert.strictEqual(container.readonly, true);
+
+        assert.strictEqual(runCount, 1);
     });
 
     afterEach(async () => {

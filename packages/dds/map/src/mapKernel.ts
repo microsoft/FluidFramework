@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -178,7 +177,7 @@ export class MapKernel implements IValueTypeCreator {
 
     /**
      * Create a new shared map kernel.
-     * @param runtime - The data store runtime the shared object using the kernel will be associated with
+     * @param serializer - The serializer to serialize / parse handles
      * @param handle - The handle of the shared object using the kernel
      * @param submitMessage - A callback to submit a message through the shared object
      * @param isAttached - To query whether the shared object should generate ops
@@ -186,14 +185,14 @@ export class MapKernel implements IValueTypeCreator {
      * @param eventEmitter - The object that will emit map events
      */
     constructor(
-        private readonly runtime: IFluidDataStoreRuntime,
+        private readonly serializer: IFluidSerializer,
         private readonly handle: IFluidHandle,
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
         private readonly isAttached: () => boolean,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
-        this.localValueMaker = new LocalValueMaker(runtime);
+        this.localValueMaker = new LocalValueMaker(serializer);
         this.messageHandlers = this.getMessageHandlers();
         for (const type of valueTypes) {
             this.localValueMaker.registerValueType(type);
@@ -329,7 +328,7 @@ export class MapKernel implements IValueTypeCreator {
         const localValue = this.localValueMaker.fromInMemory(value);
         const serializableValue = makeSerializable(
             localValue,
-            this.runtime.IFluidSerializer,
+            this.serializer,
             this.handle);
 
         // Set the value locally.
@@ -365,7 +364,7 @@ export class MapKernel implements IValueTypeCreator {
         // may be possible to remove custom value type serialization entirely.
         const transformedValue = makeHandlesSerializable(
             params,
-            this.runtime.IFluidSerializer,
+            this.serializer,
             this.handle);
 
         // Set the value locally.
@@ -436,31 +435,27 @@ export class MapKernel implements IValueTypeCreator {
 
     /**
      * Serializes the data stored in the shared map to a JSON string
+     * @param serializer - The serializer to use to serialize handles in its values.
      * @returns A JSON string containing serialized map data
      */
-    public getSerializedStorage(): IMapDataObjectSerialized {
+    public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
         const serializableMapData: IMapDataObjectSerialized = {};
         this.data.forEach((localValue, key) => {
-            serializableMapData[key] = localValue.makeSerialized(
-                this.runtime.IFluidSerializer,
-                this.handle);
+            serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
         });
         return serializableMapData;
     }
 
-    public getSerializableStorage(): IMapDataObjectSerializable {
+    public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
         const serializableMapData: IMapDataObjectSerializable = {};
         this.data.forEach((localValue, key) => {
-            serializableMapData[key] = makeSerializable(
-                localValue,
-                this.runtime.IFluidSerializer,
-                this.handle);
+            serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
         });
         return serializableMapData;
     }
 
-    public serialize(): string {
-        return JSON.stringify(this.getSerializableStorage());
+    public serialize(serializer: IFluidSerializer): string {
+        return JSON.stringify(this.getSerializableStorage(serializer));
     }
 
     /**
@@ -720,7 +715,7 @@ export class MapKernel implements IValueTypeCreator {
                     const previousValue = localValue.value;
                     const translatedValue = parseHandles(
                         op.value.value,
-                        this.runtime.IFluidSerializer);
+                        this.serializer);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.eventEmitter.emit("valueChanged", event, local, message, this);
@@ -763,7 +758,7 @@ export class MapKernel implements IValueTypeCreator {
         const emit = (opName: string, previousValue: any, params: any) => {
             const translatedParams = makeHandlesSerializable(
                 params,
-                this.runtime.IFluidSerializer,
+                this.serializer,
                 this.handle);
 
             const op: IMapValueTypeOperation = {

@@ -18,6 +18,7 @@ import {
     ITrace,
     MessageType,
     NackErrorType,
+    IServiceConfiguration,
 } from "@fluidframework/protocol-definitions";
 import { canSummarize } from "@fluidframework/server-services-client";
 import {
@@ -111,9 +112,7 @@ export class DeliLambda implements IPartitionLambda {
         collection: ICollection<IDocument>,
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
-        private readonly clientTimeout: number,
-        private readonly activityTimeout: number,
-        private readonly noOpConsolidationTimeout: number) {
+        private readonly serviceConfiguration: IServiceConfiguration) {
         // Instantiate existing clients
         if (lastCheckpoint.clients) {
             for (const client of lastCheckpoint.clients) {
@@ -556,7 +555,7 @@ export class DeliLambda implements IPartitionLambda {
             contents: null,
             data: JSON.stringify(clientId),
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientLeave,
         };
         const leaveMessage: IRawOperationMessage = {
@@ -612,7 +611,7 @@ export class DeliLambda implements IPartitionLambda {
                 clientSequenceNumber: -1,
                 contents: null,
                 referenceSequenceNumber: -1,
-                traces: [],
+                traces: this.serviceConfiguration.enableTraces ? [] : undefined,
                 type,
             },
             tenantId: this.tenantId,
@@ -669,7 +668,7 @@ export class DeliLambda implements IPartitionLambda {
     private getIdleClient(timestamp: number): IClientSequenceNumber {
         if (this.clientSeqManager.count() > 0) {
             const client = this.clientSeqManager.peek();
-            if (client.canEvict && (timestamp - client.lastUpdate > this.clientTimeout)) {
+            if (client.canEvict && (timestamp - client.lastUpdate > this.serviceConfiguration.deli.clientTimeout)) {
                 return client;
             }
         }
@@ -684,7 +683,7 @@ export class DeliLambda implements IPartitionLambda {
                 const noOpMessage = this.createOpMessage(MessageType.NoOp);
                 this.sendToAlfred(noOpMessage);
             }
-        }, this.activityTimeout);
+        }, this.serviceConfiguration.deli.activityTimeout);
     }
 
     private clearIdleTimer() {
@@ -703,7 +702,7 @@ export class DeliLambda implements IPartitionLambda {
                 const noOpMessage = this.createOpMessage(MessageType.NoOp);
                 this.sendToAlfred(noOpMessage);
             }
-        }, this.noOpConsolidationTimeout);
+        }, this.serviceConfiguration.deli.noOpConsolidationTimeout);
     }
 
     private clearNoopConsolidationTimer() {

@@ -101,6 +101,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     // Save the timeout so we can cancel and reschedule it as needed
     private blobCacheTimeout: ReturnType<typeof setTimeout> | undefined;
+    // If the defer flag is set when the timeout fires, we'll reschedule rather than clear immediately
+    // This deferral approach is used (rather than clearing/resetting the timer) as current calling patterns trigger
+    // too many calls to setTimeout/clearTimeout.
+    private deferBlobCacheClear: boolean = false;
 
     private readonly attributesBlobHandles: Set<string> = new Set();
 
@@ -222,6 +226,17 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     public async read(blobid: string): Promise<string> {
+        return this.readWithEncodingOutput(blobid, "base64");
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
+     */
+    public async readString(blobid: string): Promise<string> {
+        return this.readWithEncodingOutput(blobid, "string");
+    }
+
+    private async readWithEncodingOutput(blobid: string, outputFormat: string) {
         let blob = this.blobCache.get(blobid);
         // Reset the timer on attempted cache read
         this.scheduleClearBlobsCache();
@@ -250,10 +265,25 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             // ODSP document ids are random guids (different per session)
             // fix the branch name in attributes
             // this prevents issues when generating summaries
-            const documentAttributes: api.IDocumentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
-            documentAttributes.branch = this.documentId;
+            if (blob.encoding === "base64") {
+                const documentAttributes: api.IDocumentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
+                documentAttributes.branch = this.documentId;
 
-            blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
+                if (outputFormat === "base64") {
+                    blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
+                } else {
+                    blob.content = JSON.stringify(documentAttributes);
+                }
+            } else {
+                const documentAttributes: api.IDocumentAttributes = JSON.parse(blob.content);
+                documentAttributes.branch = this.documentId;
+
+                if (outputFormat === "base64") {
+                    blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
+                } else {
+                    blob.content = JSON.stringify(documentAttributes);
+                }
+            }
         }
 
         return blob.content;
@@ -784,14 +814,27 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     /**
-     * Stop the current timer for clearing the blob cache (if any) and schedule a new one
+     * Schedule a timer for clearing the blob cache or defer the current one.
      */
     private scheduleClearBlobsCache() {
-        const blobCacheTimeoutDuration = 10000;
         if (this.blobCacheTimeout !== undefined) {
-            clearTimeout(this.blobCacheTimeout);
+            // If we already have an outstanding timer, just signal that we should defer the clear
+            this.deferBlobCacheClear = true;
+        } else {
+            // If we don't have an outstanding timer, set a timer
+            // When the timer runs out, we'll decide whether to proceed with the cache clear or reset the timer
+            const clearCacheOrDefer = () => {
+                this.blobCacheTimeout = undefined;
+                if (this.deferBlobCacheClear) {
+                    this.deferBlobCacheClear = false;
+                    this.scheduleClearBlobsCache();
+                } else {
+                    this.blobCache.clear();
+                }
+            };
+            const blobCacheTimeoutDuration = 10000;
+            this.blobCacheTimeout = setTimeout(clearCacheOrDefer, blobCacheTimeoutDuration);
         }
-        this.blobCacheTimeout = setTimeout(() => { this.blobCache.clear(); }, blobCacheTimeoutDuration);
     }
 
     private checkSnapshotUrl() {

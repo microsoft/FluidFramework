@@ -4,16 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ITree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
-import {
-    MockFluidDataStoreRuntime,
-    MockContainerRuntimeFactory,
-    MockContainerRuntimeFactoryForReconnection,
-    MockContainerRuntimeForReconnection,
-    MockEmptyDeltaConnection,
-    MockStorage,
-} from "@fluidframework/test-runtime-utils";
 import {
     Marker,
     ReferenceType,
@@ -22,6 +14,14 @@ import {
     reservedTileLabelsKey,
     SnapshotLegacy,
 } from "@fluidframework/merge-tree";
+import {
+    MockFluidDataStoreRuntime,
+    MockContainerRuntimeFactory,
+    MockContainerRuntimeFactoryForReconnection,
+    MockContainerRuntimeForReconnection,
+    MockEmptyDeltaConnection,
+    MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 
@@ -40,10 +40,10 @@ describe("SharedString", () => {
         });
 
         // Creates a new SharedString and loads it from the passed snaphost tree.
-        async function CreateStringAndCompare(tree: ITree): Promise<void> {
+        async function CreateStringAndCompare(summaryTree: ISummaryTree): Promise<void> {
             const services: IChannelServices = {
                 deltaConnection: new MockEmptyDeltaConnection(),
-                objectStorage: new MockStorage(tree),
+                objectStorage: MockStorage.createFromSummary(summaryTree),
             };
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
             const sharedString2 = new SharedString(
@@ -54,6 +54,22 @@ describe("SharedString", () => {
             await sharedString2.loaded;
 
             assert.equal(sharedString.getText(), sharedString2.getText(), "Could not correctly load from snapshot");
+        }
+
+        function verifyAndReturnSummaryTree(): ISummaryTree {
+            const summarizeResult = sharedString.summarize();
+            const summaryObjectKeys = Object.keys(summarizeResult.summary.tree);
+            assert.strictEqual(summaryObjectKeys.length, 2, "summary should have two entries");
+            assert.strictEqual(summaryObjectKeys[0], "header", "header not present in summary");
+            assert.strictEqual(summaryObjectKeys[1], "content", "content not present in summary");
+
+            const subTree = summarizeResult.summary.tree.content as ISummaryTree;
+            const subTreeObjectKeys = Object.keys(subTree.tree);
+            assert.strictEqual(subTreeObjectKeys.length, 2, "sub tree should have two entries");
+            assert.strictEqual(subTreeObjectKeys[0], "header", "header not present in sub tree");
+            assert.strictEqual(subTreeObjectKeys[1], SnapshotLegacy.catchupOps, "catchupOps not present in sub tree");
+
+            return summarizeResult.summary;
         }
 
         it("can insert text", async () => {
@@ -197,7 +213,7 @@ describe("SharedString", () => {
             assert.equal(sharedString.getText(), "12aaa3", "Could not replace negative range");
         });
 
-        it("can load a SharedString from snapshot", async () => {
+        it("can load a SharedString from summary", async () => {
             const insertText = "text";
             const segmentCount = 1000;
 
@@ -207,18 +223,11 @@ describe("SharedString", () => {
                 sharedString.insertText(0, `${insertText}${i}`);
             }
 
-            // Get snapshot and verify its correct.
-            let tree = sharedString.snapshot();
-            assert(tree.entries.length === 2);
-            assert(tree.entries[0].path === "header");
-            assert(tree.entries[1].path === "content");
-            let subTree = tree.entries[1].value as ITree;
-            assert(subTree.entries.length === 2);
-            assert(subTree.entries[0].path === "header");
-            assert(subTree.entries[1].path === SnapshotLegacy.catchupOps);
+            // Verify that summary data is correcy.
+            let summaryTree = verifyAndReturnSummaryTree();
 
             // Load a new SharedString from the snapshot and verify it is loaded correctly.
-            await CreateStringAndCompare(tree);
+            await CreateStringAndCompare(summaryTree);
 
             for (let i = 0; i < segmentCount; i = i + 1) {
                 sharedString.insertText(0, `${insertText}-${i}`);
@@ -227,18 +236,11 @@ describe("SharedString", () => {
             // TODO: Due to segment packing, we have only "header" and no body
             // Need to change test to include other types of segments (like marker) to exercise "body".
 
-            // Get another snapshot.
-            tree = sharedString.snapshot();
-            assert(tree.entries.length === 2);
-            assert(tree.entries[0].path === "header");
-            assert(tree.entries[1].path === "content");
-            subTree = tree.entries[1].value as ITree;
-            assert(subTree.entries.length === 2);
-            assert(subTree.entries[0].path === "header");
-            assert(subTree.entries[1].path === SnapshotLegacy.catchupOps);
+            // Verify summary after changes.
+            summaryTree = verifyAndReturnSummaryTree();
 
             // Load a new SharedString from the snapshot and verify it is loaded correctly.
-            await CreateStringAndCompare(tree);
+            await CreateStringAndCompare(summaryTree);
         });
     });
 
@@ -260,7 +262,7 @@ describe("SharedString", () => {
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
-                objectStorage: new MockStorage(sharedString.snapshot()),
+                objectStorage: MockStorage.createFromSummary(sharedString.summarize().summary),
             };
 
             const sharedString2 =

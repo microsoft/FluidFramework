@@ -93,7 +93,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             testTenantManager,
             new EmptyTaskMessageSender(),
             {},
-            16 * 1024,
             generateToken,
             async () => new TestHistorian(testDbFactory.testDatabase),
             logger,

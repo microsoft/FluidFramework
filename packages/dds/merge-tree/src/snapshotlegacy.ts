@@ -102,7 +102,7 @@ export class SnapshotLegacy {
      */
     emit(
         catchUpMsgs: ISequencedDocumentMessage[],
-        serializer?: IFluidSerializer,
+        serializer: IFluidSerializer,
         bind?: IFluidHandle,
     ): ITree {
         const chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.chunkSize);

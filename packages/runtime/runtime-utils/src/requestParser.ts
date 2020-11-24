@@ -75,16 +75,30 @@ export class RequestParser implements IRequest {
 
     /**
      * Creates a sub request starting at a specific path part of this request's url
+     * The sub request url always has a leading slash, and always include query params if original url has any
+     * e.g. original url is /a/b/?queryParams, createSubRequest(0) is /a/b/?queryParams
+     * createSubRequest(1) is /b/?queryParams
+     * createSubRequest(2) is /?queryParams
+     * createSubRequest(n) where n is bigger than parts length, e.g. 2, or n is less than 0 will throw an exception
+     *
+     * note: query params are not counted towards path parts.
      *
      * @param startingPathIndex - The index of the first path part of the sub request
      */
     public createSubRequest(startingPathIndex: number): IRequest {
-        if (startingPathIndex < 0 || startingPathIndex > this.pathParts.length) {
+        const pathLen = this.pathParts.length;
+        if (startingPathIndex < 0 || startingPathIndex > pathLen) {
             throw new Error("incorrect sub-request");
         }
-        const path = this.pathParts.slice(startingPathIndex).join("/");
+        if (startingPathIndex === pathLen && this.url.includes("?")) {
+            return {
+                url:`/${this.query}`,
+                headers: this.headers,
+            };
+        }
+        const path = `/${this.pathParts.slice(startingPathIndex).join("/")}`;
         return {
-            url: path + this.query,
+            url: this.query === "" ? path : `${path}/${this.query}`,
             headers: this.headers,
         };
     }

@@ -4,6 +4,7 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -128,7 +129,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      *
      * @returns the snapshot of the current state of the counter
      */
-    public snapshot(): ITree {
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
         // Get a serializable form of data
         const content: ICounterSnapshotFormat = {
             value: this.value,
