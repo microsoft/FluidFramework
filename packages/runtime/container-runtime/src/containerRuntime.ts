@@ -1115,7 +1115,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
-        const context = this.dataStores.contexts.tryGet(envelope.address);
+        const context = this.dataStores.contexts.get(envelope.address);
         if (!context) {
             // Attach message may not have been processed yet
             assert(!local);
@@ -1134,11 +1134,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
-        const deferredContext = this.dataStores.contexts.ensureDeferred(id);
+        const deferredContext = this.dataStores.contexts.prepDeferredContext(id);
 
         if (!wait && !deferredContext.isCompleted) {
-            return Promise.reject(new Error(`DataStore ${id} does not exist`));
+            throw new Error(`DataStore ${id} does not exist`);
         }
 
         const context = await deferredContext.promise;
@@ -1421,6 +1420,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const envelope = message.contents as IEnvelope;
         const transformed = { ...message, contents: envelope.contents };
         const context = this.dataStores.contexts.get(envelope.address);
+        assert(!!context, "There should be a store context for the op");
         context.process(transformed, local, localMessageMetadata);
     }
 
@@ -1436,7 +1436,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
         for (const [,context] of this.dataStores.contexts) {
             // Fire only for bounded stores.
-            if (!this.dataStores.contexts.notBoundContexts.has(context.id)) {
+            if (!this.dataStores.contexts.isNotBound(context.id)) {
                 context.emit(eventName);
             }
         }
@@ -1450,14 +1450,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         let notBoundContextsLength: number;
         do {
             const builderTree = builder.summary.tree;
-            notBoundContextsLength = this.dataStores.contexts.notBoundContexts.size;
+            notBoundContextsLength = this.dataStores.contexts.notBoundLength();
             // Iterate over each data store and ask it to snapshot
             Array.from(this.dataStores.contexts)
                 .filter(([key, _]) =>
                     // Take summary of bounded data stores only, make sure we haven't summarized them already
                     // and no attach op has been fired for that data store because for loader versions <= 0.24
                     // we set attach state as "attaching" before taking createNew summary.
-                    !(this.dataStores.contexts.notBoundContexts.has(key)
+                    !(this.dataStores.contexts.isNotBound(key)
                         || builderTree[key]
                         || this.dataStores.attachOpFiredForDataStore.has(key)),
                 )
@@ -1475,7 +1475,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     }
                     builder.addWithStats(key, dataStoreSummary);
                 });
-        } while (notBoundContextsLength !== this.dataStores.contexts.notBoundContexts.size);
+        } while (notBoundContextsLength !== this.dataStores.contexts.notBoundLength());
 
         this.serializeContainerBlobs(builder);
 
