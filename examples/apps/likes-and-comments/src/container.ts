@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 import { LikesAndComments } from "./fluidObject";
 
@@ -21,5 +20,5 @@ import { LikesAndComments } from "./fluidObject";
  */
 export const LikesAndCommentsContainer = new ContainerRuntimeFactoryWithDefaultDataStore(
     LikesAndComments.factory,
-    new Map([LikesAndComments.factory.registryEntry]),
+    createDataStoreRegistry([LikesAndComments.factory.registryEntry]),
 );

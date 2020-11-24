@@ -23,7 +23,6 @@ import {
     IFluidDataStoreFactory,
     ITask,
     ITaskManager,
-    NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import debug from "debug";
 import { v4 as uuid } from "uuid";
@@ -465,10 +464,6 @@ export class TaskManagerFactory implements IFluidDataStoreFactory {
     public readonly type = TaskManagerFactory.type;
 
     public get IFluidDataStoreFactory() { return this; }
-
-    public static get registryEntry(): NamedFluidDataStoreRegistryEntry {
-        return [this.type, Promise.resolve(new TaskManagerFactory())];
-    }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
         const mapFactory = SharedMap.getFactory();

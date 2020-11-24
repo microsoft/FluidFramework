@@ -22,6 +22,7 @@ The branching feature has been removed. This includes all related members, metho
 - [FluidDataStoreRuntime.registerRequestHandler deprecated](#FluidDataStoreRuntime.registerRequestHandler-deprecated)
 - [snapshot removed from IFluidDataStoreRuntime](#snapshot-removed-from-IFluidDataStoreRuntime)
 - [getAttachSnapshot deprecated in IFluidDataStoreChannel](#getAttachSnapshot-deprecated-in-IFluidDataStoreChannel)
+- [NamedFluidDataStoreRegistryEntries](#NamedFluidDataStoreRegistryEntries)
 
 ### OdspDriverUrlResolver2 renamed to OdspDriverUrlResolverForShareLink
 `OdspDriverUrlResolver2` renamed to `OdspDriverUrlResolverForShareLink`
@@ -35,7 +36,7 @@ The branching feature has been removed. This includes all related members, metho
 
 ### _createDataStoreWithProps returns IFluidRouter
 `IContainerRuntimeBase._createDataStoreWithProps` returns IFluidRouter instead of IFluidDataStoreChannel. This is done to be consistent with other APIs create data stores, and ensure we do not return internal interfaces. This likely to expose areas where IFluidDataStoreChannel.bindToContext() was called manually on data store. Such usage should be re-evaluate - lifetime management should be left up to runtime, storage of any handle form data store in attached DDS will result in automatic attachment of data store (and all of its objects) to container. If absolutely needed, and only for staging, casting can be done to implement old behavior.
-
+    
 ### FluidDataStoreRuntime.registerRequestHandler deprecated
 Please use mixinRequestHandler() as a way to create custom data store runtime  factory/object and append request handling to existing implementation.
 
@@ -44,6 +45,17 @@ Please use mixinRequestHandler() as a way to create custom data store runtime  f
 
 ### getAttachSnapshot deprecated in IFluidDataStoreChannel
 `getAttachSnapshot()` has been deprecated in `IFluidDataStoreChannel`. It is replaced by `getAttachSummary()`.
+
+### NamedFluidDataStoreRegistryEntries 
+NamedFluidDataStoreRegistryEntries usage across repo is reduced substantially. Specifically, `ContainerRuntime.load()` is changed. Instead many interfaces are changed to accept IFluidDataStoreRegistry
+The following two classes are added to assist in conversion:
+`createDataStoreRegistry` function can be used to wrap input in many formats, including FluidDataStoreRegistryEntries format into IFluidDataStoreRegistry. It takes Iterable<> of:
+1. old [name, Promise<factory>] format.
+2. [name, factory]
+3. factory
+Or IFluidDataStoreRegistry itself!
+
+`MultipleDataStoreRegistries` - can be used to combine  multiple IFluidDataStoreRegistry objects into one.
 
 ## 0.28 Breaking Changes
 

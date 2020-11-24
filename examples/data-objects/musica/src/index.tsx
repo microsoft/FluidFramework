@@ -10,6 +10,7 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 // React
 import React from "react";
@@ -19,8 +20,6 @@ import ReactDOM from "react-dom";
 import { Player, NoteProperties } from "./Player";
 import { PianoUtility } from "./PianoUtility";
 import { DAW } from "./daw";
-
-const musicaName = "@fluid-example/musica";
 
 // TODO: Is this right?
 const audioContext = new AudioContext();
@@ -101,7 +100,7 @@ export class Musica extends DataObject implements IFluidHTMLView {
 }
 
 export const MusicaInstantiationFactory = new DataObjectFactory(
-    musicaName,
+    "@fluid-example/musica",
     Musica,
     [],
     {},
@@ -109,7 +108,7 @@ export const MusicaInstantiationFactory = new DataObjectFactory(
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     MusicaInstantiationFactory,
-    new Map([
-        [musicaName, Promise.resolve(MusicaInstantiationFactory)],
+    createDataStoreRegistry([
+        [MusicaInstantiationFactory.type, Promise.resolve(MusicaInstantiationFactory)],
     ]),
 );

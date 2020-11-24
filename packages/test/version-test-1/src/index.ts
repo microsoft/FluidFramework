@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/aqueduct";
-import { createDataStoreFactory } from "@fluidframework/runtime-utils";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { createDataStoreFactory, createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 import { VersiontestInstantiationFactory } from "./main";
 
@@ -16,7 +14,7 @@ const defaultFactory = createDataStoreFactory(fluidPackageName, VersiontestInsta
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     defaultFactory,
-    new Map([
+    createDataStoreRegistry([
         [defaultFactory.type, Promise.resolve(defaultFactory)],
     ]),
 );

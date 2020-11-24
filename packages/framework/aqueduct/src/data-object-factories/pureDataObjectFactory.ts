@@ -10,19 +10,19 @@ import {
     mixinRequestHandler,
  } from "@fluidframework/datastore";
 import { IEvent } from "@fluidframework/common-definitions";
-import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IContainerRuntimeBase,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
-    NamedFluidDataStoreRegistryEntries,
+    FluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntry,
     IFluidDataStoreContextDetached,
 } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 import {
     FluidObjectSymbolProvider,
     DependencyContainer,
@@ -117,14 +117,14 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
         private readonly ctor: new (props: IDataObjectProps<O, S>) => TObj,
         sharedObjects: readonly IChannelFactory[],
         private readonly optionalProviders: FluidObjectSymbolProvider<O>,
-        registryEntries?: NamedFluidDataStoreRegistryEntries,
+        registryEntries?: FluidDataStoreRegistry,
         private readonly runtimeClass: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
     ) {
         if (this.type === "") {
             throw new Error("undefined type member");
         }
         if (registryEntries !== undefined) {
-            this.registry = new FluidDataStoreRegistry(registryEntries);
+            this.registry = createDataStoreRegistry(registryEntries).IFluidDataStoreRegistry;
         }
         this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
     }
@@ -142,7 +142,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
      * @returns The NamedFluidDataStoreRegistryEntry
      */
     public get registryEntry(): NamedFluidDataStoreRegistryEntry {
-        return [this.type, Promise.resolve(this)];
+        return [this.type, this];
     }
 
     /**

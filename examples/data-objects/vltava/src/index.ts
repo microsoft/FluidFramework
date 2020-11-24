@@ -18,9 +18,9 @@ import {
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreFactory,
-    NamedFluidDataStoreRegistryEntries,
+    IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject, createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 import {
     Anchor,
@@ -67,7 +67,7 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectIn
 export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultDataStore {
     constructor(
         defaultFactory: IFluidDataStoreFactory,
-        registryEntries: NamedFluidDataStoreRegistryEntries,
+        registryEntries: IProvideFluidDataStoreRegistry,
     ) {
         super(defaultFactory, registryEntries);
     }
@@ -129,12 +129,12 @@ const generateFactory = () => {
     // and the default registry is already determined Issue:#1138
     return new VltavaRuntimeFactory(
         Anchor.getFactory(),
-        [
+        createDataStoreRegistry([
             ...containerFluidObjects,
             // We don't want to include the default wrapper fluidObject in our list of available fluidObjects
             Anchor.getFactory().registryEntry,
             ["internalRegistry", Promise.resolve(new InternalRegistry(containerFluidObjectsDefinition))],
-        ],
+        ]),
     );
 };
 

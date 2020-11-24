@@ -12,8 +12,6 @@ import ReactDOM from "react-dom";
 import { SharedMap, IDirectory, IDirectoryValueChanged } from "@fluidframework/map";
 import { DdsCollectionComponent } from "./ddsCollection";
 
-export const PrimitivesName = "PrimitivesCollection";
-
 /**
  * Basic DDS examples using view interfaces and stock component classes.
  */

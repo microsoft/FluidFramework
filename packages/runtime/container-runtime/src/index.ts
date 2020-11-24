@@ -5,7 +5,6 @@
 
 export * from "./containerRuntime";
 export * from "./deltaScheduler";
-export * from "./dataStoreRegistry";
 export * from "./runWhileConnectedCoordinator";
 export * from "./summarizer";
 export * from "./summaryCollection";

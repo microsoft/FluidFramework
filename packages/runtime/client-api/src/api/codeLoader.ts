@@ -20,7 +20,8 @@ import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
-    NamedFluidDataStoreRegistryEntries,
+    IFluidDataStoreRegistry,
+    IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import {
@@ -28,6 +29,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { createDataStoreRegistry, MultipleDataStoreRegistries } from "@fluidframework/runtime-utils";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -110,18 +112,23 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
     constructor(
         private readonly runtimeOptions: IContainerRuntimeOptions,
-        private readonly registries: NamedFluidDataStoreRegistryEntries) {
+        private readonly registries?: IFluidDataStoreRegistry) {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const chaincode = new Chaincode(context.closeFn);
 
+        let registry: IProvideFluidDataStoreRegistry =
+            createDataStoreRegistry([[chaincode.type, Promise.resolve(chaincode)]]);
+        if (this.registries) {
+            registry = new MultipleDataStoreRegistries(
+                registry,
+                this.registries,
+            );
+        }
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
-            [
-                [chaincode.type, Promise.resolve(chaincode)],
-                ...this.registries,
-            ],
+            registry,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(rootStoreId),
                 innerRequestHandler,
@@ -142,7 +149,7 @@ export class CodeLoader implements ICodeLoader {
 
     constructor(
         runtimeOptions: IContainerRuntimeOptions,
-        registries: NamedFluidDataStoreRegistryEntries = [],
+        registries?: IFluidDataStoreRegistry,
     ) {
         this.fluidModule = {
             fluidExport: new ChaincodeFactory(

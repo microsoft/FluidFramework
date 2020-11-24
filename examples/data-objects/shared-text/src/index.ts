@@ -12,13 +12,13 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
-    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 import * as sharedTextComponent from "./component";
 
 /* eslint-disable max-len */
@@ -48,15 +48,6 @@ const DefaultComponentName = "text";
 // };
 /* eslint-enable max-len */
 
-const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    ["@fluid-example/math", math.then((m) => m.fluidExport)],
-    ["@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)],
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    ["@fluid-example/video-players", videoPlayers.then((m) => m.fluidExport)],
-    ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
-];
-
 class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFactory {
     public static readonly type = "@fluid-example/shared-text";
     public readonly type = SharedTextFactoryComponent.type;
@@ -74,10 +65,16 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const runtime = await ContainerRuntime.load(
             context,
-            [
-                ...defaultRegistryEntries,
-                [SharedTextFactoryComponent.type, Promise.resolve(this)],
-            ],
+            createDataStoreRegistry(
+                [
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                    ["@fluid-example/math", math.then((m) => m.fluidExport)],
+                    ["@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)],
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                    ["@fluid-example/video-players", videoPlayers.then((m) => m.fluidExport)],
+                    ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
+                    [SharedTextFactoryComponent.type, Promise.resolve(this)],
+                ]),
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(DefaultComponentName),
                 innerRequestHandler,

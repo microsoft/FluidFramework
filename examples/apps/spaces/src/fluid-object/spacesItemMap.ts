@@ -6,7 +6,6 @@
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { AsSerializable, Serializable } from "@fluidframework/datastore-definitions";
 import {
-    NamedFluidDataStoreRegistryEntries,
     IFluidDataStoreFactory,
     IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
@@ -106,7 +105,7 @@ export const spacesItemMap = new Map<string, ISpacesItemEntry>([
 ]);
 
 // This can go away if the item entries have a way to bring their own subregistries.
-export const spacesRegistryEntries: NamedFluidDataStoreRegistryEntries = new Map([
+export const spacesRegistryEntries = new Map([
     ClickerInstantiationFactory.registryEntry,
     [cmfe.type, Promise.resolve(cmfe)],
     [CollaborativeText.Name, Promise.resolve(CollaborativeText.getFactory())],

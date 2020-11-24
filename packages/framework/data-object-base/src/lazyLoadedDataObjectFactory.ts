@@ -5,12 +5,10 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
-import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
-    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
     IFluidDataStoreRuntime,
@@ -18,7 +16,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { LazyPromise } from "@fluidframework/common-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject, createDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { LazyLoadedDataObject } from "./lazyLoadedDataObject";
 
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> implements IFluidDataStoreFactory {
@@ -34,10 +32,9 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         storeFactories?: readonly IFluidDataStoreFactory[],
     ) {
         if (storeFactories !== undefined) {
-            this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(
+            this.IFluidDataStoreRegistry = createDataStoreRegistry(
                 storeFactories.map(
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    (factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries);
+                    (factory) => [factory.type, Promise.resolve(factory)])).IFluidDataStoreRegistry;
         }
 
         this.ISharedObjectRegistry = new Map(

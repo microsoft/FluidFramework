@@ -13,28 +13,28 @@ import {
     innerRequestHandler,
 } from "@fluidframework/request-handler";
 import {
-    NamedFluidDataStoreRegistryEntries,
     IFluidDataStoreFactory,
     FlushMode,
+    IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 
 const defaultStoreId = "" as const;
 
 export class RuntimeFactory implements IRuntimeFactory {
-    private readonly registry: NamedFluidDataStoreRegistryEntries;
+    private readonly registry: IProvideFluidDataStoreRegistry;
 
     constructor(
         private readonly defaultStoreFactory: IFluidDataStoreFactory,
         storeFactories: IFluidDataStoreFactory[] = [defaultStoreFactory],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
     ) {
-        this.registry =
+        this.registry = createDataStoreRegistry(
             (storeFactories.includes(defaultStoreFactory)
                 ? storeFactories
                 : storeFactories.concat(defaultStoreFactory)
             ).map(
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                (factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries;
+                (factory) => [factory.type, Promise.resolve(factory)]));
     }
 
     public get IRuntimeFactory() { return this; }

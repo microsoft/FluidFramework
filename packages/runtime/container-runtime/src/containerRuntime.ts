@@ -78,11 +78,11 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
+    IProvideFluidDataStoreRegistry,
     IFluidDataStoreChannel,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelop,
-    NamedFluidDataStoreRegistryEntries,
     ISummaryStats,
     ISummarizeInternalResult,
     IAgentScheduler,
@@ -101,12 +101,13 @@ import {
     convertToSummaryTree,
     RequestParser,
     requestFluidObject,
+    createDataStoreRegistry,
+    MultipleDataStoreRegistries,
     convertSnapshotTreeToSummaryTree,
     normalizeAndPrefixGCNodeIds,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
-import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
 import { ISummarizerRuntime, ISummarizerInternalsProvider, Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
@@ -422,16 +423,6 @@ export class ScheduleManager {
 
 export const taskSchedulerId = "_scheduler";
 
-// Wraps the provided list of packages and augments with some system level services.
-class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
-    constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
-        super([
-            ...namedEntries,
-            TaskManagerFactory.registryEntry,
-        ]);
-    }
-}
-
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -460,7 +451,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public static async load(
         context: IContainerContext,
-        registryEntries: NamedFluidDataStoreRegistryEntries,
+        registryEntries: IProvideFluidDataStoreRegistry,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IFluidObject = context.scope,
@@ -473,7 +464,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             });
         }
 
-        const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
+        const registry = new MultipleDataStoreRegistries(
+            createDataStoreRegistry([new TaskManagerFactory()]),
+            registryEntries,
+        );
 
         const chunkId = context.baseSnapshot?.blobs[chunksBlobName];
         const chunks = context.baseSnapshot && chunkId ? context.storage ?

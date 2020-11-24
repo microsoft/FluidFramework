@@ -10,12 +10,11 @@ import {
 import { IProvideRuntimeFactory } from "@fluidframework/container-definitions";
 import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
+import { createDataStoreRegistry } from "@fluidframework/runtime-utils";
 import { MonacoRunner } from "./chaincode";
 
-const monacoName = "@fluid-example/monaco";
-
 const componentFactory = new DataObjectFactory(
-    monacoName,
+    "@fluid-example/monaco",
     MonacoRunner,
     [
         sequence.SharedString.getFactory(),
@@ -27,8 +26,8 @@ const componentFactory = new DataObjectFactory(
 
 const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
     componentFactory,
-    new Map([
-        [monacoName, Promise.resolve(componentFactory)],
+    createDataStoreRegistry([
+        [componentFactory.type, Promise.resolve(componentFactory)],
     ]),
 );
 
