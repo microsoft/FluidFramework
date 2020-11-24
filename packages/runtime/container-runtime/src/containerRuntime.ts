@@ -95,7 +95,6 @@ import {
     ITaskManager,
     ISummarizeResult,
     IChannelSummarizeResult,
-    IContextSummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
@@ -1465,7 +1464,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Normalize the child's nodes and prefix the child's id to the ids of GC nodes returned by it.
         // This gradually builds the id of each node to be a path from the root.
         normalizeAndPrefixGCNodeIds(childGCNodes, childId);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return childGCNodes;
     }
 
@@ -1494,11 +1492,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param trackState - This tells whether we should track state from this summary.
      */
     private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
-        const summarizeResult: IContextSummarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
+        const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
         assert(summarizeResult.summary.type === SummaryType.Tree,
             "Container Runtime's summarize should always return a tree");
-            // eslint-disable-next-line max-len
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-return
         return summarizeResult as IChannelSummarizeResult;
     }
 
