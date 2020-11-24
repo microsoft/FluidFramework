@@ -70,6 +70,7 @@
     "@fluidframework/eslint-config-fluid": "^0.21.0",
     "@fluidframework/mocha-test-setup": "^0.30.0",
     "@fluidframework/test-runtime-utils": "^0.30.0",
+    "@fluid-internal/test-dds-utils": "^0.30.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@tiny-calc/micro": "0.0.0-alpha.5",
     "@types/assert": "^1.5.1",

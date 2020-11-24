@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
+import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
@@ -458,111 +459,62 @@ describe("Map", () => {
         });
 
         describe("Garbage Collection", () => {
-            it("can generate GC nodes with handles in data", () => {
-                const subMap = factory.create(dataStoreRuntime, "subMap");
-                map.set("object", subMap.handle);
+            let subMapCount = 0;
+            let expectedRoutes: string[] = [];
 
-                containerRuntimeFactory.processAllMessages();
-
-                // Verify the GC nodes returned by summarize.
-                const gcNodes = map2.summarize().gcNodes;
-                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                assert.deepStrictEqual(
-                    gcNodes[0].outboundRoutes,
-                    [subMap.handle.absolutePath],
-                    "GC node's outbound routes is incorrect");
+            beforeEach(() => {
+                subMapCount = 0;
+                expectedRoutes = [];
             });
 
-            it("can generate GC nodes when handles are removed from data", () => {
-                const subMap = factory.create(dataStoreRuntime, "subMap");
-                const subMap2 = factory.create(dataStoreRuntime, "subMap2");
-                map.set("object", subMap.handle);
-                map.set("object2", subMap2.handle);
+            // Return the remote SharedMap because we want to verify its summary data.
+            const getSharedObject = () => map2;
 
+            async function addOutboundRoutes() {
+                const newSubMapId = `subMap-${++subMapCount}`;
+                const subMap = factory.create(dataStoreRuntime, newSubMapId);
+                map.set(newSubMapId, subMap.handle);
+                expectedRoutes.push(subMap.handle.absolutePath);
                 containerRuntimeFactory.processAllMessages();
+            }
 
-                // Verify the GC nodes returned by summarize.
-                let gcNodes = map2.summarize().gcNodes;
-                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                assert.deepStrictEqual(
-                    gcNodes[0].outboundRoutes,
-                    [
-                        subMap.handle.absolutePath,
-                        subMap2.handle.absolutePath,
-                    ],
-                    "GC node's outbound routes is incorrect");
+            async function deleteOutboundRoutes() {
+                // Delete the last handle that was added.
+                const subMapId = `subMap-${subMapCount}`;
+                const deletedHandle = map.get<IFluidHandle>(subMapId);
+                assert(deletedHandle, "Route must be added before deleting");
 
-                map.delete("object");
+                map.delete(subMapId);
+                // Remove deleted handle's route from expected routes.
+                expectedRoutes = expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
                 containerRuntimeFactory.processAllMessages();
+            }
 
-                gcNodes = map2.summarize().gcNodes;
-                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                assert.deepStrictEqual(
-                    gcNodes[0].outboundRoutes,
-                    [subMap2.handle.absolutePath],
-                    "GC node's outbound routes is incorrect");
-            });
-
-            it("can generate GC nodes when handles are added to data", () => {
-                const subMap = factory.create(dataStoreRuntime, "subMap");
-                map.set("object", subMap.handle);
-
-                containerRuntimeFactory.processAllMessages();
-
-                // Verify the GC nodes returned by summarize.
-                let gcNodes = map2.summarize().gcNodes;
-                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                assert.deepStrictEqual(
-                    gcNodes[0].outboundRoutes,
-                    [subMap.handle.absolutePath],
-                    "GC node's outbound routes is incorrect");
-
-                const subMap2 = factory.create(dataStoreRuntime, "subMap2");
-                map.set("object2", subMap2.handle);
-                containerRuntimeFactory.processAllMessages();
-
-                gcNodes = map2.summarize().gcNodes;
-                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                assert.deepStrictEqual(
-                    gcNodes[0].outboundRoutes,
-                    [
-                        subMap.handle.absolutePath,
-                        subMap2.handle.absolutePath,
-
-                    ],
-                    "GC node's outbound routes is incorrect");
-            });
-
-            it("can generate GC nodes with nested handles in data", () => {
-                const subMap = factory.create(dataStoreRuntime, "subMap");
-                const subMap2 = factory.create(dataStoreRuntime, "subMap2");
+            async function addNestedHandles() {
+                const subMapId1 = `subMap-${++subMapCount}`;
+                const subMapId2 = `subMap-${++subMapCount}`;
+                const subMap = factory.create(dataStoreRuntime, subMapId1);
+                const subMap2 = factory.create(dataStoreRuntime, subMapId2);
                 const containingObject = {
                     subMapHandle: subMap.handle,
                     nestedObj: {
                         subMap2Handle: subMap2.handle,
                     },
                 };
-                map.set("object", containingObject);
-
+                map.set(subMapId2, containingObject);
+                expectedRoutes.push(subMap.handle.absolutePath, subMap2.handle.absolutePath);
                 containerRuntimeFactory.processAllMessages();
+            }
 
-                // Verify the GC nodes returned by summarize.
-                const gcNodes = map2.summarize().gcNodes;
-                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                assert.deepStrictEqual(
-                    gcNodes[0].outboundRoutes,
-                    [
-                        subMap.handle.absolutePath,
-                        subMap2.handle.absolutePath,
-                    ],
-                    "GC node's outbound routes is incorrect");
-            });
+            const gcTestProvider: IGCTestProvider = {
+                getSharedObject,
+                addOutboundRoutes,
+                deleteOutboundRoutes,
+                addNestedHandles,
+                getExpectedOutboundRoutes: () => expectedRoutes,
+            };
+
+            runGCTests(gcTestProvider);
         });
     });
 });

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
+import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
@@ -1049,145 +1050,74 @@ describe("Directory", () => {
         });
 
         describe("Garbage Collection", () => {
-            it("can generate GC nodes with handles in data", () => {
-                const subMap = mapFactory.create(dataStoreRuntime, "subMap");
-                directory.set("object", subMap.handle);
+            let subMapCount = 0;
+            let expectedRoutes: string[] = [];
 
-                const fooDirectory = directory.createSubDirectory("foo");
-                const subMap2 = mapFactory.create(dataStoreRuntime, "subMap2");
-                fooDirectory.set("object", subMap2.handle);
-
-                const barDirectory = fooDirectory.createSubDirectory("bar");
-                const subMap3 = mapFactory.create(dataStoreRuntime, "subMap3");
-                barDirectory.set("object", subMap3.handle);
-
-                const bazDirectory = barDirectory.createSubDirectory("baz");
-                const subMap4 = mapFactory.create(dataStoreRuntime, "subMap4");
-                bazDirectory.set("object", subMap4.handle);
-
-                containerRuntimeFactory.processAllMessages();
-
-                // Verify the GC nodes returned by summarize.
-                const gcNodes = directory2.summarize().gcNodes;
-                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                assert.deepStrictEqual(
-                    gcNodes[0].outboundRoutes,
-                    [
-                        subMap.handle.absolutePath,
-                        subMap2.handle.absolutePath,
-                        subMap3.handle.absolutePath,
-                        subMap4.handle.absolutePath,
-                    ],
-                    "GC node's outbound routes is incorrect");
+            beforeEach(() => {
+                subMapCount = 0;
+                expectedRoutes = [];
             });
 
-            it("can generate GC nodes when handles are removed from data", () => {
-                const subMap = mapFactory.create(dataStoreRuntime, "subMap");
-                directory.set("object", subMap.handle);
+            // Return the remote SharedDirectory because we want to verify its summary data.
+            const getSharedObject = () => directory2;
 
-                const fooDirectory = directory.createSubDirectory("foo");
-                const subMap2 = mapFactory.create(dataStoreRuntime, "subMap2");
-                fooDirectory.set("object", subMap2.handle);
+            async function addOutboundRoutes() {
+                const subMapId1 = `subMap-${++subMapCount}`;
+                const subMap1 = mapFactory.create(dataStoreRuntime, subMapId1);
+                directory.set(subMapId1, subMap1.handle);
+                expectedRoutes.push(subMap1.handle.absolutePath);
 
-                const barDirectory = fooDirectory.createSubDirectory("bar");
-                const subMap3 = mapFactory.create(dataStoreRuntime, "subMap3");
-                barDirectory.set("object", subMap3.handle);
-
-                containerRuntimeFactory.processAllMessages();
-
-                // Verify the GC nodes returned by summarize.
-                let gcNodes = directory2.summarize().gcNodes;
-                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                assert.deepStrictEqual(
-                    gcNodes[0].outboundRoutes,
-                    [
-                        subMap.handle.absolutePath,
-                        subMap2.handle.absolutePath,
-                        subMap3.handle.absolutePath,
-                    ],
-                    "GC node's outbound routes is incorrect");
-
-                // Verify that removed handle updates GC node correctly.
-                fooDirectory.delete("object");
+                const fooDirectory = directory.getSubDirectory("foo") ?? directory.createSubDirectory("foo");
+                const subMapId2 = `subMap-${++subMapCount}`;
+                const subMap2 = mapFactory.create(dataStoreRuntime, subMapId2);
+                fooDirectory.set(subMapId2, subMap2.handle);
+                expectedRoutes.push(subMap2.handle.absolutePath);
 
                 containerRuntimeFactory.processAllMessages();
+            }
 
-                gcNodes = directory2.summarize().gcNodes;
-                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                assert.deepStrictEqual(
-                    gcNodes[0].outboundRoutes,
-                    [
-                        subMap.handle.absolutePath,
-                        subMap3.handle.absolutePath,
-                    ],
-                    "GC node's outbound routes should now be empty");
-            });
+            async function deleteOutboundRoutes() {
+                // Delete the last handle that was added.
+                const fooDirectory = directory.getSubDirectory("foo");
+                assert(fooDirectory, "Route must be added before deleting");
 
-            it("can generate GC nodes when handles are added to data", () => {
-                const subMap = mapFactory.create(dataStoreRuntime, "subMap");
-                directory.set("object", subMap.handle);
+                const subMapId = `subMap-${subMapCount}`;
+                const deletedHandle = fooDirectory.get(subMapId);
+                assert(deletedHandle, "Route must be added before deleting");
+
+                fooDirectory.delete(subMapId);
+                // Remove deleted handle's route from expected routes.
+                expectedRoutes = expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
 
                 containerRuntimeFactory.processAllMessages();
+            }
 
-                // Verify the GC nodes returned by summarize.
-                let gcNodes = directory2.summarize().gcNodes;
-                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                assert.deepStrictEqual(
-                    gcNodes[0].outboundRoutes,
-                    [
-                        subMap.handle.absolutePath,
-                    ],
-                    "GC node's outbound routes is incorrect");
-
-                // Verify that new handle in subdirectory updates GC node correctly.
-                const fooDirectory = directory.createSubDirectory("foo");
-                const subMap2 = mapFactory.create(dataStoreRuntime, "subMap2");
-                fooDirectory.set("object", subMap2.handle);
-
-                containerRuntimeFactory.processAllMessages();
-
-                gcNodes = directory2.summarize().gcNodes;
-                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                assert.deepStrictEqual(
-                    gcNodes[0].outboundRoutes,
-                    [
-                        subMap.handle.absolutePath,
-                        subMap2.handle.absolutePath,
-                    ],
-                    "GC node's outbound routes should have the new handle's route");
-            });
-
-            it("can generate GC nodes with nested handles in data", () => {
-                const fooDirectory = directory.createSubDirectory("foo");
-                const subMap = mapFactory.create(dataStoreRuntime, "subMap");
-                const subMap2 = mapFactory.create(dataStoreRuntime, "subMap2");
+            async function addNestedHandles() {
+                const fooDirectory = directory.getSubDirectory("foo") ?? directory.createSubDirectory("foo");
+                const subMapId1 = `subMap-${++subMapCount}`;
+                const subMapId2 = `subMap-${++subMapCount}`;
+                const subMap = mapFactory.create(dataStoreRuntime, subMapId1);
+                const subMap2 = mapFactory.create(dataStoreRuntime, subMapId2);
                 const containingObject = {
                     subMapHandle: subMap.handle,
                     nestedObj: {
                         subMap2Handle: subMap2.handle,
                     },
                 };
-                fooDirectory.set("object", containingObject);
-
+                fooDirectory.set(subMapId2, containingObject);
                 containerRuntimeFactory.processAllMessages();
+                expectedRoutes.push(subMap.handle.absolutePath, subMap2.handle.absolutePath);
+            }
 
-                // Verify the GC nodes returned by summarize.
-                const gcNodes = directory2.summarize().gcNodes;
-                assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                assert.deepStrictEqual(
-                    gcNodes[0].outboundRoutes,
-                    [
-                        subMap.handle.absolutePath,
-                        subMap2.handle.absolutePath,
-                    ],
-                    "GC node's outbound routes is incorrect");
-            });
+            const gcTestProvider: IGCTestProvider = {
+                getSharedObject,
+                addOutboundRoutes,
+                deleteOutboundRoutes,
+                addNestedHandles,
+                getExpectedOutboundRoutes: () => expectedRoutes,
+            };
+
+            runGCTests(gcTestProvider);
         });
     });
 });

@@ -4,12 +4,15 @@
  */
 
 import { strict as assert } from "assert";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IDeltaConnection, IChannelServices } from "@fluidframework/datastore-definitions";
 import {
     FileMode,
     ISummaryBlob,
     ITree,
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
+import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
@@ -17,7 +20,6 @@ import {
     MockFluidDataStoreRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IDeltaConnection, IChannelServices } from "@fluidframework/datastore-definitions";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection } from "../interfaces";
 
@@ -286,111 +288,65 @@ describe("ConsensusRegisterCollection", () => {
             });
 
             describe("Garbage Collection", () => {
+                let subCollectionCount = 0;
+                let expectedRoutes: string[] = [];
+
                 async function writeAndProcessMsg(key: string, value: any) {
                     const waitP = testCollection1.write(key, value);
                     containerRuntimeFactory.processAllMessages();
                     return waitP;
                 }
 
-                it("can generate GC nodes with handles in data", async () => {
-                    const gcTestCollection = crcFactory.create(dataStoreRuntime1, "gcTestCollection");
-                    await writeAndProcessMsg("key", gcTestCollection.handle);
-
-                    // Verify the GC nodes returned by summarize.
-                    const gcNodes = testCollection2.summarize().gcNodes;
-                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                    assert.deepStrictEqual(
-                        gcNodes[0].outboundRoutes,
-                        [
-                            gcTestCollection.handle.absolutePath,
-                        ],
-                        "GC node's outbound routes is incorrect");
+                beforeEach(() => {
+                    subCollectionCount = 0;
+                    expectedRoutes = [];
                 });
 
-                it("can generate GC nodes when handles are added to data", async () => {
-                    const gcTestCollection1 = crcFactory.create(dataStoreRuntime1, "gcTestCollection1");
-                    await writeAndProcessMsg("key", gcTestCollection1.handle);
+                // Return the remote collection because we want to verify its summary data.
+                const getSharedObject = () => testCollection2;
 
-                    // Verify the GC nodes returned by summarize.
-                    let gcNodes = testCollection2.summarize().gcNodes;
-                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                    assert.deepStrictEqual(
-                        gcNodes[0].outboundRoutes,
-                        [
-                            gcTestCollection1.handle.absolutePath,
-                        ],
-                        "GC node's outbound routes is incorrect");
+                async function addOutboundRoutes() {
+                    const subCollectionId = `subCollection-${++subCollectionCount}`;
+                    const subTestCollection = crcFactory.create(dataStoreRuntime1, subCollectionId);
+                    await writeAndProcessMsg(subCollectionId, subTestCollection.handle);
+                    expectedRoutes.push(subTestCollection.handle.absolutePath);
+                }
 
-                    // Add a new handle to data.
-                    const gcTestCollection2 = crcFactory.create(dataStoreRuntime1, "gcTestCollection2");
-                    await writeAndProcessMsg("key2", gcTestCollection2.handle);
+                async function deleteOutboundRoutes() {
+                    const subCollectionId = `subCollection-${subCollectionCount}`;
+                    const deletedHandle = testCollection1.read(subCollectionId) as IFluidHandle;
+                    assert(deletedHandle, "Route must be added before deleting");
 
-                    // Verify that added handle updates GC nodes correctly.
-                    gcNodes = testCollection2.summarize().gcNodes;
-                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                    assert.deepStrictEqual(
-                        gcNodes[0].outboundRoutes,
-                        [
-                            gcTestCollection1.handle.absolutePath,
-                            gcTestCollection2.handle.absolutePath,
-                        ],
-                        "GC node's outbound routes is incorrect");
-                });
+                    // Delete the last handle that was added.
+                    await writeAndProcessMsg(subCollectionId, "nonHandleValue");
+                    // Remove deleted handle's route from expected routes.
+                    expectedRoutes = expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
+                }
 
-                it("can generate GC nodes when handles are removed from data", async () => {
-                    const gcTestCollection1 = crcFactory.create(dataStoreRuntime1, "gcTestCollection1");
-                    await writeAndProcessMsg("key", gcTestCollection1.handle);
-
-                    // Verify the GC nodes returned by summarize.
-                    let gcNodes = testCollection2.summarize().gcNodes;
-                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                    assert.deepStrictEqual(
-                        gcNodes[0].outboundRoutes,
-                        [
-                            gcTestCollection1.handle.absolutePath,
-                        ],
-                        "GC node's outbound routes is incorrect");
-
-                    // Remove the handle from data.
-                    await writeAndProcessMsg("key", "nonHandleValue");
-
-                    // Verify that added handle updates GC nodes correctly.
-                    gcNodes = testCollection2.summarize().gcNodes;
-                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                    assert.deepStrictEqual(
-                        gcNodes[0].outboundRoutes,
-                        [],
-                        "GC node's outbound routes is incorrect");
-                });
-
-                it("can generate GC nodes with nested handles in data", async () => {
-                    const gcTestCollection1 = crcFactory.create(dataStoreRuntime1, "gcTestCollection1");
-                    const gcTestCollection2 = crcFactory.create(dataStoreRuntime1, "gcTestCollection2");
+                async function addNestedHandles() {
+                    const subCollectionId1 = `subCollection-${++subCollectionCount}`;
+                    const subCollectionId2 = `subCollection-${++subCollectionCount}`;
+                    const subTestCollection1 = crcFactory.create(dataStoreRuntime1, subCollectionId1);
+                    const subTestCollection2 = crcFactory.create(dataStoreRuntime1, subCollectionId2);
                     const containingObject = {
-                        collection1Handle: gcTestCollection1.handle,
+                        collection1Handle: subTestCollection1.handle,
                         nestedObj: {
-                            collection2Handle: gcTestCollection2.handle,
+                            collection2Handle: subTestCollection2.handle,
                         },
                     };
-                    await writeAndProcessMsg("key", containingObject);
+                    await writeAndProcessMsg(subCollectionId2, containingObject);
+                    expectedRoutes.push(subTestCollection1.handle.absolutePath, subTestCollection2.handle.absolutePath);
+                }
 
-                    // Verify the GC nodes returned by summarize.
-                    const gcNodes = testCollection2.summarize().gcNodes;
-                    assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-                    assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-                    assert.deepStrictEqual(
-                        gcNodes[0].outboundRoutes,
-                        [
-                            gcTestCollection1.handle.absolutePath,
-                            gcTestCollection2.handle.absolutePath,
-                        ],
-                        "GC node's outbound routes is incorrect");
-                });
+                const gcTestProvider: IGCTestProvider = {
+                    getSharedObject,
+                    addOutboundRoutes,
+                    deleteOutboundRoutes,
+                    addNestedHandles,
+                    getExpectedOutboundRoutes: () => expectedRoutes,
+                };
+
+                runGCTests(gcTestProvider);
             });
         });
     });
