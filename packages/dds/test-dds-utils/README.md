@@ -1,6 +1,6 @@
-# @fluidframework/test-dds-utils
+# @fluid-internal/test-dds-utils
 
-Utilities for writing unit tests for DDS in Fluid framework.
+Utilities for writing unit tests for DDS in Fluid Framework.
 
 ## Garbage Collection (GC) unit tests
 The [gcTestRunner](./src/gcTestRunner.ts) file provides a set of tests for validating that the DDSs return correct GC nodes.

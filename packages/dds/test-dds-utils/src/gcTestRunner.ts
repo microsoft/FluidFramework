@@ -23,8 +23,8 @@ export interface IGCTestProvider {
 }
 
 export const runGCTests = (provider: IGCTestProvider) => {
-    it("can generate GC nodes with routes to fluid objects in data", async () => {
-        // Get the shared object and add routes to fluid object in its data.
+    it("can generate GC nodes with routes to Fluid objects in data", async () => {
+        // Get the shared object and add routes to Fluid object in its data.
         const sharedObject = provider.getSharedObject();
         await provider.addOutboundRoutes();
 
@@ -39,7 +39,7 @@ export const runGCTests = (provider: IGCTestProvider) => {
     });
 
     it("can generate GC nodes when handles are deleted from data", async () => {
-        // Get the shared object and add routes to fluid object in its data.
+        // Get the shared object and add routes to Fluid object in its data.
         const sharedObject = provider.getSharedObject();
         await provider.addOutboundRoutes();
 
@@ -52,7 +52,7 @@ export const runGCTests = (provider: IGCTestProvider) => {
             provider.getExpectedOutboundRoutes().sort(),
             "GC node's outbound routes is incorrect");
 
-        // Delete routes to fluid objects from the shared object's data.
+        // Delete routes to Fluid objects from the shared object's data.
         await provider.deleteOutboundRoutes();
 
         // Verify that GC node's outbound routes are updated correctly.
@@ -66,7 +66,7 @@ export const runGCTests = (provider: IGCTestProvider) => {
     });
 
     it("can generate GC nodes when handles are added to data", async () => {
-        // Get the shared object and add routes to fluid object in its data.
+        // Get the shared object and add routes to Fluid object in its data.
         const sharedObject = provider.getSharedObject();
         await provider.addOutboundRoutes();
 
@@ -79,7 +79,7 @@ export const runGCTests = (provider: IGCTestProvider) => {
             provider.getExpectedOutboundRoutes().sort(),
             "GC node's outbound routes is incorrect");
 
-        // Add more routes to fluid object to the shared object's data.
+        // Add more routes to Fluid object to the shared object's data.
         await provider.addOutboundRoutes();
 
         // Verify that GC node's outbound routes are updated correctly.
