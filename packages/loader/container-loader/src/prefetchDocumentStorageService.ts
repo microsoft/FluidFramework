@@ -78,7 +78,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 
         for (const commit of Object.keys(tree.commits)) {
             this.getVersions(tree.commits[commit], 1)
-                .then((moduleCommit) => this.getSnapshotTree(moduleCommit[0]))
+                .then(async (moduleCommit) => this.getSnapshotTree(moduleCommit[0]))
                 .catch((error) => debug("Ignored cached read error", error));
         }
 

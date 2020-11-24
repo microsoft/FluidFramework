@@ -35,7 +35,7 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
         return this.readWithRetry(async () => this.internalStorageService.readBlob(id));
     }
 
-    private async readWithRetry<T>(api: () => Promise<T>, retryLimitSeconds: number = 500): Promise<T> {
+    private async readWithRetry<T>(api: () => Promise<T>, retryLimitSeconds: number = 0): Promise<T> {
         let result: T;
         try {
             result = await api();
@@ -46,6 +46,7 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
                 throw error;
             }
             // If the error is throttling error, then wait for the specified time before retrying.
+            // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
             const retryAfter = getRetryDelayFromError(error) ?? Math.min(retryLimitSeconds * 2, 8000);
             emitThrottlingWarning(retryAfter, CreateContainerError(error), this.container);
             result = await new Promise((resolve) => setTimeout(async () => {
