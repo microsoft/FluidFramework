@@ -29,10 +29,6 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         return p;
     }
 
-    public async readBlob(id: string): Promise<ArrayBufferLike> {
-        return this.internalStorageService.readBlob(id);
-    }
-
     public async read(blobId: string): Promise<string> {
         return this.cachedRead(blobId);
     }
@@ -82,13 +78,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 
         for (const commit of Object.keys(tree.commits)) {
             this.getVersions(tree.commits[commit], 1)
-                .then((moduleCommit) => {
-                    this.internalStorageService.getSnapshotTree(moduleCommit[0])
-                    .then((snapshotTree: ISnapshotTree | null | undefined) => {
-                        if (snapshotTree === null || snapshotTree === undefined) { return; }
-                        this.prefetchTree(snapshotTree);
-                    });
-                })
+                .then((moduleCommit) => this.getSnapshotTree(moduleCommit[0]))
                 .catch((error) => debug("Ignored cached read error", error));
         }
 
