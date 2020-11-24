@@ -13,9 +13,9 @@ import {
     ISummarizerNodeWithGC,
     CreateChildSummarizerNodeParam,
 } from "@fluidframework/runtime-definitions";
+import { cloneGCNodes } from "../garbageCollectionUtils";
 import { SummarizerNode } from "./summarizerNode";
 import { ICreateChildDetails, IInitialSummary, ISummarizerNodeRootContract, SummaryNode } from "./summarizerNodeUtils";
-import { cloneGCNodes } from "./garbageCollectionUtils";
 
 export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISummarizerNodeRootContract {}
 
@@ -153,17 +153,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
  */
 export const createRootSummarizerNodeWithGC = (
     logger: ITelemetryLogger,
-    /** Summarize function */
     summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
-    /** Sequence number of latest change to new node/subtree */
     changeSequenceNumber: number,
-    /**
-     * Reference sequence number of last acked summary,
-     * or undefined if not loaded from summary.
-     */
     referenceSequenceNumber: number | undefined,
     config: ISummarizerNodeConfig = {},
-    /** Function to get the initial value of garbage collection nodes */
     getInitialGCNodesFn?: () => Promise<IGraphNode[]>,
 ): IRootSummarizerNodeWithGC => new SummarizerNodeWithGC(
     logger,

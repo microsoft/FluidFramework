@@ -12,7 +12,7 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "./summaryUtils";
+import { SummaryTreeBuilder } from "../summaryUtils";
 
 const baseSummaryTreeKey = "_baseSummary";
 const outstandingOpsBlobKey = "_outstandingOps";

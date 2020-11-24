@@ -11,9 +11,8 @@ import {
     ISummarizeInternalResult,
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
-import { IRootSummarizerNodeWithGC } from "../summarizerNodeWithGc";
-import { mergeStats } from "../summaryUtils";
-import { createRootSummarizerNodeWithGC } from "../summarizerNodeContract";
+import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "../summarizerNodeWithGc";
+import { mergeStats } from "../../summaryUtils";
 
 describe("SummarizerNodeWithGC Tests", () => {
     const summarizerNodeId = "testNode";

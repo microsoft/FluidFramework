@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { mergeStats, convertToSummaryTree, calculateStats } from "./summaryUtils";
+import { mergeStats, convertToSummaryTree, calculateStats } from "../summaryUtils";
 import {
     decodeSummary,
     encodeSummary,
@@ -560,14 +560,8 @@ export class SummarizerNode implements IRootSummarizerNode {
  */
 export const createRootSummarizerNode = (
     logger: ITelemetryLogger,
-    /** Summarize function */
     summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
-    /** Sequence number of latest change to new node/subtree */
     changeSequenceNumber: number,
-    /**
-     * Reference sequence number of last acked summary,
-     * or undefined if not loaded from summary.
-     */
     referenceSequenceNumber: number | undefined,
     config: ISummarizerNodeConfig = {},
 ): IRootSummarizerNode => new SummarizerNode(
