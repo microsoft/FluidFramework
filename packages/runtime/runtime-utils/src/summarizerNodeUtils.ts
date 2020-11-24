@@ -59,6 +59,7 @@ export class EscapedPath {
 
 /** Information about a summary relevant to a specific node in the tree */
 export class SummaryNode {
+    /** Creates an instance that is valid for the root with specific basePath and localPath */
     public static createForRoot(referenceSequenceNumber: number): SummaryNode {
         return new SummaryNode({
             referenceSequenceNumber,
@@ -67,15 +68,19 @@ export class SummaryNode {
         });
     }
 
+    /** Summary reference sequence number, i.e. last sequence number seen when it was created */
     public get referenceSequenceNumber(): number {
         return this.summary.referenceSequenceNumber;
     }
+    /** Full path to parent node, or undefined if this is the root */
     public get basePath(): EscapedPath | undefined {
         return this.summary.basePath;
     }
+    /** Relative path to this node from its parent node */
     public get localPath(): EscapedPath {
         return this.summary.localPath;
     }
+    /** Relative path from this node to its node innermost base summary */
     public get additionalPath(): EscapedPath | undefined {
         return this.summary.additionalPath;
     }
@@ -89,16 +94,25 @@ export class SummaryNode {
         additionalPath?: EscapedPath,
     }) { }
 
+    /** Gets the full path to this node, to be used when sending a handle */
     public get fullPath(): EscapedPath {
         return this.basePath?.concat(this.localPath) ?? this.localPath;
     }
 
+    /**
+     * Gets the full path to this node's innermost base summary.
+     * The children nodes can use this as their basePath to determine their path.
+     */
     public get fullPathForChildren(): EscapedPath {
         return this.additionalPath !== undefined
             ? this.fullPath.concat(this.additionalPath)
             : this.fullPath;
     }
 
+    /**
+     * Creates a new node within the same summary for a child of this node.
+     * @param id - id of the child node
+     */
     public createForChild(id: string): SummaryNode {
         return new SummaryNode({
             referenceSequenceNumber: this.referenceSequenceNumber,
@@ -108,9 +122,13 @@ export class SummaryNode {
     }
 }
 
+/** Result from decoding summary which may have been a differential summary. */
 interface IDecodedSummary {
+    /** The innermost base summary which is not itself a differential summary */
     readonly baseSummary: ISnapshotTree;
+    /** The entire path name to the innermost base summary */
     readonly pathParts: string[];
+    /** Function to fetch all outstanding ops since the innermost base summary */
     getOutstandingOps(readAndParseBlob: ReadAndParseBlob): Promise<ISequencedDocumentMessage[]>;
 }
 
@@ -187,6 +205,13 @@ interface IEncodedSummary extends ISummaryTreeWithStats {
     readonly additionalPath: EscapedPath;
 }
 
+/**
+ * Parameter to help encode summary with conditional behavior.
+ * When fromSummary is true, it will contain the SummaryNode of
+ * its previous summary, which it can use to point to with a handle.
+ * When fromSummary is false, it will use an actual summary tree
+ * as its base summary in case the first summary is a differential summary.
+ */
 export type EncodeSummaryParam = {
     fromSummary: true;
     summaryNode: SummaryNode;
