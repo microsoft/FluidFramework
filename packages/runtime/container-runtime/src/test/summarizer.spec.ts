@@ -13,7 +13,7 @@ import {
     ISummaryProposal,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { RunningSummarizer } from "../summarizer";
 import { SummaryCollection } from "../summaryCollection";
 
