@@ -24,7 +24,7 @@ import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
-import { convertSnapshotTreeToProtocolAndAppSummaryTree, requestFluidObject } from "@fluidframework/runtime-utils";
+import { convertContainerToDriverSerializedFormat, requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ILocalTestObjectProvider,
     generateLocalTest,
@@ -253,7 +253,7 @@ const tests = (args: ILocalTestObjectProvider) => {
         dataStore.root.set("attachKey", subDataStore1.handle);
 
         const snapshotTree = container.serialize();
-        const summaryForAttach = convertSnapshotTreeToProtocolAndAppSummaryTree(snapshotTree);
+        const summaryForAttach = convertContainerToDriverSerializedFormat(snapshotTree);
         const resolvedUrl = await args.urlResolver.resolve(request);
         const service = await args.documentServiceFactory.createContainer(summaryForAttach as any, resolvedUrl);
         const absoluteUrl = await args.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");

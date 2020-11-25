@@ -257,7 +257,7 @@ export function convertSnapshotTreeToSummaryTree(
  * attach the container.
  * @param serializedSnapshotTree - serialized snapshot tree to be converted to summary tree for attach.
  */
-export function convertSnapshotTreeToProtocolAndAppSummaryTree(
+export function convertContainerToDriverSerializedFormat(
     serializedSnapshotTree: string,
 ): ISummaryTree {
     const snapshotTree: ISnapshotTree = JSON.parse(serializedSnapshotTree);
