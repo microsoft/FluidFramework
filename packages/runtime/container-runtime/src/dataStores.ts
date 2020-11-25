@@ -270,12 +270,16 @@ export class DataStores implements IDisposable {
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<IFluidDataStoreChannel> {
-        const deferredContext = this.contexts.prepDeferredContext(id);
+        const existingContext = this.contexts.get(id);
+        if (existingContext !== undefined && !this.contexts.isNotBound(id)) {
+            return existingContext.realize();
+        }
 
-        if (!wait && !deferredContext.isCompleted) {
+        if (!wait) {
             throw new Error(`DataStore ${id} does not exist`);
         }
 
+        const deferredContext = this.contexts.prepDeferredContext(id);
         const context = await deferredContext.promise;
         return context.realize();
     }
