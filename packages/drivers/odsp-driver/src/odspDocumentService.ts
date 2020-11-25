@@ -329,7 +329,7 @@ export class OdspDocumentService implements IDocumentService {
             // pushV2 websocket urls will contain pushf
             const pushV2 = nonAfdUrl.includes("pushf");
             try {
-                const connection = await OdspDocumentDeltaConnection.create(
+                const connection = await OdspDocumentDeltaConnection.create2(
                     tenantId,
                     documentId,
                     token,
@@ -368,7 +368,7 @@ export class OdspDocumentService implements IDocumentService {
 
             const startTime = performance.now();
             try {
-                const connection = await OdspDocumentDeltaConnection.create(
+                const connection = await OdspDocumentDeltaConnection.create2(
                     tenantId,
                     documentId,
                     token,

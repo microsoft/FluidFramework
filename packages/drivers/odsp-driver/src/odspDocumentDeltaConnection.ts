@@ -4,10 +4,9 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IDocumentDeltaConnection, DriverError } from "@fluidframework/driver-definitions";
-import { OdspError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
     IConnect,
@@ -18,7 +17,6 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import uuid from "uuid/v4";
 import { IOdspSocketError } from "./contracts";
-import { debug } from "./debug";
 import { errorObjectFromSocketError } from "./odspError";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -28,14 +26,82 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const socketReferenceBufferTime = 2000;
 
 class SocketReference {
-    public references: number = 1;
-    public delayDeleteTimeout?: NodeJS.Timeout;
-    public delayDeleteTimeoutSetTime?: number;
+    private references: number = 1;
+    private delayDeleteTimeout?: NodeJS.Timeout;
+    private delayDeleteTimeoutSetTime?: number;
+    private _socket: SocketIOClient.Socket | undefined;
+    private inUse = false;
 
-    public constructor(public socket: SocketIOClient.Socket | undefined) {
+    // Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
+    private static readonly socketIoSockets: Map<string, SocketReference> = new Map();
+
+    public static find(key: string, logger: ITelemetryLogger) {
+        const socketReference = SocketReference.socketIoSockets.get(key);
+
+        // Verify the socket is healthy before reusing it
+        if (socketReference && socketReference.disconnected) {
+            // The socket is in a bad state. fully remove the reference
+            socketReference.closeSocket();
+            return undefined;
+        }
+
+        if (socketReference) {
+            // Clear the pending deletion if there is one
+            socketReference.clearTimer();
+            socketReference.references++;
+
+            logger.sendTelemetryEvent({
+                references: socketReference.references,
+                eventName: "OdspDocumentDeltaCollection.GetSocketIoReference",
+                delayDeleteDelta: socketReference.delayDeleteTimeoutSetTime !== undefined ?
+                    (Date.now() - socketReference.delayDeleteTimeoutSetTime) : undefined,
+            });
+        }
+
+        return socketReference;
     }
 
-    public clearTimer() {
+    /**
+     * Removes a reference for the given key
+     * Once the ref count hits 0, the socket is disconnected and removed
+     * @param key - socket reference key
+     * @param isFatalError - true if the socket reference should be removed immediately due to a fatal error
+     */
+    public removeSocketIoReference(isFatalError: boolean) {
+        assert(this.references > 0);
+        this.references--;
+
+        // see comment in disconnected() getter
+        this.inUse = true;
+
+        if (isFatalError || this.disconnected) {
+            this.closeSocket();
+            return;
+        }
+
+        if (this.references === 0 && this.delayDeleteTimeout === undefined) {
+            this.delayDeleteTimeout = setTimeout(() => {
+                // We should not get here with active users.
+                assert(this.references === 0);
+                this.closeSocket();
+            }, socketReferenceBufferTime);
+            this.delayDeleteTimeoutSetTime = Date.now();
+        }
+    }
+
+    public get socket() {
+        if (!this._socket) {
+            throw new Error(`Invalid socket for key "${this.key}`);
+        }
+        return this._socket;
+    }
+
+    public constructor(public readonly key: string, socket: SocketIOClient.Socket) {
+        this._socket = socket;
+        SocketReference.socketIoSockets.set(key, this);
+    }
+
+    private clearTimer() {
         if (this.delayDeleteTimeout !== undefined) {
             clearTimeout(this.delayDeleteTimeout);
             this.delayDeleteTimeout = undefined;
@@ -43,11 +109,37 @@ class SocketReference {
         }
     }
 
-    public closeSocket() {
-        if (this.socket) {
-            this.socket.disconnect();
-            this.socket = undefined;
-        }
+    private closeSocket() {
+        if (!this._socket) { return; }
+
+        this.clearTimer();
+
+        assert(SocketReference.socketIoSockets.get(this.key) === this);
+        SocketReference.socketIoSockets.delete(this.key);
+
+        const socket = this._socket;
+        this._socket = undefined;
+
+        // Delay closing socket, to make sure all users of socket observe the same event that causes
+        // this instance to close, and thus properly record reason for clusure.
+        // All event raising is synchronous, so clients will have a chance to react before socket is
+        // closed without any extra data on why it was closed.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        Promise.resolve().then(() => { socket.disconnect(); });
+    }
+
+    private get disconnected() {
+        if (this._socket === undefined) { return true; }
+        if (this.socket.connected) { return false; }
+
+        // We have a socket that is not connected. Two cases are possible:
+        // 1) It was connected some time ago and lost connection. We do not want to reuse it.
+        // 2) It was just created and never had a chance to connect - connection is in process.
+        // We have to differentiate these two states in order to be able to reuse socket in #1, but not in #2
+        // We will use the fact that socket had some activity. I.e. if socket disconnected, or client stopped using
+        // socket, then removeSocketIoReference() will be called for it, and it will be the indiction that it's not #1,
+        // or something else is wrong with socket.
+        return this.inUse;
     }
 }
 
@@ -68,15 +160,15 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param url - websocket URL
      * @param telemetryLogger - optional telemetry logger
      */
-    public static async create(
+    public static async create2(
         tenantId: string,
         documentId: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
         url: string,
-        timeoutMs: number = 20000,
-        telemetryLogger: ITelemetryLogger = new TelemetryNullLogger()): Promise<IDocumentDeltaConnection> {
+        timeoutMs: number,
+        telemetryLogger: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
         // enable multiplexing when the websocket url does not include the tenant/document id
         const parsedUrl = new URL(url);
         const enableMultiplexing = !parsedUrl.searchParams.has("documentId") && !parsedUrl.searchParams.has("tenantId");
@@ -89,9 +181,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             io, timeoutMs, socketReferenceKey, url, enableMultiplexing, tenantId, documentId, telemetryLogger);
 
         const socket = socketReference.socket;
-        if (!socket) {
-            throw new Error(`Invalid socket for key "${socketReferenceKey}`);
-        }
 
         const connectMessage: IConnect = {
             client,
@@ -106,7 +195,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         const deltaConnection = new OdspDocumentDeltaConnection(
             socket,
             documentId,
-            socketReferenceKey,
+            socketReference,
+            telemetryLogger,
             enableMultiplexing);
 
         try {
@@ -142,8 +232,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         return deltaConnection;
     }
 
-    // Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
-    private static readonly socketIoSockets: Map<string, SocketReference> = new Map();
+    private socketReferenece: SocketReference | undefined;
 
     /**
      * Gets or create a socket io connection for the given key
@@ -156,113 +245,42 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         enableMultiplexing: boolean,
         tenantId: string,
         documentId: string,
-        telemetryLogger: ITelemetryLogger): SocketReference {
-        let socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
-
-        // Verify the socket is healthy before reusing it
-        if (socketReference && (!socketReference.socket || !socketReference.socket.connected)) {
-            // The socket is in a bad state. fully remove the reference
-            OdspDocumentDeltaConnection.removeSocketIoReference(key, true, "socket is closed");
-
-            socketReference = undefined;
-        }
-
+        logger: ITelemetryLogger): SocketReference
+    {
+        const socketReference = SocketReference.find(key, logger);
         if (socketReference) {
-            telemetryLogger.sendTelemetryEvent({
-                references: socketReference.references,
-                eventName: "OdspDocumentDeltaCollection.GetSocketIoReference",
-                delayDeleteDelta: socketReference.delayDeleteTimeoutSetTime !== undefined ?
-                    (Date.now() - socketReference.delayDeleteTimeoutSetTime) : undefined,
+            return socketReference;
+        }
+
+        const query = enableMultiplexing ? undefined : { documentId, tenantId };
+
+        const socket = io(
+            url,
+            {
+                multiplex: false, // Don't rely on socket.io built-in multiplexing
+                query,
+                reconnection: false,
+                transports: ["websocket"],
+                timeout: timeoutMs,
             });
 
-            socketReference.references++;
+        const socketReference2 = new SocketReference(key, socket);
 
-            // Clear the pending deletion if there is one
-            socketReference.clearTimer();
+        socket.on("server_disconnect", (socketError: IOdspSocketError) => {
+            // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
+            // filter out retryable vs. non-retryable cases.
+            const error = errorObjectFromSocketError(socketError);
+            error.canRetry = true;
 
-            debug(`Using existing socketio reference for ${key} (${socketReference.references})`);
-        } else {
-            const query = enableMultiplexing ? undefined : { documentId, tenantId };
+            // The server always closes the socket after sending this message
+            // fully remove the socket reference now
+            // This raises "disconnect" event with proper error object.
+            socketReference2.removeSocketIoReference(true /* socketProtocolError */);
 
-            const socket = io(
-                url,
-                {
-                    multiplex: false, // Don't rely on socket.io built-in multiplexing
-                    query,
-                    reconnection: false,
-                    transports: ["websocket"],
-                    timeout: timeoutMs,
-                });
+            socket.emit("disconnect", error);
+        });
 
-            socket.on("server_disconnect", (socketError: IOdspSocketError) => {
-                // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
-                // filter out retryable vs. non-retryable cases.
-                const error = errorObjectFromSocketError(socketError);
-                error.canRetry = true;
-
-                // The server always closes the socket after sending this message
-                // fully remove the socket reference now
-                // This raises "disconnect" event with proper error object.
-                OdspDocumentDeltaConnection.removeSocketIoReference(key, true /* socketProtocolError */, error);
-            });
-
-            socketReference = new SocketReference(socket);
-
-            OdspDocumentDeltaConnection.socketIoSockets.set(key, socketReference);
-            debug(`Created new socketio reference for ${key}. multiplexing: ${enableMultiplexing}`);
-        }
-
-        return socketReference;
-    }
-
-    /**
-     * Removes a reference for the given key
-     * Once the ref count hits 0, the socket is disconnected and removed
-     * @param key - socket reference key
-     * @param isFatalError - true if the socket reference should be removed immediately due to a fatal error
-     */
-    private static removeSocketIoReference(
-        key: string,
-        isFatalError: boolean,
-        reason: string | OdspError) {
-        const socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
-        if (!socketReference) {
-            // This is expected to happen if we removed the reference due the socket not being connected
-            return;
-        }
-
-        socketReference.references--;
-
-        debug(`Removed socketio reference for ${key}. Remaining references: ${socketReference.references}.`);
-
-        if (isFatalError || (socketReference.socket && !socketReference.socket.connected)) {
-            // Clear the pending deletion if there is one
-            socketReference.clearTimer();
-
-            OdspDocumentDeltaConnection.socketIoSockets.delete(key);
-            debug(`Deleted socketio reference for ${key}. Is fatal error: ${isFatalError}.`);
-
-            // Raise "disconnect" event before closing.
-            // That produces cleaner telemetry with reason behind closure
-            if (socketReference.socket) {
-                socketReference.socket.emit("disconnect", reason);
-            }
-            socketReference.closeSocket();
-            return;
-        }
-
-        if (socketReference.references === 0 && socketReference.delayDeleteTimeout === undefined) {
-            socketReference.delayDeleteTimeout = setTimeout(() => {
-                // We should not get here with active users.
-                assert(socketReference.references === 0);
-
-                OdspDocumentDeltaConnection.socketIoSockets.delete(key);
-                socketReference.closeSocket();
-
-                debug(`Deleted socketio reference for ${key}.`);
-            }, socketReferenceBufferTime);
-            socketReference.delayDeleteTimeoutSetTime = Date.now();
-        }
+        return socketReference2;
     }
 
     /**
@@ -275,9 +293,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     constructor(
         socket: SocketIOClient.Socket,
         documentId: string,
-        private socketReferenceKey: string | undefined,
-        private readonly enableMultiplexing?: boolean) {
+        socketReferenece: SocketReference,
+        private readonly logger: ITelemetryLogger,
+        private readonly enableMultiplexing?: boolean)
+    {
         super(socket, documentId);
+        this.socketReferenece = socketReferenece;
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
@@ -341,19 +362,19 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * Disconnect from the websocket
      */
     protected disconnect(socketProtocolError: boolean, reason: DriverError) {
-        const key = this.socketReferenceKey;
-        assert(key !== undefined, "reentrancy not supported!");
-        this.socketReferenceKey = undefined;
+        const socket = this.socketReferenece;
+        if (socket === undefined) {
+            this.logger.sendErrorEvent({ eventName: "OdspSocketReentrancy" }, reason);
+            return;
+        }
+        this.socketReferenece = undefined;
 
         if (!socketProtocolError && this.hasDetails) {
             // tell the server we are disconnecting this client from the document
             this.socket.emit("disconnect_document", this.clientId, this.documentId);
         }
 
-        OdspDocumentDeltaConnection.removeSocketIoReference(key, socketProtocolError, reason);
-
-        // RemoveSocketIoReference() above raises "disconnect" event on socket for socketProtocolError === true
-        // If it's not critical error, we want to raise event on this object only.
+        socket.removeSocketIoReference(socketProtocolError);
         this.emit("disconnect", reason);
     }
 }
