@@ -260,7 +260,7 @@ export function convertSnapshotTreeToSummaryTree(
 export function convertSnapshotTreeToProtocolAndAppSummaryTree(
     serializedSnapshotTree: string,
 ): ISummaryTree {
-    const snapshotTree = JSON.parse(serializedSnapshotTree);
+    const snapshotTree: ISnapshotTree = JSON.parse(serializedSnapshotTree);
     const summaryTree = convertSnapshotTreeToSummaryTree(snapshotTree).summary;
     const appSummaryTree: ISummaryTree = {
         type: SummaryType.Tree,
