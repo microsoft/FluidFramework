@@ -88,15 +88,19 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
         this._contexts.set(id, context);
 
         this.notBoundContexts.add(id);
-        this.prepDeferredContext(id);
+        this.ensureDeferred(id);
     }
 
     /**
-     * This returns a Deferred that will resolve when a context with the given id is bound,
+     * This returns a Promise that will resolve when a context with the given id is bound,
      * or added as remote from another client.
-     * @param id The id of the context to defer binding on
+     * @param id The id of the context to await
      */
-    public prepDeferredContext(id: string): Deferred<FluidDataStoreContext> {
+    public async waitForContext(id: string): Promise<FluidDataStoreContext> {
+        return this.ensureDeferred(id).promise;
+    }
+
+    private ensureDeferred(id: string): Deferred<FluidDataStoreContext> {
         const deferred = this.deferredContexts.get(id);
         if (deferred) { return deferred; }
 
@@ -106,17 +110,24 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     }
 
     /**
-     * Triggers the deferred to resolve, indicating the context has been bound
+     * Indicates the context has been bound
+     */
+    public notifyOnBind(id: string) {
+        this.resolveDeferred(id);
+    }
+
+    /**
+     * Triggers the deferred to resolve, indicating the context is not local-only
      * @param id - The id of the context to resolve to
      */
-    public resolveDeferredBind(id: string) {
+    private resolveDeferred(id: string) {
         const context = this._contexts.get(id);
-        assert(!!context, "Cannot find context we've bound");
+        assert(!!context, "Cannot find context to resolve to");
         assert(!this.notBoundContexts.has(id), "Expected this id to already be removed from notBoundContexts");
 
-        const deferredBind = this.deferredContexts.get(id);
-        assert(!!deferredBind, "Cannot find deferredBind to resolve");
-        deferredBind.resolve(context);
+        const deferred = this.deferredContexts.get(id);
+        assert(!!deferred, "Cannot find deferred to resolve");
+        deferred.resolve(context);
     }
 
     /**
@@ -132,7 +143,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
         this._contexts.set(id, context);
 
         // Resolve the deferred immediately since this context is not unbound
-        const deferred = this.prepDeferredContext(id);
-        deferred.resolve(context);
+        this.ensureDeferred(id);
+        this.resolveDeferred(id);
     }
 }

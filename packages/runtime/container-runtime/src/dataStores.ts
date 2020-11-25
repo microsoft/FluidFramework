@@ -202,8 +202,7 @@ export class DataStores implements IDisposable {
             this.attachOpFiredForDataStore.add(id);
         }
 
-        // Resolve the deferred so other local stores can access it now that the context is bound
-        this.contexts.resolveDeferredBind(fluidDataStoreRuntime.id);
+        this.contexts.notifyOnBind(fluidDataStoreRuntime.id);
     }
 
     public createDetachedDataStoreCore(
@@ -279,8 +278,7 @@ export class DataStores implements IDisposable {
             throw new Error(`DataStore ${id} does not exist`);
         }
 
-        const deferredContext = this.contexts.prepDeferredContext(id);
-        const context = await deferredContext.promise;
+        const context = await this.contexts.waitForContext(id);
         return context.realize();
     }
 
