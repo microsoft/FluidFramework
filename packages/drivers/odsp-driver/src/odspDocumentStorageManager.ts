@@ -237,8 +237,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     private async readWithEncodingOutput(blobId: string, outputFormat: string): Promise<string> {
-        // const blob = this.blobCache.get(blobId);
-        let blob: IBlob | undefined;
+        const blob = this.blobCache.get(blobId);
         assert(!blob || blob.encoding === "base64" || blob.encoding === undefined, "wrong blob encoding format");
         let buffer;
         // Reset the timer on attempted cache read
