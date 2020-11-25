@@ -503,7 +503,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._deltaManager.close(error);
 
-        this.retriableStorageService?.stopRetry();
+        this.retriableStorageService?.dispose();
 
         this._protocolHandler?.close();
 

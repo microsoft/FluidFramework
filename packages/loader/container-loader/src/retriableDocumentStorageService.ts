@@ -11,7 +11,7 @@ import { Container } from "./container";
 import { emitThrottlingWarning, getRetryDelayFromError } from "./deltaManager";
 
 export class RetriableDocumentStorageService extends DocumentStorageServiceProxy {
-    private shouldRetry = true;
+    private disposed = false;
     constructor(
         internalStorageService: IDocumentStorageService,
         private readonly container: Container,
@@ -19,8 +19,8 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
         super(internalStorageService);
     }
 
-    public stopRetry() {
-        this.shouldRetry = false;
+    public dispose() {
+        this.disposed = true;
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
@@ -35,24 +35,35 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
         return this.readWithRetry(async () => this.internalStorageService.readBlob(id));
     }
 
+    public async readString(id: string): Promise<string> {
+        return this.readWithRetry(async () => this.internalStorageService.readString(id));
+    }
+
+    private async delay(timeMs: number): Promise<void> {
+        return new Promise((resolve) => setTimeout(() => resolve(), timeMs));
+    }
+
     private async readWithRetry<T>(api: () => Promise<T>, retryLimitSeconds: number = 0): Promise<T> {
-        let result: T;
-        try {
-            result = await api();
-        } catch (error) {
-            // If it is not retriable, then just throw the error.
-            const canRetry = canRetryOnError(error);
-            if (!(canRetry && this.shouldRetry)) {
-                throw error;
+        let result: T | undefined;
+        let success = false;
+        do {
+            try {
+                result = await api();
+                success = true;
+            } catch (err) {
+                // If it is not retriable, then just throw the error.
+                const canRetry = canRetryOnError(err);
+                if (!canRetry || this.disposed) {
+                    throw err;
+                }
+                // If the error is throttling error, then wait for the specified time before retrying.
+                // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
+                const retryAfter = getRetryDelayFromError(err) ?? Math.min(retryLimitSeconds * 2, 8000);
+                emitThrottlingWarning(retryAfter, CreateContainerError(err), this.container);
+                await this.delay(retryAfter);
             }
-            // If the error is throttling error, then wait for the specified time before retrying.
-            // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
-            const retryAfter = getRetryDelayFromError(error) ?? Math.min(retryLimitSeconds * 2, 8000);
-            emitThrottlingWarning(retryAfter, CreateContainerError(error), this.container);
-            result = await new Promise((resolve) => setTimeout(async () => {
-                resolve(await this.readWithRetry(api, retryAfter));
-            }, retryAfter));
-        }
-        return result;
+        } while (!success);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return result!;
     }
 }

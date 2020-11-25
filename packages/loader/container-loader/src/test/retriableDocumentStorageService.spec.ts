@@ -113,7 +113,7 @@ describe("RetriableDocumentStorageService Tests", () => {
     it("Should not retry if it is disabled", async () => {
         let retryTimes: number = 1;
         let success = "false";
-        retriableStorageService.stopRetry();
+        retriableStorageService.dispose();
         internalService.read = async (id: string) => {
             if (retryTimes > 0) {
                 retryTimes -= 1;
