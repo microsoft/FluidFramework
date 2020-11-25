@@ -88,6 +88,7 @@ import {
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
+    IGraphNode,
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
@@ -1288,9 +1289,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+        const gcNodes: IGraphNode[] = [];
         const builder = new SummaryTreeBuilder();
 
-        const gcNodes = await this.dataStores.summarizeInternal(builder, fullTree, trackState);
+        await this.dataStores.summarizeInternal(builder, fullTree, trackState);
 
         this.serializeContainerBlobs(builder);
         const summary = builder.getSummaryTree();

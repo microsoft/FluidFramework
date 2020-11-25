@@ -378,7 +378,7 @@ export class DataStores implements IDisposable {
     }
 
     public async summarizeInternal(
-        builder: SummaryTreeBuilder, fullTree: boolean, trackState: boolean): Promise<IGraphNode[]> {
+        builder: SummaryTreeBuilder, fullTree: boolean, trackState: boolean): Promise<void> {
         // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
         // channel contexts.
         let gcNodes: IGraphNode[] = [ this.getGCNode() ];
@@ -401,7 +401,6 @@ export class DataStores implements IDisposable {
                 // Update and add the child context's GC nodes to the main list.
                 gcNodes = gcNodes.concat(this.updateChildGCNodes(contextSummary.gcNodes, contextId));
             }));
-        return gcNodes;
     }
 
     public createSummary(builder: SummaryTreeBuilder) {
