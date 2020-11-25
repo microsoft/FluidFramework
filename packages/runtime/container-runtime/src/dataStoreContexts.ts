@@ -131,13 +131,12 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     }
 
     /**
-     * Add the given context, marking it as already bound.
+     * Add the given context, marking it as not local-only.
      * This could be because it's a local context that's been bound, or because it's a remote context.
-     * @param id - id of context to add. Redundant with context.id
      * @param context - The context to add
      */
-    public addBoundOrRemote(id: string, context: FluidDataStoreContext) {
-        assert(id === context.id, "id mismatch for context being added");
+    public addBoundOrRemote(context: FluidDataStoreContext) {
+        const id = context.id;
         assert(!this._contexts.has(id), "Creating store with existing ID");
 
         this._contexts.set(id, context);
