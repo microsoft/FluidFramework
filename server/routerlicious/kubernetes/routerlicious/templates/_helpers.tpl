@@ -35,10 +35,6 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- printf "%s-%s" .Release.Name .Values.scribe.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "routemanager.fullname" -}}
-{{- printf "%s-%s" .Release.Name .Values.routemanager.name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
 {{- define "foreman.fullname" -}}
 {{- printf "%s-%s" .Release.Name .Values.foreman.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}

@@ -153,6 +153,57 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
  * @param snapshot - snapshot in ITree format
  * @param fullTree - true to never use handles, even if id is specified
  */
+export function convertToSummaryTreeWithStats(
+    snapshot: ITree,
+    fullTree: boolean = false,
+): ISummaryTreeWithStats {
+    const builder = new SummaryTreeBuilder();
+    for (const entry of snapshot.entries) {
+        switch (entry.type) {
+            case TreeEntry.Blob: {
+                const blob = entry.value as IBlob;
+                let content: string | Uint8Array;
+                if (blob.encoding === "base64") {
+                    content = IsoBuffer.from(blob.contents, "base64");
+                } else {
+                    content = blob.contents;
+                }
+                builder.addBlob(entry.path, content);
+                break;
+            }
+
+            case TreeEntry.Tree: {
+                const subtree = convertToSummaryTree(
+                    entry.value as ITree,
+                    fullTree);
+                builder.addWithStats(entry.path, subtree);
+
+                break;
+            }
+
+            case TreeEntry.Attachment: {
+                const id = (entry.value as IAttachment).id;
+                builder.addAttachment(id);
+
+                break;
+            }
+
+            case TreeEntry.Commit:
+                throw new Error("Should not have Commit TreeEntry in summary");
+
+            default:
+                throw new Error("Unexpected TreeEntry type");
+        }
+    }
+
+    return builder.getSummaryTree();
+}
+
+/**
+ * Converts snapshot ITree to ISummaryTree format and tracks stats.
+ * @param snapshot - snapshot in ITree format
+ * @param fullTree - true to never use handles, even if id is specified
+ */
 export function convertToSummaryTree(
     snapshot: ITree,
     fullTree: boolean = false,
@@ -170,46 +221,7 @@ export function convertToSummaryTree(
             stats,
         };
     } else {
-        const builder = new SummaryTreeBuilder();
-        for (const entry of snapshot.entries) {
-            switch (entry.type) {
-                case TreeEntry.Blob: {
-                    const blob = entry.value as IBlob;
-                    let content: string | Uint8Array;
-                    if (blob.encoding === "base64") {
-                        content = IsoBuffer.from(blob.contents, "base64");
-                    } else {
-                        content = blob.contents;
-                    }
-                    builder.addBlob(entry.path, content);
-                    break;
-                }
-
-                case TreeEntry.Tree: {
-                    const subtree = convertToSummaryTree(
-                        entry.value as ITree,
-                        fullTree);
-                    builder.addWithStats(entry.path, subtree);
-
-                    break;
-                }
-
-                case TreeEntry.Attachment: {
-                    const id = (entry.value as IAttachment).id;
-                    builder.addAttachment(id);
-
-                    break;
-                }
-
-                case TreeEntry.Commit:
-                    throw new Error("Should not have Commit TreeEntry in summary");
-
-                default:
-                    throw new Error("Unexpected TreeEntry type");
-            }
-        }
-
-        return builder.getSummaryTree();
+        return convertToSummaryTreeWithStats(snapshot, fullTree);
     }
 }
 

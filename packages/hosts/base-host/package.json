@@ -60,14 +60,14 @@
     "@fluidframework/container-loader": "^0.30.0",
     "@fluidframework/core-interfaces": "^0.30.0",
     "@fluidframework/driver-definitions": "^0.30.0",
-    "@fluidframework/protocol-definitions": "^0.1015.0-0",
+    "@fluidframework/protocol-definitions": "^0.1015.0",
     "@fluidframework/telemetry-utils": "^0.30.0",
     "@fluidframework/web-code-loader": "^0.30.0",
     "assert": "^2.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
-    "@fluidframework/eslint-config-fluid": "^0.21.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.21.0",
     "@fluidframework/mocha-test-setup": "^0.30.0",
     "@fluidframework/test-runtime-utils": "^0.30.0",
     "@microsoft/api-extractor": "^7.7.2",

@@ -195,7 +195,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         const clientSequenceNumber = this.sendProposal(key, value);
         if (clientSequenceNumber < 0) {
             this.emit("error", { eventName: "ProposalInDisconnectedState", key });
-            return Promise.reject(false);
+            return Promise.reject(new Error("Can't proposal in disconnected state"));
         }
 
         const deferred = new Deferred<void>();

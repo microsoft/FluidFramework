@@ -59,7 +59,7 @@ import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { getQueryString } from "./getQueryString";
-import { EpochTracker } from "./epochTracker";
+import { EpochTracker, FetchType } from "./epochTracker";
 
 /* eslint-disable max-len */
 
@@ -101,6 +101,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     // Save the timeout so we can cancel and reschedule it as needed
     private blobCacheTimeout: ReturnType<typeof setTimeout> | undefined;
+    // If the defer flag is set when the timeout fires, we'll reschedule rather than clear immediately
+    // This deferral approach is used (rather than clearing/resetting the timer) as current calling patterns trigger
+    // too many calls to setTimeout/clearTimeout.
+    private deferBlobCacheClear: boolean = false;
 
     private readonly attributesBlobHandles: Set<string> = new Set();
 
@@ -189,6 +193,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         headers,
                         method: "POST",
                     },
+                    FetchType.createBlob,
                 ),
             );
         });
@@ -211,7 +216,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
                 async (event) => {
-                    const res = await this.epochTracker.fetchResponse(url, { headers });
+                    const res = await this.epochTracker.fetchResponse(url, { headers }, FetchType.blob);
                     const content = await res.arrayBuffer();
                     event.end({ size: content.byteLength });
                     return content;
@@ -221,6 +226,17 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     public async read(blobid: string): Promise<string> {
+        return this.readWithEncodingOutput(blobid, "base64");
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
+     */
+    public async readString(blobid: string): Promise<string> {
+        return this.readWithEncodingOutput(blobid, "string");
+    }
+
+    private async readWithEncodingOutput(blobid: string, outputFormat: string) {
         let blob = this.blobCache.get(blobid);
         // Reset the timer on attempted cache read
         this.scheduleClearBlobsCache();
@@ -239,23 +255,46 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         headers: Object.keys(headers).length !== 0 ? true : undefined,
                         waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
                     },
-                    async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }),
+                    async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }, FetchType.blob),
                 );
             });
             blob = response.content;
         }
 
-        if (this.attributesBlobHandles.has(blobid)) {
+        assert(blob.encoding === "base64" || blob.encoding === undefined, "wrong blob encoding format");
+        const inputFormat = blob.encoding;
+        if (!this.attributesBlobHandles.has(blobid)) {
+            if (outputFormat === inputFormat || (outputFormat === "string" && inputFormat === undefined))  {
+                return blob.content;
+            }
+            else if (outputFormat === "base64") {
+                return fromUtf8ToBase64(blob.content);
+            }
+            else {
+                return fromBase64ToUtf8(blob.content);
+            }
+        }
+        else {
             // ODSP document ids are random guids (different per session)
             // fix the branch name in attributes
             // this prevents issues when generating summaries
-            const documentAttributes: api.IDocumentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
-            documentAttributes.branch = this.documentId;
+            const docId = this.documentId;
+            let documentAttributes: api.IDocumentAttributes;
+            if (inputFormat === "base64") {
+                documentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
+                documentAttributes.branch = docId;
+            }
+            else {
+                documentAttributes = JSON.parse(blob.content);
+                documentAttributes.branch = docId;
+            }
 
-            blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
+            if (outputFormat === "base64") {
+                return fromUtf8ToBase64(JSON.stringify(documentAttributes));
+            } else {
+                return JSON.stringify(documentAttributes);
+            }
         }
-
-        return blob.content;
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
@@ -377,6 +416,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     key: "",
                                 },
                                 this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
+                                FetchType.treesLatest,
                             );
 
                             let method: string;
@@ -479,7 +519,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 // Clear the cache on 401/403/404 on snapshot fetch from network because this means either the user doesn't have permissions
                 // permissions for the file or it was deleted. So the user will again try to fetch from cache on any failure in future.
                 if (errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
-                    await this.cache.persistedCache.removeAllEntriesForDocId(this.documentId);
+                    await this.cache.persistedCache.removeEntries(this.fileEntry);
                 }
                 throw error;
             });
@@ -496,7 +536,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     eventName: "getVersions",
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
-                async () => this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }),
+                async () => this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }, FetchType.treesLatest),
             );
             const versionsResponse = response.content;
             if (!versionsResponse) {
@@ -629,9 +669,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         signal: controller?.signal,
                         method: "POST",
                     },
+                    FetchType.treesLatest,
                     true);
             } else {
-                response = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers, signal: controller?.signal });
+                response = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers, signal: controller?.signal }, FetchType.treesLatest);
             }
             const endTime = performance.now();
             const overallTime = endTime - startTime;
@@ -781,14 +822,27 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     /**
-     * Stop the current timer for clearing the blob cache (if any) and schedule a new one
+     * Schedule a timer for clearing the blob cache or defer the current one.
      */
     private scheduleClearBlobsCache() {
-        const blobCacheTimeoutDuration = 10000;
         if (this.blobCacheTimeout !== undefined) {
-            clearTimeout(this.blobCacheTimeout);
+            // If we already have an outstanding timer, just signal that we should defer the clear
+            this.deferBlobCacheClear = true;
+        } else {
+            // If we don't have an outstanding timer, set a timer
+            // When the timer runs out, we'll decide whether to proceed with the cache clear or reset the timer
+            const clearCacheOrDefer = () => {
+                this.blobCacheTimeout = undefined;
+                if (this.deferBlobCacheClear) {
+                    this.deferBlobCacheClear = false;
+                    this.scheduleClearBlobsCache();
+                } else {
+                    this.blobCache.clear();
+                }
+            };
+            const blobCacheTimeoutDuration = 10000;
+            this.blobCacheTimeout = setTimeout(clearCacheOrDefer, blobCacheTimeoutDuration);
         }
-        this.blobCacheTimeout = setTimeout(() => { this.blobCache.clear(); }, blobCacheTimeoutDuration);
     }
 
     private checkSnapshotUrl() {
@@ -957,7 +1011,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                             body: postBody,
                             headers,
                             method: "POST",
-                        });
+                        },
+                        FetchType.uploadSummary);
                     return { result: response.content, blobsShaToPathCacheLatest };
                 });
         });

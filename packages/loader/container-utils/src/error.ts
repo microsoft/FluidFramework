@@ -4,8 +4,14 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ContainerErrorType, IGenericError, ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+    ContainerErrorType,
+    IGenericError,
+    ICriticalContainerError,
+    IErrorBase,
+} from "@fluidframework/container-definitions";
 import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
 
 function messageFromError(error: any) {
     if (typeof error?.message === "string") {
@@ -26,6 +32,18 @@ export class GenericError extends CustomErrorWithProps implements IGenericError 
         readonly error: any,
     ) {
         super(errorMessage);
+    }
+}
+
+export class DataCorruptionError extends CustomErrorWithProps implements IErrorBase {
+    readonly errorType = "dataCorruptionError";
+    readonly canRetry = false;
+
+    constructor(
+        errorMessage: string,
+        props: ITelemetryProperties,
+    ) {
+        super(errorMessage, props);
     }
 }
 

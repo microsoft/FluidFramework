@@ -65,9 +65,14 @@ export interface IDocumentStorageService {
     getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
 
     /**
-     * Reads the object with the given ID
+     * Reads the object with the given ID, returns content in base64
      */
     read(id: string): Promise<string>;
+
+    /**
+     * Reads the object with the given ID, returns content in utf8
+     */
+    readString(id: string): Promise<string>;
 
     /**
      * Writes to the object with the given ID
@@ -178,12 +183,33 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     /**
      * Disconnects the given delta connection
      */
-    close();
+    close(): void;
+}
+
+export enum LoaderCachingPolicy {
+    /**
+     * The loader should not implement any prefetching or caching policy.
+     */
+    NoCaching,
+
+    /**
+     * The loader should implement prefetching policy, i.e. it should prefetch resources from the latest snapshot.
+     */
+    Prefetch,
+}
+
+export interface IDocumentServicePolicies {
+    readonly caching?: LoaderCachingPolicy;
 }
 
 export interface IDocumentService {
 
     resolvedUrl: IResolvedUrl;
+
+    /**
+     * Policies implemented/instructed by driver.
+     */
+    policies?: IDocumentServicePolicies;
 
     /**
      * Access to storage associated with the document...

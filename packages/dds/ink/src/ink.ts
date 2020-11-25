@@ -4,6 +4,7 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -188,9 +189,9 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
      */
-    public snapshot(): ITree {
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
         const tree: ITree = {
             entries: [
                 {

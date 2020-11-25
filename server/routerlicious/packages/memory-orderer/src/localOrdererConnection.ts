@@ -27,6 +27,8 @@ export class LocalOrdererConnection implements IOrdererConnection {
     // Back-compat, removal tracked with issue #4346
     public readonly parentBranch = null;
 
+    public readonly maxMessageSize: number;
+
     constructor(
         public socket: ISubscriber,
         public readonly existing: boolean,
@@ -36,9 +38,10 @@ export class LocalOrdererConnection implements IOrdererConnection {
         public readonly documentId: string,
         public readonly clientId: string,
         private readonly client: IClient,
-        public readonly maxMessageSize: number,
         public readonly serviceConfiguration: IServiceConfiguration,
-    ) { }
+    ) {
+        this.maxMessageSize = serviceConfiguration.maxMessageSize;
+    }
 
     public async connect() {
         // Send the connect message
@@ -52,7 +55,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
             contents: null,
             data: JSON.stringify(clientDetail),
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientJoin,
         };
 
@@ -92,7 +95,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
             contents: null,
             data: JSON.stringify(this.clientId),
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientLeave,
         };
         const message: IRawOperationMessage = {
@@ -111,18 +114,20 @@ export class LocalOrdererConnection implements IOrdererConnection {
     }
 
     private submitRawOperation(messages: IRawOperationMessage[]) {
-        // Add trace
-        messages.forEach((message) => {
-            const operation = message.operation;
-            if (operation && operation.traces) {
-                operation.traces.push(
-                    {
-                        action: "start",
-                        service: "alfred",
-                        timestamp: performance.now(),
-                    });
-            }
-        });
+        if (this.serviceConfiguration.enableTraces) {
+            // Add trace
+            messages.forEach((message) => {
+                const operation = message.operation;
+                if (operation && operation.traces) {
+                    operation.traces.push(
+                        {
+                            action: "start",
+                            service: "alfred",
+                            timestamp: performance.now(),
+                        });
+                }
+            });
+        }
 
         const boxcar: IBoxcarMessage = {
             contents: messages,

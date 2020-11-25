@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IntervalType, LocalReference } from "@fluidframework/merge-tree";
-import { IBlob } from "@fluidframework/protocol-definitions";
+import { IBlob, ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     IntervalCollectionView,
@@ -20,8 +20,8 @@ import {
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
 import {
-    generateTestWithCompat,
-    ICompatLocalTestObjectProvider,
+    generateTest,
+    ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "./compatUtils";
@@ -53,7 +53,7 @@ const assertIntervalsHelper = (
     }
 };
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     describe("one client", () => {
         const stringId = "stringKey";
 
@@ -302,25 +302,33 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
             assert.equal(
                 mapFrom3.get("nestedKey"), "nestedValue", "Incorrect value in interval collection's shared map");
 
-            // SharedString snapshots as a blob
-            const snapshotBlob = outerString2.snapshot().entries[0].value as IBlob;
-            // Since it's based on a map kernel, its contents parse as
-            // an IMapDataObjectSerializable with the "comments" member we set
-            const parsedSnapshot = JSON.parse(snapshotBlob.contents);
+            let parsedContent: any;
+            // back-compat for N-2 <= 0.30, remove the else part when N-2 >= 0.31
+            if (outerString2.summarize) {
+                const summaryBlob = outerString2.summarize().summary.tree.header as ISummaryBlob;
+                // Since it's based on a map kernel, its contents parse as
+                // an IMapDataObjectSerializable with the "comments" member we set
+                parsedContent = JSON.parse(summaryBlob.content as string);
+            } else {
+                const snapshotBlob = outerString2.snapshot().entries[0].value as IBlob;
+                // Since it's based on a map kernel, its contents parse as
+                // an IMapDataObjectSerializable with the "comments" member we set
+                parsedContent = JSON.parse(snapshotBlob.contents);
+            }
             // LocalIntervalCollection serializes as an array of ISerializedInterval, let's get the first comment
             const serializedInterval1FromSnapshot =
-                (parsedSnapshot["intervalCollections/comments"].value as ISerializedInterval[])[0];
+                (parsedContent["intervalCollections/comments"].value as ISerializedInterval[])[0];
             // The "story" is the ILocalValue of the handle pointing to the SharedString
             assert(serializedInterval1FromSnapshot.properties);
             const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string };
             assert.equal(
                 handleLocalValueFromSnapshot.type,
                 "__fluid_handle__",
-                "Incorrect handle type in shared interval's snapshot");
+                "Incorrect handle type in shared interval's summary");
         });
     });
 };
 
 describe("SharedInterval", () => {
-    generateTestWithCompat(tests);
+    generateTest(tests, { tinylicious: true });
 });

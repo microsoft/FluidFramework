@@ -83,7 +83,7 @@ export class SnapshotV1 {
      * the summary data rather than JSON.stringify.
      */
     emit(
-        serializer?: IFluidSerializer,
+        serializer: IFluidSerializer,
         bind?: IFluidHandle,
     ): ITree {
         const chunks: MergeTreeChunkV1[] = [];

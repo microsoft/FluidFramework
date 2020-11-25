@@ -24,11 +24,16 @@ describe("document-router", () => {
             factory = await plugin.create(config);
         });
 
+        afterEach(async () => {
+           await factory.dispose();
+        });
+
         describe(".create", () => {
             it("Should be able to create a new lambda", async () => {
                 const context = new TestContext();
                 const lambda = await factory.create(config, context);
                 assert.ok(lambda);
+                lambda.close();
             });
         });
     });

@@ -10,7 +10,7 @@ export async function promiseTimeout(mSec: number, promise: Promise<any>): Promi
     const timeout = new Promise((resolve, reject) => {
         const id = setTimeout(() => {
             clearTimeout(id);
-            reject(`Timed out in ${mSec} milliseconds.`);
+            reject(new Error(`Timed out in ${mSec} milliseconds.`));
         }, mSec);
     });
     return Promise.race([

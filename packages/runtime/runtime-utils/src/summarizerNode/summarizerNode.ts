@@ -16,220 +16,24 @@ import {
     ISequencedDocumentMessage,
     SummaryType,
     ISnapshotTree,
-    IDocumentAttributes,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { mergeStats, SummaryTreeBuilder, convertToSummaryTree, calculateStats } from "./summaryUtils";
+import { mergeStats, convertToSummaryTree, calculateStats } from "../summaryUtils";
+import {
+    decodeSummary,
+    encodeSummary,
+    EncodeSummaryParam,
+    EscapedPath,
+    ICreateChildDetails,
+    IInitialSummary,
+    ISummarizerNodeRootContract,
+    ReadAndParseBlob,
+    seqFromTree,
+    SummaryNode,
+} from "./summarizerNodeUtils";
 
-const baseSummaryTreeKey = "_baseSummary";
-const outstandingOpsBlobKey = "_outstandingOps";
-const maxDecodeDepth = 100;
-
-/** Reads a blob from storage and parses it from JSON. */
-export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
-
-/**
- * Fetches the sequence number of the snapshot tree by examining the protocol.
- * @param tree - snapshot tree to examine
- * @param readAndParseBlob - function to read blob contents from storage
- * and parse the result from JSON.
- */
-async function seqFromTree(
-    tree: ISnapshotTree,
-    readAndParseBlob: ReadAndParseBlob,
-): Promise<number> {
-    const attributesHash = tree.trees[".protocol"].blobs.attributes;
-    const attrib = await readAndParseBlob<IDocumentAttributes>(attributesHash);
-    return attrib.sequenceNumber;
-}
-
-/** Path for nodes in a tree with escaped special characters */
-class EscapedPath {
-    private constructor(public readonly path: string) { }
-    public static create(path: string): EscapedPath {
-        return new EscapedPath(encodeURIComponent(path));
-    }
-    public static createAndConcat(pathParts: string[]): EscapedPath {
-        let ret = EscapedPath.create(pathParts[0] ?? "");
-        for (let i = 1; i < pathParts.length; i++) {
-            ret = ret.concat(EscapedPath.create(pathParts[i]));
-        }
-        return ret;
-    }
-    public toString(): string {
-        return this.path;
-    }
-    public concat(path: EscapedPath): EscapedPath {
-        return new EscapedPath(`${this.path}/${path.path}`);
-    }
-}
-
-/** Information about a summary relevant to a specific node in the tree */
-class SummaryNode {
-    public get referenceSequenceNumber(): number {
-        return this.summary.referenceSequenceNumber;
-    }
-    public get basePath(): EscapedPath | undefined {
-        return this.summary.basePath;
-    }
-    public get localPath(): EscapedPath {
-        return this.summary.localPath;
-    }
-    public get additionalPath(): EscapedPath | undefined {
-        return this.summary.additionalPath;
-    }
-    public set additionalPath(additionalPath: EscapedPath | undefined) {
-        this.summary.additionalPath = additionalPath;
-    }
-    constructor(private readonly summary: {
-        readonly referenceSequenceNumber: number,
-        readonly basePath: EscapedPath | undefined,
-        readonly localPath: EscapedPath,
-        additionalPath?: EscapedPath,
-    }) { }
-
-    public get fullPath(): EscapedPath {
-        return this.basePath?.concat(this.localPath) ?? this.localPath;
-    }
-
-    public get fullPathForChildren(): EscapedPath {
-        return this.additionalPath !== undefined
-            ? this.fullPath.concat(this.additionalPath)
-            : this.fullPath;
-    }
-
-    public createForChild(id: string): SummaryNode {
-        return new SummaryNode({
-            referenceSequenceNumber: this.referenceSequenceNumber,
-            basePath: this.fullPathForChildren,
-            localPath: EscapedPath.create(id),
-        });
-    }
-}
-
-interface IDecodedSummary {
-    readonly baseSummary: ISnapshotTree;
-    readonly pathParts: string[];
-    getOutstandingOps(readAndParseBlob: ReadAndParseBlob): Promise<ISequencedDocumentMessage[]>;
-}
-
-/**
- * Checks if the snapshot is created by referencing a previous successful
- * summary plus outstanding ops. If so, it will recursively "decode" it until
- * it gets to the last successful summary (the base summary) and returns that
- * as well as a function for fetching the outstanding ops. Also returns the
- * full path to the previous base summary for child summarizer nodes to use as
- * their base path when necessary.
- * @param snapshot - snapshot tree to decode
- */
-function decodeSummary(snapshot: ISnapshotTree, logger: Pick<ITelemetryLogger, "sendTelemetryEvent">): IDecodedSummary {
-    let baseSummary = snapshot;
-    const pathParts: string[] = [];
-    const opsBlobs: string[] = [];
-
-    for (let i = 0; ; i++) {
-        if (i > maxDecodeDepth) {
-            logger.sendTelemetryEvent({
-                eventName: "DecodeSummaryMaxDepth",
-                maxDecodeDepth,
-            });
-        }
-        const outstandingOpsBlob = baseSummary.blobs[outstandingOpsBlobKey];
-        const newBaseSummary = baseSummary.trees[baseSummaryTreeKey];
-        if (outstandingOpsBlob === undefined && newBaseSummary === undefined) {
-            return {
-                baseSummary,
-                pathParts,
-                async getOutstandingOps(readAndParseBlob: ReadAndParseBlob) {
-                    let outstandingOps: ISequencedDocumentMessage[] = [];
-                    for (const opsBlob of opsBlobs) {
-                        const newOutstandingOps = await readAndParseBlob<ISequencedDocumentMessage[]>(opsBlob);
-                        if (outstandingOps.length > 0 && newOutstandingOps.length > 0) {
-                            const latestSeq = outstandingOps[outstandingOps.length - 1].sequenceNumber;
-                            const newEarliestSeq = newOutstandingOps[0].sequenceNumber;
-                            if (newEarliestSeq <= latestSeq) {
-                                logger.sendTelemetryEvent({
-                                    eventName:"DuplicateOutstandingOps",
-                                    category: "generic",
-                                    // eslint-disable-next-line max-len
-                                    message: `newEarliestSeq <= latestSeq in decodeSummary: ${newEarliestSeq} <= ${latestSeq}`,
-                                });
-                                while (newOutstandingOps.length > 0
-                                    && newOutstandingOps[0].sequenceNumber <= latestSeq) {
-                                    newOutstandingOps.shift();
-                                }
-                            }
-                        }
-                        outstandingOps = outstandingOps.concat(newOutstandingOps);
-                    }
-                    return outstandingOps;
-                },
-            };
-        }
-
-        assert(!!outstandingOpsBlob, "Outstanding ops blob missing, but base summary tree exists");
-        assert(newBaseSummary !== undefined, "Base summary tree missing, but outstanding ops blob exists");
-        baseSummary = newBaseSummary;
-        pathParts.push(baseSummaryTreeKey);
-        opsBlobs.unshift(outstandingOpsBlob);
-    }
-}
-
-/**
- * Summary tree which is a handle of the previous successfully acked summary
- * and a blob of the outstanding ops since that summary.
- */
-interface IEncodedSummary extends ISummaryTreeWithStats {
-    readonly additionalPath: EscapedPath;
-}
-
-type EncodeSummaryParam = {
-    fromSummary: true;
-    summaryNode: SummaryNode;
-} | {
-    fromSummary: false;
-    initialSummary: ISummaryTreeWithStats;
-};
-
-/**
- * Creates a summary tree which is a handle of the previous successfully acked summary
- * and a blob of the outstanding ops since that summary. If there is no acked summary yet,
- * it will create with the tree found in the initial attach op and the blob of outstanding ops.
- * @param summaryParam - information about last acked summary and paths to encode if from summary,
- * otherwise the initial summary from the attach op.
- * @param outstandingOps - outstanding ops since last acked summary
- */
-function encodeSummary(summaryParam: EncodeSummaryParam, outstandingOps: ISequencedDocumentMessage[]): IEncodedSummary {
-    let additionalPath = EscapedPath.create(baseSummaryTreeKey);
-
-    const builder = new SummaryTreeBuilder();
-    builder.addBlob(outstandingOpsBlobKey, JSON.stringify(outstandingOps));
-
-    if (summaryParam.fromSummary) {
-        // Create using handle of latest acked summary
-        const summaryNode = summaryParam.summaryNode;
-        if (summaryNode.additionalPath !== undefined) {
-            additionalPath = additionalPath.concat(summaryNode.additionalPath);
-        }
-        builder.addHandle(baseSummaryTreeKey, SummaryType.Tree, summaryNode.fullPath.path);
-    } else {
-        // Create using initial summary from attach op
-        builder.addWithStats(baseSummaryTreeKey, summaryParam.initialSummary);
-    }
-
-    const summary = builder.getSummaryTree();
-    return {
-        ...summary,
-        additionalPath,
-    };
-}
-
-interface IInitialSummary {
-    sequenceNumber: number;
-    id: string;
-    summary: ISummaryTreeWithStats | undefined;
-}
+export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
 
 /**
  * Encapsulates the summarizing work and state of an individual tree node in the
@@ -244,7 +48,7 @@ interface IInitialSummary {
  * call refreshLatestSummary to inform the tree of SummarizerNodes of the new baseline
  * latest successful summary.
  */
-export class SummarizerNode implements ISummarizerNode {
+export class SummarizerNode implements IRootSummarizerNode {
     /**
      * The reference sequence number of the most recent acked summary.
      * Returns 0 if there is not yet an acked summary.
@@ -253,26 +57,32 @@ export class SummarizerNode implements ISummarizerNode {
         return this.latestSummary?.referenceSequenceNumber ?? 0;
     }
 
-    private readonly children = new Map<string, SummarizerNode>();
+    protected readonly children = new Map<string, SummarizerNode>();
     private readonly pendingSummaries = new Map<string, SummaryNode>();
     private readonly outstandingOps: ISequencedDocumentMessage[] = [];
     private wipReferenceSequenceNumber: number | undefined;
     private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
     private wipSkipRecursion = false;
 
-    public startSummary(referenceSequenceNumber: number) {
+    public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
+        assert(this.wipSummaryLogger === undefined, "wipSummaryLogger should not be set yet in startSummary");
+
         assert(
             this.wipReferenceSequenceNumber === undefined,
             "Already tracking a summary",
         );
 
+        this.wipSummaryLogger = summaryLogger;
+
         for (const child of this.children.values()) {
-            child.startSummary(referenceSequenceNumber);
+            child.startSummary(referenceSequenceNumber, this.wipSummaryLogger);
         }
         this.wipReferenceSequenceNumber = referenceSequenceNumber;
     }
 
     public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
+        assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary or ctor");
+
         // Try to reuse the tree if unchanged
         if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
             const latestSummary = this.latestSummary;
@@ -326,7 +136,7 @@ export class SummarizerNode implements ISummarizerNode {
                 // No base summary to reference
                 throw error;
             }
-            this.logger.logException({
+            this.wipSummaryLogger.logException({
                 eventName: "SummarizingWithBasePlusOps",
                 category: "error",
             },
@@ -341,15 +151,22 @@ export class SummarizerNode implements ISummarizerNode {
         }
     }
 
+    /**
+     * Complete the WIP summary for the given proposalHandle
+     */
     public completeSummary(proposalHandle: string) {
         this.completeSummaryCore(proposalHandle, undefined, false);
     }
 
+    /**
+     * Recursive implementation for completeSummary, with additional internal-only parameters
+     */
     private completeSummaryCore(
         proposalHandle: string,
         parentPath: EscapedPath | undefined,
         parentSkipRecursion: boolean,
     ) {
+        assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary or ctor");
         assert(this.wipReferenceSequenceNumber !== undefined, "Not tracking a summary");
         let localPathsToUse = this.wipLocalPaths;
 
@@ -410,6 +227,7 @@ export class SummarizerNode implements ISummarizerNode {
         this.wipReferenceSequenceNumber = undefined;
         this.wipLocalPaths = undefined;
         this.wipSkipRecursion = false;
+        this.wipSummaryLogger = undefined;
         for (const child of this.children.values()) {
             child.clearSummary();
         }
@@ -419,6 +237,7 @@ export class SummarizerNode implements ISummarizerNode {
         proposalHandle: string | undefined,
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
+        correlatedSummaryLogger: ITelemetryLogger,
     ): Promise<void> {
         if (proposalHandle !== undefined) {
             const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
@@ -436,6 +255,7 @@ export class SummarizerNode implements ISummarizerNode {
             snapshotTree,
             undefined,
             EscapedPath.create(""),
+            correlatedSummaryLogger,
         );
     }
 
@@ -477,10 +297,11 @@ export class SummarizerNode implements ISummarizerNode {
         snapshotTree: ISnapshotTree,
         basePath: EscapedPath | undefined,
         localPath: EscapedPath,
+        correlatedSummaryLogger: ITelemetryLogger,
     ): void {
         this.refreshLatestSummaryCore(referenceSequenceNumber);
 
-        const { baseSummary, pathParts } = decodeSummary(snapshotTree, this.logger);
+        const { baseSummary, pathParts } = decodeSummary(snapshotTree, correlatedSummaryLogger);
 
         this.latestSummary = new SummaryNode({
             referenceSequenceNumber,
@@ -503,6 +324,7 @@ export class SummarizerNode implements ISummarizerNode {
                     subtree,
                     pathForChildren,
                     EscapedPath.create(id),
+                    correlatedSummaryLogger,
                 );
             }
         }
@@ -528,7 +350,7 @@ export class SummarizerNode implements ISummarizerNode {
         snapshot: ISnapshotTree,
         readAndParseBlob: ReadAndParseBlob,
     ): Promise<{ baseSummary: ISnapshotTree, outstandingOps: ISequencedDocumentMessage[] }> {
-        const decodedSummary = decodeSummary(snapshot, this.logger);
+        const decodedSummary = decodeSummary(snapshot, this.defaultLogger);
         const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 
         if (outstandingOps.length > 0) {
@@ -576,14 +398,20 @@ export class SummarizerNode implements ISummarizerNode {
     private readonly canReuseHandle: boolean;
     private readonly throwOnError: boolean;
     private trackingSequenceNumber: number;
-    private constructor(
-        private readonly logger: ITelemetryLogger,
+
+    /**
+     * Do not call constructor directly.
+     * Use createRootSummarizerNode to create root node, or createChild to create child nodes.
+     */
+    public constructor(
+        protected readonly defaultLogger: ITelemetryLogger,
         private readonly summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         config: ISummarizerNodeConfig,
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
         private latestSummary?: SummaryNode,
         private readonly initialSummary?: IInitialSummary,
+        protected wipSummaryLogger?: ITelemetryLogger,
     ) {
         this.canReuseHandle = config.canReuseHandle ?? true;
         // BUGBUG: Seeing issues with differential summaries.
@@ -591,33 +419,6 @@ export class SummarizerNode implements ISummarizerNode {
         // while we continue to investigate
         this.throwOnError = true; // config.throwOnFailure ?? false;
         this.trackingSequenceNumber = this._changeSequenceNumber;
-    }
-
-    public static createRoot(
-        logger: ITelemetryLogger,
-        /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
-        /** Sequence number of latest change to new node/subtree */
-        changeSequenceNumber: number,
-        /**
-         * Reference sequence number of last acked summary,
-         * or undefined if not loaded from summary.
-         */
-        referenceSequenceNumber: number | undefined,
-        config: ISummarizerNodeConfig = {},
-    ): SummarizerNode {
-        const maybeSummaryNode = referenceSequenceNumber === undefined ? undefined : new SummaryNode({
-            referenceSequenceNumber,
-            basePath: undefined,
-            localPath: EscapedPath.create(""), // root hard-coded to ""
-        });
-        return new SummarizerNode(
-            logger,
-            summarizeInternalFn,
-            config,
-            changeSequenceNumber,
-            maybeSummaryNode,
-        );
     }
 
     public createChild(
@@ -635,18 +436,46 @@ export class SummarizerNode implements ISummarizerNode {
     ): ISummarizerNode {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
 
-        const latestSummary = this.latestSummary;
-        let child: SummarizerNode;
+        const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
+        const child = new SummarizerNode(
+            this.defaultLogger,
+            summarizeInternalFn,
+            config,
+            createDetails.changeSequenceNumber,
+            createDetails.latestSummary,
+            createDetails.initialSummary,
+            this.wipSummaryLogger,
+        );
+        this.initializeChild(child);
+
+        this.children.set(id, child);
+        return child;
+    }
+
+    public getChild(id: string): ISummarizerNode | undefined {
+        return this.children.get(id);
+    }
+
+    /**
+     * Returns the details needed to create a child node.
+     * @param id - Initial id or path part of the child node.
+     * @param createParam - Information needed to create the node.
+     * @returns the details needed to create the child node.
+     */
+    protected getCreateDetailsForChild(id: string, createParam: CreateChildSummarizerNodeParam): ICreateChildDetails {
+        let initialSummary: IInitialSummary | undefined;
+        let latestSummary: SummaryNode | undefined;
+        let changeSequenceNumber: number;
+
+        const parentLatestSummary = this.latestSummary;
         switch (createParam.type) {
             case CreateSummarizerNodeSource.FromAttach: {
-                let summaryNode: SummaryNode | undefined;
-                let initialSummary: IInitialSummary | undefined;
                 if (
-                    latestSummary !== undefined
-                    && createParam.sequenceNumber <= latestSummary.referenceSequenceNumber
+                    parentLatestSummary !== undefined
+                    && createParam.sequenceNumber <= parentLatestSummary.referenceSequenceNumber
                 ) {
                     // Prioritize latest summary if it was after this node was attached.
-                    summaryNode = latestSummary.createForChild(id);
+                    latestSummary = parentLatestSummary.createForChild(id);
                 } else {
                     const summary = convertToSummaryTree(createParam.snapshot) as ISummaryTreeWithStats;
                     initialSummary = {
@@ -655,27 +484,21 @@ export class SummarizerNode implements ISummarizerNode {
                         summary,
                     };
                 }
-                child = new SummarizerNode(
-                    this.logger,
-                    summarizeInternalFn,
-                    config,
-                    createParam.sequenceNumber,
-                    summaryNode,
-                    initialSummary,
-                );
+                changeSequenceNumber = createParam.sequenceNumber;
                 break;
             }
             case CreateSummarizerNodeSource.FromSummary: {
                 if (this.initialSummary === undefined) {
-                    assert(!!latestSummary, "Cannot create child from summary if parent does not have latest summary");
+                    assert(
+                        !!parentLatestSummary,
+                        "Cannot create child from summary if parent does not have latest summary");
                 }
                 // fallthrough to local
             }
             case CreateSummarizerNodeSource.Local: {
-                const initialSummary = this.initialSummary;
-                let childInitialSummary: IInitialSummary | undefined;
-                if (initialSummary !== undefined) {
-                    const childSummary = initialSummary.summary?.summary.tree[id];
+                const parentInitialSummary = this.initialSummary;
+                if (parentInitialSummary !== undefined) {
+                    const childSummary = parentInitialSummary.summary?.summary.tree[id];
                     if (createParam.type === CreateSummarizerNodeSource.FromSummary) {
                         // Locally created would not have subtree.
                         assert(!!childSummary, "Missing child summary tree");
@@ -691,20 +514,14 @@ export class SummarizerNode implements ISummarizerNode {
                             stats: calculateStats(childSummary),
                         };
                     }
-                    childInitialSummary = {
-                        sequenceNumber: initialSummary.sequenceNumber,
+                    initialSummary = {
+                        sequenceNumber: parentInitialSummary.sequenceNumber,
                         id,
                         summary: childSummaryWithStats,
                     };
                 }
-                child = new SummarizerNode(
-                    this.logger,
-                    summarizeInternalFn,
-                    config,
-                    latestSummary?.referenceSequenceNumber ?? -1,
-                    latestSummary?.createForChild(id),
-                    childInitialSummary,
-                );
+                latestSummary = parentLatestSummary?.createForChild(id);
+                changeSequenceNumber = parentLatestSummary?.referenceSequenceNumber ?? -1;
                 break;
             }
             default: {
@@ -713,15 +530,44 @@ export class SummarizerNode implements ISummarizerNode {
             }
         }
 
+        return {
+            initialSummary,
+            latestSummary,
+            changeSequenceNumber,
+        };
+    }
+
+    /**
+     * Initializes a child node with some of this node's data, such as the wipReferenceSequenceNumber.
+     * @param child - The child node to be initialized.
+     */
+    protected initializeChild(child: SummarizerNode) {
         // If created while summarizing, relay that information down
         if (this.wipReferenceSequenceNumber !== undefined) {
             child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
         }
-        this.children.set(id, child);
-        return child;
-    }
-
-    public getChild(id: string): ISummarizerNode | undefined {
-        return this.children.get(id);
     }
 }
+
+/**
+ * Creates a root summarizer node.
+ * @param logger - Logger to use within SummarizerNode
+ * @param summarizeInternalFn - Function to generate summary
+ * @param changeSequenceNumber - Sequence number of latest change to new node/subtree
+ * @param referenceSequenceNumber - Reference sequence number of last acked summary,
+ * or undefined if not loaded from summary
+ * @param config - Configure behavior of summarizer node
+ */
+export const createRootSummarizerNode = (
+    logger: ITelemetryLogger,
+    summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+    changeSequenceNumber: number,
+    referenceSequenceNumber: number | undefined,
+    config: ISummarizerNodeConfig = {},
+): IRootSummarizerNode => new SummarizerNode(
+        logger,
+        summarizeInternalFn,
+        config,
+        changeSequenceNumber,
+        referenceSequenceNumber === undefined ? undefined : SummaryNode.createForRoot(referenceSequenceNumber),
+    );

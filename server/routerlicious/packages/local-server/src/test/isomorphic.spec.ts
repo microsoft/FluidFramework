@@ -13,11 +13,11 @@ describe("Local server", () => {
             webpack(config, (err, stats) => {
                 if (err) {
                     assert.fail(err);
-                    reject();
+                    reject(new Error());
                 } else if (stats.hasErrors()) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     assert.fail(stats.compilation.errors.map((value) => value.stack).join("\n"));
-                    reject();
+                    reject(new Error());
                 } else {
                     resolve();
                 }

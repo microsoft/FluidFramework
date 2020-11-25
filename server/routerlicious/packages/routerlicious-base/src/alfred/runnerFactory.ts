@@ -56,7 +56,7 @@ export class OrdererManager implements core.IOrdererManager {
         winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
 
         if (tenant.orderer.url !== this.ordererUrl) {
-            return Promise.reject("Invalid ordering service endpoint");
+            return Promise.reject(new Error("Invalid ordering service endpoint"));
         }
 
         switch (tenant.orderer.type) {
@@ -174,7 +174,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             deltasCollectionName,
             scribeCollectionName);
 
-        const storage = new services.DocumentStorage(databaseManager, tenantManager, producer);
+        const storage = new services.DocumentStorage(databaseManager, tenantManager);
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
         const address = `${await utils.getHostIp()}:4000`;
