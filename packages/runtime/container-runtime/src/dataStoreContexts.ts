@@ -68,13 +68,12 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     }
 
     /**
-     * Prepare and return the unbound context with the given id so it can be bound.
+     * Return the unbound local context with the given id.
      */
-    public prepContextForBind(id: string): LocalFluidDataStoreContext {
+    public getUnbound(id: string): LocalFluidDataStoreContext {
         assert(this.notBoundContexts.has(id), "Store being bound should be in not bounded set");
         assert(this._contexts.has(id), "Attempting to bind to a context that hasn't been added yet");
 
-        this.notBoundContexts.delete(id);
         return this._contexts.get(id) as LocalFluidDataStoreContext;
     }
 
@@ -92,8 +91,8 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     }
 
     /**
-     * This returns a Promise that will resolve when a context with the given id is bound,
-     * or added as remote from another client.
+     * This returns a Promise that will resolve when a context with the given id is
+     * either bound or added as remote from another client.
      * @param id The id of the context to await
      */
     public async waitForContext(id: string): Promise<FluidDataStoreContext> {
@@ -110,9 +109,10 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     }
 
     /**
-     * Indicates the context has been bound
+     * Update this context as bound
      */
-    public notifyOnBind(id: string) {
+    public bind(id: string) {
+        this.notBoundContexts.delete(id);
         this.resolveDeferred(id);
     }
 

@@ -189,7 +189,7 @@ export class DataStores implements IDisposable {
 
     public  bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
         const id = fluidDataStoreRuntime.id;
-        const localContext = this.contexts.prepContextForBind(id);
+        const localContext = this.contexts.getUnbound(id);
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients.
@@ -202,7 +202,7 @@ export class DataStores implements IDisposable {
             this.attachOpFiredForDataStore.add(id);
         }
 
-        this.contexts.notifyOnBind(fluidDataStoreRuntime.id);
+        this.contexts.bind(fluidDataStoreRuntime.id);
     }
 
     public createDetachedDataStoreCore(
