@@ -39,7 +39,6 @@ const socketIOEvents = [
 
 export interface ICombinedDriver {
     clientId: string;
-    getResolvedUrl: () => Promise<IResolvedUrl>;
     stream: IOuterDocumentDeltaConnectionProxy;
     deltaStorage: IDocumentDeltaStorageService;
     storage: IDocumentStorageService;
@@ -152,7 +151,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         const clientId = deltaStream.clientId;
         const combinedDriver = {
             clientId,
-            getResolvedUrl: Comlink.proxy(async () => resolvedUrl),
             stream: this.getOuterDocumentDeltaConnection(deltaStream),
             deltaStorage: this.getDeltaStorage(deltaStorage),
             storage: this.getStorage(storage),

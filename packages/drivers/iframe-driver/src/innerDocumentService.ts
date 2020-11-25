@@ -26,11 +26,12 @@ export class InnerDocumentService implements IDocumentService {
      */
     public static async create(
         proxyObject: ICombinedDriver,
+        resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<InnerDocumentService> {
         return new InnerDocumentService(
             proxyObject,
-            await proxyObject.getResolvedUrl(),
+            resolvedUrl,
             proxyObject.clientId,
             logger,
         );

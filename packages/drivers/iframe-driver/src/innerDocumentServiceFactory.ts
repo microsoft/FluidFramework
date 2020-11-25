@@ -45,7 +45,7 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         const outerDocumentServiceProxyId = await this.outerProxy.createDocumentService(MakeThinProxy(resolvedUrl));
 
         const clients = await this.outerProxy.clients;
-        return InnerDocumentService.create(clients[outerDocumentServiceProxyId], logger);
+        return InnerDocumentService.create(clients[outerDocumentServiceProxyId], resolvedUrl, logger);
     }
 
     public async createContainer(
@@ -58,6 +58,6 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
             MakeThinProxy(resolvedUrl),
         );
         const clients = await this.outerProxy.clients;
-        return InnerDocumentService.create(clients[outerDocumentServiceProxyId], logger);
+        return InnerDocumentService.create(clients[outerDocumentServiceProxyId], resolvedUrl, logger);
     }
 }
