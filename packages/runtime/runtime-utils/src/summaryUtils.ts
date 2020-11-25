@@ -253,6 +253,32 @@ export function convertSnapshotTreeToSummaryTree(
 }
 
 /**
+ * Utility to convert serialized snapshot taken in detached container to format where we can use it to
+ * attach the container.
+ * @param serializedSnapshotTree - serialized snapshot tree to be converted to summary tree for attach.
+ */
+export function convertSnapshotTreeToProtocolAndAppSummaryTree(
+    serializedSnapshotTree: string,
+): ISummaryTree {
+    const snapshotTree = JSON.parse(serializedSnapshotTree);
+    const summaryTree = convertSnapshotTreeToSummaryTree(snapshotTree).summary;
+    const appSummaryTree: ISummaryTree = {
+        type: SummaryType.Tree,
+        tree: {},
+    };
+    const entries = Object.entries(summaryTree.tree);
+    for (const [key, subTree] of entries) {
+        if (key !== ".protocol") {
+            appSummaryTree.tree[key] = subTree;
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+            delete summaryTree.tree[key];
+        }
+    }
+    summaryTree.tree[".app"] = appSummaryTree;
+    return summaryTree;
+}
+
+/**
  * Converts ISummaryTree to ITree format. This is needed for back-compat while we get rid of snapshot.
  * @param summaryTree - summary tree in ISummaryTree format
  */
