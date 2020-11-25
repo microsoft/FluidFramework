@@ -226,6 +226,17 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     public async read(blobid: string): Promise<string> {
+        return this.readWithEncodingOutput(blobid, "base64");
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
+     */
+    public async readString(blobid: string): Promise<string> {
+        return this.readWithEncodingOutput(blobid, "string");
+    }
+
+    private async readWithEncodingOutput(blobid: string, outputFormat: string) {
         let blob = this.blobCache.get(blobid);
         // Reset the timer on attempted cache read
         this.scheduleClearBlobsCache();
@@ -250,17 +261,40 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             blob = response.content;
         }
 
-        if (this.attributesBlobHandles.has(blobid)) {
+        assert(blob.encoding === "base64" || blob.encoding === undefined, "wrong blob encoding format");
+        const inputFormat = blob.encoding;
+        if (!this.attributesBlobHandles.has(blobid)) {
+            if (outputFormat === inputFormat || (outputFormat === "string" && inputFormat === undefined))  {
+                return blob.content;
+            }
+            else if (outputFormat === "base64") {
+                return fromUtf8ToBase64(blob.content);
+            }
+            else {
+                return fromBase64ToUtf8(blob.content);
+            }
+        }
+        else {
             // ODSP document ids are random guids (different per session)
             // fix the branch name in attributes
             // this prevents issues when generating summaries
-            const documentAttributes: api.IDocumentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
-            documentAttributes.branch = this.documentId;
+            const docId = this.documentId;
+            let documentAttributes: api.IDocumentAttributes;
+            if (inputFormat === "base64") {
+                documentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
+                documentAttributes.branch = docId;
+            }
+            else {
+                documentAttributes = JSON.parse(blob.content);
+                documentAttributes.branch = docId;
+            }
 
-            blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
+            if (outputFormat === "base64") {
+                return fromUtf8ToBase64(JSON.stringify(documentAttributes));
+            } else {
+                return JSON.stringify(documentAttributes);
+            }
         }
-
-        return blob.content;
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {

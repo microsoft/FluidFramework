@@ -24,15 +24,13 @@ import {
 
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
-    IBlob,
     ICommittedProposal,
     IQuorum,
     ISequencedClient,
     ISequencedDocumentMessage,
-    ITree,
+    ISummaryTree,
     ITreeEntry,
     MessageType,
-    TreeEntry,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -592,11 +590,11 @@ export class MockObjectStorageService implements IChannelStorageService {
  * Mock implementation of IChannelServices
  */
 export class MockSharedObjectServices implements IChannelServices {
-    public static createFromTree(tree: ITree) {
+    public static createFromSummary(summaryTree: ISummaryTree) {
         const contents: { [key: string]: string } = {};
-        for (const entry of tree.entries) {
-            assert(entry.type === TreeEntry.Blob);
-            contents[entry.path] = (entry.value as IBlob).contents;
+        for (const [key, value] of Object.entries(summaryTree.tree)) {
+            assert(value.type === SummaryType.Blob);
+            contents[key] = value.content as string;
         }
         return new MockSharedObjectServices(contents);
     }

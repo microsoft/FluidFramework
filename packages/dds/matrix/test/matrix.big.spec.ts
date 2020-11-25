@@ -21,17 +21,17 @@ const enum Const {
     excelMaxCols = 16384,
 }
 
-// Snapshots the given `SharedMatrix`, loads the snapshot into a 2nd SharedMatrix, vets that the two are
+// Summarizes the given `SharedMatrix`, loads the summary into a 2nd SharedMatrix, vets that the two are
 // equivalent, and then returns the 2nd matrix.
-async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
-    // Create a snapshot
-    const objectStorage = new MockStorage(matrix.snapshot());
+async function summarize<T extends Serializable>(matrix: SharedMatrix<T>) {
+    // Create a summary
+    const objectStorage = MockStorage.createFromSummary(matrix.summarize().summary);
 
-    // Create a local DataStoreRuntime since we only want to load the snapshot for a local client.
+    // Create a local DataStoreRuntime since we only want to load the summary for a local client.
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     dataStoreRuntime.local = true;
 
-    // Load the snapshot into a newly created 2nd SharedMatrix.
+    // Load the summary into a newly created 2nd SharedMatrix.
     const matrix2 = new SharedMatrix<T>(dataStoreRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
     await matrix2.load({
         deltaConnection: new MockEmptyDeltaConnection(),
@@ -184,10 +184,10 @@ describe("Big Matrix", function () {
         });
     });
 
-    describe("local client snapshot", () => {
+    describe("local client summarize", () => {
         // MergeTree client expects a either no delta manager or a real delta manager with minimumSequenceNumber and
         // lastSequenceNumber to be updated.
-        // Sp, we test snapshots with local client because MockFluidDataStoreRuntime has no delta manager and is assigned
+        // Sp, we test summarize with local client because MockFluidDataStoreRuntime has no delta manager and is assigned
         // one once it is connected.
 
         let matrix: SharedMatrix;
@@ -199,15 +199,15 @@ describe("Big Matrix", function () {
             matrix = new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);
         });
 
-        it("snapshot", async () => {
+        it("summarize", async () => {
             matrix.insertRows(0, Const.excelMaxRows);
             matrix.insertCols(0, Const.excelMaxCols);
 
             setCorners(matrix);
             checkCorners(matrix);
 
-            const fromSnapshot = await snapshot(matrix);
-            checkCorners(fromSnapshot);
+            const fromSummary = await summarize(matrix);
+            checkCorners(fromSummary);
         });
     });
 });

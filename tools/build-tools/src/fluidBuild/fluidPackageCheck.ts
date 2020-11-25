@@ -209,6 +209,7 @@ export class FluidPackageCheck {
 
             // all build tasks, but optional build:webpack
             const buildCompile: string[] = [];
+            const buildCommonJs: string[] = [];
 
             const hasFull = pkg.getScript("build:full") !== undefined;
 
@@ -223,7 +224,13 @@ export class FluidPackageCheck {
 
             const buildPrefix = pkg.getScript("build:genver") ? "npm run build:genver && " : "";
             if (pkg.getScript("tsc")) {
-                buildCompile.push("tsc");
+                if (pkg.getScript("build:test")) {
+                    buildCommonJs.push("tsc");
+                    buildCommonJs.push("build:test");
+                    buildCompile.push("build:commonjs");
+                } else {
+                    buildCompile.push("tsc");
+                }
             }
 
             if (pkg.getScript("build:es5")) {
@@ -270,9 +277,9 @@ export class FluidPackageCheck {
                 return;
             }
 
-            const check = (scriptName: string, parts: string[], prefix = "") => {
+            const check = (scriptName: string, parts: string[], concurrently = true, prefix = "") => {
                 const expected = parts.length === 0 ? undefined :
-                    prefix + (parts.length > 1 ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts[0]}`);
+                    prefix + (parts.length > 1 && concurrently? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts.join(" && npm run ")}`);
                 const script = pkg.getScript(scriptName);
                 if (script !== expected) {
                     this.logWarn(pkg, `non-conformant script "${scriptName}"`, fix);
@@ -284,8 +291,9 @@ export class FluidPackageCheck {
                     }
                 }
             }
-            check("build", build, buildPrefix);
+            check("build", build, true, buildPrefix);
             check("build:compile", buildCompile);
+            check("build:commonjs", buildCommonJs, false);
             check("build:full", buildFull);
             check("build:full:compile", buildFullCompile);
             if (!pkg.packageJson.private) {
