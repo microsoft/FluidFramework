@@ -211,6 +211,7 @@
             "Test": {
                 "dev": true,
                 "packages": [
+                    "@fluid-internal/test-dds-utils",
                     "@fluidframework/local-driver",
                     "@fluidframework/test-runtime-utils",
                     "@fluidframework/webpack-fluid-loader"
