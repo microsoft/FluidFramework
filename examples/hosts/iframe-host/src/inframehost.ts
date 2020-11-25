@@ -10,22 +10,17 @@ import {
     IUrlResolverProxyKey,
     OuterUrlResolver,
 } from "@fluidframework/iframe-driver";
-import { Container, Loader } from "@fluidframework/container-loader";
-import {
-    ICodeLoader,
-    IProxyLoaderFactory,
-} from "@fluidframework/container-definitions";
+import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import {
     MultiDocumentServiceFactory,
     MultiUrlResolver,
 } from "@fluidframework/driver-utils";
-import { IRequest, IFluidObject } from "@fluidframework/core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 
 export interface IFrameOuterHostConfig {
     documentServiceFactory: IDocumentServiceFactory;
     urlResolver: IUrlResolver;
-    codeLoader: ICodeLoader,
 
     // Any config to be provided to loader.
     options?: any;
@@ -38,17 +33,20 @@ export interface IFrameOuterHostConfig {
 }
 
 export class IFrameOuterHost {
-    private readonly loader: Loader;
     constructor(private readonly hostConfig: IFrameOuterHostConfig) {
         // todo
         // disable summaries
         // set as non-user client
-        this.loader = new Loader({
-            ...hostConfig,
-        });
     }
 
+    /**
+     * Set up the outer proxies for an IFrame
+     * @param iframe - The IFrame on which to expose methods (it still needs
+     * to be set up internally separately)
+     */
     public async loadOuterProxy(iframe: HTMLIFrameElement): Promise<void> {
+        // With comlink, only a single object should be exposed on a single window
+        // so combine them all in one (otherwise there are mysterious runtime errors)
         const combinedProxy = {};
 
         const outerDocumentServiceProxy =  new DocumentServiceFactoryProxy(
@@ -66,9 +64,5 @@ export class IFrameOuterHost {
         const iframeContentWindow = iframe.contentWindow!;
         iframeContentWindow.window.postMessage("EndpointExposed", "*");
         Comlink.expose(combinedProxy, Comlink.windowEndpoint(iframeContentWindow));
-    }
-
-    public async getContainerForRequest(request: IRequest): Promise<Container> {
-        return this.loader.resolve(request);
     }
 }

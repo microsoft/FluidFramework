@@ -4,6 +4,7 @@
  */
 
 import * as Comlink from "comlink";
+import { assert } from "@fluidframework/common-utils";
 import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IUrlResolverProxy, IUrlResolverProxyKey } from "./outerUrlResolver";
@@ -15,6 +16,7 @@ export class InnerUrlResolver implements IUrlResolver {
         // is expected to exist when running any inner iframe code.
         const combinedProxy = Comlink.wrap(Comlink.windowEndpoint(window.parent));
         const outerProxy = combinedProxy[IUrlResolverProxyKey] as Comlink.Remote<IUrlResolverProxy>;
+        assert(outerProxy !== undefined, "OuterUrlResolverProxy unavailable");
         await outerProxy.connected();
         return new InnerUrlResolver(outerProxy);
     }

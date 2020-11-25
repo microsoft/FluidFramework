@@ -10,8 +10,9 @@ import {
     InnerUrlResolver,
 } from "@fluidframework/iframe-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
+import { IContainerProxy, MakeContainerProxy } from "./containerProxy";
 
-async function getFluidObjectAndRender(container: Container, div: HTMLDivElement) {
+async function getFluidObjectAndRender(container: IContainerProxy, div: HTMLDivElement) {
     const response = await container.request({ url: "/" });
     if (response.status !== 200 ||
         !(
@@ -27,11 +28,10 @@ async function getFluidObjectAndRender(container: Container, div: HTMLDivElement
     view.render(div, { display: "block" });
 }
 
-async function loadFluidObject(
-    divId: string,
+async function loadContainer(
     documentId: string,
     createNew: boolean,
-) {
+): Promise<IContainerProxy> {
     const documentServiceFactory = await InnerDocumentServiceFactory.create();
     const urlResolver = await InnerUrlResolver.create();
 
@@ -51,8 +51,7 @@ async function loadFluidObject(
         // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
         // proposal.
         container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
-        await container.attach({ url: documentId });
-        // TODO: Proxy outer attach call
+        // Caller is responsible for attaching the created container
     } else {
         // Request must be appropriate and parseable by resolver.
         container = await loader.resolve({ url: documentId });
@@ -64,17 +63,27 @@ async function loadFluidObject(
         }
     }
 
+    return MakeContainerProxy(container);
+}
+
+async function loadFluidObject(
+    divId: string,
+    containerProxy: IContainerProxy,
+) {
     const componentDiv = document.getElementById(divId) as HTMLDivElement;
-    await getFluidObjectAndRender(container, componentDiv).catch(() => { });
+    await getFluidObjectAndRender(containerProxy, componentDiv).catch(() => { });
     // Handle the code upgrade scenario (which fires contextChanged)
-    container.on("contextChanged", (value) => {
-        getFluidObjectAndRender(container, componentDiv).catch(() => { });
+    await containerProxy.on("contextChanged", (value) => {
+        getFluidObjectAndRender(containerProxy, componentDiv).catch(() => { });
     });
 }
 
 export async function runInner(divId: string) {
-    // expose the entrypoint on the iframe window to load a Fluid object
-    (window as any).loadFluidObject = async (documentId, createNew) => {
-        return loadFluidObject(divId, documentId, createNew);
+    // expose the entrypoints on the iframe window to load a Fluid object
+    (window as any).loadContainer = async (documentId, createNew) => {
+        return loadContainer(documentId, createNew);
+    };
+    (window as any).loadFluidObject = async (containerProxy) => {
+        return loadFluidObject(divId, containerProxy);
     };
 }

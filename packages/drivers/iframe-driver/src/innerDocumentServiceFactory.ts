@@ -5,6 +5,7 @@
 
 import * as Comlink from "comlink";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -25,6 +26,7 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         const combinedProxy = Comlink.wrap(Comlink.windowEndpoint(window.parent));
         const outerProxy =
             combinedProxy[IDocumentServiceFactoryProxyKey] as Comlink.Remote<IDocumentServiceFactoryProxy>;
+        assert(outerProxy !== undefined, "OuterDocumentServiceFactoryProxy unavailable");
         await outerProxy.connected();
         return new InnerDocumentServiceFactory(outerProxy);
     }

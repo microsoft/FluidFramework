@@ -3,19 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { fluidExport as TodoContainer } from "@fluid-example/todo";
-import { Container } from "@fluidframework/container-loader";
 import { IFluidObject } from "@fluidframework/core-interfaces";
-import {
-    InsecureTinyliciousUrlResolver,
- } from "@fluidframework/get-tinylicious-container";
-import {
-    RouterliciousDocumentServiceFactory,
-} from "@fluidframework/routerlicious-driver";
+import { InsecureTinyliciousUrlResolver } from "@fluidframework/get-tinylicious-container";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import {
-    InsecureTokenProvider,
-} from "@fluidframework/test-runtime-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { IContainerProxy } from "./containerProxy";
 import { IFrameOuterHost } from "./inframehost";
 
 let createNew = false;
@@ -39,28 +32,28 @@ export async function loadFrame(iframeDivId: string, divId: string, logId: strin
     const tokenProvider = new InsecureTokenProvider("tinylicious", documentId, "12345", { id: "userid0" });
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
 
-    const module = { fluidExport: TodoContainer };
-    const codeLoader = { load: async () => module };
-
     const host = new IFrameOuterHost({
         urlResolver,
         documentServiceFactory,
-        codeLoader,
     });
 
     await host.loadOuterProxy(iframe);
 
     iframe.addEventListener("load", () => {
         void (async () => {
-            await (iframe.contentWindow as any).loadFluidObject(documentId, createNew);
-            // don't try to connect until the iframe does, so they get existing false
-            const container = await host.getContainerForRequest({ url: documentId });
-            await loadOuterDataStoreAndLogDivs(container, logId, divId);
+            // load the code inside the iframe but attach it here outside
+            const containerProxy: IContainerProxy =
+                await (iframe.contentWindow as any).loadContainer(documentId, createNew);
+            if (createNew) {
+                await containerProxy.attach({ url: documentId });
+            }
+            await (iframe.contentWindow as any).loadFluidObject(containerProxy);
+            await loadOuterDataStoreAndLogDivs(containerProxy, logId, divId);
         })();
     });
 }
 
-async function getFluidObjectAndRender(container: Container, div: HTMLDivElement) {
+async function getFluidObjectAndRender(container: IContainerProxy, div: HTMLDivElement) {
     const response = await container.request({ url: "/" });
     if (response.status !== 200 ||
         !(
@@ -77,18 +70,21 @@ async function getFluidObjectAndRender(container: Container, div: HTMLDivElement
 }
 
 async function loadOuterDataStoreAndLogDivs(
-    container: Container,
+    container: IContainerProxy,
     logDivId: string,
     dataStoreDivId: string,
 ): Promise<void> {
     const logDiv = document.getElementById(logDivId) as HTMLDivElement;
 
-    if (!container.getQuorum().has("code")) {
+    const quorum = await container.getQuorum();
+    if (!quorum.has("code")) {
         // we'll never propose the code, so wait for them to do it
-        await new Promise((resolve) => container.once("contextChanged", () => resolve()));
+        await new Promise((resolve) => {
+            void container.once("contextChanged", () => resolve());
+            return;
+        });
     }
 
-    const quorum = container.getQuorum();
     const log =
         (emitter: { on(event: string, listener: (...args: any[]) => void) }, name: string, ...events: string[]) => {
             events.forEach((event) =>
@@ -105,7 +101,7 @@ async function loadOuterDataStoreAndLogDivs(
     const dataStoreDiv = document.getElementById(dataStoreDivId) as HTMLDivElement;
     getFluidObjectAndRender(container, dataStoreDiv).catch(() => {});
     // Handle the code upgrade scenario (which fires contextChanged)
-    container.on("contextChanged", (value) => {
+    await container.on("contextChanged", (value) => {
         getFluidObjectAndRender(container, dataStoreDiv).catch(() => {});
     });
 }
