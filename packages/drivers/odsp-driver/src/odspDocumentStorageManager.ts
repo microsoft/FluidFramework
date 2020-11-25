@@ -233,11 +233,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
      * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
      */
     public async readString(blobId: string): Promise<string> {
-        return this.readWithEncodingOutput(blobId, "utf8");
+        return this.readWithEncodingOutput(blobId, "string");
     }
 
     private async readWithEncodingOutput(blobId: string, outputFormat: string): Promise<string> {
-        const blob = this.blobCache.get(blobId);
+        // const blob = this.blobCache.get(blobId);
+        let blob: IBlob | undefined;
+        assert(!blob || blob.encoding === "base64" || blob.encoding === undefined, "wrong blob encoding format");
         let buffer;
         // Reset the timer on attempted cache read
         this.scheduleClearBlobsCache();
@@ -263,36 +265,36 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             buffer = await response.arrayBuffer();
         }
 
-        if (this.attributesBlobHandles.has(blobId)) {
-            // ODSP document ids are random guids (different per session)
-            // fix the branch name in attributes
-            // this prevents issues when generating summaries
-            let documentAttributes;
+        if (!this.attributesBlobHandles.has(blobId)) {
             if (blob) {
-                documentAttributes = JSON.parse(blob.encoding === "base64" ? fromBase64ToUtf8(blob.content) : blob.content);
-            } else {
-                documentAttributes = JSON.parse(IsoBuffer.from(buffer).toString("utf8"));
+                if (outputFormat === blob.encoding || (outputFormat === "string" && blob.encoding === undefined))  {
+                    return blob.content;
+                } else if (outputFormat === "base64") {
+                    return fromUtf8ToBase64(blob.content);
+                } else {
+                    return fromBase64ToUtf8(blob.content);
+                }
             }
-            documentAttributes.branch = this.documentId;
 
-            if (outputFormat === "base64") {
-                return fromUtf8ToBase64(JSON.stringify(documentAttributes));
-            } else {
-                return JSON.stringify(documentAttributes);
-            }
+            return IsoBuffer.from(buffer).toString(outputFormat === "base64" ? "base64" : "utf8");
         }
 
+        // ODSP document ids are random guids (different per session)
+        // fix the branch name in attributes
+        // this prevents issues when generating summaries
+        let documentAttributes: api.IDocumentAttributes;
         if (blob) {
-            if (blob.encoding === outputFormat) {
-                return blob.content;
-            } else if (outputFormat === "base64") {
-                return fromUtf8ToBase64(blob.content);
-            } else {
-                return fromBase64ToUtf8(blob.content);
-            }
+            documentAttributes = JSON.parse(blob.encoding === "base64" ? fromBase64ToUtf8(blob.content) : blob.content);
+        } else {
+            documentAttributes = JSON.parse(IsoBuffer.from(buffer).toString("utf8"));
         }
+        documentAttributes.branch = this.documentId;
 
-        return IsoBuffer.from(buffer).toString(outputFormat);
+        if (outputFormat === "base64") {
+            return fromUtf8ToBase64(JSON.stringify(documentAttributes));
+        } else {
+            return JSON.stringify(documentAttributes);
+        }
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
