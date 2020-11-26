@@ -8,15 +8,19 @@ import { RedisClient } from "redis";
 import redis from "redis-mock";
 import { IRequestMetrics, ThrottlerRequestType } from "@fluidframework/server-services-core";
 import { RedisThrottleManager } from "../redisThrottleManager";
+import Sinon from "sinon";
 
 describe("RedisThrottleManager", () => {
     let mockRedisClient: RedisClient;
     beforeEach(() => {
+        // use fake timers to have full control over the passage of time
+        Sinon.useFakeTimers()
         mockRedisClient = redis.createClient() as RedisClient;
     });
     afterEach(() => {
         mockRedisClient.flushall();
         mockRedisClient.end();
+        Sinon.restore();
     });
     it("Creates and retrieves requestMetric", async () => {
         const throttleManager = new RedisThrottleManager(mockRedisClient);
@@ -72,6 +76,70 @@ describe("RedisThrottleManager", () => {
         const requestType = ThrottlerRequestType.OpenSocketConn;
 
         const retrievedRequestMetric = await throttleManager.getRequestMetric(id, requestType);
+        assert.strictEqual(retrievedRequestMetric, undefined);
+    });
+
+    it("Expires outdated values", async () => {
+        const ttlInSeconds = 10;
+        const throttleManager = new RedisThrottleManager(mockRedisClient, ttlInSeconds);
+
+        const id = "test-id";
+        const requestType = ThrottlerRequestType.HistorianHttps;
+        const originalRequestMetric: IRequestMetrics = {
+            count: 2,
+            lastCoolDownAt: Date.now(),
+            throttleStatus: false,
+            throttleReason: "N/A",
+            retryAfterInMs: 0,
+        };
+        await throttleManager.setRequestMetric(id, requestType, originalRequestMetric);
+
+        // Move to just before the expiration date to make sure it is not prematurely expired
+        Sinon.clock.tick(ttlInSeconds * 1000 - 1);
+        let retrievedRequestMetric = await throttleManager.getRequestMetric(id, requestType);
+        assert.deepStrictEqual(retrievedRequestMetric, originalRequestMetric);
+
+        // move to end of expiration window when value should be expired
+        Sinon.clock.tick(1);
+        retrievedRequestMetric = await throttleManager.getRequestMetric(id, requestType);
+        assert.strictEqual(retrievedRequestMetric, undefined);
+    });
+
+    it("Updates expiration on overwrite, then expires outdated values", async () => {
+        const ttlInSeconds = 10;
+        const throttleManager = new RedisThrottleManager(mockRedisClient, ttlInSeconds);
+
+        const id = "test-id";
+        const requestType = ThrottlerRequestType.HistorianHttps;
+        const originalRequestMetric: IRequestMetrics = {
+            count: 2,
+            lastCoolDownAt: Date.now(),
+            throttleStatus: false,
+            throttleReason: "N/A",
+            retryAfterInMs: 0,
+        };
+        await throttleManager.setRequestMetric(id, requestType, originalRequestMetric);
+
+        // Move to just before the expiration date to make sure it is not prematurely expired
+        Sinon.clock.tick(ttlInSeconds * 1000 - 1);
+        let retrievedRequestMetric = await throttleManager.getRequestMetric(id, requestType);
+        assert.deepStrictEqual(retrievedRequestMetric, originalRequestMetric);
+
+        // Update stored value, which should reset expiration
+        const updatedRequestMetric: IRequestMetrics = {
+            ...originalRequestMetric,
+            count: 3,
+        };
+        await throttleManager.setRequestMetric(id, requestType, updatedRequestMetric);
+
+        // Move to end of new expiration window to make sure ttl was indeed updated
+        Sinon.clock.tick(ttlInSeconds * 1000 - 1);
+        retrievedRequestMetric = await throttleManager.getRequestMetric(id, requestType);
+        assert.deepStrictEqual(retrievedRequestMetric, updatedRequestMetric);
+
+        // move to end of expiration window when value should be expired
+        Sinon.clock.tick(1);
+        retrievedRequestMetric = await throttleManager.getRequestMetric(id, requestType);
         assert.strictEqual(retrievedRequestMetric, undefined);
     });
 });

@@ -3,24 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IRequestMetrics, IThrottleManager, IThrottlerResponse, ThrottlerRequestType } from "@fluidframework/server-services-core";
+import { IThrottlerResponse, ThrottlerRequestType } from "@fluidframework/server-services-core";
+import { TestThrottleManager } from "@fluidframework/server-test-utils";
 import assert from "assert";
 import Sinon from "sinon";
 import { Throttler } from "../throttler";
-
-class MockThrottleManager implements IThrottleManager {
-    private readonly cache: { [key: string]: IRequestMetrics } = {};
-
-    async setRequestMetric(id: string, requestType: ThrottlerRequestType, requestMetric: IRequestMetrics): Promise<void> {
-        this.cache[this.getKey(id, requestType)] = requestMetric;
-    }
-    async getRequestMetric(id: string, requestType: ThrottlerRequestType): Promise<IRequestMetrics> {
-        return this.cache[this.getKey(id, requestType)];
-    }
-    private getKey(id: string, requestType: ThrottlerRequestType): string {
-        return `${id}_${requestType}`;
-    }
-}
 
 describe("Throttler", () => {
     beforeEach(() => {
@@ -38,7 +25,7 @@ describe("Throttler", () => {
         const requestsPerCooldown = cooldownInterval / requestRate;
         let weight: number = 1;
         let response: IThrottlerResponse;
-        const throttleManager = new MockThrottleManager();
+        const throttleManager = new TestThrottleManager();
         const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
 
         const id = "test-id";
@@ -57,7 +44,7 @@ describe("Throttler", () => {
         const requestsPerCooldown = cooldownInterval / requestRate;
         let weight: number = 2;
         let response: IThrottlerResponse;
-        const throttleManager = new MockThrottleManager();
+        const throttleManager = new TestThrottleManager();
         const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
 
         const id = "test-id";
@@ -76,7 +63,7 @@ describe("Throttler", () => {
         const requestsPerCooldown = cooldownInterval / requestRate;
         let weight: number = requestsPerCooldown + 1;
         let response: IThrottlerResponse;
-        const throttleManager = new MockThrottleManager();
+        const throttleManager = new TestThrottleManager();
         const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
 
         const id = "test-id";
@@ -92,7 +79,7 @@ describe("Throttler", () => {
         const requestsPerCooldown = cooldownInterval / requestRate;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleManager = new MockThrottleManager();
+        const throttleManager = new TestThrottleManager();
         const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
 
         const id = "test-id";
@@ -115,7 +102,7 @@ describe("Throttler", () => {
         const requestsPerCooldown = cooldownInterval / requestRate;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleManager = new MockThrottleManager();
+        const throttleManager = new TestThrottleManager();
         const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
 
         const id = "test-id";
@@ -143,7 +130,7 @@ describe("Throttler", () => {
         const cooldownInterval = 1000;
         let weight: number = 1;
         let response: IThrottlerResponse;
-        const throttleManager = new MockThrottleManager();
+        const throttleManager = new TestThrottleManager();
         const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
 
         const id = "test-id";
@@ -168,12 +155,31 @@ describe("Throttler", () => {
         assert.strictEqual(response.throttleStatus, false, `request after ${cooldownInterval + 1}ms should not be throttled`);
     });
 
+
+    it("stores most recently calculated requestMetrics", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number = requestsPerCooldown + 1;
+        let response: IThrottlerResponse;
+        const throttleManager = new TestThrottleManager();
+        const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
+
+        const id = "test-id";
+        const requestType = ThrottlerRequestType.SubmitOp;
+
+        response = await throttler.updateRequestCount(id, requestType, weight);
+        assert.strictEqual(response.throttleStatus, true, `request with ${weight - requestsPerCooldown} excess weight should be throttled`);
+
+        const cachedResponse = await throttler.getThrottleStatus(id, requestType);
+        assert.deepStrictEqual(cachedResponse, response);
+    });
     it("does not increase throttle duration while throttled", async () => {
         const requestRate = 100;
         const cooldownInterval = 1000;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleManager = new MockThrottleManager();
+        const throttleManager = new TestThrottleManager();
         const requestsPerCooldown = cooldownInterval / requestRate;
         const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
 
@@ -202,7 +208,7 @@ describe("Throttler", () => {
         const requestsPerCooldown = cooldownInterval / requestRate;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleManager = new MockThrottleManager();
+        const throttleManager = new TestThrottleManager();
         const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
 
         const id = "test-id";
@@ -228,7 +234,7 @@ describe("Throttler", () => {
         const requestsPerCooldown = cooldownInterval / requestRate;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleManager = new MockThrottleManager();
+        const throttleManager = new TestThrottleManager();
         const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
 
         const id = "test-id";
@@ -254,7 +260,7 @@ describe("Throttler", () => {
         const requestsPerCooldown = cooldownInterval / requestRate;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleManager = new MockThrottleManager();
+        const throttleManager = new TestThrottleManager();
         const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
 
         const id = "test-id";
@@ -280,7 +286,7 @@ describe("Throttler", () => {
         const requestsPerCooldown = cooldownInterval / requestRate;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleManager = new MockThrottleManager();
+        const throttleManager = new TestThrottleManager();
         const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
 
         const id = "test-id";
@@ -306,7 +312,7 @@ describe("Throttler", () => {
         const requestsPerCooldown = cooldownInterval / requestRate;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleManager = new MockThrottleManager();
+        const throttleManager = new TestThrottleManager();
         const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
 
         const id = "test-id";
@@ -332,7 +338,7 @@ describe("Throttler", () => {
         const requestsPerCooldown = cooldownInterval / requestRate;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleManager = new MockThrottleManager();
+        const throttleManager = new TestThrottleManager();
         const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
 
         const id = "test-id";
@@ -350,5 +356,45 @@ describe("Throttler", () => {
         weight = 0;
         response = await throttler.updateRequestCount(id, requestType, weight);
         assert.strictEqual(response.throttleStatus, true, `request after ${retryAfter}ms should still be throttled`);
+    });
+
+    it("throttles one id, but not another with same requestType", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number = requestsPerCooldown + 1;
+        let response: IThrottlerResponse;
+        const throttleManager = new TestThrottleManager();
+        const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
+
+        const id1 = "test-id-1";
+        const id2 = "test-id-2";
+        const requestType = ThrottlerRequestType.SubmitOp;
+
+        response = await throttler.updateRequestCount(id1, requestType, weight);
+        assert.strictEqual(response.throttleStatus, true, `request for ${id1} with ${weight - requestsPerCooldown} excess weight should be throttled`);
+
+        response = await throttler.updateRequestCount(id2, requestType, weight - 1);
+        assert.strictEqual(response.throttleStatus, false, `request for ${id2} with ${requestsPerCooldown - weight} spare weight should not be throttled`);
+    });
+
+    it("throttles one requestType, but not another with same id", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number = requestsPerCooldown + 1;
+        let response: IThrottlerResponse;
+        const throttleManager = new TestThrottleManager();
+        const throttler = new Throttler(throttleManager, requestRate, cooldownInterval);
+
+        const id = "test-id";
+        const requestType1 = ThrottlerRequestType.SubmitOp;
+        const requestType2 = ThrottlerRequestType.OpenSocketConn;
+
+        response = await throttler.updateRequestCount(id, requestType1, weight);
+        assert.strictEqual(response.throttleStatus, true, `request for type ${requestType1} with ${weight - requestsPerCooldown} excess weight should be throttled`);
+
+        response = await throttler.updateRequestCount(id, requestType2, weight - 1);
+        assert.strictEqual(response.throttleStatus, false, `request for type ${requestType2} with ${requestsPerCooldown - weight} spare weight should not be throttled`);
     });
 });
