@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidObject } from "@fluidframework/core-interfaces";
@@ -12,7 +13,7 @@ import {
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IContainerProxy, MakeContainerProxy } from "./containerProxy";
 
-async function getFluidObjectAndRender(container: IContainerProxy, div: HTMLDivElement) {
+async function getFluidObjectAndRender(container: Container, div: HTMLDivElement) {
     const response = await container.request({ url: "/" });
     if (response.status !== 200 ||
         !(
@@ -28,9 +29,22 @@ async function getFluidObjectAndRender(container: IContainerProxy, div: HTMLDivE
     view.render(div, { display: "block" });
 }
 
+async function loadFluidObject(
+    divId: string,
+    container: Container,
+) {
+    const componentDiv = document.getElementById(divId) as HTMLDivElement;
+    await getFluidObjectAndRender(container, componentDiv).catch(() => { });
+    // Handle the code upgrade scenario (which fires contextChanged)
+    container.on("contextChanged", (value) => {
+        getFluidObjectAndRender(container, componentDiv).catch(() => { });
+    });
+}
+
 async function loadContainer(
     documentId: string,
     createNew: boolean,
+    divId: string,
 ): Promise<IContainerProxy> {
     const documentServiceFactory = await InnerDocumentServiceFactory.create();
     const urlResolver = await InnerUrlResolver.create();
@@ -46,6 +60,7 @@ async function loadContainer(
 
     let container: Container;
 
+    // TODO: drive new/existing creation entirely from outer
     if (createNew) {
         // We're not actually using the code proposal (our code loader always loads the same module regardless of the
         // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
@@ -63,27 +78,14 @@ async function loadContainer(
         }
     }
 
-    return MakeContainerProxy(container);
-}
+    await loadFluidObject(divId, container);
 
-async function loadFluidObject(
-    divId: string,
-    containerProxy: IContainerProxy,
-) {
-    const componentDiv = document.getElementById(divId) as HTMLDivElement;
-    await getFluidObjectAndRender(containerProxy, componentDiv).catch(() => { });
-    // Handle the code upgrade scenario (which fires contextChanged)
-    await containerProxy.on("contextChanged", (value) => {
-        getFluidObjectAndRender(containerProxy, componentDiv).catch(() => { });
-    });
+    return MakeContainerProxy(container);
 }
 
 export async function runInner(divId: string) {
     // expose the entrypoints on the iframe window to load a Fluid object
     (window as any).loadContainer = async (documentId, createNew) => {
-        return loadContainer(documentId, createNew);
-    };
-    (window as any).loadFluidObject = async (containerProxy) => {
-        return loadFluidObject(divId, containerProxy);
+        return loadContainer(documentId, createNew, divId);
     };
 }
