@@ -132,7 +132,7 @@ export class IFrameOuterHost {
      * Use the internal loader (which is created with a dummy code loader and
      * runtime) to resolve the request to a container.  The returned container
      * provides only limited functionality.
-     * @param request
+     * @param request - The request to resolve on the internal loader
      */
     public async loadContainer(request: IRequest): Promise<Container> {
         return this.loader.resolve(request);
