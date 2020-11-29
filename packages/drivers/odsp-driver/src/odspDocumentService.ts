@@ -329,15 +329,15 @@ export class OdspDocumentService implements IDocumentService {
             // pushV2 websocket urls will contain pushf
             const pushV2 = nonAfdUrl.includes("pushf");
             try {
-                const connection = await OdspDocumentDeltaConnection.create2(
+                const connection = await OdspDocumentDeltaConnection.create(
                     tenantId,
                     documentId,
                     token,
                     io,
                     client,
                     nonAfdUrl,
-                    60000,
                     this.logger,
+                    60000,
                 );
                 const endTime = performance.now();
                 this.logger.sendPerformanceEvent({
@@ -368,15 +368,15 @@ export class OdspDocumentService implements IDocumentService {
 
             const startTime = performance.now();
             try {
-                const connection = await OdspDocumentDeltaConnection.create2(
+                const connection = await OdspDocumentDeltaConnection.create(
                     tenantId,
                     documentId,
                     token,
                     io,
                     client,
                     afdUrl,
-                    60000,
                     this.logger,
+                    60000,
                 );
                 const endTime = performance.now();
                 // Set the successful connection attempt in the cache so we can skip the non-AFD failure the next time

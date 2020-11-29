@@ -160,15 +160,16 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param url - websocket URL
      * @param telemetryLogger - optional telemetry logger
      */
-    public static async create2(
+    public static async create(
         tenantId: string,
         documentId: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
         url: string,
-        timeoutMs: number,
-        telemetryLogger: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
+        telemetryLogger: ITelemetryLogger,
+        timeoutMs: number): Promise<IDocumentDeltaConnection>
+    {
         // enable multiplexing when the websocket url does not include the tenant/document id
         const parsedUrl = new URL(url);
         const enableMultiplexing = !parsedUrl.searchParams.has("documentId") && !parsedUrl.searchParams.has("tenantId");
@@ -294,10 +295,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         socket: SocketIOClient.Socket,
         documentId: string,
         socketReferenece: SocketReference,
-        private readonly logger: ITelemetryLogger,
+        logger: ITelemetryLogger,
         private readonly enableMultiplexing?: boolean)
     {
-        super(socket, documentId);
+        super(socket, documentId, logger);
         this.socketReferenece = socketReferenece;
     }
 
