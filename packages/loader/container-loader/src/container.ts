@@ -1137,12 +1137,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this.service === undefined) {
             throw new Error("Not attached");
         }
-        const storageService = await this.service.connectToStorage();
+        let service = await this.service.connectToStorage();
 
         // Enable prefetching for the service unless it has a caching policy set otherwise:
-        const service = new PrefetchDocumentStorageService(storageService);
-        if (this.service.policies?.caching === LoaderCachingPolicy.NoCaching) {
-            service.stopPrefetch();
+        if (this.service.policies?.caching !== LoaderCachingPolicy.NoCaching) {
+            service = new PrefetchDocumentStorageService(service);
         }
         return service;
     }
