@@ -225,28 +225,31 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         });
     }
 
-    public async read(blobid: string): Promise<string> {
-        return this.readWithEncodingOutput(blobid, "base64");
+    public async read(blobId: string): Promise<string> {
+        return this.readWithEncodingOutput(blobId, "base64");
     }
 
     /**
      * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
      */
-    public async readString(blobid: string): Promise<string> {
-        return this.readWithEncodingOutput(blobid, "string");
+    public async readString(blobId: string): Promise<string> {
+        return this.readWithEncodingOutput(blobId, "string");
     }
 
-    private async readWithEncodingOutput(blobid: string, outputFormat: string) {
-        let blob = this.blobCache.get(blobid);
+    private async readWithEncodingOutput(blobId: string, outputFormat: string): Promise<string> {
+        const blob = this.blobCache.get(blobId);
+        assert(!blob || blob.encoding === "base64" || blob.encoding === undefined, "wrong blob encoding format");
+        let buffer;
         // Reset the timer on attempted cache read
         this.scheduleClearBlobsCache();
         if (blob === undefined) {
-            this.checkSnapshotUrl();
+            this.checkAttachmentGETUrl();
 
             const response = await getWithRetryForTokenRefresh(async (options) => {
                 const storageToken = await this.getStorageToken(options, "GetBlob");
 
-                const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/blobs/${blobid}`, storageToken);
+                const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
+                const { url, headers } = getUrlAndHeadersWithAuth(unAuthedUrl, storageToken);
 
                 return PerformanceEvent.timedExecAsync(
                     this.logger,
@@ -255,45 +258,41 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         headers: Object.keys(headers).length !== 0 ? true : undefined,
                         waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
                     },
-                    async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }, FetchType.blob),
+                    async () => this.epochTracker.fetchResponse(url, { headers }, FetchType.blob),
                 );
             });
-            blob = response.content;
+            buffer = await response.arrayBuffer();
         }
 
-        assert(blob.encoding === "base64" || blob.encoding === undefined, "wrong blob encoding format");
-        const inputFormat = blob.encoding;
-        if (!this.attributesBlobHandles.has(blobid)) {
-            if (outputFormat === inputFormat || (outputFormat === "string" && inputFormat === undefined))  {
-                return blob.content;
-            }
-            else if (outputFormat === "base64") {
-                return fromUtf8ToBase64(blob.content);
-            }
-            else {
-                return fromBase64ToUtf8(blob.content);
-            }
-        }
-        else {
-            // ODSP document ids are random guids (different per session)
-            // fix the branch name in attributes
-            // this prevents issues when generating summaries
-            const docId = this.documentId;
-            let documentAttributes: api.IDocumentAttributes;
-            if (inputFormat === "base64") {
-                documentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
-                documentAttributes.branch = docId;
-            }
-            else {
-                documentAttributes = JSON.parse(blob.content);
-                documentAttributes.branch = docId;
+        if (!this.attributesBlobHandles.has(blobId)) {
+            if (blob) {
+                if (outputFormat === blob.encoding || (outputFormat === "string" && blob.encoding === undefined))  {
+                    return blob.content;
+                } else if (outputFormat === "base64") {
+                    return fromUtf8ToBase64(blob.content);
+                } else {
+                    return fromBase64ToUtf8(blob.content);
+                }
             }
 
-            if (outputFormat === "base64") {
-                return fromUtf8ToBase64(JSON.stringify(documentAttributes));
-            } else {
-                return JSON.stringify(documentAttributes);
-            }
+            return IsoBuffer.from(buffer).toString(outputFormat === "base64" ? "base64" : "utf8");
+        }
+
+        // ODSP document ids are random guids (different per session)
+        // fix the branch name in attributes
+        // this prevents issues when generating summaries
+        let documentAttributes: api.IDocumentAttributes;
+        if (blob) {
+            documentAttributes = JSON.parse(blob.encoding === "base64" ? fromBase64ToUtf8(blob.content) : blob.content);
+        } else {
+            documentAttributes = JSON.parse(IsoBuffer.from(buffer).toString("utf8"));
+        }
+        documentAttributes.branch = this.documentId;
+
+        if (outputFormat === "base64") {
+            return fromUtf8ToBase64(JSON.stringify(documentAttributes));
+        } else {
+            return JSON.stringify(documentAttributes);
         }
     }
 

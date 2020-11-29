@@ -4,7 +4,12 @@
  */
 
 import { ITelemetryLogger, ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+    ISequencedDocumentMessage,
+    ISnapshotTree,
+    ITreeEntry,
+    SummaryType,
+} from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
@@ -13,15 +18,25 @@ import {
     IEnvelope,
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
+    IGraphNode,
     IInboundSignalMessage,
     InboundAttachMessage,
+    ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker } from "@fluidframework/runtime-utils";
+import {
+     convertSnapshotTreeToSummaryTree,
+     convertSummaryTreeToITree,
+     convertToSummaryTree,
+     normalizeAndPrefixGCNodeIds,
+     SummaryTracker,
+     SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree, readAndParseFromBlobs } from "@fluidframework/driver-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import uuid from "uuid";
+import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime, nonDataStorePaths } from "./containerRuntime";
 import {
@@ -49,14 +64,14 @@ export class DataStores implements IDisposable {
     private readonly disposeOnce = new Lazy<void>(()=>this.contexts.dispose());
 
     constructor(
-        baseSnapshot: ISnapshotTree | undefined,
+        private readonly baseSnapshot: ISnapshotTree | undefined,
         private readonly runtime: ContainerRuntime,
         private readonly submitAttachFn: (attachContent: any) => void,
         private readonly summaryTracker: SummaryTracker,
         private readonly getCreateChildSummarizerNodeFn:
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         baseLogger: ITelemetryBaseLogger,
-        public readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
+        private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
         // Extract stores stored inside the snapshot
@@ -322,5 +337,136 @@ export class DataStores implements IDisposable {
                 context.emit(eventName);
             }
         }
+    }
+
+    /**
+     * Notifies this object to take the snapshot of the container.
+     * @deprecated - Use summarize to get summary of the container runtime.
+     */
+    public async snapshot(): Promise<ITreeEntry[]> {
+        // Iterate over each store and ask it to snapshot
+        const fluidDataStoreSnapshotsP = Array.from(this.contexts).map(async ([fluidDataStoreId, value]) => {
+            const summaryTree = await value.summarize(true /* fullTree */, false /* trackState */);
+            assert(
+                summaryTree.summary.type === SummaryType.Tree,
+                "summarize should always return a tree when fullTree is true");
+            // back-compat summary - Remove this once snapshot is removed.
+            const snapshot = convertSummaryTreeToITree(summaryTree.summary);
+
+            // If ID exists then previous commit is still valid
+            return {
+                fluidDataStoreId,
+                snapshot,
+            };
+        });
+
+        const entries: ITreeEntry[] = [];
+
+        // Add in module references to the store snapshots
+        const fluidDataStoreSnapshots = await Promise.all(fluidDataStoreSnapshotsP);
+
+        // Sort for better diffing of snapshots (in replay tool, used to find bugs in snapshotting logic)
+        fluidDataStoreSnapshots.sort((a, b) => a?.fluidDataStoreId.localeCompare(b.fluidDataStoreId));
+
+        for (const fluidDataStoreSnapshot of fluidDataStoreSnapshots) {
+            entries.push(new TreeTreeEntry(
+                fluidDataStoreSnapshot.fluidDataStoreId,
+                fluidDataStoreSnapshot.snapshot,
+            ));
+        }
+        return entries;
+    }
+
+    public async summarizeInternal(
+        builder: SummaryTreeBuilder, fullTree: boolean, trackState: boolean): Promise<void> {
+        // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
+        // channel contexts.
+        let gcNodes: IGraphNode[] = [ this.getGCNode() ];
+
+        // Iterate over each store and ask it to snapshot
+        await Promise.all(Array.from(this.contexts)
+            .filter(([_, context]) => {
+                // Summarizer works only with clients with no local changes!
+                assert(context.attachState !== AttachState.Attaching);
+                return context.attachState === AttachState.Attached;
+            }).map(async ([contextId, context]) => {
+                const contextSummary = await context.summarize(fullTree, trackState);
+                builder.addWithStats(contextId, contextSummary);
+
+                // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
+                if (contextSummary.gcNodes === undefined) {
+                    contextSummary.gcNodes = [];
+                }
+
+                // Update and add the child context's GC nodes to the main list.
+                gcNodes = gcNodes.concat(this.updateChildGCNodes(contextSummary.gcNodes, contextId));
+            }));
+    }
+
+    public createSummary(builder: SummaryTreeBuilder) {
+        // Attaching graph of some stores can cause other stores to get bound too.
+        // So keep taking summary until no new stores get bound.
+        let notBoundContextsLength: number;
+        do {
+            const builderTree = builder.summary.tree;
+            notBoundContextsLength = this.contexts.notBoundLength();
+            // Iterate over each data store and ask it to snapshot
+            Array.from(this.contexts)
+                .filter(([key, _]) =>
+                    // Take summary of bounded data stores only, make sure we haven't summarized them already
+                    // and no attach op has been fired for that data store because for loader versions <= 0.24
+                    // we set attach state as "attaching" before taking createNew summary.
+                    !(this.contexts.isNotBound(key)
+                        || builderTree[key]
+                        || this.attachOpFiredForDataStore.has(key)),
+                )
+                .map(([key, value]) => {
+                    let dataStoreSummary: ISummarizeResult;
+                    if (value.isLoaded) {
+                        const snapshot = value.generateAttachMessage().snapshot;
+                        dataStoreSummary = convertToSummaryTree(snapshot, true);
+                    } else {
+                        // If this data store is not yet loaded, then there should be no changes in the snapshot from
+                        // which it was created as it is detached container. So just use the previous snapshot.
+                        assert(!!this.baseSnapshot,
+                            "BaseSnapshot should be there as detached container loaded from snapshot");
+                        dataStoreSummary = convertSnapshotTreeToSummaryTree(this.baseSnapshot.trees[key]);
+                    }
+                    builder.addWithStats(key, dataStoreSummary);
+                });
+        } while (notBoundContextsLength !== this.contexts.notBoundLength());
+    }
+
+    /**
+     * @returns this channel's garbage collection node.
+     */
+    private getGCNode(): IGraphNode {
+        /**
+         * Get the outbound routes of this channel. This will be updated to only consider root data stores
+         * as referenced and hence outbound.
+         */
+        const outboundRoutes: string[] = [];
+        for (const [contextId] of this.contexts) {
+            outboundRoutes.push(`/${contextId}`);
+        }
+
+        return {
+            id: "/",
+            outboundRoutes,
+        };
+    }
+
+    /**
+     * Updates the garbage collection nodes of this node's children:
+     * - Prefixes the child's id to the id of each node returned by the child.
+     * @param childGCNodes - The child's garbage collection nodes.
+     * @param childId - The id of the child node.
+     * @returns the updated GC nodes of the child.
+     */
+    private updateChildGCNodes(childGCNodes: IGraphNode[], childId: string): IGraphNode[] {
+        // Normalize the child's nodes and prefix the child's id to the ids of GC nodes returned by it.
+        // This gradually builds the id of each node to be a path from the root.
+        normalizeAndPrefixGCNodeIds(childGCNodes, childId);
+        return childGCNodes;
     }
 }

@@ -53,7 +53,6 @@ import {
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     BlobTreeEntry,
-    TreeTreeEntry,
 } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
@@ -74,7 +73,6 @@ import {
 import {
     FlushMode,
     InboundAttachMessage,
-    IGraphNode,
     IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
@@ -87,22 +85,19 @@ import {
     ISummarizeInternalResult,
     IAgentScheduler,
     ITaskManager,
-    ISummarizeResult,
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
+    IGraphNode,
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
     IRootSummarizerNodeWithGC,
     SummaryTracker,
     SummaryTreeBuilder,
-    convertSummaryTreeToITree,
     convertToSummaryTree,
     RequestParser,
     requestFluidObject,
-    convertSnapshotTreeToSummaryTree,
-    normalizeAndPrefixGCNodeIds,
     createRootSummarizerNodeWithGC,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -911,36 +906,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated - Use summarize to get summary of the container runtime.
      */
     public async snapshot(): Promise<ITree> {
-        // Iterate over each store and ask it to snapshot
-        const fluidDataStoreSnapshotsP = Array.from(this.dataStores.contexts).map(async ([fluidDataStoreId, value]) => {
-            const summaryTree = await value.summarize(true /* fullTree */, false /* trackState */);
-            assert(
-                summaryTree.summary.type === SummaryType.Tree,
-                "summarize should always return a tree when fullTree is true");
-            // back-compat summary - Remove this once snapshot is removed.
-            const snapshot = convertSummaryTreeToITree(summaryTree.summary);
-
-            // If ID exists then previous commit is still valid
-            return {
-                fluidDataStoreId,
-                snapshot,
-            };
-        });
-
-        const root: ITree = { entries: [], id: null };
-
-        // Add in module references to the store snapshots
-        const fluidDataStoreSnapshots = await Promise.all(fluidDataStoreSnapshotsP);
-
-        // Sort for better diffing of snapshots (in replay tool, used to find bugs in snapshotting logic)
-        fluidDataStoreSnapshots.sort((a, b) => a?.fluidDataStoreId.localeCompare(b.fluidDataStoreId));
-
-        for (const fluidDataStoreSnapshot of fluidDataStoreSnapshots) {
-            root.entries.push(new TreeTreeEntry(
-                fluidDataStoreSnapshot.fluidDataStoreId,
-                fluidDataStoreSnapshot.snapshot,
-            ));
-        }
+        const root: ITree = { entries: await this.dataStores.snapshot(), id: null };
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
@@ -1311,39 +1277,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Updates the garbage collection nodes of this node's children:
-     * - Prefixes the child's id to the id of each node returned by the child.
-     * @param childGCNodes - The child's garbage collection nodes.
-     * @param childId - The id of the child node.
-     * @returns the updated GC nodes of the child.
-     */
-    private updateChildGCNodes(childGCNodes: IGraphNode[], childId: string): IGraphNode[] {
-        // Normalize the child's nodes and prefix the child's id to the ids of GC nodes returned by it.
-        // This gradually builds the id of each node to be a path from the root.
-        normalizeAndPrefixGCNodeIds(childGCNodes, childId);
-        return childGCNodes;
-    }
-
-    /**
-     * @returns this channel's garbage collection node.
-     */
-    private getGCNode(): IGraphNode {
-        /**
-         * Get the outbound routes of this channel. This will be updated to only consider root data stores
-         * as referenced and hence outbound.
-         */
-        const outboundRoutes: string[] = [];
-        for (const [contextId] of this.dataStores.contexts) {
-            outboundRoutes.push(`/${contextId}`);
-        }
-
-        return {
-            id: "/",
-            outboundRoutes,
-        };
-    }
-
-    /**
      * Returns a summary of the runtime at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
@@ -1356,29 +1289,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
-        // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
-        // channel contexts.
-        let gcNodes: IGraphNode[] = [ this.getGCNode() ];
+        const gcNodes: IGraphNode[] = [];
         const builder = new SummaryTreeBuilder();
 
-        // Iterate over each store and ask it to snapshot
-        await Promise.all(Array.from(this.dataStores.contexts)
-            .filter(([_, context]) => {
-                // Summarizer works only with clients with no local changes!
-                assert(context.attachState !== AttachState.Attaching);
-                return context.attachState === AttachState.Attached;
-            }).map(async ([contextId, context]) => {
-                const contextSummary = await context.summarize(fullTree, trackState);
-                builder.addWithStats(contextId, contextSummary);
-
-                // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
-                if (contextSummary.gcNodes === undefined) {
-                    contextSummary.gcNodes = [];
-                }
-
-                // Update and add the child context's GC nodes to the main list.
-                gcNodes = gcNodes.concat(this.updateChildGCNodes(contextSummary.gcNodes, contextId));
-            }));
+        await this.dataStores.summarizeInternal(builder, fullTree, trackState);
 
         this.serializeContainerBlobs(builder);
         const summary = builder.getSummaryTree();
@@ -1402,37 +1316,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public createSummary(): ISummaryTree {
         const builder = new SummaryTreeBuilder();
 
-        // Attaching graph of some stores can cause other stores to get bound too.
-        // So keep taking summary until no new stores get bound.
-        let notBoundContextsLength: number;
-        do {
-            const builderTree = builder.summary.tree;
-            notBoundContextsLength = this.dataStores.contexts.notBoundLength();
-            // Iterate over each data store and ask it to snapshot
-            Array.from(this.dataStores.contexts)
-                .filter(([key, _]) =>
-                    // Take summary of bounded data stores only, make sure we haven't summarized them already
-                    // and no attach op has been fired for that data store because for loader versions <= 0.24
-                    // we set attach state as "attaching" before taking createNew summary.
-                    !(this.dataStores.contexts.isNotBound(key)
-                        || builderTree[key]
-                        || this.dataStores.attachOpFiredForDataStore.has(key)),
-                )
-                .map(([key, value]) => {
-                    let dataStoreSummary: ISummarizeResult;
-                    if (value.isLoaded) {
-                        const snapshot = value.generateAttachMessage().snapshot;
-                        dataStoreSummary = convertToSummaryTree(snapshot, true);
-                    } else {
-                        // If this data store is not yet loaded, then there should be no changes in the snapshot from
-                        // which it was created as it is detached container. So just use the previous snapshot.
-                        assert(!!this.context.baseSnapshot,
-                            "BaseSnapshot should be there as detached container loaded from snapshot");
-                        dataStoreSummary = convertSnapshotTreeToSummaryTree(this.context.baseSnapshot.trees[key]);
-                    }
-                    builder.addWithStats(key, dataStoreSummary);
-                });
-        } while (notBoundContextsLength !== this.dataStores.contexts.notBoundLength());
+        this.dataStores.createSummary(builder);
 
         this.serializeContainerBlobs(builder);
 
