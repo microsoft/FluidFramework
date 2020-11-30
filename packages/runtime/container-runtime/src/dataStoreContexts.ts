@@ -68,11 +68,14 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     }
 
     /**
-     * Return the unbound local context with the given id.
+     * Return the unbound local context with the given id,
+     * or undefined if it's not found or not unbound.
      */
-    public getUnbound(id: string): LocalFluidDataStoreContext {
-        assert(this.notBoundContexts.has(id), "Store being bound should be in not bounded set");
-        assert(this._contexts.has(id), "Attempting to bind to a context that hasn't been added yet");
+    public getUnbound(id: string): LocalFluidDataStoreContext | undefined {
+        const context = this._contexts.get(id);
+        if (!context || !this.notBoundContexts.has(id)) {
+            return undefined;
+        }
 
         return this._contexts.get(id) as LocalFluidDataStoreContext;
     }
@@ -91,12 +94,19 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     }
 
     /**
-     * This returns a Promise that will resolve when a context with the given id is
-     * either bound or added as remote from another client.
-     * @param id The id of the context to await
+     * Get the context with the given id, once it exists locally and is attached.
+     * e.g. If created locally, it must be bound, or if created remotely then it's fine as soon as it's sync'd in.
+     * @param id The id of the context to get
+     * @param wait If false, return undefined if the context isn't present and ready now. Otherwise, wait for it.
      */
-    public async waitForContext(id: string): Promise<FluidDataStoreContext> {
-        return this.ensureDeferred(id).promise;
+    public async getAttached(id: string, wait: boolean): Promise<FluidDataStoreContext | undefined> {
+        const deferredContext = this.ensureDeferred(id);
+
+        if (!wait && !deferredContext.isCompleted) {
+            return undefined;
+        }
+
+        return deferredContext.promise;
     }
 
     private ensureDeferred(id: string): Deferred<FluidDataStoreContext> {
@@ -112,7 +122,9 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      * Update this context as bound
      */
     public bind(id: string) {
-        this.notBoundContexts.delete(id);
+        const removed: boolean = this.notBoundContexts.delete(id);
+        assert(removed, "The given id was not found in notBoundContexts to delete");
+
         this.resolveDeferred(id);
     }
 

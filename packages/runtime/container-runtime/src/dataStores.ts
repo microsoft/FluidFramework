@@ -190,6 +190,8 @@ export class DataStores implements IDisposable {
     public  bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
         const id = fluidDataStoreRuntime.id;
         const localContext = this.contexts.getUnbound(id);
+        assert(!!localContext, "Could not find unbound context to bind");
+
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients.
@@ -269,16 +271,12 @@ export class DataStores implements IDisposable {
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<IFluidDataStoreChannel> {
-        const existingContext = this.contexts.get(id);
-        if (existingContext !== undefined && !this.contexts.isNotBound(id)) {
-            return existingContext.realize();
+        const context = await this.contexts.getAttached(id, wait);
+
+        if (!context) {
+            throw new Error(`DataStore ${id} does not exist yet`);
         }
 
-        if (!wait) {
-            throw new Error(`DataStore ${id} does not exist`);
-        }
-
-        const context = await this.contexts.waitForContext(id);
         return context.realize();
     }
 
