@@ -291,7 +291,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param socketReferenceKey - socket reference key
      * @param enableMultiplexing - If the websocket is multiplexing multiple documents
      */
-    constructor(
+    private constructor(
         socket: SocketIOClient.Socket,
         documentId: string,
         socketReferenece: SocketReference,
