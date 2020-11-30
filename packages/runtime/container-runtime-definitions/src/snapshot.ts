@@ -39,32 +39,6 @@ export const nonDataStorePaths = [protocolTreeName, ".logTail", ".serviceProtoco
 
 export const dataStoreAttributesBlobName = ".component";
 
-// TODO: Remove comments
-// export interface IChannelSnapshot extends ISnapshotTreeBase {
-//     blobs: { ".attributes": string; };
-//     trees: { ".data": ISnapshotTree; };
-// }
-
-// export interface IChannelsTree {
-//     [id: string]: IChannelSnapshot;
-// }
-
-// export interface ISnapshotTreeBase {
-//     id: string | null;
-// }
-
-// export interface IDataStoreSnapshot extends ISnapshotTreeBase {
-//     blobs: { [dataStoreAttributesBlobName]: string; }
-//     trees: { ".channels": ISnapshotTree };
-// }
-
-// export interface IDifferentialSnapshot<T extends IDataStoreSnapshot = IDataStoreSnapshot> extends ISnapshotTreeBase {
-//     blobs: { "_outstandingOps": string; };
-//     trees: { "_baseSummary": T | IDifferentialSnapshot<T> }
-// }
-
-// export type DataStoreSnapshot = IDataStoreSnapshot | IDifferentialSnapshot;
-
 export interface IRuntimeSnapshot {
     id: string | null;
     blobs: {
