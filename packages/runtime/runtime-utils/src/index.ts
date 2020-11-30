@@ -6,6 +6,7 @@
 export * from "./dataStoreHandleContextUtils";
 export * from "./dataStoreHelpers";
 export * from "./garbageCollectionUtils";
+export * from "./garbageCollector";
 export * from "./objectstoragepartition";
 export * from "./objectstorageutils";
 export * from "./requestParser";

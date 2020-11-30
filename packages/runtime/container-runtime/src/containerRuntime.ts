@@ -82,22 +82,26 @@ import {
     ISignalEnvelop,
     NamedFluidDataStoreRegistryEntries,
     ISummaryStats,
+    ISummaryTreeWithStats,
     ISummarizeInternalResult,
     IAgentScheduler,
     ITaskManager,
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
-    IGraphNode,
 } from "@fluidframework/runtime-definitions";
 import {
-    FluidSerializer,
-    IRootSummarizerNodeWithGC,
-    SummaryTreeBuilder,
+    addBlobToSummary,
+    addTreeToSummary,
     convertToSummaryTree,
-    RequestParser,
-    requestFluidObject,
     createRootSummarizerNodeWithGC,
+    FluidSerializer,
+    GarbageCollector,
+    IRootSummarizerNodeWithGC,
+    IGarbageCollector,
+    requestFluidObject,
+    RequestParser,
+    SummaryTracker,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -588,6 +592,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private latestSummaryAck: ISummaryContext;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
+    private readonly garbageCollector: IGarbageCollector;
 
     private tasks: string[] = [];
 
@@ -685,6 +690,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 throwOnFailure: true,
             },
         );
+
+        this.garbageCollector = new GarbageCollector(ChildLogger.create(this.logger, "GarbageCollector"));
 
         this.dataStores = new DataStores(
             context.baseSnapshot,
@@ -906,13 +913,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return root;
     }
 
-    protected serializeContainerBlobs(summaryTreeBuilder: SummaryTreeBuilder) {
+    protected addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
-            summaryTreeBuilder.addBlob(chunksBlobName, content);
+            addBlobToSummary(summaryTree, chunksBlobName, content);
         }
         const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
-        summaryTreeBuilder.addWithStats(blobsTreeName, blobsTree);
+        addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
@@ -1280,17 +1287,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
-        const gcNodes: IGraphNode[] = [];
-        const builder = new SummaryTreeBuilder();
-
-        await this.dataStores.summarizeInternal(builder, fullTree, trackState);
-
-        this.serializeContainerBlobs(builder);
-        const summary = builder.getSummaryTree();
+        const summarizeResult = await this.dataStores.summarize(fullTree, trackState);
+        this.addContainerBlobsToSummary(summarizeResult);
         return {
-            ...summary,
+            ...summarizeResult,
             id: "",
-            gcNodes,
         };
     }
 
@@ -1305,13 +1306,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public createSummary(): ISummaryTree {
-        const builder = new SummaryTreeBuilder();
-
-        this.dataStores.createSummary(builder);
-
-        this.serializeContainerBlobs(builder);
-
-        return builder.summary;
+        const summaryTree = this.dataStores.createSummary();
+        this.addContainerBlobsToSummary(summaryTree);
+        return summaryTree.summary;
     }
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
@@ -1350,10 +1347,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             const trace = Trace.start();
-            const treeWithStats = await this.summarize(fullTree || safe, true /* trackState */);
+            const summarizeResult = await this.summarize(fullTree || safe, true /* trackState */);
+
+            // Run garbage collection on the GC nodes returned by summarize.
+            const startingRoutes = [ "/" ];
+            this.garbageCollector.runGC(summarizeResult.gcNodes, startingRoutes);
 
             const generateData: IGeneratedSummaryData = {
-                summaryStats: treeWithStats.stats,
+                summaryStats: summarizeResult.stats,
                 generateDuration: trace.trace().duration,
             };
 
@@ -1369,7 +1370,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             );
 
             const handle = await this.storage.uploadSummaryWithContext(
-                treeWithStats.summary,
+                summarizeResult.summary,
                 this.latestSummaryAck);
 
             // safe mode refreshes the latest summary ack

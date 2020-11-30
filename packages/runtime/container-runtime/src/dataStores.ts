@@ -15,6 +15,7 @@ import {
     CreateChildSummarizerNodeParam,
     CreateSummarizerNodeSource,
     IAttachMessage,
+    IChannelSummarizeResult,
     IEnvelope,
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
@@ -22,6 +23,7 @@ import {
     IInboundSignalMessage,
     InboundAttachMessage,
     ISummarizeResult,
+    ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import {
      convertSnapshotTreeToSummaryTree,
@@ -370,11 +372,11 @@ export class DataStores implements IDisposable {
         return entries;
     }
 
-    public async summarizeInternal(
-        builder: SummaryTreeBuilder, fullTree: boolean, trackState: boolean): Promise<void> {
+    public async summarize(fullTree: boolean, trackState: boolean): Promise<IChannelSummarizeResult> {
+        const builder = new SummaryTreeBuilder();
         // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
         // channel contexts.
-        let gcNodes: IGraphNode[] = [ this.getGCNode() ];
+        let gcNodes: IGraphNode[] = [ await this.getGCNode() ];
 
         // Iterate over each store and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
@@ -394,9 +396,15 @@ export class DataStores implements IDisposable {
                 // Update and add the child context's GC nodes to the main list.
                 gcNodes = gcNodes.concat(this.updateChildGCNodes(contextSummary.gcNodes, contextId));
             }));
+
+        return {
+            ...builder.getSummaryTree(),
+            gcNodes,
+        };
     }
 
-    public createSummary(builder: SummaryTreeBuilder) {
+    public createSummary(): ISummaryTreeWithStats {
+        const builder = new SummaryTreeBuilder();
         // Attaching graph of some stores can cause other stores to get bound too.
         // So keep taking summary until no new stores get bound.
         let notBoundContextsLength: number;
@@ -428,19 +436,23 @@ export class DataStores implements IDisposable {
                     builder.addWithStats(key, dataStoreSummary);
                 });
         } while (notBoundContextsLength !== this.contexts.notBoundLength());
+
+        return builder.getSummaryTree();
     }
 
     /**
      * @returns this channel's garbage collection node.
      */
-    private getGCNode(): IGraphNode {
+    private async getGCNode(): Promise<IGraphNode> {
         /**
-         * Get the outbound routes of this channel. This will be updated to only consider root data stores
-         * as referenced and hence outbound.
+         * Get the outbound routes of this channel. Only root data stores are considered referenced.
          */
         const outboundRoutes: string[] = [];
-        for (const [contextId] of this.contexts) {
-            outboundRoutes.push(`/${contextId}`);
+        for (const [contextId, context] of this.contexts) {
+            const isRootDataStore = await context.getIsRoot();
+            if (isRootDataStore) {
+                outboundRoutes.push(`/${contextId}`);
+            }
         }
 
         return {
