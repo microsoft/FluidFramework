@@ -175,7 +175,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         }
         if (path.length === 0) {
             const tryId = previousFullSnapshot.id;
-            assert(!!tryId && tryId.length > 0, "Parent summary does not have handle for specified path.");
+            assert(!!tryId, "Parent summary does not have handle for specified path.");
             return tryId;
         }
 
