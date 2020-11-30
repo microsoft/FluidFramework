@@ -65,7 +65,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
          * GC nodes cache.
          */
         if (trackState) {
-            const summarizeResult = await super.summarize(fullTree);
+            const summarizeResult = await super.summarize(fullTree, false /* forceDifferential */);
 
             // If this is the first time we are summarizing and nothing has changed since the last summary, we would
             // not have updated the GC nodes cache. So, we need to get its initial value.
