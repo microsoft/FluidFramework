@@ -29,9 +29,14 @@ import {
     AttachState,
 } from "@fluidframework/container-definitions";
 import {
+    blobsTreeName,
+    chunksBlobName,
     IContainerRuntime,
     IContainerRuntimeDirtyable,
     IContainerRuntimeEvents,
+    IContainerRuntimeMetadata,
+    metadataBlobName,
+    missingSnapshotFormatVersion,
 } from "@fluidframework/container-runtime-definitions";
 import {
     assert,
@@ -113,11 +118,7 @@ import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager } from "./blobManager";
-import { DataStores } from "./dataStores";
-
-const chunksBlobName = ".chunks";
-const blobsTreeName = ".blobs";
-export const nonDataStorePaths = [".protocol", ".logTail", ".serviceProtocol", blobsTreeName];
+import { BaseSnapshotType, DataStores } from "./dataStores";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -471,14 +472,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
 
-        const chunkId = context.baseSnapshot?.blobs[chunksBlobName];
-        const chunks = context.baseSnapshot && chunkId ? context.storage ?
-            await readAndParse<[string, string[]][]>(context.storage, chunkId) :
-            readAndParseFromBlobs<[string, string[]][]>(context.baseSnapshot.blobs, chunkId) : [];
+        const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
+            const blobId = context.baseSnapshot?.blobs[blobName];
+            if (context.baseSnapshot && blobId) {
+                return context.storage ?
+                    readAndParse<T>(context.storage, blobId) :
+                    readAndParseFromBlobs<T>(context.baseSnapshot.blobs, blobId);
+            }
+        };
+        const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
+        const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
 
         const runtime = new ContainerRuntime(
             context,
             registry,
+            metadata,
             chunks,
             runtimeOptions,
             containerScope,
@@ -643,6 +651,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
+        metadata: IContainerRuntimeMetadata = { snapshotFormatVersion: missingSnapshotFormatVersion },
         chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
@@ -694,8 +703,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
+        // back-compat before namespaces were improved
+        let dataStoresSnapshot = context.baseSnapshot;
+        let dataStoresSnapshotType: BaseSnapshotType = "legacy";
+
+        if (!!dataStoresSnapshot && metadata.snapshotFormatVersion !== missingSnapshotFormatVersion) {
+            dataStoresSnapshot = dataStoresSnapshot.trees[".dataStores"];
+            dataStoresSnapshotType = "next";
+            assert(!!dataStoresSnapshot, "expected .dataStores tree in snapshot");
+        }
+
         this.dataStores = new DataStores(
-            context.baseSnapshot,
+            dataStoresSnapshot,
+            dataStoresSnapshotType,
             this,
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             this.summaryTracker,

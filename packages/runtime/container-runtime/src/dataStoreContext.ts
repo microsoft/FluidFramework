@@ -18,7 +18,7 @@ import {
     BindState,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { Deferred, assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred, assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
@@ -30,7 +30,14 @@ import {
     ITree,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import {
+    currentDataStoreSnapshotFormatVersion,
+    dataStoreAttributesBlobName,
+    DataStoreSnapshotFormatVersion,
+    IContainerRuntime,
+    nextDataStoreSnapshotFormatVersion,
+    missingSnapshotFormatVersion,
+} from "@fluidframework/container-runtime-definitions";
 import {
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
@@ -51,22 +58,17 @@ import {
 import { SummaryTracker, addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
-// Snapshot Format Version to be used in store attributes.
-export const currentSnapshotFormatVersion = "0.1";
-
-const attributesBlobKey = ".component";
-
 function createAttributes(pkg: readonly string[], isRootDataStore: boolean): IFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
     return {
         pkg: stringifiedPkg,
-        snapshotFormatVersion: currentSnapshotFormatVersion,
+        snapshotFormatVersion: currentDataStoreSnapshotFormatVersion,
         isRootDataStore,
     };
 }
 export function createAttributesBlob(pkg: readonly string[], isRootDataStore: boolean): ITreeEntry {
     const attributes = createAttributes(pkg, isRootDataStore);
-    return new BlobTreeEntry(attributesBlobKey, JSON.stringify(attributes));
+    return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
 }
 
 /**
@@ -76,7 +78,7 @@ export function createAttributesBlob(pkg: readonly string[], isRootDataStore: bo
  */
 export interface IFluidDataStoreAttributes {
     pkg: string;
-    readonly snapshotFormatVersion?: string;
+    readonly snapshotFormatVersion: DataStoreSnapshotFormatVersion;
     /**
      * This tells whether a data store is root. Root data stores are never collected.
      * Non-root data stores may be collected if they are not used. If this is not present, default it to
@@ -382,7 +384,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const summarizeResult = await this.channel!.summarize(fullTree, trackState);
         const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
-        addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(attributes));
+        addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
         return { ...summarizeResult, id: this.id };
     }
 
@@ -547,7 +549,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 
     constructor(
         id: string,
-        private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
+        private readonly initSnapshotValue: Promise<ISnapshotTree> | string | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject,
@@ -581,12 +583,12 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     // pkg can never change for a store.
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         if (!this.details) {
-            let tree: ISnapshotTree | null;
+            let tree: ISnapshotTree | undefined;
             let isRootStore: boolean | undefined;
 
             if (typeof this.initSnapshotValue === "string") {
                 const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
-                tree = await this.storage.getSnapshotTree(commit);
+                tree = await this.storage.getSnapshotTree(commit) ?? undefined;
             } else {
                 tree = await this.initSnapshotValue;
             }
@@ -600,24 +602,36 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                 this.pending = loadedSummary.outstandingOps.concat(this.pending!);
             }
 
-            if (tree !== null && tree.blobs[attributesBlobKey] !== undefined) {
+            if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion, isRootDataStore } =
-                    await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[attributesBlobKey]);
+                    await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
 
                 let pkgFromSnapshot: string[];
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
-                // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
-                if (snapshotFormatVersion === undefined) {
-                    if (pkg.startsWith("[\"") && pkg.endsWith("\"]")) {
-                        pkgFromSnapshot = JSON.parse(pkg) as string[];
-                    } else {
-                        pkgFromSnapshot = [pkg];
+                // For snapshotFormatVersion = "0.1" or "0.2", pkg is jsonified, otherwise it is just a string.
+                switch (snapshotFormatVersion) {
+                    case missingSnapshotFormatVersion: {
+                        if (pkg.startsWith("[\"") && pkg.endsWith("\"]")) {
+                            pkgFromSnapshot = JSON.parse(pkg) as string[];
+                        } else {
+                            pkgFromSnapshot = [pkg];
+                        }
+                        break;
                     }
-                } else if (snapshotFormatVersion === currentSnapshotFormatVersion) {
-                    pkgFromSnapshot = JSON.parse(pkg) as string[];
-                } else {
-                    throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
+                    case nextDataStoreSnapshotFormatVersion: {
+                        tree = tree.trees[".channels"];
+                        // Intentional fallthrough, since package is still JSON
+                    }
+                    case currentDataStoreSnapshotFormatVersion: {
+                        pkgFromSnapshot = JSON.parse(pkg) as string[];
+                        break;
+                    }
+                    default: {
+                        unreachableCase(
+                            snapshotFormatVersion,
+                            `Invalid snapshot format version ${snapshotFormatVersion}`);
+                    }
                 }
                 this.pkg = pkgFromSnapshot;
                 isRootStore = isRootDataStore;
@@ -632,7 +646,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 pkg: this.pkg!,
                 isRootDataStore: isRootStore ?? true,
-                snapshot: tree ?? undefined,
+                snapshot: tree,
             };
         }
 

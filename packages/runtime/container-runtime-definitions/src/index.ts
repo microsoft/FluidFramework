@@ -5,3 +5,4 @@
 
 export * from "./containerRuntime";
 export * from "./containerRuntimeDirtyable";
+export * from "./snapshot";

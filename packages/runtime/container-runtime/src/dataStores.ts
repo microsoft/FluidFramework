@@ -37,17 +37,23 @@ import { BlobCacheStorageService, buildSnapshotTree, readAndParseFromBlobs } fro
 import { assert, Lazy } from "@fluidframework/common-utils";
 import uuid from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
+import {
+    currentDataStoreSnapshotFormatVersion,
+    nextDataStoreSnapshotFormatVersion,
+    nonDataStorePaths,
+} from "@fluidframework/container-runtime-definitions";
 import { DataStoreContexts } from "./dataStoreContexts";
-import { ContainerRuntime, nonDataStorePaths } from "./containerRuntime";
+import { ContainerRuntime } from "./containerRuntime";
 import {
     FluidDataStoreContext,
     RemotedFluidDataStoreContext,
     IFluidDataStoreAttributes,
-    currentSnapshotFormatVersion,
     LocalFluidDataStoreContext,
     createAttributesBlob,
     LocalDetachedFluidDataStoreContext,
- } from "./dataStoreContext";
+} from "./dataStoreContext";
+
+export type BaseSnapshotType = "legacy" | "next";
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
@@ -65,6 +71,7 @@ export class DataStores implements IDisposable {
 
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
+        baseSnapshotType: BaseSnapshotType,
         private readonly runtime: ContainerRuntime,
         private readonly submitAttachFn: (attachContent: any) => void,
         private readonly summaryTracker: SummaryTracker,
@@ -75,11 +82,12 @@ export class DataStores implements IDisposable {
     ) {
         this.logger = ChildLogger.create(baseLogger);
         // Extract stores stored inside the snapshot
-        const fluidDataStores = new Map<string, ISnapshotTree | string>();
+        const fluidDataStores = new Map<string, ISnapshotTree>();
 
-        if (typeof baseSnapshot === "object") {
+        const nonDataStorePathsToUse = baseSnapshotType === "legacy" ? nonDataStorePaths : [];
+        if (baseSnapshot) {
             Object.keys(baseSnapshot.trees).forEach((value) => {
-                if (!nonDataStorePaths.includes(value)) {
+                if (!nonDataStorePathsToUse.includes(value)) {
                     const tree = baseSnapshot.trees[value];
                     fluidDataStores.set(value, tree);
                 }
@@ -111,10 +119,11 @@ export class DataStores implements IDisposable {
                         snapshotTree.blobs,
                         snapshotTree.blobs[".component"]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
-                // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
+                // For snapshotFormatVersion = "0.1" or "0.2", pkg is jsonified, otherwise it is just a string.
                 // However the feature of loading a detached container from snapshot, is added when the
                 // snapshotFormatVersion is "0.1", so we don't expect it to be anything else.
-                if (snapshotFormatVersion === currentSnapshotFormatVersion) {
+                if (snapshotFormatVersion === currentDataStoreSnapshotFormatVersion
+                    || snapshotFormatVersion === nextDataStoreSnapshotFormatVersion) {
                     pkgFromSnapshot = JSON.parse(pkg) as string[];
                 } else {
                     throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
@@ -165,7 +174,7 @@ export class DataStores implements IDisposable {
 
         const flatBlobs = new Map<string, string>();
         let flatBlobsP = Promise.resolve(flatBlobs);
-        let snapshotTreeP: Promise<ISnapshotTree> | null = null;
+        let snapshotTreeP: Promise<ISnapshotTree> | undefined;
         if (attachMessage.snapshot) {
             snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
             // flatBlobs' validity is contingent on snapshotTreeP's resolution
@@ -414,7 +423,7 @@ export class DataStores implements IDisposable {
             Array.from(this.contexts)
                 .filter(([key, _]) =>
                     // Take summary of bounded data stores only, make sure we haven't summarized them already
-                    // and no attach op has been fired for that data store because for loader versions <= 0.24
+                    // and no\ attach op has been fired for that data store because for loader versions <= 0.24
                     // we set attach state as "attaching" before taking createNew summary.
                     !(this.contexts.isNotBound(key)
                         || builderTree[key]
