@@ -57,7 +57,7 @@ export interface ISummarizerInternalsProvider {
     /** Encapsulates the work to walk the internals of the running container to generate a summary */
     generateSummary(
         full: boolean,
-        safe: boolean,
+        refreshLatestAck: boolean,
         summaryLogger: ITelemetryLogger,
     ): Promise<GenerateSummaryData | undefined>;
 

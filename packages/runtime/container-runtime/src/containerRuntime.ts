@@ -1336,7 +1336,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /** Implementation of ISummarizerInternalsProvider.generateSummary */
     public async generateSummary(
         fullTree: boolean = false,
-        safe: boolean = false,
+        refreshLatestAck: boolean = false,
         summaryLogger: ITelemetryLogger,
     ): Promise<GenerateSummaryData | undefined> {
         const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
@@ -1359,7 +1359,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             const trace = Trace.start();
-            const treeWithStats = await this.summarize(fullTree || safe, true /* trackState */);
+            const treeWithStats = await this.summarize(fullTree, true /* trackState */);
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: treeWithStats.stats,
@@ -1381,8 +1381,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 treeWithStats.summary,
                 this.latestSummaryAck);
 
-            // safe mode refreshes the latest summary ack
-            if (safe) {
+            if (refreshLatestAck) {
                 const version = await this.getVersionFromStorage(this.id);
                 await this.refreshLatestSummaryAck(
                     undefined,
