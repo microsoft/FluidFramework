@@ -423,7 +423,7 @@ export class DataStores implements IDisposable {
             Array.from(this.contexts)
                 .filter(([key, _]) =>
                     // Take summary of bounded data stores only, make sure we haven't summarized them already
-                    // and no\ attach op has been fired for that data store because for loader versions <= 0.24
+                    // and no attach op has been fired for that data store because for loader versions <= 0.24
                     // we set attach state as "attaching" before taking createNew summary.
                     !(this.contexts.isNotBound(key)
                         || builderTree[key]

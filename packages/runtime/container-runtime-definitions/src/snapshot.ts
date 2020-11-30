@@ -27,7 +27,7 @@ export interface IContainerRuntimeMetadata {
     snapshotFormatVersion: ContainerRuntimeSnapshotFormatVersion;
 }
 
-const protocolTreeName = ".protocol";
+export const protocolTreeName = ".protocol";
 
 /**
  * List of tree IDs at the container level which are reserved.
