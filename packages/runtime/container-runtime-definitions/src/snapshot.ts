@@ -5,19 +5,20 @@
 
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 
-export const missingSnapshotFormatVersion = undefined;
+export type PropertyValues<T> = T[keyof T];
 
-export const nextContainerSnapshotFormatVersion = "0.1";
-export type ContainerRuntimeSnapshotFormatVersion =
-    | typeof missingSnapshotFormatVersion
-    | typeof nextContainerSnapshotFormatVersion;
+export const containerSnapshotFormatVersions = {
+    missing: undefined,
+    next: "0.1",
+} as const;
+export type ContainerRuntimeSnapshotFormatVersion = PropertyValues<typeof containerSnapshotFormatVersions>;
 
-export const currentDataStoreSnapshotFormatVersion = "0.1";
-export const nextDataStoreSnapshotFormatVersion = "0.2";
-export type DataStoreSnapshotFormatVersion =
-    | typeof missingSnapshotFormatVersion
-    | typeof currentDataStoreSnapshotFormatVersion
-    | typeof nextDataStoreSnapshotFormatVersion;
+export const dataStoreSnapshotFormatVersions = {
+    missing: undefined,
+    current: "0.1",
+    next: "0.2",
+} as const;
+export type DataStoreSnapshotFormatVersion = PropertyValues<typeof dataStoreSnapshotFormatVersions>;
 
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";

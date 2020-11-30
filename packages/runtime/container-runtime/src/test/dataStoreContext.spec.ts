@@ -21,8 +21,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker, createRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
-    currentDataStoreSnapshotFormatVersion,
-    missingSnapshotFormatVersion,
+    dataStoreSnapshotFormatVersions,
 } from "@fluidframework/container-runtime-definitions";
 import {
     IFluidDataStoreAttributes,
@@ -95,7 +94,7 @@ describe("Data Store Context Tests", () => {
             const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
             const dataStoreAttributes: IFluidDataStoreAttributes = {
                 pkg: JSON.stringify(["TestDataStore1"]),
-                snapshotFormatVersion: currentDataStoreSnapshotFormatVersion,
+                snapshotFormatVersion: dataStoreSnapshotFormatVersions.current,
                 isRootDataStore: true,
             };
 
@@ -165,7 +164,7 @@ describe("Data Store Context Tests", () => {
             const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
             const dataStoreAttributes: IFluidDataStoreAttributes = {
                 pkg: JSON.stringify(["TestComp", "SubComp"]),
-                snapshotFormatVersion: currentDataStoreSnapshotFormatVersion,
+                snapshotFormatVersion: dataStoreSnapshotFormatVersions.current,
                 isRootDataStore: false,
             };
 
@@ -221,7 +220,7 @@ describe("Data Store Context Tests", () => {
         it("Check RemotedDataStore Attributes", async () => {
             dataStoreAttributes = {
                 pkg: JSON.stringify(["TestDataStore1"]),
-                snapshotFormatVersion: currentDataStoreSnapshotFormatVersion,
+                snapshotFormatVersion: dataStoreSnapshotFormatVersions.current,
                 isRootDataStore: true,
             };
             const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
@@ -262,7 +261,7 @@ describe("Data Store Context Tests", () => {
         it("Check RemotedDataStore Attributes without version", async () => {
             dataStoreAttributes = {
                 pkg: "TestDataStore1",
-                snapshotFormatVersion: missingSnapshotFormatVersion,
+                snapshotFormatVersion: dataStoreSnapshotFormatVersions.missing,
             };
             const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
             const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
@@ -303,7 +302,7 @@ describe("Data Store Context Tests", () => {
         it("can process RemotedDataStore Attributes without isRootDataStore flag", async () => {
             dataStoreAttributes = {
                 pkg: JSON.stringify(["TestDataStore1"]),
-                snapshotFormatVersion: currentDataStoreSnapshotFormatVersion,
+                snapshotFormatVersion: dataStoreSnapshotFormatVersions.current,
             };
             const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
             const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);

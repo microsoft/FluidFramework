@@ -38,9 +38,8 @@ import { assert, Lazy } from "@fluidframework/common-utils";
 import uuid from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
-    currentDataStoreSnapshotFormatVersion,
-    nextDataStoreSnapshotFormatVersion,
     nonDataStorePaths,
+    dataStoreSnapshotFormatVersions,
 } from "@fluidframework/container-runtime-definitions";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime } from "./containerRuntime";
@@ -122,8 +121,8 @@ export class DataStores implements IDisposable {
                 // For snapshotFormatVersion = "0.1" or "0.2", pkg is jsonified, otherwise it is just a string.
                 // However the feature of loading a detached container from snapshot, is added when the
                 // snapshotFormatVersion is "0.1", so we don't expect it to be anything else.
-                if (snapshotFormatVersion === currentDataStoreSnapshotFormatVersion
-                    || snapshotFormatVersion === nextDataStoreSnapshotFormatVersion) {
+                if (snapshotFormatVersion === dataStoreSnapshotFormatVersions.current
+                    || snapshotFormatVersion === dataStoreSnapshotFormatVersions.next) {
                     pkgFromSnapshot = JSON.parse(pkg) as string[];
                 } else {
                     throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);

@@ -36,7 +36,7 @@ import {
     IContainerRuntimeEvents,
     IContainerRuntimeMetadata,
     metadataBlobName,
-    missingSnapshotFormatVersion,
+    containerSnapshotFormatVersions,
 } from "@fluidframework/container-runtime-definitions";
 import {
     assert,
@@ -651,7 +651,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
-        metadata: IContainerRuntimeMetadata = { snapshotFormatVersion: missingSnapshotFormatVersion },
+        metadata: IContainerRuntimeMetadata = { snapshotFormatVersion: containerSnapshotFormatVersions.missing },
         chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
@@ -707,7 +707,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         let dataStoresSnapshot = context.baseSnapshot;
         let dataStoresSnapshotType: BaseSnapshotType = "legacy";
 
-        if (!!dataStoresSnapshot && metadata.snapshotFormatVersion !== missingSnapshotFormatVersion) {
+        if (!!dataStoresSnapshot && metadata.snapshotFormatVersion !== containerSnapshotFormatVersions.missing) {
             dataStoresSnapshot = dataStoresSnapshot.trees[".dataStores"];
             dataStoresSnapshotType = "next";
             assert(!!dataStoresSnapshot, "expected .dataStores tree in snapshot");

@@ -31,12 +31,10 @@ import {
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-    currentDataStoreSnapshotFormatVersion,
     dataStoreAttributesBlobName,
+    dataStoreSnapshotFormatVersions,
     DataStoreSnapshotFormatVersion,
     IContainerRuntime,
-    nextDataStoreSnapshotFormatVersion,
-    missingSnapshotFormatVersion,
 } from "@fluidframework/container-runtime-definitions";
 import {
     CreateChildSummarizerNodeFn,
@@ -62,7 +60,7 @@ function createAttributes(pkg: readonly string[], isRootDataStore: boolean): IFl
     const stringifiedPkg = JSON.stringify(pkg);
     return {
         pkg: stringifiedPkg,
-        snapshotFormatVersion: currentDataStoreSnapshotFormatVersion,
+        snapshotFormatVersion: dataStoreSnapshotFormatVersions.current,
         isRootDataStore,
     };
 }
@@ -611,7 +609,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
                 // For snapshotFormatVersion = "0.1" or "0.2", pkg is jsonified, otherwise it is just a string.
                 switch (snapshotFormatVersion) {
-                    case missingSnapshotFormatVersion: {
+                    case dataStoreSnapshotFormatVersions.missing: {
                         if (pkg.startsWith("[\"") && pkg.endsWith("\"]")) {
                             pkgFromSnapshot = JSON.parse(pkg) as string[];
                         } else {
@@ -619,11 +617,11 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                         }
                         break;
                     }
-                    case nextDataStoreSnapshotFormatVersion: {
+                    case dataStoreSnapshotFormatVersions.next: {
                         tree = tree.trees[".channels"];
                         // Intentional fallthrough, since package is still JSON
                     }
-                    case currentDataStoreSnapshotFormatVersion: {
+                    case dataStoreSnapshotFormatVersions.current: {
                         pkgFromSnapshot = JSON.parse(pkg) as string[];
                         break;
                     }
