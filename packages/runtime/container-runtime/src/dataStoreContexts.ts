@@ -73,7 +73,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     public getUnbound(id: string): LocalFluidDataStoreContext | undefined {
         const context = this._contexts.get(id);
-        if (!context || !this.notBoundContexts.has(id)) {
+        if (context === undefined || !this.notBoundContexts.has(id)) {
             return undefined;
         }
 
