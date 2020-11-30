@@ -122,7 +122,7 @@ export class DataStores implements IDisposable {
                     snapshotTree,
                     isRootDataStore ?? true);
             }
-            this.contexts.addBoundOrRemote(dataStoreContext);
+            this.contexts.addBoundOrRemoted(dataStoreContext);
         }
     }
 
@@ -180,7 +180,7 @@ export class DataStores implements IDisposable {
             pkg);
 
         // Resolve pending gets and store off any new ones
-       this.contexts.addBoundOrRemote(remotedFluidDataStoreContext);
+       this.contexts.addBoundOrRemoted(remotedFluidDataStoreContext);
 
         // Equivalent of nextTick() - Prefetch once all current ops have completed
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -271,10 +271,10 @@ export class DataStores implements IDisposable {
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<IFluidDataStoreChannel> {
-        const context = await this.contexts.getAttached(id, wait);
+        const context = await this.contexts.getBoundOrRemoted(id, wait);
 
         if (!context) {
-            throw new Error(`DataStore ${id} does not exist yet`);
+            throw new Error(`DataStore ${id} does not yet exist or is not yet bound`);
         }
 
         return context.realize();

@@ -99,7 +99,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      * @param id The id of the context to get
      * @param wait If false, return undefined if the context isn't present and ready now. Otherwise, wait for it.
      */
-    public async getAttached(id: string, wait: boolean): Promise<FluidDataStoreContext | undefined> {
+    public async getBoundOrRemoted(id: string, wait: boolean): Promise<FluidDataStoreContext | undefined> {
         const deferredContext = this.ensureDeferred(id);
 
         if (!wait && !deferredContext.isCompleted) {
@@ -147,7 +147,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      * This could be because it's a local context that's been bound, or because it's a remote context.
      * @param context - The context to add
      */
-    public addBoundOrRemote(context: FluidDataStoreContext) {
+    public addBoundOrRemoted(context: FluidDataStoreContext) {
         const id = context.id;
         assert(!this._contexts.has(id), "Creating store with existing ID");
 
