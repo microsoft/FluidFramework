@@ -271,13 +271,13 @@ export class DataStores implements IDisposable {
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<IFluidDataStoreChannel> {
-        const contextP = this.contexts.getBoundOrRemoted(id, wait);
+        const context = await this.contexts.getBoundOrRemoted(id, wait);
 
-        if (contextP === undefined) {
+        if (context === undefined) {
             throw new Error(`DataStore ${id} does not yet exist or is not yet bound`);
         }
 
-        return (await contextP).realize();
+        return context.realize();
     }
 
     public processSignal(address: string, message: IInboundSignalMessage, local: boolean) {
