@@ -80,8 +80,56 @@ export class SummarizerNode implements IRootSummarizerNode {
         this.wipReferenceSequenceNumber = referenceSequenceNumber;
     }
 
-    public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
-        assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary or ctor");
+    private differentialSummary(error: Error | string, logger: ITelemetryLogger): ISummarizeResult {
+        const throwError = () => { throw (typeof error === "string" ? Error(error) : error); };
+        if (this.trackingSequenceNumber < this._changeSequenceNumber) {
+            return throwError();
+        }
+
+        const latestSummary = this.latestSummary;
+        const initialSummary = this.initialSummary;
+
+        let encodeParam: EncodeSummaryParam;
+        let localPath: EscapedPath;
+        if (latestSummary !== undefined) {
+            // Create using handle of latest acked summary
+            encodeParam = {
+                fromSummary: true,
+                summaryNode: latestSummary,
+            };
+            localPath = latestSummary.localPath;
+        } else if (initialSummary?.summary !== undefined) {
+            // Create using initial summary from attach op
+            encodeParam = {
+                fromSummary: false,
+                initialSummary: initialSummary.summary,
+            };
+            localPath = EscapedPath.create(initialSummary.id);
+        } else {
+            // No base summary to reference
+            return throwError();
+        }
+
+        if (typeof error !== "string") {
+            logger.logException({
+                eventName: "SummarizingWithBasePlusOps",
+                category: "error",
+            },
+            error);
+        }
+
+        const summary = encodeSummary(encodeParam, this.outstandingOps);
+        this.wipLocalPaths = {
+            localPath,
+            additionalPath: summary.additionalPath,
+        };
+        this.wipSkipRecursion = true;
+        return { summary: summary.summary, stats: summary.stats };
+    }
+
+    public async summarize(fullTree: boolean, forceDifferential = false): Promise<ISummarizeResult> {
+        const logger = this.wipSummaryLogger;
+        assert(!!logger, "wipSummaryLogger should have been set in startSummary or ctor");
 
         // Try to reuse the tree if unchanged
         if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
@@ -105,49 +153,19 @@ export class SummarizerNode implements IRootSummarizerNode {
             }
         }
 
+        if (forceDifferential === true) {
+            return this.differentialSummary("Cannot generate differential summary", logger);
+        }
+
         try {
             const result = await this.summarizeInternalFn(fullTree);
             this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
             return { summary: result.summary, stats: result.stats };
         } catch (error) {
-            if (this.throwOnError || this.trackingSequenceNumber < this._changeSequenceNumber) {
+            if (this.throwOnError) {
                 throw error;
             }
-            const latestSummary = this.latestSummary;
-            const initialSummary = this.initialSummary;
-
-            let encodeParam: EncodeSummaryParam;
-            let localPath: EscapedPath;
-            if (latestSummary !== undefined) {
-                // Create using handle of latest acked summary
-                encodeParam = {
-                    fromSummary: true,
-                    summaryNode: latestSummary,
-                };
-                localPath = latestSummary.localPath;
-            } else if (initialSummary?.summary !== undefined) {
-                // Create using initial summary from attach op
-                encodeParam = {
-                    fromSummary: false,
-                    initialSummary: initialSummary.summary,
-                };
-                localPath = EscapedPath.create(initialSummary.id);
-            } else {
-                // No base summary to reference
-                throw error;
-            }
-            this.wipSummaryLogger.logException({
-                eventName: "SummarizingWithBasePlusOps",
-                category: "error",
-            },
-            error);
-            const summary = encodeSummary(encodeParam, this.outstandingOps);
-            this.wipLocalPaths = {
-                localPath,
-                additionalPath: summary.additionalPath,
-            };
-            this.wipSkipRecursion = true;
-            return { summary: summary.summary, stats: summary.stats };
+            return this.differentialSummary(error, logger);
         }
     }
 

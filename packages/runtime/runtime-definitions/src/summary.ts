@@ -115,10 +115,14 @@ export interface ISummarizerNode {
      * Calls the internal summarize function and handles internal state tracking.
      * If unchanged and fullTree is false, it will reuse previous summary subtree.
      * If an error is encountered and throwOnFailure is false, it will try to make
-     * a summary with a pointer to the previous summary + a blob of outstanding ops.
-     * @param fullTree - true to skip optimizations and always generate the full tree
+     * a differential summary with a pointer to the previous summary + a blob of outstanding ops.
+     * @param fullTree - true to not allow reuse of previous handle if unchanged.
+     * @param forceDifferential - true to send differential summary; defaults to false.
+     * Setting forceDifferential to true will not call summarizeInternalFn.
+     * In case of no changes, if both forceDifferential is true and fullTree is false,
+     * a handle pointing to the previous tree will be used, not a differential summary.
      */
-    summarize(fullTree: boolean): Promise<ISummarizeResult>;
+    summarize(fullTree: boolean, forceDifferential?: boolean): Promise<ISummarizeResult>;
     /**
      * Checks if the base snapshot was created as a failure summary. If it has
      * the base summary handle + outstanding ops blob, then this will return the
