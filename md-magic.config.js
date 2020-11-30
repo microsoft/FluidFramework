@@ -32,20 +32,16 @@ You can run this example using the following steps:
    a. For an even faster build, you can add the package name to the build command, like this:
       \`npm run build:fast -- --nolint ${getPackageName(path)}\``;
 
-    const defaultSteps = `
-1. Navigate to this directory (${getPackagePath(path)}).
-1. Run \`npm run start\`.`;
+      const tinyliciousStep = `1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).`;
+      const finalStep = `1. Run \`npm run start\` from this directory (${getPackagePath(path)}) and open <http://localhost:8080> in a web browser to see the app running.`;
 
-    const tinyliciousSteps = `
-1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).
-1. Run \`npm run start\` from this directory and open <http://localhost:8080> on the browser to see the app running
-`;
+    const steps = [
+        preamble,
+        includeTinylicious ? tinyliciousStep : undefined,
+        finalStep,
+    ].filter(item => item !== undefined);
 
-    if (includeTinylicious) {
-        return preamble + tinyliciousSteps;
-    } else {
-        return preamble + defaultSteps;
-    }
+    return steps.join("\n");
 }
 
 /* markdown-magic config */
