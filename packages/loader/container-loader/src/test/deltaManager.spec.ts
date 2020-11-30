@@ -84,11 +84,16 @@ describe("Loader", () => {
                 );
                 const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
+                const container = {
+                    cancelDelayInfo: () => {},
+                    emitDelayInfo: () => undefined,
+                };
                 deltaManager = new DeltaManager(
                     () => service,
                     client as IClient,
                     logger,
                     false,
+                    container,
                 );
                 deltaManager.attachOpHandler(0, 0, 1, {
                     process: (message) => intendedResult,

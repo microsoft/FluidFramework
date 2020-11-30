@@ -29,6 +29,7 @@ import {
     ContainerWarning,
     IThrottlingWarning,
     AttachState,
+    ContainerErrorType,
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, GenericError } from "@fluidframework/container-utils";
 import {
@@ -100,6 +101,12 @@ const detachedContainerRefSeqNumber = 0;
 
 interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
+}
+
+export enum RetryFor {
+    DeltaStream,
+    DeltaStorage,
+    Storage,
 }
 
 export interface IContainerConfig {
@@ -293,6 +300,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private service: IDocumentService | undefined;
     private _connectionState = ConnectionState.Disconnected;
     private readonly _audience: Audience;
+    private deltaStorageDelay: number = 0;
+    private deltaStreamDelay: number = 0;
+    private storageDelay: number = 0;
 
     private _context: ContainerContext | undefined;
     private get context() {
@@ -740,6 +750,40 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.logContainerError(warning);
         }
         this.emit("warning", warning);
+    }
+
+    public cancelDelayInfo(retryEndpoint: RetryFor) {
+        if (retryEndpoint === RetryFor.DeltaStorage) {
+            this.deltaStorageDelay = 0;
+        } else if (retryEndpoint === RetryFor.DeltaStream) {
+            this.deltaStreamDelay = 0;
+        } else {
+            this.storageDelay = 0;
+        }
+    }
+
+    public emitDelayInfo(
+        retryEndpoint: RetryFor,
+        delaySeconds: number,
+        error: ICriticalContainerError,
+    ) {
+        if (retryEndpoint === RetryFor.DeltaStorage) {
+            this.deltaStorageDelay = delaySeconds;
+        } else if (retryEndpoint === RetryFor.DeltaStream) {
+            this.deltaStreamDelay = delaySeconds;
+        } else {
+            this.storageDelay = delaySeconds;
+        }
+
+        const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay, this.storageDelay);
+        if (delayTime > 0) {
+            const throttlingError: IThrottlingWarning = {
+                errorType: ContainerErrorType.throttlingError,
+                message: `Service busy/throttled: ${error.message}`,
+                retryAfterSeconds: delayTime,
+            };
+            this.raiseContainerWarning(throttlingError);
+        }
     }
 
     public async reloadContext(): Promise<void> {
@@ -1323,6 +1367,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.client,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             this._canReconnect,
+            this,
         );
 
         deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
@@ -1363,10 +1408,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
             this.setConnectionState(ConnectionState.Disconnected, reason);
-        });
-
-        deltaManager.on("throttled", (warning: IThrottlingWarning) => {
-            this.raiseContainerWarning(warning);
         });
 
         deltaManager.on("readonly", (readonly) => {

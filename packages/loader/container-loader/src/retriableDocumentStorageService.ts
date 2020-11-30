@@ -7,14 +7,16 @@ import { CreateContainerError } from "@fluidframework/container-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { canRetryOnError, DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
-import { Container } from "./container";
-import { emitThrottlingWarning, getRetryDelayFromError } from "./deltaManager";
+import { Container, RetryFor } from "./container";
+import { getRetryDelayFromError } from "./deltaManager";
 
 export class RetriableDocumentStorageService extends DocumentStorageServiceProxy {
+    private static callsWaiting: number = 0;
+    private static futureTimeTillWait: number = 0;
     private disposed = false;
     constructor(
         internalStorageService: IDocumentStorageService,
-        private readonly container: Container,
+        private readonly container: Pick<Container, "emitDelayInfo" | "cancelDelayInfo">,
     ) {
         super(internalStorageService);
     }
@@ -43,12 +45,20 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
         return new Promise((resolve) => setTimeout(() => resolve(), timeMs));
     }
 
-    private async readWithRetry<T>(api: () => Promise<T>, retryLimitSeconds: number = 0): Promise<T> {
+    private async readWithRetry<T>(api: () => Promise<T>): Promise<T> {
         let result: T | undefined;
-        let success = false;
+        let success: boolean | undefined;
+        let retryAfter = 0;
         do {
             try {
                 result = await api();
+                if (success === false) {
+                    RetriableDocumentStorageService.callsWaiting -= 1;
+                    if (RetriableDocumentStorageService.callsWaiting === 0) {
+                        RetriableDocumentStorageService.futureTimeTillWait = 0;
+                        this.container.cancelDelayInfo(RetryFor.Storage);
+                    }
+                }
                 success = true;
             } catch (err) {
                 // If it is not retriable, then just throw the error.
@@ -56,10 +66,26 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
                 if (!canRetry || this.disposed) {
                     throw err;
                 }
+                if (success === undefined) {
+                    // We are going to retry this call.
+                    RetriableDocumentStorageService.callsWaiting += 1;
+                    success = false;
+                }
                 // If the error is throttling error, then wait for the specified time before retrying.
                 // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
-                const retryAfter = getRetryDelayFromError(err) ?? Math.min(retryLimitSeconds * 2, 8000);
-                emitThrottlingWarning(retryAfter, CreateContainerError(err), this.container);
+                retryAfter = getRetryDelayFromError(err) ?? Math.min(retryAfter * 2, 8000);
+                let waitTime = 0;
+                if (RetriableDocumentStorageService.futureTimeTillWait === 0) {
+                    waitTime = retryAfter - RetriableDocumentStorageService.futureTimeTillWait;
+                    RetriableDocumentStorageService.futureTimeTillWait = Date.now() + waitTime;
+                } else {
+                    waitTime = Date.now() + retryAfter - RetriableDocumentStorageService.futureTimeTillWait;
+                    RetriableDocumentStorageService.futureTimeTillWait += waitTime;
+                }
+                if (waitTime > 0) {
+                    this.container.emitDelayInfo(RetryFor.Storage, waitTime, CreateContainerError(err));
+                    RetriableDocumentStorageService.futureTimeTillWait += waitTime;
+                }
                 await this.delay(retryAfter);
             }
         } while (!success);

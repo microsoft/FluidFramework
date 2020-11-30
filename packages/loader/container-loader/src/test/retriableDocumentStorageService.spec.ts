@@ -4,10 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { IThrottlingWarning } from "@fluidframework/container-definitions";
 import { DriverErrorType, IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { RetriableDocumentStorageService } from "../retriableDocumentStorageService";
-import { Container } from "../container";
 
 describe("RetriableDocumentStorageService Tests", () => {
     let retriableStorageService: RetriableDocumentStorageService;
@@ -15,8 +13,11 @@ describe("RetriableDocumentStorageService Tests", () => {
     beforeEach(() => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         internalService = {} as IDocumentStorageService;
-        const container = { emit: (event: string, error: IThrottlingWarning) => {} };
-        retriableStorageService = new RetriableDocumentStorageService(internalService, container as Container);
+        const container = {
+            cancelDelayInfo: () => {},
+            emitDelayInfo: () => undefined,
+        };
+        retriableStorageService = new RetriableDocumentStorageService(internalService, container);
     });
 
     it("Should succeed at first time", async () => {
