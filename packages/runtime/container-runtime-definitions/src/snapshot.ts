@@ -7,13 +7,13 @@ import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 
 export const missingSnapshotFormatVersion = undefined;
 
-export const nextContainerSnapshotFormatVersion = "1.0";
+export const nextContainerSnapshotFormatVersion = "0.1";
 export type ContainerRuntimeSnapshotFormatVersion =
     | typeof missingSnapshotFormatVersion
     | typeof nextContainerSnapshotFormatVersion;
 
-export const currentDataStoreSnapshotFormatVersion = "1.0";
-export const nextDataStoreSnapshotFormatVersion = "2.0";
+export const currentDataStoreSnapshotFormatVersion = "0.1";
+export const nextDataStoreSnapshotFormatVersion = "0.2";
 export type DataStoreSnapshotFormatVersion =
     | typeof missingSnapshotFormatVersion
     | typeof currentDataStoreSnapshotFormatVersion
