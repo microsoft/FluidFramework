@@ -24,7 +24,7 @@ import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { convertContainerToDriverSerializedFormat, requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ILocalTestObjectProvider,
     generateLocalTest,
@@ -180,10 +180,19 @@ const tests = (args: ILocalTestObjectProvider) => {
         const testChannel1 = await subDataStore1.runtime.getChannel("root");
         const testChannel2 = await subDataStore2.runtime.getChannel("root");
         assert.strictEqual(testChannel2.isAttached(), true, "Channel should be attached!!");
-        assert.strictEqual(JSON.stringify(testChannel2.snapshot()), JSON.stringify(testChannel1.snapshot()),
-            "Value for snapshot should be same!!");
         assert.strictEqual(testChannel2.isAttached(), testChannel1.isAttached(),
             "Value for isAttached should persist!!");
+
+        // back-compat for N-2 <= 0.29, remove the else part when N-2 >= 0.30
+        if (testChannel1.summarize && testChannel2.summarize) {
+            assert.strictEqual(JSON.stringify(testChannel2.summarize()), JSON.stringify(testChannel1.summarize()),
+                "Value for summarize should be same!!");
+        } else {
+            assert.strictEqual(
+                JSON.stringify((testChannel2 as SharedMap).snapshot()),
+                JSON.stringify((testChannel1 as SharedMap).snapshot()),
+                "Value for summarize should be same!!");
+        }
     });
 
     it("ReAttach detached container on failed attach", async () => {
@@ -231,6 +240,30 @@ const tests = (args: ILocalTestObjectProvider) => {
         assert(dataStore2, "Data store created in failed attach mode should exist");
         assert.strictEqual(dataStore1.runtime.attachState, AttachState.Attached, "Data store 1 should be attached");
         assert.strictEqual(dataStore2.runtime.attachState, AttachState.Attached, "Data store 2 should be attached");
+    });
+
+    it("Directly attach container through service factory, should resolve to same container", async () => {
+        const container = await loader.createDetachedContainer(pkg);
+        // Get the root dataStore from the detached container.
+        const response = await container.request({ url: "/" });
+        const dataStore = response.value as ITestFluidObject;
+
+        // Create a sub dataStore of type TestFluidObject.
+        const subDataStore1 = await createFluidObject(dataStore.context, "default");
+        dataStore.root.set("attachKey", subDataStore1.handle);
+
+        const snapshotTree = container.serialize();
+        const summaryForAttach = convertContainerToDriverSerializedFormat(snapshotTree);
+        const resolvedUrl = await args.urlResolver.resolve(request);
+        const service = await args.documentServiceFactory.createContainer(summaryForAttach as any, resolvedUrl);
+        const absoluteUrl = await args.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");
+
+        const container2 = await loader.resolve({ url: absoluteUrl });
+        // Get the root dataStore from the detached container.
+        const response2 = await container2.request({ url: "/" });
+        const dataStore2 = response2.value as ITestFluidObject;
+        assert.strictEqual(dataStore2.root.get("attachKey").absolutePath, subDataStore1.handle.absolutePath,
+            "Stored handle should match!!");
     });
 
     it("Fire ops during container attach for shared string", async () => {

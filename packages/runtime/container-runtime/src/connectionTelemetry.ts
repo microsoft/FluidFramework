@@ -45,7 +45,6 @@ class OpPerfTelemetry {
 
         this.deltaManager.on("connect", (details, opsBehind) => {
             this.clientId = details.clientId;
-            this.clientSequenceNumberForLatencyStatistics = undefined;
             if (opsBehind !== undefined) {
                 this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
                 this.gap = opsBehind;
@@ -58,6 +57,7 @@ class OpPerfTelemetry {
             }
         });
         this.deltaManager.on("disconnect", () => {
+            this.clientSequenceNumberForLatencyStatistics = undefined;
             this.connectionOpSeqNumber = undefined;
             this.firstConnection = false;
         });
@@ -97,18 +97,20 @@ class OpPerfTelemetry {
     }
 
     private beforeProcessingOp(message: ISequencedDocumentMessage) {
-        if (message.sequenceNumber === this.connectionOpSeqNumber) {
+        const sequenceNumber = message.sequenceNumber;
+
+        if (sequenceNumber === this.connectionOpSeqNumber) {
             this.reportGettingUpToDate();
         }
 
         // Record collab window max size after every 1000th op.
-        if (message.sequenceNumber % 1000 === 0) {
+        if (sequenceNumber % 1000 === 0) {
             if (this.opSendTimeForLatencyStatisticsForMsnStatistics !== undefined) {
-                this.logger.sendTelemetryEvent({
+                this.logger.sendPerformanceEvent({
                     eventName: "MsnStatistics",
-                    sequenceNumber: message.sequenceNumber,
+                    sequenceNumber,
                     msnDistance: this.deltaManager.lastSequenceNumber - this.deltaManager.minimumSequenceNumber,
-                    timeDelta: message.timestamp - this.opSendTimeForLatencyStatisticsForMsnStatistics,
+                    duration: message.timestamp - this.opSendTimeForLatencyStatisticsForMsnStatistics,
                 });
             }
             this.opSendTimeForLatencyStatisticsForMsnStatistics = message.timestamp;
@@ -116,12 +118,11 @@ class OpPerfTelemetry {
 
         if (this.clientId === message.clientId &&
             this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
-            assert(!!this.opSendTimeForLatencyStatistics);
-            this.logger.sendTelemetryEvent({
+            assert(this.opSendTimeForLatencyStatistics !== undefined);
+            this.logger.sendPerformanceEvent({
                 eventName: "OpRoundtripTime",
-                seqNumber: message.sequenceNumber,
-                clientSequenceNumber: message.clientSequenceNumber,
-                value: Date.now() - this.opSendTimeForLatencyStatistics,
+                sequenceNumber,
+                duration: Date.now() - this.opSendTimeForLatencyStatistics,
             });
             this.clientSequenceNumberForLatencyStatistics = undefined;
         }

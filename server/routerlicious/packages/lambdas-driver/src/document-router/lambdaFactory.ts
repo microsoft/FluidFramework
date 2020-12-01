@@ -11,7 +11,8 @@ import { DocumentLambda } from "./documentLambda";
 export class DocumentLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private readonly documentLambdaFactory: IPartitionLambdaFactory,
-        private readonly activityTimeout?: number,
+        private readonly partitionActivityTimeout?: number,
+        private readonly partitionActivityCheckInterval?: number,
     ) {
         super();
 
@@ -22,8 +23,12 @@ export class DocumentLambdaFactory extends EventEmitter implements IPartitionLam
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        const lambda = new DocumentLambda(this.documentLambdaFactory, config, context, this.activityTimeout);
-        return lambda;
+        return new DocumentLambda(
+            this.documentLambdaFactory,
+            config,
+            context,
+            this.partitionActivityTimeout,
+            this.partitionActivityCheckInterval);
     }
 
     public async dispose(): Promise<void> {

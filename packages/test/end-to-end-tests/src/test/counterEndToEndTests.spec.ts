@@ -143,5 +143,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("SharedCounter", () => {
-    generateTest(tests, { tinylicious: process.argv.includes("--tinylicious") });
+    generateTest(tests, { tinylicious: true });
 });

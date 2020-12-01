@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8, gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy } from "@fluidframework/protocol-base";
@@ -62,6 +62,14 @@ export class DocumentStorageService implements IDocumentStorageService {
         const value = await this.manager.getBlob(blobId);
         this.blobsShaCache.set(value.sha, "");
         return value.content;
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
+     */
+    public async readString(blobId: string): Promise<string> {
+        const base64Result = await this.read(blobId);
+        return fromBase64ToUtf8(base64Result);
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
@@ -165,6 +173,11 @@ export class DocumentStorageService implements IDocumentStorageService {
             // root of tree should be unnamed
             path.shift();
         }
+        if (path.length === 0) {
+            const tryId = previousFullSnapshot.id;
+            assert(!!tryId, "Parent summary does not have handle for specified path.");
+            return tryId;
+        }
 
         return this.getIdFromPathCore(handleType, path, previousFullSnapshot);
     }
@@ -175,21 +188,18 @@ export class DocumentStorageService implements IDocumentStorageService {
         /** Previous snapshot, subtree relative to this path part */
         previousSnapshot: ISnapshotTree,
     ): string {
+        assert(path.length > 0, "Expected at least 1 path part");
         const key = path[0];
         if (path.length === 1) {
             switch (handleType) {
                 case SummaryType.Blob: {
                     const tryId = previousSnapshot.blobs[key];
-                    if (!tryId) {
-                        throw Error("Parent summary does not have blob handle for specified path.");
-                    }
+                    assert(!!tryId, "Parent summary does not have blob handle for specified path.");
                     return tryId;
                 }
                 case SummaryType.Tree: {
                     const tryId = previousSnapshot.trees[key]?.id;
-                    if (!tryId) {
-                        throw Error("Parent summary does not have tree handle for specified path.");
-                    }
+                    assert(!!tryId, "Parent summary does not have tree handle for specified path.");
                     return tryId;
                 }
                 default:

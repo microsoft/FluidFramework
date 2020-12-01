@@ -19,20 +19,11 @@ import {
     MongoManager,
 } from "@fluidframework/server-services-core";
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
-import { FileMode } from "@fluidframework/protocol-definitions";
+import { FileMode, IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { DeliLambda } from "./lambda";
-
-// We expire clients after 5 minutes of no activity
-export const ClientSequenceTimeout = 5 * 60 * 1000;
-
-// Timeout for sending no-ops to trigger inactivity checker.
-export const ActivityCheckingTimeout = 30 * 1000;
-
-// Timeout for sending consolidated no-ops.
-export const NoopConsolidationTimeout = 250;
 
 // Epoch should never tick in our current setting. This flag is just for being extra cautious.
 // TODO: Remove when everything is up to date.
@@ -56,7 +47,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         private readonly collection: ICollection<IDocument>,
         private readonly tenantManager: ITenantManager,
         private readonly forwardProducer: IProducer,
-        private readonly reverseProducer: IProducer) {
+        private readonly reverseProducer: IProducer,
+        private readonly serviceConfiguration: IServiceConfiguration) {
         super();
     }
 
@@ -141,9 +133,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
             this.forwardProducer,
             this.reverseProducer,
-            ClientSequenceTimeout,
-            ActivityCheckingTimeout,
-            NoopConsolidationTimeout);
+            this.serviceConfiguration);
     }
 
     public async dispose(): Promise<void> {
