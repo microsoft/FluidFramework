@@ -94,44 +94,46 @@ export function createOdspNetworkError(
             break;
         case 401:
         case 403:
-            error = new AuthorizationError(errorMessage, claims);
+            error = new AuthorizationError(errorMessage, claims, statusCode);
             break;
         case 404:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, false);
+            error = new NetworkErrorBasic(
+                errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, false, statusCode);
             break;
         case 406:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.unsupportedClientProtocolVersion, false);
+            error = new NetworkErrorBasic(
+                errorMessage, DriverErrorType.unsupportedClientProtocolVersion, false, statusCode);
             break;
         case fluidEpochMismatchError:
-            error = new NonRetryableError(errorMessage, OdspErrorType.epochVersionMismatch);
+            error = new NonRetryableError(errorMessage, OdspErrorType.epochVersionMismatch, statusCode);
             break;
         case 413:
-            error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig);
+            error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig, statusCode);
             break;
         case 414:
         case invalidFileNameStatusCode:
-            error = new NonRetryableError(errorMessage, OdspErrorType.invalidFileNameError);
+            error = new NonRetryableError(errorMessage, OdspErrorType.invalidFileNameError, statusCode);
             break;
         case 500:
             error = new GenericNetworkError(errorMessage, true, statusCode);
             break;
         case 501:
-            error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled);
+            error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled, statusCode);
             break;
         case 507:
-            error = new NonRetryableError(errorMessage, OdspErrorType.outOfStorageError);
+            error = new NonRetryableError(errorMessage, OdspErrorType.outOfStorageError, statusCode);
             break;
         case offlineFetchFailureStatusCode:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.offlineError, true);
+            error = new NetworkErrorBasic(errorMessage, DriverErrorType.offlineError, true, statusCode);
             break;
         case fetchFailureStatusCode:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.fetchFailure, true);
+            error = new NetworkErrorBasic(errorMessage, DriverErrorType.fetchFailure, true, statusCode);
             break;
         case fetchIncorrectResponse:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.incorrectServerResponse, false);
+            error = new NetworkErrorBasic(errorMessage, DriverErrorType.incorrectServerResponse, false, statusCode);
             break;
         case fetchTimeoutStatusCode:
-            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTimeout);
+            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTimeout, statusCode);
             break;
         default:
             error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, statusCode);
