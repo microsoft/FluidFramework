@@ -179,7 +179,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.registry;
     }
 
-    public async getIsRoot(): Promise<boolean> {
+    public async isRoot(): Promise<boolean> {
         const initialDetails = await this.getInitialSnapshotDetails();
         return initialDetails.isRootDataStore;
     }

@@ -51,6 +51,7 @@ import {
     readAndParseFromBlobs,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
+import { runGarbageCollection } from "@fluidframework/gc-utils";
 import {
     BlobTreeEntry,
 } from "@fluidframework/protocol-base";
@@ -96,9 +97,7 @@ import {
     convertToSummaryTree,
     createRootSummarizerNodeWithGC,
     FluidSerializer,
-    GarbageCollector,
     IRootSummarizerNodeWithGC,
-    IGarbageCollector,
     requestFluidObject,
     RequestParser,
     SummaryTracker,
@@ -213,6 +212,9 @@ export interface IContainerRuntimeOptions {
 
     // Delay before first attempt to spawn summarizing container
     initialSummarizerDelayMs?: number;
+
+    // Flag that enables running garbage collection to delete unused Fluid objects.
+    runGC?: boolean;
 }
 
 interface IRuntimeMessageMetadata {
@@ -592,7 +594,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private latestSummaryAck: ISummaryContext;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
-    private readonly garbageCollector: IGarbageCollector;
 
     private tasks: string[] = [];
 
@@ -649,6 +650,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
             enableWorker: false,
+            runGC: true,
         },
         private readonly containerScope: IFluidObject,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
@@ -690,8 +692,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 throwOnFailure: true,
             },
         );
-
-        this.garbageCollector = new GarbageCollector(ChildLogger.create(this.logger, "GarbageCollector"));
 
         this.dataStores = new DataStores(
             context.baseSnapshot,
@@ -913,7 +913,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return root;
     }
 
-    protected addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
+    private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
@@ -1349,9 +1349,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const trace = Trace.start();
             const summarizeResult = await this.summarize(fullTree || safe, true /* trackState */);
 
-            // Run garbage collection on the GC nodes returned by summarize.
-            const startingRoutes = [ "/" ];
-            this.garbageCollector.runGC(summarizeResult.gcNodes, startingRoutes);
+            if (this.runtimeOptions.runGC) {
+                // Run garbage collection on the GC nodes returned by summarize.
+                runGarbageCollection(summarizeResult.gcNodes, [ "/" ], this.logger);
+            }
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: summarizeResult.stats,

@@ -29,7 +29,6 @@ import {
      convertSnapshotTreeToSummaryTree,
      convertSummaryTreeToITree,
      convertToSummaryTree,
-     normalizeAndPrefixGCNodeIds,
      SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -38,6 +37,7 @@ import { BlobCacheStorageService, buildSnapshotTree, readAndParseFromBlobs } fro
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
+import { normalizeAndPrefixGCNodeIds } from "@fluidframework/gc-utils";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime, nonDataStorePaths } from "./containerRuntime";
 import {
@@ -393,8 +393,9 @@ export class DataStores implements IDisposable {
                     contextSummary.gcNodes = [];
                 }
 
-                // Update and add the child context's GC nodes to the main list.
-                gcNodes = gcNodes.concat(this.updateChildGCNodes(contextSummary.gcNodes, contextId));
+                // Normalize the context's GC nodes and prefix its id to the ids of GC nodes returned by it.
+                normalizeAndPrefixGCNodeIds(contextSummary.gcNodes, contextId);
+                gcNodes = gcNodes.concat(contextSummary.gcNodes);
             }));
 
         return {
@@ -441,15 +442,13 @@ export class DataStores implements IDisposable {
     }
 
     /**
+     * Get the outbound routes of this channel. Only root data stores are considered referenced.
      * @returns this channel's garbage collection node.
      */
     private async getGCNode(): Promise<IGraphNode> {
-        /**
-         * Get the outbound routes of this channel. Only root data stores are considered referenced.
-         */
         const outboundRoutes: string[] = [];
         for (const [contextId, context] of this.contexts) {
-            const isRootDataStore = await context.getIsRoot();
+            const isRootDataStore = await context.isRoot();
             if (isRootDataStore) {
                 outboundRoutes.push(`/${contextId}`);
             }
@@ -459,19 +458,5 @@ export class DataStores implements IDisposable {
             id: "/",
             outboundRoutes,
         };
-    }
-
-    /**
-     * Updates the garbage collection nodes of this node's children:
-     * - Prefixes the child's id to the id of each node returned by the child.
-     * @param childGCNodes - The child's garbage collection nodes.
-     * @param childId - The id of the child node.
-     * @returns the updated GC nodes of the child.
-     */
-    private updateChildGCNodes(childGCNodes: IGraphNode[], childId: string): IGraphNode[] {
-        // Normalize the child's nodes and prefix the child's id to the ids of GC nodes returned by it.
-        // This gradually builds the id of each node to be a path from the root.
-        normalizeAndPrefixGCNodeIds(childGCNodes, childId);
-        return childGCNodes;
     }
 }
