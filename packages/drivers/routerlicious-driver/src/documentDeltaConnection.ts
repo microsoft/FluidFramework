@@ -21,8 +21,8 @@ export enum R11sErrorType {
 function createNetworkError(
     errorMessage: string,
     canRetry: boolean,
-    statusCode?: number,
-    retryAfterSeconds?: number,
+    statusCode: number | undefined,
+    retryAfterSeconds: number | undefined,
 ) {
     switch (statusCode) {
         case 401:
@@ -33,7 +33,7 @@ function createNetworkError(
             return new NetworkErrorBasic(errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, canRetry);
             break;
         case 500:
-            return new GenericNetworkError(errorMessage, canRetry);
+            return new GenericNetworkError(errorMessage, canRetry, statusCode);
             break;
         default:
             return createGenericNetworkError(errorMessage, canRetry, retryAfterSeconds, statusCode);

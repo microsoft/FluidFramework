@@ -37,7 +37,7 @@ export class GenericNetworkError extends CustomErrorWithProps implements IDriver
     constructor(
         errorMessage: string,
         readonly canRetry: boolean,
-        readonly statusCode?: number,
+        readonly statusCode: number | undefined,
     ) {
         super(errorMessage);
     }

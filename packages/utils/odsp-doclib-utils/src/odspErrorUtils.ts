@@ -113,7 +113,7 @@ export function createOdspNetworkError(
             error = new NonRetryableError(errorMessage, OdspErrorType.invalidFileNameError);
             break;
         case 500:
-            error = new GenericNetworkError(errorMessage, true);
+            error = new GenericNetworkError(errorMessage, true, statusCode);
             break;
         case 501:
             error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled);
