@@ -9,7 +9,7 @@ For consistency we recommend building and developing within a container
 
 You can build the production container by running.
 
-`docker build -t historian . --build-arg NPM_TOKEN=${NPM_TOKEN}`
+`docker build -t historian .`
 
 And then mount it for development by running.
 
