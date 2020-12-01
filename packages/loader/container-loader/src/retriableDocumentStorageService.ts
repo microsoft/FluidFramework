@@ -12,7 +12,6 @@ import { getRetryDelayFromError } from "./deltaManager";
 
 export class RetriableDocumentStorageService extends DocumentStorageServiceProxy {
     private static callsWaiting: number = 0;
-    private static futureTimeTillWait: number = 0;
     private disposed = false;
     constructor(
         internalStorageService: IDocumentStorageService,
@@ -55,15 +54,16 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
                 if (success === false) {
                     RetriableDocumentStorageService.callsWaiting -= 1;
                     if (RetriableDocumentStorageService.callsWaiting === 0) {
-                        RetriableDocumentStorageService.futureTimeTillWait = 0;
                         this.container.cancelDelayInfo(RetryFor.Storage);
                     }
                 }
                 success = true;
             } catch (err) {
+                if (this.disposed) {
+                    throw CreateContainerError("Storage service disposed!!");
+                }
                 // If it is not retriable, then just throw the error.
-                const canRetry = canRetryOnError(err);
-                if (!canRetry || this.disposed) {
+                if (!canRetryOnError(err)) {
                     throw err;
                 }
                 if (success === undefined) {
@@ -74,18 +74,8 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
                 // If the error is throttling error, then wait for the specified time before retrying.
                 // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
                 retryAfter = getRetryDelayFromError(err) ?? Math.min(retryAfter * 2, 8000);
-                let waitTime = 0;
-                if (RetriableDocumentStorageService.futureTimeTillWait === 0) {
-                    waitTime = retryAfter - RetriableDocumentStorageService.futureTimeTillWait;
-                    RetriableDocumentStorageService.futureTimeTillWait = Date.now() + waitTime;
-                } else {
-                    waitTime = Date.now() + retryAfter - RetriableDocumentStorageService.futureTimeTillWait;
-                    RetriableDocumentStorageService.futureTimeTillWait += waitTime;
-                }
-                if (waitTime > 0) {
-                    this.container.emitDelayInfo(RetryFor.Storage, waitTime, CreateContainerError(err));
-                    RetriableDocumentStorageService.futureTimeTillWait += waitTime;
-                }
+                this.container.emitDelayInfo(RetryFor.Storage, retryAfter, CreateContainerError(err));
+
                 await this.delay(retryAfter);
             }
         } while (!success);
