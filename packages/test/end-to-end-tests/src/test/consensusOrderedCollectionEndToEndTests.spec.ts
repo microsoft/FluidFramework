@@ -55,12 +55,12 @@ function generate(
 
         beforeEach(async () => {
             // Create a Container for the first client.
-            container1 = await args.makeTestContainer(testContainerConfig) as IContainer;
+            container1 = await args.makeTestContainer(testContainerConfig);
             dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            container2 = await args.loadTestContainer(testContainerConfig) as IContainer;
+            container2 = await args.loadTestContainer(testContainerConfig);
             dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 

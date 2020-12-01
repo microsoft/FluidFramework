@@ -951,15 +951,7 @@ export class DeltaManager
         delaySeconds: number,
         error: ICriticalContainerError,
     ) {
-        let idForMap: string;
-        if (id !== undefined) {
-            idForMap = id;
-            this.idToDelayMap.set(id, delaySeconds);
-        } else {
-            idForMap = uuid();
-            this.idToDelayMap.set(idForMap, delaySeconds);
-        }
-
+        this.idToDelayMap.set(id, delaySeconds);
         const delayTime = Math.max(this.maxThrottlingDelay, delaySeconds);
         if (delayTime > 0) {
             const throttlingError: IThrottlingWarning = {
@@ -969,7 +961,6 @@ export class DeltaManager
             };
             this.emit("throttled", throttlingError);
         }
-        return idForMap;
     }
 
     private readonly opHandler = (documentId: string, messages: ISequencedDocumentMessage[]) => {

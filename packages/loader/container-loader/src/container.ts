@@ -273,7 +273,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     // Active chaincode and associated runtime
     private _storageService: IDocumentStorageService | undefined;
-
     private get storageService() {
         if (this._storageService === undefined) {
             throw new Error("Attempted to access storageService before it was defined");
