@@ -13,11 +13,11 @@ describe("RetriableDocumentStorageService Tests", () => {
     beforeEach(() => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         internalService = {} as IDocumentStorageService;
-        const container = {
+        const deltaManager = {
             cancelDelayInfo: () => {},
-            emitDelayInfo: () => undefined,
+            emitDelayInfo: () => "",
         };
-        retriableStorageService = new RetriableDocumentStorageService(internalService, container);
+        retriableStorageService = new RetriableDocumentStorageService(internalService, deltaManager);
     });
 
     it("Should succeed at first time", async () => {

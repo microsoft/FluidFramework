@@ -89,16 +89,11 @@ describe("Container Runtime", () => {
             );
             const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
-            const container = {
-                cancelDelayInfo: () => {},
-                emitDelayInfo: () => undefined,
-            };
             deltaManager = new DeltaManager(
                 () => service,
                 client as IClient,
                 DebugLogger.create("fluid:testDeltaManager"),
                 false,
-                container,
             );
 
             const emitter = new EventEmitter();

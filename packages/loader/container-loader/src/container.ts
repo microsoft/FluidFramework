@@ -27,13 +27,11 @@ import {
     IRuntimeState,
     ICriticalContainerError,
     ContainerWarning,
-    IThrottlingWarning,
     AttachState,
-    ContainerErrorType,
+    IThrottlingWarning,
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, GenericError } from "@fluidframework/container-utils";
 import {
-    LoaderCachingPolicy,
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
@@ -93,20 +91,12 @@ import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
-import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 
 const detachedContainerRefSeqNumber = 0;
 
 interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
-}
-
-export enum RetryFor {
-    DeltaStream,
-    DeltaStorage,
-    Storage,
 }
 
 export interface IContainerConfig {
@@ -283,7 +273,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     // Active chaincode and associated runtime
     private _storageService: IDocumentStorageService | undefined;
-    private retriableStorageService: RetriableDocumentStorageService | undefined;
+
     private get storageService() {
         if (this._storageService === undefined) {
             throw new Error("Attempted to access storageService before it was defined");
@@ -300,9 +290,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private service: IDocumentService | undefined;
     private _connectionState = ConnectionState.Disconnected;
     private readonly _audience: Audience;
-    private deltaStorageDelay: number = 0;
-    private deltaStreamDelay: number = 0;
-    private storageDelay: number = 0;
 
     private _context: ContainerContext | undefined;
     private get context() {
@@ -512,8 +499,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._closed = true;
 
         this._deltaManager.close(error);
-
-        this.retriableStorageService?.dispose();
 
         this._protocolHandler?.close();
 
@@ -750,40 +735,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.logContainerError(warning);
         }
         this.emit("warning", warning);
-    }
-
-    public cancelDelayInfo(retryEndpoint: RetryFor) {
-        if (retryEndpoint === RetryFor.DeltaStorage) {
-            this.deltaStorageDelay = 0;
-        } else if (retryEndpoint === RetryFor.DeltaStream) {
-            this.deltaStreamDelay = 0;
-        } else {
-            this.storageDelay = 0;
-        }
-    }
-
-    public emitDelayInfo(
-        retryEndpoint: RetryFor,
-        delaySeconds: number,
-        error: ICriticalContainerError,
-    ) {
-        if (retryEndpoint === RetryFor.DeltaStorage) {
-            this.deltaStorageDelay = delaySeconds;
-        } else if (retryEndpoint === RetryFor.DeltaStream) {
-            this.deltaStreamDelay = delaySeconds;
-        } else {
-            this.storageDelay = delaySeconds;
-        }
-
-        const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay, this.storageDelay);
-        if (delayTime > 0) {
-            const throttlingError: IThrottlingWarning = {
-                errorType: ContainerErrorType.throttlingError,
-                message: `Service busy/throttled: ${error.message}`,
-                retryAfterSeconds: delayTime,
-            };
-            this.raiseContainerWarning(throttlingError);
-        }
     }
 
     public async reloadContext(): Promise<void> {
@@ -1182,18 +1133,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
-        if (this.service === undefined) {
-            throw new Error("Not attached");
-        }
-        let service = await this.service.connectToStorage();
-
-        // Enable prefetching for the service unless it has a caching policy set otherwise:
-        if (this.service.policies?.caching !== LoaderCachingPolicy.NoCaching) {
-            service = new PrefetchDocumentStorageService(service);
-        }
-
-        this.retriableStorageService = new RetriableDocumentStorageService(service, this);
-        return this.retriableStorageService;
+        return this._deltaManager.connectToStorage();
     }
 
     private async getDocumentAttributes(
@@ -1366,7 +1306,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.client,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             this._canReconnect,
-            this,
         );
 
         deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
@@ -1407,6 +1346,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
             this.setConnectionState(ConnectionState.Disconnected, reason);
+        });
+
+        deltaManager.on("throttled", (warning: IThrottlingWarning) => {
+            this.raiseContainerWarning(warning);
         });
 
         deltaManager.on("readonly", (readonly) => {
