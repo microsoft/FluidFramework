@@ -154,13 +154,13 @@ class SocketReference {
         if (this._socket === undefined) { return true; }
         if (this.socket.connected) { return false; }
 
-        // We have a socket that is not connected. Two cases are possible:
+        // We have a socket that is not connected. Possible cases:
         // 1) It was connected some time ago and lost connection. We do not want to reuse it.
-        // 2) It was just created and never had a chance to connect - connection is in process.
-        // We have to differentiate these two states in order to be able to reuse socket in #1, but not in #2
+        // 2) It failed to connect (was never connected).
+        // 3) It was just created and never had a chance to connect - connection is in process.
+        // We have to differentiate 1 from 2-3 (specifically 1 & 3) in order to be able to reuse socket in #3.
         // We will use the fact that socket had some activity. I.e. if socket disconnected, or client stopped using
-        // socket, then removeSocketIoReference() will be called for it, and it will be the indiction that it's not #1,
-        // or something else is wrong with socket.
+        // socket, then removeSocketIoReference() will be called for it, and it will be the indiction that it's not #3.
         return !this.isPendingInitialConnection;
     }
 }
