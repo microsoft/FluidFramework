@@ -21,7 +21,7 @@ import {
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IDeltaManager } from "./deltas";
-import { ICriticalContainerError, ContainerWarning, IThrottlingWarning } from "./error";
+import { ICriticalContainerError, ContainerWarning } from "./error";
 import { IFluidModule } from "./fluidModule";
 import { AttachState } from "./runtime";
 
