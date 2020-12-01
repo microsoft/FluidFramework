@@ -49,7 +49,7 @@ export class AuthorizationError extends CustomErrorWithProps implements IAuthori
 
     constructor(
         errorMessage: string,
-        readonly claims: string,
+        readonly claims: string | undefined,
         readonly statusCode: number,
     ) {
         super(errorMessage);

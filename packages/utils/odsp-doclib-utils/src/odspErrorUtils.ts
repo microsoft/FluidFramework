@@ -82,7 +82,7 @@ export type OdspError =
 
 export function createOdspNetworkError(
     errorMessage: string,
-    statusCode?: number,
+    statusCode: number,
     retryAfterSeconds?: number,
     claims?: string,
 ): OdspError {
