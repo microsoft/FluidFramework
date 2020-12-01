@@ -4,12 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IGraphNode } from "@fluidframework/runtime-definitions";
-
-export interface IGCResult {
-    referencedNodes: IGraphNode[];
-    deletedNodes: IGraphNode[];
-}
+import { IGCResult, IGraphNode } from "./interfaces";
 
 /**
  * Runs garbage collection on the given reference graph.

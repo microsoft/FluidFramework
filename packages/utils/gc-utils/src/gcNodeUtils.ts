@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IGraphNode } from "@fluidframework/runtime-definitions";
+import { IGraphNode } from "./interfaces";
 
 /**
  * Helper function that normalizes the ids of the given list of garbage collection nodes and prefixs them with the

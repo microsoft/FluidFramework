@@ -5,10 +5,9 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { cloneGCNodes } from "@fluidframework/gc-utils";
+import { cloneGCNodes, IGraphNode } from "@fluidframework/gc-utils";
 import {
     IContextSummarizeResult,
-    IGraphNode,
     ISummarizeInternalResult,
     ISummarizerNodeConfig,
     ISummarizerNodeWithGC,

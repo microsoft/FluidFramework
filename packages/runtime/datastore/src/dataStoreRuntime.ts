@@ -46,7 +46,6 @@ import {
     IEnvelope,
     IFluidDataStoreContext,
     IFluidDataStoreChannel,
-    IGraphNode,
     IInboundSignalMessage,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
@@ -65,7 +64,7 @@ import {
     IChannelFactory,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import { addRouteToAllGCNodes, normalizeAndPrefixGCNodeIds } from "@fluidframework/gc-utils";
+import { addRouteToAllGCNodes, IGraphNode, normalizeAndPrefixGCNodeIds } from "@fluidframework/gc-utils";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";

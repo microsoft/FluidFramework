@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IGraphNode } from "@fluidframework/gc-utils";
 import {
     SummaryTree,
     ISummaryTree,
@@ -10,20 +11,6 @@ import {
     ISnapshotTree,
     ITree,
 } from "@fluidframework/protocol-definitions";
-
-/**
- * Represents a node in a graph that has a unique id and a list of routes to other nodes.
- */
-export interface IGraphNode {
-    /**
-     * This node's indentifier.
-     */
-    id: string;
-    /**
-     * A list of routes to other nodes in the graph.
-     */
-    outboundRoutes: string[];
-}
 
 export interface ISummaryStats {
     treeNodeCount: number;
