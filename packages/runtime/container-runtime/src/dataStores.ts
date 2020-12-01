@@ -137,7 +137,7 @@ export class DataStores implements IDisposable {
                     snapshotTree,
                     isRootDataStore ?? true);
             }
-            this.contexts.addBoundOrRemote(key, dataStoreContext);
+            this.contexts.addBoundOrRemoted(dataStoreContext);
         }
     }
 
@@ -195,7 +195,7 @@ export class DataStores implements IDisposable {
             pkg);
 
         // Resolve pending gets and store off any new ones
-       this.contexts.addBoundOrRemote(attachMessage.id, remotedFluidDataStoreContext);
+       this.contexts.addBoundOrRemoted(remotedFluidDataStoreContext);
 
         // Equivalent of nextTick() - Prefetch once all current ops have completed
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -204,7 +204,9 @@ export class DataStores implements IDisposable {
 
     public  bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
         const id = fluidDataStoreRuntime.id;
-        const localContext = this.contexts.prepContextForBind(id);
+        const localContext = this.contexts.getUnbound(id);
+        assert(!!localContext, "Could not find unbound context to bind");
+
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients.
@@ -217,8 +219,7 @@ export class DataStores implements IDisposable {
             this.attachOpFiredForDataStore.add(id);
         }
 
-        // Resolve the deferred so other local stores can access it now that the context is bound
-        this.contexts.resolveDeferredBind(fluidDataStoreRuntime.id);
+        this.contexts.bind(fluidDataStoreRuntime.id);
     }
 
     public createDetachedDataStoreCore(
@@ -285,13 +286,12 @@ export class DataStores implements IDisposable {
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<IFluidDataStoreChannel> {
-        const deferredContext = this.contexts.prepDeferredContext(id);
+        const context = await this.contexts.getBoundOrRemoted(id, wait);
 
-        if (!wait && !deferredContext.isCompleted) {
-            throw new Error(`DataStore ${id} does not exist`);
+        if (context === undefined) {
+            throw new Error(`DataStore ${id} does not yet exist or is not yet bound`);
         }
 
-        const context = await deferredContext.promise;
         return context.realize();
     }
 
