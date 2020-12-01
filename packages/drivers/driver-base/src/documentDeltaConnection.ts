@@ -376,7 +376,7 @@ export class DocumentDeltaConnection
 
         this._details = await new Promise<IConnected>((resolve, reject) => {
             const fail = (socketProtocolError: boolean, err: DriverError) => {
-                // timeout & "error" can happen after sucecssful connection
+                // timeout & "error" can happen after successful connection
                 if (!success) {
                     this.closeCore(socketProtocolError, err);
                 }

@@ -27,10 +27,15 @@ const socketReferenceBufferTime = 2000;
 
 class SocketReference {
     private references: number = 1;
-    private delayDeleteTimeout?: NodeJS.Timeout;
+    private delayDeleteTimeout: ReturnType<typeof setTimeout> | undefined;
     private delayDeleteTimeoutSetTime?: number;
     private _socket: SocketIOClient.Socket | undefined;
-    private inUse = false;
+
+    // When making decisions about socket reuse, we do not reuse disconnected socket.
+    // But we want to differentiate the following case from disconnected case:
+    // Socket that never connected and never failed, it's in "attempting to connect" mode
+    // such sockets should be reused, despite socket.disconnected === true
+    private isPendingInitialConnection = true;
 
     // Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
     private static readonly socketIoSockets: Map<string, SocketReference> = new Map();
@@ -72,7 +77,7 @@ class SocketReference {
         this.references--;
 
         // see comment in disconnected() getter
-        this.inUse = true;
+        this.isPendingInitialConnection = false;
 
         if (isFatalError || this.disconnected) {
             this.closeSocket();
@@ -99,6 +104,23 @@ class SocketReference {
     public constructor(public readonly key: string, socket: SocketIOClient.Socket) {
         this._socket = socket;
         SocketReference.socketIoSockets.set(key, this);
+
+        // The server always closes the socket after sending this message
+        // fully remove the socket reference now
+        socket.on("server_disconnect", (socketError: IOdspSocketError) => {
+            // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
+            // filter out retryable vs. non-retryable cases.
+            const error = errorObjectFromSocketError(socketError);
+            error.canRetry = true;
+
+            // see comment in disconnected() getter
+            // Setting it here to ensure socket reuse does not happen if new request to connect
+            // comes in from "disconnect" listener below, before we close socket.
+            this.isPendingInitialConnection = false;
+
+            socket.emit("disconnect", error);
+            this.closeSocket();
+        });
     }
 
     private clearTimer() {
@@ -139,7 +161,7 @@ class SocketReference {
         // We will use the fact that socket had some activity. I.e. if socket disconnected, or client stopped using
         // socket, then removeSocketIoReference() will be called for it, and it will be the indiction that it's not #1,
         // or something else is wrong with socket.
-        return this.inUse;
+        return !this.isPendingInitialConnection;
     }
 }
 
@@ -233,7 +255,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         return deltaConnection;
     }
 
-    private socketReferenece: SocketReference | undefined;
+    private socketReference: SocketReference | undefined;
 
     /**
      * Gets or create a socket io connection for the given key
@@ -248,9 +270,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         documentId: string,
         logger: ITelemetryLogger): SocketReference
     {
-        const socketReference = SocketReference.find(key, logger);
-        if (socketReference) {
-            return socketReference;
+        const existingSocketReference  = SocketReference.find(key, logger);
+        if (existingSocketReference) {
+            return existingSocketReference;
         }
 
         const query = enableMultiplexing ? undefined : { documentId, tenantId };
@@ -265,23 +287,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 timeout: timeoutMs,
             });
 
-        const socketReference2 = new SocketReference(key, socket);
-
-        socket.on("server_disconnect", (socketError: IOdspSocketError) => {
-            // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
-            // filter out retryable vs. non-retryable cases.
-            const error = errorObjectFromSocketError(socketError);
-            error.canRetry = true;
-
-            // The server always closes the socket after sending this message
-            // fully remove the socket reference now
-            // This raises "disconnect" event with proper error object.
-            socketReference2.removeSocketIoReference(true /* socketProtocolError */);
-
-            socket.emit("disconnect", error);
-        });
-
-        return socketReference2;
+        return new SocketReference(key, socket);
     }
 
     /**
@@ -294,12 +300,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     private constructor(
         socket: SocketIOClient.Socket,
         documentId: string,
-        socketReferenece: SocketReference,
+        socketReference: SocketReference,
         logger: ITelemetryLogger,
         private readonly enableMultiplexing?: boolean)
     {
         super(socket, documentId, logger);
-        this.socketReferenece = socketReferenece;
+        this.socketReference = socketReference;
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
@@ -363,12 +369,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * Disconnect from the websocket
      */
     protected disconnect(socketProtocolError: boolean, reason: DriverError) {
-        const socket = this.socketReferenece;
-        if (socket === undefined) {
-            this.logger.sendErrorEvent({ eventName: "OdspSocketReentrancy" }, reason);
-            return;
-        }
-        this.socketReferenece = undefined;
+        const socket = this.socketReference;
+        assert(socket !== undefined, "reentrancy not supported!");
+        this.socketReference = undefined;
 
         if (!socketProtocolError && this.hasDetails) {
             // tell the server we are disconnecting this client from the document
