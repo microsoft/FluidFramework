@@ -11,6 +11,7 @@ import {
     createGenericNetworkError,
 } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
 
 export enum R11sErrorType {
     authorizationError = "authorizationError",
@@ -69,6 +70,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 io,
                 client,
                 url,
+                new TelemetryNullLogger(),
             );
             return connection;
         } catch (errorObject) {
