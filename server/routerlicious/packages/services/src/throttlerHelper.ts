@@ -60,7 +60,6 @@ export class ThrottlerHelper implements IThrottlerHelper {
 
     private updateRequestDelta(id: string, requestType: ThrottlerRequestType, value: number): void {
         const key = this.getKey(id, requestType);
-
         if (this.requestDeltaMap[key] === undefined) {
             this.requestDeltaMap[key] = 0;
         }
@@ -72,8 +71,10 @@ export class ThrottlerHelper implements IThrottlerHelper {
         const key = this.getKey(id, requestType);
 
         const now = Date.now();
-        const lastThrottleUpdateAt = this.lastThrottleUpdateAtMap[key] || 0;
-        if (now - lastThrottleUpdateAt > this.minThrottleIntervalInMs) {
+        if (this.lastThrottleUpdateAtMap[key] === undefined) {
+            this.lastThrottleUpdateAtMap[key] = now;
+        }
+        if (now - this.lastThrottleUpdateAtMap[key] > this.minThrottleIntervalInMs) {
             const requestDelta = this.requestDeltaMap[key];
             this.lastThrottleUpdateAtMap[key] = now;
             this.requestDeltaMap[key] = 0;

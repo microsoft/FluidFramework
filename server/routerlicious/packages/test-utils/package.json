@@ -62,6 +62,7 @@
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
+    "@types/sinon": "^9.0.9",
     "@types/string-hash": "^1.1.1",
     "@typescript-eslint/eslint-plugin": "~4.2.0",
     "@typescript-eslint/parser": "~4.2.0",
