@@ -37,7 +37,7 @@ export class GenericNetworkError extends CustomErrorWithProps implements IDriver
     constructor(
         errorMessage: string,
         readonly canRetry: boolean,
-        readonly statusCode?: number,
+        readonly statusCode: number | undefined,
     ) {
         super(errorMessage);
     }
@@ -49,7 +49,8 @@ export class AuthorizationError extends CustomErrorWithProps implements IAuthori
 
     constructor(
         errorMessage: string,
-        readonly claims?: string,
+        readonly claims: string | undefined,
+        readonly statusCode: number,
     ) {
         super(errorMessage);
     }
@@ -60,6 +61,7 @@ export class NetworkErrorBasic<T> extends CustomErrorWithProps {
         errorMessage: string,
         readonly errorType: T,
         readonly canRetry: boolean,
+        readonly statusCode: number | undefined,
     ) {
         super(errorMessage);
     }
@@ -69,8 +71,9 @@ export class NonRetryableError<T> extends NetworkErrorBasic<T> {
     constructor(
         errorMessage: string,
         readonly errorType: T,
+        readonly statusCode: number | undefined,
     ) {
-        super(errorMessage, errorType, false);
+        super(errorMessage, errorType, false, statusCode);
     }
 }
 
@@ -91,7 +94,7 @@ export class ThrottlingError extends CustomErrorWithProps implements IThrottling
 }
 
 export const createWriteError = (errorMessage: string) =>
-    new NonRetryableError(errorMessage, DriverErrorType.writeError);
+    new NonRetryableError(errorMessage, DriverErrorType.writeError, undefined /* statusCodes */);
 
 export function createGenericNetworkError(
     errorMessage: string,
