@@ -4,3 +4,4 @@
  */
 export * from "./garbageCollector";
 export * from "./gcNodeUtils";
+export * from "./interfaces";
