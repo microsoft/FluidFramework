@@ -35,6 +35,7 @@ import {
     dataStoreSnapshotFormatVersions,
     DataStoreSnapshotFormatVersion,
     IContainerRuntime,
+    channelsTreeName,
 } from "@fluidframework/container-runtime-definitions";
 import {
     CreateChildSummarizerNodeFn,
@@ -618,7 +619,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                         break;
                     }
                     case dataStoreSnapshotFormatVersions.next: {
-                        tree = tree.trees[".channels"];
+                        tree = tree.trees[channelsTreeName];
                         // Intentional fallthrough, since package is still JSON
                     }
                     case dataStoreSnapshotFormatVersions.current: {

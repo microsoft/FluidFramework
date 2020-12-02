@@ -37,6 +37,7 @@ import {
     IContainerRuntimeMetadata,
     metadataBlobName,
     containerSnapshotFormatVersions,
+    channelsTreeName,
 } from "@fluidframework/container-runtime-definitions";
 import {
     assert,
@@ -708,9 +709,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         let dataStoresSnapshotType: BaseSnapshotType = "legacy";
 
         if (!!dataStoresSnapshot && metadata.snapshotFormatVersion !== containerSnapshotFormatVersions.missing) {
-            dataStoresSnapshot = dataStoresSnapshot.trees[".dataStores"];
+            dataStoresSnapshot = dataStoresSnapshot.trees[channelsTreeName];
             dataStoresSnapshotType = "next";
-            assert(!!dataStoresSnapshot, "expected .dataStores tree in snapshot");
+            assert(!!dataStoresSnapshot, "expected .channels tree in snapshot");
         }
 
         this.dataStores = new DataStores(

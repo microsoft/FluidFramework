@@ -40,6 +40,8 @@ export const nonDataStorePaths = [protocolTreeName, ".logTail", ".serviceProtoco
 
 export const dataStoreAttributesBlobName = ".component";
 
+export const channelsTreeName = ".channels";
+
 export interface IRuntimeSnapshot {
     id: string | null;
     blobs: {
@@ -49,6 +51,6 @@ export interface IRuntimeSnapshot {
     trees: {
         [protocolTreeName]: ISnapshotTree;
         [blobsTreeName]: ISnapshotTree;
-        ".dataStores": ISnapshotTree;
+        [channelsTreeName]: ISnapshotTree;
     },
 }
