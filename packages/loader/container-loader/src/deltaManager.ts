@@ -952,12 +952,12 @@ export class DeltaManager
         error: ICriticalContainerError,
     ) {
         this.idToDelayMap.set(id, delaySeconds);
-        const delayTime = Math.max(this.maxThrottlingDelay, delaySeconds);
-        if (delayTime > 0) {
+        if (delaySeconds > 0 && delaySeconds > this.maxThrottlingDelay) {
+            this.maxThrottlingDelay = delaySeconds;
             const throttlingError: IThrottlingWarning = {
                 errorType: ContainerErrorType.throttlingError,
                 message: `Service busy/throttled: ${error.message}`,
-                retryAfterSeconds: delayTime,
+                retryAfterSeconds: delaySeconds,
             };
             this.emit("throttled", throttlingError);
         }
