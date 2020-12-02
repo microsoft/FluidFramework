@@ -5,7 +5,7 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import merge from "lodash/merge";
-import uuid from "uuid";
+import { v4 as uuid } from "uuid";
 import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";

@@ -11,7 +11,7 @@ import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicio
 import { getRandomName } from "@fluidframework/server-services-client";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { IDevServerUser, IRouterliciousRouteOptions, RouteOptions } from "./loader";
 
 export const deltaConns = new Map<string, ILocalDeltaConnectionServer>();

@@ -63,7 +63,7 @@
     "lodash": "^4.17.19",
     "nconf": "^0.10.0",
     "semver": "^6.3.0",
-    "uuid": "^3.3.2"
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",

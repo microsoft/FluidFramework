@@ -68,7 +68,7 @@
     "@fluidframework/test-runtime-utils": "^0.31.0",
     "assert": "^2.0.0",
     "debug": "^4.1.1",
-    "uuid": "^3.3.2"
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",

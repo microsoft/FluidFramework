@@ -64,7 +64,7 @@
     "assert": "^2.0.0",
     "axios": "^0.18.0",
     "jsrsasign": "^10.0.2",
-    "uuid": "^3.3.2"
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
@@ -74,7 +74,7 @@
     "@types/jsrsasign": "^8.0.8",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
-    "@types/uuid": "^3.4.4",
+    "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "~4.2.0",
     "@typescript-eslint/parser": "~4.2.0",
     "concurrently": "^5.2.0",

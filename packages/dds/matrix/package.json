@@ -98,6 +98,6 @@
     "ts-node": "^7.0.1",
     "typescript": "~3.7.4",
     "typescript-formatter": "7.1.0",
-    "uuid": "^3.3.2"
+    "uuid": "^8.3.1"
   }
 }

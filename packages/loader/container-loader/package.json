@@ -67,7 +67,7 @@
     "debug": "^4.1.1",
     "double-ended-queue": "^2.1.0-0",
     "lodash": "^4.17.19",
-    "uuid": "^3.3.2"
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluid-internal/test-loader-utils": "^0.31.0",
