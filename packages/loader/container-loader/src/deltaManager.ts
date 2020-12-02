@@ -60,11 +60,11 @@ const ImmediateNoOpResponse = "";
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
 const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds;
 
-function getNackReconnectInfo(nackContent: INackContent, mode: ConnectionMode) {
+function getNackReconnectInfo(nackContent: INackContent, readonlyPermission: boolean, mode: ConnectionMode) {
     const reason = `Nack: ${nackContent.message}`;
     // always retry/reconnect on Nack if connection mode is read, as first
     // write on a read connection should always nack first, then re-connect as write
-    const canRetry = mode === "read" ? true : ![403, 429].includes(nackContent.code);
+    const canRetry = mode === "read" ? !readonlyPermission : ![403, 429].includes(nackContent.code);
     return createGenericNetworkError(reason, canRetry, nackContent.retryAfter, nackContent.code);
 }
 
@@ -972,10 +972,17 @@ export class DeltaManager
             this.close(createWriteError("WriteOnReadOnlyDocument"));
         }
 
-        // check message.content for Back-compat with old service.
-        const reconnectInfo = message.content !== undefined
-            ? getNackReconnectInfo(message.content, this.connectionMode) :
-            createGenericNetworkError(`Nack: unknown reason`, true);
+        const readonlyPermission = this.readonlyPermissions === true ? true : false;
+        const reconnectInfo =
+            // check message.content for Back-compat with old service.
+            message.content !== undefined
+                ? getNackReconnectInfo(
+                    message.content,
+                    readonlyPermission,
+                    this.connectionMode) :
+                createGenericNetworkError(
+                    `Nack: unknown reason`,
+                    !readonlyPermission /* canRetry */);
 
         if (this.reconnectMode !== ReconnectMode.Enabled) {
             this.logger.sendErrorEvent({
