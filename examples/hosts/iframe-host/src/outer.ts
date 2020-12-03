@@ -14,6 +14,7 @@ import {
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { ContainerProxy } from "./containerProxy";
 import {
     IFrameInnerApi,
     IFrameOuterHost,
@@ -38,7 +39,7 @@ export async function loadFrame(
     const iframe = document.createElement("iframe");
     iframe.src = "/inner.html";
     // TODO: remove "allow-same-origin"
-    iframe.sandbox.add("allow-scripts", "allow-same-origin");
+    iframe.sandbox.add("allow-scripts", "allow-forms", "allow-same-origin");
     iframeDiv.appendChild(iframe);
 
     const urlResolver = new InsecureTinyliciousUrlResolver();
@@ -65,9 +66,9 @@ export async function loadFrame(
             await innerApi.setMessagePort(Comlink.transfer(innerPort, [innerPort]));
 
             // load the code inside the iframe but attach it here outside
-            const containerId = await innerApi.loadContainer(documentId, createNew);
+            const containerProxy = await ContainerProxy.create(innerApi, documentId, createNew);
             if (createNew) {
-                await innerApi.attachContainer(containerId, { url: documentId });
+                await containerProxy.attach({ url: documentId });
             }
 
             const container = await host.loadContainer({ url: documentId });
