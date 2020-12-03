@@ -5,7 +5,7 @@
 import { EventEmitter } from "events";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { ITestDbFactory } from "@fluidframework/server-test-utils";
-import uuid from "uuid";
+import { v4 as uuid } from "uuid";
 
 /**
  * A collection for testing that stores data in the browsers session storage

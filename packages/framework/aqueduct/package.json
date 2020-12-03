@@ -71,7 +71,7 @@
     "@fluidframework/synthesize": "^0.31.0",
     "@fluidframework/view-interfaces": "^0.31.0",
     "assert": "^2.0.0",
-    "uuid": "^3.3.2"
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",

@@ -58,7 +58,7 @@
     "@fluidframework/server-services-core": "^0.1016.0",
     "@fluidframework/server-test-utils": "^0.1016.0",
     "jsrsasign": "^10.0.2",
-    "uuid": "^3.3.2"
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",

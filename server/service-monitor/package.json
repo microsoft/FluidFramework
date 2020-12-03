@@ -36,7 +36,7 @@
     "debug": "^4.1.1",
     "jsonwebtoken": "^8.5.1",
     "nconf": "^0.10.0",
-    "uuid": "^3.3.2",
+    "uuid": "^8.3.1",
     "winston": "3.2.1"
   },
   "devDependencies": {

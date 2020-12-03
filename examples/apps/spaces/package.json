@@ -54,7 +54,7 @@
     "react-collapsible": "^2.7.0",
     "react-dom": "^16.10.2",
     "react-grid-layout": "^0.18.3",
-    "uuid": "^3.3.2"
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
