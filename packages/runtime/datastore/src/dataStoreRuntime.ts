@@ -274,8 +274,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
         this._disposed = true;
 
-        this.removeAllListeners();
         this.emit("dispose");
+        this.removeAllListeners();
     }
 
     public async resolveHandle(request: IRequest): Promise<IResponse> {
