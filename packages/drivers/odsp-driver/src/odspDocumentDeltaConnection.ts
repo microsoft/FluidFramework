@@ -14,7 +14,6 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
-// eslint-disable-next-line import/no-internal-modules
 import { v4 as uuid } from "uuid";
 import { IOdspSocketError } from "./contracts";
 import { errorObjectFromSocketError } from "./odspError";
