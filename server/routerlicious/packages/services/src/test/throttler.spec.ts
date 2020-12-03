@@ -13,6 +13,7 @@ import Sinon from "sinon";
 describe("Throttler", () => {
     // TODO: add assertions for the ThrottlingError being thrown
     // TODO: add tests for variable weight requests
+    // TODO: add tests for cache size and age
     beforeEach(() => {
         // use fake timers to have full control over the passage of time
         Sinon.useFakeTimers(Date.now());
@@ -48,8 +49,8 @@ describe("Throttler", () => {
         const rate = 100;
         // only checks Throttler at most once per second
         const minThrottleCheckInterval = 1000;
-        const throttleManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleManager, limit, rate);
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test1";
 
@@ -60,8 +61,8 @@ describe("Throttler", () => {
         const limit = 10;
         const rate = 100;
         const minThrottleCheckInterval = 1000;
-        const throttleManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleManager, limit, rate);
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test2";
 
@@ -86,8 +87,8 @@ describe("Throttler", () => {
         const limit = 10;
         const rate = 100;
         const minThrottleCheckInterval = 1000;
-        const throttleManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleManager, limit, rate);
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test3";
 
@@ -112,8 +113,8 @@ describe("Throttler", () => {
         const limit = 10;
         const rate = 100;
         const minThrottleCheckInterval = 1000;
-        const throttleManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleManager, limit, rate);
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test4";
 
@@ -141,8 +142,8 @@ describe("Throttler", () => {
         const limit = 10;
         const rate = 100;
         const minThrottleCheckInterval = 1000;
-        const throttleManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleManager, limit, rate);
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
         Sinon.stub(throttlerHelper, "updateRequestCount").rejects();
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test5";
@@ -160,8 +161,8 @@ describe("Throttler", () => {
         const limit = 10;
         const rate = 100;
         const minThrottleCheckInterval = 1000;
-        const throttleManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleManager, limit, rate);
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
         Sinon.stub(throttlerHelper, "getThrottleStatus").rejects();
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test6";
@@ -179,14 +180,9 @@ describe("Throttler", () => {
         const limit = 10;
         const rate = 100;
         const minThrottleCheckInterval = 1000;
-        const throttleManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleManager, limit, rate);
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
         Sinon.stub(throttlerHelper, "updateRequestCount").resolves({
-            throttleStatus: false,
-            throttleReason: undefined,
-            retryAfterInMs: 0,
-        });
-        Sinon.stub(throttlerHelper, "getThrottleStatus").resolves({
             throttleStatus: true,
             throttleReason: "Exceeded count",
             retryAfterInMs: 100,
@@ -194,11 +190,17 @@ describe("Throttler", () => {
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test7";
 
-        // should not throw because throttle status is being retrieved in the background
+        // should not throw because throttle interval has not passed
         assert.doesNotThrow(() => {
             throttler.openRequest(id);
         });
-        // allow throttle status to be retrieved
+        // allow throttle status to be updated
+        await Sinon.clock.tickAsync(minThrottleCheckInterval * 2 + 1);
+        // should not throw because throttle status is being updated in the background
+        assert.doesNotThrow(() => {
+            throttler.openRequest(id);
+        });
+        // allow throttle update to complete
         await Sinon.clock.nextAsync();
         // should throw because throttle status has been retrieved and cached
         assert.throws(() => {

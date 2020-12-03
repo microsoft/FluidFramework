@@ -10,21 +10,30 @@ import {
     ThrottlingError,
     ILogger,
 } from "@fluidframework/server-services-core";
+import LRUCache from "lru-cache";
 
 /**
  * A lenient implementation of IThrottlerHelper that prioritizes low latency over strict throttling.
  */
 export class Throttler implements IThrottler {
-    // TODO: Should these cache values expire? Use node-cache package perhaps?
-    private readonly lastThrottleUpdateAtMap: { [key: string]: number } = {};
-    private readonly requestDeltaMap: { [key: string]: number } = {};
-    private readonly throttlerResponseCache: { [key: string]: IThrottlerResponse } = {};
+    private readonly lastThrottleUpdateAtMap: LRUCache<string, number>;
+    private readonly requestDeltaMap: LRUCache<string, number>;
+    private readonly throttlerResponseCache: LRUCache<string, IThrottlerResponse>;
 
     constructor(
         private readonly throttlerHelper: IThrottlerHelper,
         private readonly minThrottleIntervalInMs: number,
         private readonly logger?: ILogger,
+        maxCacheSize: number = 1000,
+        maxCacheAge: number = 1000 * 60,
     ) {
+        const cacheOptions: LRUCache.Options<string, any> = {
+            max: maxCacheSize,
+            maxAge: maxCacheAge,
+        };
+        this.lastThrottleUpdateAtMap = new LRUCache(cacheOptions);
+        this.requestDeltaMap = new LRUCache(cacheOptions);
+        this.throttlerResponseCache = new LRUCache(cacheOptions);
     }
 
     /**
@@ -37,10 +46,8 @@ export class Throttler implements IThrottler {
         void this.updateAndCacheThrottleStatus(id);
 
         // check cached throttle status, but allow requests through if status is not yet cached
-        const cachedThrottlerResponse = this.throttlerResponseCache[id];
-        if (!cachedThrottlerResponse) {
-            void this.getAndCacheThrottleStatus(id);
-        } else if (cachedThrottlerResponse.throttleStatus) {
+        const cachedThrottlerResponse = this.throttlerResponseCache.get(id);
+        if (cachedThrottlerResponse && cachedThrottlerResponse.throttleStatus) {
             throw new ThrottlingError(
                 cachedThrottlerResponse.throttleReason,
                 Math.ceil(cachedThrottlerResponse.retryAfterInMs / 1000),
@@ -53,47 +60,27 @@ export class Throttler implements IThrottler {
     }
 
     private updateRequestDelta(id: string, value: number): void {
-        if (this.requestDeltaMap[id] === undefined) {
-            this.requestDeltaMap[id] = 0;
-        }
+        const currentValue = this.requestDeltaMap.get(id) || 0;
 
-        this.requestDeltaMap[id] += value;
+        this.requestDeltaMap.set(id, currentValue + value);
     }
 
     private async updateAndCacheThrottleStatus(id: string): Promise<void> {
         const now = Date.now();
-        if (this.lastThrottleUpdateAtMap[id] === undefined) {
-            this.lastThrottleUpdateAtMap[id] = now;
+        if (this.lastThrottleUpdateAtMap.get(id) === undefined) {
+            this.lastThrottleUpdateAtMap.set(id, now);
         }
-        if (now - this.lastThrottleUpdateAtMap[id] > this.minThrottleIntervalInMs) {
-            const requestDelta = this.requestDeltaMap[id];
-            this.lastThrottleUpdateAtMap[id] = now;
-            this.requestDeltaMap[id] = 0;
+        if (now - this.lastThrottleUpdateAtMap.get(id) > this.minThrottleIntervalInMs) {
+            const requestDelta = this.requestDeltaMap.get(id);
+            this.lastThrottleUpdateAtMap.set(id, now);
+            this.requestDeltaMap.set(id, 0);
             return this.throttlerHelper.updateRequestCount(id, requestDelta)
                 .then((throttlerResponse) => {
-                    this.throttlerResponseCache[id] = throttlerResponse;
+                    this.throttlerResponseCache.set(id, throttlerResponse);
                 })
                 .catch((err) => {
                     this.logger?.error(`Failed to update Throttler request count for ${id}: ${err}`);
                 });
         }
-    }
-
-    private async getAndCacheThrottleStatus(id: string): Promise<void> {
-        return this.throttlerHelper.getThrottleStatus(id)
-            .then((throttlerResponse) => {
-                if (!throttlerResponse) {
-                    this.throttlerResponseCache[id] = {
-                        throttleStatus: false,
-                        throttleReason: undefined,
-                        retryAfterInMs: 0,
-                    };
-                } else {
-                    this.throttlerResponseCache[id] = throttlerResponse;
-                }
-            })
-            .catch((err) => {
-                this.logger?.error(`Failed to retrieve Throttler status for ${id}: ${err}`);
-            });
     }
 }

@@ -61,7 +61,8 @@ export class ThrottlerHelper implements IThrottlerHelper {
         const newTimeUntilNotThrottled = this.getTimeUntilNotThrottledInMs(requestMetric, now);
         if (newTimeUntilNotThrottled > 0) {
             requestMetric.throttleStatus = true;
-            requestMetric.throttleReason = `count exceeded by ${Math.abs(requestMetric.count)}`;
+            requestMetric.throttleReason =
+                `Request count exceeded by ${Math.abs(requestMetric.count)} at ${new Date(now).toISOString()}`;
             requestMetric.retryAfterInMs = newTimeUntilNotThrottled;
         } else {
             requestMetric.throttleStatus = false;

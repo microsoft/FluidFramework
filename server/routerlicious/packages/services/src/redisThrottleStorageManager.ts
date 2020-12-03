@@ -30,13 +30,7 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
         requestMetric: IRequestMetrics,
     ): Promise<void> {
         const key = this.getKey(id);
-        const result = await this.setAsync(key,
-            "count", requestMetric.count,
-            "lastCoolDownAt", requestMetric.lastCoolDownAt,
-            "throttleStatus", requestMetric.throttleStatus,
-            "throttleReason", requestMetric.throttleReason,
-            "retryAfterInMs", requestMetric.retryAfterInMs,
-        );
+        const result = await this.setAsync(key, requestMetric);
 
         if (result !== "OK") {
             return Promise.reject(result);
@@ -51,6 +45,7 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
             return undefined;
         }
 
+        // All values retrieved from Redis are strings, so they must be parsed
         return {
             count: Number.parseInt(requestMetric.count, 10),
             lastCoolDownAt: Number.parseInt(requestMetric.lastCoolDownAt, 10),
