@@ -51,12 +51,10 @@ import {
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import {
-    addRouteToAllGCNodes,
     convertSnapshotTreeToSummaryTree,
     convertSummaryTreeToITree,
     FluidSerializer,
     generateHandleContextPath,
-    normalizeAndPrefixGCNodeIds,
     RequestParser,
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
@@ -67,6 +65,7 @@ import {
     IChannelFactory,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
+import { addRouteToAllGCNodes, normalizeAndPrefixGCNodeIds } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
