@@ -93,7 +93,6 @@ import {
 import {
     FluidSerializer,
     IRootSummarizerNodeWithGC,
-    SummaryTracker,
     SummaryTreeBuilder,
     convertToSummaryTree,
     RequestParser,
@@ -587,8 +586,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
     private latestSummaryAck: ISummaryContext;
-    // back-compat: summarizerNode - remove all summary trackers
-    private readonly summaryTracker: SummaryTracker;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
@@ -669,11 +666,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             proposalHandle: undefined,
             ackHandle: this.context.getLoadedFromVersion()?.id,
         };
-        this.summaryTracker = new SummaryTracker(
-            "", // fullPath - the root is unnamed
-            this.deltaManager.initialSequenceNumber, // referenceSequenceNumber - last acked summary ref seq number
-            this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
-        );
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = createRootSummarizerNodeWithGC(
@@ -698,7 +690,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             context.baseSnapshot,
             this,
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
-            this.summaryTracker,
             (id: string, createParam: CreateChildSummarizerNodeParam) =>
                 (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
                     summarizeInternal,
@@ -1387,7 +1378,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 await this.refreshLatestSummaryAck(
                     undefined,
                     version.id,
-                    this.summaryTracker.referenceSequenceNumber,
                     new ChildLogger(summaryLogger, undefined, { safeSummary: true }),
                     version,
                 );
@@ -1743,18 +1733,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async refreshLatestSummaryAck(
         proposalHandle: string | undefined,
         ackHandle: string,
-        trackerRefSeqNum: number, // back-compat summarizerNode - remove when fully enabled
         summaryLogger: ITelemetryLogger,
         version?: IVersion,
     ) {
-        if (trackerRefSeqNum < this.summaryTracker.referenceSequenceNumber) {
-            return;
-        }
-
         this.latestSummaryAck = { proposalHandle, ackHandle };
-
-        // back-compat summarizerNode - remove all summary trackers when fully enabled
-        this.summaryTracker.refreshLatestSummary(trackerRefSeqNum);
 
         const getSnapshot = async () => {
             const perfEvent = PerformanceEvent.start(summaryLogger, {

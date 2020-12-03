@@ -28,7 +28,6 @@ import {
      convertSummaryTreeToITree,
      convertToSummaryTree,
      normalizeAndPrefixGCNodeIds,
-     SummaryTracker,
      SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -67,7 +66,6 @@ export class DataStores implements IDisposable {
         private readonly baseSnapshot: ISnapshotTree | undefined,
         private readonly runtime: ContainerRuntime,
         private readonly submitAttachFn: (attachContent: any) => void,
-        private readonly summaryTracker: SummaryTracker,
         private readonly getCreateChildSummarizerNodeFn:
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         baseLogger: ITelemetryBaseLogger,
@@ -97,7 +95,6 @@ export class DataStores implements IDisposable {
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
-                    this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
                     this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
             } else {
                 let pkgFromSnapshot: string[];
@@ -131,7 +128,6 @@ export class DataStores implements IDisposable {
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
-                    this.summaryTracker.createOrGetChild(key, this.runtime.deltaManager.lastSequenceNumber),
                     this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
                     (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
                     snapshotTree,
@@ -181,7 +177,6 @@ export class DataStores implements IDisposable {
             this.runtime,
             new BlobCacheStorageService(this.runtime.storage, flatBlobsP),
             this.runtime.scope,
-            this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
             this.getCreateChildSummarizerNodeFn(
                 attachMessage.id,
                 {
@@ -233,7 +228,6 @@ export class DataStores implements IDisposable {
             this.runtime,
             this.runtime.storage,
             this.runtime.scope,
-            this.summaryTracker.createOrGetChild(id, this.runtime.deltaManager.lastSequenceNumber),
             this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
@@ -250,7 +244,6 @@ export class DataStores implements IDisposable {
             this.runtime,
             this.runtime.storage,
             this.runtime.scope,
-            this.summaryTracker.createOrGetChild(id, this.runtime.deltaManager.lastSequenceNumber),
             this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
