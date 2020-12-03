@@ -5,13 +5,12 @@
 
 import * as util from "util";
 import {
-    IThrottleManager,
+    IThrottleStorageManager,
     IRequestMetrics,
-    ThrottlerRequestType,
 } from "@fluidframework/server-services-core";
 import { RedisClient } from "redis";
 
-export class RedisThrottleManager implements IThrottleManager {
+export class RedisThrottleStorageManager implements IThrottleStorageManager {
     private readonly setAsync: any;
     private readonly getAsync: any;
     private readonly expire: any;
@@ -28,10 +27,9 @@ export class RedisThrottleManager implements IThrottleManager {
 
     public async setRequestMetric(
         id: string,
-        requestType: ThrottlerRequestType,
         requestMetric: IRequestMetrics,
     ): Promise<void> {
-        const key = this.getKey(id, requestType);
+        const key = this.getKey(id);
         const result = await this.setAsync(key,
             "count", requestMetric.count,
             "lastCoolDownAt", requestMetric.lastCoolDownAt,
@@ -46,8 +44,8 @@ export class RedisThrottleManager implements IThrottleManager {
         await this.expire(key, this.expireAfterSeconds);
     }
 
-    public async getRequestMetric(id: string, requestType: ThrottlerRequestType): Promise<IRequestMetrics> {
-        const requestMetric = await this.getAsync(this.getKey(id, requestType));
+    public async getRequestMetric(id: string): Promise<IRequestMetrics> {
+        const requestMetric = await this.getAsync(this.getKey(id));
 
         if (!requestMetric) {
             return undefined;
@@ -62,7 +60,7 @@ export class RedisThrottleManager implements IThrottleManager {
         };
     }
 
-    private getKey(id: string, requestType: ThrottlerRequestType): string {
-        return `${this.prefix}:${id}:${requestType}`;
+    private getKey(id: string): string {
+        return `${this.prefix}:${id}`;
     }
 }

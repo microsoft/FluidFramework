@@ -4,18 +4,17 @@
  */
 
 import {
-    IThrottleManager,
-    IThrottler,
+    IThrottleStorageManager,
     IThrottlerResponse,
-    ThrottlerRequestType,
+    IThrottlerHelper,
 } from "@fluidframework/server-services-core";
 
 /**
  * Super simple Token Bucket Throttler implementation for use in tests.
  */
-export class TestThrottler implements IThrottler {
+export class TestThrottlerHelper implements IThrottlerHelper {
     constructor(
-        private readonly throttleManager: IThrottleManager,
+        private readonly throttleStorageManager: IThrottleStorageManager,
         private readonly limit: number,
         private readonly rate: number,
     ) {
@@ -23,13 +22,12 @@ export class TestThrottler implements IThrottler {
 
     public async updateRequestCount(
         id: string,
-        requestType: ThrottlerRequestType,
         count: number,
     ): Promise<IThrottlerResponse> {
         const now = Date.now();
 
         // get stored request metric
-        let requestMetric = await this.throttleManager.getRequestMetric(id, requestType);
+        let requestMetric = await this.throttleStorageManager.getRequestMetric(id);
         if (!requestMetric) {
             // start a request metric 0 count
             requestMetric = {
@@ -60,7 +58,7 @@ export class TestThrottler implements IThrottler {
         }
 
         // update stored request metric
-        await this.throttleManager.setRequestMetric(id, requestType, requestMetric);
+        await this.throttleStorageManager.setRequestMetric(id, requestMetric);
 
         return {
             throttleStatus: requestMetric.throttleStatus,
@@ -69,8 +67,8 @@ export class TestThrottler implements IThrottler {
         };
     }
 
-    public async getThrottleStatus(id: string, requestType: ThrottlerRequestType): Promise<IThrottlerResponse> {
-        const requestMetric = await this.throttleManager.getRequestMetric(id, requestType);
+    public async getThrottleStatus(id: string): Promise<IThrottlerResponse> {
+        const requestMetric = await this.throttleStorageManager.getRequestMetric(id);
 
         return {
             throttleStatus: requestMetric.throttleStatus,

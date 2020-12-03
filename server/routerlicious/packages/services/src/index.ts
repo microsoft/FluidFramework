@@ -18,7 +18,7 @@ export * from "./rdkafkaConsumer";
 export * from "./rdkafkaProducer";
 export * from "./redis";
 export * from "./redisClientManager";
-export * from "./redisThrottleManager";
+export * from "./redisThrottleStorageManager";
 export * from "./secretManager";
 export * from "./socketIoRedisPublisher";
 export * from "./tenant";

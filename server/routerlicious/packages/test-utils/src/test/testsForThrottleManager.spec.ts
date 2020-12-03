@@ -4,16 +4,15 @@
  */
 
 import assert from "assert";
-import { IRequestMetrics, ThrottlerRequestType } from "@fluidframework/server-services-core";
-import { TestThrottleManager } from "../testThrottleManager";
+import { IRequestMetrics } from "@fluidframework/server-services-core";
+import { TestThrottleStorageManager } from "../testThrottleStorageManager";
 
 describe("Test for Test Utils", () => {
     describe("ThrottleManager", () => {
         it("Creates and retrieves requestMetric", async () => {
-            const throttleManager = new TestThrottleManager();
+            const throttleManager = new TestThrottleStorageManager();
 
             const id = "test-id-1";
-            const requestType = ThrottlerRequestType.AlfredHttps;
             const requestMetric: IRequestMetrics = {
                 count: 2,
                 lastCoolDownAt: Date.now(),
@@ -22,16 +21,15 @@ describe("Test for Test Utils", () => {
                 retryAfterInMs: 2500,
             };
 
-            await throttleManager.setRequestMetric(id, requestType, requestMetric);
-            const retrievedRequestMetric = await throttleManager.getRequestMetric(id, requestType);
+            await throttleManager.setRequestMetric(id, requestMetric);
+            const retrievedRequestMetric = await throttleManager.getRequestMetric(id);
             assert.deepStrictEqual(retrievedRequestMetric, requestMetric);
         });
 
         it("Creates and overwrites requestMetric", async () => {
-            const throttleManager = new TestThrottleManager();
+            const throttleManager = new TestThrottleStorageManager();
 
             const id = "test-id-2";
-            const requestType = ThrottlerRequestType.HistorianHttps;
             const originalRequestMetric: IRequestMetrics = {
                 count: 2,
                 lastCoolDownAt: Date.now(),
@@ -40,8 +38,8 @@ describe("Test for Test Utils", () => {
                 retryAfterInMs: 0,
             };
 
-            await throttleManager.setRequestMetric(id, requestType, originalRequestMetric);
-            const retrievedRequestMetric = await throttleManager.getRequestMetric(id, requestType);
+            await throttleManager.setRequestMetric(id, originalRequestMetric);
+            const retrievedRequestMetric = await throttleManager.getRequestMetric(id);
             assert.deepStrictEqual(retrievedRequestMetric, originalRequestMetric);
 
             const updatedRequestMetric: IRequestMetrics = {
@@ -51,18 +49,17 @@ describe("Test for Test Utils", () => {
                 throttleReason: "Exceeded token count: Wait 5 seconds",
                 retryAfterInMs: 5000,
             };
-            await throttleManager.setRequestMetric(id, requestType, updatedRequestMetric);
-            const retrievedUpdatedRequestMetric = await throttleManager.getRequestMetric(id, requestType);
+            await throttleManager.setRequestMetric(id, updatedRequestMetric);
+            const retrievedUpdatedRequestMetric = await throttleManager.getRequestMetric(id);
             assert.deepStrictEqual(retrievedUpdatedRequestMetric, updatedRequestMetric);
         });
 
         it("Returns undefined when requestMetric does not exist", async () => {
-            const throttleManager = new TestThrottleManager();
+            const throttleManager = new TestThrottleStorageManager();
 
             const id = "test-id-2";
-            const requestType = ThrottlerRequestType.OpenSocketConn;
 
-            const retrievedRequestMetric = await throttleManager.getRequestMetric(id, requestType);
+            const retrievedRequestMetric = await throttleManager.getRequestMetric(id);
             assert.strictEqual(retrievedRequestMetric, undefined);
         });
     });

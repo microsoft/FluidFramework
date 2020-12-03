@@ -5,109 +5,95 @@
 
 import {
     IThrottler,
+    IThrottlerHelper,
     IThrottlerResponse,
-    IThrottleManager,
-    ThrottlerRequestType,
-    IRequestMetrics,
+    ThrottlingError,
+    ILogger,
 } from "@fluidframework/server-services-core";
 
 /**
- * Implements the Token Bucket algorithm for throttling requests.
+ * A lenient implementation of IThrottlerHelper that prioritizes low latency over strict throttling.
  */
 export class Throttler implements IThrottler {
+    // TODO: Should these cache values expire? Use node-cache package perhaps?
+    private readonly lastThrottleUpdateAtMap: { [key: string]: number } = {};
+    private readonly requestDeltaMap: { [key: string]: number } = {};
+    private readonly throttlerResponseCache: { [key: string]: IThrottlerResponse } = {};
+
     constructor(
-        private readonly throttleManager: IThrottleManager,
-        private readonly requestRate: number,
-        private readonly minCooldownIntervalInMs: number,
+        private readonly throttlerHelper: IThrottlerHelper,
+        private readonly minThrottleIntervalInMs: number,
+        private readonly logger?: ILogger,
     ) {
     }
 
-    public async updateRequestCount(
-        id: string,
-        requestType: ThrottlerRequestType,
-        count: number,
-    ): Promise<IThrottlerResponse> {
+    /**
+     * Uses caching to bring added latency down to constant time (from cache connection time)
+     * @throws {ThrottlingError} if throttled
+     */
+    public openRequest(id: string, weight: number = 1): void {
+        this.updateRequestDelta(id, weight);
+
+        void this.updateAndCacheThrottleStatus(id);
+
+        // check cached throttle status, but allow requests through if status is not yet cached
+        const cachedThrottlerResponse = this.throttlerResponseCache[id];
+        if (!cachedThrottlerResponse) {
+            void this.getAndCacheThrottleStatus(id);
+        } else if (cachedThrottlerResponse.throttleStatus) {
+            throw new ThrottlingError(
+                cachedThrottlerResponse.throttleReason,
+                Math.ceil(cachedThrottlerResponse.retryAfterInMs / 1000),
+            );
+        }
+    }
+
+    public closeRequest(id: string, weight: number = 1): void {
+        this.updateRequestDelta(id, -weight);
+    }
+
+    private updateRequestDelta(id: string, value: number): void {
+        if (this.requestDeltaMap[id] === undefined) {
+            this.requestDeltaMap[id] = 0;
+        }
+
+        this.requestDeltaMap[id] += value;
+    }
+
+    private async updateAndCacheThrottleStatus(id: string): Promise<void> {
         const now = Date.now();
-        let requestMetric = await this.throttleManager.getRequestMetric(id, requestType);
-        if (!requestMetric) {
-            // start a request metric with 1 cooldown interval's worth of tokens
-            requestMetric = {
-                count: this.minCooldownIntervalInMs / this.requestRate,
-                lastCoolDownAt: now,
-                throttleStatus: false,
-                throttleReason: undefined,
-                retryAfterInMs: 0,
-            };
+        if (this.lastThrottleUpdateAtMap[id] === undefined) {
+            this.lastThrottleUpdateAtMap[id] = now;
         }
-
-        // Exit early if already throttled and no chance of being unthrottled
-        const timeUntilNotThrottled = this.getTimeUntilNotThrottledInMs(requestMetric, now);
-        if (timeUntilNotThrottled > 0) {
-            requestMetric.retryAfterInMs = timeUntilNotThrottled;
-            // update stored request metric with new retry duration
-            await this.throttleManager.setRequestMetric(id, requestType, requestMetric);
-            return this.convertRequestMetricsToThrottlerResponse(requestMetric);
+        if (now - this.lastThrottleUpdateAtMap[id] > this.minThrottleIntervalInMs) {
+            const requestDelta = this.requestDeltaMap[id];
+            this.lastThrottleUpdateAtMap[id] = now;
+            this.requestDeltaMap[id] = 0;
+            return this.throttlerHelper.updateRequestCount(id, requestDelta)
+                .then((throttlerResponse) => {
+                    this.throttlerResponseCache[id] = throttlerResponse;
+                })
+                .catch((err) => {
+                    this.logger?.error(`Failed to update Throttler request count for ${id}: ${err}`);
+                });
         }
-
-        // replenish "tokens" if possible
-        const amountToReplenish = this.getAmountToReplenishOnCooldown(requestMetric, now);
-        if (amountToReplenish > 0) {
-            requestMetric.count += amountToReplenish;
-            requestMetric.lastCoolDownAt = now;
-        }
-
-        // adjust "tokens" based on given count
-        requestMetric.count -= count;
-
-        // throttle if "token bucket" is empty
-        const newTimeUntilNotThrottled = this.getTimeUntilNotThrottledInMs(requestMetric, now);
-        if (newTimeUntilNotThrottled > 0) {
-            requestMetric.throttleStatus = true;
-            requestMetric.throttleReason = `count exceeded by ${Math.abs(requestMetric.count)}`;
-            requestMetric.retryAfterInMs = newTimeUntilNotThrottled;
-        } else {
-            requestMetric.throttleStatus = false;
-            requestMetric.throttleReason = "";
-            requestMetric.retryAfterInMs = 0;
-        }
-
-        // update stored request metric
-        await this.throttleManager.setRequestMetric(id, requestType, requestMetric);
-
-        return this.convertRequestMetricsToThrottlerResponse(requestMetric);
     }
 
-    public async getThrottleStatus(id: string, requestType: ThrottlerRequestType): Promise<IThrottlerResponse> {
-        const requestMetric = await this.throttleManager.getRequestMetric(id, requestType);
-        return this.convertRequestMetricsToThrottlerResponse(requestMetric);
-    }
-
-    private convertRequestMetricsToThrottlerResponse(requestMetric: IRequestMetrics): IThrottlerResponse {
-        return {
-            throttleStatus: requestMetric.throttleStatus,
-            throttleReason: requestMetric.throttleReason,
-            retryAfterInMs: requestMetric.retryAfterInMs,
-        };
-    }
-
-    private getAmountToReplenishOnCooldown(requestMetric: IRequestMetrics, now: number): number {
-        const timeSinceLastCooldownInMs = now - requestMetric.lastCoolDownAt;
-        // replenish "tokens" at most once per minCooldownInterval
-        if (timeSinceLastCooldownInMs > this.minCooldownIntervalInMs) {
-            return Math.floor(timeSinceLastCooldownInMs / this.requestRate);
-        }
-        return 0;
-    }
-
-    private getTimeUntilNotThrottledInMs(requestMetric: IRequestMetrics, now: number): number {
-        const debt = 0 - requestMetric.count;
-        if (debt <= 0) {
-            return 0;
-        }
-        const amountPossibleToReplenishNow = this.getAmountToReplenishOnCooldown(requestMetric, now);
-        const timeUntilNextCooldown = requestMetric.lastCoolDownAt + this.minCooldownIntervalInMs - now;
-        const timeUntilDebtReplenished = (debt - amountPossibleToReplenishNow) * this.requestRate;
-        // must at least wait until next cooldown
-        return Math.max(timeUntilNextCooldown, timeUntilDebtReplenished);
+    private async getAndCacheThrottleStatus(id: string): Promise<void> {
+        return this.throttlerHelper.getThrottleStatus(id)
+            .then((throttlerResponse) => {
+                if (!throttlerResponse) {
+                    this.throttlerResponseCache[id] = {
+                        throttleStatus: false,
+                        throttleReason: undefined,
+                        retryAfterInMs: 0,
+                    };
+                } else {
+                    this.throttlerResponseCache[id] = throttlerResponse;
+                }
+            })
+            .catch((err) => {
+                this.logger?.error(`Failed to retrieve Throttler status for ${id}: ${err}`);
+            });
     }
 }

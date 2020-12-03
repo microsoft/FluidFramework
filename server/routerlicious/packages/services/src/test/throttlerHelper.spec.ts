@@ -3,212 +3,344 @@
  * Licensed under the MIT License.
  */
 
+import { IThrottlerResponse } from "@fluidframework/server-services-core";
+import { TestThrottleStorageManager } from "@fluidframework/server-test-utils";
 import assert from "assert";
-import { TestThrottler, TestThrottleManager } from "@fluidframework/server-test-utils";
-import { ThrottlerHelper } from "../throttlerHelper";
-import { IThrottlerHelper, ThrottlerRequestType } from "@fluidframework/server-services-core";
 import Sinon from "sinon";
-
+import { ThrottlerHelper } from "../throttlerHelper";
 
 describe("ThrottlerHelper", () => {
     beforeEach(() => {
         // use fake timers to have full control over the passage of time
-        Sinon.useFakeTimers(Date.now());
+        Sinon.useFakeTimers();
     });
 
     afterEach(() => {
         Sinon.restore();
     });
 
-    const exceedThrottleLimit = async (
-        id: string,
-        requestType: ThrottlerRequestType,
-        throttlerHelper: IThrottlerHelper,
-        rate: number,
-        minThrottleCheckInterval: number,
-        numIntervalsToBeThrottledFor: number = 1,
-    ) => {
-        const numRequestsToExceedIntervalLimit = Math.ceil(minThrottleCheckInterval / rate);
-        // open enough requests to throttle for duration of numIntervalsToBeThrottledFor
-        const numRequestsToOpen = numIntervalsToBeThrottledFor * numRequestsToExceedIntervalLimit;
-        for (let i = 0; i < numRequestsToOpen; i++) {
-            // make sure we give ThrottlerHelper ability to check Throttler in case it is doing so
-            await Sinon.clock.nextAsync();
-            // should not throw because no time has passed to allow Throttler to be checked aside from initial update
-            assert.doesNotThrow(() => {
-                throttlerHelper.openRequest(id, requestType);
-            });
+    it("throttles on many individual requests", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number = 1;
+        let response: IThrottlerResponse;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttler = new ThrottlerHelper(throttleStorageManager, requestRate, cooldownInterval);
+
+        const id = "test-id";
+        for (let i = 0; i < requestsPerCooldown; i++) {
+            response = await throttler.updateRequestCount(id, weight);
+            assert.strictEqual(response.throttleStatus, false, `request ${i + 1} should not be throttled`);
         }
-    }
-
-    it("does not throttle within min throttle check interval", async () => {
-        // Max 10 requests per second
-        const limit = 10;
-        const rate = 100;
-        // only checks Throttler at most once per second
-        const minThrottleCheckInterval = 1000;
-        const throttleManager = new TestThrottleManager();
-        const throttler = new TestThrottler(throttleManager, limit, rate);
-        const throttlerHelper = new ThrottlerHelper(throttler, minThrottleCheckInterval);
-        const id = "test1";
-        const requestType = ThrottlerRequestType.AlfredHttps;
-
-        await exceedThrottleLimit(id, requestType, throttlerHelper, rate, minThrottleCheckInterval, 1);
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request ${requestsPerCooldown + 1} should be throttled`);
     });
 
-    it("throttles after min throttle check interval", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleManager = new TestThrottleManager();
-        const throttler = new TestThrottler(throttleManager, limit, rate);
-        const throttlerHelper = new ThrottlerHelper(throttler, minThrottleCheckInterval);
-        const id = "test2";
-        const requestType = ThrottlerRequestType.AlfredHttps;
+    it("throttles on a few request batches", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number = 2;
+        let response: IThrottlerResponse;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttler = new ThrottlerHelper(throttleStorageManager, requestRate, cooldownInterval);
 
-        await exceedThrottleLimit(id, requestType, throttlerHelper, rate, minThrottleCheckInterval, 1);
-
-        // move clock forward to next Throttler check
-        await Sinon.clock.tickAsync(minThrottleCheckInterval + 1);
-
-        // should not throw because Throttler will be checked in the background
-        assert.doesNotThrow(() => {
-            throttlerHelper.openRequest(id, requestType);
-        });
-        // wait for throttler to be checked
-        await Sinon.clock.nextAsync();
-        // should throw because last Throttler update should have returned throttled=true
-        assert.throws(() => {
-            throttlerHelper.openRequest(id, requestType);
-        });
-    });
-
-    it("throttles after multiple throttle check intervals", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleManager = new TestThrottleManager();
-        const throttler = new TestThrottler(throttleManager, limit, rate);
-        const throttlerHelper = new ThrottlerHelper(throttler, minThrottleCheckInterval);
-        const id = "test3";
-        const requestType = ThrottlerRequestType.AlfredHttps;
-
-        await exceedThrottleLimit(id, requestType, throttlerHelper, rate, minThrottleCheckInterval, 2);
-
-        // move clock forward to next Throttler check
-        await Sinon.clock.tickAsync(minThrottleCheckInterval * 2 + 1);
-
-        // should not throw because Throttler will be checked in the background
-        assert.doesNotThrow(() => {
-            throttlerHelper.openRequest(id, requestType);
-        });
-        // wait for throttler to be checked
-        await Sinon.clock.nextAsync();
-        // should throw because last Throttler update should have returned throttled=true
-        assert.throws(() => {
-            throttlerHelper.openRequest(id, requestType);
-        });
-    });
-
-    it("un-throttles early if requests are closed", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleManager = new TestThrottleManager();
-        const throttler = new TestThrottler(throttleManager, limit, rate);
-        const throttlerHelper = new ThrottlerHelper(throttler, minThrottleCheckInterval);
-        const id = "test4";
-        const requestType = ThrottlerRequestType.AlfredHttps;
-
-        // open enough requests to throttle for 3 intervals, after throttle interval expires
-        await exceedThrottleLimit(id, requestType, throttlerHelper, rate, minThrottleCheckInterval, 2);
-
-        // close enough requests to reduce throttle duration by 1 interval
-        for (let i = 0; i < limit + 1; i++) {
-            throttlerHelper.closeRequest(id, requestType);
+        const id = "test-id";
+        for (let i = 0; i < requestsPerCooldown / weight; i++) {
+            response = await throttler.updateRequestCount(id, weight)
+            assert.strictEqual(response.throttleStatus, false, `request ${i + 1} should not be throttled`);
         }
-
-        await Sinon.clock.tickAsync(minThrottleCheckInterval * 2 + 1);
-        // should not throw because Throttler will be checked in the background
-        assert.doesNotThrow(() => {
-            throttlerHelper.openRequest(id, requestType);
-        });
-        await Sinon.clock.nextAsync();
-        // should not throw because exceeded limit but requests were closed to remain within limit
-        assert.doesNotThrow(() => {
-            throttlerHelper.openRequest(id, requestType);
-        });
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request ${requestsPerCooldown / weight + 1} should be throttled`);
     });
 
-    it("does not throttle when Throttler fails to update throttle status", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleManager = new TestThrottleManager();
-        const throttler = new TestThrottler(throttleManager, limit, rate);
-        Sinon.stub(throttler, "updateRequestCount").rejects();
-        const throttlerHelper = new ThrottlerHelper(throttler, minThrottleCheckInterval);
-        const id = "test5";
-        const requestType = ThrottlerRequestType.AlfredHttps;
+    it("throttles on one request batch", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number = requestsPerCooldown + 1;
+        let response: IThrottlerResponse;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttler = new ThrottlerHelper(throttleStorageManager, requestRate, cooldownInterval);
 
-        assert.doesNotThrow(() => {
-            throttlerHelper.openRequest(id, requestType);
-        });
-        await Sinon.clock.nextAsync();
-        assert.doesNotThrow(() => {
-            throttlerHelper.openRequest(id, requestType);
-        });
+        const id = "test-id";
+
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request with ${weight - requestsPerCooldown} excess weight should be throttled`);
     });
 
-    it("does not throttle when Throttler fails to retrieve throttle status", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleManager = new TestThrottleManager();
-        const throttler = new TestThrottler(throttleManager, limit, rate);
-        Sinon.stub(throttler, "getThrottleStatus").rejects();
-        const throttlerHelper = new ThrottlerHelper(throttler, minThrottleCheckInterval);
-        const id = "test6";
-        const requestType = ThrottlerRequestType.AlfredHttps;
+    it("un-throttles after cooldown", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number;
+        let response: IThrottlerResponse;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttler = new ThrottlerHelper(throttleStorageManager, requestRate, cooldownInterval);
 
-        assert.doesNotThrow(() => {
-            throttlerHelper.openRequest(id, requestType);
-        });
-        await Sinon.clock.nextAsync();
-        assert.doesNotThrow(() => {
-            throttlerHelper.openRequest(id, requestType);
-        });
+        const id = "test-id";
+
+        weight = requestsPerCooldown * 2 - 1;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request with ${weight - requestsPerCooldown} excess weight should be throttled`);
+
+        Sinon.clock.tick(cooldownInterval + 1);
+
+        weight = 1
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, false, `request after ${cooldownInterval + 1}ms should not be throttled`);
     });
 
-    it("leniently throttles an un-cached, throttled request", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleManager = new TestThrottleManager();
-        const throttler = new TestThrottler(throttleManager, limit, rate);
-        Sinon.stub(throttler, "updateRequestCount").resolves({
-            throttleStatus: false,
-            throttleReason: undefined,
-            retryAfterInMs: 0,
-        });
-        Sinon.stub(throttler, "getThrottleStatus").resolves({
+    it("un-throttles after double cooldown", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number;
+        let response: IThrottlerResponse;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttler = new ThrottlerHelper(throttleStorageManager, requestRate, cooldownInterval);
+
+        const id = "test-id";
+
+        weight = requestsPerCooldown * 3 - 1;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request with ${weight - requestsPerCooldown} excess weight should be throttled`);
+
+        Sinon.clock.tick(cooldownInterval + 1);
+
+        weight = 1
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request after ${cooldownInterval - 1}ms should still be throttled`);
+
+        Sinon.clock.tick(cooldownInterval);
+
+        weight = 1
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, false, `request after ${cooldownInterval * 2 + 1}ms should not be throttled`);
+    });
+
+    it("throttles based on stored requestMetrics", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        let weight: number = 1;
+        let response: IThrottlerResponse;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttler = new ThrottlerHelper(throttleStorageManager, requestRate, cooldownInterval);
+
+        const id = "test-id";
+
+        const now = Date.now();
+        await throttleStorageManager.setRequestMetric(id, {
+            count: 0 - weight,
+            lastCoolDownAt: now,
+            retryAfterInMs: cooldownInterval,
             throttleStatus: true,
-            throttleReason: "Exceeded count",
-            retryAfterInMs: 100,
+            throttleReason: "Exceeded count by 1",
         });
-        const throttlerHelper = new ThrottlerHelper(throttler, minThrottleCheckInterval);
-        const id = "test7";
-        const requestType = ThrottlerRequestType.AlfredHttps;
 
-        // should not throw because throttle status is being retrieved in the background
-        assert.doesNotThrow(() => {
-            throttlerHelper.openRequest(id, requestType);
-        });
-        // allow throttle status to be retrieved
-        await Sinon.clock.nextAsync();
-        // should throw because throttle status has been retrieved and cached
-        assert.throws(() => {
-            throttlerHelper.openRequest(id, requestType);
-        });
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, "request after 0ms should be throttled");
+
+
+        Sinon.clock.tick(cooldownInterval + 1);
+
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, false, `request after ${cooldownInterval + 1}ms should not be throttled`);
+    });
+
+
+    it("stores most recently calculated requestMetrics", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number = requestsPerCooldown + 1;
+        let response: IThrottlerResponse;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttler = new ThrottlerHelper(throttleStorageManager, requestRate, cooldownInterval);
+
+        const id = "test-id";
+
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request with ${weight - requestsPerCooldown} excess weight should be throttled`);
+
+        const cachedResponse = await throttler.getThrottleStatus(id);
+        assert.deepStrictEqual(cachedResponse, response);
+    });
+    it("does not increase throttle duration while throttled", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        let weight: number;
+        let response: IThrottlerResponse;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        const throttler = new ThrottlerHelper(throttleStorageManager, requestRate, cooldownInterval);
+
+        const id = "test-id";
+
+        weight = requestsPerCooldown + 1;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request with ${weight - requestsPerCooldown} excess weight should be throttled`);
+
+        // make sure potentially added throttle duration exceeds 1 cooldown interval
+        weight = requestsPerCooldown * 2;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, "request after 0ms should be throttled");
+
+        Sinon.clock.tick(cooldownInterval + 1);
+
+        weight = 1;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, false, `request after ${cooldownInterval + 1}ms should not be throttled`);
+    });
+
+    it("gives accurate retryAfterInMs duration when only one cooldownInterval required", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number;
+        let response: IThrottlerResponse;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttler = new ThrottlerHelper(throttleStorageManager, requestRate, cooldownInterval);
+
+        const id = "test-id";
+
+        weight = requestsPerCooldown + 1;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request with ${weight - requestsPerCooldown} excess weight should be throttled`);
+
+        const retryAfter = response.retryAfterInMs;
+        // move 1 ms past retryAfter duration
+        Sinon.clock.tick(retryAfter + 1);
+
+        // should no longer be throttled
+        weight = 0;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, false, `request after ${retryAfter}ms should not be throttled`);
+    });
+
+    it("gives accurate retryAfterInMs duration when more than one cooldownInterval required", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number;
+        let response: IThrottlerResponse;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttler = new ThrottlerHelper(throttleStorageManager, requestRate, cooldownInterval);
+
+        const id = "test-id";
+
+        weight = requestsPerCooldown * 3 + 1;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request with ${weight - requestsPerCooldown} excess weight should be throttled`);
+
+        const retryAfter = response.retryAfterInMs;
+        // move 1 ms past retryAfter duration
+        Sinon.clock.tick(retryAfter + 1);
+
+        // should no longer be throttled
+        weight = 0;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, false, `request after ${retryAfter}ms should not be throttled`);
+    });
+
+    it("gives accurate retryAfterInMs duration when exactly two cooldownIntervals required", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number;
+        let response: IThrottlerResponse;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttler = new ThrottlerHelper(throttleStorageManager, requestRate, cooldownInterval);
+
+        const id = "test-id";
+
+        weight = requestsPerCooldown * 3;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request with ${weight - requestsPerCooldown} excess weight should be throttled`);
+
+        const retryAfter = response.retryAfterInMs;
+        // move 1 ms past retryAfter duration
+        Sinon.clock.tick(retryAfter + 1);
+
+        // should no longer be throttled
+        weight = 0;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, false, `request after ${retryAfter}ms should not be throttled`);
+    });
+
+    it("gives minimum retryAfterInMs duration when only one cooldownInterval required", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number;
+        let response: IThrottlerResponse;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttler = new ThrottlerHelper(throttleStorageManager, requestRate, cooldownInterval);
+
+        const id = "test-id";
+
+        weight = requestsPerCooldown + 1;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request with ${weight - requestsPerCooldown} excess weight should be throttled`);
+
+        const retryAfter = response.retryAfterInMs;
+        // move to 1ms before end of retryAfter duration
+        Sinon.clock.tick(retryAfter - 1);
+
+        // should still be throttled
+        weight = 0;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request after ${retryAfter}ms should still be throttled`);
+    });
+
+    it("gives minimum retryAfterInMs duration when more than one cooldownInterval required", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number;
+        let response: IThrottlerResponse;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttler = new ThrottlerHelper(throttleStorageManager, requestRate, cooldownInterval);
+
+        const id = "test-id";
+
+        weight = requestsPerCooldown * 3 + 1;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request with ${weight - requestsPerCooldown} excess weight should be throttled`);
+
+        const retryAfter = response.retryAfterInMs;
+        // move to 1ms before end of retryAfter duration
+        Sinon.clock.tick(retryAfter - 1);
+
+        // should still be throttled
+        weight = 0;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request after ${retryAfter}ms should still be throttled`);
+    });
+
+    it("gives minimum retryAfterInMs duration when exactly two cooldownIntervals required", async () => {
+        const requestRate = 100;
+        const cooldownInterval = 1000;
+        const requestsPerCooldown = cooldownInterval / requestRate;
+        let weight: number;
+        let response: IThrottlerResponse;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttler = new ThrottlerHelper(throttleStorageManager, requestRate, cooldownInterval);
+
+        const id = "test-id";
+
+        weight = requestsPerCooldown * 3;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request with ${weight - requestsPerCooldown} excess weight should be throttled`);
+
+        const retryAfter = response.retryAfterInMs;
+        // move to 1ms before end of retryAfter duration
+        Sinon.clock.tick(retryAfter - 1);
+
+        // should still be throttled
+        weight = 0;
+        response = await throttler.updateRequestCount(id, weight);
+        assert.strictEqual(response.throttleStatus, true, `request after ${retryAfter}ms should still be throttled`);
     });
 });
