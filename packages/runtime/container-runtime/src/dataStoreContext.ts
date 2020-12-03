@@ -195,18 +195,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         @deprecated Dummy summary tracker for back compat
         Should be remove in 0.31 and #3243 closed
     */
-    private readonly summaryTracker = {
-        /**
-         * Updates the latest sequence number representing change to this node or subtree.
-         * @param latestSequenceNumber - new latest sequence number
-         */
-        updateLatestSequenceNumber: (latestSequenceNumber: number)=>{},
-        /**
-         * Creates a child ISummaryTracker node based off information from its parent.
-         * @param key - key of node for newly created child ISummaryTracker
-         * @param latestSequenceNumber - initial value for latest sequence number of change
-         */
-        createOrGetChild: (key: string, latestSequenceNumber: number)=>this.summaryTracker,
+    protected readonly summaryTracker = {
+        createOrGetChild: (key: string, sequenceNumber: number)=>({
+            updateLatestSequenceNumber: (latestSequenceNumber: number)=>{},
+        }),
     };
 
     constructor(
