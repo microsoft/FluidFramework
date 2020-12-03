@@ -48,7 +48,7 @@ import {
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker, addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in store attributes.
@@ -191,13 +191,22 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
 
+    /**
+        @deprecated Dummy summary tracker for back compat
+        Should be remove in 0.31 and #3243 closed
+    */
+    protected readonly summaryTracker = {
+        createOrGetChild: (key: string, sequenceNumber: number)=>({
+            updateLatestSequenceNumber: (latestSequenceNumber: number)=>{},
+        }),
+    };
+
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
         public readonly scope: IFluidObject,
-        public readonly summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
         public readonly isLocalDataStore: boolean,
@@ -336,7 +345,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             contents: innerContents.content,
         };
 
-        this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
         this.summarizerNode.recordChange(message);
 
         if (this.loaded) {
@@ -422,16 +430,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         // Get the latest sequence number.
         const latestSequenceNumber = this.deltaManager.lastSequenceNumber;
 
-        // Update our summary tracker's latestSequenceNumber.
-        this.summaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
         this.summarizerNode.invalidate(latestSequenceNumber);
 
-        const channelSummaryTracker = this.summaryTracker.getChild(address);
         const channelSummarizerNode = this.summarizerNode.getChild(address);
-        // If there is a summary tracker for the channel that called us, update it's latestSequenceNumber.
-        if (channelSummaryTracker) {
-            channelSummaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
-        }
+
         if (channelSummarizerNode) {
             channelSummarizerNode.invalidate(latestSequenceNumber); // TODO: lazy load problem?
         }
@@ -551,7 +553,6 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject,
-        summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         pkg?: string[],
     ) {
@@ -561,7 +562,6 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             true,
             storage,
             scope,
-            summaryTracker,
             createSummarizerNode,
             BindState.Bound,
             false,
@@ -650,7 +650,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject,
-        summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
@@ -666,7 +665,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             snapshotTree !== undefined ? true : false,
             storage,
             scope,
-            summaryTracker,
             createSummarizerNode,
             snapshotTree ? BindState.Bound : BindState.NotBound,
             true,
@@ -741,7 +739,6 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
-        summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
@@ -757,7 +754,6 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
             runtime,
             storage,
             scope,
-            summaryTracker,
             createSummarizerNode,
             bindChannel,
             snapshotTree,
@@ -782,7 +778,6 @@ export class LocalDetachedFluidDataStoreContext
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
-        summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
@@ -794,7 +789,6 @@ export class LocalDetachedFluidDataStoreContext
             runtime,
             storage,
             scope,
-            summaryTracker,
             createSummarizerNode,
             bindChannel,
             snapshotTree,
