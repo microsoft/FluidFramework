@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { canRetryOnError, DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
