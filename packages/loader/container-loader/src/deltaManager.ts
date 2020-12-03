@@ -308,6 +308,9 @@ export class DeltaManager
     }
 
     public async connectToStorage(): Promise<IDocumentStorageService> {
+        if (this.storageService !== undefined) {
+            return this.storageService;
+        }
         const service = this.serviceProvider();
         if (service === undefined) {
             throw new Error("Not attached");
