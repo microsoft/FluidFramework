@@ -113,14 +113,6 @@
                     "Telemetry-Utils",
                     "Container-Definitions"
                 ]
-            },
-            "GC-Utils": {
-                "packages": [
-                    "@fluidframework/gc-utils"
-                ],
-                "deps": [
-                    "Base-Definitions"
-                ]
             }
         }
     },
@@ -167,8 +159,7 @@
                 "deps": [
                     "Container-Definitions",
                     "Driver-Utils",
-                    "Container-Utils",
-                    "GC-Utils"
+                    "Container-Utils"
                 ]
             },
             "Framework": {

@@ -51,7 +51,7 @@ import {
     readAndParseFromBlobs,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
-import { runGarbageCollection } from "@fluidframework/gc-utils";
+import { runGarbageCollection } from "@fluidframework/garbage-collector";
 import {
     BlobTreeEntry,
 } from "@fluidframework/protocol-base";
@@ -100,7 +100,6 @@ import {
     IRootSummarizerNodeWithGC,
     requestFluidObject,
     RequestParser,
-    SummaryTracker,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";

@@ -19,6 +19,7 @@ import {
     IEnvelope,
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
+    IGraphNode,
     IInboundSignalMessage,
     InboundAttachMessage,
     ISummarizeResult,
@@ -36,7 +37,7 @@ import { BlobCacheStorageService, buildSnapshotTree, readAndParseFromBlobs } fro
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
-import { IGraphNode, normalizeAndPrefixGCNodeIds } from "@fluidframework/gc-utils";
+import { normalizeAndPrefixGCNodeIds } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime, nonDataStorePaths } from "./containerRuntime";
 import {

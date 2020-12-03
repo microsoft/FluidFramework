@@ -5,8 +5,9 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IGraphNode } from "@fluidframework/runtime-definitions";
 import { runGarbageCollection } from "../garbageCollector";
-import { IGCResult, IGraphNode } from "../interfaces";
+import { IGCResult } from "../interfaces";
 
 describe("Garbage Collector", () => {
     let logger: ITelemetryLogger;

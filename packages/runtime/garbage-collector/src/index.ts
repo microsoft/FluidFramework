@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 export * from "./garbageCollector";
-export * from "./gcNodeUtils";
+export * from "./utils";
 export * from "./interfaces";
