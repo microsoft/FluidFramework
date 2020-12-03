@@ -98,7 +98,7 @@ describe("Errors Types", () => {
     }
 
     it("GenericNetworkError Test_1", async () => {
-        const networkError = createOdspNetworkError("Test Message");
+        const networkError = createOdspNetworkError("Test Message", 500);
         assert.equal(networkError.errorType, DriverErrorType.genericNetworkError,
             "Error should be a genericNetworkError");
         assertCustomPropertySupport(networkError);
@@ -209,7 +209,7 @@ describe("Errors Types", () => {
     it("ThrottlingError Test", async () => {
         const networkError = createOdspNetworkError(
             "Test Message",
-            undefined,
+            429,
             100 /* retryAfterSeconds */) as IThrottlingWarning;
         assertCustomPropertySupport(networkError);
         assert.equal(networkError.errorType, DriverErrorType.throttlingError, "Error should be a throttlingError");
@@ -232,7 +232,7 @@ describe("Errors Types", () => {
     });
 
     it("Check double conversion of network error", async () => {
-        const networkError = createOdspNetworkError("Test Error");
+        const networkError = createOdspNetworkError("Test Error", 400);
         const error1 = CreateContainerError(networkError);
         const error2 = CreateContainerError(error1);
         assertCustomPropertySupport(error1);

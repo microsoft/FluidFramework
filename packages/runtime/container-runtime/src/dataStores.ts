@@ -28,14 +28,13 @@ import {
      convertSummaryTreeToITree,
      convertToSummaryTree,
      normalizeAndPrefixGCNodeIds,
-     SummaryTracker,
      SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree, readAndParseFromBlobs } from "@fluidframework/driver-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
-import uuid from "uuid";
+import { v4 as uuid } from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime, nonDataStorePaths } from "./containerRuntime";
@@ -67,7 +66,6 @@ export class DataStores implements IDisposable {
         private readonly baseSnapshot: ISnapshotTree | undefined,
         private readonly runtime: ContainerRuntime,
         private readonly submitAttachFn: (attachContent: any) => void,
-        private readonly summaryTracker: SummaryTracker,
         private readonly getCreateChildSummarizerNodeFn:
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         baseLogger: ITelemetryBaseLogger,
@@ -97,7 +95,6 @@ export class DataStores implements IDisposable {
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
-                    this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
                     this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
             } else {
                 let pkgFromSnapshot: string[];
@@ -131,13 +128,12 @@ export class DataStores implements IDisposable {
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
-                    this.summaryTracker.createOrGetChild(key, this.runtime.deltaManager.lastSequenceNumber),
                     this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
                     (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
                     snapshotTree,
                     isRootDataStore ?? true);
             }
-            this.contexts.addBoundOrRemote(key, dataStoreContext);
+            this.contexts.addBoundOrRemoted(dataStoreContext);
         }
     }
 
@@ -181,7 +177,6 @@ export class DataStores implements IDisposable {
             this.runtime,
             new BlobCacheStorageService(this.runtime.storage, flatBlobsP),
             this.runtime.scope,
-            this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
             this.getCreateChildSummarizerNodeFn(
                 attachMessage.id,
                 {
@@ -195,7 +190,7 @@ export class DataStores implements IDisposable {
             pkg);
 
         // Resolve pending gets and store off any new ones
-       this.contexts.addBoundOrRemote(attachMessage.id, remotedFluidDataStoreContext);
+       this.contexts.addBoundOrRemoted(remotedFluidDataStoreContext);
 
         // Equivalent of nextTick() - Prefetch once all current ops have completed
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -204,7 +199,9 @@ export class DataStores implements IDisposable {
 
     public  bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
         const id = fluidDataStoreRuntime.id;
-        const localContext = this.contexts.prepContextForBind(id);
+        const localContext = this.contexts.getUnbound(id);
+        assert(!!localContext, "Could not find unbound context to bind");
+
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients.
@@ -217,8 +214,7 @@ export class DataStores implements IDisposable {
             this.attachOpFiredForDataStore.add(id);
         }
 
-        // Resolve the deferred so other local stores can access it now that the context is bound
-        this.contexts.resolveDeferredBind(fluidDataStoreRuntime.id);
+        this.contexts.bind(fluidDataStoreRuntime.id);
     }
 
     public createDetachedDataStoreCore(
@@ -232,7 +228,6 @@ export class DataStores implements IDisposable {
             this.runtime,
             this.runtime.storage,
             this.runtime.scope,
-            this.summaryTracker.createOrGetChild(id, this.runtime.deltaManager.lastSequenceNumber),
             this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
@@ -249,7 +244,6 @@ export class DataStores implements IDisposable {
             this.runtime,
             this.runtime.storage,
             this.runtime.scope,
-            this.summaryTracker.createOrGetChild(id, this.runtime.deltaManager.lastSequenceNumber),
             this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
@@ -285,13 +279,12 @@ export class DataStores implements IDisposable {
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<IFluidDataStoreChannel> {
-        const deferredContext = this.contexts.prepDeferredContext(id);
+        const context = await this.contexts.getBoundOrRemoted(id, wait);
 
-        if (!wait && !deferredContext.isCompleted) {
-            throw new Error(`DataStore ${id} does not exist`);
+        if (context === undefined) {
+            throw new Error(`DataStore ${id} does not yet exist or is not yet bound`);
         }
 
-        const context = await deferredContext.promise;
         return context.realize();
     }
 

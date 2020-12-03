@@ -123,8 +123,9 @@ describe("context reload", function() {
 
     const createOldRuntimeFactory = (dataStore): old.IRuntimeFactory => {
         const type = OldTestDataStore.type;
+        const factory = new old.DataObjectFactory(type, dataStore, [], {});
         return new old.ContainerRuntimeFactoryWithDefaultDataStore(
-            type,
+            factory,
             [[type, Promise.resolve(new old.DataObjectFactory(type, dataStore, [], {}))]],
         );
     };
