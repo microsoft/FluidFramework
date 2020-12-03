@@ -20,10 +20,10 @@ import { MakeThinProxy } from "./proxyUtils";
  * Connects to the outerDocumentService factory across the iframe boundary
  */
 export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
-    public static async create(): Promise<InnerDocumentServiceFactory> {
+    public static async create(outerPort: MessagePort): Promise<InnerDocumentServiceFactory> {
         // The outer host is responsible for setting up the iframe, so the proxy connection
         // is expected to exist when running any inner iframe code.
-        const combinedProxy = Comlink.wrap(Comlink.windowEndpoint(window.parent));
+        const combinedProxy = Comlink.wrap(outerPort);
         const outerProxy =
             combinedProxy[IDocumentServiceFactoryProxyKey] as Comlink.Remote<IDocumentServiceFactoryProxy>;
         assert(outerProxy !== undefined, "OuterDocumentServiceFactoryProxy unavailable");

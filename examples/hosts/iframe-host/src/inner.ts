@@ -3,15 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import * as Comlink from "comlink";
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
 import {
     InnerDocumentServiceFactory,
     InnerUrlResolver,
 } from "@fluidframework/iframe-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { IContainerProxy, MakeContainerProxy } from "./containerProxy";
+import { IFrameInnerApi } from "./inframehost";
+
+let innerPort: MessagePort;
+const containers: Map<string, Container> = new Map();
 
 async function getFluidObjectAndRender(container: Container, div: HTMLDivElement) {
     const response = await container.request({ url: "/" });
@@ -45,9 +49,9 @@ async function loadContainer(
     documentId: string,
     createNew: boolean,
     divId: string,
-): Promise<IContainerProxy> {
-    const documentServiceFactory = await InnerDocumentServiceFactory.create();
-    const urlResolver = await InnerUrlResolver.create();
+): Promise<string> {
+    const documentServiceFactory = await InnerDocumentServiceFactory.create(innerPort);
+    const urlResolver = await InnerUrlResolver.create(innerPort);
 
     const module = { fluidExport: TodoContainer };
     const codeLoader = { load: async () => module };
@@ -79,13 +83,30 @@ async function loadContainer(
     }
 
     await loadFluidObject(divId, container);
+    containers.set(container.id, container);
 
-    return MakeContainerProxy(container);
+    return container.id;
+}
+
+async function attachContainer(
+    containerId: string,
+    request: IRequest,
+): Promise<void> {
+    const container = containers.get(containerId);
+    if (container === undefined) {
+        throw new Error(`container with provided id: ${containerId} not found`);
+    }
+    await container.attach(request);
 }
 
 export async function runInner(divId: string) {
-    // expose the entrypoints on the iframe window to load a Fluid object
-    (window as any).loadContainer = async (documentId, createNew) => {
-        return loadContainer(documentId, createNew, divId);
+    const innerApi: IFrameInnerApi = {
+        setMessagePort: Comlink.proxy(async (port2) => {
+            innerPort = port2;
+        }),
+        loadContainer: Comlink.proxy(async (documentId, createNew) => loadContainer(documentId, createNew, "content")),
+        attachContainer: Comlink.proxy(async (containerId, request) => attachContainer(containerId, request)),
     };
+
+    Comlink.expose(innerApi, Comlink.windowEndpoint(window.parent));
 }

@@ -28,6 +28,28 @@ import {
 } from "@fluidframework/iframe-driver";
 import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
 
+export interface IFrameInnerApi {
+    /**
+     * Set the MessagePort which inner IFrame components can wrap
+     * to obtain an outer proxy
+     * @param innerPort - Port2 of a MessageChannel
+     */
+    setMessagePort(innerPort: MessagePort): Promise<void>;
+    /**
+     * Load a container
+     * @param documentId - id for the container
+     * @param createNew - if a new container should be created
+     * @returns An identifier for the container that can be used with this API
+     */
+    loadContainer(documentId: string, createNew: boolean): Promise<string>;
+    /**
+     * Attach the container with the given id inside the IFrame
+     * @param containerId - the containerid on which to call attach
+     * @param request - the request to pass to the attach call
+     */
+    attachContainer(containerId: string, request: IRequest): Promise<void>;
+}
+
 export interface IFrameOuterHostConfig {
     documentServiceFactory: IDocumentServiceFactory;
     urlResolver: IUrlResolver;
@@ -105,10 +127,12 @@ export class IFrameOuterHost {
      * Set up the outer proxies for an IFrame
      * @param iframe - The IFrame on which to expose methods (it still needs
      * to be set up internally separately)
+     * @returns The MessagePort to provide to the IFrame after it has loaded
      */
-    public async loadOuterProxy(iframe: HTMLIFrameElement): Promise<void> {
+    public async loadOuterProxy(iframe: HTMLIFrameElement): Promise<MessagePort> {
         // With comlink, only a single object should be exposed on a single window
-        // so combine them all in one (otherwise there are mysterious runtime errors)
+        // (because it uses message event listeners under the hood) so combine
+        // them all in one (otherwise there are mysterious runtime errors)
         const combinedProxy = {};
 
         const outerDocumentServiceProxy =  new DocumentServiceFactoryProxy(
@@ -122,10 +146,10 @@ export class IFrameOuterHost {
         );
         combinedProxy[IUrlResolverProxyKey] = outerUrlResolverProxy.createProxy();
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const iframeContentWindow = iframe.contentWindow!;
-        iframeContentWindow.window.postMessage("EndpointExposed", "*");
-        Comlink.expose(combinedProxy, Comlink.windowEndpoint(iframeContentWindow));
+        const channel = new MessageChannel();
+        Comlink.expose(combinedProxy, channel.port1);
+
+        return channel.port2;
     }
 
     /**

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as Comlink from "comlink";
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidObject } from "@fluidframework/core-interfaces";
@@ -13,8 +14,10 @@ import {
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
-import { IContainerProxy } from "./containerProxy";
-import { IFrameOuterHost } from "./inframehost";
+import {
+    IFrameInnerApi,
+    IFrameOuterHost,
+} from "./inframehost";
 
 let createNew = false;
 const getDocumentId = () => {
@@ -34,6 +37,8 @@ export async function loadFrame(
     const iframeDiv = document.getElementById(iframeDivId) as HTMLIFrameElement;
     const iframe = document.createElement("iframe");
     iframe.src = "/inner.html";
+    // TODO: remove "allow-same-origin"
+    iframe.sandbox.add("allow-scripts", "allow-same-origin");
     iframeDiv.appendChild(iframe);
 
     const urlResolver = new InsecureTinyliciousUrlResolver();
@@ -46,22 +51,31 @@ export async function loadFrame(
         documentServiceFactory,
     });
 
-    await host.loadOuterProxy(iframe);
+    const innerPort = await host.loadOuterProxy(iframe);
 
-    iframe.addEventListener("load", () => {
+    iframe.addEventListener("load", function loadFn() {
         void (async () => {
+            // TODO: Inner IFrame exposes its API on its contentWindow currently while outer IFrame
+            // exposes it through a MessageChannel.  MessageChannel supports two-way communication
+            // but Comlink does not, so use two one-way paths until we have a two-way wrapper that
+            // doesn't use naked postMessage
+
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const innerApi = Comlink.wrap<IFrameInnerApi>(Comlink.windowEndpoint(iframe.contentWindow!));
+            await innerApi.setMessagePort(Comlink.transfer(innerPort, [innerPort]));
+
             // load the code inside the iframe but attach it here outside
-            const containerProxy: IContainerProxy =
-                await (iframe.contentWindow as any).loadContainer(documentId, createNew);
+            const containerId = await innerApi.loadContainer(documentId, createNew);
             if (createNew) {
-                await containerProxy.attach({ url: documentId });
+                await innerApi.attachContainer(containerId, { url: documentId });
             }
-            // await (iframe.contentWindow as any).loadFluidObject(containerProxy);
 
             const container = await host.loadContainer({ url: documentId });
             await loadOuterLogDiv(container, logDivId);
 
             await loadOuterDataStoreDiv(dataStoreDivId);
+
+            iframe.removeEventListener("load", loadFn);
         })();
     });
 }

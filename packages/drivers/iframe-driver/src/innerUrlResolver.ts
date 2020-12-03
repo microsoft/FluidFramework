@@ -11,10 +11,10 @@ import { IUrlResolverProxy, IUrlResolverProxyKey } from "./outerUrlResolver";
 import { MakeThinProxy } from "./proxyUtils";
 
 export class InnerUrlResolver implements IUrlResolver {
-    public static async create(): Promise<InnerUrlResolver> {
+    public static async create(outerPort: MessagePort): Promise<InnerUrlResolver> {
         // The outer host is responsible for setting up the iframe, so the proxy connection
         // is expected to exist when running any inner iframe code.
-        const combinedProxy = Comlink.wrap(Comlink.windowEndpoint(window.parent));
+        const combinedProxy = Comlink.wrap(outerPort);
         const outerProxy = combinedProxy[IUrlResolverProxyKey] as Comlink.Remote<IUrlResolverProxy>;
         assert(outerProxy !== undefined, "OuterUrlResolverProxy unavailable");
         await outerProxy.connected();
