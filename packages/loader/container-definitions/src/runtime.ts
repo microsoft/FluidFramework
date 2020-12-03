@@ -135,6 +135,7 @@ export interface IContainerContext extends IDisposable {
     readonly serviceConfiguration: IServiceConfiguration | undefined;
     readonly version: string;
     readonly previousRuntimeState: IRuntimeState;
+    readonly pendingOps?;
 
     /**
      * Ambient services provided with the context
@@ -180,5 +181,5 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
      * Instantiates a new IRuntime for the given IContainerContext to proxy to
      * This is the main entry point to the Container's business logic
      */
-    instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, pendingOps?): Promise<IRuntime>;
 }

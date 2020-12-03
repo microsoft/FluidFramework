@@ -69,6 +69,7 @@ type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
  */
 export class PendingStateManager {
     private readonly pendingStates = new Deque<IPendingState>();
+    private readonly initialStates: Deque<IPendingState>;
 
     // Maintains the count of messages that are currently unacked.
     private pendingMessagesCount: number = 0;
@@ -98,7 +99,10 @@ export class PendingStateManager {
         return this.pendingStates.toArray();
     }
 
-    constructor(private readonly containerRuntime: ContainerRuntime) { }
+    constructor(private readonly containerRuntime: ContainerRuntime, initialStates: IPendingState[] = []) {
+        this.initialStates = new Deque<IPendingState>(initialStates);
+        this.pendingMessagesCount = initialStates.length;
+    }
 
     /**
      * Called when a message is submitted locally. Adds the message and the associated details to the pending state
@@ -302,9 +306,23 @@ export class PendingStateManager {
         return nextPendingState;
     }
 
+    public replayInitialStates() {
+        const isLoaded = (state) => {
+            const address = state.content?.address;
+            const context = ((this.containerRuntime) as any).contexts.get(address);
+            return !address || (!!context && context.isLoaded && !!context.channel && context.channel.isLoaded());
+        };
+        while (this.initialStates.length > 0 && isLoaded(this.initialStates.peekFront())) {
+            this.replayState(this.initialStates.shift()!);
+        }
+        if (this.initialStates.length > 0) {
+            setTimeout(() => this.replayInitialStates(), 100);
+        }
+    }
+
     /**
      * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
-     * states in its queue. This includes setting the FlushMode and trigerring resubmission of unacked ops.
+     * states in its queue. This includes setting the FlushMode and triggering resubmission of unacked ops.
      */
     public replayPendingStates() {
         assert(this.connected, "The connection state is not consistent with the runtime");
@@ -330,33 +348,37 @@ export class PendingStateManager {
         while (pendingStatesCount > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pendingState = this.pendingStates.shift()!;
-            switch (pendingState.type) {
-                case "message":
-                    {
-                        this.containerRuntime.reSubmitFn(
-                            pendingState.messageType,
-                            pendingState.content,
-                            pendingState.localOpMetadata,
-                            pendingState.opMetadata);
-                    }
-                    break;
-                case "flushMode":
-                    {
-                        this.containerRuntime.setFlushMode(pendingState.flushMode);
-                    }
-                    break;
-                case "flush":
-                    {
-                        this.containerRuntime.flush();
-                    }
-                    break;
-                default:
-                    break;
-            }
+            this.replayState(pendingState);
             pendingStatesCount--;
         }
 
         // Revert the FlushMode.
         this.containerRuntime.setFlushMode(savedFlushMode);
+    }
+
+    private replayState(pendingState: IPendingState) {
+        switch (pendingState.type) {
+            case "message":
+                {
+                    this.containerRuntime.reSubmitFn(
+                        pendingState.messageType,
+                        pendingState.content,
+                        pendingState.localOpMetadata,
+                        pendingState.opMetadata);
+                }
+                break;
+            case "flushMode":
+                {
+                    this.containerRuntime.setFlushMode(pendingState.flushMode);
+                }
+                break;
+            case "flush":
+                {
+                    this.containerRuntime.flush();
+                }
+                break;
+            default:
+                break;
+        }
     }
 }

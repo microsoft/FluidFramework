@@ -299,6 +299,13 @@ export class Loader extends EventEmitter implements ILoader {
         });
     }
 
+    public async resolveWithPendingOps(request: IRequest, pendingOps): Promise<Container> {
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Resolve" }, async () => {
+            const resolved = await this.resolveCore(request, pendingOps);
+            return resolved.container;
+        });
+    }
+
     public async request(request: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
             const resolved = await this.resolveCore(request);
@@ -353,6 +360,7 @@ export class Loader extends EventEmitter implements ILoader {
 
     private async resolveCore(
         request: IRequest,
+        pendingOps?,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
@@ -379,7 +387,8 @@ export class Loader extends EventEmitter implements ILoader {
                     this.loadContainer(
                         parsed.id,
                         request,
-                        resolvedAsFluid);
+                        resolvedAsFluid,
+                        pendingOps);
                 this.containers.set(key, containerP);
                 container = await containerP;
             }
@@ -388,7 +397,8 @@ export class Loader extends EventEmitter implements ILoader {
                 await this.loadContainer(
                     parsed.id,
                     request,
-                    resolvedAsFluid);
+                    resolvedAsFluid,
+                    pendingOps);
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
@@ -447,11 +457,13 @@ export class Loader extends EventEmitter implements ILoader {
         id: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
+        pendingOps?,
     ): Promise<Container> {
         return Container.load(
             id,
             this,
             request,
-            resolved);
+            resolved,
+            pendingOps);
     }
 }

@@ -35,6 +35,8 @@ export class TestContainerRuntimeFactory implements IRuntimeFactory {
             ],
             async (req, rt) => builder.handleRequest(req, rt),
             this.runtimeOptions,
+            // undefined,
+            // pendingOps,
         );
 
         if (!runtime.existing) {

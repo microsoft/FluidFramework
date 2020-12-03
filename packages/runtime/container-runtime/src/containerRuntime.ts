@@ -793,7 +793,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.deltaSender = this.deltaManager;
 
-        this.pendingStateManager = new PendingStateManager(this);
+        this.pendingStateManager = new PendingStateManager(this, context.pendingOps);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);
@@ -859,6 +859,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // but it's an extra requirement for Container.forceReadonly() API
             assert(!readonly || !this.connected, "Unsafe to transition to read-only state!");
 
+            this.pendingStateManager.replayInitialStates();
             this.replayPendingStates();
         });
 
@@ -1088,7 +1089,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._connected = connected;
 
         if (changeOfState) {
-           this.replayPendingStates();
+            this.pendingStateManager.replayInitialStates();
+            this.replayPendingStates();
         }
 
         for (const [fluidDataStore, context] of this.contexts) {

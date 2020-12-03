@@ -189,6 +189,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         loader: Loader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
+        pendingOps?,
     ): Promise<Container> {
         const [, docId] = id.split("/");
         const container = new Container(
@@ -215,7 +216,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 };
                 container.on("closed", onClosed);
 
-                container.load(version, pause === true)
+                container.load(version, pause === true, pendingOps)
                     .finally(() => {
                         container.removeListener("closed", onClosed);
                     })
@@ -433,6 +434,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     constructor(
         private readonly loader: Loader,
         config: IContainerConfig,
+        pendingOps?,
     ) {
         super();
         this._audience = new Audience();
@@ -981,7 +983,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      *   - otherwise, version sha to load snapshot
      * @param pause - start the container in a paused state
      */
-    private async load(specifiedVersion: string | null | undefined, pause: boolean) {
+    private async load(specifiedVersion: string | null | undefined, pause: boolean, pendingOps?) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
         }
@@ -1046,7 +1048,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         [this._protocolHandler] = await Promise.all([protocolHandlerP, loadDetailsP]);
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.loadContext(codeDetails, attributes, maybeSnapshotTree);
+        await this.loadContext(codeDetails, attributes, maybeSnapshotTree, undefined, pendingOps);
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -1620,6 +1622,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         attributes: IDocumentAttributes,
         snapshot?: ISnapshotTree,
         previousRuntimeState: IRuntimeState = {},
+        pendingOps?,
     ) {
         assert(this._context?.disposed !== false, "Existing context not disposed");
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
@@ -1643,6 +1646,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             previousRuntimeState,
+            pendingOps,
         );
 
         loader.resolveContainer(this);

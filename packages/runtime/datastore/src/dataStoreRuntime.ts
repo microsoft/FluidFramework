@@ -264,6 +264,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
     }
 
+    public isLoaded() {
+        return Array.from(this.contexts.values()).every((context) => (context as any).isLoaded);
+    }
+
     public dispose(): void {
         if (this._disposed) {
             return;
