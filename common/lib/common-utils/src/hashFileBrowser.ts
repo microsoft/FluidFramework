@@ -5,20 +5,31 @@
 
 import { IsoBuffer } from "./bufferBrowser";
 
+let insecureContextHashFn: ((f: IsoBuffer) => Promise<string>) | undefined;
+
+/**
+ * Set a hashing function to be called in place of hashFile's internal
+ * implementation when running under insecure contexts.  Not needed
+ * when running under Node.
+ * @param hashFn - The function that should be used in place of hashFile
+ */
+export function setInsecureContextHashFn(hashFn: (f: IsoBuffer) => Promise<string>) {
+    insecureContextHashFn = hashFn;
+}
+
 /**
  * Hash a file. Consistent within a session, but should not be persisted and
  * is not consistent with git.
- * Must be called under secure context for browsers
+ * If called under an insecure context for a browser, an override function
+ * needs to be set using setInsecureContextHashFn
  *
  * @param file - The contents of the file in a buffer
  * @returns The hash of the content of the buffer
  */
 export async function hashFile(file: IsoBuffer): Promise<string> {
-    // Handle insecure contexts (e.g. running with local services)
-    // by deferring to Node version, which uses a hash polyfill
-    const subtle = crypto.subtle;
-    if (subtle === undefined) {
-        return import("./hashFileNode").then(async (m) => m.hashFile(file));
+    // Use the function override if provided
+    if (insecureContextHashFn !== undefined) {
+        return insecureContextHashFn(file);
     }
 
     const hash = await crypto.subtle.digest("SHA-1", file);
