@@ -14,6 +14,13 @@ import { IsoBuffer } from "./bufferBrowser";
  * @returns The hash of the content of the buffer
  */
 export async function hashFile(file: IsoBuffer): Promise<string> {
+    // Handle insecure contexts (e.g. running with local services)
+    // by deferring to Node version, which uses a hash polyfill
+    const subtle = crypto.subtle;
+    if (subtle === undefined) {
+        return import("./hashFileNode").then(async (m) => m.hashFile(file));
+    }
+
     const hash = await crypto.subtle.digest("SHA-1", file);
     const hashArray = new Uint8Array(hash);
     const hashHex = Array.prototype.map.call(hashArray, function(byte) {
