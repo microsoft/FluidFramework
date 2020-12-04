@@ -579,7 +579,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // will retry, fallback to get call. In case of error for which getWithRetryForTokenRefresh will retry, let it retry
         // only if it is first failure, otherwise fallback to get call.
         try {
-            const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost, abortController);
+            const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost, this.hostPolicy.summarizerClient ? undefined : abortController);
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
