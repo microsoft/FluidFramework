@@ -209,42 +209,6 @@ export interface IFluidDataStoreChannel extends
      */
     reSubmit(type: string, content: any, localOpMetadata: unknown);
 }
-
-/**
- * @deprecated 0.21 summarizerNode - use ISummarizerNode instead
- */
-export interface ISummaryTracker {
-    /**
-     * The reference sequence number of the most recent acked summary.
-     */
-    readonly referenceSequenceNumber: number;
-    /**
-     * The latest sequence number of change to this node or subtree.
-     */
-    readonly latestSequenceNumber: number;
-    /**
-     * Gets the id to use when summarizing, or undefined if it has changed.
-     */
-    getId(): Promise<string | undefined>;
-    /**
-     * Updates the latest sequence number representing change to this node or subtree.
-     * @param latestSequenceNumber - new latest sequence number
-     */
-    updateLatestSequenceNumber(latestSequenceNumber: number): void;
-    /**
-     * Creates a child ISummaryTracker node based off information from its parent.
-     * @param key - key of node for newly created child ISummaryTracker
-     * @param latestSequenceNumber - initial value for latest sequence number of change
-     */
-    createOrGetChild(key: string, latestSequenceNumber: number): ISummaryTracker;
-    /**
-     * Retrives a child ISummaryTracker node based off the key.
-     * @param key - key of the child ISummaryTracker node.
-     * @returns - The child ISummaryTracker node.
-     */
-    getChild(key: string): ISummaryTracker | undefined;
-}
-
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
@@ -307,7 +271,6 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
      * Ambient services provided with the context
      */
     readonly scope: IFluidObject;
-    readonly summaryTracker: ISummaryTracker;
 
     /**
      * Returns the current quorum.

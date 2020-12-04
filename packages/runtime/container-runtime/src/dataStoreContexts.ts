@@ -68,13 +68,15 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     }
 
     /**
-     * Prepare and return the unbound context with the given id so it can be bound.
+     * Return the unbound local context with the given id,
+     * or undefined if it's not found or not unbound.
      */
-    public prepContextForBind(id: string): LocalFluidDataStoreContext {
-        assert(this.notBoundContexts.has(id), "Store being bound should be in not bounded set");
-        assert(this._contexts.has(id), "Attempting to bind to a context that hasn't been added yet");
+    public getUnbound(id: string): LocalFluidDataStoreContext | undefined {
+        const context = this._contexts.get(id);
+        if (context === undefined || !this.notBoundContexts.has(id)) {
+            return undefined;
+        }
 
-        this.notBoundContexts.delete(id);
         return this._contexts.get(id) as LocalFluidDataStoreContext;
     }
 
@@ -88,15 +90,26 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
         this._contexts.set(id, context);
 
         this.notBoundContexts.add(id);
-        this.prepDeferredContext(id);
+        this.ensureDeferred(id);
     }
 
     /**
-     * This returns a Deferred that will resolve when a context with the given id is bound,
-     * or added as remote from another client.
-     * @param id The id of the context to defer binding on
+     * Get the context with the given id, once it exists locally and is attached.
+     * e.g. If created locally, it must be bound, or if created remotely then it's fine as soon as it's sync'd in.
+     * @param id The id of the context to get
+     * @param wait If false, return undefined if the context isn't present and ready now. Otherwise, wait for it.
      */
-    public prepDeferredContext(id: string): Deferred<FluidDataStoreContext> {
+    public async getBoundOrRemoted(id: string, wait: boolean): Promise<FluidDataStoreContext | undefined> {
+        const deferredContext = this.ensureDeferred(id);
+
+        if (!wait && !deferredContext.isCompleted) {
+            return undefined;
+        }
+
+        return deferredContext.promise;
+    }
+
+    private ensureDeferred(id: string): Deferred<FluidDataStoreContext> {
         const deferred = this.deferredContexts.get(id);
         if (deferred) { return deferred; }
 
@@ -106,33 +119,42 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     }
 
     /**
-     * Triggers the deferred to resolve, indicating the context has been bound
-     * @param id - The id of the context to resolve to
+     * Update this context as bound
      */
-    public resolveDeferredBind(id: string) {
-        const context = this._contexts.get(id);
-        assert(!!context, "Cannot find context we've bound");
-        assert(!this.notBoundContexts.has(id), "Expected this id to already be removed from notBoundContexts");
+    public bind(id: string) {
+        const removed: boolean = this.notBoundContexts.delete(id);
+        assert(removed, "The given id was not found in notBoundContexts to delete");
 
-        const deferredBind = this.deferredContexts.get(id);
-        assert(!!deferredBind, "Cannot find deferredBind to resolve");
-        deferredBind.resolve(context);
+        this.resolveDeferred(id);
     }
 
     /**
-     * Add the given context, marking it as already bound.
+     * Triggers the deferred to resolve, indicating the context is not local-only
+     * @param id - The id of the context to resolve to
+     */
+    private resolveDeferred(id: string) {
+        const context = this._contexts.get(id);
+        assert(!!context, "Cannot find context to resolve to");
+        assert(!this.notBoundContexts.has(id), "Expected this id to already be removed from notBoundContexts");
+
+        const deferred = this.deferredContexts.get(id);
+        assert(!!deferred, "Cannot find deferred to resolve");
+        deferred.resolve(context);
+    }
+
+    /**
+     * Add the given context, marking it as not local-only.
      * This could be because it's a local context that's been bound, or because it's a remote context.
-     * @param id - id of context to add. Redundant with context.id
      * @param context - The context to add
      */
-    public addBoundOrRemote(id: string, context: FluidDataStoreContext) {
-        assert(id === context.id, "id mismatch for context being added");
+    public addBoundOrRemoted(context: FluidDataStoreContext) {
+        const id = context.id;
         assert(!this._contexts.has(id), "Creating store with existing ID");
 
         this._contexts.set(id, context);
 
         // Resolve the deferred immediately since this context is not unbound
-        const deferred = this.prepDeferredContext(id);
-        deferred.resolve(context);
+        this.ensureDeferred(id);
+        this.resolveDeferred(id);
     }
 }

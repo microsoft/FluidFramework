@@ -59,7 +59,7 @@
     "jsrsasign": "^10.0.2",
     "jwt-decode": "^3.0.0",
     "sillyname": "0.1.0",
-    "uuid": "^3.3.2"
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
