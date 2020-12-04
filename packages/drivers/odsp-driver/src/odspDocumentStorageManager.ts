@@ -587,7 +587,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 throw error;
             }
             // If the snapshot size is too big and the host specified the size limitation, then don't try to fetch the snapshot again.
-            if (error.errorType === OdspErrorType.snapshotTooBig && this.hostPolicy.snapshotOptions?.mds !== undefined) {
+            if ((error.errorType === OdspErrorType.snapshotTooBig && this.hostPolicy.snapshotOptions?.mds !== undefined) && (this.hostPolicy.summarizerClient !== true)) {
                 throw error;
             }
             // If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
