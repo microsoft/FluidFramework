@@ -4,24 +4,40 @@
  */
 
 import { ITelemetryLogger, ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+    ISequencedDocumentMessage,
+    ISnapshotTree,
+    ITreeEntry,
+    SummaryType,
+} from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     CreateSummarizerNodeSource,
     IAttachMessage,
+    IChannelSummarizeResult,
     IEnvelope,
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
+    IGraphNode,
     IInboundSignalMessage,
     InboundAttachMessage,
+    ISummarizeResult,
+    ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker } from "@fluidframework/runtime-utils";
+import {
+     convertSnapshotTreeToSummaryTree,
+     convertSummaryTreeToITree,
+     convertToSummaryTree,
+     SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree, readAndParseFromBlobs } from "@fluidframework/driver-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
-import uuid from "uuid";
+import { v4 as uuid } from "uuid";
+import { TreeTreeEntry } from "@fluidframework/protocol-base";
+import { normalizeAndPrefixGCNodeIds } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime, nonDataStorePaths } from "./containerRuntime";
 import {
@@ -49,14 +65,13 @@ export class DataStores implements IDisposable {
     private readonly disposeOnce = new Lazy<void>(()=>this.contexts.dispose());
 
     constructor(
-        baseSnapshot: ISnapshotTree | undefined,
+        private readonly baseSnapshot: ISnapshotTree | undefined,
         private readonly runtime: ContainerRuntime,
         private readonly submitAttachFn: (attachContent: any) => void,
-        private readonly summaryTracker: SummaryTracker,
         private readonly getCreateChildSummarizerNodeFn:
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         baseLogger: ITelemetryBaseLogger,
-        public readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
+        private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
         // Extract stores stored inside the snapshot
@@ -82,7 +97,6 @@ export class DataStores implements IDisposable {
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
-                    this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
                     this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
             } else {
                 let pkgFromSnapshot: string[];
@@ -116,13 +130,12 @@ export class DataStores implements IDisposable {
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
-                    this.summaryTracker.createOrGetChild(key, this.runtime.deltaManager.lastSequenceNumber),
                     this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
                     (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
                     snapshotTree,
                     isRootDataStore ?? true);
             }
-            this.contexts.addBoundOrRemote(key, dataStoreContext);
+            this.contexts.addBoundOrRemoted(dataStoreContext);
         }
     }
 
@@ -166,7 +179,6 @@ export class DataStores implements IDisposable {
             this.runtime,
             new BlobCacheStorageService(this.runtime.storage, flatBlobsP),
             this.runtime.scope,
-            this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
             this.getCreateChildSummarizerNodeFn(
                 attachMessage.id,
                 {
@@ -180,7 +192,7 @@ export class DataStores implements IDisposable {
             pkg);
 
         // Resolve pending gets and store off any new ones
-       this.contexts.addBoundOrRemote(attachMessage.id, remotedFluidDataStoreContext);
+       this.contexts.addBoundOrRemoted(remotedFluidDataStoreContext);
 
         // Equivalent of nextTick() - Prefetch once all current ops have completed
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -189,7 +201,9 @@ export class DataStores implements IDisposable {
 
     public  bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
         const id = fluidDataStoreRuntime.id;
-        const localContext = this.contexts.prepContextForBind(id);
+        const localContext = this.contexts.getUnbound(id);
+        assert(!!localContext, "Could not find unbound context to bind");
+
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients.
@@ -202,8 +216,7 @@ export class DataStores implements IDisposable {
             this.attachOpFiredForDataStore.add(id);
         }
 
-        // Resolve the deferred so other local stores can access it now that the context is bound
-        this.contexts.resolveDeferredBind(fluidDataStoreRuntime.id);
+        this.contexts.bind(fluidDataStoreRuntime.id);
     }
 
     public createDetachedDataStoreCore(
@@ -217,7 +230,6 @@ export class DataStores implements IDisposable {
             this.runtime,
             this.runtime.storage,
             this.runtime.scope,
-            this.summaryTracker.createOrGetChild(id, this.runtime.deltaManager.lastSequenceNumber),
             this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
@@ -234,7 +246,6 @@ export class DataStores implements IDisposable {
             this.runtime,
             this.runtime.storage,
             this.runtime.scope,
-            this.summaryTracker.createOrGetChild(id, this.runtime.deltaManager.lastSequenceNumber),
             this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
@@ -270,13 +281,12 @@ export class DataStores implements IDisposable {
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<IFluidDataStoreChannel> {
-        const deferredContext = this.contexts.prepDeferredContext(id);
+        const context = await this.contexts.getBoundOrRemoted(id, wait);
 
-        if (!wait && !deferredContext.isCompleted) {
-            throw new Error(`DataStore ${id} does not exist`);
+        if (context === undefined) {
+            throw new Error(`DataStore ${id} does not yet exist or is not yet bound`);
         }
 
-        const context = await deferredContext.promise;
         return context.realize();
     }
 
@@ -322,5 +332,131 @@ export class DataStores implements IDisposable {
                 context.emit(eventName);
             }
         }
+    }
+
+    /**
+     * Notifies this object to take the snapshot of the container.
+     * @deprecated - Use summarize to get summary of the container runtime.
+     */
+    public async snapshot(): Promise<ITreeEntry[]> {
+        // Iterate over each store and ask it to snapshot
+        const fluidDataStoreSnapshotsP = Array.from(this.contexts).map(async ([fluidDataStoreId, value]) => {
+            const summaryTree = await value.summarize(true /* fullTree */, false /* trackState */);
+            assert(
+                summaryTree.summary.type === SummaryType.Tree,
+                "summarize should always return a tree when fullTree is true");
+            // back-compat summary - Remove this once snapshot is removed.
+            const snapshot = convertSummaryTreeToITree(summaryTree.summary);
+
+            // If ID exists then previous commit is still valid
+            return {
+                fluidDataStoreId,
+                snapshot,
+            };
+        });
+
+        const entries: ITreeEntry[] = [];
+
+        // Add in module references to the store snapshots
+        const fluidDataStoreSnapshots = await Promise.all(fluidDataStoreSnapshotsP);
+
+        // Sort for better diffing of snapshots (in replay tool, used to find bugs in snapshotting logic)
+        fluidDataStoreSnapshots.sort((a, b) => a?.fluidDataStoreId.localeCompare(b.fluidDataStoreId));
+
+        for (const fluidDataStoreSnapshot of fluidDataStoreSnapshots) {
+            entries.push(new TreeTreeEntry(
+                fluidDataStoreSnapshot.fluidDataStoreId,
+                fluidDataStoreSnapshot.snapshot,
+            ));
+        }
+        return entries;
+    }
+
+    public async summarize(fullTree: boolean, trackState: boolean): Promise<IChannelSummarizeResult> {
+        const builder = new SummaryTreeBuilder();
+        // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
+        // channel contexts.
+        let gcNodes: IGraphNode[] = [ await this.getGCNode() ];
+
+        // Iterate over each store and ask it to snapshot
+        await Promise.all(Array.from(this.contexts)
+            .filter(([_, context]) => {
+                // Summarizer works only with clients with no local changes!
+                assert(context.attachState !== AttachState.Attaching);
+                return context.attachState === AttachState.Attached;
+            }).map(async ([contextId, context]) => {
+                const contextSummary = await context.summarize(fullTree, trackState);
+                builder.addWithStats(contextId, contextSummary);
+
+                // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
+                if (contextSummary.gcNodes === undefined) {
+                    contextSummary.gcNodes = [];
+                }
+
+                // Normalize the context's GC nodes and prefix its id to the ids of GC nodes returned by it.
+                normalizeAndPrefixGCNodeIds(contextSummary.gcNodes, contextId);
+                gcNodes = gcNodes.concat(contextSummary.gcNodes);
+            }));
+
+        return {
+            ...builder.getSummaryTree(),
+            gcNodes,
+        };
+    }
+
+    public createSummary(): ISummaryTreeWithStats {
+        const builder = new SummaryTreeBuilder();
+        // Attaching graph of some stores can cause other stores to get bound too.
+        // So keep taking summary until no new stores get bound.
+        let notBoundContextsLength: number;
+        do {
+            const builderTree = builder.summary.tree;
+            notBoundContextsLength = this.contexts.notBoundLength();
+            // Iterate over each data store and ask it to snapshot
+            Array.from(this.contexts)
+                .filter(([key, _]) =>
+                    // Take summary of bounded data stores only, make sure we haven't summarized them already
+                    // and no attach op has been fired for that data store because for loader versions <= 0.24
+                    // we set attach state as "attaching" before taking createNew summary.
+                    !(this.contexts.isNotBound(key)
+                        || builderTree[key]
+                        || this.attachOpFiredForDataStore.has(key)),
+                )
+                .map(([key, value]) => {
+                    let dataStoreSummary: ISummarizeResult;
+                    if (value.isLoaded) {
+                        const snapshot = value.generateAttachMessage().snapshot;
+                        dataStoreSummary = convertToSummaryTree(snapshot, true);
+                    } else {
+                        // If this data store is not yet loaded, then there should be no changes in the snapshot from
+                        // which it was created as it is detached container. So just use the previous snapshot.
+                        assert(!!this.baseSnapshot,
+                            "BaseSnapshot should be there as detached container loaded from snapshot");
+                        dataStoreSummary = convertSnapshotTreeToSummaryTree(this.baseSnapshot.trees[key]);
+                    }
+                    builder.addWithStats(key, dataStoreSummary);
+                });
+        } while (notBoundContextsLength !== this.contexts.notBoundLength());
+
+        return builder.getSummaryTree();
+    }
+
+    /**
+     * Get the outbound routes of this channel. Only root data stores are considered referenced.
+     * @returns this channel's garbage collection node.
+     */
+    private async getGCNode(): Promise<IGraphNode> {
+        const outboundRoutes: string[] = [];
+        for (const [contextId, context] of this.contexts) {
+            const isRootDataStore = await context.isRoot();
+            if (isRootDataStore) {
+                outboundRoutes.push(`/${contextId}`);
+            }
+        }
+
+        return {
+            id: "/",
+            outboundRoutes,
+        };
     }
 }

@@ -39,6 +39,7 @@
     "postinstall:lerna:win32": "npm run pre-lerna-install:win32 && (lerna bootstrap --strict --hoist & npm run post-lerna-install:win32)",
     "pre-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json package-lock.json.bak; [ -f lerna-package-lock.json ] && mv lerna-package-lock.json package-lock.json; exit 0",
     "pre-lerna-install:win32": "if exist package-lock.json move package-lock.json package-lock.json.bak && if exist lerna-package-lock.json move lerna-package-lock.json package-lock.json",
+    "readme:update": "md-magic --path \"{common,examples,packages}/*{/*/,/}*/README.md\" --ignore \"node_modules/**\" --config ./md-magic.config.js",
     "restart": "cd server/routerlicious && npm run restart",
     "start:docker": "docker-compose -f server/docker-compose.yml up",
     "start:tinylicious": "forever start node_modules/tinylicious/dist/index.js",
@@ -101,7 +102,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.9319",
+    "@fluidframework/build-tools": "^0.2.10790",
     "@fluidframework/test-tools": "^0.2.3074",
     "@mattetti/custom-api-documenter": "^0.3.3",
     "@microsoft/api-extractor": "^7.7.2",
@@ -109,11 +110,12 @@
     "copyfiles": "^2.1.0",
     "forever": "^3.0.4",
     "lerna": "^3.14.1",
+    "markdown-magic": "^1.0.0",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.0.7",
     "start-server-and-test": "^1.11.6",
-    "tinylicious": "^0.2.3810",
+    "tinylicious": "^0.3.10860",
     "typescript": "~3.7.4"
   },
   "fluidBuild": {

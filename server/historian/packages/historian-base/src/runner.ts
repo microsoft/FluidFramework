@@ -9,6 +9,7 @@ import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { ICache, ITenantService } from "./services";
+import { configureLogging } from "./logger";
 import * as app from "./app";
 
 export class HistorianRunner implements utils.IRunner {
@@ -26,7 +27,7 @@ export class HistorianRunner implements utils.IRunner {
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
-
+        configureLogging(this.config.get("logger"));
         // Create the historian app
         const historian = app.create(this.config, this.riddler, this.cache);
         historian.set("port", this.port);
