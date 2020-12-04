@@ -18,7 +18,7 @@ export class TestThrottleStorageManager implements IThrottleStorageManager {
         this.cache[id] = throttleMetric;
     }
 
-    async getThrottlingMetric(id: string): Promise<IThrottlingMetrics> {
+    async getThrottlingMetric(id: string): Promise<IThrottlingMetrics | undefined> {
         return this.cache[id];
     }
 }

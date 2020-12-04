@@ -8,7 +8,7 @@ import { IThrottlingMetrics } from "@fluidframework/server-services-core";
 import { TestThrottleStorageManager } from "../testThrottleStorageManager";
 
 describe("Test for Test Utils", () => {
-    describe("ThrottleManager", () => {
+    describe("ThrottleStorageManager", () => {
         it("Creates and retrieves throttlingMetric", async () => {
             const throttleManager = new TestThrottleStorageManager();
 

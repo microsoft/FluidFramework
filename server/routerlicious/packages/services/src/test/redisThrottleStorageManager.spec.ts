@@ -10,7 +10,7 @@ import { IThrottlingMetrics } from "@fluidframework/server-services-core";
 import { RedisThrottleStorageManager } from "../redisThrottleStorageManager";
 import Sinon from "sinon";
 
-describe("RedisThrottleManager", () => {
+describe("RedisThrottleStorageManager", () => {
     let mockRedisClient: RedisClient;
     beforeEach(() => {
         // use fake timers to have full control over the passage of time

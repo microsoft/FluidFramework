@@ -38,7 +38,7 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
         await this.expire(key, this.expireAfterSeconds);
     }
 
-    public async getThrottlingMetric(id: string): Promise<IThrottlingMetrics> {
+    public async getThrottlingMetric(id: string): Promise<IThrottlingMetrics | undefined> {
         const throttlingMetric = await this.getAsync(this.getKey(id));
 
         if (!throttlingMetric) {

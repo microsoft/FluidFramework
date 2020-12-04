@@ -76,8 +76,11 @@ export class ThrottlerHelper implements IThrottlerHelper {
         return this.getThrottlerResponseFromThrottlingMetrics(throttlingMetric);
     }
 
-    public async getThrottleStatus(id: string): Promise<IThrottlerResponse> {
+    public async getThrottleStatus(id: string): Promise<IThrottlerResponse | undefined> {
         const throttlingMetric = await this.throttleStorageManager.getThrottlingMetric(id);
+        if (!throttlingMetric) {
+            return undefined;
+        }
         return this.getThrottlerResponseFromThrottlingMetrics(throttlingMetric);
     }
 

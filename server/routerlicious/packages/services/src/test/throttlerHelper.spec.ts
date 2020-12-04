@@ -26,14 +26,14 @@ describe("ThrottlerHelper", () => {
         let weight: number = 1;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttler = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
 
         const id = "test-id";
         for (let i = 0; i < operationsPerCooldown; i++) {
-            response = await throttler.updateCount(id, weight);
+            response = await throttlerHelper.updateCount(id, weight);
             assert.strictEqual(response.throttleStatus, false, `operation ${i + 1} should not be throttled`);
         }
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation ${operationsPerCooldown + 1} should be throttled`);
     });
 
@@ -44,14 +44,14 @@ describe("ThrottlerHelper", () => {
         let weight: number = 2;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttler = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
 
         const id = "test-id";
         for (let i = 0; i < operationsPerCooldown / weight; i++) {
-            response = await throttler.updateCount(id, weight)
+            response = await throttlerHelper.updateCount(id, weight)
             assert.strictEqual(response.throttleStatus, false, `operation ${i + 1} should not be throttled`);
         }
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation ${operationsPerCooldown / weight + 1} should be throttled`);
     });
 
@@ -62,11 +62,11 @@ describe("ThrottlerHelper", () => {
         let weight: number = operationsPerCooldown + 1;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttler = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
 
         const id = "test-id";
 
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation with ${weight - operationsPerCooldown} excess weight should be throttled`);
     });
 
@@ -77,18 +77,18 @@ describe("ThrottlerHelper", () => {
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttler = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
 
         const id = "test-id";
 
         weight = operationsPerCooldown * 2 - 1;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation with ${weight - operationsPerCooldown} excess weight should be throttled`);
 
         Sinon.clock.tick(cooldownInterval + 1);
 
         weight = 1
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, false, `operation after ${cooldownInterval + 1}ms should not be throttled`);
     });
 
@@ -99,24 +99,24 @@ describe("ThrottlerHelper", () => {
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttler = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
 
         const id = "test-id";
 
         weight = operationsPerCooldown * 3 - 1;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation with ${weight - operationsPerCooldown} excess weight should be throttled`);
 
         Sinon.clock.tick(cooldownInterval + 1);
 
         weight = 1
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation after ${cooldownInterval - 1}ms should still be throttled`);
 
         Sinon.clock.tick(cooldownInterval);
 
         weight = 1
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, false, `operation after ${cooldownInterval * 2 + 1}ms should not be throttled`);
     });
 
@@ -126,7 +126,7 @@ describe("ThrottlerHelper", () => {
         let weight: number = 1;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttler = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
 
         const id = "test-id";
 
@@ -139,13 +139,13 @@ describe("ThrottlerHelper", () => {
             throttleReason: "Exceeded count by 1",
         });
 
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, "operation after 0ms should be throttled");
 
 
         Sinon.clock.tick(cooldownInterval + 1);
 
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, false, `operation after ${cooldownInterval + 1}ms should not be throttled`);
     });
 
@@ -157,14 +157,14 @@ describe("ThrottlerHelper", () => {
         let weight: number = operationsPerCooldown + 1;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttler = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
 
         const id = "test-id";
 
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation with ${weight - operationsPerCooldown} excess weight should be throttled`);
 
-        const cachedResponse = await throttler.getThrottleStatus(id);
+        const cachedResponse = await throttlerHelper.getThrottleStatus(id);
         assert.deepStrictEqual(cachedResponse, response);
     });
     it("does not increase throttle duration while throttled", async () => {
@@ -174,23 +174,23 @@ describe("ThrottlerHelper", () => {
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
         const operationsPerCooldown = cooldownInterval / rate;
-        const throttler = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
 
         const id = "test-id";
 
         weight = operationsPerCooldown + 1;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation with ${weight - operationsPerCooldown} excess weight should be throttled`);
 
         // make sure potentially added throttle duration exceeds 1 cooldown interval
         weight = operationsPerCooldown * 2;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, "operation after 0ms should be throttled");
 
         Sinon.clock.tick(cooldownInterval + 1);
 
         weight = 1;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, false, `operation after ${cooldownInterval + 1}ms should not be throttled`);
     });
 
@@ -201,12 +201,12 @@ describe("ThrottlerHelper", () => {
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttler = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
 
         const id = "test-id";
 
         weight = operationsPerCooldown + 1;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation with ${weight - operationsPerCooldown} excess weight should be throttled`);
 
         const retryAfter = response.retryAfterInMs;
@@ -215,7 +215,7 @@ describe("ThrottlerHelper", () => {
 
         // should no longer be throttled
         weight = 0;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, false, `operation after ${retryAfter}ms should not be throttled`);
     });
 
@@ -226,12 +226,12 @@ describe("ThrottlerHelper", () => {
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttler = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
 
         const id = "test-id";
 
         weight = operationsPerCooldown * 3 + 1;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation with ${weight - operationsPerCooldown} excess weight should be throttled`);
 
         const retryAfter = response.retryAfterInMs;
@@ -240,7 +240,7 @@ describe("ThrottlerHelper", () => {
 
         // should no longer be throttled
         weight = 0;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, false, `operation after ${retryAfter}ms should not be throttled`);
     });
 
@@ -251,12 +251,12 @@ describe("ThrottlerHelper", () => {
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttler = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
 
         const id = "test-id";
 
         weight = operationsPerCooldown * 3;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation with ${weight - operationsPerCooldown} excess weight should be throttled`);
 
         const retryAfter = response.retryAfterInMs;
@@ -265,7 +265,7 @@ describe("ThrottlerHelper", () => {
 
         // should no longer be throttled
         weight = 0;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, false, `operation after ${retryAfter}ms should not be throttled`);
     });
 
@@ -276,12 +276,12 @@ describe("ThrottlerHelper", () => {
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttler = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
 
         const id = "test-id";
 
         weight = operationsPerCooldown + 1;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation with ${weight - operationsPerCooldown} excess weight should be throttled`);
 
         const retryAfter = response.retryAfterInMs;
@@ -290,7 +290,7 @@ describe("ThrottlerHelper", () => {
 
         // should still be throttled
         weight = 0;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation after ${retryAfter}ms should still be throttled`);
     });
 
@@ -301,12 +301,12 @@ describe("ThrottlerHelper", () => {
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttler = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
 
         const id = "test-id";
 
         weight = operationsPerCooldown * 3 + 1;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation with ${weight - operationsPerCooldown} excess weight should be throttled`);
 
         const retryAfter = response.retryAfterInMs;
@@ -315,7 +315,7 @@ describe("ThrottlerHelper", () => {
 
         // should still be throttled
         weight = 0;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation after ${retryAfter}ms should still be throttled`);
     });
 
@@ -326,12 +326,12 @@ describe("ThrottlerHelper", () => {
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttler = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
 
         const id = "test-id";
 
         weight = operationsPerCooldown * 3;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation with ${weight - operationsPerCooldown} excess weight should be throttled`);
 
         const retryAfter = response.retryAfterInMs;
@@ -340,7 +340,18 @@ describe("ThrottlerHelper", () => {
 
         // should still be throttled
         weight = 0;
-        response = await throttler.updateCount(id, weight);
+        response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation after ${retryAfter}ms should still be throttled`);
+    });
+
+    it("returns undefined when trying to retrieve unknown throttleStatus", async () => {
+        const rate = 100;
+        const cooldownInterval = 1000;
+        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, rate, cooldownInterval);
+
+        const id = "test-id";
+
+        await assert.doesNotReject(throttlerHelper.getThrottleStatus(id));
     });
 });
