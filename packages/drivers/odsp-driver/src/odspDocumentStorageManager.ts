@@ -565,21 +565,25 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private async fetchSnapshot(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
         assert(snapshotOptions.timeout !== undefined, "Timeout should be provided for setting a limit");
-        const abortController = new AbortController();
-        const timeout = setTimeout(
-            () => {
-                clearTimeout(timeout);
-                abortController.abort();
-            },
-            snapshotOptions.timeout,
-        );
+        let abortController: AbortController | undefined;
+        if (this.hostPolicy.summarizerClient !== true) {
+            abortController = new AbortController();
+            const timeout = setTimeout(
+                () => {
+                    clearTimeout(timeout);
+                    abortController?.abort();
+                },
+                snapshotOptions.timeout,
+            );
+        }
+
         const usePost = this.hostPolicy.usePostForTreesLatest;
         // If usePost is false, then make get call for TreesLatest.
         // If usePost is true, make a post call. In case of failure other than the reason for which getWithRetryForTokenRefresh
         // will retry, fallback to get call. In case of error for which getWithRetryForTokenRefresh will retry, let it retry
         // only if it is first failure, otherwise fallback to get call.
         try {
-            const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost, this.hostPolicy.summarizerClient ? undefined : abortController);
+            const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost, abortController);
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
