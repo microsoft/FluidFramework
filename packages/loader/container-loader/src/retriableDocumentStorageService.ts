@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { canRetryOnError, DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
@@ -47,12 +46,11 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
         let result: T | undefined;
         let success = false;
         let retryAfter = 0;
-        let id: string | undefined;
         do {
             try {
                 result = await api();
-                if (id !== undefined) {
-                    this.deltaManager.cancelDelayInfo(id);
+                if (retryAfter > 0) {
+                    this.deltaManager.cancelDelayInfo();
                 }
                 success = true;
             } catch (err) {
@@ -66,10 +64,7 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
                 // If the error is throttling error, then wait for the specified time before retrying.
                 // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
                 retryAfter = getRetryDelayFromError(err) ?? Math.min(retryAfter * 2, 8000);
-                if (id === undefined) {
-                    id = uuid();
-                }
-                this.deltaManager.emitDelayInfo(id, retryAfter, CreateContainerError(err));
+                this.deltaManager.emitDelayInfo(retryAfter, CreateContainerError(err));
                 await this.delay(retryAfter);
             }
         } while (!success);

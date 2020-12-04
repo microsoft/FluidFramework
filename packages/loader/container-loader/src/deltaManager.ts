@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { ITelemetryLogger, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IConnectionDetails,
@@ -168,8 +167,6 @@ export class DeltaManager
     private clientSequenceNumberObserved = 0;
     private closed = false;
     private storageService: RetriableDocumentStorageService | undefined;
-    private readonly deltaStreamDelayId = uuid();
-    private readonly deltaStorageDelayId = uuid();
 
     // track clientId used last time when we sent any ops
     private lastSubmittedClientId: string | undefined;
@@ -180,8 +177,7 @@ export class DeltaManager
     private messageBuffer: IDocumentMessage[] = [];
 
     private connectFirstConnection = true;
-    private readonly idToDelayMap = new Map<string, number>();
-    private maxThrottlingDelay: number = 0;
+    private timeTillThrottling: number = 0;
 
     // True if current connection has checkpoint information
     // I.e. we know how far behind the client was at the time of establishing connection
@@ -609,7 +605,7 @@ export class DeltaManager
                     delay = retryDelayFromError ?? Math.min(delay * 2, MaxReconnectDelaySeconds);
 
                     if (retryDelayFromError !== undefined) {
-                        this.emitDelayInfo(this.deltaStreamDelayId, retryDelayFromError, error);
+                        this.emitDelayInfo(retryDelayFromError, error);
                     }
                     await waitForConnectedState(delay * 1000);
                 }
@@ -833,7 +829,7 @@ export class DeltaManager
                 retryAfter = getRetryDelayFromError(origError);
 
                 if (retryAfter !== undefined && retryAfter >= 0) {
-                    this.emitDelayInfo(this.deltaStorageDelayId, retryAfter, error);
+                    this.emitDelayInfo(retryAfter, error);
                 }
             }
 
@@ -944,19 +940,19 @@ export class DeltaManager
         }
     }
 
-    public cancelDelayInfo(id: string) {
-        this.idToDelayMap.delete(id);
-        this.maxThrottlingDelay = Math.max(...this.idToDelayMap.values());
+    public cancelDelayInfo() {
+        if (Date.now() >= this.timeTillThrottling) {
+            this.timeTillThrottling = 0;
+        }
     }
 
     public emitDelayInfo(
-        id: string,
         delaySeconds: number,
         error: ICriticalContainerError,
     ) {
-        this.idToDelayMap.set(id, delaySeconds);
-        if (delaySeconds > 0 && delaySeconds > this.maxThrottlingDelay) {
-            this.maxThrottlingDelay = delaySeconds;
+        const timeNow = Date.now();
+        if (delaySeconds > 0 && (timeNow + delaySeconds > this.timeTillThrottling)) {
+            this.timeTillThrottling = timeNow + delaySeconds;
             const throttlingError: IThrottlingWarning = {
                 errorType: ContainerErrorType.throttlingError,
                 message: `Service busy/throttled: ${error.message}`,
@@ -1053,7 +1049,7 @@ export class DeltaManager
         assert(!readonly || this.connectionMode === "read", "readonly perf with write connection");
         this.set_readonlyPermissions(readonly);
 
-        this.cancelDelayInfo(this.deltaStreamDelayId);
+        this.cancelDelayInfo();
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
@@ -1192,7 +1188,7 @@ export class DeltaManager
         if (this.reconnectMode === ReconnectMode.Enabled) {
             const delay = getRetryDelayFromError(error);
             if (delay !== undefined) {
-                this.emitDelayInfo(this.deltaStreamDelayId, delay, error);
+                this.emitDelayInfo(delay, error);
                 await waitForConnectedState(delay * 1000);
             }
 
@@ -1388,7 +1384,7 @@ export class DeltaManager
         this.fetching = true;
 
         await this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
-            this.cancelDelayInfo(this.deltaStorageDelayId);
+            this.cancelDelayInfo();
             this.catchUpCore(messages, telemetryEventSuffix);
         });
 
