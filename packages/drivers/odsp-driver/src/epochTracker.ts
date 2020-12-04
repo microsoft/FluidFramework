@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { fluidEpochMismatchError, OdspErrorType, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { OdspErrorType } from "@fluidframework/odsp-doclib-utils";
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, IFileEntry, LocalPersistentCacheAdapter } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
@@ -161,9 +161,11 @@ export class EpochTracker {
         // If epoch is undefined, then don't compare it because initially for createNew or TreesLatest
         // initializes this value. Sometimes response does not contain epoch as it is still in
         // implementation phase at server side. In that case also, don't compare it with our epoch value.
-        if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
-            throwOdspNetworkError("Epoch Mismatch", fluidEpochMismatchError);
-        }
+        // [Issue: https://github.com/microsoft/FluidFramework/issues/4513]
+        // Temporarily disabling the client epoch validation until server fixes the epoch returned.
+        // if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
+        //     throwOdspNetworkError("Epoch Mismatch", fluidEpochMismatchError);
+        // }
         if (epochFromResponse) {
             if (this._fluidEpoch === undefined) {
                 this.logger.sendTelemetryEvent(
@@ -174,8 +176,10 @@ export class EpochTracker {
                         fromCache,
                     },
                 );
+                // [Issue: https://github.com/microsoft/FluidFramework/issues/4513]
+                // Only putting it for 1 time only as the server returns incorrect epoch.
+                this._fluidEpoch = epochFromResponse;
             }
-            this._fluidEpoch = epochFromResponse;
         }
     }
 
