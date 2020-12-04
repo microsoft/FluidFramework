@@ -5,20 +5,13 @@
 
 import { INackContent, NackErrorType } from "@fluidframework/protocol-definitions";
 
-export enum ThrottlerRequestType {
-    OpenSocketConn = "OpenSocketConn",
-    SubmitOp = "SubmitOp",
-    AlfredRest = "AlfredRest",
-    HistorianRest = "HistorianRest",
-}
-
 export interface IThrottlerResponse {
     throttleStatus: boolean;
     throttleReason: string;
     retryAfterInMs: number;
 }
 
-export interface IRequestMetrics extends IThrottlerResponse {
+export interface IThrottlingMetrics extends IThrottlerResponse {
     count: number;
     lastCoolDownAt: number;
 }
@@ -36,21 +29,21 @@ export class ThrottlingError implements INackContent {
 
 export interface IThrottleStorageManager {
     /**
-     * Add a request's metrics to the tracked requests.
+     * Store throttling metrics for the given id.
      */
-    setRequestMetric(id: string, requestMetric: IRequestMetrics): Promise<void>;
+    setThrottlingMetric(id: string, throttlingMetric: IThrottlingMetrics): Promise<void>;
 
     /**
-     * Get a request's metrics from the tracked requests.
+     * Get throttling metrics for the given id.
      */
-    getRequestMetric(id: string): Promise<IRequestMetrics>;
+    getThrottlingMetric(id: string): Promise<IThrottlingMetrics>;
 }
 
 export interface IThrottlerHelper {
     /**
-     * Updates request count for given id, runs rate-limiting algorithm, and updates throttleStatus.
+     * Updates throttling metric count for given id, runs rate-limiting algorithm, and updates throttle status.
      */
-    updateRequestCount(id: string, count: number): Promise<IThrottlerResponse>;
+    updateCount(id: string, count: number): Promise<IThrottlerResponse>;
 
     /**
      * Retrieve most recent throttle status for given id.
@@ -60,13 +53,13 @@ export interface IThrottlerHelper {
 
 export interface IThrottler {
     /**
-     * Open a throttle-able request.
-     * @throws {ThrottlingError} when throttled and cannot open request.
+     * Increment the number of consumed throttle-able resources by weight.
+     * @throws {ThrottlingError} when throttled.
      */
-    openRequest(id: string, weight?: number): void;
+    incrementCount(id: string, weight?: number): void;
 
     /**
-     * Mark an opened throttle-able request as closed.
+     * Decrement the number of consumed throttle-able resources by weight.
      */
-    closeRequest(id: string, weight?: number): void;
+    decrementCount(id: string, weight?: number): void;
 }

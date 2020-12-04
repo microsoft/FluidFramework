@@ -20,17 +20,17 @@ export class TestThrottlerHelper implements IThrottlerHelper {
     ) {
     }
 
-    public async updateRequestCount(
+    public async updateCount(
         id: string,
         count: number,
     ): Promise<IThrottlerResponse> {
         const now = Date.now();
 
-        // get stored request metric
-        let requestMetric = await this.throttleStorageManager.getRequestMetric(id);
-        if (!requestMetric) {
-            // start a request metric 0 count
-            requestMetric = {
+        // get stored throttling metric
+        let throttlingMetric = await this.throttleStorageManager.getThrottlingMetric(id);
+        if (!throttlingMetric) {
+            // start a throttling metric 0 count
+            throttlingMetric = {
                 count: 0,
                 lastCoolDownAt: now,
                 throttleStatus: false,
@@ -40,40 +40,40 @@ export class TestThrottlerHelper implements IThrottlerHelper {
         }
 
         // cooldown count
-        requestMetric.count -= Math.floor((now - requestMetric.lastCoolDownAt) / this.rate);
-        requestMetric.lastCoolDownAt = now;
+        throttlingMetric.count -= Math.floor((now - throttlingMetric.lastCoolDownAt) / this.rate);
+        throttlingMetric.lastCoolDownAt = now;
 
         // adjust count
-        requestMetric.count += count;
+        throttlingMetric.count += count;
 
         // check throttle
-        if (requestMetric.count > this.limit) {
-            requestMetric.throttleStatus = true;
-            requestMetric.retryAfterInMs = (requestMetric.count - this.limit) * this.rate;
-            requestMetric.throttleReason = `count exceeded by ${requestMetric.count - this.limit}`;
+        if (throttlingMetric.count > this.limit) {
+            throttlingMetric.throttleStatus = true;
+            throttlingMetric.retryAfterInMs = (throttlingMetric.count - this.limit) * this.rate;
+            throttlingMetric.throttleReason = `Count exceeded by ${throttlingMetric.count - this.limit} at ${now}`;
         } else {
-            requestMetric.throttleStatus = false;
-            requestMetric.retryAfterInMs = 0;
-            requestMetric.throttleReason = undefined;
+            throttlingMetric.throttleStatus = false;
+            throttlingMetric.retryAfterInMs = 0;
+            throttlingMetric.throttleReason = undefined;
         }
 
-        // update stored request metric
-        await this.throttleStorageManager.setRequestMetric(id, requestMetric);
+        // update stored throttling metric
+        await this.throttleStorageManager.setThrottlingMetric(id, throttlingMetric);
 
         return {
-            throttleStatus: requestMetric.throttleStatus,
-            throttleReason: requestMetric.throttleReason,
-            retryAfterInMs: requestMetric.retryAfterInMs,
+            throttleStatus: throttlingMetric.throttleStatus,
+            throttleReason: throttlingMetric.throttleReason,
+            retryAfterInMs: throttlingMetric.retryAfterInMs,
         };
     }
 
     public async getThrottleStatus(id: string): Promise<IThrottlerResponse> {
-        const requestMetric = await this.throttleStorageManager.getRequestMetric(id);
+        const throttlingMetric = await this.throttleStorageManager.getThrottlingMetric(id);
 
         return {
-            throttleStatus: requestMetric.throttleStatus,
-            throttleReason: requestMetric.throttleReason,
-            retryAfterInMs: requestMetric.retryAfterInMs,
+            throttleStatus: throttlingMetric.throttleStatus,
+            throttleReason: throttlingMetric.throttleReason,
+            retryAfterInMs: throttlingMetric.retryAfterInMs,
         };
     }
 }

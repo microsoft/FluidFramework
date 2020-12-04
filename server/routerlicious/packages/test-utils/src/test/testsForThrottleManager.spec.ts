@@ -4,16 +4,16 @@
  */
 
 import assert from "assert";
-import { IRequestMetrics } from "@fluidframework/server-services-core";
+import { IThrottlingMetrics } from "@fluidframework/server-services-core";
 import { TestThrottleStorageManager } from "../testThrottleStorageManager";
 
 describe("Test for Test Utils", () => {
     describe("ThrottleManager", () => {
-        it("Creates and retrieves requestMetric", async () => {
+        it("Creates and retrieves throttlingMetric", async () => {
             const throttleManager = new TestThrottleStorageManager();
 
             const id = "test-id-1";
-            const requestMetric: IRequestMetrics = {
+            const throttlingMetric: IThrottlingMetrics = {
                 count: 2,
                 lastCoolDownAt: Date.now(),
                 throttleStatus: false,
@@ -21,16 +21,16 @@ describe("Test for Test Utils", () => {
                 retryAfterInMs: 2500,
             };
 
-            await throttleManager.setRequestMetric(id, requestMetric);
-            const retrievedRequestMetric = await throttleManager.getRequestMetric(id);
-            assert.deepStrictEqual(retrievedRequestMetric, requestMetric);
+            await throttleManager.setThrottlingMetric(id, throttlingMetric);
+            const retrievedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
+            assert.deepStrictEqual(retrievedThrottlingMetric, throttlingMetric);
         });
 
-        it("Creates and overwrites requestMetric", async () => {
+        it("Creates and overwrites throttlingMetric", async () => {
             const throttleManager = new TestThrottleStorageManager();
 
             const id = "test-id-2";
-            const originalRequestMetric: IRequestMetrics = {
+            const originalThrottlingMetric: IThrottlingMetrics = {
                 count: 2,
                 lastCoolDownAt: Date.now(),
                 throttleStatus: false,
@@ -38,29 +38,29 @@ describe("Test for Test Utils", () => {
                 retryAfterInMs: 0,
             };
 
-            await throttleManager.setRequestMetric(id, originalRequestMetric);
-            const retrievedRequestMetric = await throttleManager.getRequestMetric(id);
-            assert.deepStrictEqual(retrievedRequestMetric, originalRequestMetric);
+            await throttleManager.setThrottlingMetric(id, originalThrottlingMetric);
+            const retrievedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
+            assert.deepStrictEqual(retrievedThrottlingMetric, originalThrottlingMetric);
 
-            const updatedRequestMetric: IRequestMetrics = {
+            const updatedThrottlingMetric: IThrottlingMetrics = {
                 count: 0,
                 lastCoolDownAt: Date.now(),
                 throttleStatus: true,
                 throttleReason: "Exceeded token count: Wait 5 seconds",
                 retryAfterInMs: 5000,
             };
-            await throttleManager.setRequestMetric(id, updatedRequestMetric);
-            const retrievedUpdatedRequestMetric = await throttleManager.getRequestMetric(id);
-            assert.deepStrictEqual(retrievedUpdatedRequestMetric, updatedRequestMetric);
+            await throttleManager.setThrottlingMetric(id, updatedThrottlingMetric);
+            const retrievedUpdatedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
+            assert.deepStrictEqual(retrievedUpdatedThrottlingMetric, updatedThrottlingMetric);
         });
 
-        it("Returns undefined when requestMetric does not exist", async () => {
+        it("Returns undefined when throttlingMetric does not exist", async () => {
             const throttleManager = new TestThrottleStorageManager();
 
             const id = "test-id-2";
 
-            const retrievedRequestMetric = await throttleManager.getRequestMetric(id);
-            assert.strictEqual(retrievedRequestMetric, undefined);
+            const retrievedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
+            assert.strictEqual(retrievedThrottlingMetric, undefined);
         });
     });
 });

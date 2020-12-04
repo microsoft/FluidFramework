@@ -17,7 +17,7 @@ import LRUCache from "lru-cache";
  */
 export class Throttler implements IThrottler {
     private readonly lastThrottleUpdateAtMap: LRUCache<string, number>;
-    private readonly requestDeltaMap: LRUCache<string, number>;
+    private readonly countDeltaMap: LRUCache<string, number>;
     private readonly throttlerResponseCache: LRUCache<string, IThrottlerResponse>;
 
     constructor(
@@ -32,7 +32,7 @@ export class Throttler implements IThrottler {
             maxAge: maxCacheAge,
         };
         this.lastThrottleUpdateAtMap = new LRUCache(cacheOptions);
-        this.requestDeltaMap = new LRUCache(cacheOptions);
+        this.countDeltaMap = new LRUCache(cacheOptions);
         this.throttlerResponseCache = new LRUCache(cacheOptions);
     }
 
@@ -40,12 +40,12 @@ export class Throttler implements IThrottler {
      * Uses caching to bring added latency down to constant time (from cache connection time)
      * @throws {ThrottlingError} if throttled
      */
-    public openRequest(id: string, weight: number = 1): void {
-        this.updateRequestDelta(id, weight);
+    public incrementCount(id: string, weight: number = 1): void {
+        this.updateCountDelta(id, weight);
 
         void this.updateAndCacheThrottleStatus(id);
 
-        // check cached throttle status, but allow requests through if status is not yet cached
+        // check cached throttle status, but allow operation through if status is not yet cached
         const cachedThrottlerResponse = this.throttlerResponseCache.get(id);
         if (cachedThrottlerResponse && cachedThrottlerResponse.throttleStatus) {
             throw new ThrottlingError(
@@ -55,14 +55,14 @@ export class Throttler implements IThrottler {
         }
     }
 
-    public closeRequest(id: string, weight: number = 1): void {
-        this.updateRequestDelta(id, -weight);
+    public decrementCount(id: string, weight: number = 1): void {
+        this.updateCountDelta(id, -weight);
     }
 
-    private updateRequestDelta(id: string, value: number): void {
-        const currentValue = this.requestDeltaMap.get(id) || 0;
+    private updateCountDelta(id: string, value: number): void {
+        const currentValue = this.countDeltaMap.get(id) || 0;
 
-        this.requestDeltaMap.set(id, currentValue + value);
+        this.countDeltaMap.set(id, currentValue + value);
     }
 
     private async updateAndCacheThrottleStatus(id: string): Promise<void> {
@@ -71,15 +71,15 @@ export class Throttler implements IThrottler {
             this.lastThrottleUpdateAtMap.set(id, now);
         }
         if (now - this.lastThrottleUpdateAtMap.get(id) > this.minThrottleIntervalInMs) {
-            const requestDelta = this.requestDeltaMap.get(id);
+            const countDelta = this.countDeltaMap.get(id);
             this.lastThrottleUpdateAtMap.set(id, now);
-            this.requestDeltaMap.set(id, 0);
-            return this.throttlerHelper.updateRequestCount(id, requestDelta)
+            this.countDeltaMap.set(id, 0);
+            await this.throttlerHelper.updateCount(id, countDelta)
                 .then((throttlerResponse) => {
                     this.throttlerResponseCache.set(id, throttlerResponse);
                 })
                 .catch((err) => {
-                    this.logger?.error(`Failed to update Throttler request count for ${id}: ${err}`);
+                    this.logger?.error(`Failed to update throttling count for ${id}: ${err}`);
                 });
         }
     }

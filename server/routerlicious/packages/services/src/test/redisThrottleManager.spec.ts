@@ -6,7 +6,7 @@
 import assert from "assert";
 import { RedisClient } from "redis";
 import redis from "redis-mock";
-import { IRequestMetrics } from "@fluidframework/server-services-core";
+import { IThrottlingMetrics } from "@fluidframework/server-services-core";
 import { RedisThrottleStorageManager } from "../redisThrottleStorageManager";
 import Sinon from "sinon";
 
@@ -22,11 +22,11 @@ describe("RedisThrottleManager", () => {
         mockRedisClient.end();
         Sinon.restore();
     });
-    it("Creates and retrieves requestMetric", async () => {
+    it("Creates and retrieves throttlingMetric", async () => {
         const throttleManager = new RedisThrottleStorageManager(mockRedisClient);
 
         const id = "test-id";
-        const requestMetric: IRequestMetrics = {
+        const throttlingMetric: IThrottlingMetrics = {
             count: 2,
             lastCoolDownAt: Date.now(),
             throttleStatus: false,
@@ -34,16 +34,16 @@ describe("RedisThrottleManager", () => {
             retryAfterInMs: 2500,
         };
 
-        await throttleManager.setRequestMetric(id, requestMetric);
-        const retrievedRequestMetric = await throttleManager.getRequestMetric(id);
-        assert.deepStrictEqual(retrievedRequestMetric, requestMetric);
+        await throttleManager.setThrottlingMetric(id, throttlingMetric);
+        const retrievedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
+        assert.deepStrictEqual(retrievedThrottlingMetric, throttlingMetric);
     });
 
-    it("Creates and overwrites requestMetric", async () => {
+    it("Creates and overwrites throttlingMetric", async () => {
         const throttleManager = new RedisThrottleStorageManager(mockRedisClient);
 
         const id = "test-id";
-        const originalRequestMetric: IRequestMetrics = {
+        const originalThrottlingMetric: IThrottlingMetrics = {
             count: 2,
             lastCoolDownAt: Date.now(),
             throttleStatus: false,
@@ -51,29 +51,29 @@ describe("RedisThrottleManager", () => {
             retryAfterInMs: 0,
         };
 
-        await throttleManager.setRequestMetric(id, originalRequestMetric);
-        const retrievedRequestMetric = await throttleManager.getRequestMetric(id);
-        assert.deepStrictEqual(retrievedRequestMetric, originalRequestMetric);
+        await throttleManager.setThrottlingMetric(id, originalThrottlingMetric);
+        const retrievedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
+        assert.deepStrictEqual(retrievedThrottlingMetric, originalThrottlingMetric);
 
-        const updatedRequestMetric: IRequestMetrics = {
+        const updatedThrottlingMetric: IThrottlingMetrics = {
             count: 0,
             lastCoolDownAt: Date.now(),
             throttleStatus: true,
             throttleReason: "Exceeded token count: Wait 5 seconds",
             retryAfterInMs: 5000,
         };
-        await throttleManager.setRequestMetric(id, updatedRequestMetric);
-        const retrievedUpdatedRequestMetric = await throttleManager.getRequestMetric(id);
-        assert.deepStrictEqual(retrievedUpdatedRequestMetric, updatedRequestMetric);
+        await throttleManager.setThrottlingMetric(id, updatedThrottlingMetric);
+        const retrievedUpdatedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
+        assert.deepStrictEqual(retrievedUpdatedThrottlingMetric, updatedThrottlingMetric);
     });
 
-    it("Returns undefined when requestMetric does not exist", async () => {
+    it("Returns undefined when throttlingMetric does not exist", async () => {
         const throttleManager = new RedisThrottleStorageManager(mockRedisClient);
 
         const id = "test-id";
 
-        const retrievedRequestMetric = await throttleManager.getRequestMetric(id);
-        assert.strictEqual(retrievedRequestMetric, undefined);
+        const retrievedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
+        assert.strictEqual(retrievedThrottlingMetric, undefined);
     });
 
     it("Expires outdated values", async () => {
@@ -81,24 +81,24 @@ describe("RedisThrottleManager", () => {
         const throttleManager = new RedisThrottleStorageManager(mockRedisClient, ttlInSeconds);
 
         const id = "test-id";
-        const originalRequestMetric: IRequestMetrics = {
+        const originalThrottlingMetric: IThrottlingMetrics = {
             count: 2,
             lastCoolDownAt: Date.now(),
             throttleStatus: false,
             throttleReason: "N/A",
             retryAfterInMs: 0,
         };
-        await throttleManager.setRequestMetric(id, originalRequestMetric);
+        await throttleManager.setThrottlingMetric(id, originalThrottlingMetric);
 
         // Move to just before the expiration date to make sure it is not prematurely expired
         Sinon.clock.tick(ttlInSeconds * 1000 - 1);
-        let retrievedRequestMetric = await throttleManager.getRequestMetric(id);
-        assert.deepStrictEqual(retrievedRequestMetric, originalRequestMetric);
+        let retrievedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
+        assert.deepStrictEqual(retrievedThrottlingMetric, originalThrottlingMetric);
 
         // move to end of expiration window when value should be expired
         Sinon.clock.tick(1);
-        retrievedRequestMetric = await throttleManager.getRequestMetric(id);
-        assert.strictEqual(retrievedRequestMetric, undefined);
+        retrievedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
+        assert.strictEqual(retrievedThrottlingMetric, undefined);
     });
 
     it("Updates expiration on overwrite, then expires outdated values", async () => {
@@ -106,35 +106,35 @@ describe("RedisThrottleManager", () => {
         const throttleManager = new RedisThrottleStorageManager(mockRedisClient, ttlInSeconds);
 
         const id = "test-id";
-        const originalRequestMetric: IRequestMetrics = {
+        const originalThrottlingMetric: IThrottlingMetrics = {
             count: 2,
             lastCoolDownAt: Date.now(),
             throttleStatus: false,
             throttleReason: "N/A",
             retryAfterInMs: 0,
         };
-        await throttleManager.setRequestMetric(id, originalRequestMetric);
+        await throttleManager.setThrottlingMetric(id, originalThrottlingMetric);
 
         // Move to just before the expiration date to make sure it is not prematurely expired
         Sinon.clock.tick(ttlInSeconds * 1000 - 1);
-        let retrievedRequestMetric = await throttleManager.getRequestMetric(id);
-        assert.deepStrictEqual(retrievedRequestMetric, originalRequestMetric);
+        let retrievedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
+        assert.deepStrictEqual(retrievedThrottlingMetric, originalThrottlingMetric);
 
         // Update stored value, which should reset expiration
-        const updatedRequestMetric: IRequestMetrics = {
-            ...originalRequestMetric,
+        const updatedThrottlingMetric: IThrottlingMetrics = {
+            ...originalThrottlingMetric,
             count: 3,
         };
-        await throttleManager.setRequestMetric(id, updatedRequestMetric);
+        await throttleManager.setThrottlingMetric(id, updatedThrottlingMetric);
 
         // Move to end of new expiration window to make sure ttl was indeed updated
         Sinon.clock.tick(ttlInSeconds * 1000 - 1);
-        retrievedRequestMetric = await throttleManager.getRequestMetric(id);
-        assert.deepStrictEqual(retrievedRequestMetric, updatedRequestMetric);
+        retrievedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
+        assert.deepStrictEqual(retrievedThrottlingMetric, updatedThrottlingMetric);
 
         // move to end of expiration window when value should be expired
         Sinon.clock.tick(1);
-        retrievedRequestMetric = await throttleManager.getRequestMetric(id);
-        assert.strictEqual(retrievedRequestMetric, undefined);
+        retrievedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
+        assert.strictEqual(retrievedThrottlingMetric, undefined);
     });
 });

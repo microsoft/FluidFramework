@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { IRequestMetrics, IThrottleStorageManager } from "@fluidframework/server-services-core";
+import { IThrottlingMetrics, IThrottleStorageManager } from "@fluidframework/server-services-core";
 
-// In-memory cache implementation of IThrottleManager for testing
+/**
+ * In-memory cache implementation of IThrottleManager for testing
+ */
 export class TestThrottleStorageManager implements IThrottleStorageManager {
-    private readonly cache: { [key: string]: IRequestMetrics } = {};
+    private readonly cache: { [key: string]: IThrottlingMetrics } = {};
 
-    async setRequestMetric(
+    async setThrottlingMetric(
         id: string,
-        requestMetric: IRequestMetrics,
+        throttleMetric: IThrottlingMetrics,
     ): Promise<void> {
-        this.cache[id] = requestMetric;
+        this.cache[id] = throttleMetric;
     }
 
-    async getRequestMetric(id: string): Promise<IRequestMetrics> {
+    async getThrottlingMetric(id: string): Promise<IThrottlingMetrics> {
         return this.cache[id];
     }
 }

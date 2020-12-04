@@ -6,7 +6,7 @@
 import * as util from "util";
 import {
     IThrottleStorageManager,
-    IRequestMetrics,
+    IThrottlingMetrics,
 } from "@fluidframework/server-services-core";
 import { RedisClient } from "redis";
 
@@ -25,12 +25,12 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
         this.expire = util.promisify(client.expire.bind(client));
     }
 
-    public async setRequestMetric(
+    public async setThrottlingMetric(
         id: string,
-        requestMetric: IRequestMetrics,
+        throttlingMetric: IThrottlingMetrics,
     ): Promise<void> {
         const key = this.getKey(id);
-        const result = await this.setAsync(key, requestMetric);
+        const result = await this.setAsync(key, throttlingMetric);
 
         if (result !== "OK") {
             return Promise.reject(result);
@@ -38,20 +38,20 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
         await this.expire(key, this.expireAfterSeconds);
     }
 
-    public async getRequestMetric(id: string): Promise<IRequestMetrics> {
-        const requestMetric = await this.getAsync(this.getKey(id));
+    public async getThrottlingMetric(id: string): Promise<IThrottlingMetrics> {
+        const throttlingMetric = await this.getAsync(this.getKey(id));
 
-        if (!requestMetric) {
+        if (!throttlingMetric) {
             return undefined;
         }
 
         // All values retrieved from Redis are strings, so they must be parsed
         return {
-            count: Number.parseInt(requestMetric.count, 10),
-            lastCoolDownAt: Number.parseInt(requestMetric.lastCoolDownAt, 10),
-            throttleStatus: requestMetric.throttleStatus === "true",
-            throttleReason: requestMetric.throttleReason,
-            retryAfterInMs: Number.parseInt(requestMetric.retryAfterInMs, 10),
+            count: Number.parseInt(throttlingMetric.count, 10),
+            lastCoolDownAt: Number.parseInt(throttlingMetric.lastCoolDownAt, 10),
+            throttleStatus: throttlingMetric.throttleStatus === "true",
+            throttleReason: throttlingMetric.throttleReason,
+            retryAfterInMs: Number.parseInt(throttlingMetric.retryAfterInMs, 10),
         };
     }
 

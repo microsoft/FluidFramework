@@ -7,30 +7,30 @@ import {
     IThrottlerHelper,
     IThrottlerResponse,
     IThrottleStorageManager,
-    IRequestMetrics,
+    IThrottlingMetrics,
 } from "@fluidframework/server-services-core";
 
 /**
- * Implements the Token Bucket algorithm for throttling requests.
+ * Implements the Token Bucket algorithm for throttling operations.
  */
 export class ThrottlerHelper implements IThrottlerHelper {
     constructor(
         private readonly throttleStorageManager: IThrottleStorageManager,
-        private readonly requestRate: number,
+        private readonly rate: number,
         private readonly minCooldownIntervalInMs: number,
     ) {
     }
 
-    public async updateRequestCount(
+    public async updateCount(
         id: string,
         count: number,
     ): Promise<IThrottlerResponse> {
         const now = Date.now();
-        let requestMetric = await this.throttleStorageManager.getRequestMetric(id);
-        if (!requestMetric) {
-            // start a request metric with 1 cooldown interval's worth of tokens
-            requestMetric = {
-                count: this.minCooldownIntervalInMs / this.requestRate,
+        let throttlingMetric = await this.throttleStorageManager.getThrottlingMetric(id);
+        if (!throttlingMetric) {
+            // start a throttling metric with 1 cooldown interval's worth of tokens
+            throttlingMetric = {
+                count: this.minCooldownIntervalInMs / this.rate,
                 lastCoolDownAt: now,
                 throttleStatus: false,
                 throttleReason: undefined,
@@ -39,73 +39,73 @@ export class ThrottlerHelper implements IThrottlerHelper {
         }
 
         // Exit early if already throttled and no chance of being unthrottled
-        const timeUntilNotThrottled = this.getTimeUntilNotThrottledInMs(requestMetric, now);
+        const timeUntilNotThrottled = this.getTimeUntilNotThrottledInMs(throttlingMetric, now);
         if (timeUntilNotThrottled > 0) {
-            requestMetric.retryAfterInMs = timeUntilNotThrottled;
-            // update stored request metric with new retry duration
-            await this.throttleStorageManager.setRequestMetric(id, requestMetric);
-            return this.convertRequestMetricsToThrottlerResponse(requestMetric);
+            throttlingMetric.retryAfterInMs = timeUntilNotThrottled;
+            // update stored throttling metric with new retry duration
+            await this.throttleStorageManager.setThrottlingMetric(id, throttlingMetric);
+            return this.getThrottlerResponseFromThrottlingMetrics(throttlingMetric);
         }
 
         // replenish "tokens" if possible
-        const amountToReplenish = this.getAmountToReplenishOnCooldown(requestMetric, now);
+        const amountToReplenish = this.getAmountToReplenishOnCooldown(throttlingMetric, now);
         if (amountToReplenish > 0) {
-            requestMetric.count += amountToReplenish;
-            requestMetric.lastCoolDownAt = now;
+            throttlingMetric.count += amountToReplenish;
+            throttlingMetric.lastCoolDownAt = now;
         }
 
         // adjust "tokens" based on given count
-        requestMetric.count -= count;
+        throttlingMetric.count -= count;
 
         // throttle if "token bucket" is empty
-        const newTimeUntilNotThrottled = this.getTimeUntilNotThrottledInMs(requestMetric, now);
+        const newTimeUntilNotThrottled = this.getTimeUntilNotThrottledInMs(throttlingMetric, now);
         if (newTimeUntilNotThrottled > 0) {
-            requestMetric.throttleStatus = true;
-            requestMetric.throttleReason =
-                `Request count exceeded by ${Math.abs(requestMetric.count)} at ${new Date(now).toISOString()}`;
-            requestMetric.retryAfterInMs = newTimeUntilNotThrottled;
+            throttlingMetric.throttleStatus = true;
+            throttlingMetric.throttleReason =
+                `Throttling count exceeded by ${Math.abs(throttlingMetric.count)} at ${new Date(now).toISOString()}`;
+            throttlingMetric.retryAfterInMs = newTimeUntilNotThrottled;
         } else {
-            requestMetric.throttleStatus = false;
-            requestMetric.throttleReason = "";
-            requestMetric.retryAfterInMs = 0;
+            throttlingMetric.throttleStatus = false;
+            throttlingMetric.throttleReason = "";
+            throttlingMetric.retryAfterInMs = 0;
         }
 
-        // update stored request metric
-        await this.throttleStorageManager.setRequestMetric(id, requestMetric);
+        // update stored throttling metric
+        await this.throttleStorageManager.setThrottlingMetric(id, throttlingMetric);
 
-        return this.convertRequestMetricsToThrottlerResponse(requestMetric);
+        return this.getThrottlerResponseFromThrottlingMetrics(throttlingMetric);
     }
 
     public async getThrottleStatus(id: string): Promise<IThrottlerResponse> {
-        const requestMetric = await this.throttleStorageManager.getRequestMetric(id);
-        return this.convertRequestMetricsToThrottlerResponse(requestMetric);
+        const throttlingMetric = await this.throttleStorageManager.getThrottlingMetric(id);
+        return this.getThrottlerResponseFromThrottlingMetrics(throttlingMetric);
     }
 
-    private convertRequestMetricsToThrottlerResponse(requestMetric: IRequestMetrics): IThrottlerResponse {
+    private getThrottlerResponseFromThrottlingMetrics(throttlingMetric: IThrottlingMetrics): IThrottlerResponse {
         return {
-            throttleStatus: requestMetric.throttleStatus,
-            throttleReason: requestMetric.throttleReason,
-            retryAfterInMs: requestMetric.retryAfterInMs,
+            throttleStatus: throttlingMetric.throttleStatus,
+            throttleReason: throttlingMetric.throttleReason,
+            retryAfterInMs: throttlingMetric.retryAfterInMs,
         };
     }
 
-    private getAmountToReplenishOnCooldown(requestMetric: IRequestMetrics, now: number): number {
-        const timeSinceLastCooldownInMs = now - requestMetric.lastCoolDownAt;
+    private getAmountToReplenishOnCooldown(throttlingMetric: IThrottlingMetrics, now: number): number {
+        const timeSinceLastCooldownInMs = now - throttlingMetric.lastCoolDownAt;
         // replenish "tokens" at most once per minCooldownInterval
         if (timeSinceLastCooldownInMs > this.minCooldownIntervalInMs) {
-            return Math.floor(timeSinceLastCooldownInMs / this.requestRate);
+            return Math.floor(timeSinceLastCooldownInMs / this.rate);
         }
         return 0;
     }
 
-    private getTimeUntilNotThrottledInMs(requestMetric: IRequestMetrics, now: number): number {
-        const debt = 0 - requestMetric.count;
+    private getTimeUntilNotThrottledInMs(throttlingMetric: IThrottlingMetrics, now: number): number {
+        const debt = 0 - throttlingMetric.count;
         if (debt <= 0) {
             return 0;
         }
-        const amountPossibleToReplenishNow = this.getAmountToReplenishOnCooldown(requestMetric, now);
-        const timeUntilNextCooldown = requestMetric.lastCoolDownAt + this.minCooldownIntervalInMs - now;
-        const timeUntilDebtReplenished = (debt - amountPossibleToReplenishNow) * this.requestRate;
+        const amountPossibleToReplenishNow = this.getAmountToReplenishOnCooldown(throttlingMetric, now);
+        const timeUntilNextCooldown = throttlingMetric.lastCoolDownAt + this.minCooldownIntervalInMs - now;
+        const timeUntilDebtReplenished = (debt - amountPossibleToReplenishNow) * this.rate;
         // must at least wait until next cooldown
         return Math.max(timeUntilNextCooldown, timeUntilDebtReplenished);
     }
