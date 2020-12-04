@@ -564,29 +564,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     private async fetchSnapshot(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
-        const usePost = this.hostPolicy.usePostForTreesLatest;
-        // If usePost is false, then make get call for TreesLatest.
-        // If usePost is true, make a post call. In case of failure other than the reason for which getWithRetryForTokenRefresh
-        // will retry, fallback to get call. In case of error for which getWithRetryForTokenRefresh will retry, let it retry
-        // only if it is first failure, otherwise fallback to get call.
-        if (usePost) {
-            try {
-                const odspSnapshot = await this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, true);
-                return odspSnapshot;
-            } catch (error) {
-                const errorType = error.errorType;
-                if ((errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.incorrectServerResponse) && tokenFetchOptions.refresh === false) {
-                    throw error;
-                }
-                this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
-                return this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, false);
-            }
-        } else {
-            return this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, false);
-        }
-    }
-
-    private async fetchSnapshotWithTimeout(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions, usePost: boolean) {
         assert(snapshotOptions.timeout !== undefined, "Timeout should be provided for setting a limit");
         const abortController = new AbortController();
         const timeout = setTimeout(
@@ -596,10 +573,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             },
             snapshotOptions.timeout,
         );
+        const usePost = this.hostPolicy.usePostForTreesLatest;
+        // If usePost is false, then make get call for TreesLatest.
+        // If usePost is true, make a post call. In case of failure other than the reason for which getWithRetryForTokenRefresh
+        // will retry, fallback to get call. In case of error for which getWithRetryForTokenRefresh will retry, let it retry
+        // only if it is first failure, otherwise fallback to get call.
         try {
             const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost, abortController);
             return odspSnapshot;
         } catch (error) {
+            const errorType = error.errorType;
+            if ((errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.incorrectServerResponse) && tokenFetchOptions.refresh === false) {
+                throw error;
+            }
             // If the snapshot size is too big and the host specified the size limitation, then don't try to fetch the snapshot again.
             if (error.errorType === OdspErrorType.snapshotTooBig && this.hostPolicy.snapshotOptions?.mds !== undefined) {
                 throw error;
@@ -609,6 +595,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined };
                 return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions, usePost);
             }
+            if (usePost) {
+                this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
+                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
+            }
             throw error;
         }
     }
@@ -616,7 +606,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private async fetchSnapshotCore(
         snapshotOptions: ISnapshotOptions,
         tokenFetchOptions: TokenFetchOptions,
-        usePost: boolean,
+        usePost: boolean | undefined,
         controller?: AbortController,
     ) {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
