@@ -21,7 +21,13 @@ export class ThrottlingError implements INackContent {
     readonly type = NackErrorType.ThrottlingError;
 
     constructor(
+        /**
+         * Explanation for throttling.
+         */
         readonly message: string,
+        /**
+         * Client should retry operation after this many seconds.
+         */
         readonly retryAfter: number,
     ) {
     }
@@ -39,6 +45,9 @@ export interface IThrottleStorageManager {
     getThrottlingMetric(id: string): Promise<IThrottlingMetrics>;
 }
 
+/**
+ * Runs rate-limiting calculations for IThrottler.
+ */
 export interface IThrottlerHelper {
     /**
      * Updates throttling metric count for given id, runs rate-limiting algorithm, and updates throttle status.
@@ -51,15 +60,18 @@ export interface IThrottlerHelper {
     getThrottleStatus(id: string): Promise<IThrottlerResponse>;
 }
 
+/**
+ * Determines if an operation should be allowed or throttled.
+ */
 export interface IThrottler {
     /**
-     * Increment the number of consumed throttle-able resources by weight.
+     * Increment the number of throttle-able operations by `weight`.
      * @throws {ThrottlingError} when throttled.
      */
     incrementCount(id: string, weight?: number): void;
 
     /**
-     * Decrement the number of consumed throttle-able resources by weight.
+     * Decrement the number of throttle-able operations by `weight`.
      */
     decrementCount(id: string, weight?: number): void;
 }

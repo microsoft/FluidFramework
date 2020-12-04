@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/server-services-core";
 
 /**
- * Implements the Token Bucket algorithm for throttling operations.
+ * Implements the Token Bucket algorithm to calculate rate-limiting for throttling operations.
  */
 export class ThrottlerHelper implements IThrottlerHelper {
     constructor(

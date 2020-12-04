@@ -14,6 +14,8 @@ import LRUCache from "lru-cache";
 
 /**
  * A lenient implementation of IThrottlerHelper that prioritizes low latency over strict throttling.
+ * This should be used for implementing throttling in places where latency matters more than accuracy,
+ * such as service endpoints or socket connections.
  */
 export class Throttler implements IThrottler {
     private readonly lastThrottleUpdateAtMap: LRUCache<string, number>;
@@ -37,7 +39,8 @@ export class Throttler implements IThrottler {
     }
 
     /**
-     * Uses caching to bring added latency down to constant time (from cache connection time)
+     * Increments operation count and calculates throttle status of given operation id.
+     * Uses most recently calculated throttle status to determine current throttling, while updating in the background.
      * @throws {ThrottlingError} if throttled
      */
     public incrementCount(id: string, weight: number = 1): void {
@@ -56,6 +59,9 @@ export class Throttler implements IThrottler {
         }
     }
 
+    /**
+     * Decrements operation count of given operation id.
+     */
     public decrementCount(id: string, weight: number = 1): void {
         this.updateCountDelta(id, -weight);
     }
