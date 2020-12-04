@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { 8 } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     MapKernel,
@@ -182,8 +182,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     protected async loadCore(storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 
-        const data: string = header ? fromBase64ToUtf8(header) : undefined;
-        this.intervalMapKernel.populate(data);
+        this.intervalMapKernel.populate(header);
     }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {

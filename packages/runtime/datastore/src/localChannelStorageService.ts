@@ -39,6 +39,7 @@ export class LocalChannelStorageService implements IChannelStorageService {
                 case TreeEntry.Blob:
                     if (path === entry.path) {
                         const blob = entry.value as IBlob;
+                        // noooooooooooooooooooooooooo
                         return blob.encoding === "utf-8"
                             ? fromUtf8ToBase64(blob.contents)
                             : blob.contents;

@@ -25,7 +25,7 @@ export class ChannelStorageService implements IChannelStorageService {
 
     constructor(
         private readonly tree: Promise<ISnapshotTree> | undefined,
-        private readonly storage: Pick<IDocumentStorageService, "read">,
+        private readonly storage: Pick<IDocumentStorageService, "readString">,
         private readonly extraBlobs?: Promise<Map<string, string>>,
     ) {
         // Create a map from paths to blobs
@@ -50,7 +50,7 @@ export class ChannelStorageService implements IChannelStorageService {
             ? (await this.extraBlobs).get(id)
             : undefined;
 
-        return blob ?? this.storage.read(id);
+        return blob ?? this.storage.readString(id);
     }
 
     public async list(path: string): Promise<string[]> {

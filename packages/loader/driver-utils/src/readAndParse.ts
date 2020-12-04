@@ -13,9 +13,8 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
  * @param id - the id of the blob to read and parse
  * @returns the object that we decoded and JSON.parse
  */
-export async function readAndParse<T>(storage: Pick<IDocumentStorageService, "read">, id: string): Promise<T> {
-    const encoded = await storage.read(id);
-    const decoded = fromBase64ToUtf8(encoded);
+export async function readAndParse<T>(storage: Pick<IDocumentStorageService, "readString">, id: string): Promise<T> {
+    const decoded = await storage.readString(id);
     return JSON.parse(decoded) as T;
 }
 

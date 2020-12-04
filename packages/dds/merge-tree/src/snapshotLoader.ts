@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -222,7 +222,6 @@ export class SnapshotLoader {
      * SharedObject.processCore.
      */
     private async loadCatchupOps(rawMessages: Promise<string>): Promise<ISequencedDocumentMessage[]> {
-        const utf8 = fromBase64ToUtf8(await rawMessages);
-        return JSON.parse(utf8) as ISequencedDocumentMessage[];
+        return JSON.parse(await rawMessages) as ISequencedDocumentMessage[];
     }
 }
