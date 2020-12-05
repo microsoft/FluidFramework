@@ -14,8 +14,8 @@ describe("RetriableDocumentStorageService Tests", () => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         internalService = {} as IDocumentStorageService;
         const deltaManager = {
-            cancelDelayInfo: () => {},
-            refreshDelayInfo: () => "",
+            refreshDelayInfo: () => {},
+            emitDelayInfo: () => {},
         };
         retriableStorageService = new RetriableDocumentStorageService(internalService, deltaManager);
     });
