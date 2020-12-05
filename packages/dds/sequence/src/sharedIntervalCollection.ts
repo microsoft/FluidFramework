@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { 8 } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     MapKernel,

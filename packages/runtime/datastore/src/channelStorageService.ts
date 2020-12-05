@@ -53,6 +53,15 @@ export class ChannelStorageService implements IChannelStorageService {
         return blob ?? this.storage.readString(id);
     }
 
+    public async readString(path: string): Promise<string> {
+        const id = await this.getIdForPath(path);
+        const blob = this.extraBlobs !== undefined
+            ? (await this.extraBlobs).get(id)
+            : undefined;
+
+        return blob ?? this.storage.readString(id);
+    }
+
     public async list(path: string): Promise<string[]> {
         let tree = await this.tree;
         const pathParts = getNormalizedObjectStoragePathParts(path);
