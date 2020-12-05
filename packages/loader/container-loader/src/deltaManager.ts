@@ -180,8 +180,8 @@ export class DeltaManager
     private messageBuffer: IDocumentMessage[] = [];
 
     private connectFirstConnection = true;
-    private readonly idToDelayMap = new Map<string, number>();
-    private maxThrottlingDelay: number = 0;
+    private readonly throttlingIdSet = new Set<string>();
+    private timeTillThrottling: number = 0;
 
     // True if current connection has checkpoint information
     // I.e. we know how far behind the client was at the time of establishing connection
@@ -944,9 +944,11 @@ export class DeltaManager
         }
     }
 
-    public cancelDelayInfo(id: string) {
-        this.idToDelayMap.delete(id);
-        this.maxThrottlingDelay = Math.max(...this.idToDelayMap.values());
+    public refreshDelayInfo(id: string) {
+        this.throttlingIdSet.delete(id);
+        if (this.throttlingIdSet.size === 0) {
+            this.timeTillThrottling = 0;
+        }
     }
 
     public emitDelayInfo(
@@ -954,9 +956,10 @@ export class DeltaManager
         delaySeconds: number,
         error: ICriticalContainerError,
     ) {
-        this.idToDelayMap.set(id, delaySeconds);
-        if (delaySeconds > 0 && delaySeconds > this.maxThrottlingDelay) {
-            this.maxThrottlingDelay = delaySeconds;
+        const timeNow = Date.now();
+        this.throttlingIdSet.add(id);
+        if (delaySeconds > 0 && (timeNow + delaySeconds > this.timeTillThrottling)) {
+            this.timeTillThrottling = timeNow + delaySeconds;
             const throttlingError: IThrottlingWarning = {
                 errorType: ContainerErrorType.throttlingError,
                 message: `Service busy/throttled: ${error.message}`,
@@ -1053,7 +1056,7 @@ export class DeltaManager
         assert(!readonly || this.connectionMode === "read", "readonly perf with write connection");
         this.set_readonlyPermissions(readonly);
 
-        this.cancelDelayInfo(this.deltaStreamDelayId);
+        this.refreshDelayInfo(this.deltaStreamDelayId);
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
@@ -1388,7 +1391,7 @@ export class DeltaManager
         this.fetching = true;
 
         await this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
-            this.cancelDelayInfo(this.deltaStorageDelayId);
+            this.refreshDelayInfo(this.deltaStorageDelayId);
             this.catchUpCore(messages, telemetryEventSuffix);
         });
 
