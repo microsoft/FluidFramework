@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/data-object-base",
-  "version": "0.30.1",
+  "version": "0.30.2",
   "description": "Data object base for synchronously and lazily loaded object scenarios",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -55,20 +55,20 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.19.1",
     "@fluidframework/common-utils": "^0.25.0",
-    "@fluidframework/container-definitions": "^0.30.1",
-    "@fluidframework/container-runtime": "^0.30.1",
-    "@fluidframework/core-interfaces": "^0.30.1",
-    "@fluidframework/datastore": "^0.30.1",
-    "@fluidframework/datastore-definitions": "^0.30.1",
-    "@fluidframework/request-handler": "^0.30.1",
-    "@fluidframework/runtime-definitions": "^0.30.1",
-    "@fluidframework/runtime-utils": "^0.30.1",
-    "@fluidframework/shared-object-base": "^0.30.1"
+    "@fluidframework/container-definitions": "^0.30.2",
+    "@fluidframework/container-runtime": "^0.30.2",
+    "@fluidframework/core-interfaces": "^0.30.2",
+    "@fluidframework/datastore": "^0.30.2",
+    "@fluidframework/datastore-definitions": "^0.30.2",
+    "@fluidframework/request-handler": "^0.30.2",
+    "@fluidframework/runtime-definitions": "^0.30.2",
+    "@fluidframework/runtime-utils": "^0.30.2",
+    "@fluidframework/shared-object-base": "^0.30.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
-    "@fluidframework/mocha-test-setup": "^0.30.1",
+    "@fluidframework/mocha-test-setup": "^0.30.2",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
