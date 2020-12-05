@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
@@ -161,7 +162,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         const rawContent = await storage.read(snapshotFileName);
 
         const content = rawContent !== undefined
-            ? JSON.parse(rawContent) as ICounterSnapshotFormat
+            ? JSON.parse(fromBase64ToUtf8(rawContent)) as ICounterSnapshotFormat
             : { value: 0 };
 
         this._value = content.value;
