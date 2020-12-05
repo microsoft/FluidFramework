@@ -944,7 +944,7 @@ export class DeltaManager
         }
     }
 
-    public cancelDelayInfo(id: string) {
+    public refreshDelayInfo(id: string) {
         this.throttlingIdSet.delete(id);
         if (this.throttlingIdSet.size === 0) {
             this.timeTillThrottling = 0;
@@ -1056,7 +1056,7 @@ export class DeltaManager
         assert(!readonly || this.connectionMode === "read", "readonly perf with write connection");
         this.set_readonlyPermissions(readonly);
 
-        this.cancelDelayInfo(this.deltaStreamDelayId);
+        this.refreshDelayInfo(this.deltaStreamDelayId);
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
@@ -1391,7 +1391,7 @@ export class DeltaManager
         this.fetching = true;
 
         await this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
-            this.cancelDelayInfo(this.deltaStorageDelayId);
+            this.refreshDelayInfo(this.deltaStorageDelayId);
             this.catchUpCore(messages, telemetryEventSuffix);
         });
 

@@ -14,7 +14,7 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
     private disposed = false;
     constructor(
         internalStorageService: IDocumentStorageService,
-        private readonly deltaManager: Pick<DeltaManager, "emitDelayInfo" | "cancelDelayInfo">,
+        private readonly deltaManager: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">,
     ) {
         super(internalStorageService);
     }
@@ -52,7 +52,7 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
             try {
                 result = await api();
                 if (id !== undefined) {
-                    this.deltaManager.cancelDelayInfo(id);
+                    this.deltaManager.refreshDelayInfo(id);
                 }
                 success = true;
             } catch (err) {
