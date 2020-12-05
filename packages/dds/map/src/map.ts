@@ -339,7 +339,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             this.kernel.populateFromSerializable(newFormat.content);
             await Promise.all(newFormat.blobs.map(async (value) => {
                 const blob = await storage.read(value);
-                this.kernel.populateFromSerializable(JSON.parse(blob) as IMapDataObjectSerializable);
+                const blobData = fromBase64ToUtf8(blob);
+                this.kernel.populateFromSerializable(JSON.parse(blobData) as IMapDataObjectSerializable);
             }));
         } else {
             this.kernel.populateFromSerializable(json as IMapDataObjectSerializable);
