@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
@@ -332,7 +333,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         const header = await storage.read(snapshotFileName);
 
         // eslint-disable-next-line @typescript-eslint/ban-types
-        const json = JSON.parse(header) as object;
+        const json = JSON.parse(fromBase64ToUtf8(header)) as object;
         const newFormat = json as IMapSerializationFormat;
         if (Array.isArray(newFormat.blobs)) {
             this.kernel.populateFromSerializable(newFormat.content);
