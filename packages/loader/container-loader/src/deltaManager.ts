@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { v4 as uuid } from "uuid";
 import { ITelemetryLogger, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IConnectionDetails,
@@ -167,6 +168,8 @@ export class DeltaManager
     private clientSequenceNumberObserved = 0;
     private closed = false;
     private storageService: RetriableDocumentStorageService | undefined;
+    private readonly deltaStreamDelayId = uuid();
+    private readonly deltaStorageDelayId = uuid();
 
     // track clientId used last time when we sent any ops
     private lastSubmittedClientId: string | undefined;
@@ -177,6 +180,7 @@ export class DeltaManager
     private messageBuffer: IDocumentMessage[] = [];
 
     private connectFirstConnection = true;
+    private readonly throttlingIdSet = new Set<string>();
     private timeTillThrottling: number = 0;
 
     // True if current connection has checkpoint information
@@ -605,7 +609,7 @@ export class DeltaManager
                     delay = retryDelayFromError ?? Math.min(delay * 2, MaxReconnectDelaySeconds);
 
                     if (retryDelayFromError !== undefined) {
-                        this.emitDelayInfo(retryDelayFromError, error);
+                        this.emitDelayInfo(this.deltaStreamDelayId, retryDelayFromError, error);
                     }
                     await waitForConnectedState(delay * 1000);
                 }
@@ -829,7 +833,7 @@ export class DeltaManager
                 retryAfter = getRetryDelayFromError(origError);
 
                 if (retryAfter !== undefined && retryAfter >= 0) {
-                    this.emitDelayInfo(retryAfter, error);
+                    this.emitDelayInfo(this.deltaStorageDelayId, retryAfter, error);
                 }
             }
 
@@ -940,17 +944,20 @@ export class DeltaManager
         }
     }
 
-    public cancelDelayInfo() {
-        if (Date.now() >= this.timeTillThrottling) {
+    public cancelDelayInfo(id: string) {
+        this.throttlingIdSet.delete(id);
+        if (this.throttlingIdSet.size === 0) {
             this.timeTillThrottling = 0;
         }
     }
 
     public emitDelayInfo(
+        id: string,
         delaySeconds: number,
         error: ICriticalContainerError,
     ) {
         const timeNow = Date.now();
+        this.throttlingIdSet.add(id);
         if (delaySeconds > 0 && (timeNow + delaySeconds > this.timeTillThrottling)) {
             this.timeTillThrottling = timeNow + delaySeconds;
             const throttlingError: IThrottlingWarning = {
@@ -1049,7 +1056,7 @@ export class DeltaManager
         assert(!readonly || this.connectionMode === "read", "readonly perf with write connection");
         this.set_readonlyPermissions(readonly);
 
-        this.cancelDelayInfo();
+        this.cancelDelayInfo(this.deltaStreamDelayId);
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
@@ -1188,7 +1195,7 @@ export class DeltaManager
         if (this.reconnectMode === ReconnectMode.Enabled) {
             const delay = getRetryDelayFromError(error);
             if (delay !== undefined) {
-                this.emitDelayInfo(delay, error);
+                this.emitDelayInfo(this.deltaStreamDelayId, delay, error);
                 await waitForConnectedState(delay * 1000);
             }
 
@@ -1384,7 +1391,7 @@ export class DeltaManager
         this.fetching = true;
 
         await this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
-            this.cancelDelayInfo();
+            this.cancelDelayInfo(this.deltaStorageDelayId);
             this.catchUpCore(messages, telemetryEventSuffix);
         });
 
