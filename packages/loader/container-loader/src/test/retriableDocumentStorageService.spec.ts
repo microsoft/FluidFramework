@@ -15,7 +15,7 @@ describe("RetriableDocumentStorageService Tests", () => {
         internalService = {} as IDocumentStorageService;
         const deltaManager = {
             cancelDelayInfo: () => {},
-            emitDelayInfo: () => "",
+            refreshDelayInfo: () => "",
         };
         retriableStorageService = new RetriableDocumentStorageService(internalService, deltaManager);
     });
