@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { Serializable, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { FileMode, TreeEntry } from "@fluidframework/protocol-definitions";
 import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
@@ -24,6 +25,7 @@ export const serializeBlob = (
 
 export async function deserializeBlob(storage: IChannelStorageService, path: string, serializer: IFluidSerializer) {
     const handleTableChunk = await storage.read(path);
+    const utf8 = fromBase64ToUtf8(handleTableChunk);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return serializer.parse(handleTableChunk);
+    return serializer.parse(utf8);
 }
