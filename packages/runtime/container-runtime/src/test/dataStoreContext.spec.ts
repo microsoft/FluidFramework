@@ -227,7 +227,7 @@ describe("Data Store Context Tests", () => {
                 dataStoreId,
                 Promise.resolve(snapshotTree),
                 containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
+                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,
                 createSummarizerNodeFn,
             );
@@ -265,7 +265,7 @@ describe("Data Store Context Tests", () => {
                 dataStoreId,
                 Promise.resolve(snapshotTree),
                 containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
+                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,
                 createSummarizerNodeFn,
             );
@@ -305,7 +305,7 @@ describe("Data Store Context Tests", () => {
                 dataStoreId,
                 Promise.resolve(snapshotTree),
                 containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
+                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,
                 createSummarizerNodeFn,
             );

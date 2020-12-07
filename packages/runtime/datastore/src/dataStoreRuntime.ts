@@ -488,9 +488,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}`);
 
                     const flatBlobs = new Map<string, string>();
-                    const snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
-                    // flatBlobsP's validity is contingent on snapshotTreeP's resolution
-                    const flatBlobsP = snapshotTreeP.then((snapshotTree) => { return flatBlobs; });
+                    const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
                     const remoteChannelContext = new RemoteChannelContext(
                         this,
@@ -499,9 +497,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         (content, localContentMetadata) => this.submitChannelOp(id, content, localContentMetadata),
                         (address: string) => this.setChannelDirty(address),
                         id,
-                        snapshotTreeP,
+                        snapshotTree,
                         this.sharedObjectRegistry,
-                        flatBlobsP,
+                        flatBlobs,
                         this.dataStoreContext.getCreateChildSummarizerNodeFn(
                             id,
                             {
