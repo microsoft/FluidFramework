@@ -179,3 +179,5 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
 
     getChild(id: string): ISummarizerNodeWithGC | undefined
 }
+
+export const channelsTreeName = ".channels";

@@ -4,6 +4,7 @@
  */
 
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { channelsTreeName } from "@fluidframework/runtime-definitions";
 
 export type ContainerRuntimeSnapshotFormatVersion =
     /**
@@ -53,8 +54,6 @@ export const protocolTreeName = ".protocol";
 export const nonDataStorePaths = [protocolTreeName, ".logTail", ".serviceProtocol", blobsTreeName];
 
 export const dataStoreAttributesBlobName = ".component";
-
-export const channelsTreeName = ".channels";
 
 export interface IRuntimeSnapshot {
     id: string | null;

@@ -28,6 +28,7 @@ import {
     ICreateChildDetails,
     IInitialSummary,
     ISummarizerNodeRootContract,
+    parseSummaryForSubtrees,
     ReadAndParseBlob,
     seqFromTree,
     SummaryNode,
@@ -309,12 +310,9 @@ export class SummarizerNode implements IRootSummarizerNode {
             localPath,
         });
 
-        // New versions of snapshots have child nodes isolated in .channels subtree
-        const channelsSubtree: ISnapshotTree | undefined = baseSummary.trees[".channels"];
-        let childrenTree = baseSummary;
-        if (channelsSubtree !== undefined) {
-            pathParts.push(".channels");
-            childrenTree = channelsSubtree;
+        const { childrenTree, childrenPathPart } = parseSummaryForSubtrees(baseSummary);
+        if (childrenPathPart !== undefined) {
+            pathParts.push(childrenPathPart);
         }
 
         if (pathParts.length > 0) {
@@ -362,8 +360,9 @@ export class SummarizerNode implements IRootSummarizerNode {
         const decodedSummary = decodeSummary(snapshot, this.defaultLogger);
         const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 
-        if (decodedSummary.baseSummary.trees[".channels"] !== undefined) {
-            decodedSummary.pathParts.push(".channels");
+        const { childrenPathPart } = parseSummaryForSubtrees(decodedSummary.baseSummary);
+        if (childrenPathPart !== undefined) {
+            decodedSummary.pathParts.push(childrenPathPart);
         }
 
         if (decodedSummary.pathParts.length > 0) {
