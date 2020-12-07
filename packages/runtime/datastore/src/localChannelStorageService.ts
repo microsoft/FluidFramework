@@ -4,7 +4,7 @@
  */
 
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8, fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
@@ -14,6 +14,11 @@ export class LocalChannelStorageService implements IChannelStorageService {
 
     public async read(path: string): Promise<string> {
         const contents = this.readSync(path);
+        return contents !== undefined ? Promise.resolve(contents) : Promise.reject(new Error("Not found"));
+    }
+
+    public async readString(path: string): Promise<string> {
+        const contents = this.readStringSync(path);
         return contents !== undefined ? Promise.resolve(contents) : Promise.reject(new Error("Not found"));
     }
 
@@ -33,6 +38,10 @@ export class LocalChannelStorageService implements IChannelStorageService {
         return this.readSyncInternal(path, this.tree);
     }
 
+    private readStringSync(path: string): string | undefined {
+        return this.readStringSyncInternal(path, this.tree);
+    }
+
     private readSyncInternal(path: string, tree: ITree): string | undefined {
         for (const entry of tree.entries) {
             switch (entry.type) {
@@ -48,6 +57,31 @@ export class LocalChannelStorageService implements IChannelStorageService {
                 case TreeEntry.Tree:
                     if (path.startsWith(entry.path)) {
                         return this.readSyncInternal(path.substr(entry.path.length + 1), entry.value as ITree);
+                    }
+                    break;
+
+                default:
+            }
+        }
+
+        return undefined;
+    }
+
+    private readStringSyncInternal(path: string, tree: ITree): string | undefined {
+        for (const entry of tree.entries) {
+            switch (entry.type) {
+                case TreeEntry.Blob:
+                    if (path === entry.path) {
+                        const blob = entry.value as IBlob;
+                        return blob.encoding === "utf-8"
+                            ? blob.contents
+                            : fromBase64ToUtf8(blob.contents);
+                    }
+                    break;
+
+                case TreeEntry.Tree:
+                    if (path.startsWith(entry.path)) {
+                        return this.readStringSyncInternal(path.substr(entry.path.length + 1), entry.value as ITree);
                     }
                     break;
 

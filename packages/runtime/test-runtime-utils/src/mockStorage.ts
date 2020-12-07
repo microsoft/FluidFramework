@@ -38,11 +38,38 @@ export class MockStorage implements IChannelStorageService {
         }
     }
 
+    private static readStringCore(tree: ITree, paths: string[]): string {
+        if (tree) {
+            for (const entry of tree.entries) {
+                if (entry.path === paths[0]) {
+                    if (entry.type === "Blob") {
+                        // eslint-disable-next-line prefer-rest-params
+                        assert(paths.length === 1, JSON.stringify({ ...arguments }));
+                        const blob = entry.value as IBlob;
+                        return IsoBuffer.from(blob.contents, blob.encoding)
+                            .toString("utf8");
+                    }
+                    if (entry.type === "Tree") {
+                        return MockStorage.readStringCore(entry.value as ITree, paths.slice(1));
+                    }
+                    return undefined;
+                }
+            }
+            return undefined;
+        }
+    }
+
     constructor(protected tree?: ITree) {
     }
 
     public async read(path: string): Promise<string> {
         const blob = MockStorage.readCore(this.tree, path.split("/"));
+        assert(blob !== undefined, `Blob does not exist: ${path}`);
+        return blob;
+    }
+
+    public async readString(path: string): Promise<string> {
+        const blob = MockStorage.readStringCore(this.tree, path.split("/"));
         assert(blob !== undefined, `Blob does not exist: ${path}`);
         return blob;
     }

@@ -19,6 +19,10 @@ export class ObjectStoragePartition implements IChannelStorageService {
         return this.storage.read(`${this.path}/${path}`);
     }
 
+    public async readString(path: string): Promise<string> {
+        return this.storage.readString(`${this.path}/${path}`);
+    }
+
     public async contains(path: string): Promise<boolean> {
         return this.storage.contains(`${this.path}/${path}`);
     }
