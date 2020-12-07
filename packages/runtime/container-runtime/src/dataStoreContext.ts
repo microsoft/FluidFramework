@@ -34,9 +34,9 @@ import {
     dataStoreAttributesBlobName,
     DataStoreSnapshotFormatVersion,
     IContainerRuntime,
-    channelsTreeName,
 } from "@fluidframework/container-runtime-definitions";
 import {
+    channelsTreeName,
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     FluidDataStoreRegistryEntry,

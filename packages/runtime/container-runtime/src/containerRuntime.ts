@@ -36,7 +36,6 @@ import {
     IContainerRuntimeEvents,
     IContainerRuntimeMetadata,
     metadataBlobName,
-    channelsTreeName,
 } from "@fluidframework/container-runtime-definitions";
 import {
     assert,
@@ -95,6 +94,7 @@ import {
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
+    channelsTreeName,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
