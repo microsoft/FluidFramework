@@ -71,23 +71,17 @@ export class DataStores implements IDisposable {
         baseLogger: ITelemetryBaseLogger,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
-        this.logger = ChildLogger.create(baseLogger,"DataStores");
+        this.logger = ChildLogger.create(baseLogger);
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree | string>();
 
         if (typeof baseSnapshot === "object") {
-            for (const value of Object.keys(baseSnapshot.trees)) {
+            Object.keys(baseSnapshot.trees).forEach((value) => {
                 if (!nonDataStorePaths.includes(value)) {
-                    if (value.startsWith(".")) {
-                        this.logger.sendErrorEvent({
-                            eventName: "UnknownDotTree",
-                        });
-                        continue;
-                    }
                     const tree = baseSnapshot.trees[value];
                     fluidDataStores.set(value, tree);
                 }
-            }
+            });
         }
 
         // Create a context for each of them
@@ -225,8 +219,6 @@ export class DataStores implements IDisposable {
         isRoot: boolean,
         id = uuid()): IFluidDataStoreContextDetached
     {
-        assert(!id.startsWith("."), "Datastore id's must not start with '.'");
-
         const context = new LocalDetachedFluidDataStoreContext(
             id,
             pkg,
@@ -243,8 +235,6 @@ export class DataStores implements IDisposable {
     }
 
     public _createFluidDataStoreContext(pkg: string[], id: string, isRoot: boolean, props?: any) {
-        assert(!id.startsWith("."), "Datastore id's must not start with '.'");
-
         const context = new LocalFluidDataStoreContext(
             id,
             pkg,
