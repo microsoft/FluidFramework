@@ -308,6 +308,15 @@ export class SummarizerNode implements IRootSummarizerNode {
             basePath,
             localPath,
         });
+
+        // New versions of snapshots have child nodes isolated in .channels subtree
+        const channelsSubtree: ISnapshotTree | undefined = baseSummary.trees[".channels"];
+        let childrenTree = baseSummary;
+        if (channelsSubtree !== undefined) {
+            pathParts.push(".channels");
+            childrenTree = channelsSubtree;
+        }
+
         if (pathParts.length > 0) {
             this.latestSummary.additionalPath = EscapedPath.createAndConcat(pathParts);
         }
@@ -315,7 +324,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         // Propagate update to all child nodes
         const pathForChildren = this.latestSummary.fullPathForChildren;
         for (const [id, child] of this.children.entries()) {
-            const subtree = baseSummary.trees[id];
+            const subtree = childrenTree.trees[id];
             // Assuming subtrees missing from snapshot are newer than the snapshot,
             // but might be nice to assert this using earliest seq for node.
             if (subtree !== undefined) {
@@ -353,12 +362,18 @@ export class SummarizerNode implements IRootSummarizerNode {
         const decodedSummary = decodeSummary(snapshot, this.defaultLogger);
         const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 
-        if (outstandingOps.length > 0) {
-            assert(!!this.latestSummary, "Should have latest summary defined if any outstanding ops found");
-            this.latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
+        if (decodedSummary.baseSummary.trees[".channels"] !== undefined) {
+            decodedSummary.pathParts.push(".channels");
+        }
 
-            // Defensive: tracking number should already exceed this number.
-            // This is probably a little excessive; can remove when stable.
+        if (decodedSummary.pathParts.length > 0) {
+            assert(!!this.latestSummary, "Should have latest summary defined during loadBaseSummary");
+            this.latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
+        }
+
+        // Defensive assertion: tracking number should already exceed this number.
+        // This is probably a little excessive; can remove when stable.
+        if (outstandingOps.length > 0) {
             const newOpsLatestSeq = outstandingOps[outstandingOps.length - 1].sequenceNumber;
             assert(
                 newOpsLatestSeq <= this.trackingSequenceNumber,
