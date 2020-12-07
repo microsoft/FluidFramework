@@ -23,6 +23,6 @@ export class BlobCacheStorageService extends DocumentStorageServiceProxy {
             return blob;
         }
 
-        return this.internalStorageService.readString(id);
+        return this.internalStorageService.read(id);
     }
 }

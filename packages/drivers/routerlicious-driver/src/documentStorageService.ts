@@ -104,7 +104,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const iso = IsoBuffer.from(await this.readString(blobId), "string");
+        const iso = IsoBuffer.from(await this.read(blobId), "base64");
 
         // In a Node environment, IsoBuffer may be a Node.js Buffer.  Node.js will
         // pool multiple small Buffer instances into a single ArrayBuffer, in which

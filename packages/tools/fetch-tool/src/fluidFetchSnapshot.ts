@@ -76,7 +76,7 @@ function fetchBlobs(prefix: string,
                 reused = false;
                 blob = blobCache.get(blobId);
                 if (blob === undefined) {
-                    blob = storage.readString(blobId);
+                    blob = storage.read(blobId);
                     blobCache.set(blobId, blob);
                 }
             }
