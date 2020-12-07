@@ -13,8 +13,7 @@ import {
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 
-import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../directory";
-import { MapFactory } from "../map";
+import { MapFactory, DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "..";
 
 function createConnectedDirectory(id: string, runtimeFactory: MockContainerRuntimeFactory) {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();

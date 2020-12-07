@@ -157,7 +157,8 @@ describe("Loader.request", () => {
             });
             assert(false, "Loader pause flags doesn't pause container op processing");
         } catch (e) {
-            assert.strictEqual(e.message, `DataStore ${newDataStore.id} does not exist`);
+            const topFrame: string | undefined = e?.stack.split("\n")[1].trimLeft();
+            assert(topFrame?.startsWith("at DataStores.getDataStore"), "Expected an error in DataStores.getDataStore");
         }
 
         (container2 as Container).resume();

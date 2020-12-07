@@ -18,7 +18,7 @@ import {
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SummaryTracker, createRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
+import { createRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     IFluidDataStoreAttributes,
@@ -29,7 +29,6 @@ import { ContainerRuntime } from "../containerRuntime";
 
 describe("Data Store Context Tests", () => {
     const dataStoreId = "Test1";
-    let summaryTracker: SummaryTracker;
     let createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 
     describe("LocalFluidDataStoreContext Initialization", () => {
@@ -40,7 +39,6 @@ describe("Data Store Context Tests", () => {
         let containerRuntime: ContainerRuntime;
 
         beforeEach(async () => {
-            summaryTracker = new SummaryTracker("", 0, 0);
             const summarizerNode = createRootSummarizerNodeWithGC(
                 new TelemetryNullLogger(),
                 (() => undefined) as unknown as SummarizeInternalFn,
@@ -77,7 +75,6 @@ describe("Data Store Context Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
-                summaryTracker,
                 createSummarizerNodeFn,
                 attachCb,
                 undefined,
@@ -115,7 +112,6 @@ describe("Data Store Context Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
-                summaryTracker,
                 createSummarizerNodeFn,
                 attachCb,
                 undefined,
@@ -148,7 +144,6 @@ describe("Data Store Context Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
-                summaryTracker,
                 createSummarizerNodeFn,
                 attachCb,
                 undefined,
@@ -185,7 +180,6 @@ describe("Data Store Context Tests", () => {
         let scope: IFluidObject;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
-            summaryTracker = new SummaryTracker("", 0, 0);
             const summarizerNode = createRootSummarizerNodeWithGC(
                 new TelemetryNullLogger(),
                 (() => undefined) as unknown as SummarizeInternalFn,
@@ -235,7 +229,6 @@ describe("Data Store Context Tests", () => {
                 containerRuntime,
                 new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
-                summaryTracker,
                 createSummarizerNodeFn,
             );
             const summaryTree = await remotedDataStoreContext.summarize(true);
@@ -275,7 +268,6 @@ describe("Data Store Context Tests", () => {
                 containerRuntime,
                 new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
-                summaryTracker,
                 createSummarizerNodeFn,
             );
             const summaryTree = await remotedDataStoreContext.summarize(true);
@@ -316,7 +308,6 @@ describe("Data Store Context Tests", () => {
                 containerRuntime,
                 new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
-                summaryTracker,
                 createSummarizerNodeFn,
             );
             const summaryTree = await remotedDataStoreContext.summarize(true);

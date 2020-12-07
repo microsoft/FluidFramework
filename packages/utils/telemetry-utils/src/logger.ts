@@ -397,7 +397,6 @@ export class PerformanceEvent {
     }
 
     private event?: ITelemetryGenericEvent;
-    private readonly eventName: string;
     private readonly startTime = performance.now();
     private startMark?: string;
 
@@ -406,7 +405,6 @@ export class PerformanceEvent {
         event: ITelemetryGenericEvent,
     ) {
         this.event = { ...event };
-        this.eventName = event.eventName;
         this.reportEvent("start");
 
         if (typeof window === "object" && window != null && window.performance) {
@@ -420,7 +418,9 @@ export class PerformanceEvent {
     }
 
     public end(props?: ITelemetryProperties, eventNameSuffix = "end"): void {
-        this.reportEvent(eventNameSuffix, props);
+        if (!this.reportEvent(eventNameSuffix, props)) {
+            return;
+        }
 
         if (this.startMark && this.event) {
             const endMark = `${this.event.eventName}-${eventNameSuffix}`;
@@ -437,17 +437,16 @@ export class PerformanceEvent {
         this.event = undefined;
     }
 
-    public reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: any): void {
+    /**
+     * Report the event, if it hasn't already been reported.
+     * Returns a boolean indicating if it was reported this time.
+     */
+    public reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: any): boolean {
+        // There are strange sequences involving muliple Promise chains
+        // where the event can be cancelled and then later a callback is invoked
+        // and the caller attempts to end directly, e.g. issue #3936. Just return.
         if (!this.event) {
-            const errorEvent = {
-                eventName: "PerformanceEventAfterStop",
-                perfEventName: this.eventName,
-                eventNameSuffix,
-            };
-            // Include the error object if present to get a callstack, even though it
-            // doesn't really "belong" to this event (which is about telemetry health, not the perf event)
-            this.logger.sendErrorEvent(errorEvent, error);
-            return;
+            return false;
         }
 
         const event: ITelemetryPerformanceEvent = { ...this.event, ...props };
@@ -457,6 +456,7 @@ export class PerformanceEvent {
         }
 
         this.logger.sendPerformanceEvent(event, error);
+        return true;
     }
 }
 
