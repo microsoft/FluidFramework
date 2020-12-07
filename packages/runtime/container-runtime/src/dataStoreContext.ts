@@ -32,7 +32,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     dataStoreAttributesBlobName,
-    dataStoreSnapshotFormatVersions,
     DataStoreSnapshotFormatVersion,
     IContainerRuntime,
     channelsTreeName,
@@ -61,7 +60,7 @@ function createAttributes(pkg: readonly string[], isRootDataStore: boolean): IFl
     const stringifiedPkg = JSON.stringify(pkg);
     return {
         pkg: stringifiedPkg,
-        snapshotFormatVersion: dataStoreSnapshotFormatVersions.current,
+        snapshotFormatVersion: "0.1",
         isRootDataStore,
     };
 }
@@ -610,7 +609,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
                 // For snapshotFormatVersion = "0.1" or "0.2", pkg is jsonified, otherwise it is just a string.
                 switch (snapshotFormatVersion) {
-                    case dataStoreSnapshotFormatVersions.missing: {
+                    case undefined: {
                         if (pkg.startsWith("[\"") && pkg.endsWith("\"]")) {
                             pkgFromSnapshot = JSON.parse(pkg) as string[];
                         } else {
@@ -618,11 +617,11 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                         }
                         break;
                     }
-                    case dataStoreSnapshotFormatVersions.next: {
+                    case "0.2": {
                         tree = tree.trees[channelsTreeName];
                         // Intentional fallthrough, since package is still JSON
                     }
-                    case dataStoreSnapshotFormatVersions.current: {
+                    case "0.1": {
                         pkgFromSnapshot = JSON.parse(pkg) as string[];
                         break;
                     }

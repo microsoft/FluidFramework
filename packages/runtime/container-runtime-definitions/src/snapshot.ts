@@ -5,20 +5,34 @@
 
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 
-export type PropertyValues<T> = T[keyof T];
+export type ContainerRuntimeSnapshotFormatVersion =
+    /**
+     * Format version is missing from snapshot.
+     * This indicates it is an older version.
+     */
+    | undefined
+    /**
+     * Introduces .metadata blob and .channels trees for isolation of
+     * data store trees from container-level objects.
+     */
+    | "0.1";
 
-export const containerSnapshotFormatVersions = {
-    missing: undefined,
-    next: "0.1",
-} as const;
-export type ContainerRuntimeSnapshotFormatVersion = PropertyValues<typeof containerSnapshotFormatVersions>;
-
-export const dataStoreSnapshotFormatVersions = {
-    missing: undefined,
-    current: "0.1",
-    next: "0.2",
-} as const;
-export type DataStoreSnapshotFormatVersion = PropertyValues<typeof dataStoreSnapshotFormatVersions>;
+export type DataStoreSnapshotFormatVersion =
+    /**
+     * Format version is missing from snapshot.
+     * This indicates it is an older version.
+     */
+    | undefined
+    /**
+     * From this version the pkg within the data store
+     * attributes blob is a JSON array rather than a string.
+     */
+    | "0.1"
+    /**
+     * Introduces .channels trees for isolation of
+     * channel trees from data store objects.
+     */
+    | "0.2";
 
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
