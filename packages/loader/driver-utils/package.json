@@ -55,8 +55,8 @@
     "@fluidframework/protocol-base": "^0.1015.0",
     "@fluidframework/protocol-definitions": "^0.1015.0",
     "@fluidframework/telemetry-utils": "^0.31.0",
-    "uuid": "^8.3.1",
-    "assert": "^2.0.0"
+    "assert": "^2.0.0",
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
