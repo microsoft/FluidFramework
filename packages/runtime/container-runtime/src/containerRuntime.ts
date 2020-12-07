@@ -51,7 +51,7 @@ import {
     readAndParseFromBlobs,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
-import { runGarbageCollection } from "@fluidframework/garbage-collector";
+import { IGCResult, runGarbageCollection } from "@fluidframework/garbage-collector";
 import {
     BlobTreeEntry,
 } from "@fluidframework/protocol-base";
@@ -78,6 +78,7 @@ import {
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
+    IGCData,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelop,
@@ -696,11 +697,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             context.baseSnapshot,
             this,
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
-            (id: string, createParam: CreateChildSummarizerNodeParam) =>
-                (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
+            (id: string, createParam: CreateChildSummarizerNodeParam) => (
+                    summarizeInternal: SummarizeInternalFn,
+                    getGCDataFn: () => Promise<IGCData>,
+                    getInitialGCDataFn: () => Promise<IGCData | undefined>,
+                ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,
                     createParam,
+                    undefined,
+                    getGCDataFn,
+                    getInitialGCDataFn,
                 ),
             this._logger);
 
@@ -1348,12 +1355,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, reason: "disconnected" };
             }
 
+            // Get the container's GC data. This contains the reference graph on which we will run GC.
+            let gcResult: IGCResult | undefined;
+            const gcData = await this.dataStores.getGCData();
+            if (this.runtimeOptions.runGC) {
+                gcResult = runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+            }
+
             const trace = Trace.start();
             const summarizeResult = await this.summarize(fullTree || safe, true /* trackState */);
 
-            if (this.runtimeOptions.runGC) {
-                // Run garbage collection on the GC nodes returned by summarize.
-                runGarbageCollection(summarizeResult.gcNodes, [ "/" ], this.logger);
+            if (gcResult !== undefined) {
+                addBlobToSummary(summarizeResult, ".referencedRoutes", JSON.stringify(gcResult.referencedNodeIds));
+                addBlobToSummary(summarizeResult, ".deletedRoutes", JSON.stringify(gcResult.deletedNodeIds));
             }
 
             const generateData: IGeneratedSummaryData = {

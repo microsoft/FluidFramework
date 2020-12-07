@@ -170,11 +170,7 @@ export const createOldRuntimeFactory = (
     dataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): old.IRuntimeFactory => {
-    // TODO: when the old version of 0.27 is released this can use the old version of TestContainerRuntimeFactory
-    // with the default data store
-    // return new old.TestContainerRuntimeFactory(type, dataStoreFactory as old.IFluidDataStoreFactory, runtimeOptions);
-    const factory = new TestContainerRuntimeFactory(type, dataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
-    return factory as unknown as old.IRuntimeFactory;
+    return new old.TestContainerRuntimeFactory(type, dataStoreFactory as old.IFluidDataStoreFactory, runtimeOptions);
 };
 
 function getDataStoreFactory(containerOptions?: ITestContainerConfig) {

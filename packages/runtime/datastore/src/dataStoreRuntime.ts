@@ -46,6 +46,7 @@ import {
     IEnvelope,
     IFluidDataStoreContext,
     IFluidDataStoreChannel,
+    IGCData,
     IGraphNode,
     IInboundSignalMessage,
     ISummaryTreeWithStats,
@@ -65,7 +66,11 @@ import {
     IChannelFactory,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import { addRouteToAllGCNodes, normalizeAndPrefixGCNodeIds } from "@fluidframework/garbage-collector";
+import {
+    addRouteToAllGCNodes,
+    normalizeAndPrefixGCNodeIds,
+    GCDataBuilder,
+} from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
@@ -594,6 +599,48 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             id: "/",
             outboundRoutes,
         };
+    }
+
+    /**
+     * @returns this channel's GC nodes.
+     */
+    private getOutboundRoutes(): string[] {
+        /**
+         * Get the outbound routes of this channel. Currently, all contexts in this channel are considered referenced
+         * and are hence outbound. This will change when we have root and non-root channel contexts. Then only root
+         * contexts will be considered as referenced.
+         */
+        const outboundRoutes: string[] = [];
+        for (const [contextId] of this.contexts) {
+            outboundRoutes.push(`${this.absolutePath}/${contextId}`);
+        }
+        return outboundRoutes;
+    }
+
+    public async getGCData(): Promise<IGCData> {
+        const builder = new GCDataBuilder();
+        // Iterate over each channel context and get its GC data.
+        await Promise.all(Array.from(this.contexts)
+            .filter(([contextId, _]) => {
+                const isAttached = this.isChannelAttached(contextId);
+                // GC can only run on clients with no local changes!
+                assert(isAttached, "Not expecting local channels during GC");
+                // If the object is registered - and we have received the sequenced op creating the object
+                // (i.e. it has a base mapping) - then we go ahead and get GC data.
+                return isAttached;
+            }).map(async ([contextId, context]) => {
+                const contextGCData = await context.getGCData();
+                // Prefix the child's id to the ids of GC nodes returned by it. This gradually builds the id of
+                // each node to be a path from the root.
+                builder.prefixAndAddGCNodes(contextId, contextGCData.gcNodes);
+            }));
+
+        // Add a back route to self in each child's outbound routes. If any child is referenced, then its parent
+        // should be considered referenced as well.
+        builder.addRouteToAllGCNodes(this.absolutePath);
+        // Get the outbound routes and add a GC node for this channel.
+        builder.addGCNode("/", this.getOutboundRoutes());
+        return builder.getGCData();
     }
 
     /**

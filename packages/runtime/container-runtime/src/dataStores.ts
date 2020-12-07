@@ -19,6 +19,7 @@ import {
     IEnvelope,
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
+    IGCData,
     IGraphNode,
     IInboundSignalMessage,
     InboundAttachMessage,
@@ -37,7 +38,7 @@ import { BlobCacheStorageService, buildSnapshotTree, readAndParseFromBlobs } fro
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
-import { normalizeAndPrefixGCNodeIds } from "@fluidframework/garbage-collector";
+import { normalizeAndPrefixGCNodeIds, GCDataBuilder } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime, nonDataStorePaths } from "./containerRuntime";
 import {
@@ -438,6 +439,26 @@ export class DataStores implements IDisposable {
         return builder.getSummaryTree();
     }
 
+    public async getGCData(): Promise<IGCData> {
+        const builder = new GCDataBuilder();
+        // Iterate over each store and get its GC data.
+        await Promise.all(Array.from(this.contexts)
+            .filter(([_, context]) => {
+                // GC can only run on clients with no local changes!
+                assert(context.attachState !== AttachState.Attaching, "Not expecting local data stores during GC");
+                return context.attachState === AttachState.Attached;
+            }).map(async ([contextId, context]) => {
+                const contextgcData = await context.getGCData();
+                // Prefix the child's id to the ids of GC nodes returned by it. This gradually builds the id of
+                // each node to be a path from the root.
+                builder.prefixAndAddGCNodes(contextId, contextgcData.gcNodes);
+            }));
+
+        // Get the outbound routes and add a GC node for this channel.
+        builder.addGCNode("/", await this.getOutboundRoutes());
+        return builder.getGCData();
+    }
+
     /**
      * Get the outbound routes of this channel. Only root data stores are considered referenced.
      * @returns this channel's garbage collection node.
@@ -455,5 +476,20 @@ export class DataStores implements IDisposable {
             id: "/",
             outboundRoutes,
         };
+    }
+
+    /**
+     * Returns the outbound routes of this channel. Only root data stores are considered referenced and their paths are
+     * part of outbound routes.
+     */
+    private async getOutboundRoutes(): Promise<string[]> {
+        const outboundRoutes: string[] = [];
+        for (const [contextId, context] of this.contexts) {
+            const isRootDataStore = await context.isRoot();
+            if (isRootDataStore) {
+                outboundRoutes.push(`/${contextId}`);
+            }
+        }
+        return outboundRoutes;
     }
 }

@@ -10,6 +10,7 @@ import {
     ISnapshotTree,
     ITree,
 } from "@fluidframework/protocol-definitions";
+import { IGCData } from "./garbageCollection";
 
 /**
  * Represents a node in a graph that has a unique id and a list of routes to other nodes.
@@ -173,9 +174,11 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
         createParam: CreateChildSummarizerNodeParam,
         /** Optional configuration affecting summarize behavior */
         config?: ISummarizerNodeConfig,
+        getGCDataFn?: () => Promise<IGCData>,
         /** Function to get the initial value of garbage collection nodes */
-        getInitialGCNodesFn?: () => Promise<IGraphNode[]>,
+        getInitialGCDataFn?: () => Promise<IGCData | undefined>,
     ): ISummarizerNodeWithGC;
 
-    getChild(id: string): ISummarizerNodeWithGC | undefined
+    getChild(id: string): ISummarizerNodeWithGC | undefined;
+    getGCData(): Promise<IGCData>;
 }

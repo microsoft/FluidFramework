@@ -15,7 +15,7 @@ import {
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult, IGraphNode } from "@fluidframework/runtime-definitions";
+import { IChannelSummarizeResult, IGCData, IGraphNode } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { SharedObjectHandle } from "./handle";
@@ -232,6 +232,28 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         return {
             ...summaryTree,
             gcNodes,
+        };
+    }
+
+    /**
+     * {@inheritDoc (ISharedObject:interface).getGCData}
+     */
+    public getGCData(): IGCData {
+        this._isSummarizing = true;
+         // Create a SummarySerializer that will be used to serialize IFluidHandles in this object. SummarySerializer
+         // tracks the routes of handles that it serializes. These represent outbound routes to other Fluid object.
+        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+
+        // Take a snapshot of the object's data which will serialize all the handles.
+        // Note: Using the snapshotCore API during GC is a little expensive but its okay for now.
+        this.snapshotCore(serializer);
+
+        this._isSummarizing = false;
+
+        // Return GC data for this shared object which contains a single GC node. The outbound routes of the node are
+        // the routes of handles serialized during snapshot.
+        return {
+            gcNodes: { "/": serializer.getSerializedRoutes() },
         };
     }
 

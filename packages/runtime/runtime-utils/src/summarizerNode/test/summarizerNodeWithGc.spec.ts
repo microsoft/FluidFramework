@@ -5,10 +5,13 @@
 
 import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { cloneGCData } from "@fluidframework/garbage-collector";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
     CreateSummarizerNodeSource,
+    IGCData,
     ISummarizeInternalResult,
+    ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "../summarizerNodeWithGc";
@@ -17,14 +20,14 @@ import { mergeStats } from "../../summaryUtils";
 describe("SummarizerNodeWithGC Tests", () => {
     const summarizerNodeId = "testNode";
     const node1Id = "/gcNode1";
-    const node2Id = "/gcNode1/subNode1";
-    const node3Id = "/gcNode1/subNode2";
+    const node2Id = "/gcNode2";
+    const subNode1Id = "/gcNode1/subNode";
+    const subNode2Id = "/gcNode2/subNode";
 
-    let summarizeGCNodes = [
-        { id: node1Id, outboundRoutes: [ node2Id ] },
-        { id: node2Id, outboundRoutes: [ node1Id ] },
-    ];
+    let internalGCData: IGCData;
+    let initialGCData: IGCData | undefined;
     let rootSummarizerNode: IRootSummarizerNodeWithGC;
+    let summarizerNode: ISummarizerNodeWithGC;
 
     beforeEach(async () => {
         rootSummarizerNode = createRootSummarizerNodeWithGC(
@@ -33,6 +36,28 @@ describe("SummarizerNodeWithGC Tests", () => {
             0,
             0);
         rootSummarizerNode.startSummary(0, new TelemetryNullLogger());
+
+        summarizerNode = rootSummarizerNode.createChild(
+            summarizeInternal,
+            summarizerNodeId,
+            { type: CreateSummarizerNodeSource.FromSummary },
+            undefined,
+            getInternalGCData,
+            getInitialGCData,
+        );
+
+        // Initialize the values to be returned by getGCNodeInternal.
+        internalGCData = {
+            gcNodes: {
+                "/": [ node1Id, node2Id ],
+                "/gcNode1": [ subNode1Id ],
+            },
+        };
+
+        // Initialize the values to be returned by getInitialGCNodes. This is empty to begin with.
+        initialGCData = {
+            gcNodes: {},
+        };
     });
 
     async function summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
@@ -44,107 +69,73 @@ describe("SummarizerNodeWithGC Tests", () => {
                 tree: {},
             },
             stats,
-            gcNodes: summarizeGCNodes,
+            gcNodes: [],
             id: summarizerNodeId,
         };
     }
 
-    it("can return correct garbage collection nodes from summarize internal", async () => {
-        const summarizerNode = rootSummarizerNode.createChild(
-            summarizeInternal,
-            summarizerNodeId,
-            { type: CreateSummarizerNodeSource.FromSummary },
-        );
+    const getInternalGCData = async (): Promise<IGCData> => internalGCData;
+    const getInitialGCData = async (): Promise<IGCData | undefined> => initialGCData;
 
-        // Call summarize with fullTree as true. This will force the summarizer node to call summarizeInternal.
-        const summarizeResult = await summarizerNode.summarize(true /* fullTree */, true /* trackState */);
-        assert.deepStrictEqual(
-            summarizeResult.gcNodes,
-            summarizeGCNodes,
-            "Summarizer node did not return correct GC nodes from summarize internal",
-        );
+    it("fails when function to get GC data is not provided", async () => {
+        // Root sumamrizer node does not have the function to get GC data. Trying to get GC data from it should fail.
+        let failed = false;
+        try {
+            await rootSummarizerNode.getGCData();
+        } catch (error) {
+            failed = true;
+        }
+        assert(failed, "Getting GC data should have failed");
     });
 
-    it("can return initial garbage collection nodes", async () => {
-        const initialGCNodes = [
-            { id: node1Id, outboundRoutes: [ node3Id ] },
-            { id: node3Id, outboundRoutes: [ node2Id, node1Id ] },
-        ];
-        const getInitialGCNodes = async () => { return Promise.resolve(initialGCNodes); };
+    it("can return GC data when data has changed since last summary", async () => {
+        // Invalidate the summarizer node to force it to generate GC data and not use cached value.
+        summarizerNode.invalidate(10);
 
-        const summarizerNode = rootSummarizerNode.createChild(
-            summarizeInternal,
-            summarizerNodeId,
-            { type: CreateSummarizerNodeSource.FromSummary },
-            undefined,
-            getInitialGCNodes,
-        );
-
-        // Call summarize with fullTree as false. The summarizer node will not attempt to call summarizeInternal.
-        // It should instead call getInitialGCNodes to get the initial GC nodes.
-        const summarizeResult = await summarizerNode.summarize(false /* fullTree */, true /* trackState */);
-        assert.deepStrictEqual(
-            summarizeResult.gcNodes,
-            initialGCNodes,
-            "Summarizer node did not return correct initial GC nodes",
-        );
+        const gcData = await summarizerNode.getGCData();
+        assert.deepStrictEqual(gcData, internalGCData, "GC data should be generated by calling getInternalGCData");
     });
 
-    it("can return cached garbage collection nodes", async () => {
-        const summarizerNode = rootSummarizerNode.createChild(
-            summarizeInternal,
-            summarizerNodeId,
-            { type: CreateSummarizerNodeSource.FromSummary },
-            undefined,
-        );
+    it("can return initial GC data when nothing has changed since last summary", async () => {
+        // Set the data to be returned by getInitialGCData.
+        initialGCData = {
+            gcNodes: {
+                "/": [ node1Id ],
+                "gcNode1": [ "/" ],
+                "gcNode2": [ subNode1Id, subNode2Id ],
+            },
+        };
 
-        // Call summarize with fullTree as true. This will force the summarizer node to call summarizeInternal.
-        let summarizeResult = await summarizerNode.summarize(true /* fullTree */, true /* trackState */);
-        assert.deepStrictEqual(
-            summarizeResult.gcNodes,
-            summarizeGCNodes,
-            "Summarizer node did not return correct GC nodes from summarize Internal",
-        );
-
-        // Call summarize with fullTree as false. The summarizer node will not attempt to call summarizeInternal.
-        // It should instead use the cached value of GC nodes from the previous run.
-        summarizeResult = await summarizerNode.summarize(false /* fullTree */, true /* trackState */);
-        assert.deepStrictEqual(
-            summarizeResult.gcNodes,
-            summarizeGCNodes,
-            "Summarizer node did not return correct cached GC nodes",
-        );
+        // We did not invalidate the summarizer node,so  it will get the initial GC data becuase nothing changed since
+        // last smmary.
+        const gcData = await summarizerNode.getGCData();
+        assert.deepStrictEqual(gcData, initialGCData, "Initial GC data should have been returned");
     });
 
-    it("can return updated garbage collection nodes when not tracking state", async () => {
-        const summarizerNode = rootSummarizerNode.createChild(
-            summarizeInternal,
-            summarizerNodeId,
-            { type: CreateSummarizerNodeSource.FromSummary },
-            undefined,
-        );
+    it("can return GC data when initial GC data is not available", async () => {
+        // Set initial GC data to undefined. This will force the summarizer node to generate GC data even though
+        // nothing changed since last summary.
+        initialGCData = undefined;
 
-        // Call summarize with trackState as false. This will force the summarizer node to call summarizeInternal.
-        let summarizeResult = await summarizerNode.summarize(false /* fullTree */, false /* trackState */);
-        assert.deepStrictEqual(
-            summarizeResult.gcNodes,
-            summarizeGCNodes,
-            "Summarizer node did not return correct GC nodes from summarize internal",
-        );
+        const gcData = await summarizerNode.getGCData();
+        assert.deepStrictEqual(gcData, internalGCData, "GC data should be generated by calling getInternalGCData");
+    });
 
-        // Update the GC nodes returned by summarizeInternal.
-        summarizeGCNodes = [
-            { id: node1Id, outboundRoutes: [ node3Id ] },
-            { id: node3Id, outboundRoutes: [] },
-        ];
+    it("can return cached GC data", async () => {
+        // Set initial GC data to undefined. This will force the summarizer node to generate GC data even though
+        // nothing changed since last summary.
+        initialGCData = undefined;
+        const gcData = await summarizerNode.getGCData();
+        assert.deepStrictEqual(gcData, internalGCData, "GC data should be generated by calling getInternalGCData");
 
-        // The above summarize call would have cached the returned GC nodes. Call summarize again with trackState
-        // as false. This will force it to call summarizeInternal again and we should get the updated GC nodes.
-        summarizeResult = await summarizerNode.summarize(false /* fullTree */, false /* trackState */);
-        assert.deepStrictEqual(
-            summarizeResult.gcNodes,
-            summarizeGCNodes,
-            "Summarizer node did not return updated GC nodes from summarize internal",
-        );
+        // Make a clone of the GC data returned above because we are about to change it.
+        const cachedGCData = cloneGCData(gcData);
+
+        // Add a new node to the GC data returned by getInternalGCData.
+        internalGCData.gcNodes[subNode1Id] = [ "/", subNode2Id ];
+
+        // Since nothing changed since last summary, summarizer node should return the GC data from the previous run.
+        const newGCData = await summarizerNode.getGCData();
+        assert.deepStrictEqual(newGCData, cachedGCData, "GC data from previous run should be returned");
     });
 });
