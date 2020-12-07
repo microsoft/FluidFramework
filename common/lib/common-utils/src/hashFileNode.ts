@@ -10,7 +10,8 @@ import { IsoBuffer } from "./bufferNode";
 /**
  * Set a hashing function to be called in place of hashFile's internal
  * implementation when running under insecure contexts.  Not needed
- * when running under Node.
+ * when running under Node.  The internal algorithm should match that the
+ * one used internally by hashFile.
  * @param hashFn - The function that should be used in place of hashFile
  */
 export function setInsecureContextHashFn(hashFn: (f: IsoBuffer) => Promise<string>) {
