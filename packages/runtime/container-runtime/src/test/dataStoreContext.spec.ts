@@ -225,7 +225,7 @@ describe("Data Store Context Tests", () => {
 
             remotedDataStoreContext = new RemotedFluidDataStoreContext(
                 dataStoreId,
-                Promise.resolve(snapshotTree),
+                snapshotTree,
                 containerRuntime,
                 new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,
@@ -263,7 +263,7 @@ describe("Data Store Context Tests", () => {
 
             remotedDataStoreContext = new RemotedFluidDataStoreContext(
                 dataStoreId,
-                Promise.resolve(snapshotTree),
+                snapshotTree,
                 containerRuntime,
                 new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,
@@ -303,7 +303,7 @@ describe("Data Store Context Tests", () => {
 
             remotedDataStoreContext = new RemotedFluidDataStoreContext(
                 dataStoreId,
-                Promise.resolve(snapshotTree),
+                snapshotTree,
                 containerRuntime,
                 new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,

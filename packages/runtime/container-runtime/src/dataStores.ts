@@ -91,7 +91,7 @@ export class DataStores implements IDisposable {
             if (this.runtime.attachState !== AttachState.Detached) {
                 dataStoreContext = new RemotedFluidDataStoreContext(
                     key,
-                    typeof value === "string" ? value : Promise.resolve(value),
+                    value,
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
@@ -170,7 +170,7 @@ export class DataStores implements IDisposable {
         const pkg = [attachMessage.type];
         const remotedFluidDataStoreContext = new RemotedFluidDataStoreContext(
             attachMessage.id,
-            snapshotTree === null ? null : Promise.resolve(snapshotTree),
+            snapshotTree,
             this.runtime,
             new BlobCacheStorageService(this.runtime.storage, flatBlobs),
             this.runtime.scope,
