@@ -26,11 +26,7 @@ export class ChannelStorageService implements IChannelStorageService {
 
     constructor(
         private readonly tree: ISnapshotTree | undefined,
-<<<<<<< HEAD
         private readonly storage: Pick<IDocumentStorageService, "readBlob">,
-=======
-        private readonly storage: Pick<IDocumentStorageService, "read">,
->>>>>>> main
         private readonly extraBlobs?: Map<string, string>,
     ) {
         this.flattenedTree = {};
@@ -46,7 +42,6 @@ export class ChannelStorageService implements IChannelStorageService {
 
     public async readBlob(path: string): Promise<ArrayBufferLike> {
         const id = await this.getIdForPath(path);
-<<<<<<< HEAD
         const blob = this.extraBlobs?.get(id) ?? this.storage.readBlob(id);
 
         return blob;
@@ -54,19 +49,14 @@ export class ChannelStorageService implements IChannelStorageService {
 
     public async read(path: string): Promise<string> {
         const blob = this.readBlob(path);
-=======
-        const blob = this.extraBlobs !== undefined
-            ? this.extraBlobs.get(id)
-            : undefined;
->>>>>>> main
 
-        return blob ?? this.storage.read(id);
+        return blob;
     }
 
     public async readString(path: string): Promise<string> {
         const blob = this.readBlob(path);
 
-        return this.storage.readString(id);
+        return blob;
     }
 
     public async list(path: string): Promise<string[]> {
