@@ -43,7 +43,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
 import {
-    IChannelSummarizeResult,
+    ISummaryTreeWithStats,
     IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
@@ -495,7 +495,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
-    public async summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult> {
+    public async summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats> {
         const stats = mergeStats();
         stats.treeNodeCount++;
         return {
@@ -504,7 +504,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
                 tree: {},
             },
             stats,
-            gcNodes: [],
         };
     }
 
@@ -512,7 +511,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return [];
     }
 
-    public getAttachSummary(): IChannelSummarizeResult {
+    public getAttachSummary(): ISummaryTreeWithStats {
         const stats = mergeStats();
         stats.treeNodeCount++;
         return {
@@ -521,7 +520,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
                 tree: {},
             },
             stats,
-            gcNodes: [],
         };
     }
 

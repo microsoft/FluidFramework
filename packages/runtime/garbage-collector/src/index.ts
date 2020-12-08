@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 export * from "./garbageCollector";
-export * from "./utils";
 export * from "./interfaces";

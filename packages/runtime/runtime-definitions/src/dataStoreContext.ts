@@ -33,8 +33,8 @@ import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
 import { IInboundSignalMessage } from "./protocol";
 import {
     CreateChildSummarizerNodeParam,
-    IChannelSummarizeResult,
     ISummarizerNodeWithGC,
+    ISummaryTreeWithStats,
     SummarizeInternalFn,
 } from "./summary";
 import { ITaskManager } from "./agent";
@@ -173,7 +173,7 @@ export interface IFluidDataStoreChannel extends
     /**
      * Retrieves the summary used as part of the initial summary message
      */
-    getAttachSummary(): IChannelSummarizeResult;
+    getAttachSummary(): ISummaryTreeWithStats;
 
     /**
      * Processes the op.
@@ -191,7 +191,7 @@ export interface IFluidDataStoreChannel extends
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
      */
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult>;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
      * Notifies this object about changes in the connection state.

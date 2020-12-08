@@ -33,28 +33,12 @@ export interface ISummaryTreeWithStats {
     summary: ISummaryTree;
 }
 
-export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
-    /**
-     * A list of the channel's garbage collection nodes. This includes all the child nodes plus nodes for
-     * the channel itself.
-     */
-    gcNodes: IGraphNode[];
-}
-
 export interface ISummarizeResult {
     stats: ISummaryStats;
     summary: SummaryTree;
 }
 
-export interface IContextSummarizeResult extends ISummarizeResult {
-    /**
-     * A list of the context's garbage collection nodes. This includes all the child nodes plus nodes for
-     * the context itself.
-     */
-    gcNodes: IGraphNode[];
-}
-
-export interface ISummarizeInternalResult extends IContextSummarizeResult {
+export interface ISummarizeInternalResult extends ISummarizeResult {
     id: string;
 }
 
@@ -158,7 +142,7 @@ export interface ISummarizerNode {
  * - A trackState flag in summarize which indicates whether the summarizer node should track the state of the summary.
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
-    summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
+    summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
     createChild(
         /** Summarize function */
         summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
@@ -173,8 +157,6 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
         createParam: CreateChildSummarizerNodeParam,
         /** Optional configuration affecting summarize behavior */
         config?: ISummarizerNodeConfig,
-        /** Function to get the initial value of garbage collection nodes */
-        getInitialGCNodesFn?: () => Promise<IGraphNode[]>,
     ): ISummarizerNodeWithGC;
 
     getChild(id: string): ISummarizerNodeWithGC | undefined

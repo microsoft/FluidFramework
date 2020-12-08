@@ -51,7 +51,6 @@ import {
     readAndParseFromBlobs,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
-import { runGarbageCollection } from "@fluidframework/garbage-collector";
 import {
     BlobTreeEntry,
 } from "@fluidframework/protocol-base";
@@ -87,7 +86,6 @@ import {
     ISummarizeInternalResult,
     IAgentScheduler,
     ITaskManager,
-    IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
@@ -1278,11 +1276,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
      */
-    private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
+    private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
         const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
         assert(summarizeResult.summary.type === SummaryType.Tree,
             "Container Runtime's summarize should always return a tree");
-        return summarizeResult as IChannelSummarizeResult;
+        return summarizeResult as ISummaryTreeWithStats;
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
@@ -1347,11 +1345,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             const trace = Trace.start();
             const summarizeResult = await this.summarize(fullTree || safe, true /* trackState */);
-
-            if (this.runtimeOptions.runGC) {
-                // Run garbage collection on the GC nodes returned by summarize.
-                runGarbageCollection(summarizeResult.gcNodes, [ "/" ], this.logger);
-            }
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: summarizeResult.stats,

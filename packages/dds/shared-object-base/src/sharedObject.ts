@@ -15,7 +15,7 @@ import {
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult, IGraphNode } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { SharedObjectHandle } from "./handle";
@@ -207,32 +207,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * {@inheritDoc (ISharedObject:interface).summarize}
      */
-    public summarize(fullTree: boolean = false, trackState: boolean = false): IChannelSummarizeResult {
+    public summarize(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
         this._isSummarizing = true;
-
-        /**
-         * Create a SummarySerializer that will be used to serialize IFluidHandles in this object. SummarySerializer
-         * tracks the routes of all handles that it serializes. These represent routes to referenced Fluid object.
-         */
         const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
         const snapshot: ITree = this.snapshotCore(serializer);
-        const summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
-
-        /**
-         * We need to add this channel's garbage collection node to the summarize result.
-         * The outbound routes of this channel are all the routes of all the handles that are tracked by the
-         * SummarySerializer created above.
-         */
-        const gcNodes: IGraphNode[] = [
-            { id: "/", outboundRoutes: serializer.getSerializedRoutes() },
-        ];
-
         this._isSummarizing = false;
 
-        return {
-            ...summaryTree,
-            gcNodes,
-        };
+        return convertToSummaryTreeWithStats(snapshot, fullTree);
     }
 
     /**

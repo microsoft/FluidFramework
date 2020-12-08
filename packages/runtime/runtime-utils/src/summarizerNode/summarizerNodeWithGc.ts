@@ -5,14 +5,12 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { cloneGCNodes } from "@fluidframework/garbage-collector";
 import {
-    IContextSummarizeResult,
-    IGraphNode,
     ISummarizeInternalResult,
     ISummarizerNodeConfig,
     ISummarizerNodeWithGC,
     CreateChildSummarizerNodeParam,
+    ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import { SummarizerNode } from "./summarizerNode";
 import { ICreateChildDetails, IInitialSummary, ISummarizerNodeRootContract, SummaryNode } from "./summarizerNodeUtils";
@@ -28,8 +26,6 @@ export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISumma
  *   directly into summarizeInternal method.
  */
 export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
-    private gcNodes: IGraphNode[] | undefined;
-
     /**
      * Do not call constructor directly.
      * Use createRootSummarizerNodeWithGC to create root node, or createChild to create child nodes.
@@ -43,12 +39,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         latestSummary?: SummaryNode,
         initialSummary?: IInitialSummary,
         wipSummaryLogger?: ITelemetryLogger,
-        /** Function to get the initial value of garbage collection nodes */
-        private readonly getInitialGCNodesFn?: () => Promise<IGraphNode[]>,
     ) {
         super(
             logger,
-            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */),
+            async (fullTree: boolean) => this.summarizeFn(fullTree, true /* trackState */),
             config,
             changeSequenceNumber,
             latestSummary,
@@ -57,43 +51,16 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         );
     }
 
-    public async summarize(fullTree: boolean, trackState: boolean = true): Promise<IContextSummarizeResult> {
+    public async summarize(fullTree: boolean, trackState: boolean = true): Promise<ISummarizeResult> {
         /**
          * If trackState is true, call parent summarizer node to get the summary since it tracks the state from summary.
-         * It may update the GC nodes cache if data has changed since last summary.
-         * If trackState is false, get the summary directly from the summarizeInternal method which will update the
-         * GC nodes cache.
+         * If trackState is false, get the summary directly from summarizeInternal.
          */
         if (trackState) {
-            const summarizeResult = await super.summarize(fullTree);
-
-            // If this is the first time we are summarizing and nothing has changed since the last summary, we would
-            // not have updated the GC nodes cache. So, we need to get its initial value.
-            if (this.gcNodes === undefined) {
-                this.gcNodes = this.getInitialGCNodesFn
-                    ? await this.getInitialGCNodesFn()
-                    : [];
-            }
-
-            return {
-                ...summarizeResult,
-                gcNodes: cloneGCNodes(this.gcNodes),
-            };
+            return super.summarize(fullTree);
         } else {
-            return this.summarizeInternal(fullTree, trackState);
+            return this.summarizeFn(fullTree, false /* trackState */);
         }
-    }
-
-    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
-        const summarizeResult = await this.summarizeFn(fullTree, trackState);
-        // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
-        if (summarizeResult.gcNodes === undefined) {
-            summarizeResult.gcNodes = [];
-        }
-        // Clone and cache the GC nodes. This will be used when a node's data hasn't changed and this
-        // method is not called.
-        this.gcNodes = cloneGCNodes(summarizeResult.gcNodes);
-        return summarizeResult;
     }
 
     /**
@@ -111,8 +78,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
          */
         createParam: CreateChildSummarizerNodeParam,
         config: ISummarizerNodeConfig = {},
-        /** Function to get the initial value of garbage collection nodes */
-        getInitialGCNodesFn?: () => Promise<IGraphNode[]>,
     ): ISummarizerNodeWithGC {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
 
@@ -125,7 +90,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             createDetails.latestSummary,
             createDetails.initialSummary,
             this.wipSummaryLogger,
-            getInitialGCNodesFn,
         );
         this.initializeChild(child);
 
@@ -149,7 +113,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
  * @param referenceSequenceNumber - Reference sequence number of last acked summary,
  * or undefined if not loaded from summary
  * @param config - Configure behavior of summarizer node
- * @param getInitialGCNodesFn - Function to get the initial value of garbage collection nodes
  */
 export const createRootSummarizerNodeWithGC = (
     logger: ITelemetryLogger,
@@ -157,14 +120,10 @@ export const createRootSummarizerNodeWithGC = (
     changeSequenceNumber: number,
     referenceSequenceNumber: number | undefined,
     config: ISummarizerNodeConfig = {},
-    getInitialGCNodesFn?: () => Promise<IGraphNode[]>,
 ): IRootSummarizerNodeWithGC => new SummarizerNodeWithGC(
     logger,
     summarizeInternalFn,
     config,
     changeSequenceNumber,
     referenceSequenceNumber === undefined ? undefined : SummaryNode.createForRoot(referenceSequenceNumber),
-    undefined /* initialSummary */,
-    undefined /* wipSummaryLogger */,
-    getInitialGCNodesFn,
 );
