@@ -7,8 +7,8 @@ import { getSessionStorageContainer } from "@fluidframework/get-session-storage-
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
 import { renderDiceRoller } from "../src/view";
-import { DiceRollerContainerRuntimeFactory } from "../src/containerCode";
-import { DiceRoller } from "../src/dataObject";
+import { KeyValueContainerRuntimeFactory } from "../src/containerCode";
+import { KeyValueDroplet } from "../src/dataObject";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
@@ -26,10 +26,10 @@ const documentId = window.location.hash.substring(1);
 export async function createContainerAndRenderInElement(element: HTMLDivElement, createNewFlag: boolean) {
     // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
     // to store ops.
-    const container = await getSessionStorageContainer(documentId, DiceRollerContainerRuntimeFactory, createNewFlag);
+    const container = await getSessionStorageContainer(documentId, KeyValueContainerRuntimeFactory, createNewFlag);
 
     // Get the Default Object from the Container
-    const defaultObject = await getDefaultObjectFromContainer<DiceRoller>(container);
+    const defaultObject = await getDefaultObjectFromContainer<KeyValueDroplet>(container);
 
     // Given an IDiceRoller, we can render its data using the view we've created in our app.
     renderDiceRoller(defaultObject, element);

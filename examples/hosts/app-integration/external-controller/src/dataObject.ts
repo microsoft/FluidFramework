@@ -5,73 +5,71 @@
 
 import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { ISharedMap, SharedMap, IDirectoryValueChanged } from "@fluidframework/map";
 
 /**
- * IDiceRoller describes the public API surface for our dice roller data object.
+ * IKeyValueDataObject describes the public API surface for our KeyValue Droplet data object.
  */
-export interface IDiceRoller extends EventEmitter {
+export interface IKeyValueDataObject extends EventEmitter {
     /**
      * Get the dice value as a number.
      */
-    readonly value: number;
+    get: (key: string) => any
 
     /**
      * Roll the dice.  Will cause a "diceRolled" event to be emitted.
      */
-    roll: () => void;
+    set: (key: string, value: any) => void;
 
     /**
      * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
      */
-    on(event: "diceRolled", listener: () => void): this;
+    on(event: "changed", listener: (args: IDirectoryValueChanged) => void): this;
 }
 
-// The root is map-like, so we'll use this key for storing the value.
-const diceValueKey = "diceValue";
-
 /**
- * The DiceRoller is our data object that implements the IDiceRoller interface.
+ * The KeyValueDroplet is our data object that implements the IKeyValueDataObject interface.
  */
-export class DiceRoller extends DataObject implements IDiceRoller {
+export class KeyValueDroplet extends DataObject implements IKeyValueDataObject {
+
+    private dataMap: ISharedMap | undefined;
+
     /**
      * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
      * initialize the state of the DataObject.
      */
     protected async initializingFirstTime() {
-        this.root.set(diceValueKey, 1);
+        const initMap = SharedMap.create(this.runtime, 'name');
+        this.root.set("map", initMap.handle);
     }
 
     /**
      * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
-     * DataObject, by registering an event listener for dice rolls.
+     * DataObject, by registering an event listener for changes in data.
      */
     protected async hasInitialized() {
-        this.root.on("valueChanged", (changed) => {
-            if (changed.key === diceValueKey) {
-                // When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
-                this.emit("diceRolled");
-            }
+        this.dataMap = await this.root.get("map").get();
+
+        this.dataMap?.on("valueChanged", (changed) => {
+            this.emit("changed", changed);
         });
     }
 
-    public get value() {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.root.get(diceValueKey);
+    public set = (key: string, value: JSON) => {
+        this.dataMap?.set(key, value)
     }
-
-    public readonly roll = () => {
-        const rollValue = Math.floor(Math.random() * 6) + 1;
-        this.root.set(diceValueKey, rollValue);
-    };
+    public get = (key: string) => {
+        return this.dataMap?.get(key)
+    }
 }
 
 /**
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const DiceRollerInstantiationFactory = new DataObjectFactory(
-    "dice-roller",
-    DiceRoller,
+export const KeyValueInstantiationFactory = new DataObjectFactory(
+    "keyvalue-droplet",
+    KeyValueDroplet,
     [],
     {},
 );
