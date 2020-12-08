@@ -35,6 +35,13 @@
         "kafkaClientId": "alfred",
         "maxMessageSize": "16KB",
         "maxNumberOfClientsPerDocument": 1000000,
+        "throttling": {
+            "http": {
+                "requestRate": 0.1,
+                "minCooldownIntervalInMs": 1000,
+                "minThrottleIntervalInMs": 10000
+            }
+        },
         "topic": "rawdeltas",
         "bucket": "snapshots",
         "restJsonSize": "50mb",

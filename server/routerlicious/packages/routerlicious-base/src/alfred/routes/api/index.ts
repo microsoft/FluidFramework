@@ -7,6 +7,7 @@ import {
     IDocumentStorage,
     IProducer,
     ITenantManager,
+    IThrottler,
     MongoManager,
 } from "@fluidframework/server-services-core";
 import cors from "cors";
@@ -20,6 +21,7 @@ import * as documents from "./documents";
 export function create(
     config: Provider,
     tenantManager: ITenantManager,
+    throttler: IThrottler,
     storage: IDocumentStorage,
     mongoManager: MongoManager,
     producer: IProducer,
@@ -27,7 +29,7 @@ export function create(
     const router: Router = Router();
     const deltasRoute = deltas.create(config, tenantManager, mongoManager, appTenants);
     const documentsRoute = documents.create(storage, appTenants);
-    const apiRoute = api.create(config, producer, tenantManager, storage);
+    const apiRoute = api.create(config, producer, tenantManager, throttler, storage);
 
     router.use(cors());
     router.use("/deltas", deltasRoute);

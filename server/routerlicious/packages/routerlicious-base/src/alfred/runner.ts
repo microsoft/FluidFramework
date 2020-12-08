@@ -13,6 +13,7 @@ import {
     IWebServer,
     IWebServerFactory,
     MongoManager,
+    IThrottler,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -32,6 +33,7 @@ export class AlfredRunner implements utils.IRunner {
         private readonly port: string | number,
         private readonly orderManager: IOrdererManager,
         private readonly tenantManager: ITenantManager,
+        private readonly throttler: IThrottler,
         private readonly storage: IDocumentStorage,
         private readonly clientManager: IClientManager,
         private readonly appTenants: IAlfredTenant[],
@@ -48,6 +50,7 @@ export class AlfredRunner implements utils.IRunner {
         const alfred = app.create(
             this.config,
             this.tenantManager,
+            this.throttler,
             this.storage,
             this.appTenants,
             this.mongoManager,

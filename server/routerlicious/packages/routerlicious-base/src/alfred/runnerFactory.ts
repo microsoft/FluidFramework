@@ -80,6 +80,7 @@ export class AlfredResources implements utils.IResources {
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
+        public throttler: core.IThrottler,
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
         public mongoManager: core.MongoManager,
@@ -166,6 +167,16 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         const tenantManager = new services.TenantManager(authEndpoint);
 
+        const throttleRequestRate = config.get("alfred:throttling:http:requestRate") as number;
+        const throttleMinCooldownIntervalInMs = config.get("alfred:throttling:http:minCooldownIntervalInMs") as number;
+        const minThrottleIntervalInMs = config.get("alfred:throttling:http:minThrottleIntervalInMs") as number;
+        const throttleStorageManager = new services.RedisThrottleStorageManager(redisClient);
+        const throttlerHelper = new services.ThrottlerHelper(
+            throttleStorageManager,
+            throttleRequestRate,
+            throttleMinCooldownIntervalInMs);
+        const throttler = new services.Throttler(throttlerHelper, minThrottleIntervalInMs, winston);
+
         const databaseManager = new core.MongoDatabaseManager(
             mongoManager,
             nodeCollectionName,
@@ -228,6 +239,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             webSocketLibrary,
             orderManager,
             tenantManager,
+            throttler,
             storage,
             appTenants,
             mongoManager,
@@ -245,6 +257,7 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.port,
             resources.orderManager,
             resources.tenantManager,
+            resources.throttler,
             resources.storage,
             resources.clientManager,
             resources.appTenants,

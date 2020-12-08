@@ -12,6 +12,9 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
+import { RequestHandler } from "express";
+import onFinished from "on-finished";
+import { getParam } from "../../../utils";
 
 export interface IMapSetOperation {
     op: string;
@@ -127,3 +130,15 @@ export function craftMapSet(op: IMapSetOperation) {
 
     return opMessage;
 }
+
+export const throttle = (throttler: core.IThrottler, weight: number = 1, fallbackId: string = "-"): RequestHandler =>
+    (req, res, next) => {
+        const tenantId = getParam(req.params, "tenantId") || fallbackId;
+        const throttleId = `${tenantId}_AlfredRest`;
+        throttler.incrementCount(throttleId, weight);
+        onFinished(req, () => {
+            throttler.decrementCount(throttleId, weight);
+        });
+
+        next();
+    };

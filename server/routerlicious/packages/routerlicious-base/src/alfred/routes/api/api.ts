@@ -20,12 +20,14 @@ import {
     craftOpMessage,
     IBlobData,
     IMapSetOperation,
+    throttle,
 } from "./restHelper";
 
 export function create(
     config: Provider,
     producer: core.IProducer,
     tenantManager: core.ITenantManager,
+    throttler: core.IThrottler,
     storage: core.IDocumentStorage): Router {
     const router: Router = Router();
 
@@ -45,7 +47,7 @@ export function create(
         }, (error) => response.status(400).end(error.toString()));
     }
 
-    router.get("/ping", async (request, response) => {
+    router.get("/ping", throttle(throttler, 1, "ping"), async (request, response) => {
         response.sendStatus(200);
     });
 
