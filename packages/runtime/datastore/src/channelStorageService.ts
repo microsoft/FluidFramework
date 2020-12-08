@@ -7,7 +7,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8, IsoBuffer } from "@fluidframework/common-utils";
 
 export class ChannelStorageService implements IChannelStorageService {
     private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
@@ -26,7 +26,7 @@ export class ChannelStorageService implements IChannelStorageService {
 
     constructor(
         private readonly tree: ISnapshotTree | undefined,
-        private readonly storage: Pick<IDocumentStorageService, "read" | "readString">,
+        private readonly storage: Pick<IDocumentStorageService, "readBlob">,
         private readonly extraBlobs?: Map<string, string>,
     ) {
         // Create a map from paths to blobs
@@ -45,23 +45,22 @@ export class ChannelStorageService implements IChannelStorageService {
         return (await this.flattenedTreeP)[path] !== undefined;
     }
 
-    public async read(path: string): Promise<string> {
+    public async readBlob(path: string): Promise<ArrayBufferLike> {
         const id = await this.getIdForPath(path);
-        const blob = this.extraBlobs !== undefined
-            ? (await this.extraBlobs).get(id)
-            : undefined;
+        const blob = this.extraBlobs?.get(id) ?? this.storage.readBlob(id);
+
+        return blob;
+    }
+
+    public async read(path: string): Promise<string> {
+        const blob = this.readBlob(path);
 
         return blob ?? this.storage.read(id);
     }
 
     public async readString(path: string): Promise<string> {
-        const id = await this.getIdForPath(path);
-        const blob = this.extraBlobs !== undefined
-            ? (await this.extraBlobs).get(id)
-            : undefined;
-        if (blob !== undefined) {
-            return fromBase64ToUtf8(blob);
-        }
+        const blob = this.readBlob(path);
+
         return this.storage.readString(id);
     }
 

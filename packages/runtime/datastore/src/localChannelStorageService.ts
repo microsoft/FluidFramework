@@ -4,7 +4,7 @@
  */
 
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { fromBase64ToUtf8, fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8, fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
@@ -14,12 +14,14 @@ export class LocalChannelStorageService implements IChannelStorageService {
 
     public async read(path: string): Promise<string> {
         const contents = this.readSync(path);
-        return contents !== undefined ? Promise.resolve(contents) : Promise.reject(new Error("Not found"));
+        assert(contents !== undefined, "Not Found");
+        return contents;
     }
 
     public async readString(path: string): Promise<string> {
         const contents = this.readStringSync(path);
-        return contents !== undefined ? Promise.resolve(contents) : Promise.reject(new Error("Not found"));
+        assert(contents !== undefined, "Not Found");
+        return contents;
     }
 
     public async contains(path: string): Promise<boolean> {
