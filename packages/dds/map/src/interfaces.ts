@@ -5,7 +5,7 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IEvent, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -196,7 +196,17 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
         changed: IDirectoryValueChanged,
         local: boolean,
         op: ISequencedDocumentMessage,
-        target: IEventThisPlaceHolder) => void);
+        target: IEventThisPlaceHolder,
+    ) => void);
+}
+
+export interface IDirectoryEvents extends IEvent {
+    (event: "containedValueChanged", listener: (
+        changed: IValueChanged,
+        local: boolean,
+        op: ISequencedDocumentMessage,
+        target: IEventThisPlaceHolder,
+    ) => void);
 }
 
 /**
