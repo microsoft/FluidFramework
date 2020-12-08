@@ -25,9 +25,9 @@ export class ChannelStorageService implements IChannelStorageService {
     private readonly flattenedTreeP: Promise<{ [path: string]: string }>;
 
     constructor(
-        private readonly tree: Promise<ISnapshotTree> | undefined,
+        private readonly tree: ISnapshotTree | undefined,
         private readonly storage: Pick<IDocumentStorageService, "read" | "readString">,
-        private readonly extraBlobs?: Promise<Map<string, string>>,
+        private readonly extraBlobs?: Map<string, string>,
     ) {
         // Create a map from paths to blobs
         if (tree !== undefined) {

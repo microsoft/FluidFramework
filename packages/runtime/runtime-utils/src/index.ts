@@ -9,6 +9,7 @@ export * from "./objectstoragepartition";
 export * from "./objectstorageutils";
 export * from "./requestParser";
 export * from "./serializer";
-export * from "./summarizerNode";
+// eslint-disable-next-line import/no-internal-modules
+export * from "./summarizerNode/index";
 export * from "./summaryUtils";
 export * from "./utils";
