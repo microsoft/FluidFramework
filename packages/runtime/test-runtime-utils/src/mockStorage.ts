@@ -17,7 +17,40 @@ export class MockStorage implements IChannelStorageService {
         return new MockStorage(tree);
     }
 
-    public async readBlob(tree: ITree, paths: string[]): Promise<IBlob> {
+    public async readBlob(path: string): Promise<IBlob> {
+        return this.readBlobInternal(this.tree, path.split("/"));
+    }
+
+    constructor(protected tree?: ITree) {
+    }
+
+    public async read(path: string): Promise<string> {
+        const blob = await this.readBlob(path);
+        assert(blob !== undefined, `Blob does not exist: ${path}`);
+        if (blob.encoding === "base64") {
+            return blob.contents;
+        }
+        return fromUtf8ToBase64(blob.contents);
+    }
+
+    public async readString(path: string): Promise<string> {
+        const blob = await this.readBlob(path);
+        assert(blob !== undefined, `Blob does not exist: ${path}`);
+        if (blob.encoding === "base64") {
+            return fromBase64ToUtf8(blob.contents);
+        }
+        return blob.contents;
+    }
+
+    public async contains(path: string): Promise<boolean> {
+        return await this.readBlob(path) !== undefined;
+    }
+
+    public async list(path: string): Promise<string[]> {
+        return listBlobsAtTreePath(this.tree, path);
+    }
+
+    private async readBlobInternal(tree: ITree, paths: string[]): Promise<IBlob> {
         if (tree) {
             for (const entry of tree.entries) {
                 if (entry.path === paths[0]) {
@@ -28,41 +61,12 @@ export class MockStorage implements IChannelStorageService {
                         return blob;
                     }
                     if (entry.type === "Tree") {
-                        return this.readBlob(entry.value as ITree, paths.slice(1));
+                        return this.readBlobInternal(entry.value as ITree, paths.slice(1));
                     }
                     return undefined;
                 }
             }
             return undefined;
         }
-    }
-
-    constructor(protected tree?: ITree) {
-    }
-
-    public async read(path: string): Promise<string> {
-        const blob = await this.readBlob(this.tree, path.split("/"));
-        assert(blob !== undefined, `Blob does not exist: ${path}`);
-        if (blob.encoding === "base64") {
-            return blob.contents;
-        }
-        return fromUtf8ToBase64(blob.contents);
-    }
-
-    public async readString(path: string): Promise<string> {
-        const blob = await this.readBlob(this.tree, path.split("/"));
-        assert(blob !== undefined, `Blob does not exist: ${path}`);
-        if (blob.encoding === "base64") {
-            return fromBase64ToUtf8(blob.contents);
-        }
-        return blob.contents;
-    }
-
-    public async contains(path: string): Promise<boolean> {
-        return await this.readBlob(this.tree, path.split("/")) !== undefined;
-    }
-
-    public async list(path: string): Promise<string[]> {
-        return listBlobsAtTreePath(this.tree, path);
     }
 }
