@@ -444,8 +444,8 @@ export class DataStores implements IDisposable {
         // Iterate over each store and get its GC data.
         await Promise.all(Array.from(this.contexts)
             .filter(([_, context]) => {
-                // GC can only run on clients with no local changes!
-                assert(context.attachState !== AttachState.Attaching, "Not expecting local data stores during GC");
+                // Get GC data only for attached comtexts. Detached contexts are not connected in the GC reference
+                // graph so any references they might have won't be connected too.
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
                 const contextGCData = await context.getGCData();

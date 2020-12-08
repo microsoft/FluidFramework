@@ -619,12 +619,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         // Iterate over each channel context and get its GC data.
         await Promise.all(Array.from(this.contexts)
             .filter(([contextId, _]) => {
-                const isAttached = this.isChannelAttached(contextId);
-                // GC can only run on clients with no local changes!
-                assert(isAttached, "Not expecting local channels during GC");
-                // If the object is registered - and we have received the sequenced op creating the object
-                // (i.e. it has a base mapping) - then we go ahead and get GC data.
-                return isAttached;
+                // Get GC data only for attached contexts. Detached contexts are not connected in the GC reference
+                // graph so any references they might have won't be connected too.
+                return this.isChannelAttached(contextId);
             }).map(async ([contextId, context]) => {
                 const contextGCData = await context.getGCData();
                 // Prefix the child's id to the ids of GC nodes returned by it. This gradually builds the id of

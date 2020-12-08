@@ -208,25 +208,23 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).summarize}
      */
     public summarize(fullTree: boolean = false, trackState: boolean = false): IChannelSummarizeResult {
+        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
+        // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
+        // to other Fluid objects.
+        assert(!this._isSummarizing, "Possible re-entrancy! Summary should not already be in progress.");
         this._isSummarizing = true;
 
-        /**
-         * Create a SummarySerializer that will be used to serialize IFluidHandles in this object. SummarySerializer
-         * tracks the routes of all handles that it serializes. These represent routes to referenced Fluid object.
-         */
         const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
         const snapshot: ITree = this.snapshotCore(serializer);
         const summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
 
-        /**
-         * We need to add this channel's garbage collection node to the summarize result.
-         * The outbound routes of this channel are all the routes of all the handles that are tracked by the
-         * SummarySerializer created above.
-         */
+        // Add this channel's garbage collection node to the summarize result. The outbound routes of this channel are
+        // all the routes of all the handles that are tracked by the SummarySerializer above.
         const gcNodes: IGraphNode[] = [
             { id: "/", outboundRoutes: serializer.getSerializedRoutes() },
         ];
 
+        assert(this._isSummarizing, "Possible re-entrancy! Summary should have been in progress.");
         this._isSummarizing = false;
 
         return {
@@ -239,18 +237,24 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).getGCData}
      */
     public getGCData(): IGCData {
+        // We run the full summarize logic to get the list of outbound routes from this object. This is a little
+        // expensive but its okay for now. It will be udpated to not use full summarize and make it more efficient.
+        // See: https://github.com/microsoft/FluidFramework/issues/4547
+
+        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
+        // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
+        // to other Fluid objects.
+        assert(!this._isSummarizing, "Possible re-entrancy! Summary should not already be in progress.");
         this._isSummarizing = true;
-         // Create a SummarySerializer that will be used to serialize IFluidHandles in this object. SummarySerializer
-         // tracks the routes of handles that it serializes. These represent outbound routes to other Fluid object.
+
         const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
 
-        // Take a snapshot of the object's data which will serialize all the handles.
-        // Note: Using the snapshotCore API during GC is a little expensive but its okay for now.
         this.snapshotCore(serializer);
 
+        assert(this._isSummarizing, "Possible re-entrancy! Summary should have been in progress.");
         this._isSummarizing = false;
 
-        // Return GC data for this shared object which contains a single GC node. The outbound routes of the node are
+        // Return GC data for this shared object which contains a single GC node. The outbound routes of this node are
         // the routes of handles serialized during snapshot.
         return {
             gcNodes: { "/": serializer.getSerializedRoutes() },
