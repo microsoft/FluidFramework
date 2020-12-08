@@ -647,15 +647,15 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService) {
-        const header = await storage.read(snapshotFileName);
-        const data = JSON.parse(fromBase64ToUtf8(header));
+        const header = await storage.readString(snapshotFileName);
+        const data = JSON.parse(header);
         const newFormat = data as IDirectoryNewStorageFormat;
         if (Array.isArray(newFormat.blobs)) {
             // New storage format
             this.populate(newFormat.content);
             await Promise.all(newFormat.blobs.map(async (blob) => {
-                const blobContent = await storage.read(blob);
-                const dataExtra = JSON.parse(fromBase64ToUtf8(blobContent));
+                const blobContent = await storage.readString(blob);
+                const dataExtra = JSON.parse(blobContent);
                 this.populate(dataExtra as IDirectoryDataObject);
             }));
         } else {

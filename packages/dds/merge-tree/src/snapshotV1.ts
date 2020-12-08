@@ -253,7 +253,7 @@ export class SnapshotV1 {
         options: Properties.PropertySet,
         serializer?: IFluidSerializer,
     ): Promise<MergeTreeChunkV1> {
-        const chunkAsString: string = await storage.read(path);
+        const chunkAsString: string = await storage.readString(path);
         return SnapshotV1.processChunk(path, chunkAsString, logger, options, serializer);
     }
 
@@ -264,8 +264,7 @@ export class SnapshotV1 {
         options: Properties.PropertySet,
         serializer?: IFluidSerializer,
     ): MergeTreeChunkV1 {
-        const utf8 = fromBase64ToUtf8(chunk);
-        const chunkObj = serializer ? serializer.parse(utf8) : JSON.parse(utf8);
+        const chunkObj = serializer ? serializer.parse(chunk) : JSON.parse(chunk);
         return toLatestVersion(path, chunkObj, logger, options);
     }
 }

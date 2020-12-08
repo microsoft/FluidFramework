@@ -330,17 +330,16 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
     */
     protected async loadCore(storage: IChannelStorageService) {
-        const header = await storage.read(snapshotFileName);
+        const header = await storage.readString(snapshotFileName);
 
         // eslint-disable-next-line @typescript-eslint/ban-types
-        const json = JSON.parse(fromBase64ToUtf8(header)) as object;
+        const json = JSON.parse(header) as object;
         const newFormat = json as IMapSerializationFormat;
         if (Array.isArray(newFormat.blobs)) {
             this.kernel.populateFromSerializable(newFormat.content);
             await Promise.all(newFormat.blobs.map(async (value) => {
-                const blob = await storage.read(value);
-                const blobData = fromBase64ToUtf8(blob);
-                this.kernel.populateFromSerializable(JSON.parse(blobData) as IMapDataObjectSerializable);
+                const blob = await storage.readString(value);
+                this.kernel.populateFromSerializable(JSON.parse(blob) as IMapDataObjectSerializable);
             }));
         } else {
             this.kernel.populateFromSerializable(json as IMapDataObjectSerializable);

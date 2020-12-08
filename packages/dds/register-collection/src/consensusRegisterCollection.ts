@@ -213,8 +213,8 @@ export class ConsensusRegisterCollection<T>
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const header = await storage.read(snapshotFileName);
-        const dataObj = header !== undefined ? this.parse(fromBase64ToUtf8(header), this.serializer) : {};
+        const header = await storage.readString(snapshotFileName);
+        const dataObj = header !== undefined ? this.parse(header, this.serializer) : {};
 
         for (const key of Object.keys(dataObj)) {
             assert(dataObj[key].atomic?.value.type !== "Shared",

@@ -487,10 +487,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService) {
-        const header = await storage.read(snapshotFileName);
+        const header = await storage.readString(snapshotFileName);
 
-        const data: string = header ? fromBase64ToUtf8(header) : undefined;
-        this.intervalMapKernel.populate(data);
+        this.intervalMapKernel.populate(header);
 
         try {
             // this will load the header, and return a promise
