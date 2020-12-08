@@ -834,7 +834,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
         if (previousContextState.snapshot !== undefined) {
-            snapshot = await buildSnapshotTree(previousContextState.snapshot.entries, blobs);
+            snapshot = buildSnapshotTree(previousContextState.snapshot.entries, blobs);
 
             /**
              * Should be removed / updated after issue #2914 is fixed.
@@ -852,7 +852,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         if (blobs.size > 0) {
             this.blobsCacheStorageService =
-                new BlobCacheStorageService(this.storageService, Promise.resolve(blobs));
+                new BlobCacheStorageService(this.storageService, blobs);
         }
         const attributes: IDocumentAttributes = {
             branch: this.id,

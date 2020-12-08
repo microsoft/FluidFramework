@@ -67,9 +67,8 @@ export class LocalChannelContext implements IChannelContext {
                 this.submitFn,
                 this.dirtyFn,
                 this.storageService,
-                clonedSnapshotTree !== undefined ? Promise.resolve(clonedSnapshotTree) : undefined,
-                blobMap !== undefined ?
-                    Promise.resolve(blobMap) : undefined,
+                clonedSnapshotTree,
+                blobMap,
             );
         });
         this.factory = registry.get(type);

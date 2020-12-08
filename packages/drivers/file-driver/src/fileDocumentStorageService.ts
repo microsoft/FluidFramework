@@ -218,7 +218,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
 
                 // Prep for the future - refresh latest tree, as it's requests on next snapshot generation.
                 // Do not care about blobs (at least for now), as blobs are not written out (need follow up)
-                this.latestWriterTree = await buildSnapshotTree(tree.entries, this.blobsWriter);
+                this.latestWriterTree = buildSnapshotTree(tree.entries, this.blobsWriter);
 
                 // Do not reset this.commitsWriter - runtime will reference same commits in future snapshots
                 // if data store did not change in between two snapshots.
