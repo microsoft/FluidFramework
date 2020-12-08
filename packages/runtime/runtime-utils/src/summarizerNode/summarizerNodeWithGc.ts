@@ -21,7 +21,8 @@ export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISumma
 
 /**
  * Extends the functionality of SummarizerNode to manage this node's garbage collection data:
- * - It caches the GC data returned by the getGCData method.
+ * - Adds a new API `getGCData` to return GC data of this node.
+ * - Caches the result of getGCData method to be used if nothing changes between summaries.
  * - Gets the initial GC data if required.
  * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  *   directly into summarizeInternal method.
@@ -69,7 +70,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     /**
-     * Returns the GC data of this node. If nothing has changed since the last time we summarized, it tried to reuse
+     * Returns the GC data of this node. If nothing has changed since the last time we summarized, it tries to reuse
      * existing data.
      */
     public async getGCData(): Promise<IGCData> {
