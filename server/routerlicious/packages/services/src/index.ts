@@ -23,5 +23,6 @@ export * from "./secretManager";
 export * from "./socketIoRedisPublisher";
 export * from "./tenant";
 export * from "./throttler";
+export * from "./throttlerHelper";
 export * from "./zookeeperClient";
 export * from "@fluidframework/server-services-shared";
