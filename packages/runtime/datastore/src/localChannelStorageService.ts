@@ -59,9 +59,13 @@ export class LocalChannelStorageService implements IChannelStorageService {
     }
 }
 
+//
+// Concrete example of an interface that has readBlob
+//
+
 // Some interface (as an example) that implements readBlob.
 // This can be IDocumentStorage, IChannelStorageService, etc.
-export interface IFoo {
+export interface IDocumentStorage {
     someOtherMethods(): void;
 
     readBlob(blobid: string): IsoBuffer;
@@ -75,22 +79,27 @@ export interface IFoo {
     readString?(blobId: string): string;
 }
 
-// For each such interface, we can define an extended interface that has readString()
-// We will demostrate below how to have one shared implementaiton that can add readString()
-// to any interface that implements readBlob().
-export interface IFooEx extends IFoo {
-    readString(blobId: string): string;
+// We expect mostconsumers of IDocumentStorage to want to use readString API, so different layers down the road
+// (like Container, ContainerRuntime, etc.) could take IDocumentStorage and fill in missing readSTring.
+// For simplicity of usage, we define new interface that has raedString
+export type IDocumentStorageEx = IDocumentStorage & IHasReadString;
+export const getDocumentStroageEx = (storage: IDocumentStorage): IDocumentStorageEx =>
+    addReadString(storage);
+
+//
+// SHARED CODE
+// To be used by various users like getDocumentStroageEx, IChannelStorageServiceEx, etc.
+//
+
+// This is what we add to such object.
+export interface IHasReadString {
+    readString(blobid: string): string;
 }
 
 // This is input to addReadString() - it basically defined any type that has readBlob
 // Any object that satisfy this interace (like IFoo) will be accespted
 export interface IHasReadBlob {
     readBlob(blobid: string): IsoBuffer;
-}
-
-// This is what we add to such object.
-export interface IHasReadString {
-    readString(blobid: string): string;
 }
 
 // Function that takes any object that implements readBlob() and adds implementation of readString.
