@@ -22,33 +22,28 @@ export class ChannelStorageService implements IChannelStorageService {
         }
     }
 
-    private readonly flattenedTreeP: Promise<{ [path: string]: string }>;
+    private readonly flattenedTree: { [path: string]: string };
 
     constructor(
         private readonly tree: ISnapshotTree | undefined,
         private readonly storage: Pick<IDocumentStorageService, "read" | "readString">,
         private readonly extraBlobs?: Map<string, string>,
     ) {
+        this.flattenedTree = {};
         // Create a map from paths to blobs
         if (tree !== undefined) {
-            this.flattenedTreeP = tree.then((snapshotTree) => {
-                const flattenedTree: { [path: string]: string } = {};
-                ChannelStorageService.flattenTree("", snapshotTree, flattenedTree);
-                return flattenedTree;
-            });
-        } else {
-            this.flattenedTreeP = Promise.resolve({});
+             ChannelStorageService.flattenTree("", tree, this.flattenedTree);
         }
     }
 
     public async contains(path: string): Promise<boolean> {
-        return (await this.flattenedTreeP)[path] !== undefined;
+        return this.flattenedTree[path] !== undefined;
     }
 
     public async read(path: string): Promise<string> {
         const id = await this.getIdForPath(path);
         const blob = this.extraBlobs !== undefined
-            ? (await this.extraBlobs).get(id)
+            ? this.extraBlobs.get(id)
             : undefined;
 
         return blob ?? this.storage.read(id);
@@ -66,7 +61,7 @@ export class ChannelStorageService implements IChannelStorageService {
     }
 
     public async list(path: string): Promise<string[]> {
-        let tree = await this.tree;
+        let tree = this.tree;
         const pathParts = getNormalizedObjectStoragePathParts(path);
         while (tree !== undefined && pathParts.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -81,6 +76,6 @@ export class ChannelStorageService implements IChannelStorageService {
     }
 
     private async getIdForPath(path: string): Promise<string> {
-        return (await this.flattenedTreeP)[path];
+        return this.flattenedTree[path];
     }
 }
