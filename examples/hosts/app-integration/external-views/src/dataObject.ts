@@ -6,18 +6,16 @@
 import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { ISharedMap, SharedMap, IDirectoryValueChanged } from "@fluidframework/map";
 
 
-export interface IKeyValueDroplet extends EventEmitter {
-    on(event: "changed", listener: () => void): this;
-
-    get(key: string)
-
-    set(key: string, value: JSON)
+export interface IKeyValueDataObject extends EventEmitter {
+    on(event: "changed", listener: (args: IDirectoryValueChanged) => void): this;
+    get: (key: string) => any;
+    set: (key: string, value: any) => void
 }
 
-export class KeyValueDroplet extends DataObject implements IKeyValueDroplet {
+export class KeyValueDroplet extends DataObject implements IKeyValueDataObject {
 
     private dataMap: ISharedMap | undefined;
 
@@ -30,7 +28,7 @@ export class KeyValueDroplet extends DataObject implements IKeyValueDroplet {
         this.dataMap = await this.root.get("map").get();
 
         this.dataMap?.on("valueChanged", (changed) => {
-            this.emit("changed");
+            this.emit("changed", changed);
         });
     }
 
