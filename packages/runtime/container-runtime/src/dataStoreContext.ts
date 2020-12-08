@@ -554,7 +554,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 
     constructor(
         id: string,
-        private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
+        private readonly initSnapshotValue: ISnapshotTree | string | null,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject,
@@ -593,7 +593,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                 const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
                 tree = await this.storage.getSnapshotTree(commit);
             } else {
-                tree = await this.initSnapshotValue;
+                tree = this.initSnapshotValue;
             }
 
             const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);

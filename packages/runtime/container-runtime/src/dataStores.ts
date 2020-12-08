@@ -93,7 +93,7 @@ export class DataStores implements IDisposable {
             if (this.runtime.attachState !== AttachState.Detached) {
                 dataStoreContext = new RemotedFluidDataStoreContext(
                     key,
-                    typeof value === "string" ? value : Promise.resolve(value),
+                    value,
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
@@ -162,12 +162,9 @@ export class DataStores implements IDisposable {
         }
 
         const flatBlobs = new Map<string, string>();
-        let flatBlobsP = Promise.resolve(flatBlobs);
-        let snapshotTreeP: Promise<ISnapshotTree> | null = null;
+        let snapshotTree: ISnapshotTree | null = null;
         if (attachMessage.snapshot) {
-            snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
-            // flatBlobs' validity is contingent on snapshotTreeP's resolution
-            flatBlobsP = snapshotTreeP.then(() => { return flatBlobs; });
+            snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
         }
 
         // Include the type of attach message which is the pkg of the store to be
@@ -175,9 +172,9 @@ export class DataStores implements IDisposable {
         const pkg = [attachMessage.type];
         const remotedFluidDataStoreContext = new RemotedFluidDataStoreContext(
             attachMessage.id,
-            snapshotTreeP,
+            snapshotTree,
             this.runtime,
-            new BlobCacheStorageService(this.runtime.storage, flatBlobsP),
+            new BlobCacheStorageService(this.runtime.storage, flatBlobs),
             this.runtime.scope,
             this.getCreateChildSummarizerNodeFn(
                 attachMessage.id,
