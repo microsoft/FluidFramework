@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DefaultServiceConfiguration, ScribeLambdaFactory } from "@fluidframework/server-lambdas";
+import { ScribeLambdaFactory } from "@fluidframework/server-lambdas";
 import { create as createDocumentRouter } from "@fluidframework/server-lambdas-driver";
 import { createProducer, MongoDbFactory, TenantManager } from "@fluidframework/server-services";
 import {
+    DefaultServiceConfiguration,
     IDocument,
     IPartitionLambdaFactory,
     ISequencedOperationMessage,

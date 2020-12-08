@@ -16,7 +16,6 @@ import {
     MessageType,
     ISequencedDocumentAugmentedMessage,
     IProtocolState,
-    IServiceConfiguration,
 } from "@fluidframework/protocol-definitions";
 import {
     ControlMessageType,
@@ -27,6 +26,7 @@ import {
     IRawOperationMessage,
     IScribe,
     ISequencedOperationMessage,
+    IServiceConfiguration,
     RawOperationType,
     SequencedOperationType,
     IQueuedMessage,

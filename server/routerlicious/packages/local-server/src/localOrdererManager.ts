@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import { IPubSub, LocalOrderer } from "@fluidframework/server-memory-orderer";
 import { GitManager, IHistorian } from "@fluidframework/server-services-client";
 import {
@@ -12,6 +11,7 @@ import {
     ILogger,
     IOrderer,
     IOrdererManager,
+    IServiceConfiguration,
     ITaskMessageSender,
     ITenantManager,
     TokenGenerator,
