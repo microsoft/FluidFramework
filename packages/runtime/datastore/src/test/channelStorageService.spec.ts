@@ -17,11 +17,8 @@ describe("ChannelStorageService", () => {
             id: null,
             trees: {},
         };
-        const storage: Pick<IDocumentStorageService, "read"|"readString"> = {
-            read: async (id: string) => {
-                assert.fail();
-            },
-            readString: async (id: string) => {
+        const storage: Pick<IDocumentStorageService, "readBlob"> = {
+            readBlob: async (id: string) => {
                 assert.fail();
             },
         };
@@ -41,12 +38,9 @@ describe("ChannelStorageService", () => {
             id: null,
             trees: {},
         };
-        const storage: Pick<IDocumentStorageService, "read"|"readString"> = {
-            read: async (id: string) => {
-                return id;
-            },
-            readString: async (id: string) => {
-                return id;
+        const storage: Pick<IDocumentStorageService, "readBlob"> = {
+            readBlob: async (id: string) => {
+                assert.fail();
             },
         };
         const ss = new ChannelStorageService(tree, storage);
@@ -74,12 +68,9 @@ describe("ChannelStorageService", () => {
                 },
             },
         };
-        const storage: Pick<IDocumentStorageService, "read"|"readString"> = {
-            read: async (id: string) => {
-                return id;
-            },
-            readString: async (id: string) => {
-                return id;
+        const storage: Pick<IDocumentStorageService, "readBlob"> = {
+            readBlob: async (id: string) => {
+                assert.fail();
             },
         };
         const ss = new ChannelStorageService(tree, storage);

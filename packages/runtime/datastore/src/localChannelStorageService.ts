@@ -13,20 +13,29 @@ export class LocalChannelStorageService implements IChannelStorageService {
     }
 
     public async read(path: string): Promise<string> {
-        const contents = this.readSync(path);
-        assert(contents !== undefined, "Not Found");
-        return contents;
+        const blob = await this.readBlob(path);
+        assert(blob !== undefined, "Not Found");
+        assert(blob.contents !== undefined, "Not Found");
+        if (blob.encoding === "base64") {
+            return blob.contents;
+        }
+        return fromUtf8ToBase64(blob.contents);
     }
 
     public async readString(path: string): Promise<string> {
-        const contents = this.readStringSync(path);
-        assert(contents !== undefined, "Not Found");
-        return contents;
+        const blob = await this.readBlob(path);
+        assert(blob !== undefined, "Not Found");
+        assert(blob.contents !== undefined, "Not Found");
+        if (blob.encoding === "base64") {
+            return fromBase64ToUtf8(blob.contents);
+        }
+        return blob.contents;
     }
 
     public async contains(path: string): Promise<boolean> {
-        const contents = this.readSync(path);
-        return contents !== undefined;
+        const blob = await this.readBlob(path);
+        assert(blob !== undefined, "Not Found");
+        return blob.contents !== undefined;
     }
 
     public async list(path: string): Promise<string[]> {
@@ -36,54 +45,25 @@ export class LocalChannelStorageService implements IChannelStorageService {
     /**
      * Provides a synchronous access point to locally stored data
      */
-    private readSync(path: string): string | undefined {
-        return this.readSyncInternal(path, this.tree);
+    public async readBlob(path: string): Promise<IBlob> {
+        const blob = this.readSyncInternal(path, this.tree);
+        assert(blob !== undefined, "Not Found");
+        return blob;
     }
 
-    private readStringSync(path: string): string | undefined {
-        return this.readStringSyncInternal(path, this.tree);
-    }
-
-    private readSyncInternal(path: string, tree: ITree): string | undefined {
+    private readSyncInternal(path: string, tree: ITree): IBlob | undefined {
         for (const entry of tree.entries) {
             switch (entry.type) {
                 case TreeEntry.Blob:
                     if (path === entry.path) {
                         const blob = entry.value as IBlob;
-                        return blob.encoding === "utf-8"
-                            ? fromUtf8ToBase64(blob.contents)
-                            : blob.contents;
+                        return blob;
                     }
                     break;
 
                 case TreeEntry.Tree:
                     if (path.startsWith(entry.path)) {
                         return this.readSyncInternal(path.substr(entry.path.length + 1), entry.value as ITree);
-                    }
-                    break;
-
-                default:
-            }
-        }
-
-        return undefined;
-    }
-
-    private readStringSyncInternal(path: string, tree: ITree): string | undefined {
-        for (const entry of tree.entries) {
-            switch (entry.type) {
-                case TreeEntry.Blob:
-                    if (path === entry.path) {
-                        const blob = entry.value as IBlob;
-                        return blob.encoding === "utf-8"
-                            ? blob.contents
-                            : fromBase64ToUtf8(blob.contents);
-                    }
-                    break;
-
-                case TreeEntry.Tree:
-                    if (path.startsWith(entry.path)) {
-                        return this.readStringSyncInternal(path.substr(entry.path.length + 1), entry.value as ITree);
                     }
                     break;
 

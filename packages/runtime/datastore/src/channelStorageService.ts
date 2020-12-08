@@ -4,10 +4,10 @@
  */
 
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
-import { fromBase64ToUtf8, IsoBuffer } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8, fromUtf8ToBase64 } from "@fluidframework/common-utils";
 
 export class ChannelStorageService implements IChannelStorageService {
     private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
@@ -40,7 +40,7 @@ export class ChannelStorageService implements IChannelStorageService {
         return this.flattenedTree[path] !== undefined;
     }
 
-    public async readBlob(path: string): Promise<ArrayBufferLike> {
+    public async readBlob(path: string): Promise<IBlob> {
         const id = await this.getIdForPath(path);
         const blob = this.extraBlobs?.get(id) ?? this.storage.readBlob(id);
 
@@ -48,15 +48,19 @@ export class ChannelStorageService implements IChannelStorageService {
     }
 
     public async read(path: string): Promise<string> {
-        const blob = this.readBlob(path);
-
-        return blob;
+        const blob = await this.readBlob(path);
+        if (blob.encoding === "base64") {
+            return blob.contents;
+        }
+        return fromUtf8ToBase64(blob.contents);
     }
 
     public async readString(path: string): Promise<string> {
-        const blob = this.readBlob(path);
-
-        return blob;
+        const blob = await this.readBlob(path);
+        if (blob.encoding === "base64") {
+            return fromBase64ToUtf8(blob.contents);
+        }
+        return blob.contents;
     }
 
     public async list(path: string): Promise<string[]> {

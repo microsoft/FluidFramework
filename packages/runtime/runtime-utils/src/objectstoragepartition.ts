@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { IBlob } from "@fluidframework/protocol-definitions";
 
 /**
  * Returns a new IChannelStorageService that resolves the given `path` as root.
@@ -21,6 +22,10 @@ export class ObjectStoragePartition implements IChannelStorageService {
 
     public async readString(path: string): Promise<string> {
         return this.storage.readString(`${this.path}/${path}`);
+    }
+
+    public async readBlob(path: string): Promise<IBlob> {
+        return this.readBlob(`${this.path}/${path}`);
     }
 
     public async contains(path: string): Promise<boolean> {
