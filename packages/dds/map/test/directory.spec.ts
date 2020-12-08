@@ -661,6 +661,31 @@ describe("Directory", () => {
                 assert.equal(directory1.getWorkingDirectory("foo").get("fromSubdir"), "testValue4");
             });
 
+            it("raises the containedValueChanged event when keys are set and deleted from a subdirectory", () => {
+                directory1.createSubDirectory("foo");
+                containerRuntimeFactory.processAllMessages();
+
+                const subdir1 = directory1.getWorkingDirectory("/foo");
+                const subdir2 = directory2.getWorkingDirectory("/foo");
+
+                let called1 = 0;
+                let called2 = 0;
+                subdir1.on("containedValueChanged", () => called1++);
+                subdir2.on("containedValueChanged", () => called2++);
+
+                subdir1.set("testKey", "testValue");
+                containerRuntimeFactory.processAllMessages();
+
+                assert.strictEqual(called1, 1, "containedValueChanged on local subdirectory after set()");
+                assert.strictEqual(called2, 1, "containedValueChanged on remote subdirectory after set()");
+
+                subdir1.delete("testKey");
+                containerRuntimeFactory.processAllMessages();
+
+                assert.strictEqual(called1, 2, "containedValueChanged on local subdirectory after delete()");
+                assert.strictEqual(called2, 2, "containedValueChanged on remote subdirectory after delete()");
+            });
+
             it("Can be cleared from the subdirectory", () => {
                 const fooDirectory = directory1.createSubDirectory("foo");
                 const barDirectory = directory1.createSubDirectory("bar");
