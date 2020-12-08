@@ -448,10 +448,10 @@ export class DataStores implements IDisposable {
                 assert(context.attachState !== AttachState.Attaching, "Not expecting local data stores during GC");
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
-                const contextgcData = await context.getGCData();
+                const contextGCData = await context.getGCData();
                 // Prefix the child's id to the ids of GC nodes returned by it. This gradually builds the id of
                 // each node to be a path from the root.
-                builder.prefixAndAddGCNodes(contextId, contextgcData.gcNodes);
+                builder.prefixAndAddGCNodes(contextId, contextGCData.gcNodes);
             }));
 
         // Get the outbound routes and add a GC node for this channel.

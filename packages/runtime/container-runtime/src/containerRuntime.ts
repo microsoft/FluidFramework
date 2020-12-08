@@ -51,7 +51,7 @@ import {
     readAndParseFromBlobs,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
-import { IGCResult, runGarbageCollection } from "@fluidframework/garbage-collector";
+import { runGarbageCollection } from "@fluidframework/garbage-collector";
 import {
     BlobTreeEntry,
 } from "@fluidframework/protocol-base";
@@ -1355,20 +1355,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, reason: "disconnected" };
             }
 
-            // Get the container's GC data. This contains the reference graph on which we will run GC.
-            let gcResult: IGCResult | undefined;
+            // Get the container's GC data and run GC on the reference graph in the GC data.
             const gcData = await this.dataStores.getGCData();
             if (this.runtimeOptions.runGC) {
-                gcResult = runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+                runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
             }
 
             const trace = Trace.start();
             const summarizeResult = await this.summarize(fullTree || safe, true /* trackState */);
-
-            if (gcResult !== undefined) {
-                addBlobToSummary(summarizeResult, ".referencedRoutes", JSON.stringify(gcResult.referencedNodeIds));
-                addBlobToSummary(summarizeResult, ".deletedRoutes", JSON.stringify(gcResult.deletedNodeIds));
-            }
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: summarizeResult.stats,

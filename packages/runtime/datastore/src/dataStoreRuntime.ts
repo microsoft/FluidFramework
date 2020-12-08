@@ -602,14 +602,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
-     * @returns this channel's GC nodes.
+     * Returns the outbound routes of this channel. Currently, all contexts in this channel are considered
+     * referenced and are hence outbound. This will change when we have root and non-root channel contexts.
+     * The only root contexts will be considered as referenced.
      */
     private getOutboundRoutes(): string[] {
-        /**
-         * Get the outbound routes of this channel. Currently, all contexts in this channel are considered referenced
-         * and are hence outbound. This will change when we have root and non-root channel contexts. Then only root
-         * contexts will be considered as referenced.
-         */
         const outboundRoutes: string[] = [];
         for (const [contextId] of this.contexts) {
             outboundRoutes.push(`${this.absolutePath}/${contextId}`);
