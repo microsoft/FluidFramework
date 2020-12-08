@@ -4,7 +4,7 @@
  */
 
 import { Response } from "express";
-import { ICache, ITenantService, RestGitService } from "../services";
+import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
 
 /**
  * Helper function to handle a promise that should be returned to the user
@@ -54,7 +54,12 @@ export async function createGitService(
     }
 
     const details = await tenantService.getTenant(tenantId, token);
-    const service = new RestGitService(details.storage, cache);
+    const customData: ITenantCustomDataExternal = details.customData;
+    let writeToExternalStorage = false;
+    if (customData.externalStorageData != null) {
+        writeToExternalStorage = true;
+    }
+    const service = new RestGitService(details.storage, cache, writeToExternalStorage);
 
     return service;
 }
