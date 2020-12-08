@@ -4,10 +4,9 @@
  */
 
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64, IsoBuffer } from "@fluidframework/common-utils";
 import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
-import { IsoBuffer } from "@fluidframework/common-utils";
 
 export class LocalChannelStorageService implements IChannelStorageService {
     constructor(private readonly tree: ITree) {
@@ -72,7 +71,7 @@ export interface IFoo {
     // if it wants to. It does not have to, but it may chose to do so if it has extra knowlege allowing
     // it to implement such functionality more efficiently
     // I.e. SPO driver may implement it because it already operates (for most part) with strings, going through
-    // readBlob() would add more conversions, and thus make it slower. 
+    // readBlob() would add more conversions, and thus make it slower.
     readString?(blobId: string): string;
 }
 
@@ -103,9 +102,12 @@ export function addReadString<T extends IHasReadBlob>(object: T): T & IHasReadSt
     if (objectEx.readString !== undefined) {
         return objectEx;
     }
-    objectEx.readString = (...args) => {
-        const buffer = objectEx.readBlob(...args);
+
+    // make a copy and add method
+    const copy = Object.create(objectEx) as T & IHasReadString;
+    copy.readString = (...args) => {
+        const buffer = copy.readBlob(...args);
         return buffer.toString("utf8");
     };
-    return objectEx;
+    return copy;
 }
