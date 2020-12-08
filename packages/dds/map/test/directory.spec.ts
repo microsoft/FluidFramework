@@ -79,14 +79,16 @@ describe("Directory", () => {
             });
 
             it("should fire correct directory events", async () => {
-                const dummyDirectory = directory;
                 let called1: boolean = false;
                 let called2: boolean = false;
-                dummyDirectory.on("op", (agr1, arg2, arg3) => called1 = true);
-                dummyDirectory.on("valueChanged", (agr1, arg2, arg3, arg4) => called2 = true);
-                dummyDirectory.set("dwyane", "johnson");
+                let called3: boolean = false;
+                directory.on("op", (arg1, arg2, arg3) => called1 = true);
+                directory.on("valueChanged", (arg1, arg2, arg3, arg4) => called2 = true);
+                directory.on("containedValueChanged", (arg1, arg2, arg3, arg4) => called3 = true);
+                directory.set("dwyane", "johnson");
                 assert.equal(called1, false, "did not receive op event");
                 assert.equal(called2, true, "did not receive valueChanged event");
+                assert.equal(called3, true, "did not receive containedValueChanged event");
             });
 
             it("Rejects a undefined and null key set", () => {

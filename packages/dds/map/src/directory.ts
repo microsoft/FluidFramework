@@ -430,6 +430,13 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         super(id, runtime, attributes);
         this.localValueMaker = new LocalValueMaker(this.serializer);
         this.setMessageHandlers();
+        // Mirror the containedValueChanged op on the SharedDirectory
+        this.root.on(
+            "containedValueChanged",
+            (changed: IValueChanged, local: boolean, op: ISequencedDocumentMessage) => {
+                this.emit("containedValueChanged", changed, local, op);
+            },
+        );
     }
 
     /**
