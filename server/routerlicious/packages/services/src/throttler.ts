@@ -50,7 +50,6 @@ export class Throttler implements IThrottler {
 
         // check cached throttle status, but allow operation through if status is not yet cached
         const cachedThrottlerResponse = this.throttlerResponseCache.get(id);
-        console.log({ cachedThrottlerResponse });
         if (cachedThrottlerResponse && cachedThrottlerResponse.throttleStatus) {
             throw new ThrottlingError(
                 cachedThrottlerResponse.throttleReason,

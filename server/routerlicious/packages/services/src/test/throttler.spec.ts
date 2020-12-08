@@ -325,7 +325,7 @@ describe("Throttler", () => {
         }
     });
 
-    it.only("expires old cached values", async () => {
+    it("expires old cached values", async () => {
         const limit = 10;
         const rate = 100;
         const minThrottleCheckInterval = 1000;

@@ -16,7 +16,7 @@ import {
 export class ThrottlerHelper implements IThrottlerHelper {
     constructor(
         private readonly throttleStorageManager: IThrottleStorageManager,
-        private readonly rate: number,
+        private readonly rateInOperationsPerMs: number,
         private readonly minCooldownIntervalInMs: number,
     ) {
     }
@@ -30,7 +30,7 @@ export class ThrottlerHelper implements IThrottlerHelper {
         if (!throttlingMetric) {
             // start a throttling metric with 1 cooldown interval's worth of tokens
             throttlingMetric = {
-                count: this.minCooldownIntervalInMs / this.rate,
+                count: this.minCooldownIntervalInMs * this.rateInOperationsPerMs,
                 lastCoolDownAt: now,
                 throttleStatus: false,
                 throttleReason: undefined,
@@ -96,7 +96,7 @@ export class ThrottlerHelper implements IThrottlerHelper {
         const timeSinceLastCooldownInMs = now - throttlingMetric.lastCoolDownAt;
         // replenish "tokens" at most once per minCooldownInterval
         if (timeSinceLastCooldownInMs > this.minCooldownIntervalInMs) {
-            return Math.floor(timeSinceLastCooldownInMs / this.rate);
+            return Math.floor(timeSinceLastCooldownInMs * this.rateInOperationsPerMs);
         }
         return 0;
     }
@@ -108,7 +108,8 @@ export class ThrottlerHelper implements IThrottlerHelper {
         }
         const amountPossibleToReplenishNow = this.getAmountToReplenishOnCooldown(throttlingMetric, now);
         const timeUntilNextCooldown = throttlingMetric.lastCoolDownAt + this.minCooldownIntervalInMs - now;
-        const timeUntilDebtReplenished = (debt - amountPossibleToReplenishNow) * this.rate;
+        const remainingDebt = debt - amountPossibleToReplenishNow;
+        const timeUntilDebtReplenished = remainingDebt / this.rateInOperationsPerMs;
         // must at least wait until next cooldown
         return Math.max(timeUntilNextCooldown, timeUntilDebtReplenished);
     }
