@@ -5,7 +5,7 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { IEvent, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -116,12 +116,10 @@ export interface IValueTypeCreator {
 }
 
 /**
- * Interface describing actions on a directory.
- *
- * @remarks
- * When used as a Map, operates on its keys.
+ * The IDirectoryNoEvents describes the methods of the IDirectory but omits the IEventProvider interface to avoid
+ * a Typescript compilation conflict with its definition in ISharedObject.
  */
-export interface IDirectory extends Map<string, any> {
+interface IDirectoryNoEvents extends Map<string, any> {
     /**
      * The absolute path of the directory.
      */
@@ -191,6 +189,14 @@ export interface IDirectory extends Map<string, any> {
     getWorkingDirectory(relativePath: string): IDirectory;
 }
 
+/**
+ * Interface describing actions on a directory.
+ *
+ * @remarks
+ * When used as a Map, operates on its keys.
+ */
+export interface IDirectory extends IDirectoryNoEvents, IEventProvider<IDirectoryEvents> { }
+
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
@@ -212,7 +218,7 @@ export interface IDirectoryEvents extends IEvent {
 /**
  * Interface describing a shared directory.
  */
-export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents>, IDirectory {
+export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents>, IDirectoryNoEvents {
 
 }
 
