@@ -51,12 +51,10 @@ import {
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import {
-    addRouteToAllGCNodes,
     convertSnapshotTreeToSummaryTree,
     convertSummaryTreeToITree,
     FluidSerializer,
     generateHandleContextPath,
-    normalizeAndPrefixGCNodeIds,
     RequestParser,
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
@@ -67,6 +65,7 @@ import {
     IChannelFactory,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
+import { addRouteToAllGCNodes, normalizeAndPrefixGCNodeIds } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
@@ -240,10 +239,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         tree.trees[path],
                         this.sharedObjectRegistry,
                         undefined /* extraBlobs */,
-                        this.dataStoreContext.summaryTracker.createOrGetChild(
-                            path,
-                            this.deltaManager.lastSequenceNumber,
-                        ),
                         this.dataStoreContext.getCreateChildSummarizerNodeFn(
                             path,
                             { type: CreateSummarizerNodeSource.FromSummary },
@@ -492,9 +487,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}`);
 
                     const flatBlobs = new Map<string, string>();
-                    const snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
-                    // flatBlobsP's validity is contingent on snapshotTreeP's resolution
-                    const flatBlobsP = snapshotTreeP.then((snapshotTree) => { return flatBlobs; });
+                    const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
                     const remoteChannelContext = new RemoteChannelContext(
                         this,
@@ -503,13 +496,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         (content, localContentMetadata) => this.submitChannelOp(id, content, localContentMetadata),
                         (address: string) => this.setChannelDirty(address),
                         id,
-                        snapshotTreeP,
+                        snapshotTree,
                         this.sharedObjectRegistry,
-                        flatBlobsP,
-                        this.dataStoreContext.summaryTracker.createOrGetChild(
-                            id,
-                            message.sequenceNumber,
-                        ),
+                        flatBlobs,
                         this.dataStoreContext.getCreateChildSummarizerNodeFn(
                             id,
                             {
@@ -855,7 +844,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
  */
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function mixinRequestHandler(
     requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
@@ -875,7 +863,6 @@ export function mixinRequestHandler(
  * Mixin class that adds await for DataObject to finish initialization before we proceed to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  */
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function mixinSummaryHandler(
     handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string }>,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,

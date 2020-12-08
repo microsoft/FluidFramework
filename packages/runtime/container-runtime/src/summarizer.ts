@@ -65,7 +65,6 @@ export interface ISummarizerInternalsProvider {
     refreshLatestSummaryAck(
         proposalHandle: string,
         ackHandle: string,
-        referenceSequenceNumber: number,
         summaryLogger: ITelemetryLogger,
     ): Promise<void>;
 }
@@ -849,7 +848,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                 await this.internalsProvider.refreshLatestSummaryAck(
                     ack.summaryOp.contents.handle,
                     ack.summaryAckNack.contents.handle,
-                    refSequenceNumber,
                     summaryLogger,
                 );
             } catch (error) {

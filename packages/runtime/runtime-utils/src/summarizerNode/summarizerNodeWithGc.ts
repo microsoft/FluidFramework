@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
+import { cloneGCNodes } from "@fluidframework/garbage-collector";
 import {
     IContextSummarizeResult,
     IGraphNode,
@@ -13,7 +14,6 @@ import {
     ISummarizerNodeWithGC,
     CreateChildSummarizerNodeParam,
 } from "@fluidframework/runtime-definitions";
-import { cloneGCNodes } from "../garbageCollectionUtils";
 import { SummarizerNode } from "./summarizerNode";
 import { ICreateChildDetails, IInitialSummary, ISummarizerNodeRootContract, SummaryNode } from "./summarizerNodeUtils";
 

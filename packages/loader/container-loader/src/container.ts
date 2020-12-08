@@ -5,7 +5,7 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import merge from "lodash/merge";
-import uuid from "uuid";
+import { v4 as uuid } from "uuid";
 import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
@@ -27,12 +27,11 @@ import {
     IRuntimeState,
     ICriticalContainerError,
     ContainerWarning,
-    IThrottlingWarning,
     AttachState,
+    IThrottlingWarning,
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, GenericError } from "@fluidframework/container-utils";
 import {
-    LoaderCachingPolicy,
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
@@ -92,7 +91,6 @@ import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
 const detachedContainerRefSeqNumber = 0;
@@ -836,7 +834,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
         if (previousContextState.snapshot !== undefined) {
-            snapshot = await buildSnapshotTree(previousContextState.snapshot.entries, blobs);
+            snapshot = buildSnapshotTree(previousContextState.snapshot.entries, blobs);
 
             /**
              * Should be removed / updated after issue #2914 is fixed.
@@ -854,7 +852,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         if (blobs.size > 0) {
             this.blobsCacheStorageService =
-                new BlobCacheStorageService(this.storageService, Promise.resolve(blobs));
+                new BlobCacheStorageService(this.storageService, blobs);
         }
         const attributes: IDocumentAttributes = {
             branch: this.id,
@@ -1134,16 +1132,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
-        if (this.service === undefined) {
-            throw new Error("Not attached");
-        }
-        let service = await this.service.connectToStorage();
-
-        // Enable prefetching for the service unless it has a caching policy set otherwise:
-        if (this.service.policies?.caching !== LoaderCachingPolicy.NoCaching) {
-            service = new PrefetchDocumentStorageService(service);
-        }
-        return service;
+        return this._deltaManager.connectToStorage();
     }
 
     private async getDocumentAttributes(

@@ -23,7 +23,6 @@ import {
     IFluidDataStoreContext,
     ISummarizeInternalResult,
     ISummarizerNodeWithGC,
-    ISummaryTracker,
 } from "@fluidframework/runtime-definitions";
 import { createServiceEndpoints, IChannelContext, summarizeChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -48,10 +47,9 @@ export class RemoteChannelContext implements IChannelContext {
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
         private readonly id: string,
-        baseSnapshot: Promise<ISnapshotTree> | ISnapshotTree,
+        baseSnapshot:  ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
-        extraBlobs: Promise<Map<string, string>> | undefined,
-        private readonly summaryTracker: ISummaryTracker,
+        extraBlobs: Map<string, string> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private readonly attachMessageType?: string,
     ) {
@@ -61,7 +59,7 @@ export class RemoteChannelContext implements IChannelContext {
             submitFn,
             () => dirtyFn(this.id),
             storageService,
-            Promise.resolve(baseSnapshot),
+            baseSnapshot,
             extraBlobs);
 
         const thisSummarizeInternal =
@@ -88,7 +86,6 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
-        this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
         this.summarizerNode.invalidate(message.sequenceNumber);
 
         if (this.isLoaded) {
