@@ -6,7 +6,6 @@
 import { EventEmitter } from "events";
 import {
     assert,
-    fromUtf8ToBase64,
 } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {

@@ -67,7 +67,7 @@ export interface IDocumentStorageService {
     /**
      * Reads the object with the given ID, returns content in base64
      */
-    read(id: string): Promise<string>;
+    // read(id: string): Promise<string>;
 
     /**
      * Writes to the object with the given ID

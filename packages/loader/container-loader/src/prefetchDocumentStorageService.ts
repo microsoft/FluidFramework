@@ -27,10 +27,6 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         return p;
     }
 
-    public async read(blobId: string): Promise<string> {
-        return this.cachedRead(blobId);
-    }
-
     public stopPrefetch() {
         this.prefetchEnabled = false;
         this.prefetchCache.clear();

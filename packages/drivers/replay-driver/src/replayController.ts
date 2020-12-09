@@ -16,7 +16,6 @@ import * as api from "@fluidframework/protocol-definitions";
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
     public abstract getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
     public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
-    public abstract read(blobId: string): Promise<string>;
 
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         return Promise.reject(new Error("Invalid operation"));

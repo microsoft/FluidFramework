@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert , fromBase64ToUtf8, fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { IBlob, ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/common-utils";
+import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { convertSummaryTreeToITree, listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
