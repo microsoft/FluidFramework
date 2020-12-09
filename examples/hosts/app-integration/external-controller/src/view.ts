@@ -12,6 +12,8 @@ import { IKeyValueDataObject } from "./dataObject";
  */
 export function renderDiceRoller(DO: IKeyValueDataObject, div: HTMLDivElement) {
     const dataKey = "dataKey";
+    // Set init value for dataKey
+    DO.set(dataKey, 1);
     const wrapperDiv = document.createElement("div");
     wrapperDiv.style.textAlign = "center";
     div.append(wrapperDiv);

@@ -1,3 +1,4 @@
+/* eslint-disable import/no-internal-modules */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -44,12 +45,12 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
  */
 async function setup() {
     const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
-    if (leftElement === null) {
+    if (leftElement === undefined) {
         throw new Error("sbs-left does not exist");
     }
     await createContainerAndRenderInElement(leftElement, createNew);
     const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
-    if (rightElement === null) {
+    if (rightElement === undefined) {
         throw new Error("sbs-right does not exist");
     }
     // The second time we don't need to createNew because we know a Container exists.

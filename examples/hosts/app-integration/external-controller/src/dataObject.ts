@@ -59,10 +59,8 @@ export class KeyValueDroplet extends DataObject implements IKeyValueDataObject {
     };
 
     public get = (key: string) => {
-        if (this.dataMap !== undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return this.dataMap.get(key);
-        }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return this.dataMap?.get(key);
     };
 }
 
