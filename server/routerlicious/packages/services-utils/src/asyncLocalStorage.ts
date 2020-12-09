@@ -7,11 +7,11 @@ import { AsyncLocalStorage } from "async_hooks";
 import * as uuid from "uuid";
 import { Request, Response, NextFunction } from "express";
 
-const asyncLocalStorage = new AsyncLocalStorage();
+const asyncLocalStorage = new AsyncLocalStorage<string>();
 
 export function getCorrelationId(): string | undefined {
     const id = asyncLocalStorage.getStore();
-    return typeof(id) === "string" ? id : undefined;
+    return id;
 }
 
 export function bindCorrelationId(headerName: string = "x-correlation-id"):
