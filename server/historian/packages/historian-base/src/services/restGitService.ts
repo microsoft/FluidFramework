@@ -116,6 +116,7 @@ export class RestGitService {
     }
 
     public async createRef(params: ICreateRefParamsExternal): Promise<git.IRef> {
+        // We modify this param to prevent writes to external storage if tenant is not linked
         if (!this.writeToExternalStorage) {
             params.config.enabled = false;
         }
@@ -123,6 +124,7 @@ export class RestGitService {
     }
 
     public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {
+        // We modify this param to prevent writes to external storage if tenant is not linked
         if (!this.writeToExternalStorage) {
             params.config.enabled = false;
         }
