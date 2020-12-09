@@ -31,7 +31,6 @@ export interface IKeyValueDataObject extends EventEmitter {
  * The KeyValueDroplet is our data object that implements the IKeyValueDataObject interface.
  */
 export class KeyValueDroplet extends DataObject implements IKeyValueDataObject {
-
     private dataMap: ISharedMap | undefined;
 
     /**
@@ -39,7 +38,7 @@ export class KeyValueDroplet extends DataObject implements IKeyValueDataObject {
      * initialize the state of the DataObject.
      */
     protected async initializingFirstTime() {
-        const initMap = SharedMap.create(this.runtime, 'name');
+        const initMap = SharedMap.create(this.runtime, "name");
         this.root.set("map", initMap.handle);
     }
 
@@ -56,11 +55,15 @@ export class KeyValueDroplet extends DataObject implements IKeyValueDataObject {
     }
 
     public set = (key: string, value: JSON) => {
-        this.dataMap?.set(key, value)
-    }
+        this.dataMap?.set(key, value);
+    };
+
     public get = (key: string) => {
-        return this.dataMap?.get(key)
-    }
+        if (this.dataMap !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return this.dataMap.get(key);
+        }
+    };
 }
 
 /**
