@@ -4,26 +4,17 @@
  */
 
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { assert, fromBase64ToUtf8, fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/common-utils";
+import { ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
 export class LocalChannelStorageService implements IChannelStorageService {
     constructor(private readonly tree: ITree) {
     }
 
-    public async read(path: string): Promise<string> {
-        const blob = await this.readBlob(path);
-        assert(blob !== undefined, "Not Found");
-        if (blob.encoding === "base64") {
-            return blob.contents;
-        }
-        return fromUtf8ToBase64(blob.contents);
-    }
-
     public async contains(path: string): Promise<boolean> {
         const blob = await this.readBlob(path);
-        return blob.contents !== undefined;
+        return blob !== undefined;
     }
 
     public async list(path: string): Promise<string[]> {
@@ -39,12 +30,12 @@ export class LocalChannelStorageService implements IChannelStorageService {
         return blob;
     }
 
-    private readSyncInternal(path: string, tree: ITree): IBlob | undefined {
+    private readSyncInternal(path: string, tree: ITree): ArrayBufferLike | undefined {
         for (const entry of tree.entries) {
             switch (entry.type) {
                 case TreeEntry.Blob:
                     if (path === entry.path) {
-                        const blob = entry.value as IBlob;
+                        const blob = entry.value;
                         return blob;
                     }
                     break;

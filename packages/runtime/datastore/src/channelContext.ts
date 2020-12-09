@@ -32,7 +32,7 @@ export function createServiceEndpoints(
     dirtyFn: () => void,
     storageService: IDocumentStorageService,
     tree?: ISnapshotTree,
-    extraBlobs?: Map<string, string>,
+    extraBlobs?: Map<string, ArrayBufferLike>,
 ) {
     const deltaConnection = new ChannelDeltaConnection(
         id,

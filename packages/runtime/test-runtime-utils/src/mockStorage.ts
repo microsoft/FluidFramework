@@ -24,15 +24,6 @@ export class MockStorage implements IChannelStorageService {
     constructor(protected tree?: ITree) {
     }
 
-    public async read(path: string): Promise<string> {
-        const blob = await this.readBlob(path);
-        assert(blob !== undefined, `Blob does not exist: ${path}`);
-        if (blob.encoding === "base64") {
-            return blob.contents;
-        }
-        return fromUtf8ToBase64(blob.contents);
-    }
-
     public async contains(path: string): Promise<boolean> {
         return await this.readBlob(path) !== undefined;
     }
@@ -41,14 +32,14 @@ export class MockStorage implements IChannelStorageService {
         return listBlobsAtTreePath(this.tree, path);
     }
 
-    private async readBlobInternal(tree: ITree, paths: string[]): Promise<IBlob> {
+    private async readBlobInternal(tree: ITree, paths: string[]): Promise<ArrayBufferLike> {
         if (tree) {
             for (const entry of tree.entries) {
                 if (entry.path === paths[0]) {
                     if (entry.type === "Blob") {
                         // eslint-disable-next-line prefer-rest-params
                         assert(paths.length === 1, JSON.stringify({ ...arguments }));
-                        const blob = entry.value as IBlob;
+                        const blob = entry.value;
                         return blob;
                     }
                     if (entry.type === "Tree") {
