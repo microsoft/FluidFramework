@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IKeyValueDataObject } from "./dataObject";
+import { IKeyValueDataObject } from "./kvpair-dataobject";
 
 /**
  * Render an IDiceRoller into a given div as a text character, with a button to roll it.
- * @param droplet - The Data Object to be rendered
+ * @param dataObject - The Data Object to be rendered
  * @param div - The div to render into
  */
 export function renderDiceRoller(DO: IKeyValueDataObject, div: HTMLDivElement) {

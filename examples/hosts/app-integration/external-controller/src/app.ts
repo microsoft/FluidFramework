@@ -5,8 +5,7 @@
 
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 
-import { KeyValueContainerRuntimeFactory } from "./containerCode";
-import { IKeyValueDataObject } from "./dataObject";
+import { IKeyValueDataObject, KeyValueContainerRuntimeFactory } from "./kvpair-dataobject";
 import { renderDiceRoller } from "./view";
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
