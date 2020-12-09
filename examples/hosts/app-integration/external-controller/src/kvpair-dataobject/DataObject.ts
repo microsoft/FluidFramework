@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { ISharedMap, SharedMap, IDirectoryValueChanged } from "@fluidframework/map";
+import { IDirectoryValueChanged, IValueChanged } from "@fluidframework/map";
 
 /**
  * IKeyValueDataObject describes the public API surface for our KeyValue DataObject.
  */
-export interface IKeyValueDataObject extends EventEmitter {
+export interface IKeyValueDataObject {
     /**
      * Get the dice value as a number.
      */
@@ -31,36 +30,23 @@ export interface IKeyValueDataObject extends EventEmitter {
  * The KeyValueDataObject is our data object that implements the IKeyValueDataObject interface.
  */
 export class KeyValueDataObject extends DataObject implements IKeyValueDataObject {
-    private dataMap: ISharedMap | undefined;
-
-    /**
-     * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
-     * initialize the state of the DataObject.
-     */
-    protected async initializingFirstTime() {
-        const initMap = SharedMap.create(this.runtime, "name");
-        this.root.set("map", initMap.handle);
-    }
-
     /**
      * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
      * DataObject, by registering an event listener for changes in data.
      */
     protected async hasInitialized() {
-        this.dataMap = await this.root.get("map").get();
-
-        this.dataMap?.on("valueChanged", (changed) => {
+        this.root.on("valueChanged", (changed: IValueChanged) => {
             this.emit("changed", changed);
         });
     }
 
-    public set = (key: string, value: JSON) => {
-        this.dataMap?.set(key, value);
+    public set = (key: string, value: any) => {
+        this.root.set(key, value);
     };
 
     public get = (key: string) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.dataMap?.get(key);
+        return this.root.get(key);
     };
 }
 
