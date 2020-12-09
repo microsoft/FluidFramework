@@ -1355,9 +1355,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, reason: "disconnected" };
             }
 
-            // Get the container's GC data and run GC on the reference graph in the GC data.
-            const gcData = await this.dataStores.getGCData();
             if (this.runtimeOptions.runGC) {
+                // Get the container's GC data and run GC on the reference graph in the GC data.
+                const gcData = await this.dataStores.getGCData();
                 runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
             }
 

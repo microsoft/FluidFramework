@@ -24,6 +24,7 @@ export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISumma
  * - Adds a new API `getGCData` to return GC data of this node.
  * - Caches the result of getGCData method to be used if nothing changes between summaries.
  * - Gets the initial GC data if required.
+ * - Adds GC data to the result of summarize.
  * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  *   directly into summarizeInternal method.
  */
@@ -48,7 +49,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     ) {
         super(
             logger,
-            async (fullTree: boolean) => this.summarizeFn(fullTree, true /* trackState */),
+            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */),
             config,
             changeSequenceNumber,
             latestSummary,
@@ -58,15 +59,31 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     public async summarize(fullTree: boolean, trackState: boolean = true): Promise<IContextSummarizeResult> {
+        // If trackState is true, get summary from base summarizer node which tracks summary state.
+        // If trackState is false, get summary from summarizeInternal.
         if (trackState) {
             const summarizeResult = await super.summarize(fullTree);
+
+            // If there is no cached GC data, return empty data in summarize result. It is the caller's responsiblity
+            // to ensure that GC data is available by calling getGCData before calling summarize.
+            const gcData = this.gcData !== undefined ? cloneGCData(this.gcData) : { gcNodes: {} };
+
             return {
                 ...summarizeResult,
-                gcNodes: [],
+                gcData,
             };
         } else {
-            return this.summarizeFn(fullTree, trackState);
+            return this.summarizeInternal(fullTree, trackState);
         }
+    }
+
+    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+        const summarizeResult = await this.summarizeFn(fullTree, trackState);
+        // back-compat 0.31 - Older versions will not have GC data in summary.
+        if (summarizeResult.gcData !== undefined) {
+            this.gcData = cloneGCData(summarizeResult.gcData);
+        }
+        return summarizeResult;
     }
 
     /**
@@ -83,8 +100,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             }
 
             // This is the first time GC data is requested in this client, so we need to get initial GC data.
-            // Note: Initial GC data may not be available for clients with old summary format. In such cases, we
-            // fall back to getting GC data by calling getGCDataFn.
+            // Note: Initial GC data may not be available for clients with old summary. In such cases, we fall back
+            // to getting GC data by calling getGCDataFn.
             const initialGCData = this.getInitialGCDataFn ? await this.getInitialGCDataFn() : undefined;
             if (initialGCData !== undefined) {
                 this.gcData = cloneGCData(initialGCData);

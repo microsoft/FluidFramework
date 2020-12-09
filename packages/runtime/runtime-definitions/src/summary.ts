@@ -12,16 +12,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IGCData } from "./garbageCollection";
 
-/**
- * Represents a node in a graph that has a unique id and a list of routes to other nodes.
- */
-export interface IGraphNode {
-    /** This node's indentifier */
-    id: string;
-    /** A list of routes to other nodes in the graph */
-    outboundRoutes: string[];
-}
-
 export interface ISummaryStats {
     treeNodeCount: number;
     blobNodeCount: number;
@@ -35,11 +25,8 @@ export interface ISummaryTreeWithStats {
 }
 
 export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
-    /**
-     * A list of the channel's garbage collection nodes. This includes all the child nodes plus nodes for
-     * the channel itself.
-     */
-    gcNodes: IGraphNode[];
+    /** The channel's garbage collection data */
+    gcData: IGCData;
 }
 
 export interface ISummarizeResult {
@@ -48,11 +35,8 @@ export interface ISummarizeResult {
 }
 
 export interface IContextSummarizeResult extends ISummarizeResult {
-    /**
-     * A list of the context's garbage collection nodes. This includes all the child nodes plus nodes for
-     * the context itself.
-     */
-    gcNodes: IGraphNode[];
+    /** The context's garbage collection data */
+    gcData: IGCData;
 }
 
 export interface ISummarizeInternalResult extends IContextSummarizeResult {

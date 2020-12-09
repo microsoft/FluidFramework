@@ -15,7 +15,7 @@ import {
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult, IGCData, IGraphNode } from "@fluidframework/runtime-definitions";
+import { IChannelSummarizeResult, IGCData } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { SharedObjectHandle } from "./handle";
@@ -218,18 +218,18 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         const snapshot: ITree = this.snapshotCore(serializer);
         const summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
 
-        // Add this channel's garbage collection node to the summarize result. The outbound routes of this channel are
+        // Add this channel's garbage collection data to the summarize result. The outbound routes of this channel are
         // all the routes of all the handles that are tracked by the SummarySerializer above.
-        const gcNodes: IGraphNode[] = [
-            { id: "/", outboundRoutes: serializer.getSerializedRoutes() },
-        ];
+        const gcData: IGCData = {
+            gcNodes: { "/": serializer.getSerializedRoutes() },
+        };
 
         assert(this._isSummarizing, "Possible re-entrancy! Summary should have been in progress.");
         this._isSummarizing = false;
 
         return {
             ...summaryTree,
-            gcNodes,
+            gcData,
         };
     }
 
