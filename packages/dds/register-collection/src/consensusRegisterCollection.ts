@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { blobToString } from "@fluidframework/driver-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -213,7 +214,8 @@ export class ConsensusRegisterCollection<T>
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const header = await storage.readString(snapshotFileName);
+        const blob = await storage.readBlob(snapshotFileName);
+        const header = blobToString(blob);
         const dataObj = header !== undefined ? this.parse(header, this.serializer) : {};
 
         for (const key of Object.keys(dataObj)) {

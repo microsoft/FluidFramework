@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { blobToString } from "@fluidframework/driver-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
@@ -67,10 +68,10 @@ export class SnapshotLoader {
             headerChunk.headerMetadata.orderedChunkMetadata.forEach(
                 (md) => blobs.splice(blobs.indexOf(md.id), 1));
             assert(blobs.length === 1, `There should be only one blob with catch up ops: ${blobs.length}`);
-
+            const blob = services.readBlob(blobs[0]);
             // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
-            return this.loadCatchupOps(services.readString(blobs[0]));
+            return this.loadCatchupOps(blobToString(blob));
         } else if (blobs.length !== headerChunk.headerMetadata.orderedChunkMetadata.length) {
             throw new Error("Unexpected blobs in snapshot");
         }

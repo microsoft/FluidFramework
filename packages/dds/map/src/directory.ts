@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { blobToString } from "@fluidframework/driver-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
@@ -647,15 +648,16 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService) {
-        const header = await storage.readString(snapshotFileName);
+        const blob = await storage.readBlob(snapshotFileName);
+        const header = blobToString(blob);
         const data = JSON.parse(header);
         const newFormat = data as IDirectoryNewStorageFormat;
         if (Array.isArray(newFormat.blobs)) {
             // New storage format
             this.populate(newFormat.content);
-            await Promise.all(newFormat.blobs.map(async (blob) => {
-                const blobContent = await storage.readString(blob);
-                const dataExtra = JSON.parse(blobContent);
+            await Promise.all(newFormat.blobs.map(async (value) => {
+                const newBlob = await storage.readBlob(value);
+                const dataExtra = JSON.parse(blobToString(newBlob));
                 this.populate(dataExtra as IDirectoryDataObject);
             }));
         } else {

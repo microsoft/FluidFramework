@@ -4,7 +4,7 @@
  */
 
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IBlob, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IChannelSummarizeResult } from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
@@ -102,7 +102,7 @@ export interface IChannelStorageService {
      */
     read(path: string): Promise<string>;
 
-    readBlob(path: string): Promise<IBlob>;
+    readBlob(path: string): Promise<ArrayBufferLike>;
     /**
      * Determines if there is an object contained at the given path.
      */

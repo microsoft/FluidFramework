@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { blobToString } from "@fluidframework/driver-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
@@ -330,16 +330,17 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
     */
     protected async loadCore(storage: IChannelStorageService) {
-        const header = await storage.readString(snapshotFileName);
-
+        const blob = await storage.readBlob(snapshotFileName);
+        const header = blobToString(blob);
         // eslint-disable-next-line @typescript-eslint/ban-types
         const json = JSON.parse(header) as object;
         const newFormat = json as IMapSerializationFormat;
         if (Array.isArray(newFormat.blobs)) {
             this.kernel.populateFromSerializable(newFormat.content);
             await Promise.all(newFormat.blobs.map(async (value) => {
-                const blob = await storage.readString(value);
-                this.kernel.populateFromSerializable(JSON.parse(blob) as IMapDataObjectSerializable);
+                const newBlob = await storage.readBlob(value);
+                const rawContent = blobToString(newBlob);
+                this.kernel.populateFromSerializable(JSON.parse(rawContent) as IMapDataObjectSerializable);
             }));
         } else {
             this.kernel.populateFromSerializable(json as IMapDataObjectSerializable);

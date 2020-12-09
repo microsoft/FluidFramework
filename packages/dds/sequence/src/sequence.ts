@@ -4,6 +4,7 @@
  */
 import { Deferred, fromBase64ToUtf8, assert } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { blobToString } from "@fluidframework/driver-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IValueChanged, MapKernel } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -487,8 +488,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService) {
-        const header = await storage.readString(snapshotFileName);
-
+        const blob = await storage.readBlob(snapshotFileName);
+        const header = blobToString(blob);
         this.intervalMapKernel.populate(header);
 
         try {

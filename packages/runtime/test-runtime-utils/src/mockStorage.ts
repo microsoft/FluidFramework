@@ -17,7 +17,7 @@ export class MockStorage implements IChannelStorageService {
         return new MockStorage(tree);
     }
 
-    public async readBlob(path: string): Promise<IBlob> {
+    public async readBlob(path: string): Promise<ArrayBufferLike> {
         return this.readBlobInternal(this.tree, path.split("/"));
     }
 

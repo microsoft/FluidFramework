@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { blobToString } from "@fluidframework/driver-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -128,7 +128,8 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const rawContent = await storage.readString(snapshotFileName);
+        const blob = await storage.readBlob(snapshotFileName);
+        const rawContent = blobToString(blob);
         const contents = JSON.parse(rawContent) as ISharedSummaryBlockDataSerializable;
 
         for (const [key, value] of Object.entries(contents)) {

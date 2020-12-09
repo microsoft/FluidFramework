@@ -4,6 +4,7 @@
  */
 
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { blobToString } from "@fluidframework/driver-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -214,7 +215,8 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const header = await storage.readString(snapshotFileName);
+        const blob = await storage.readBlob(snapshotFileName);
+        const header = blobToString(blob);
         if (header !== undefined) {
             this.inkData = new InkData(
                 JSON.parse(header) as ISerializableInk,

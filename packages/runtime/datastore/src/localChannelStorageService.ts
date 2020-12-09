@@ -23,7 +23,6 @@ export class LocalChannelStorageService implements IChannelStorageService {
 
     public async contains(path: string): Promise<boolean> {
         const blob = await this.readBlob(path);
-        assert(blob !== undefined, "Not Found");
         return blob.contents !== undefined;
     }
 
@@ -34,7 +33,7 @@ export class LocalChannelStorageService implements IChannelStorageService {
     /**
      * Provides a synchronous access point to locally stored data
      */
-    public async readBlob(path: string): Promise<IBlob> {
+    public async readBlob(path: string): Promise<ArrayBufferLike> {
         const blob = this.readSyncInternal(path, this.tree);
         assert(blob !== undefined, "Not Found");
         return blob;

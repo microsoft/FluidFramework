@@ -40,7 +40,7 @@ export class ChannelStorageService implements IChannelStorageService {
         return this.flattenedTree[path] !== undefined;
     }
 
-    public async readBlob(path: string): Promise<IBlob> {
+    public async readBlob(path: string): Promise<ArrayBufferLike> {
         const id = await this.getIdForPath(path);
         const blob = this.extraBlobs?.get(id) ?? this.storage.readBlob(id);
 
