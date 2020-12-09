@@ -37,8 +37,8 @@
         "maxNumberOfClientsPerDocument": 1000000,
         "throttling": {
             "http": {
-                "requestRate": 0.1,
-                "minCooldownIntervalInMs": 1000,
+                "requestsPerMs": 10000,
+                "minCooldownIntervalInMs": 10000,
                 "minThrottleIntervalInMs": 10000
             }
         },
