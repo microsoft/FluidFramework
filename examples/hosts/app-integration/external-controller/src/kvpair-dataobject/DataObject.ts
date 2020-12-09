@@ -8,7 +8,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ISharedMap, SharedMap, IDirectoryValueChanged } from "@fluidframework/map";
 
 /**
- * IKeyValueDataObject describes the public API surface for our KeyValue Droplet data object.
+ * IKeyValueDataObject describes the public API surface for our KeyValue DataObject.
  */
 export interface IKeyValueDataObject extends EventEmitter {
     /**
@@ -28,9 +28,9 @@ export interface IKeyValueDataObject extends EventEmitter {
 }
 
 /**
- * The KeyValueDroplet is our data object that implements the IKeyValueDataObject interface.
+ * The KeyValueDataObject is our data object that implements the IKeyValueDataObject interface.
  */
-export class KeyValueDroplet extends DataObject implements IKeyValueDataObject {
+export class KeyValueDataObject extends DataObject implements IKeyValueDataObject {
     private dataMap: ISharedMap | undefined;
 
     /**
@@ -69,8 +69,8 @@ export class KeyValueDroplet extends DataObject implements IKeyValueDataObject {
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
 export const KeyValueInstantiationFactory = new DataObjectFactory(
-    "keyvalue-droplet",
-    KeyValueDroplet,
+    "keyvalue-dataobject",
+    KeyValueDataObject,
     [],
     {},
 );

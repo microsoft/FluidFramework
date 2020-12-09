@@ -8,8 +8,7 @@ import { getSessionStorageContainer } from "@fluidframework/get-session-storage-
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
 import { renderDiceRoller } from "../src/view";
-import { KeyValueContainerRuntimeFactory } from "../src/containerCode";
-import { KeyValueDroplet } from "../src/dataObject";
+import { KeyValueContainerRuntimeFactory, KeyValueDataObject } from "../src/kvpair-dataobject";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
@@ -30,7 +29,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     const container = await getSessionStorageContainer(documentId, KeyValueContainerRuntimeFactory, createNewFlag);
 
     // Get the Default Object from the Container
-    const defaultObject = await getDefaultObjectFromContainer<KeyValueDroplet>(container);
+    const defaultObject = await getDefaultObjectFromContainer<KeyValueDataObject>(container);
 
     // Given an IDiceRoller, we can render its data using the view we've created in our app.
     renderDiceRoller(defaultObject, element);

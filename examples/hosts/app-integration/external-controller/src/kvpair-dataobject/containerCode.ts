@@ -4,8 +4,7 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-
-import { KeyValueInstantiationFactory } from "./dataObject";
+import { KeyValueInstantiationFactory } from "./DataObject";
 
 /**
  * The KeyValueContainerRuntimeFactory is the container code for our scenario.
