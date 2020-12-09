@@ -55,7 +55,7 @@ export async function createGitService(
 
     const details = await tenantService.getTenant(tenantId, token);
     const customData: ITenantCustomDataExternal = details.customData;
-    const writeToExternalStorage = customData.externalStorageData !== null ? true : false;
+    const writeToExternalStorage = customData.externalStorageData !== null;
     const service = new RestGitService(details.storage, cache, writeToExternalStorage);
 
     return service;
