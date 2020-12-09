@@ -33,15 +33,6 @@ export class MockStorage implements IChannelStorageService {
         return fromUtf8ToBase64(blob.contents);
     }
 
-    public async readString(path: string): Promise<string> {
-        const blob = await this.readBlob(path);
-        assert(blob !== undefined, `Blob does not exist: ${path}`);
-        if (blob.encoding === "base64") {
-            return fromBase64ToUtf8(blob.contents);
-        }
-        return blob.contents;
-    }
-
     public async contains(path: string): Promise<boolean> {
         return await this.readBlob(path) !== undefined;
     }

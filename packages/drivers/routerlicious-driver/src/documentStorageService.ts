@@ -64,14 +64,6 @@ export class DocumentStorageService implements IDocumentStorageService {
         return value.content;
     }
 
-    /**
-     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
-     */
-    public async readString(blobId: string): Promise<string> {
-        const base64Result = await this.read(blobId);
-        return fromBase64ToUtf8(base64Result);
-    }
-
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         const branch = ref ? `datastores/${this.id}/${ref}` : this.id;
         const commit = await this.manager.write(branch, tree, parents, message);

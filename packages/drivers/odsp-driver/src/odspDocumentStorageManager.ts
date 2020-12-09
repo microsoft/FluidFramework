@@ -229,13 +229,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return this.readWithEncodingOutput(blobId, "base64");
     }
 
-    /**
-     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
-     */
-    public async readString(blobId: string): Promise<string> {
-        return this.readWithEncodingOutput(blobId, "string");
-    }
-
     private async readWithEncodingOutput(blobId: string, outputFormat: string): Promise<string> {
         const blob = this.blobCache.get(blobId);
         assert(!blob || blob.encoding === "base64" || blob.encoding === undefined, "wrong blob encoding format");

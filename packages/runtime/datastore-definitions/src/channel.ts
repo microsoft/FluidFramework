@@ -102,11 +102,6 @@ export interface IChannelStorageService {
      */
     read(path: string): Promise<string>;
 
-    /**
-     * Reads the object contained at the given path. Returns a utf8 string representation for the object.
-     */
-    readString(path: string): Promise<string>;
-
     readBlob(path: string): Promise<IBlob>;
     /**
      * Determines if there is an object contained at the given path.

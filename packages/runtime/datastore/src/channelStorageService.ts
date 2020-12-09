@@ -55,14 +55,6 @@ export class ChannelStorageService implements IChannelStorageService {
         return fromUtf8ToBase64(blob.contents);
     }
 
-    public async readString(path: string): Promise<string> {
-        const blob = await this.readBlob(path);
-        if (blob.encoding === "base64") {
-            return fromBase64ToUtf8(blob.contents);
-        }
-        return blob.contents;
-    }
-
     public async list(path: string): Promise<string[]> {
         let tree = this.tree;
         const pathParts = getNormalizedObjectStoragePathParts(path);

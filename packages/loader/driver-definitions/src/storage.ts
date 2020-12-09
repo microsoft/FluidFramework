@@ -70,11 +70,6 @@ export interface IDocumentStorageService {
     read(id: string): Promise<string>;
 
     /**
-     * Reads the object with the given ID, returns content in utf8
-     */
-    readString(id: string): Promise<string>;
-
-    /**
      * Writes to the object with the given ID
      */
     write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;

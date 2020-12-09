@@ -36,14 +36,6 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.internalStorageService.read(blobId);
     }
 
-    /**
-     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
-     */
-    public async readString(blobId: string): Promise<string> {
-        const base64Result = await this.read(blobId);
-        return fromBase64ToUtf8(base64Result);
-    }
-
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         return this.internalStorageService.write(tree, parents, message, ref);
     }
