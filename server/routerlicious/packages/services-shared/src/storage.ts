@@ -284,8 +284,8 @@ export class DocumentStorage implements IDocumentStorage {
             const ops = JSON.parse(
                             Buffer.from(
                                 opsContent.content,
-                                Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : null
-                            ).toString()
+                                Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : null,
+                            ).toString(),
                         ) as ISequencedDocumentMessage[];
             const dbOps: ISequencedOperationMessage[] = ops.map((op: ISequencedDocumentMessage) => {
                 return {
