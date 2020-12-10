@@ -5,10 +5,13 @@
 
 import * as querystring from "querystring";
 import * as git from "@fluidframework/gitresources";
-import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-core";
+import {
+    ICreateRefParamsExternal,
+    IPatchRefParamsExternal,
+    ITenantStorage } from "@fluidframework/server-services-core";
 import request from "request";
 import * as winston from "winston";
-import { ICache, IStorage } from "./definitions";
+import { ICache } from "./definitions";
 
 // We include the historian version in the user-agent string
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -34,7 +37,10 @@ function endsWith(value: string, endings: string[]): boolean {
 export class RestGitService {
     private readonly authHeader: string;
 
-    constructor(private readonly storage: IStorage, private readonly cache: ICache) {
+    constructor(
+        private readonly storage: ITenantStorage,
+        private readonly cache: ICache,
+        private readonly writeToExternalStorage: boolean) {
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             this.authHeader = `Basic ${token.toString("base64")}`;
@@ -110,10 +116,18 @@ export class RestGitService {
     }
 
     public async createRef(params: ICreateRefParamsExternal): Promise<git.IRef> {
+        // We modify this param to prevent writes to external storage if tenant is not linked
+        if (!this.writeToExternalStorage) {
+            params.config.enabled = false;
+        }
         return this.post(`/repos/${this.getRepoPath()}/git/refs`, params);
     }
 
     public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {
+        // We modify this param to prevent writes to external storage if tenant is not linked
+        if (!this.writeToExternalStorage) {
+            params.config.enabled = false;
+        }
         return this.patch(`/repos/${this.getRepoPath()}/git/refs/${ref}`, params);
     }
 

@@ -26,15 +26,22 @@ export class InnerDocumentService implements IDocumentService {
      */
     public static async create(
         proxyObject: ICombinedDriver,
+        resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<InnerDocumentService> {
-        return new InnerDocumentService(proxyObject, proxyObject.clientId, logger);
+        return new InnerDocumentService(
+            proxyObject,
+            resolvedUrl,
+            proxyObject.clientId,
+            logger,
+        );
     }
 
     private readonly logger: MultiSinkLogger;
 
     private constructor(
         private readonly outerProxy: ICombinedDriver,
+        public readonly resolvedUrl: IResolvedUrl,
         public clientId: string,
         logger?: ITelemetryBaseLogger)
     {
@@ -42,12 +49,6 @@ export class InnerDocumentService implements IDocumentService {
         this.logger = new MultiSinkLogger("InnerIFrameDriver");
         this.logger.addLogger(logger);
         this.logger.addLogger(outerProxy.logger);
-    }
-
-    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
-    public get resolvedUrl(): IResolvedUrl {
-        this.logger.send({ category: "generic", eventName: "not implemented" });
-        throw new Error("Not implemented");
     }
 
     /**

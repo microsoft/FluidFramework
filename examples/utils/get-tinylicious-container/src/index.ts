@@ -5,3 +5,4 @@
 
 export * from "./getTinyliciousContainer";
 export * from "./getContainer";
+export * from "./insecureTinyliciousUrlResolver";

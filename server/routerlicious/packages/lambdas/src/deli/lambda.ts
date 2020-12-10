@@ -18,7 +18,6 @@ import {
     ITrace,
     MessageType,
     NackErrorType,
-    IServiceConfiguration,
 } from "@fluidframework/protocol-definitions";
 import { canSummarize } from "@fluidframework/server-services-client";
 import {
@@ -36,6 +35,7 @@ import {
     IProducer,
     IRawOperationMessage,
     ISequencedOperationMessage,
+    IServiceConfiguration,
     ITicketedMessage,
     NackOperationType,
     RawOperationType,
