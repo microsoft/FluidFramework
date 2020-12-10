@@ -39,9 +39,9 @@ export class SnapshotLoader {
         services: IChannelStorageService,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         const headerLoadedP =
-            services.read(SnapshotLegacy.header).then((header) => {
+            services.readBlob(SnapshotLegacy.header).then((header) => {
                 assert(!!header);
-                return this.loadHeader(header);
+                return this.loadHeader(blobToString(header));
             });
 
         const catchupOpsP =

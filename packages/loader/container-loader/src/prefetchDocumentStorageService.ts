@@ -6,7 +6,7 @@ import {
     ISnapshotTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
+import { blobToString, DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
@@ -34,16 +34,17 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     private cachedRead(blobId: string): Promise<string> {
+        const blob = this.internalStorageService.readBlob(blobId);
         if (this.prefetchEnabled) {
             const prefetchedBlobP: Promise<string> | undefined = this.prefetchCache.get(blobId);
             if (prefetchedBlobP !== undefined) {
                 return prefetchedBlobP;
             }
-            const prefetchedBlobPFromStorage = this.internalStorageService.read(blobId);
+            const prefetchedBlobPFromStorage = blobToString(blob);
             this.prefetchCache.set(blobId, prefetchedBlobPFromStorage);
             return prefetchedBlobPFromStorage;
         }
-        return this.internalStorageService.read(blobId);
+        return blobToString(blob);
     }
 
     private prefetchTree(tree: ISnapshotTree) {

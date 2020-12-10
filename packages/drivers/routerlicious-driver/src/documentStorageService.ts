@@ -5,6 +5,7 @@
 
 import { assert, gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import { blobToString } from "@fluidframework/driver-utils";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy } from "@fluidframework/protocol-base";
 import {
@@ -90,7 +91,8 @@ export class DocumentStorageService implements IDocumentStorageService {
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const iso = IsoBuffer.from(await this.read(blobId), "base64");
+        const blob = await this.readBlob(blobId);
+        const iso = IsoBuffer.from(blobToString(blob), "utf8");
 
         // In a Node environment, IsoBuffer may be a Node.js Buffer.  Node.js will
         // pool multiple small Buffer instances into a single ArrayBuffer, in which

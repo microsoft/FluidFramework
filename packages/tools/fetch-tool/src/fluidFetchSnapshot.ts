@@ -10,6 +10,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
 } from "@fluidframework/driver-definitions";
+import { blobToString } from "@fluidframework/driver-utils";
 import {
     ISnapshotTree,
     IVersion,
@@ -60,7 +61,7 @@ const blobCache = new Map<string, Promise<string>>();
 let blobCachePrevious = new Map<string, Promise<string>>();
 let blobCacheCurrent = new Map<string, Promise<string>>();
 
-function fetchBlobs(prefix: string,
+async function fetchBlobs(prefix: string,
     tree: ISnapshotTree,
     storage: IDocumentStorageService,
     blobIdMap: Map<string, number>,
@@ -76,8 +77,8 @@ function fetchBlobs(prefix: string,
                 reused = false;
                 blob = blobCache.get(blobId);
                 if (blob === undefined) {
-                    blob = storage.read(blobId);
-                    blobCache.set(blobId, blob);
+                    blob = await storage.readBlob(blobId);
+                    blobCache.set(blobId, blobToString(blob));
                 }
             }
             blobCacheCurrent.set(blobId, blob);
