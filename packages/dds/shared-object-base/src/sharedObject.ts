@@ -15,7 +15,7 @@ import {
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult, IGCData } from "@fluidframework/runtime-definitions";
+import { IChannelSummarizeResult, IGCData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { SharedObjectHandle } from "./handle";
@@ -214,18 +214,23 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         assert(!this._isSummarizing, "Possible re-entrancy! Summary should not already be in progress.");
         this._isSummarizing = true;
 
-        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
-        const snapshot: ITree = this.snapshotCore(serializer);
-        const summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
+        let summaryTree: ISummaryTreeWithStats;
+        let gcData: IGCData;
+        try {
+            const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+            const snapshot: ITree = this.snapshotCore(serializer);
+            summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
 
-        // Add this channel's garbage collection data to the summarize result. The outbound routes of this channel are
-        // all the routes of all the handles that are tracked by the SummarySerializer above.
-        const gcData: IGCData = {
-            gcNodes: { "/": serializer.getSerializedRoutes() },
-        };
+            // Add this channel's garbage collection data to the summarize result. The outbound routes of this channel
+            // are all the routes of all the handles that are tracked by the SummarySerializer above.
+            gcData = {
+                gcNodes: { "/": serializer.getSerializedRoutes() },
+            };
 
-        assert(this._isSummarizing, "Possible re-entrancy! Summary should have been in progress.");
-        this._isSummarizing = false;
+            assert(this._isSummarizing, "Possible re-entrancy! Summary should have been in progress.");
+        } finally {
+            this._isSummarizing = false;
+        }
 
         return {
             ...summaryTree,
@@ -247,18 +252,23 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         assert(!this._isSummarizing, "Possible re-entrancy! Summary should not already be in progress.");
         this._isSummarizing = true;
 
-        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+        let gcData: IGCData;
+        try {
+            const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+            this.snapshotCore(serializer);
 
-        this.snapshotCore(serializer);
+            // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
+            // routes of handles serialized during snapshot.
+            gcData = {
+                gcNodes: { "/": serializer.getSerializedRoutes() },
+            };
 
-        assert(this._isSummarizing, "Possible re-entrancy! Summary should have been in progress.");
-        this._isSummarizing = false;
+            assert(this._isSummarizing, "Possible re-entrancy! Summary should have been in progress.");
+        } finally {
+            this._isSummarizing = false;
+        }
 
-        // Return GC data for this shared object which contains a single GC node. The outbound routes of this node are
-        // the routes of handles serialized during snapshot.
-        return {
-            gcNodes: { "/": serializer.getSerializedRoutes() },
-        };
+        return gcData;
     }
 
     /**

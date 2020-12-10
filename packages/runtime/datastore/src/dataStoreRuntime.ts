@@ -586,11 +586,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     public async getGCData(): Promise<IGCData> {
         const builder = new GCDataBuilder();
-        // Iterate over each channel context and get its GC data.
+        // Iterate over each channel context and get their GC data.
         await Promise.all(Array.from(this.contexts)
             .filter(([contextId, _]) => {
                 // Get GC data only for attached contexts. Detached contexts are not connected in the GC reference
-                // graph so any references they might have won't be connected too.
+                // graph so any references they might have won't be connected as well.
                 return this.isChannelAttached(contextId);
             }).map(async ([contextId, context]) => {
                 const contextGCData = await context.getGCData();
@@ -609,8 +609,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @param trackState - This tells whether we should track state from this summary.
      */
     public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
-        // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
-        // channel contexts.
         const gcDataBuilder = new GCDataBuilder();
         const summaryBuilder = new SummaryTreeBuilder();
 
@@ -655,8 +653,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public getAttachSummary(): IChannelSummarizeResult {
         this.attachGraph();
 
-        // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
-        // channel contexts.
         const gcDataBuilder = new GCDataBuilder();
         const summaryBuilder = new SummaryTreeBuilder();
 
