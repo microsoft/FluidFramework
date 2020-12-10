@@ -22,7 +22,7 @@ describe("ChannelStorageService", () => {
                 assert.fail();
             },
         };
-        const ss = new ChannelStorageService(Promise.resolve(tree), storage);
+        const ss = new ChannelStorageService(tree, storage);
 
         assert.equal(await ss.contains("/"), false);
         assert.deepEqual(await ss.list(""), []);
@@ -43,7 +43,7 @@ describe("ChannelStorageService", () => {
                 return id;
             },
         };
-        const ss = new ChannelStorageService(Promise.resolve(tree), storage);
+        const ss = new ChannelStorageService(tree, storage);
 
         assert.equal(await ss.contains("foo"), true);
         assert.deepStrictEqual(await ss.list(""), ["foo"]);
@@ -73,7 +73,7 @@ describe("ChannelStorageService", () => {
                 return id;
             },
         };
-        const ss = new ChannelStorageService(Promise.resolve(tree), storage);
+        const ss = new ChannelStorageService(tree, storage);
 
         assert.equal(await ss.contains("nested/foo"), true);
         assert.deepStrictEqual(await ss.list("nested/"), ["foo"]);
