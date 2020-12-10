@@ -84,7 +84,7 @@ describe("Directory", () => {
                 let called3: boolean = false;
                 directory.on("op", (arg1, arg2, arg3) => called1 = true);
                 directory.on("valueChanged", (arg1, arg2, arg3, arg4) => called2 = true);
-                directory.on("containedValueChanged", (arg1, arg2, arg3, arg4) => called3 = true);
+                directory.on("containedValueChanged", (arg1, arg2, arg3) => called3 = true);
                 directory.set("dwyane", "johnson");
                 assert.equal(called1, false, "did not receive op event");
                 assert.equal(called2, true, "did not receive valueChanged event");

@@ -433,8 +433,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         // Mirror the containedValueChanged op on the SharedDirectory
         this.root.on(
             "containedValueChanged",
-            (changed: IValueChanged, local: boolean, op: ISequencedDocumentMessage) => {
-                this.emit("containedValueChanged", changed, local, op);
+            (changed: IValueChanged, local: boolean) => {
+                this.emit("containedValueChanged", changed, local);
             },
         );
     }
@@ -1570,7 +1570,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
             this.directory.emit("valueChanged", event, local, op);
             const containedEvent: IValueChanged = { key, previousValue };
-            this.emit("containedValueChanged", containedEvent, local, op);
+            this.emit("containedValueChanged", containedEvent, local);
         }
         return successfullyRemoved;
     }
@@ -1588,7 +1588,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
         this.directory.emit("valueChanged", event, local, op);
         const containedEvent: IValueChanged = { key, previousValue };
-        this.emit("containedValueChanged", containedEvent, local, op);
+        this.emit("containedValueChanged", containedEvent, local);
     }
 
     /**

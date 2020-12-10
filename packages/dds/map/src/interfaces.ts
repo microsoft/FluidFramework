@@ -211,7 +211,6 @@ export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (
         changed: IValueChanged,
         local: boolean,
-        op: ISequencedDocumentMessage,
         target: IEventThisPlaceHolder,
     ) => void);
 }
