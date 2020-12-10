@@ -78,6 +78,7 @@ import {
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
+    IGCData,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelop,
@@ -696,11 +697,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             context.baseSnapshot,
             this,
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
-            (id: string, createParam: CreateChildSummarizerNodeParam) =>
-                (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
+            (id: string, createParam: CreateChildSummarizerNodeParam) => (
+                    summarizeInternal: SummarizeInternalFn,
+                    getGCDataFn: () => Promise<IGCData>,
+                    getInitialGCDataFn: () => Promise<IGCData | undefined>,
+                ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,
                     createParam,
+                    undefined,
+                    getGCDataFn,
+                    getInitialGCDataFn,
                 ),
             this._logger);
 
@@ -1348,13 +1355,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, reason: "disconnected" };
             }
 
+            if (this.runtimeOptions.runGC) {
+                // Get the container's GC data and run GC on the reference graph in the GC data.
+                const gcData = await this.dataStores.getGCData();
+                runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+            }
+
             const trace = Trace.start();
             const summarizeResult = await this.summarize(fullTree || safe, true /* trackState */);
-
-            if (this.runtimeOptions.runGC) {
-                // Run garbage collection on the GC nodes returned by summarize.
-                runGarbageCollection(summarizeResult.gcNodes, [ "/" ], this.logger);
-            }
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: summarizeResult.stats,

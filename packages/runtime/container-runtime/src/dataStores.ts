@@ -19,7 +19,7 @@ import {
     IEnvelope,
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
-    IGraphNode,
+    IGCData,
     IInboundSignalMessage,
     InboundAttachMessage,
     ISummarizeResult,
@@ -37,7 +37,7 @@ import { BlobCacheStorageService, buildSnapshotTree, readAndParseFromBlobs } fro
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
-import { normalizeAndPrefixGCNodeIds } from "@fluidframework/garbage-collector";
+import { GCDataBuilder } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime, nonDataStorePaths } from "./containerRuntime";
 import {
@@ -370,10 +370,8 @@ export class DataStores implements IDisposable {
     }
 
     public async summarize(fullTree: boolean, trackState: boolean): Promise<IChannelSummarizeResult> {
-        const builder = new SummaryTreeBuilder();
-        // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
-        // channel contexts.
-        let gcNodes: IGraphNode[] = [ await this.getGCNode() ];
+        const gcDataBuilder = new GCDataBuilder();
+        const summaryBuilder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
@@ -383,21 +381,21 @@ export class DataStores implements IDisposable {
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
                 const contextSummary = await context.summarize(fullTree, trackState);
-                builder.addWithStats(contextId, contextSummary);
+                summaryBuilder.addWithStats(contextId, contextSummary);
 
-                // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
-                if (contextSummary.gcNodes === undefined) {
-                    contextSummary.gcNodes = [];
+                // back-compat 0.31 - Older versions will not have GC data in summary.
+                if (contextSummary.gcData !== undefined) {
+                    // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node to
+                    // be a path from the root.
+                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
                 }
-
-                // Normalize the context's GC nodes and prefix its id to the ids of GC nodes returned by it.
-                normalizeAndPrefixGCNodeIds(contextSummary.gcNodes, contextId);
-                gcNodes = gcNodes.concat(contextSummary.gcNodes);
             }));
 
+        // Get the outbound routes and add a GC node for this channel.
+        gcDataBuilder.addNode("/", await this.getOutboundRoutes());
         return {
-            ...builder.getSummaryTree(),
-            gcNodes,
+            ...summaryBuilder.getSummaryTree(),
+            gcData: gcDataBuilder.getGCData(),
         };
     }
 
@@ -438,11 +436,31 @@ export class DataStores implements IDisposable {
         return builder.getSummaryTree();
     }
 
+    public async getGCData(): Promise<IGCData> {
+        const builder = new GCDataBuilder();
+        // Iterate over each store and get their GC data.
+        await Promise.all(Array.from(this.contexts)
+            .filter(([_, context]) => {
+                // Get GC data only for attached contexts. Detached contexts are not connected in the GC reference
+                // graph so any references they might have won't be connected as well.
+                return context.attachState === AttachState.Attached;
+            }).map(async ([contextId, context]) => {
+                const contextGCData = await context.getGCData();
+                // Prefix the child's id to the ids of GC nodes returned by it. This gradually builds the id of
+                // each node to be a path from the root.
+                builder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
+            }));
+
+        // Get the outbound routes and add a GC node for this channel.
+        builder.addNode("/", await this.getOutboundRoutes());
+        return builder.getGCData();
+    }
+
     /**
-     * Get the outbound routes of this channel. Only root data stores are considered referenced.
-     * @returns this channel's garbage collection node.
+     * Returns the outbound routes of this channel. Only root data stores are considered referenced and their paths are
+     * part of outbound routes.
      */
-    private async getGCNode(): Promise<IGraphNode> {
+    private async getOutboundRoutes(): Promise<string[]> {
         const outboundRoutes: string[] = [];
         for (const [contextId, context] of this.contexts) {
             const isRootDataStore = await context.isRoot();
@@ -450,10 +468,6 @@ export class DataStores implements IDisposable {
                 outboundRoutes.push(`/${contextId}`);
             }
         }
-
-        return {
-            id: "/",
-            outboundRoutes,
-        };
+        return outboundRoutes;
     }
 }
