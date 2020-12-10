@@ -3,25 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import * as Comlink from "comlink";
+import { assert } from "@fluidframework/common-utils";
+import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IUrlResolverProxy, IUrlResolverProxyKey } from "./outerUrlResolver";
+import { MakeThinProxy } from "./proxyUtils";
 
-/**
- * A UrlResolver that returns a fixed url
- */
 export class InnerUrlResolver implements IUrlResolver {
-    constructor(private readonly resolved: IResolvedUrl) {
+    public static async create(outerPort: MessagePort): Promise<InnerUrlResolver> {
+        // The outer host is responsible for setting up the iframe, so the proxy connection
+        // is expected to exist when running any inner iframe code.
+        const combinedProxy = Comlink.wrap(outerPort);
+        const outerProxy = combinedProxy[IUrlResolverProxyKey] as Comlink.Remote<IUrlResolverProxy>;
+        assert(outerProxy !== undefined, "OuterUrlResolverProxy unavailable");
+        await outerProxy.connected();
+        return new InnerUrlResolver(outerProxy);
     }
 
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        return Promise.resolve(this.resolved);
+    public constructor(
+        private readonly outerProxy: IUrlResolverProxy,
+    ) {}
+
+    public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
+        const returnValueFn = await this.outerProxy.resolve(request);
+        return returnValueFn();
     }
 
-    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
+        codeDetails?: IFluidCodeDetails,
     ): Promise<string> {
-        throw new Error("Not implmented");
+        return this.outerProxy.getAbsoluteUrl(
+            MakeThinProxy(resolvedUrl),
+            relativeUrl,
+            MakeThinProxy(codeDetails),
+        );
     }
 }
