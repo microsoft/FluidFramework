@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -6,28 +7,20 @@
 import { IKeyValueDataObject } from "./kvpair-dataobject";
 
 /**
- * Render an IDiceRoller into a given div as a text character, with a button to roll it.
+ * Render Dice into a given HTMLElement as a text character, with a button to roll it.
  * @param dataObject - The Data Object to be rendered
- * @param div - The div to render into
+ * @param div - The HTMLElement to render into
  */
-export function renderDiceRoller(DO: IKeyValueDataObject, div: HTMLDivElement) {
+export function renderDiceRoller(DO: IKeyValueDataObject) {
     const dataKey = "dataKey";
     // Set init value for dataKey
     DO.set(dataKey, 1);
-    const wrapperDiv = document.createElement("div");
-    wrapperDiv.style.textAlign = "center";
-    div.append(wrapperDiv);
 
-    const diceCharDiv = document.createElement("div");
-    diceCharDiv.style.fontSize = "200px";
+    const diceCharDiv = document.getElementById("dice")!;
 
-    const rollButton = document.createElement("button");
-    rollButton.style.fontSize = "50px";
-    rollButton.textContent = "Roll";
+    const rollButton = document.getElementById("button")!;
     // Set the value at our dataKey with a random number between 1 and 6.
     rollButton.addEventListener("click", () => DO.set(dataKey, Math.floor(Math.random() * 6) + 1));
-
-    wrapperDiv.append(diceCharDiv, rollButton);
 
     // Get the current value of the shared data to update the view whenever it changes.
     const updateDiceChar = () => {
