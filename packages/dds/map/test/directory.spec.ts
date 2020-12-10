@@ -663,27 +663,38 @@ describe("Directory", () => {
 
             it("raises the containedValueChanged event when keys are set and deleted from a subdirectory", () => {
                 directory1.createSubDirectory("foo");
+                directory1.createSubDirectory("bar");
                 containerRuntimeFactory.processAllMessages();
 
-                const subdir1 = directory1.getWorkingDirectory("/foo");
-                const subdir2 = directory2.getWorkingDirectory("/foo");
+                const foo1 = directory1.getWorkingDirectory("/foo");
+                const foo2 = directory2.getWorkingDirectory("/foo");
+                const bar1 = directory1.getWorkingDirectory("/bar");
+                const bar2 = directory2.getWorkingDirectory("/bar");
 
                 let called1 = 0;
                 let called2 = 0;
-                subdir1.on("containedValueChanged", () => called1++);
-                subdir2.on("containedValueChanged", () => called2++);
+                let called3 = 0;
+                let called4 = 0;
+                foo1.on("containedValueChanged", () => called1++);
+                foo2.on("containedValueChanged", () => called2++);
+                bar1.on("containedValueChanged", () => called3++);
+                bar2.on("containedValueChanged", () => called4++);
 
-                subdir1.set("testKey", "testValue");
+                foo1.set("testKey", "testValue");
                 containerRuntimeFactory.processAllMessages();
 
-                assert.strictEqual(called1, 1, "containedValueChanged on local subdirectory after set()");
-                assert.strictEqual(called2, 1, "containedValueChanged on remote subdirectory after set()");
+                assert.strictEqual(called1, 1, "containedValueChanged on local foo subdirectory after set()");
+                assert.strictEqual(called2, 1, "containedValueChanged on remote foo subdirectory after set()");
+                assert.strictEqual(called3, 0, "containedValueChanged on local bar subdirectory after set()");
+                assert.strictEqual(called4, 0, "containedValueChanged on remote bar subdirectory after set()");
 
-                subdir1.delete("testKey");
+                foo1.delete("testKey");
                 containerRuntimeFactory.processAllMessages();
 
                 assert.strictEqual(called1, 2, "containedValueChanged on local subdirectory after delete()");
                 assert.strictEqual(called2, 2, "containedValueChanged on remote subdirectory after delete()");
+                assert.strictEqual(called3, 0, "containedValueChanged on local bar subdirectory after delete()");
+                assert.strictEqual(called4, 0, "containedValueChanged on remote bar subdirectory after delete()");
             });
 
             it("Can be cleared from the subdirectory", () => {
