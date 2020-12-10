@@ -394,7 +394,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     public [Symbol.toStringTag]: string = "SharedDirectory";
 
     /**
-     * {@inheritDoc IDirectory.absolutePath}
+     * {@inheritDoc IDirectoryNoEvents.absolutePath}
      */
     public get absolutePath(): string {
         return this.root.absolutePath;
@@ -440,21 +440,21 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc IDirectory.get}
+     * {@inheritDoc IDirectoryNoEvents.get}
      */
     public get<T = any>(key: string): T {
         return this.root.get<T>(key);
     }
 
     /**
-     * {@inheritDoc IDirectory.wait}
+     * {@inheritDoc IDirectoryNoEvents.wait}
      */
     public async wait<T = any>(key: string): Promise<T> {
         return this.root.wait<T>(key);
     }
 
     /**
-     * {@inheritDoc IDirectory.set}
+     * {@inheritDoc IDirectoryNoEvents.set}
      */
     public set<T = any>(key: string, value: T): this {
         this.root.set(key, value);
@@ -534,42 +534,42 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc IDirectory.createSubDirectory}
+     * {@inheritDoc IDirectoryNoEvents.createSubDirectory}
      */
     public createSubDirectory(subdirName: string): IDirectory {
         return this.root.createSubDirectory(subdirName);
     }
 
     /**
-     * {@inheritDoc IDirectory.getSubDirectory}
+     * {@inheritDoc IDirectoryNoEvents.getSubDirectory}
      */
     public getSubDirectory(subdirName: string): IDirectory {
         return this.root.getSubDirectory(subdirName);
     }
 
     /**
-     * {@inheritDoc IDirectory.hasSubDirectory}
+     * {@inheritDoc IDirectoryNoEvents.hasSubDirectory}
      */
     public hasSubDirectory(subdirName: string): boolean {
         return this.root.hasSubDirectory(subdirName);
     }
 
     /**
-     * {@inheritDoc IDirectory.deleteSubDirectory}
+     * {@inheritDoc IDirectoryNoEvents.deleteSubDirectory}
      */
     public deleteSubDirectory(subdirName: string): boolean {
         return this.root.deleteSubDirectory(subdirName);
     }
 
     /**
-     * {@inheritDoc IDirectory.subdirectories}
+     * {@inheritDoc IDirectoryNoEvents.subdirectories}
      */
     public subdirectories(): IterableIterator<[string, IDirectory]> {
         return this.root.subdirectories();
     }
 
     /**
-     * {@inheritDoc IDirectory.getWorkingDirectory}
+     * {@inheritDoc IDirectoryNoEvents.getWorkingDirectory}
      */
     public getWorkingDirectory(relativePath: string): IDirectory {
         const absolutePath = this.makeAbsolute(relativePath);
@@ -978,7 +978,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     }
 
     /**
-     * {@inheritDoc IDirectory.get}
+     * {@inheritDoc IDirectoryNoEvents.get}
      */
     public get<T = any>(key: string): T {
         if (!this._storage.has(key)) {
@@ -989,7 +989,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     }
 
     /**
-     * {@inheritDoc IDirectory.wait}
+     * {@inheritDoc IDirectoryNoEvents.wait}
      */
     public async wait<T = any>(key: string): Promise<T> {
         // Return immediately if the value already exists
@@ -1011,7 +1011,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     }
 
     /**
-     * {@inheritDoc IDirectory.set}
+     * {@inheritDoc IDirectoryNoEvents.set}
      */
     public set<T = any>(key: string, value: T): this {
         // Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
@@ -1050,7 +1050,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     }
 
     /**
-     * {@inheritDoc IDirectory.createSubDirectory}
+     * {@inheritDoc IDirectoryNoEvents.createSubDirectory}
      */
     public createSubDirectory(subdirName: string): IDirectory {
         // Undefined/null subdirectory names can't be serialized to JSON in the manner we currently snapshot.
@@ -1083,21 +1083,21 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     }
 
     /**
-     * {@inheritDoc IDirectory.getSubDirectory}
+     * {@inheritDoc IDirectoryNoEvents.getSubDirectory}
      */
     public getSubDirectory(subdirName: string): IDirectory {
         return this._subdirectories.get(subdirName);
     }
 
     /**
-     * {@inheritDoc IDirectory.hasSubDirectory}
+     * {@inheritDoc IDirectoryNoEvents.hasSubDirectory}
      */
     public hasSubDirectory(subdirName: string): boolean {
         return this._subdirectories.has(subdirName);
     }
 
     /**
-     * {@inheritDoc IDirectory.deleteSubDirectory}
+     * {@inheritDoc IDirectoryNoEvents.deleteSubDirectory}
      */
     public deleteSubDirectory(subdirName: string): boolean {
         // Delete the sub directory locally first.
@@ -1119,14 +1119,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     }
 
     /**
-     * {@inheritDoc IDirectory.subdirectories}
+     * {@inheritDoc IDirectoryNoEvents.subdirectories}
      */
     public subdirectories(): IterableIterator<[string, IDirectory]> {
         return this._subdirectories.entries();
     }
 
     /**
-     * {@inheritDoc IDirectory.getWorkingDirectory}
+     * {@inheritDoc IDirectoryNoEvents.getWorkingDirectory}
      */
     public getWorkingDirectory(relativePath: string): IDirectory {
         return this.directory.getWorkingDirectory(this.makeAbsolute(relativePath));

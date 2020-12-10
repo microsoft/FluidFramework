@@ -117,9 +117,10 @@ export interface IValueTypeCreator {
 
 /**
  * The IDirectoryNoEvents describes the methods of the IDirectory but omits the IEventProvider interface to avoid
- * a Typescript compilation conflict with its definition in ISharedObject.
+ * a Typescript compilation conflict with its definition in ISharedObject.  You should use the IDirectory interface
+ * instead.
  */
-interface IDirectoryNoEvents extends Map<string, any> {
+export interface IDirectoryNoEvents extends Map<string, any> {
     /**
      * The absolute path of the directory.
      */
