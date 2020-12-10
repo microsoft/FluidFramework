@@ -213,7 +213,7 @@ export interface IDirectoryEvents extends IEvent {
  */
 export interface ISharedDirectory extends
     ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>,
-    Omit<Omit<Omit<IDirectory,"on">,"once">,"off"> {
+    Omit<IDirectory, "on" | "once" | "off"> {
     // The Omit type excludes symbols, which we don't want to exclude.  Adding them back here manually.
     // https://github.com/microsoft/TypeScript/issues/31671
     [Symbol.iterator](): IterableIterator<[string, any]>;
