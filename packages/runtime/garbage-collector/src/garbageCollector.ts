@@ -40,8 +40,9 @@ export function runGarbageCollection(
         if (node !== undefined) {
             referencedIds.push(...node.outboundRoutes);
         } else {
-            // Log a telemetry error if there
-            logger.sendErrorEvent({
+            // Log a telemetry event if there is a node missing for a referenced id. This should not happen but for now
+            // we don't assert. We can monitor telemetry for a while to figure out next steps.
+            logger.sendTelemetryEvent({
                 eventName: "MissingGCNode",
                 missingNodeId: id,
             });
