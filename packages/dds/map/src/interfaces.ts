@@ -116,11 +116,12 @@ export interface IValueTypeCreator {
 }
 
 /**
- * The IDirectoryNoEvents describes the methods of the IDirectory but omits the IEventProvider interface to avoid
- * a Typescript compilation conflict with its definition in ISharedObject.  You should use the IDirectory interface
- * instead.
+ * Interface describing actions on a directory.
+ *
+ * @remarks
+ * When used as a Map, operates on its keys.
  */
-export interface IDirectoryNoEvents extends Map<string, any> {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents> {
     /**
      * The absolute path of the directory.
      */
@@ -190,14 +191,6 @@ export interface IDirectoryNoEvents extends Map<string, any> {
     getWorkingDirectory(relativePath: string): IDirectory;
 }
 
-/**
- * Interface describing actions on a directory.
- *
- * @remarks
- * When used as a Map, operates on its keys.
- */
-export interface IDirectory extends IDirectoryNoEvents, IEventProvider<IDirectoryEvents> { }
-
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
@@ -218,8 +211,13 @@ export interface IDirectoryEvents extends IEvent {
 /**
  * Interface describing a shared directory.
  */
-export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents>, IDirectoryNoEvents {
-
+export interface ISharedDirectory extends
+    ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>,
+    Omit<Omit<Omit<IDirectory,"on">,"once">,"off"> {
+    // The Omit type excludes symbols, which we don't want to exclude.  Adding them back here manually.
+    // https://github.com/microsoft/TypeScript/issues/31671
+    [Symbol.iterator](): IterableIterator<[string, any]>;
+    readonly [Symbol.toStringTag]: string;
 }
 
 /**
