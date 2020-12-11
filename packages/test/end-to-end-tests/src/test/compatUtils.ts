@@ -21,7 +21,7 @@ import { SharedCounter } from "@fluidframework/counter";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
-import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
+import { IClientConfiguration } from "@fluidframework/protocol-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
@@ -65,7 +65,7 @@ export interface ILocalTestObjectProvider extends ITestObjectProvider {
 }
 
 export interface ITestOptions {
-    serviceConfiguration?: Partial<IServiceConfiguration>,
+    serviceConfiguration?: Partial<IClientConfiguration>,
     tinylicious?: boolean,
 }
 
