@@ -16,7 +16,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "dev": "npm run webpack:dev",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
