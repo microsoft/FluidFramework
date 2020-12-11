@@ -122,7 +122,7 @@ export function readJsonSync(filename: string) {
     return JSON.parse(content);
 }
 
-export async function lookUpDirAsync(dir: string, callback: (currentDir: string) => boolean | Promise<boolean>) {
+export async function lookUpDirAsync(dir: string, callback: (currentDir: string) => Promise<boolean>) {
     let curr = path.resolve(dir);
     while (true) {
         if (await callback(curr)) {
