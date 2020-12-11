@@ -228,10 +228,12 @@ export class FluidPackageCheck {
             if (pkg.getScript("tsc")) {
                 if (pkg.getScript("build:test")) {
                     if (pkg.getScript("build:esnext")) {
+                        // If we have build:esnext, that means that we are building it two ways (commonjs and esm)
                         buildCommonJs.push("tsc");
                         buildCommonJs.push("build:test");
                         buildCompile.push("build:commonjs");
                     } else {
+                        // Only building it one way, so just we only need to to build with tsc and test
                         buildCompile.push("tsc");
                         buildCompile.push("build:test");
                         concurrentBuildCompile = false;
