@@ -21,6 +21,10 @@ interface ITsBuildInfo {
     }
 }
 
+interface TscTaskMatchOptions {
+    tsConfig: string;
+};
+
 export class TscTask extends LeafTask {
     private _tsBuildInfoFullPath: string | undefined;
     private _tsBuildInfo: ITsBuildInfo | undefined;
@@ -29,7 +33,7 @@ export class TscTask extends LeafTask {
     private _projectReference: TscTask | undefined;
     private _sourceStats: fs.Stats[] | undefined;
 
-    public matchTask(command: string, options?: any): LeafTask | undefined {
+    public matchTask(command: string, options?: TscTaskMatchOptions): LeafTask | undefined {
         if (!options?.tsConfig) { return super.matchTask(command); }
         if (command !== "tsc") { return undefined; }
         const configFile = this.configFileFullPath;
