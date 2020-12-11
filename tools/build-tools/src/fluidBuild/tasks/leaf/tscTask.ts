@@ -22,7 +22,7 @@ interface ITsBuildInfo {
 }
 
 interface TscTaskMatchOptions {
-    tsConfig: string;
+    tsConfig?: string;
 };
 
 export class TscTask extends LeafTask {
