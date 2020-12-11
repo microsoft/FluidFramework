@@ -39,6 +39,7 @@ import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
+import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
@@ -70,19 +71,45 @@ function expandTreeForReadability(tree: ITree): ITree {
 }
 
 /**
+ * Helper function that normalizes the snapshot trees in the given file snapshot.
+ * @returns the normalized file snapshot.
+ */
+function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapshot {
+    const normalizedSnapshot: IFileSnapshot = {
+        commits: {},
+        tree: getNormalizedSnapshot(snapshot.tree),
+    };
+    for (const commit of Object.keys(snapshot.commits)) {
+        normalizedSnapshot.commits[commit] = getNormalizedSnapshot(snapshot.commits[commit]);
+    }
+    return normalizedSnapshot;
+}
+
+/**
  * Helper class to container information about particular snapshot
  */
 class ContainerContent {
     public snapshot?: IFileSnapshot;
 
+    private _normalizedSnapshot?: IFileSnapshot;
     private snapshotSavedString?: string;
     private snapshotExpandedString?: string;
 
     public constructor(public readonly op: number) {
     }
 
+    // Returns a normalized version of the file snapshot. This will be used when comparing snapshots.
+    get normalizedSnapshot(): IFileSnapshot {
+        if (this._normalizedSnapshot === undefined) {
+            assert(this.snapshot !== undefined, "snapshot should be set before retreiving it");
+            this._normalizedSnapshot = getNormalizedFileSnapshot(this.snapshot);
+        }
+        return this._normalizedSnapshot;
+    }
+
     get snapshotAsString(): string {
         if (this.snapshotSavedString === undefined) {
+            assert(this.snapshot !== undefined, "snapshot should be set before retreiving it as string");
             this.snapshotSavedString = JSON.stringify(this.snapshot, undefined, 2);
         }
         return this.snapshotSavedString;
@@ -90,6 +117,7 @@ class ContainerContent {
 
     get snapshotExpanded(): string {
         if (this.snapshotExpandedString === undefined) {
+            assert(this.snapshot !== undefined, "snapshot should be set before retreiving it as expanded string");
             const snapshotExpanded: IFileSnapshot = {
                 commits: {},
                 tree: expandTreeForReadability(this.snapshot.tree),
@@ -102,12 +130,6 @@ class ContainerContent {
         }
         return this.snapshotExpandedString;
     }
-}
-
-function sameContent(content1: ContainerContent, content2: ContainerContent): boolean {
-    assert(content1.op === content2.op);
-
-    return content1.snapshotAsString === content2.snapshotAsString;
 }
 
 /**
@@ -597,8 +619,8 @@ export class ReplayTool {
         this.storage.onSnapshotHandler = (snapshot: IFileSnapshot) => {
             content.snapshot = snapshot;
             if (this.args.compare) {
-                this.compareSnapshots(
-                    content.snapshotAsString,
+                this.compareWithReferenceSnapshot(
+                    content.normalizedSnapshot,
                     `${dir}/${this.mainDocument.getFileName()}`);
             } else if (this.args.write) {
                 fs.mkdirSync(dir, { recursive: true });
@@ -757,19 +779,37 @@ export class ReplayTool {
             return false;
         }
 
-        if (!sameContent(content, content2)) {
-            // eslint-disable-next-line max-len
-            this.reportError(`\nOp ${op}: Discrepancy between ${name1} & ${name2}! Likely a bug in snapshot load-save sequence!`);
-            fs.mkdirSync(dir, { recursive: true });
+        // Check if the two snapshots match.
+        let failed = true;
+        let error: any;
+        if (content.op === content2.op) {
+            // Deep compare the normalized snapshots. If they do not match, catch the error and display it.
+            try {
+                strict.deepStrictEqual(content.normalizedSnapshot, content2.normalizedSnapshot);
+                failed = false;
+            } catch (e) {
+                error = e;
+            }
+        }
 
-            this.expandForReadabilityAndWriteOut(content, `${dir}/${name1}`);
-            this.expandForReadabilityAndWriteOut(content2, `${dir}/${name2}`);
+        if (failed) {
+            // eslint-disable-next-line max-len
+            this.reportError(`\nOp ${op}: Discrepancy between ${name1} & ${name2}! Likely a bug in snapshot load-save sequence!`, error);
+
+            // Write the failed snapshots under 'FailedSnapshot' sub-directory of the current directory. This will in
+            // debugging by looking into the complete snapshot.
+            const failedDir = `${dir}/FailedSnapshots`;
+            fs.mkdirSync(failedDir, { recursive: true });
+
+            this.expandForReadabilityAndWriteOut(content, `${failedDir}/${name1}`);
+            this.expandForReadabilityAndWriteOut(content2, `${failedDir}/${name2}`);
 
             if (this.args.windiff) {
-                console.log(`windiff.exe "${dir}/${name1}_expanded.json" "${dir}/${name2}_expanded.json"`);
+                console.log(`windiff.exe "${failedDir}/${name1}_expanded.json" "${failedDir}/${name2}_expanded.json"`);
                 this.windiffCount++;
                 if (this.windiffCount <= 10) {
-                    child_process.exec(`windiff.exe "${dir}/${name1}_expanded.json" "${dir}/${name2}_expanded.json"`);
+                    child_process.exec(
+                        `windiff.exe "${failedDir}/${name1}_expanded.json" "${failedDir}/${name2}_expanded.json"`);
                 } else if (this.windiffCount === 10) {
                     console.error("Launched 10 windiff processes, stopping!");
                 }
@@ -797,25 +837,32 @@ export class ReplayTool {
         }
     }
 
-    private compareSnapshots(contentAsString: string, filename: string) {
+    private compareWithReferenceSnapshot(snapshot: IFileSnapshot, referenceSnapshotFilename: string) {
+        // Read the reference snapshot and covert it to normalized IFileSnapshot.
+        const referenceSnapshotString = fs.readFileSync(`${referenceSnapshotFilename}.json`, "utf-8");
+        const referenceSnapshot = getNormalizedFileSnapshot(JSON.parse(referenceSnapshotString));
+
         /**
-         * Normalize the snapshots. The packageVersion of the snapshot could be different from the reference snapshot.
-         * Replace all package versions with X before we compare them. This is how it will looks like:
+         * The packageVersion of the snapshot could be different from the reference snapshot. Replace all package
+         * package versions with X before we compare them. This is how it will looks like:
          * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
          * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
          */
         const packageVersionRegex = /\\"packageversion\\":\\".+\\"/gi;
         const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
 
-        const snapshotAsString = fs.readFileSync(`${filename}.json`, "utf-8");
-        const snapshotObject = JSON.parse(snapshotAsString.replace(packageVersionRegex, packageVersionPlaceholder));
-        const contentObject = JSON.parse(contentAsString.replace(packageVersionRegex, packageVersionPlaceholder));
+        const normalizedSnapshot = JSON.parse(
+            JSON.stringify(snapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
+        );
+        const normalizedReferenceSnapshot = JSON.parse(
+            JSON.stringify(referenceSnapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
+        );
 
         // Put the assert in a try catch block, so that we can report errors, if any.
         try {
-            strict.deepStrictEqual(contentObject, snapshotObject);
+            strict.deepStrictEqual(normalizedSnapshot, normalizedReferenceSnapshot);
         } catch (error) {
-            this.reportError(`Mismatch in snapshot ${filename}.json`, error);
+            this.reportError(`Mismatch in snapshot ${referenceSnapshotFilename}.json`, error);
         }
     }
 }
