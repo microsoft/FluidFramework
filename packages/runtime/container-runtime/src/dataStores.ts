@@ -48,6 +48,7 @@ import {
     LocalFluidDataStoreContext,
     createAttributesBlob,
     LocalDetachedFluidDataStoreContext,
+    isLocalFluidDataStoreContext,
  } from "./dataStoreContext";
 
  /**
@@ -63,6 +64,7 @@ export class DataStores implements IDisposable {
     private readonly logger: ITelemetryLogger;
 
     private readonly disposeOnce = new Lazy<void>(()=>this.contexts.dispose());
+    private readonly contexts: DataStoreContexts;
 
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
@@ -71,8 +73,8 @@ export class DataStores implements IDisposable {
         private readonly getCreateChildSummarizerNodeFn:
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         baseLogger: ITelemetryBaseLogger,
-        private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
+        this.contexts = new DataStoreContexts(baseLogger);
         this.logger = ChildLogger.create(baseLogger);
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree | string>();
@@ -418,6 +420,9 @@ export class DataStores implements IDisposable {
                         || this.attachOpFiredForDataStore.has(key)),
                 )
                 .map(([key, value]) => {
+                    assert(
+                        isLocalFluidDataStoreContext(value),
+                        "createSummary only works on local data store contexts");
                     let dataStoreSummary: ISummarizeResult;
                     if (value.isLoaded) {
                         const snapshot = value.generateAttachMessage().snapshot;

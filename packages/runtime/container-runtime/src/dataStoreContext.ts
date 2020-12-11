@@ -101,11 +101,26 @@ interface FluidDataStoreMessage {
     type: string;
 }
 
+export interface IFluidDataStoreContextImpl extends
+    IFluidDataStoreContext, IDisposable{
+        updateLeader(leader: boolean);
+        reSubmit(contents: any, localOpMetadata: unknown): void;
+        process(messageArg: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+        realize(): Promise<IFluidDataStoreChannel>;
+        processSignal(message: IInboundSignalMessage, local: boolean): void;
+        setConnectionState(connected: boolean, clientId?: string);
+        emit(event: string, ...args: any[]);
+        summarize(fullTree: boolean, trackState: boolean): Promise<IContextSummarizeResult> ;
+        readonly isLoaded: boolean;
+        isRoot(): Promise<boolean>;
+        getGCData(): Promise<IGCData>;
+}
+
 /**
  * Represents the context for the store. This context is passed to the store runtime.
  */
 export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidDataStoreContextEvents> implements
-    IFluidDataStoreContext,
+    IFluidDataStoreContextImpl,
     IDisposable {
     public get documentId(): string {
         return this._containerRuntime.id;
@@ -549,8 +564,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.getAbsoluteUrl(relativeUrl);
     }
 
-    public abstract generateAttachMessage(): IAttachMessage;
-
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
@@ -612,10 +625,6 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             },
             pkg,
         );
-    }
-
-    public generateAttachMessage(): IAttachMessage {
-        throw new Error("Cannot attach remote store");
     }
 
     // This should only be called during realize to get the baseSnapshot,
@@ -682,10 +691,18 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     }
 }
 
+export interface ILocalFluidDataStoreContextImpl extends IFluidDataStoreContextImpl{
+    generateAttachMessage(): IAttachMessage;
+}
+
+export const isLocalFluidDataStoreContext =
+    (context: IFluidDataStoreContextImpl): context is ILocalFluidDataStoreContextImpl=>
+        typeof (context as ILocalFluidDataStoreContextImpl).generateAttachMessage === "function";
+
 /**
  * Base class for detached & attached context classes
  */
-export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
+export class LocalFluidDataStoreContextBase extends FluidDataStoreContext implements ILocalFluidDataStoreContextImpl {
     constructor(
         id: string,
         pkg: Readonly<string[]>,
