@@ -13,7 +13,7 @@ export * from "old-container-definitions";
 export * from "old-core-interfaces";
 export { Container, Loader } from "old-container-loader";
 export { ContainerRuntime, IContainerRuntimeOptions } from "old-container-runtime";
-export { IDocumentServiceFactory } from "old-driver-definitions";
+export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions";
 export { IFluidDataStoreFactory } from "old-runtime-definitions";
 export { IChannelFactory } from "old-datastore-definitions";
 export {

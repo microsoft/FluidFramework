@@ -5,12 +5,13 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "composite": true,
         "strictNullChecks": false,
         "stripInternal": true,
         "rootDir": "./src",
         "outDir": "./dist",
         "types": [
-            "mocha"
+            "node"                  /* map use node's "path" */
         ]
     },
     "include": [

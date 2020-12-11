@@ -6,13 +6,14 @@
 import fs from "fs";
 import { LocalOrdererManager } from "@fluidframework/server-local-server";
 import { DocumentStorage } from "@fluidframework/server-services-shared";
+import { generateToken, Historian } from "@fluidframework/server-services-client";
 import { MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import * as git from "isomorphic-git";
 import { Provider } from "nconf";
 import socketIo from "socket.io";
-import { Historian } from "@fluidframework/server-services-client";
+
 import winston from "winston";
 import { TinyliciousResources } from "./resources";
 import {
@@ -55,6 +56,7 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
             taskMessageSender,
             config.get("foreman:permissions"),
             maxSendMessageSize,
+            generateToken,
             async (tenantId: string) => {
                 const url = `http://localhost:${port}/repos/${encodeURIComponent(tenantId)}`;
                 return new Historian(url, false, false);

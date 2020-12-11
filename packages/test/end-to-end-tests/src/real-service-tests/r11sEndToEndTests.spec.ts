@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import * as moniker from "moniker";
-import uuid from "uuid";
+import { v4 as uuid } from "uuid";
 import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -165,10 +165,19 @@ describe(`r11s End-To-End tests`, () => {
         const testChannel1 = await subComponent1.runtime.getChannel("root");
         const testChannel2 = await subComponent2.runtime.getChannel("root");
         assert.strictEqual(testChannel2.isAttached(), true, "Channel should be attached!!");
-        assert.strictEqual(JSON.stringify(testChannel2.snapshot()), JSON.stringify(testChannel1.snapshot()),
-            "Value for snapshot should be same!!");
         assert.strictEqual(testChannel2.isAttached(), testChannel1.isAttached(),
             "Value for isAttached should persist!!");
+
+        // back-compat for N-2 <= 0.29, remove the else part when N-2 >= 0.30
+        if (testChannel1.summarize && testChannel2.summarize) {
+            assert.strictEqual(JSON.stringify(testChannel2.summarize()), JSON.stringify(testChannel1.summarize()),
+                "Value for summarize should be same!!");
+        } else {
+            assert.strictEqual(
+                JSON.stringify((testChannel2 as SharedMap).snapshot()),
+                JSON.stringify((testChannel1 as SharedMap).snapshot()),
+                "Value for summarize should be same!!");
+        }
     });
 
     it("Fire ops during container attach for shared map", async () => {

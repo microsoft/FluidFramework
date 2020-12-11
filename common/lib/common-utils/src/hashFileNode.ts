@@ -8,9 +8,21 @@ import sha1 from "sha.js/sha1";
 import { IsoBuffer } from "./bufferNode";
 
 /**
+ * Set a hashing function to be called in place of hashFile's internal
+ * implementation when running under insecure contexts.  Not needed
+ * when running under Node.  The internal algorithm should match that the
+ * one used internally by hashFile.
+ * @param hashFn - The function that should be used in place of hashFile
+ */
+export function setInsecureContextHashFn(hashFn: (f: IsoBuffer) => Promise<string>) {
+    return;
+}
+
+/**
  * Hash a file. Consistent within a session, but should not be persisted and
  * is not consistent with git.
- * Must be called under secure context for browsers
+ * If called under an insecure context for a browser, an override function
+ * needs to be set using setInsecureContextHashFn
  *
  * @param file - The contents of the file in a buffer
  * @returns The hash of the content of the buffer

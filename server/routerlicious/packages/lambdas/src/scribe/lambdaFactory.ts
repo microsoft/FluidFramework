@@ -15,6 +15,7 @@ import {
     IProducer,
     IScribe,
     ISequencedOperationMessage,
+    IServiceConfiguration,
     ITenantManager,
     MongoManager,
 } from "@fluidframework/server-services-core";
@@ -47,6 +48,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         private readonly messageCollection: ICollection<ISequencedOperationMessage>,
         private readonly producer: IProducer,
         private readonly tenantManager: ITenantManager,
+        private readonly serviceConfiguration: IServiceConfiguration,
     ) {
         super();
     }
@@ -126,13 +128,12 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             summaryReader,
             checkpointManager,
             lastCheckpoint,
+            this.serviceConfiguration,
             this.producer,
             protocolHandler,
             latestSummary.term,
             latestSummary.protocolHead,
-            opMessages,
-            true,
-            false);
+            opMessages);
     }
 
     public async dispose(): Promise<void> {

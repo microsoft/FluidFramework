@@ -4,33 +4,32 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { CreateContainerError } from "@fluidframework/container-utils";
-import { readAndParse } from "@fluidframework/driver-utils";
-import {
-    ISequencedDocumentMessage,
-    ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
     IChannel,
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
 import {
-    IFluidDataStoreContext,
-    ISummaryTracker,
-    ISummarizeResult,
-    ISummarizerNode,
+    ISequencedDocumentMessage,
+    ISnapshotTree,
+} from "@fluidframework/protocol-definitions";
+import {
     CreateChildSummarizerNodeFn,
+    IContextSummarizeResult,
+    IFluidDataStoreContext,
+    IGCData,
     ISummarizeInternalResult,
+    ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
-import { convertToSummaryTree } from "@fluidframework/runtime-utils";
-import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
+import { createServiceEndpoints, IChannelContext, summarizeChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
+import { ChannelStorageService } from "./channelStorageService";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
 import { debug } from "./debug";
-import { ChannelStorageService } from "./channelStorageService";
 
 interface IThing1 {
     type: "process";
@@ -62,7 +61,7 @@ export class RemoteChannelContext implements IChannelContext {
         readonly deltaConnection: ChannelDeltaConnection,
         readonly objectStorage: ChannelStorageService,
     };
-    private readonly summarizerNode: ISummarizerNode;
+    private readonly summarizerNode: ISummarizerNodeWithGC;
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -70,10 +69,9 @@ export class RemoteChannelContext implements IChannelContext {
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
         private readonly id: string,
-        baseSnapshot: Promise<ISnapshotTree> | ISnapshotTree,
+        baseSnapshot:  ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
-        extraBlobs: Promise<Map<string, string>> | undefined,
-        private readonly summaryTracker: ISummaryTracker,
+        extraBlobs: Map<string, string> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private readonly attachMessageType?: string,
     ) {
@@ -83,13 +81,16 @@ export class RemoteChannelContext implements IChannelContext {
             submitFn,
             () => dirtyFn(this.id),
             storageService,
-            Promise.resolve(baseSnapshot),
+            baseSnapshot,
             extraBlobs);
 
-        // Summarizer node always tracks summary state. Set trackState to true.
         const thisSummarizeInternal =
-            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */);
-        this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
+            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+        this.summarizerNode = createSummarizerNode(
+            thisSummarizeInternal,
+            async () => this.getGCDataInternal(),
+            async () => this.getInitialGCData(),
+        );
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -120,7 +121,6 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
-        this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
         this.summarizerNode.invalidate(message.sequenceNumber);
 
         if (this.isLoaded) {
@@ -146,19 +146,14 @@ export class RemoteChannelContext implements IChannelContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
-        // Summarizer node tracks the state from the summary. If trackState is true, use summarizer node to get
-        // the summary. Else, get the summary tree directly.
-        return trackState
-            ? this.summarizerNode.summarize(fullTree)
-            : this.summarizeInternal(fullTree, false /* trackState */);
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IContextSummarizeResult> {
+        return this.summarizerNode.summarize(fullTree, trackState);
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const channel = await this.getChannel();
-        const snapshotTree = snapshotChannel(channel);
-        const summaryResult = convertToSummaryTree(snapshotTree, fullTree);
-        return { ...summaryResult, id: this.id };
+        const summarizeResult = summarizeChannel(channel, fullTree, trackState);
+        return { ...summarizeResult, id: this.id };
     }
 
     private async loadChannel(): Promise<IChannel> {
@@ -179,17 +174,34 @@ export class RemoteChannelContext implements IChannelContext {
         // this as long as we support old attach messages
         if (attributes === undefined) {
             if (this.attachMessageType === undefined) {
-                throw new Error("Channel type not available");
+                // TODO: Strip out potential PII content #1920
+                throw new DataCorruptionError("Channel type not available", {
+                    channelId: this.id,
+                    dataStoreId: this.dataStoreContext.id,
+                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                });
             }
             factory = this.registry.get(this.attachMessageType);
             if (factory === undefined) {
-                throw new Error(`Channel Factory ${this.attachMessageType} for attach not registered`);
+                // TODO: Strip out potential PII content #1920
+                throw new DataCorruptionError(`Channel Factory ${this.attachMessageType} for attach not registered`, {
+                    channelId: this.id,
+                    dataStoreId: this.dataStoreContext.id,
+                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                    channelFactoryType: this.attachMessageType,
+                });
             }
             attributes = factory.attributes;
         } else {
             factory = this.registry.get(attributes.type);
             if (factory === undefined) {
-                throw new Error(`Channel Factory ${attributes.type} not registered`);
+                // TODO: Strip out potential PII content #1920
+                throw new DataCorruptionError(`Channel Factory ${attributes.type} not registered`, {
+                    channelId: this.id,
+                    dataStoreId: this.dataStoreContext.id,
+                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                    channelFactoryType: attributes.type,
+                });
             }
         }
 
@@ -244,5 +256,23 @@ export class RemoteChannelContext implements IChannelContext {
         // and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
         this.services.deltaConnection.setConnectionState(this.dataStoreContext.connected);
         return this.channel;
+    }
+
+    public async getGCData(): Promise<IGCData> {
+        return this.summarizerNode.getGCData();
+    }
+
+    private async getGCDataInternal(): Promise<IGCData> {
+        const channel = await this.getChannel();
+        return channel.getGCData();
+    }
+
+    /**
+     * This returns the GC data retrieved from the base snapshot of this context.
+     */
+    private async getInitialGCData(): Promise<IGCData | undefined> {
+        // If there is no initial GC data, then the context's GC data will be generated by calling getGCDataInternal
+        // method above.
+        return undefined;
     }
 }

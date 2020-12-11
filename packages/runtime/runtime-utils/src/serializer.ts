@@ -119,7 +119,7 @@ export class FluidSerializer implements IFluidSerializer {
         return clone ?? input;
     }
 
-    private serializeHandle(handle: IFluidHandle, bind: IFluidHandle) {
+    protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle) {
         bind.bind(handle);
         return {
             type: "__fluid_handle__",

@@ -18,6 +18,14 @@ export interface GraphItemLite {
     name: string;
 }
 
+function slashTerminatedOriginOrEmptyString(origin: string | undefined) {
+    return origin
+        ? origin.charAt(-1) === "/"
+        ? origin
+        : `${origin}/`
+        : "";
+}
+
 /**
  * Returns share link with requested scope and type for a file with given drive and item ids.
  * Scope needed: files.readwrite.all
@@ -30,6 +38,8 @@ export interface GraphItemLite {
  * @param scope - access scope that will be granted via generated link. 'default' scope tells
  * server to use default access which is determined based on tenant settings
  * @param type - access type. This value is ignored when scope is set to either 'default' or 'existingAccess'
+ * @param msGraphOrigin - If provided, base of URL to use for MS Graph API calls.
+ * If not specified, https://graph.microsoft.com is used.
  * @returns Promise which resolves to share link url when successful; otherwise, undefined.
  */
 export async function getShareLink(
@@ -42,15 +52,16 @@ export async function getShareLink(
     logger?: ITelemetryLogger,
     scope: "anonymous" | "organization" | "default" | "existingAccess" = "existingAccess",
     type: "view" | "edit" = "edit",
+    msGraphOrigin?: string,
 ): Promise<string | undefined> {
     if (scope === "existingAccess") {
-        return getFileDefaultUrl(getShareLinkToken, siteUrl, driveId, itemId, identityType, logger);
+        return getFileDefaultUrl(getShareLinkToken, siteUrl, driveId, itemId, identityType, logger, msGraphOrigin);
     }
 
     const createShareLinkResponse = await graphFetch(
         getShareLinkToken,
         siteUrl,
-        `drives/${driveId}/items/${itemId}/createLink`,
+        `${slashTerminatedOriginOrEmptyString(msGraphOrigin)}drives/${driveId}/items/${itemId}/createLink`,
         `GetShareLink_${scope}_${type}`,
         logger,
         {
@@ -146,6 +157,8 @@ const getSPOAndGraphRequestIdsFromResponse = async (response: Response) => {
  * @param itemId - ItemId of the file
  * @param identityType - type of client account
  * @param logger - Instance of the logger
+ * @param msGraphOrigin - If provided, base of URL to use for MS Graph API calls.
+ * If not specified, https://graph.microsoft.com is used.
  * @returns Promise which resolves to file url when successful; otherwise, undefined.
  */
 async function getFileDefaultUrl(
@@ -156,8 +169,9 @@ async function getFileDefaultUrl(
     itemId: string,
     identityType: IdentityType,
     logger?: ITelemetryLogger,
+    msGraphOrigin?: string,
 ): Promise<string | undefined> {
-    const graphItem = await getGraphItemLite(getShareLinkToken, siteUrl, driveId, itemId, logger);
+    const graphItem = await getGraphItemLite(getShareLinkToken, siteUrl, driveId, itemId, logger, msGraphOrigin);
     if (!graphItem) {
         return undefined;
     }
@@ -205,6 +219,8 @@ const graphItemLiteCache = new PromiseCache<string, GraphItemLite | undefined>()
  * @param driveId - ID for the drive that contains the file
  * @param itemId - ID of the file
  * @param logger - used to log results of operation, including any error
+ * @param msGraphOrigin - If provided, base of URL to use for MS Graph API calls.
+ * If not specified, https://graph.microsoft.com is used.
  * @returns Object containing name, webUrl and webDavUrl properties.
  * - name represents file name
  * - webUrl represents file url, this is url that can be used for direct loading of file on web. Primarily used
@@ -219,11 +235,13 @@ export async function getGraphItemLite(
     driveId: string,
     itemId: string,
     logger?: ITelemetryLogger,
+    msGraphOrigin?: string,
 ): Promise<GraphItemLite | undefined> {
     const cacheKey = `${driveId}_${itemId}`;
     if (graphItemLiteCache.has(cacheKey) === false) {
         const valueGenerator = async function() {
-            const partialUrl = `drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,name`;
+            const partialUrl = `${slashTerminatedOriginOrEmptyString(msGraphOrigin)
+                }drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,name`;
 
             let response: Response | undefined;
             try {

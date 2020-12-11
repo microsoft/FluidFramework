@@ -6,23 +6,26 @@
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import {
-    ISequencedDocumentMessage,
-    ISnapshotTree,
-    SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     IChannel,
     IFluidDataStoreRuntime,
     IChannelFactory,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreContext, ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import {
+    IContextSummarizeResult,
+    IFluidDataStoreContext,
+    IGCData,
+} from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
-import { convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
-import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
+import {
+    createServiceEndpoints,
+    IChannelContext,
+    summarizeChannel,
+} from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
 import { ChannelStorageService } from "./channelStorageService";
@@ -65,9 +68,8 @@ export class LocalChannelContext implements IChannelContext {
                 this.submitFn,
                 this.dirtyFn,
                 this.storageService,
-                clonedSnapshotTree !== undefined ? Promise.resolve(clonedSnapshotTree) : undefined,
-                blobMap !== undefined ?
-                    Promise.resolve(blobMap) : undefined,
+                clonedSnapshotTree,
+                blobMap,
             );
         });
         this.factory = registry.get(type);
@@ -124,24 +126,14 @@ export class LocalChannelContext implements IChannelContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummarizeResult> {
-        assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to take summary");
-        const snapshot = snapshotChannel(this.channel);
-        const summary = convertToSummaryTree(snapshot, fullTree);
-        return summary;
+    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<IContextSummarizeResult> {
+        assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to summarize");
+        return summarizeChannel(this.channel, fullTree, trackState);
     }
 
-    public getAttachSummary(): ISummaryTreeWithStats {
+    public getAttachSummary(): IContextSummarizeResult {
         assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to take snapshot");
-        const snapshot = snapshotChannel(this.channel);
-        const summaryTree = convertToSummaryTree(snapshot, true /* fullTree */);
-        assert(
-            summaryTree.summary.type === SummaryType.Tree,
-            "summarize should always return a tree when fullTree is true");
-        return {
-            stats: summaryTree.stats,
-            summary: summaryTree.summary,
-        };
+        return summarizeChannel(this.channel, true /* fullTree */, false /* trackState */);
     }
 
     private async loadChannel(): Promise<IChannel> {
@@ -204,5 +196,10 @@ export class LocalChannelContext implements IChannelContext {
         for (const value of Object.values(snapshotTree.trees)) {
             this.collectExtraBlobsAndSanitizeSnapshot(value, blobMap);
         }
+    }
+
+    public async getGCData(): Promise<IGCData> {
+        assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to run GC");
+        return this.channel.getGCData();
     }
 }

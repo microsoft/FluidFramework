@@ -18,12 +18,13 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
-import { configureWebSocketServices, DefaultServiceConfiguration } from "@fluidframework/server-lambdas";
+import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import { PubSub } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import { generateToken } from "@fluidframework/server-services-utils";
 import {
     DefaultMetricClient,
+    DefaultServiceConfiguration,
     IClientManager,
     IDeliState,
     IOrdererManager,
@@ -76,7 +77,7 @@ describe("Routerlicious", () => {
                     const testStorage = new services.DocumentStorage(
                         databaseManager,
                         testTenantManager,
-                        producer);
+                    );
                     const kafkaOrderer = new KafkaOrdererFactory(
                         producer,
                         1024 * 1024,
@@ -216,15 +217,12 @@ describe("Routerlicious", () => {
         const testId = "test";
         const url = "http://test";
 
-        let deliKafka: TestKafka;
         let testTenantManager: TestTenantManager;
         let testStorage: services.DocumentStorage;
         beforeEach(() => {
             const collectionNames = "test";
             const testData: { [key: string]: any[] } = {};
 
-            deliKafka = new TestKafka();
-            const producer = deliKafka.createProducer();
             testTenantManager = new TestTenantManager(url);
             const testDbFactory = new TestDbFactory(testData);
             const mongoManager = new MongoManager(testDbFactory);
@@ -237,7 +235,7 @@ describe("Routerlicious", () => {
             testStorage = new services.DocumentStorage(
                 databaseManager,
                 testTenantManager,
-                producer);
+            );
         });
 
         it("create document with summary", async () => {

@@ -8,6 +8,7 @@ import * as glob from "glob";
 import * as util from "util";
 import * as fs from "fs";
 import * as child_process from "child_process";
+import isEqual from "lodash.isequal";
 
 export function getExecutableFromCommand(command: string) {
     return command.split(" ")[0];
@@ -57,7 +58,7 @@ export async function execAsync(command: string, options: child_process.ExecOpti
         const p = child_process.exec(command, options, (error, stdout, stderr) => {
             resolve({ error, stdout, stderr });
         });
-        
+
         if (pipeStdIn) {
             p.stdin.write(pipeStdIn);
             p.stdin.end();
@@ -136,4 +137,13 @@ export async function lookUpDir(dir: string, callback: (currentDir: string) => b
     }
 
     return undefined;
+}
+
+export async function isSameFileOrDir(f1: string, f2: string) {
+    if (f1 === f2) { return true; }
+    const n1 = path.normalize(f1);
+    const n2 = path.normalize(f2);
+    if (n1 === n2) { return true; }
+    if (n1.toLowerCase() != n2.toLowerCase()) { return false; }
+    return isEqual(fs.lstatSync(n1), fs.lstatSync(n2));
 }

@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITree, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IChannelSummarizeResult, IGCData } from "@fluidframework/runtime-definitions";
 
 export interface ISharedObjectEvents extends IErrorEvent {
     (event: "pre-op" | "op",
@@ -30,14 +31,20 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     isAttached(): boolean;
 
     /**
-     * Gets a form of the object that can be serialized.
-     * @returns A tree representing the snapshot of the shared object
+     * Generates summary of the shared object.
+     * @returns A tree representing the summary of the shared object.
      */
-    snapshot(): ITree;
+    summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult;
 
     /**
      * Enables the channel to send and receive ops.
      * @param services - Services to connect to
      */
     connect(services: IChannelServices): void;
+
+    /**
+     * Returns the GC data for this shared object. It contains a list of GC nodes that contains references to
+     * other GC nodes.
+     */
+    getGCData(): IGCData;
 }

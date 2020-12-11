@@ -24,6 +24,11 @@ import {
     tokenFromResponse,
 } from "./tokenFetch";
 
+/**
+ * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
+ * url format and the ones which have things like driveId, siteId, itemId etc encoded in nav param.
+ * This resolver also handles share links and try to generate one for the use by the app.
+ */
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     private readonly logger: ITelemetryLogger;
     private readonly sharingLinkCache = new PromiseCache<string, string>();
@@ -34,6 +39,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         private readonly identityType: IdentityType = "Enterprise",
         logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
+        private readonly msGraphOrigin?: string,
     ) {
         this.logger = ChildLogger.create(logger, "OdspDriver");
         this.getSharingLinkToken = this.toInstrumentedSharingLinkTokenFetcher(this.logger, tokenFetcher);
@@ -152,6 +158,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             this.identityType,
             this.logger,
             "existingAccess",
+            undefined,
+            this.msGraphOrigin,
         ).then((shareLink) => {
                 if (!shareLink) {
                     throw new Error("Failed to get share link");

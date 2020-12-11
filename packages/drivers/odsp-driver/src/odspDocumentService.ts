@@ -10,6 +10,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
+    LoaderCachingPolicy,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -88,6 +89,11 @@ function writeLocalStorage(key: string, value: string) {
 export class OdspDocumentService implements IDocumentService {
     protected updateUsageOpFrequency = startingUpdateUsageOpFrequency;
 
+    readonly policies = {
+        // By default, ODSP tells the container not to prefetch/cache.
+        caching: LoaderCachingPolicy.NoCaching,
+    };
+
     /**
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
      * the "VROOM" token in SPO.
@@ -152,7 +158,10 @@ export class OdspDocumentService implements IDocumentService {
         hostPolicy: HostStoragePolicy,
         private readonly epochTracker: EpochTracker,
     ) {
-        epochTracker.hashedDocumentId = odspResolvedUrl.hashedDocumentId;
+        epochTracker.fileEntry = {
+            resolvedUrl: odspResolvedUrl,
+            docId: odspResolvedUrl.hashedDocumentId,
+        };
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
         this.logger = ChildLogger.create(logger,
@@ -327,8 +336,8 @@ export class OdspDocumentService implements IDocumentService {
                     io,
                     client,
                     nonAfdUrl,
-                    60000,
                     this.logger,
+                    60000,
                 );
                 const endTime = performance.now();
                 this.logger.sendPerformanceEvent({
@@ -366,8 +375,8 @@ export class OdspDocumentService implements IDocumentService {
                     io,
                     client,
                     afdUrl,
-                    60000,
                     this.logger,
+                    60000,
                 );
                 const endTime = performance.now();
                 // Set the successful connection attempt in the cache so we can skip the non-AFD failure the next time

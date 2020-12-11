@@ -100,9 +100,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     protected constructor(
-        private readonly namespace?: string,
-        private readonly properties?: ITelemetryProperties,
-        private readonly propertyGetters?: ITelemetryPropertyGetters) {
+        protected readonly namespace?: string,
+        protected readonly properties?: ITelemetryProperties,
+        protected readonly propertyGetters?: ITelemetryPropertyGetters) {
     }
 
     /**
@@ -249,6 +249,38 @@ export class ChildLogger extends TelemetryLogger {
         namespace?: string,
         properties?: ITelemetryProperties,
         propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
+        // if we are creating a child of a child, rather than nest, which will increase
+        // the callstack overhead, just generate a new logger that includes everything from the previous
+        if (baseLogger instanceof ChildLogger) {
+            const combinedProperties =
+                baseLogger.properties === undefined && properties === undefined
+                    ? undefined
+                    : {
+                        ...baseLogger.properties,
+                        ...properties,
+                    };
+            const combinedGetters =
+                baseLogger.propertyGetters === undefined && propertyGetters === undefined
+                    ? undefined
+                    : {
+                        ...baseLogger.propertyGetters,
+                        ...propertyGetters,
+                    };
+
+            const combinedNamespace = baseLogger.namespace === undefined
+                ? namespace
+                : namespace === undefined
+                    ? baseLogger.namespace
+                    : `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
+
+            return new ChildLogger(
+                baseLogger.baseLogger,
+                combinedNamespace,
+                combinedProperties,
+                combinedGetters,
+            );
+        }
+
         return new ChildLogger(
             baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
             namespace,
@@ -257,7 +289,7 @@ export class ChildLogger extends TelemetryLogger {
     }
 
     constructor(
-        protected readonly logger: ITelemetryBaseLogger,
+        protected readonly baseLogger: ITelemetryBaseLogger,
         namespace?: string,
         properties?: ITelemetryProperties,
         propertyGetters?: ITelemetryPropertyGetters) {
@@ -270,7 +302,7 @@ export class ChildLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
-        this.logger.send(this.prepareEvent(event));
+        this.baseLogger.send(this.prepareEvent(event));
     }
 }
 
@@ -365,7 +397,6 @@ export class PerformanceEvent {
     }
 
     private event?: ITelemetryGenericEvent;
-    private readonly eventName: string;
     private readonly startTime = performance.now();
     private startMark?: string;
 
@@ -374,7 +405,6 @@ export class PerformanceEvent {
         event: ITelemetryGenericEvent,
     ) {
         this.event = { ...event };
-        this.eventName = event.eventName;
         this.reportEvent("start");
 
         if (typeof window === "object" && window != null && window.performance) {
@@ -388,7 +418,9 @@ export class PerformanceEvent {
     }
 
     public end(props?: ITelemetryProperties, eventNameSuffix = "end"): void {
-        this.reportEvent(eventNameSuffix, props);
+        if (!this.reportEvent(eventNameSuffix, props)) {
+            return;
+        }
 
         if (this.startMark && this.event) {
             const endMark = `${this.event.eventName}-${eventNameSuffix}`;
@@ -405,17 +437,16 @@ export class PerformanceEvent {
         this.event = undefined;
     }
 
-    public reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: any): void {
+    /**
+     * Report the event, if it hasn't already been reported.
+     * Returns a boolean indicating if it was reported this time.
+     */
+    public reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: any): boolean {
+        // There are strange sequences involving muliple Promise chains
+        // where the event can be cancelled and then later a callback is invoked
+        // and the caller attempts to end directly, e.g. issue #3936. Just return.
         if (!this.event) {
-            const errorEvent = {
-                eventName: "PerformanceEventAfterStop",
-                perfEventName: this.eventName,
-                eventNameSuffix,
-            };
-            // Include the error object if present to get a callstack, even though it
-            // doesn't really "belong" to this event (which is about telemetry health, not the perf event)
-            this.logger.sendErrorEvent(errorEvent, error);
-            return;
+            return false;
         }
 
         const event: ITelemetryPerformanceEvent = { ...this.event, ...props };
@@ -425,6 +456,7 @@ export class PerformanceEvent {
         }
 
         this.logger.sendPerformanceEvent(event, error);
+        return true;
     }
 }
 
