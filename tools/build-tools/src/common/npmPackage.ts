@@ -18,7 +18,7 @@ import {
     ExecAsyncResult,
     readJsonSync,
     existsSync,
-    lookUpDir,
+    lookUpDirAsync,
 } from "./utils"
 import { MonoRepo } from "./monoRepo";
 import { options } from "../fluidBuild/options";
@@ -193,7 +193,7 @@ export class Package {
         }
         let succeeded = true;
         for (const dep of this.combinedDependencies) {
-            if (!await lookUpDir(this.directory, (currentDir) => {
+            if (!await lookUpDirAsync(this.directory, (currentDir) => {
                 // TODO: check semver as well
                 return existsSync(path.join(currentDir, "node_modules", dep.name));
             })) {

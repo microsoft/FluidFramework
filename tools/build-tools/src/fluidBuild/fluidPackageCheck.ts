@@ -222,12 +222,21 @@ export class FluidPackageCheck {
             // prepack scripts
             const prepack: string[] = [];
 
+            let concurrentBuildCompile = true;
+
             const buildPrefix = pkg.getScript("build:genver") ? "npm run build:genver && " : "";
             if (pkg.getScript("tsc")) {
                 if (pkg.getScript("build:test")) {
-                    buildCommonJs.push("tsc");
-                    buildCommonJs.push("build:test");
-                    buildCompile.push("build:commonjs");
+                    if (pkg.getScript("build:esnext")) {
+                        buildCommonJs.push("tsc");
+                        buildCommonJs.push("build:test");
+                        buildCompile.push("build:commonjs");
+                    } else {
+                        buildCompile.push("tsc");
+                        buildCompile.push("build:test");
+                        concurrentBuildCompile = false;
+                    }
+
                 } else {
                     buildCompile.push("tsc");
                 }
@@ -292,7 +301,7 @@ export class FluidPackageCheck {
                 }
             }
             check("build", build, true, buildPrefix);
-            check("build:compile", buildCompile);
+            check("build:compile", buildCompile, concurrentBuildCompile);
             check("build:commonjs", buildCommonJs, false);
             check("build:full", buildFull);
             check("build:full:compile", buildFullCompile);
