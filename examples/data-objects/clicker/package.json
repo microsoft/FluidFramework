@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/clicker",
-  "version": "0.30.3",
+  "version": "0.30.4",
   "description": "Minimal Fluid component sample to implement a collaborative counter.",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -37,11 +37,11 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.30.3",
-    "@fluidframework/core-interfaces": "^0.30.3",
-    "@fluidframework/counter": "^0.30.3",
-    "@fluidframework/runtime-definitions": "^0.30.3",
-    "@fluidframework/view-interfaces": "^0.30.3",
+    "@fluidframework/aqueduct": "^0.30.4",
+    "@fluidframework/core-interfaces": "^0.30.4",
+    "@fluidframework/counter": "^0.30.4",
+    "@fluidframework/runtime-definitions": "^0.30.4",
+    "@fluidframework/view-interfaces": "^0.30.4",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
@@ -49,7 +49,7 @@
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
     "@fluidframework/test-tools": "^0.2.3074",
-    "@fluidframework/webpack-fluid-loader": "^0.30.3",
+    "@fluidframework/webpack-fluid-loader": "^0.30.4",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
