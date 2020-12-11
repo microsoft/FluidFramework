@@ -62,6 +62,8 @@ export interface IDeltaHandler {
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     reSubmit(message: any, localOpMetadata: unknown): void;
+
+    rebase(message: any, localOpMetadata: unknown): void;
 }
 
 /**

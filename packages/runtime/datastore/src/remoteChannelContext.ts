@@ -32,9 +32,30 @@ import { ISharedObjectRegistry } from "./dataStoreRuntime";
 import { debug } from "./debug";
 import { ChannelStorageService } from "./channelStorageService";
 
+interface IThing1 {
+    type: "process";
+    message: ISequencedDocumentMessage;
+    local: boolean;
+    localOpMetadata: unknown;
+}
+
+interface IThing2 {
+    type: "rebase";
+    message: ISequencedDocumentMessage;
+    localOpMetadata: unknown;
+}
+
+interface IThing3 {
+    type: "resubmit";
+    content: any;
+    localOpMetadata: unknown;
+}
+
+type IThing = IThing1 | IThing2 | IThing3;
+
 export class RemoteChannelContext implements IChannelContext {
     private isLoaded = false;
-    private pending: ISequencedDocumentMessage[] | undefined = [];
+    private pending: IThing[] | undefined = [];
     private channelP: Promise<IChannel> | undefined;
     private channel: IChannel | undefined;
     private readonly services: {
@@ -89,6 +110,15 @@ export class RemoteChannelContext implements IChannelContext {
         this.services.deltaConnection.setConnectionState(connected);
     }
 
+    public rebaseOp(message: ISequencedDocumentMessage, localOpMetadata: unknown) {
+        if (this.isLoaded) {
+            this.services.deltaConnection.rebase(message, localOpMetadata);
+        } else {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.pending!.push({ type: "rebase", message, localOpMetadata });
+        }
+    }
+
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
         this.summarizerNode.invalidate(message.sequenceNumber);
@@ -96,16 +126,19 @@ export class RemoteChannelContext implements IChannelContext {
         if (this.isLoaded) {
             this.services.deltaConnection.process(message, local, localOpMetadata);
         } else {
-            assert(!local, "Remote channel must not be local when processing op");
+            // assert(!local, "Remote channel must not be local when processing op");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pending!.push(message);
+            this.pending!.push({ type: "process", message, local, localOpMetadata });
         }
     }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
-        assert(this.isLoaded, "Remote channel must be loaded when resubmitting op");
-
-        this.services.deltaConnection.reSubmit(content, localOpMetadata);
+        if (this.isLoaded) {
+            this.services.deltaConnection.reSubmit(content, localOpMetadata);
+        } else {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.pending!.push({ type: "resubmit", content, localOpMetadata });
+        }
     }
 
     /**
@@ -182,11 +215,22 @@ export class RemoteChannelContext implements IChannelContext {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         for (const message of this.pending!) {
             try {
-                this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
+                switch (message.type) {
+                    case "process":
+                        this.services.deltaConnection.process(message.message, message.local, message.localOpMetadata);
+                        break;
+                    case "rebase":
+                        this.services.deltaConnection.rebase(message.message, message.localOpMetadata);
+                        break;
+                    case "resubmit":
+                        this.services.deltaConnection.reSubmit(message.content, message.localOpMetadata);
+                        break;
+                    default:
+                }
             } catch (err) {
                 // record sequence number for easier debugging
                 const error = CreateContainerError(err);
-                error.sequenceNumber = message.sequenceNumber;
+                // error.sequenceNumber = message.sequenceNumber;
                 throw error;
             }
         }

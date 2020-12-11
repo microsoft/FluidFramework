@@ -859,7 +859,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // but it's an extra requirement for Container.forceReadonly() API
             assert(!readonly || !this.connected, "Unsafe to transition to read-only state!");
 
-            this.pendingStateManager.replayInitialStates();
             this.replayPendingStates();
         });
 
@@ -1158,12 +1157,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
             }
 
+            const pending = this.pendingStateManager.processRemoteMessage(message);
+
             switch (message.type) {
                 case ContainerMessageType.Attach:
                     this.processAttachMessage(message, local, localMessageMetadata);
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
-                    this.processFluidDataStoreOp(message, local, localMessageMetadata);
+                    if (pending.localAck) {
+                        // treat this as a local op because it's one we sent on a previous container
+                        this.processFluidDataStoreOp(message, true, pending.localOpMetadata);
+                    } else {
+                        this.processFluidDataStoreOp(message, local, localMessageMetadata);
+                    }
                     break;
                 case ContainerMessageType.BlobAttach:
                     assert(message?.metadata?.blobId);
@@ -1898,7 +1904,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         // Let the PendingStateManager know that a message was submitted.
-        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata, opMetadata);
+        this.pendingStateManager.onSubmitMessage(
+            type,
+            clientSequenceNumber,
+            this.deltaManager.lastSequenceNumber,
+            content,
+            localOpMetadata,
+            opMetadata,
+        );
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }

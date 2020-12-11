@@ -34,6 +34,7 @@ interface IPendingMessage {
     type: "message";
     messageType: ContainerMessageType;
     clientSequenceNumber: number;
+    referenceSequenceNumber: number;
     content: any;
     localOpMetadata: unknown;
     opMetadata: Record<string, unknown> | undefined;
@@ -56,7 +57,12 @@ interface IPendingFlush {
     type: "flush";
 }
 
-type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
+export type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
+
+interface IPendingSnapshot {
+    clientId?: string;
+    pendingStates: IPendingState[];
+}
 
 /**
  * PendingStateManager is responsible for maintaining the messages that have not been sent or have not yet been
@@ -70,6 +76,9 @@ type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
 export class PendingStateManager {
     private readonly pendingStates = new Deque<IPendingState>();
     private readonly initialStates: Deque<IPendingState>;
+    private readonly pendingRebase = new Deque<IPendingState>();
+    private readonly initialClientId: string | undefined;
+    private readonly initialClientSeqNum: number;
 
     // Maintains the count of messages that are currently unacked.
     private pendingMessagesCount: number = 0;
@@ -95,13 +104,21 @@ export class PendingStateManager {
         return this.pendingMessagesCount !== 0;
     }
 
-    public snapshot() {
-        return this.pendingStates.toArray();
+    public snapshot(): IPendingSnapshot | undefined {
+        if (this.pendingStates.length > 0) {
+            return {
+                clientId: this.clientId,
+                pendingStates: this.pendingStates.toArray(),
+            };
+        }
     }
 
-    constructor(private readonly containerRuntime: ContainerRuntime, initialStates: IPendingState[] = []) {
-        this.initialStates = new Deque<IPendingState>(initialStates);
-        this.pendingMessagesCount = initialStates.length;
+    constructor(private readonly containerRuntime: ContainerRuntime, initialSnapshot: IPendingSnapshot | undefined) {
+        this.initialStates = new Deque<IPendingState>(initialSnapshot?.pendingStates ?? []);
+        this.initialClientId = initialSnapshot?.clientId;
+        const firstPending = initialSnapshot?.pendingStates[0];
+        assert(!firstPending || firstPending.type === "message");
+        this.initialClientSeqNum = (firstPending as IPendingMessage)?.clientSequenceNumber ?? -1;
     }
 
     /**
@@ -115,6 +132,7 @@ export class PendingStateManager {
     public onSubmitMessage(
         type: ContainerMessageType,
         clientSequenceNumber: number,
+        referenceSequenceNumber: number,
         content: any,
         localOpMetadata: unknown,
         opMetadata: Record<string, unknown> | undefined,
@@ -123,6 +141,7 @@ export class PendingStateManager {
             type: "message",
             messageType: type,
             clientSequenceNumber,
+            referenceSequenceNumber,
             content,
             localOpMetadata,
             opMetadata,
@@ -185,6 +204,33 @@ export class PendingStateManager {
             type: "flush",
         };
         this.pendingStates.push(pendingFlush);
+    }
+
+    public processRemoteMessage(message: ISequencedDocumentMessage) {
+        while (!this.initialStates.isEmpty()) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const nextMessage = this.initialStates.peekFront()!;
+            assert(nextMessage.type === "message"); // assume it's not flush for now
+            if (nextMessage.referenceSequenceNumber > message.sequenceNumber) {
+                break;
+            }
+            const context = (this.containerRuntime as any).getContext(nextMessage.content?.address);
+            const channelContext = context.channel.contexts.get(nextMessage.content.contents?.content?.address);
+
+            // rebaseOp will cause the DDS to behave as if it has sent the op but not actually send it
+            channelContext.rebaseOp(nextMessage.content.contents.content, nextMessage.localOpMetadata);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.pendingRebase.push(this.initialStates.shift()!);
+        }
+        if (message.clientId === this.initialClientId && message.clientSequenceNumber >= this.initialClientSeqNum) {
+            // must be a pending op that was successfully sent
+            assert(!this.pendingRebase.isEmpty());
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const ackedMessage = this.pendingRebase.shift()!;
+            assert(ackedMessage.type === "message");
+            return { localAck: true, localOpMetadata: ackedMessage.localOpMetadata };
+        }
+        return { localAck: false, localOpMetadata: undefined };
     }
 
     /**
@@ -307,16 +353,25 @@ export class PendingStateManager {
     }
 
     public replayInitialStates() {
-        const isLoaded = (state) => {
-            const address = state.content?.address;
-            const context = ((this.containerRuntime) as any).contexts.get(address);
-            return !address || (!!context && context.isLoaded && !!context.channel && context.channel.isLoaded());
-        };
-        while (this.initialStates.length > 0 && isLoaded(this.initialStates.peekFront())) {
-            this.replayState(this.initialStates.shift()!);
+        // assert(this.connected, "The connection state is not consistent with the runtime");
+
+        // rebase all remaining pending initial ops
+        while (!this.initialStates.isEmpty()) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const nextMessage = this.initialStates.shift()!;
+            assert(nextMessage.type === "message");
+            const context = (this.containerRuntime as any).getContext(nextMessage.content?.address);
+            const channelContext = context.channel.contexts.get(nextMessage.content.contents?.content?.address);
+
+            channelContext.rebaseOp(nextMessage.content.contents.content, nextMessage.localOpMetadata);
+            this.pendingRebase.push(nextMessage);
         }
-        if (this.initialStates.length > 0) {
-            setTimeout(() => this.replayInitialStates(), 100);
+
+        // at this point we know we have seen and dequeued any pending ops that were actually sent
+        // successfully, so we resubmit everything in this queue
+        while (!this.pendingRebase.isEmpty()) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.replayState(this.pendingRebase.shift()!);
         }
     }
 

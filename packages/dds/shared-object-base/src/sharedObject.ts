@@ -331,6 +331,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             reSubmit: (content: any, localOpMetadata: unknown) => {
                 this.reSubmit(content, localOpMetadata);
             },
+            rebase: (content: any, localOpMetadata: unknown) => {
+                this.rebase(content, localOpMetadata);
+            },
         });
 
         // Trigger initial state
@@ -386,5 +389,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     private reSubmit(content: any, localOpMetadata: unknown) {
         this.reSubmitCore(content, localOpMetadata);
+    }
+
+    private rebase(content: any, localOpMetadata: unknown) {
+        this.rebaseCore(content, localOpMetadata);
+    }
+
+    protected rebaseCore(content: any, localOpMetadata: unknown) {
+        // do nothing
     }
 }

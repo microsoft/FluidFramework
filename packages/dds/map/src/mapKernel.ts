@@ -45,6 +45,8 @@ interface IMapMessageHandler {
      * @param localOpMetadata - The metadata to be submitted with the message.
      */
     submit(op: IMapOperation, localOpMetadata: unknown): void;
+
+    rebase(op: IMapOperation, localOpMetadata: unknown): void;
 }
 
 /**
@@ -499,6 +501,15 @@ export class MapKernel implements IValueTypeCreator {
         return false;
     }
 
+    public tryRebaseMessage(op: any, localOpMetadata: unknown): boolean {
+        const type: string = op.type;
+        if (this.messageHandlers.has(type)) {
+            this.messageHandlers.get(type).rebase(op as IMapOperation, localOpMetadata);
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Process the given op if a handler is registered.
      * @param message - The message to process
@@ -669,6 +680,8 @@ export class MapKernel implements IValueTypeCreator {
                     // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapClearMessage(op);
                 },
+                rebase: (op: IMapClearOperation, localOpMetadata: unknown) => {
+                },
             });
         messageHandlers.set(
             "delete",
@@ -682,6 +695,10 @@ export class MapKernel implements IValueTypeCreator {
                 submit: (op: IMapDeleteOperation, localOpMetadata: unknown) => {
                     // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapKeyMessage(op);
+                },
+                rebase: (op: IMapDeleteOperation, localOpMetadata: unknown) => {
+                    // We don't reuse the metadata but send a new one on each submit.
+                    this.rebaseMapKeyMessage(op);
                 },
             });
         messageHandlers.set(
@@ -699,6 +716,10 @@ export class MapKernel implements IValueTypeCreator {
                 submit: (op: IMapSetOperation, localOpMetadata: unknown) => {
                     // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapKeyMessage(op);
+                },
+                rebase: (op: IMapSetOperation, localOpMetadata: unknown) => {
+                    // We don't reuse the metadata but send a new one on each submit.
+                    this.rebaseMapKeyMessage(op);
                 },
             });
 
@@ -728,6 +749,8 @@ export class MapKernel implements IValueTypeCreator {
                 submit: (op: IMapValueTypeOperation, localOpMetadata: unknown) => {
                     this.submitMessage(op, localOpMetadata);
                 },
+                rebase: (op: IMapDeleteOperation, localOpMetadata: unknown) => {
+                },
             });
 
         return messageHandlers;
@@ -750,6 +773,12 @@ export class MapKernel implements IValueTypeCreator {
     private submitMapKeyMessage(op: IMapKeyOperation): void {
         const pendingMessageId = ++this.pendingMessageId;
         this.submitMessage(op, pendingMessageId);
+        this.pendingKeys.set(op.key, pendingMessageId);
+    }
+
+    private rebaseMapKeyMessage(op: IMapKeyOperation): void {
+        const pendingMessageId = ++this.pendingMessageId;
+        // this.submitMessage(op, pendingMessageId);
         this.pendingKeys.set(op.key, pendingMessageId);
     }
 
