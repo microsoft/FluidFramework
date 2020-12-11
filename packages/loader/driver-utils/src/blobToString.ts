@@ -12,7 +12,7 @@ import { IsoBuffer } from "@fluidframework/common-utils";
  * @returns the blob in string format
  */
 export function blobToString(blob: ArrayBufferLike): string {
-    const content = IsoBuffer.from(blob).toString("utf8");
+    const content = IsoBuffer.from(blob, "utf8").toString("utf8");
     return content;
 }
 

@@ -4,6 +4,7 @@
  */
 
 export * from "./blobCacheStorageService";
+export * from "./blobToString";
 export * from "./buildSnapshotTree";
 export * from "./documentStorageServiceProxy";
 export * from "./multiDocumentServiceFactory";
@@ -12,3 +13,4 @@ export * from "./network";
 export * from "./readAndParse";
 export * from "./fluidResolvedUrl";
 export * from "./summaryForCreateNew";
+export * from "./toBuffer";

@@ -4,7 +4,8 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
+import { toBuffer } from "@fluidframework/driver-utils";
+import { IBlob, ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { convertSummaryTreeToITree, listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
@@ -18,7 +19,8 @@ export class MockStorage implements IChannelStorageService {
     }
 
     public async readBlob(path: string): Promise<ArrayBufferLike> {
-        return this.readBlobInternal(this.tree, path.split("/"));
+        const blob = await this.readBlobInternal(this.tree, path.split("/"));
+        return toBuffer(blob.contents, blob.encoding);
     }
 
     constructor(protected tree?: ITree) {
@@ -32,14 +34,14 @@ export class MockStorage implements IChannelStorageService {
         return listBlobsAtTreePath(this.tree, path);
     }
 
-    private async readBlobInternal(tree: ITree, paths: string[]): Promise<ArrayBufferLike> {
+    private async readBlobInternal(tree: ITree, paths: string[]): Promise<IBlob> {
         if (tree) {
             for (const entry of tree.entries) {
                 if (entry.path === paths[0]) {
                     if (entry.type === "Blob") {
                         // eslint-disable-next-line prefer-rest-params
                         assert(paths.length === 1, JSON.stringify({ ...arguments }));
-                        const blob = entry.value;
+                        const blob = entry.value as IBlob;
                         return blob;
                     }
                     if (entry.type === "Tree") {

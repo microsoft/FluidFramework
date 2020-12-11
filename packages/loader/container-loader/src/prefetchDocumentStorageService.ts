@@ -33,8 +33,8 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private cachedRead(blobId: string): Promise<string> {
-        const blob = this.internalStorageService.readBlob(blobId);
+    private async cachedRead(blobId: string): Promise<string> {
+        const blob = await this.internalStorageService.readBlob(blobId);
         if (this.prefetchEnabled) {
             const prefetchedBlobP: Promise<string> | undefined = this.prefetchCache.get(blobId);
             if (prefetchedBlobP !== undefined) {

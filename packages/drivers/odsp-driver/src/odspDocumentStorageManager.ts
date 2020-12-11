@@ -8,8 +8,6 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
 import {
     assert,
-    fromBase64ToUtf8,
-    fromUtf8ToBase64,
     hashFile,
     IsoBuffer,
     Uint8ArrayToString,
