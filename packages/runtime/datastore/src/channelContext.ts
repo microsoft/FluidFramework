@@ -6,12 +6,18 @@
 import { IChannel } from "@fluidframework/datastore-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult, IContextSummarizeResult, IGCData } from "@fluidframework/runtime-definitions";
+import {
+    IChannelSummarizeResult,
+    IContextSummarizeResult,
+    IGCData,
+    IGCDetails,
+} from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 
 export const attributesBlobKey = ".attributes";
+export const gcBlobKey = ".gc";
 
 export interface IChannelContext {
     getChannel(): Promise<IChannel>;
@@ -55,7 +61,16 @@ export function summarizeChannel(
     trackState: boolean = false,
 ): IChannelSummarizeResult {
     const summarizeResult = channel.summarize(fullTree, trackState);
+
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
+
+    // Add GC details to the summary.
+    const gcDetails: IGCDetails = {
+        isRootNode: true,
+        gcData: summarizeResult.gcData,
+    };
+    addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
+
     return summarizeResult;
 }

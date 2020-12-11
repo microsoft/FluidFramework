@@ -641,16 +641,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         };
     }
 
-    /**
-     * back-compat 0.28 - snapshot is being removed and replaced with summary.
-     * So, getAttachSnapshot has been deprecated and getAttachSummary should be used instead.
-     */
-    public getAttachSnapshot(): ITreeEntry[] {
-        const summaryTree = this.getAttachSummary();
-        const tree = convertSummaryTreeToITree(summaryTree.summary);
-        return tree.entries;
-    }
-
     public getAttachSummary(): IChannelSummarizeResult {
         this.attachGraph();
 

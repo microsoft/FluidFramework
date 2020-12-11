@@ -20,6 +20,7 @@ import {
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
     IGCData,
+    IGCDetails,
     IInboundSignalMessage,
     InboundAttachMessage,
     ISummarizeResult,
@@ -41,7 +42,9 @@ import { GCDataBuilder } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime, nonDataStorePaths } from "./containerRuntime";
 import {
+    attributesBlobKey,
     FluidDataStoreContext,
+    gcBlobKey,
     RemotedFluidDataStoreContext,
     IFluidDataStoreAttributes,
     currentSnapshotFormatVersion,
@@ -105,10 +108,9 @@ export class DataStores implements IDisposable {
                 }
                 const snapshotTree = value;
                 // Need to rip through snapshot.
-                const { pkg, snapshotFormatVersion, isRootDataStore }
-                    = readAndParseFromBlobs<IFluidDataStoreAttributes>(
+                const { pkg, snapshotFormatVersion } = readAndParseFromBlobs<IFluidDataStoreAttributes>(
                         snapshotTree.blobs,
-                        snapshotTree.blobs[".component"]);
+                        snapshotTree.blobs[attributesBlobKey]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
                 // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
                 // However the feature of loading a detached container from snapshot, is added when the
@@ -120,10 +122,18 @@ export class DataStores implements IDisposable {
                 }
 
                 /**
-                 * If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that data
-                 * stores in older documents are not garbage collected incorrectly. This may lead to additional roots
-                 * in the document but they won't break.
+                 * Read the GC blob from summary. If there is no GC blob, set isRootDataStore to true. This will
+                 * ensure that data stores in older documents are not garbage collected incorrectly. This may lead
+                 * to additional roots in the document but they won't break.
                  */
+                let isRootDataStore = true;
+                if (snapshotTree.blobs[gcBlobKey] !== undefined) {
+                    const { isRootNode } = readAndParseFromBlobs<IGCDetails>(
+                        snapshotTree.blobs,
+                        snapshotTree.blobs[gcBlobKey]);
+                    isRootDataStore = isRootNode;
+                }
+
                 dataStoreContext = new LocalFluidDataStoreContext(
                     key,
                     pkgFromSnapshot,
@@ -133,7 +143,7 @@ export class DataStores implements IDisposable {
                     this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
                     (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
                     snapshotTree,
-                    isRootDataStore ?? true);
+                    isRootDataStore);
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
@@ -183,7 +193,7 @@ export class DataStores implements IDisposable {
                     sequenceNumber: message.sequenceNumber,
                     snapshot: attachMessage.snapshot ?? {
                         id: null,
-                        entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
+                        entries: [createAttributesBlob(pkg)],
                     },
                 }),
             pkg);
