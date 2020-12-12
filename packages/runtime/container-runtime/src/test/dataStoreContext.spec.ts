@@ -11,9 +11,7 @@ import {
     IBlob,
     ISnapshotTree,
     ISummaryBlob,
-    ITree,
     SummaryType,
-    TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreChannel,
@@ -37,18 +35,6 @@ import {
     RemotedFluidDataStoreContext,
 } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
-
-function getBlobFromSnapshot(blobKey: string, snapshotTree: ITree): IBlob {
-    let blob: IBlob | undefined;
-    for (const entry of snapshotTree.entries) {
-        if (entry.path === blobKey) {
-            assert(entry.type === TreeEntry.Blob, "Requested entry is not a blob");
-            blob = entry.value as IBlob;
-        }
-    }
-    assert(blob !== undefined, "There is no blob with the given key in summary tree");
-    return blob;
-}
 
 describe("Data Store Context Tests", () => {
     const dataStoreId = "Test1";
@@ -117,8 +103,9 @@ describe("Data Store Context Tests", () => {
                 await localDataStoreContext.realize();
                 const attachMessage = localDataStoreContext.generateAttachMessage();
 
-                const blob = getBlobFromSnapshot(attributesBlobKey, attachMessage.snapshot);
-                const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
+                const attributesEntry = attachMessage.snapshot.entries.find((e) => e.path === attributesBlobKey);
+                assert(attributesEntry !== undefined, "There is no attributes blob in the summary tree");
+                const contents = JSON.parse((attributesEntry.value as IBlob).contents) as IFluidDataStoreAttributes;
                 const dataStoreAttributes: IFluidDataStoreAttributes = {
                     pkg: JSON.stringify(["TestDataStore1"]),
                     snapshotFormatVersion: "0.1",
@@ -180,8 +167,9 @@ describe("Data Store Context Tests", () => {
                 await localDataStoreContext.realize();
 
                 const attachMessage = localDataStoreContext.generateAttachMessage();
-                const blob = getBlobFromSnapshot(attributesBlobKey, attachMessage.snapshot);
-                const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
+                const attributesEntry = attachMessage.snapshot.entries.find((e) => e.path === attributesBlobKey);
+                assert(attributesEntry !== undefined, "There is no attributes blob in the summary tree");
+                const contents = JSON.parse((attributesEntry.value as IBlob).contents) as IFluidDataStoreAttributes;
                 const dataStoreAttributes: IFluidDataStoreAttributes = {
                     pkg: JSON.stringify(["TestComp", "SubComp"]),
                     snapshotFormatVersion: "0.1",
@@ -218,8 +206,9 @@ describe("Data Store Context Tests", () => {
                 await localDataStoreContext.realize();
 
                 const attachMessage = localDataStoreContext.generateAttachMessage();
-                const blob = getBlobFromSnapshot(gcBlobKey, attachMessage.snapshot);
-                const contents = JSON.parse(blob.contents) as IGCDetails;
+                const gcEntry = attachMessage.snapshot.entries.find((e) => e.path === gcBlobKey);
+                assert(gcEntry !== undefined, "There is no GC blob in the summary tree");
+                const contents = JSON.parse((gcEntry.value as IBlob).contents) as IGCDetails;
 
                 assert.strictEqual(contents.isRootNode, true, "The data store should be root.");
                 assert.deepStrictEqual(contents.gcData, emptyGCData, "GC data from summary should be empty.");
@@ -246,8 +235,9 @@ describe("Data Store Context Tests", () => {
                 await localDataStoreContext.realize();
 
                 const attachMessage = localDataStoreContext.generateAttachMessage();
-                const blob = getBlobFromSnapshot(gcBlobKey, attachMessage.snapshot);
-                const contents = JSON.parse(blob.contents) as IGCDetails;
+                const gcEntry = attachMessage.snapshot.entries.find((e) => e.path === gcBlobKey);
+                assert(gcEntry !== undefined, "There is no GC blob in the summary tree");
+                const contents = JSON.parse((gcEntry.value as IBlob).contents) as IGCDetails;
 
                 assert.strictEqual(contents.isRootNode, false, "The data store should not be root.");
                 assert.deepStrictEqual(contents.gcData, emptyGCData, "GC datafrom summary  should be empty.");
