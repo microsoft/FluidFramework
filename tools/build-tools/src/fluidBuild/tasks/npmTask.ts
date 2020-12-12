@@ -21,10 +21,10 @@ export class NPMTask extends Task {
 
     public get isLeaf() { return false; }
 
-    public matchTask(command: string): Task | undefined {
+    public matchTask(command: string, options?: any): Task | undefined {
         if (command === this.command) { return this; }
         for (const task of this.subTasks) {
-            const t = task.matchTask(command);
+            const t = task.matchTask(command, options);
             if (t) { return t; }
         }
         return undefined;
