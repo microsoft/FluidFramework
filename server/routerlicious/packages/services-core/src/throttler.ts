@@ -33,6 +33,9 @@ export class ThrottlingError implements INackContent {
     }
 }
 
+/**
+ * Storage getter/setter with logic specific to throttling metrics.
+ */
 export interface IThrottleStorageManager {
     /**
      * Store throttling metrics for the given id.
@@ -65,13 +68,13 @@ export interface IThrottlerHelper {
  */
 export interface IThrottler {
     /**
-     * Increment the number of throttle-able operations by `weight`.
+     * Increment the current processing count of operations by `weight`.
      * @throws {ThrottlingError} when throttled.
      */
     incrementCount(id: string, weight?: number): void;
 
     /**
-     * Decrement the number of throttle-able operations by `weight`.
+     * Decrement the current processing count of operations by `weight`.
      */
     decrementCount(id: string, weight?: number): void;
 }

@@ -39,7 +39,7 @@ export class ThrottlerHelper implements IThrottlerHelper {
         }
 
         // Exit early if already throttled and no chance of being unthrottled
-        const timeUntilNotThrottled = this.getTimeUntilNotThrottledInMs(throttlingMetric, now);
+        const timeUntilNotThrottled = this.getRetryAfterInMs(throttlingMetric, now);
         if (timeUntilNotThrottled > 0) {
             throttlingMetric.retryAfterInMs = timeUntilNotThrottled;
             // update stored throttling metric with new retry duration
@@ -48,7 +48,7 @@ export class ThrottlerHelper implements IThrottlerHelper {
         }
 
         // replenish "tokens" if possible
-        const amountToReplenish = this.getAmountToReplenishOnCooldown(throttlingMetric, now);
+        const amountToReplenish = this.getTokenReplenishAmount(throttlingMetric, now);
         if (amountToReplenish > 0) {
             throttlingMetric.count += amountToReplenish;
             throttlingMetric.lastCoolDownAt = now;
@@ -58,7 +58,7 @@ export class ThrottlerHelper implements IThrottlerHelper {
         throttlingMetric.count -= count;
 
         // throttle if "token bucket" is empty
-        const newTimeUntilNotThrottled = this.getTimeUntilNotThrottledInMs(throttlingMetric, now);
+        const newTimeUntilNotThrottled = this.getRetryAfterInMs(throttlingMetric, now);
         if (newTimeUntilNotThrottled > 0) {
             throttlingMetric.throttleStatus = true;
             throttlingMetric.throttleReason =
@@ -92,7 +92,7 @@ export class ThrottlerHelper implements IThrottlerHelper {
         };
     }
 
-    private getAmountToReplenishOnCooldown(throttlingMetric: IThrottlingMetrics, now: number): number {
+    private getTokenReplenishAmount(throttlingMetric: IThrottlingMetrics, now: number): number {
         const timeSinceLastCooldownInMs = now - throttlingMetric.lastCoolDownAt;
         // replenish "tokens" at most once per minCooldownInterval
         if (timeSinceLastCooldownInMs > this.minCooldownIntervalInMs) {
@@ -101,15 +101,16 @@ export class ThrottlerHelper implements IThrottlerHelper {
         return 0;
     }
 
-    private getTimeUntilNotThrottledInMs(throttlingMetric: IThrottlingMetrics, now: number): number {
-        const debt = 0 - throttlingMetric.count;
-        if (debt <= 0) {
+    private getRetryAfterInMs(throttlingMetric: IThrottlingMetrics, now: number): number {
+        const tokenDebt = 0 - throttlingMetric.count;
+        if (tokenDebt <= 0) {
+            // no wait time is necessary before next retry because token bucket has enough tokens
             return 0;
         }
-        const amountPossibleToReplenishNow = this.getAmountToReplenishOnCooldown(throttlingMetric, now);
+        const amountPossibleToReplenishNow = this.getTokenReplenishAmount(throttlingMetric, now);
         const timeUntilNextCooldown = throttlingMetric.lastCoolDownAt + this.minCooldownIntervalInMs - now;
-        const remainingDebt = debt - amountPossibleToReplenishNow;
-        const timeUntilDebtReplenished = remainingDebt / this.rateInOperationsPerMs;
+        const remainingTokenDebt = tokenDebt - amountPossibleToReplenishNow;
+        const timeUntilDebtReplenished = remainingTokenDebt / this.rateInOperationsPerMs;
         // must at least wait until next cooldown
         return Math.max(timeUntilNextCooldown, timeUntilDebtReplenished);
     }

@@ -10,6 +10,9 @@ import {
 } from "@fluidframework/server-services-core";
 import { RedisClient } from "redis";
 
+/**
+ * Manages storage of throttling metrics in redis hashes with an expiry of 'expireAfterSeconds'.
+ */
 export class RedisThrottleStorageManager implements IThrottleStorageManager {
     private readonly setAsync: any;
     private readonly getAsync: any;
