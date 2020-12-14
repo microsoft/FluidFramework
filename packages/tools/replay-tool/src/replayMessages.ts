@@ -6,7 +6,7 @@
 import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
-import { assert } from "@fluidframework/common-utils";
+import { assert, Lazy } from "@fluidframework/common-utils";
 import * as API from "@fluid-internal/client-api";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
@@ -91,32 +91,22 @@ function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapshot {
 class ContainerContent {
     public snapshot?: IFileSnapshot;
 
-    private _normalizedSnapshot?: IFileSnapshot;
-    private snapshotSavedString?: string;
-    private snapshotExpandedString?: string;
+    private readonly _normalizedSnapshot: Lazy<IFileSnapshot>;
+    private readonly _snapshotAsString: Lazy<string>;
+    private readonly _snapshotExpanded: Lazy<string>;
 
     public constructor(public readonly op: number) {
-    }
-
-    // Returns a normalized version of the file snapshot. This will be used when comparing snapshots.
-    get normalizedSnapshot(): IFileSnapshot {
-        if (this._normalizedSnapshot === undefined) {
+        this._normalizedSnapshot = new Lazy(() => {
             assert(this.snapshot !== undefined, "snapshot should be set before retreiving it");
-            this._normalizedSnapshot = getNormalizedFileSnapshot(this.snapshot);
-        }
-        return this._normalizedSnapshot;
-    }
+            return getNormalizedFileSnapshot(this.snapshot);
+        });
 
-    get snapshotAsString(): string {
-        if (this.snapshotSavedString === undefined) {
-            assert(this.snapshot !== undefined, "snapshot should be set before retreiving it as string");
-            this.snapshotSavedString = JSON.stringify(this.snapshot, undefined, 2);
-        }
-        return this.snapshotSavedString;
-    }
+        this._snapshotAsString = new Lazy(() => {
+            assert(this.snapshot !== undefined, "snapshot should be set before retreiving it");
+            return JSON.stringify(this.snapshot, undefined, 2);
+        });
 
-    get snapshotExpanded(): string {
-        if (this.snapshotExpandedString === undefined) {
+        this._snapshotExpanded = new Lazy(() => {
             assert(this.snapshot !== undefined, "snapshot should be set before retreiving it as expanded string");
             const snapshotExpanded: IFileSnapshot = {
                 commits: {},
@@ -125,10 +115,23 @@ class ContainerContent {
             for (const commit of Object.keys(this.snapshot.commits)) {
                 snapshotExpanded.commits[commit] = expandTreeForReadability(this.snapshot.commits[commit]);
             }
+            return JSON.stringify(snapshotExpanded, undefined, 2);
+        });
+    }
 
-            this.snapshotExpandedString = JSON.stringify(snapshotExpanded, undefined, 2);
-        }
-        return this.snapshotExpandedString;
+    // Returns a normalized version of the file snapshot. This will be used when comparing snapshots.
+    get normalizedSnapshot(): IFileSnapshot {
+        return this._normalizedSnapshot.value;
+    }
+
+    // Returns the original snapshot as a string.
+    get snapshotAsString(): string {
+        return this._snapshotAsString.value;
+    }
+
+    // Returns an expanded string version of the original snapshot for readability.
+    get snapshotExpanded(): string {
+        return this._snapshotExpanded.value;
     }
 }
 

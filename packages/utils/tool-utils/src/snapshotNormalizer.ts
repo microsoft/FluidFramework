@@ -12,8 +12,13 @@ import {
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 
-// This contains a list of blobs whose contents should be normalized.
-const blobsToNormalize = [ ".gc" ];
+// A list of runtime blob paths whose contents should be normalized.
+const runtimeBlobsToNormalize = [ ".gc" ];
+
+export interface ISnapshotNormalizerConfig {
+    // The paths of blobs whose contents should be normalized.
+    blobsToNormalize?: string[];
+}
 
 /**
  * Function that deep sorts an array. It handles cases where array elements are objects or arrays.
@@ -78,42 +83,33 @@ function getSortedBlobContent(content: string): string {
 }
 
 /**
- * Returns a normalized copy of the given blob entry.
- */
-function getNormalizedBlobEntry(entry: ITreeEntry): ITreeEntry {
-    let contents = (entry.value as IBlob).contents;
-    if (blobsToNormalize.includes(entry.path)) {
-        contents = getSortedBlobContent(contents);
-    }
-    return new BlobTreeEntry(entry.path, contents);
-}
-
-/**
- * Returns a normalized copy of the given tree entry.
- */
-function getNormalizedTreeEntry(entry: ITreeEntry): ITreeEntry {
-    const normalizedTree = getNormalizedSnapshot(entry.value as ITree);
-    return new TreeTreeEntry(entry.path, normalizedTree);
-}
-
-/**
  * Helper function that normalizes the given snapshot tree. It sorts objects and arrays in the snapshot. It also
  * normalizes certain blob contents for which the order of content does not matter. For example, garbage collection
  * blobs contains objects / arrays whose element order do not matter.
  * @param snapshot - The snapshot tree to normalize.
- * A copy of the normalized snapshot tree.
+ * @param config - Configs to use when normalizing snapshot. For example, it can contain paths of blobs whose contents
+ * should be normalized as well.
+ * @returns a copy of the normalized snapshot tree.
  */
-export function getNormalizedSnapshot(snapshot: ITree): ITree {
+export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormalizerConfig): ITree {
+    // Merge blobs to normalize in the config with runtime blobs to normalize. The contents of these blobs will be
+    // parsed and deep sorted.
+    const blobsToNormalize = [ ...runtimeBlobsToNormalize, ...config?.blobsToNormalize ?? [] ];
     const normalizedEntries: ITreeEntry[] = [];
 
     for (const entry of snapshot.entries) {
         switch (entry.type) {
             case TreeEntry.Blob: {
-                normalizedEntries.push(getNormalizedBlobEntry(entry));
+                let contents = (entry.value as IBlob).contents;
+                // If this blob has to be normalized, parse and sort the blob contents first.
+                if (blobsToNormalize.includes(entry.path)) {
+                    contents = getSortedBlobContent(contents);
+                }
+                normalizedEntries.push(new BlobTreeEntry(entry.path, contents));
                 break;
             }
             case TreeEntry.Tree: {
-                normalizedEntries.push(getNormalizedTreeEntry(entry));
+                normalizedEntries.push(new TreeTreeEntry(entry.path, getNormalizedSnapshot(entry.value as ITree)));
                 break;
             }
             case TreeEntry.Attachment: {
