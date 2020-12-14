@@ -10,20 +10,7 @@ import {
     ISnapshotTree,
     ITree,
 } from "@fluidframework/protocol-definitions";
-
-/**
- * Represents a node in a graph that has a unique id and a list of routes to other nodes.
- */
-export interface IGraphNode {
-    /**
-     * This node's indentifier.
-     */
-    id: string;
-    /**
-     * A list of routes to other nodes in the graph.
-     */
-    outboundRoutes: string[];
-}
+import { IGCData } from "./garbageCollection";
 
 export interface ISummaryStats {
     treeNodeCount: number;
@@ -38,11 +25,8 @@ export interface ISummaryTreeWithStats {
 }
 
 export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
-    /**
-     * A list of the channel's garbage collection nodes. This includes all the child nodes plus nodes for
-     * the channel itself.
-     */
-    gcNodes: IGraphNode[];
+    /** The channel's garbage collection data */
+    gcData: IGCData;
 }
 
 export interface ISummarizeResult {
@@ -51,11 +35,8 @@ export interface ISummarizeResult {
 }
 
 export interface IContextSummarizeResult extends ISummarizeResult {
-    /**
-     * A list of the context's garbage collection nodes. This includes all the child nodes plus nodes for
-     * the context itself.
-     */
-    gcNodes: IGraphNode[];
+    /** The context's garbage collection data */
+    gcData: IGCData;
 }
 
 export interface ISummarizeInternalResult extends IContextSummarizeResult {
@@ -157,9 +138,13 @@ export interface ISummarizerNode {
 }
 
 /**
- * Extends the functionality of ISummarizerNode to support garbage collection. It adds the following:
- * - getInitialGCNodeFn in createChild which can be used to get initial value of the garbage collection node.
- * - A trackState flag in summarize which indicates whether the summarizer node should track the state of the summary.
+ * Extends the functionality of ISummarizerNode to support garbage collection. It adds / udpates the following APIs:
+ * - getGCData - A new API that can be used to get the garbage collection data for this node.
+ * - summarize - Added a trackState flag which indicates whether the summarizer node should track the state of the
+ *   summary or not.
+ * - createChild - Added the following params:
+ *   - getGCDataFn - This gets the GC data from the caller. This must be provided in order for getGCData to work.
+ *   - getInitialGCDataFn - This gets the initial GC data for this node from the caller.
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
     summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
@@ -177,9 +162,10 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
         createParam: CreateChildSummarizerNodeParam,
         /** Optional configuration affecting summarize behavior */
         config?: ISummarizerNodeConfig,
-        /** Function to get the initial value of garbage collection nodes */
-        getInitialGCNodesFn?: () => Promise<IGraphNode[]>,
+        getGCDataFn?: () => Promise<IGCData>,
+        getInitialGCDataFn?: () => Promise<IGCData | undefined>,
     ): ISummarizerNodeWithGC;
 
-    getChild(id: string): ISummarizerNodeWithGC | undefined
+    getChild(id: string): ISummarizerNodeWithGC | undefined;
+    getGCData(): Promise<IGCData>;
 }

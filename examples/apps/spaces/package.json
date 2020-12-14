@@ -18,7 +18,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "dev": "npm run webpack:dev",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
@@ -54,7 +54,7 @@
     "react-collapsible": "^2.7.0",
     "react-dom": "^16.10.2",
     "react-grid-layout": "^0.18.3",
-    "uuid": "^3.3.2"
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",

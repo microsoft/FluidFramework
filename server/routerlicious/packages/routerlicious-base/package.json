@@ -16,7 +16,7 @@
     "build:genver": "gen-version",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
@@ -24,7 +24,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.25.0",
+    "@fluidframework/common-utils": "^0.26.0-0",
     "@fluidframework/gitresources": "^0.1016.0",
     "@fluidframework/protocol-definitions": "^0.1016.0",
     "@fluidframework/server-kafka-orderer": "^0.1016.0",
@@ -34,7 +34,7 @@
     "@fluidframework/server-services-client": "^0.1016.0",
     "@fluidframework/server-services-core": "^0.1016.0",
     "@fluidframework/server-services-utils": "^0.1016.0",
-    "@types/node": "^10.17.24",
+    "@types/node": "^12.19.0",
     "body-parser": "^1.17.1",
     "bytes": "^3.0.0",
     "compression": "^1.7.2",

@@ -20,7 +20,7 @@
     "build:genver": "gen-version",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
@@ -52,13 +52,13 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.25.0",
+    "@fluidframework/common-utils": "^0.26.0-0",
     "@fluidframework/core-interfaces": "^0.31.0",
     "@fluidframework/datastore-definitions": "^0.31.0",
-    "@fluidframework/protocol-definitions": "^0.1015.0",
+    "@fluidframework/protocol-definitions": "^0.1016.0-0",
     "@fluidframework/shared-object-base": "^0.31.0",
     "assert": "^2.0.0",
-    "uuid": "^3.3.2"
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluid-internal/test-dds-utils": "^0.31.0",

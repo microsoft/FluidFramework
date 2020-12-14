@@ -9,7 +9,6 @@ import { DocumentStorage } from "@fluidframework/server-services-shared";
 import { generateToken, Historian } from "@fluidframework/server-services-client";
 import { MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
-import * as bytes from "bytes";
 import * as git from "isomorphic-git";
 import { Provider } from "nconf";
 import socketIo from "socket.io";
@@ -28,7 +27,6 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
     public async create(config: Provider): Promise<TinyliciousResources> {
         // Pull in the default port off the config
         const port = utils.normalizePort(process.env.PORT || "3000");
-        const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
         const collectionNames = config.get("mongo:collectionNames");
 
         const tenantManager = new TenantManager(`http://localhost:${port}`);
@@ -41,7 +39,7 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
             collectionNames.documents,
             collectionNames.deltas,
             collectionNames.scribeDeltas);
-        const storage = new DocumentStorage(databaseManager, tenantManager, null);
+        const storage = new DocumentStorage(databaseManager, tenantManager);
         const io = socketIo();
         const pubsub = new PubSubPublisher(io);
         const webServerFactory = new WebServerFactory(io);
@@ -55,7 +53,6 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
             tenantManager,
             taskMessageSender,
             config.get("foreman:permissions"),
-            maxSendMessageSize,
             generateToken,
             async (tenantId: string) => {
                 const url = `http://localhost:${port}/repos/${encodeURIComponent(tenantId)}`;

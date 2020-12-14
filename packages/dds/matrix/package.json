@@ -22,7 +22,7 @@
     "build:genver": "gen-version",
     "clean": "rimraf dist lib bench/dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "stress": "mocha -r ts-node/register -r source-map-support/register --recursive test/**/*.spec.ts --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict --fgrep stress-loop",
@@ -52,11 +52,11 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.19.1",
-    "@fluidframework/common-utils": "^0.25.0",
+    "@fluidframework/common-utils": "^0.26.0-0",
     "@fluidframework/core-interfaces": "^0.31.0",
     "@fluidframework/datastore-definitions": "^0.31.0",
     "@fluidframework/merge-tree": "^0.31.0",
-    "@fluidframework/protocol-definitions": "^0.1015.0",
+    "@fluidframework/protocol-definitions": "^0.1016.0-0",
     "@fluidframework/runtime-utils": "^0.31.0",
     "@fluidframework/shared-object-base": "^0.31.0",
     "@fluidframework/telemetry-utils": "^0.31.0",
@@ -98,6 +98,6 @@
     "ts-node": "^7.0.1",
     "typescript": "~3.7.4",
     "typescript-formatter": "7.1.0",
-    "uuid": "^3.3.2"
+    "uuid": "^8.3.1"
   }
 }

@@ -25,7 +25,7 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib es5 *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
@@ -54,7 +54,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.19.1",
-    "@fluidframework/common-utils": "^0.25.0",
+    "@fluidframework/common-utils": "^0.26.0-0",
     "@fluidframework/container-definitions": "^0.31.0",
     "@fluidframework/container-runtime": "^0.31.0",
     "@fluidframework/core-interfaces": "^0.31.0",

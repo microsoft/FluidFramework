@@ -19,7 +19,7 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "mocha --recursive dist/test --unhandled-rejections=strict",
@@ -49,7 +49,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.25.0",
+    "@fluidframework/common-utils": "^0.26.0-0",
     "@fluidframework/gitresources": "^0.1016.0",
     "@fluidframework/protocol-base": "^0.1016.0",
     "@fluidframework/protocol-definitions": "^0.1016.0",
@@ -63,7 +63,7 @@
     "lodash": "^4.17.19",
     "nconf": "^0.10.0",
     "semver": "^6.3.0",
-    "uuid": "^3.3.2"
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
@@ -74,7 +74,7 @@
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",
     "@types/nconf": "^0.0.37",
-    "@types/node": "^10.17.24",
+    "@types/node": "^12.19.0",
     "@types/webpack": "^4.41.2",
     "@typescript-eslint/eslint-plugin": "~4.2.0",
     "@typescript-eslint/parser": "~4.2.0",

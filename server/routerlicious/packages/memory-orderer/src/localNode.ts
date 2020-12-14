@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { IDocumentMessage, IServiceConfiguration } from "@fluidframework/protocol-definitions";
+import { IDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IDatabaseManager,
     IDocumentStorage,
@@ -17,6 +17,7 @@ import {
     IWebSocketServer,
     ILogger,
     TokenGenerator,
+    DefaultServiceConfiguration,
 } from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 import * as moniker from "moniker";
@@ -29,28 +30,6 @@ import { Socket } from "./socket";
 
 // Can I treat each Alfred as a mini-Kafka. And consolidate all the deli logic together?
 // Rather than creating one per? I'm in some ways on this path.
-
-const DefaultServiceConfiguration: IServiceConfiguration = {
-    blockSize: 64436,
-    maxMessageSize: 16 * 1024,
-    enableTraces: true,
-    summary: {
-        idleTime: 5000,
-        maxOps: 1000,
-        maxTime: 5000 * 12,
-        maxAckWaitTime: 600000,
-    },
-    deli: {
-        clientTimeout: 5 * 60 * 1000,
-        activityTimeout: 30 * 1000,
-        noOpConsolidationTimeout: 250,
-    },
-    scribe: {
-        generateServiceSummary: true,
-        clearCacheAfterServiceSummary: false,
-        ignoreStorageException: false,
-    },
-};
 
 class RemoteSubscriber implements ISubscriber {
     public id = uuid();

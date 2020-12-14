@@ -20,7 +20,6 @@ import * as redis from "redis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { DefaultServiceConfiguration } from "@fluidframework/server-lambdas";
 import { AlfredRunner } from "./runner";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
@@ -196,7 +195,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const kafkaOrdererFactory = new KafkaOrdererFactory(
             producer,
             maxSendMessageSize,
-            DefaultServiceConfiguration);
+            core.DefaultServiceConfiguration);
         const serverUrl = config.get("worker:serverUrl");
 
         let eventHubOrdererFactory: KafkaOrdererFactory = null;
@@ -205,7 +204,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             eventHubOrdererFactory = new KafkaOrdererFactory(
                 eventHubProducer,
                 maxSendMessageSize,
-                DefaultServiceConfiguration);
+                core.DefaultServiceConfiguration);
         }
 
         const orderManager = new OrdererManager(

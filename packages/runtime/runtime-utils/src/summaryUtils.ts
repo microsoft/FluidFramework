@@ -92,6 +92,11 @@ export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, co
     summary.stats.totalBlobSize += getBlobSize(content);
 }
 
+export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void {
+    summary.summary.tree[key] = summarizeResult.summary;
+    summary.stats = mergeStats(summary.stats, summarizeResult.stats);
+}
+
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     private attachmentCounter: number = 0;
 

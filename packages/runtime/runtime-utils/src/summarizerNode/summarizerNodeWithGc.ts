@@ -5,15 +5,15 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
+import { cloneGCData } from "@fluidframework/garbage-collector";
 import {
     IContextSummarizeResult,
-    IGraphNode,
     ISummarizeInternalResult,
     ISummarizerNodeConfig,
     ISummarizerNodeWithGC,
     CreateChildSummarizerNodeParam,
+    IGCData,
 } from "@fluidframework/runtime-definitions";
-import { cloneGCNodes } from "../garbageCollectionUtils";
 import { SummarizerNode } from "./summarizerNode";
 import { ICreateChildDetails, IInitialSummary, ISummarizerNodeRootContract, SummaryNode } from "./summarizerNodeUtils";
 
@@ -21,14 +21,15 @@ export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISumma
 
 /**
  * Extends the functionality of SummarizerNode to manage this node's garbage collection data:
- * - It caches the list of GC nodes returned by the summarizeInternal method.
- * - Gets the initial value of the GC nodes if required.
- * - Adds the cached list of GC nodes to the result of SummarizerNode's summarize.
+ * - Adds a new API `getGCData` to return GC data of this node.
+ * - Caches the result of getGCData method to be used if nothing changes between summaries.
+ * - Gets the initial GC data if required.
+ * - Adds GC data to the result of summarize.
  * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  *   directly into summarizeInternal method.
  */
 export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
-    private gcNodes: IGraphNode[] | undefined;
+    private gcData: IGCData | undefined;
 
     /**
      * Do not call constructor directly.
@@ -43,8 +44,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         latestSummary?: SummaryNode,
         initialSummary?: IInitialSummary,
         wipSummaryLogger?: ITelemetryLogger,
-        /** Function to get the initial value of garbage collection nodes */
-        private readonly getInitialGCNodesFn?: () => Promise<IGraphNode[]>,
+        private readonly getGCDataFn?: () => Promise<IGCData>,
+        private readonly getInitialGCDataFn?: () => Promise<IGCData | undefined>,
     ) {
         super(
             logger,
@@ -58,26 +59,18 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     public async summarize(fullTree: boolean, trackState: boolean = true): Promise<IContextSummarizeResult> {
-        /**
-         * If trackState is true, call parent summarizer node to get the summary since it tracks the state from summary.
-         * It may update the GC nodes cache if data has changed since last summary.
-         * If trackState is false, get the summary directly from the summarizeInternal method which will update the
-         * GC nodes cache.
-         */
+        // If trackState is true, get summary from base summarizer node which tracks summary state.
+        // If trackState is false, get summary from summarizeInternal.
         if (trackState) {
             const summarizeResult = await super.summarize(fullTree);
 
-            // If this is the first time we are summarizing and nothing has changed since the last summary, we would
-            // not have updated the GC nodes cache. So, we need to get its initial value.
-            if (this.gcNodes === undefined) {
-                this.gcNodes = this.getInitialGCNodesFn
-                    ? await this.getInitialGCNodesFn()
-                    : [];
-            }
+            // If there is no cached GC data, return empty data in summarize result. It is the caller's responsiblity
+            // to ensure that GC data is available by calling getGCData before calling summarize.
+            const gcData = this.gcData !== undefined ? cloneGCData(this.gcData) : { gcNodes: {} };
 
             return {
                 ...summarizeResult,
-                gcNodes: cloneGCNodes(this.gcNodes),
+                gcData,
             };
         } else {
             return this.summarizeInternal(fullTree, trackState);
@@ -86,14 +79,39 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const summarizeResult = await this.summarizeFn(fullTree, trackState);
-        // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
-        if (summarizeResult.gcNodes === undefined) {
-            summarizeResult.gcNodes = [];
+        // back-compat 0.31 - Older versions will not have GC data in summary.
+        if (summarizeResult.gcData !== undefined) {
+            this.gcData = cloneGCData(summarizeResult.gcData);
         }
-        // Clone and cache the GC nodes. This will be used when a node's data hasn't changed and this
-        // method is not called.
-        this.gcNodes = cloneGCNodes(summarizeResult.gcNodes);
         return summarizeResult;
+    }
+
+    /**
+     * Returns the GC data of this node. If nothing has changed since the last time we summarized, it tries to reuse
+     * existing data.
+     */
+    public async getGCData(): Promise<IGCData> {
+        assert(this.getGCDataFn !== undefined, "GC data cannot be retrieved without getGCDataFn");
+
+        if (!this.hasChanged()) {
+            // Nothing has changed since last summary. If we have the GC data from previous run, return it.
+            if (this.gcData !== undefined) {
+                return cloneGCData(this.gcData);
+            }
+
+            // This is the first time GC data is requested in this client, so we need to get initial GC data.
+            // Note: Initial GC data may not be available for clients with old summary. In such cases, we fall back
+            // to getting GC data by calling getGCDataFn.
+            const initialGCData = this.getInitialGCDataFn ? await this.getInitialGCDataFn() : undefined;
+            if (initialGCData !== undefined) {
+                this.gcData = cloneGCData(initialGCData);
+                return initialGCData;
+            }
+        }
+
+        const gcData = await this.getGCDataFn();
+        this.gcData = cloneGCData(gcData);
+        return gcData;
     }
 
     /**
@@ -111,8 +129,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
          */
         createParam: CreateChildSummarizerNodeParam,
         config: ISummarizerNodeConfig = {},
-        /** Function to get the initial value of garbage collection nodes */
-        getInitialGCNodesFn?: () => Promise<IGraphNode[]>,
+        getGCDataFn?: () => Promise<IGCData>,
+        getInitialGCDataFn?: () => Promise<IGCData | undefined>,
     ): ISummarizerNodeWithGC {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
 
@@ -125,7 +143,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             createDetails.latestSummary,
             createDetails.initialSummary,
             this.wipSummaryLogger,
-            getInitialGCNodesFn,
+            getGCDataFn,
+            getInitialGCDataFn,
         );
         this.initializeChild(child);
 
@@ -149,7 +168,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
  * @param referenceSequenceNumber - Reference sequence number of last acked summary,
  * or undefined if not loaded from summary
  * @param config - Configure behavior of summarizer node
- * @param getInitialGCNodesFn - Function to get the initial value of garbage collection nodes
+ * @param getGCDataFn - Function to get the GC data of this node
+ * @param getInitialGCNodesFn - Function to get the initial GC data of this node
  */
 export const createRootSummarizerNodeWithGC = (
     logger: ITelemetryLogger,
@@ -157,7 +177,8 @@ export const createRootSummarizerNodeWithGC = (
     changeSequenceNumber: number,
     referenceSequenceNumber: number | undefined,
     config: ISummarizerNodeConfig = {},
-    getInitialGCNodesFn?: () => Promise<IGraphNode[]>,
+    getGCDataFn?: () => Promise<IGCData>,
+    getInitialGCDataFn?: () => Promise<IGCData | undefined>,
 ): IRootSummarizerNodeWithGC => new SummarizerNodeWithGC(
     logger,
     summarizeInternalFn,
@@ -166,5 +187,6 @@ export const createRootSummarizerNodeWithGC = (
     referenceSequenceNumber === undefined ? undefined : SummaryNode.createForRoot(referenceSequenceNumber),
     undefined /* initialSummary */,
     undefined /* wipSummaryLogger */,
-    getInitialGCNodesFn,
+    getGCDataFn,
+    getInitialGCDataFn,
 );

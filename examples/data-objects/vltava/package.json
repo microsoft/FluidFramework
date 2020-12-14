@@ -17,7 +17,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "dev": "npm run webpack:dev",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
@@ -47,7 +47,7 @@
     "@fluidframework/datastore-definitions": "^0.31.0",
     "@fluidframework/last-edited-experimental": "^0.31.0",
     "@fluidframework/map": "^0.31.0",
-    "@fluidframework/protocol-definitions": "^0.1015.0",
+    "@fluidframework/protocol-definitions": "^0.1016.0-0",
     "@fluidframework/request-handler": "^0.31.0",
     "@fluidframework/runtime-definitions": "^0.31.0",
     "@fluidframework/runtime-utils": "^0.31.0",
@@ -57,7 +57,7 @@
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "react-tabs": "^3.1.0",
-    "uuid": "^3.3.2"
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
@@ -67,7 +67,7 @@
     "@types/node": "^10.17.24",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",
-    "@types/uuid": "^3.4.4",
+    "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "~4.2.0",
     "@typescript-eslint/parser": "~4.2.0",
     "concurrently": "^5.2.0",

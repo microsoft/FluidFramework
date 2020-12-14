@@ -3,23 +3,66 @@
  * Licensed under the MIT License.
  */
 
+import * as Comlink from "comlink";
 import {
-    IFrameDocumentServiceProxyFactory,
-} from "@fluidframework/iframe-driver";
-import { Loader, Container } from "@fluidframework/container-loader";
-import {
+    AttachState,
     ICodeLoader,
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
-    AttachState,
     IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
-import { MultiUrlResolver, MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
+import { Loader, Container } from "@fluidframework/container-loader";
 import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import {
+    MultiDocumentServiceFactory,
+    MultiUrlResolver,
+} from "@fluidframework/driver-utils";
+import {
+    DocumentServiceFactoryProxy,
+    IDocumentServiceFactoryProxyKey,
+    IUrlResolverProxyKey,
+    OuterUrlResolver,
+} from "@fluidframework/iframe-driver";
 import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
+
+export interface IFrameInnerApi {
+    /**
+     * Set the MessagePort which inner IFrame components can wrap
+     * to obtain an outer proxy
+     * @param innerPort - Port2 of a MessageChannel
+     */
+    setMessagePort(innerPort: MessagePort): Promise<void>;
+    /**
+     * Load a container
+     * @param documentId - id for the container
+     * @param createNew - if a new container should be created
+     * @returns An identifier for the container that can be used with this API
+     */
+    loadContainer(documentId: string, createNew: boolean): Promise<string>;
+    /**
+     * Attach the container with the given id inside the IFrame
+     * @param containerId - the containerid on which to call attach
+     * @param request - the request to pass to the attach call
+     */
+    attachContainer(containerId: string, request: IRequest): Promise<void>;
+}
+
+export interface IFrameOuterHostConfig {
+    documentServiceFactory: IDocumentServiceFactory;
+    urlResolver: IUrlResolver;
+
+    // Any config to be provided to loader.
+    options?: any;
+
+    // A Fluid object that gives host provided capabilities/configurations
+    // to the Fluid object in the container(such as auth).
+    scope?: IFluidObject;
+
+    proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
+}
 
 class ProxyRuntime implements IRuntime {
     private _disposed = false;
@@ -68,20 +111,6 @@ class ProxyCodeLoader implements ICodeLoader {
     }
 }
 
-export interface IFrameOuterHostConfig {
-    documentServiceFactory: IDocumentServiceFactory;
-    urlResolver: IUrlResolver;
-
-    // Any config to be provided to loader.
-    options?: any;
-
-    // A Fluid object that gives host provided capabilities/configurations
-    // to the Fluid object in the container(such as auth).
-    scope?: IFluidObject;
-
-    proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
-}
-
 export class IFrameOuterHost {
     private readonly loader: Loader;
     constructor(private readonly hostConfig: IFrameOuterHostConfig) {
@@ -94,25 +123,42 @@ export class IFrameOuterHost {
         });
     }
 
-    public async load(request: IRequest, iframe: HTMLIFrameElement): Promise<Container> {
-        const proxy = await IFrameDocumentServiceProxyFactory.create(
+    /**
+     * Set up the outer proxies for an IFrame
+     * @param iframe - The IFrame on which to expose methods (it still needs
+     * to be set up internally separately)
+     * @returns The MessagePort to provide to the IFrame after it has loaded
+     */
+    public async loadOuterProxy(iframe: HTMLIFrameElement): Promise<MessagePort> {
+        // With comlink, only a single object should be exposed on a single window
+        // (because it uses message event listeners under the hood) so combine
+        // them all in one (otherwise there are mysterious runtime errors)
+        const combinedProxy = {};
+
+        const outerDocumentServiceProxy =  new DocumentServiceFactoryProxy(
             MultiDocumentServiceFactory.create(this.hostConfig.documentServiceFactory),
-            iframe,
             this.hostConfig.options,
-            MultiUrlResolver.create(this.hostConfig.urlResolver));
+        );
+        combinedProxy[IDocumentServiceFactoryProxyKey] = outerDocumentServiceProxy.createProxy();
 
-        await proxy.createDocumentServiceFromRequest(request);
+        const outerUrlResolverProxy = new OuterUrlResolver(
+            MultiUrlResolver.create(this.hostConfig.urlResolver),
+        );
+        combinedProxy[IUrlResolverProxyKey] = outerUrlResolverProxy.createProxy();
 
-        // don't try to connect until the iframe does, so they get existing false
+        const channel = new MessageChannel();
+        Comlink.expose(combinedProxy, channel.port1);
 
-        await new Promise((resolve) => setTimeout(() => resolve(), 200));
+        return channel.port2;
+    }
 
-        const container = await this.loader.resolve(request);
-        if (!container.getQuorum().has("code")) {
-            // we'll never propose the code, so wait for them to do it
-            await new Promise((resolve) => container.once("contextChanged", () => resolve()));
-        }
-
-        return container;
+    /**
+     * Use the internal loader (which is created with a dummy code loader and
+     * runtime) to resolve the request to a container.  The returned container
+     * provides only limited functionality.
+     * @param request - The request to resolve on the internal loader
+     */
+    public async loadContainer(request: IRequest): Promise<Container> {
+        return this.loader.resolve(request);
     }
 }

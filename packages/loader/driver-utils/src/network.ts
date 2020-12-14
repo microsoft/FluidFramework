@@ -37,9 +37,9 @@ export class GenericNetworkError extends CustomErrorWithProps implements IDriver
     constructor(
         errorMessage: string,
         readonly canRetry: boolean,
-        readonly statusCode: number | undefined,
+        statusCode: number | undefined,
     ) {
-        super(errorMessage);
+        super(errorMessage, { statusCode });
     }
 }
 
@@ -50,9 +50,9 @@ export class AuthorizationError extends CustomErrorWithProps implements IAuthori
     constructor(
         errorMessage: string,
         readonly claims: string | undefined,
-        readonly statusCode: number,
+        statusCode: number,
     ) {
-        super(errorMessage);
+        super(errorMessage, { statusCode });
     }
 }
 
@@ -61,9 +61,9 @@ export class NetworkErrorBasic<T> extends CustomErrorWithProps {
         errorMessage: string,
         readonly errorType: T,
         readonly canRetry: boolean,
-        readonly statusCode: number | undefined,
+        statusCode: number | undefined,
     ) {
-        super(errorMessage);
+        super(errorMessage, { statusCode });
     }
 }
 
@@ -71,7 +71,7 @@ export class NonRetryableError<T> extends NetworkErrorBasic<T> {
     constructor(
         errorMessage: string,
         readonly errorType: T,
-        readonly statusCode: number | undefined,
+        statusCode: number | undefined,
     ) {
         super(errorMessage, errorType, false, statusCode);
     }
@@ -87,9 +87,9 @@ export class ThrottlingError extends CustomErrorWithProps implements IThrottling
     constructor(
         errorMessage: string,
         readonly retryAfterSeconds: number,
-        readonly statusCode?: number,
+        statusCode?: number,
     ) {
-        super(errorMessage);
+        super(errorMessage, { statusCode });
     }
 }
 

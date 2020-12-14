@@ -22,7 +22,7 @@ export class RateLimiter {
         if (task !== undefined) {
             return task();
         }
-        this.maxRequests--;
+        this.maxRequests++;
     };
 
     protected async acquire() {
