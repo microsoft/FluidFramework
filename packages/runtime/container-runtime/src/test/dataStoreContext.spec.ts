@@ -225,9 +225,9 @@ describe("Data Store Context Tests", () => {
 
             remotedDataStoreContext = new RemotedFluidDataStoreContext(
                 dataStoreId,
-                Promise.resolve(snapshotTree),
+                snapshotTree,
                 containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
+                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,
                 createSummarizerNodeFn,
             );
@@ -263,9 +263,9 @@ describe("Data Store Context Tests", () => {
 
             remotedDataStoreContext = new RemotedFluidDataStoreContext(
                 dataStoreId,
-                Promise.resolve(snapshotTree),
+                snapshotTree,
                 containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
+                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,
                 createSummarizerNodeFn,
             );
@@ -303,9 +303,9 @@ describe("Data Store Context Tests", () => {
 
             remotedDataStoreContext = new RemotedFluidDataStoreContext(
                 dataStoreId,
-                Promise.resolve(snapshotTree),
+                snapshotTree,
                 containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
+                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,
                 createSummarizerNodeFn,
             );

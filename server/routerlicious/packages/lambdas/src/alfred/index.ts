@@ -13,7 +13,6 @@ import {
     IDocumentMessage,
     IDocumentSystemMessage,
     INack,
-    IServiceConfiguration,
     ISignalMessage,
     MessageType,
     NackErrorType,
@@ -30,28 +29,6 @@ import {
     getRandomInt,
     generateClientId,
 } from "../utils";
-
-export const DefaultServiceConfiguration: IServiceConfiguration = {
-    blockSize: 64436,
-    maxMessageSize: 16 * 1024,
-    enableTraces: true,
-    summary: {
-        idleTime: 5000,
-        maxOps: 1000,
-        maxTime: 5000 * 12,
-        maxAckWaitTime: 600000,
-    },
-    deli: {
-        clientTimeout: 5 * 60 * 1000,
-        activityTimeout: 30 * 1000,
-        noOpConsolidationTimeout: 250,
-    },
-    scribe: {
-        generateServiceSummary: true,
-        clearCacheAfterServiceSummary: false,
-        ignoreStorageException: false,
-    },
-};
 
 interface IRoom {
 
@@ -306,9 +283,9 @@ export function configureWebSocketServices(
                     // Back-compat, removal tracked with issue #4346
                     parentBranch: null, // Does not matter for now.
                     serviceConfiguration: {
-                        blockSize: DefaultServiceConfiguration.blockSize,
-                        maxMessageSize: DefaultServiceConfiguration.maxMessageSize,
-                        summary: DefaultServiceConfiguration.summary,
+                        blockSize: core.DefaultServiceConfiguration.blockSize,
+                        maxMessageSize: core.DefaultServiceConfiguration.maxMessageSize,
+                        summary: core.DefaultServiceConfiguration.summary,
                     },
                     initialClients: clients,
                     initialMessages: [],

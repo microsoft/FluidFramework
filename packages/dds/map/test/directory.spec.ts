@@ -79,14 +79,16 @@ describe("Directory", () => {
             });
 
             it("should fire correct directory events", async () => {
-                const dummyDirectory = directory;
                 let called1: boolean = false;
                 let called2: boolean = false;
-                dummyDirectory.on("op", (agr1, arg2, arg3) => called1 = true);
-                dummyDirectory.on("valueChanged", (agr1, arg2, arg3, arg4) => called2 = true);
-                dummyDirectory.set("dwyane", "johnson");
+                let called3: boolean = false;
+                directory.on("op", (arg1, arg2, arg3) => called1 = true);
+                directory.on("valueChanged", (arg1, arg2, arg3, arg4) => called2 = true);
+                directory.on("containedValueChanged", (arg1, arg2, arg3) => called3 = true);
+                directory.set("dwyane", "johnson");
                 assert.equal(called1, false, "did not receive op event");
                 assert.equal(called2, true, "did not receive valueChanged event");
+                assert.equal(called3, true, "did not receive containedValueChanged event");
             });
 
             it("Rejects a undefined and null key set", () => {
@@ -657,6 +659,42 @@ describe("Directory", () => {
 
                 // Verify the remote sub directory1
                 assert.equal(directory1.getWorkingDirectory("foo").get("fromSubdir"), "testValue4");
+            });
+
+            it("raises the containedValueChanged event when keys are set and deleted from a subdirectory", () => {
+                directory1.createSubDirectory("foo");
+                directory1.createSubDirectory("bar");
+                containerRuntimeFactory.processAllMessages();
+
+                const foo1 = directory1.getWorkingDirectory("/foo");
+                const foo2 = directory2.getWorkingDirectory("/foo");
+                const bar1 = directory1.getWorkingDirectory("/bar");
+                const bar2 = directory2.getWorkingDirectory("/bar");
+
+                let called1 = 0;
+                let called2 = 0;
+                let called3 = 0;
+                let called4 = 0;
+                foo1.on("containedValueChanged", () => called1++);
+                foo2.on("containedValueChanged", () => called2++);
+                bar1.on("containedValueChanged", () => called3++);
+                bar2.on("containedValueChanged", () => called4++);
+
+                foo1.set("testKey", "testValue");
+                containerRuntimeFactory.processAllMessages();
+
+                assert.strictEqual(called1, 1, "containedValueChanged on local foo subdirectory after set()");
+                assert.strictEqual(called2, 1, "containedValueChanged on remote foo subdirectory after set()");
+                assert.strictEqual(called3, 0, "containedValueChanged on local bar subdirectory after set()");
+                assert.strictEqual(called4, 0, "containedValueChanged on remote bar subdirectory after set()");
+
+                foo1.delete("testKey");
+                containerRuntimeFactory.processAllMessages();
+
+                assert.strictEqual(called1, 2, "containedValueChanged on local subdirectory after delete()");
+                assert.strictEqual(called2, 2, "containedValueChanged on remote subdirectory after delete()");
+                assert.strictEqual(called3, 0, "containedValueChanged on local bar subdirectory after delete()");
+                assert.strictEqual(called4, 0, "containedValueChanged on remote bar subdirectory after delete()");
             });
 
             it("Can be cleared from the subdirectory", () => {

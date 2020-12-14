@@ -42,7 +42,7 @@ export abstract class LeafTask extends Task {
         this.addDependentTasks(this.dependentTasks);
     }
 
-    public matchTask(command: string): LeafTask | undefined {
+    public matchTask(command: string, options?: any): LeafTask | undefined {
         return (this.command === command) ? this : undefined;
     }
 
@@ -149,8 +149,8 @@ export abstract class LeafTask extends Task {
         return leafIsUpToDate;
     }
 
-    protected addChildTask(dependentTasks: LeafTask[], node: BuildPackage, command: string) {
-        const task = node.findTask(command);
+    protected addChildTask(dependentTasks: LeafTask[], node: BuildPackage, command: string, options?: any) {
+        const task = node.findTask(command, options);
         if (task) {
             task.collectLeafTasks(dependentTasks);
             return task;

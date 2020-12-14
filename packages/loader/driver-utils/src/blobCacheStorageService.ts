@@ -12,13 +12,13 @@ import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 export class BlobCacheStorageService extends DocumentStorageServiceProxy {
     constructor(
         internalStorageService: IDocumentStorageService,
-        private readonly blobs: Promise<Map<string, string>>,
+        private readonly blobs: Map<string, string>,
     ) {
         super(internalStorageService);
     }
 
     public async read(id: string): Promise<string> {
-        const blob = (await this.blobs).get(id);
+        const blob = this.blobs.get(id);
         if (blob !== undefined) {
             return blob;
         }

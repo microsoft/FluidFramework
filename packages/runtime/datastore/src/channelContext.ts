@@ -6,7 +6,7 @@
 import { IChannel } from "@fluidframework/datastore-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult, IContextSummarizeResult } from "@fluidframework/runtime-definitions";
+import { IChannelSummarizeResult, IContextSummarizeResult, IGCData } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
@@ -23,6 +23,8 @@ export interface IChannelContext {
     summarize(fullTree?: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
+
+    getGCData(): Promise<IGCData>;
 }
 
 export function createServiceEndpoints(
@@ -31,8 +33,8 @@ export function createServiceEndpoints(
     submitFn: (content: any, localOpMetadata: unknown) => void,
     dirtyFn: () => void,
     storageService: IDocumentStorageService,
-    tree?: Promise<ISnapshotTree>,
-    extraBlobs?: Promise<Map<string, string>>,
+    tree?: ISnapshotTree,
+    extraBlobs?: Map<string, string>,
 ) {
     const deltaConnection = new ChannelDeltaConnection(
         id,

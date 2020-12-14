@@ -19,7 +19,7 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
@@ -27,10 +27,10 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.25.0",
+    "@fluidframework/common-utils": "^0.26.0-0",
     "@fluidframework/driver-definitions": "^0.31.0",
     "@fluidframework/driver-utils": "^0.31.0",
-    "@fluidframework/protocol-definitions": "^0.1015.0",
+    "@fluidframework/protocol-definitions": "^0.1016.0-0",
     "@fluidframework/replay-driver": "^0.31.0",
     "assert": "^2.0.0"
   },

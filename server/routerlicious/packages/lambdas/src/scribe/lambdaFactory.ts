@@ -15,10 +15,10 @@ import {
     IProducer,
     IScribe,
     ISequencedOperationMessage,
+    IServiceConfiguration,
     ITenantManager,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { CheckpointManager } from "./checkpointManager";

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ITenantConfig, ITenantCustomData } from "@fluidframework/server-services-core";
+
 /**
  * Interface for a git object cache
  */
@@ -23,7 +25,7 @@ export interface ITenantService {
      * Retrieves the storage provider details for the given tenant.
      * If the provided token is invalid will return a broken promise.
      */
-    getTenant(tenantId: string, token: string): Promise<ITenant>;
+    getTenant(tenantId: string, token: string): Promise<ITenantConfig>;
 }
 
 /**
@@ -56,4 +58,27 @@ export interface ITenant {
     id: string;
 
     storage: IStorage;
+}
+
+/**
+ * An extension of ITenantCustomData.
+ * It is important to include all fields when updating tenant custom data.
+ */
+export interface ITenantCustomDataExternal extends ITenantCustomData {
+    externalStorageData?: IExternalStorage;
+}
+
+export interface IExternalStorage {
+    storageType: string;
+    accessInfo: IOauthAccessInfo | IConnectionString;
+}
+
+export interface IConnectionString {
+    connectionString: string;
+}
+
+export interface IOauthAccessInfo {
+    accessToken: string;
+    refreshToken: string;
+    expiresAt: string;
 }
