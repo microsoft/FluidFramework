@@ -53,7 +53,7 @@ export interface ISocketIoRedisOptions {
 /**
  * Custom version of the socket.io-redis adapter
  * Differences between this and socket.io-redis:
- * - Creates per room subscriptions which significantly reduces Redis server load for Fluid scenarios when running a large amount of fluid frontend servers.
+ * - Creates per room subscriptions which significantly reduces Redis server load for Fluid scenarios when running a large amount of Fluid frontend servers.
  * - Contains a health checker that verifies each room is works * 
  * - Disables rooms for the default "/" namespace to reduce memory usage (https://github.com/socketio/socket.io/issues/3089)
  * - Callbacks for telemetry logging
@@ -110,7 +110,7 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
 
         if (this.isDefaultNamespace) {
             // the default namespace
-            // don't setup stuff for the default namespace. we only use /notifications or /fluid. this will save memory
+            // don't setup stuff for the default namespace. we only use /fluid. this will save memory
             // related to https://github.com/socketio/socket.io/issues/3089
             return;
         }
