@@ -27,6 +27,8 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.26.0",
     "@fluidframework/odsp-doclib-utils": "^0.32.0",
+    "@fluidframework/protocol-base": "^0.1016.1",
+    "@fluidframework/protocol-definitions": "^0.1016.1",
     "proper-lockfile": "^4.1.1"
   },
   "devDependencies": {
