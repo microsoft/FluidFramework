@@ -51,18 +51,17 @@ export interface ISocketIoRedisOptions {
 }
 
 /**
- * Custom version of the socket.io-redis adapter with added qos logging and health checks
- * The Redis pubsub channels are compatible with socket.io-redis
+ * Custom version of the socket.io-redis adapter
  * Differences between this and socket.io-redis:
- * - Creates per room subscriptions which significally improve Redis performance for Fluid scenarios
+ * - Creates per room subscriptions which significantly reduces Redis server load for Fluid scenarios when running a large amount of fluid frontend servers.
  * - Contains a health checker that verifies each room is works * 
  * - Disables rooms for the default "/" namespace to reduce memory usage (https://github.com/socketio/socket.io/issues/3089)
  * - Callbacks for telemetry logging
- * - Written in TypeScript
+ * The Redis pubsub channels are compatible with socket.io-redis
  * References:
- * https://github.com/socketio/socket.io-redis
- * https://github.com/socketio/socket.io-emitter
- * https://github.com/socketio/socket.io-adapter
+ * - https://github.com/socketio/socket.io-redis
+ * - https://github.com/socketio/socket.io-emitter
+ * - https://github.com/socketio/socket.io-adapter
  */
 export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapter {
     private static options: ISocketIoRedisOptions;
