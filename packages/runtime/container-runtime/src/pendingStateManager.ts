@@ -43,7 +43,7 @@ interface IPendingFlush {
     type: "flush";
 }
 
-export type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
+type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
 
 interface IPendingSnapshot {
     clientId?: string;
@@ -200,7 +200,7 @@ export class PendingStateManager {
             if (nextMessage.referenceSequenceNumber > message.sequenceNumber) {
                 break;
             }
-            const context = (this.containerRuntime as any).getContext(nextMessage.content?.address);
+            const context = (this.containerRuntime as any).dataStores.contexts.get(nextMessage.content?.address);
             const channelContext = context.channel.contexts.get(nextMessage.content.contents?.content?.address);
 
             // rebaseOp will cause the DDS to behave as if it has sent the op but not actually send it
@@ -216,6 +216,7 @@ export class PendingStateManager {
             assert(ackedMessage.type === "message");
             return { localAck: true, localOpMetadata: ackedMessage.localOpMetadata };
         }
+
         return { localAck: false, localOpMetadata: undefined };
     }
 
@@ -346,8 +347,8 @@ export class PendingStateManager {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const nextMessage = this.initialStates.shift()!;
             assert(nextMessage.type === "message");
-            const context = (this.containerRuntime as any).getContext(nextMessage.content?.address);
-            const channelContext = context.channel.contexts.get(nextMessage.content.contents?.content?.address);
+            const context = (this.containerRuntime as any).dataStores.contexts.get(nextMessage.content?.address);
+            const channelContext = context.channel.contexts.get(nextMessage.content.contents?.content?.address, false);
 
             channelContext.rebaseOp(nextMessage.content.contents.content, nextMessage.localOpMetadata);
             this.pendingRebase.push(nextMessage);

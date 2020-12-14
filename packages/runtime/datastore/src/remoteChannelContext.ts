@@ -126,7 +126,6 @@ export class RemoteChannelContext implements IChannelContext {
         if (this.isLoaded) {
             this.services.deltaConnection.process(message, local, localOpMetadata);
         } else {
-            // assert(!local, "Remote channel must not be local when processing op");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pending!.push({ type: "process", message, local, localOpMetadata });
         }

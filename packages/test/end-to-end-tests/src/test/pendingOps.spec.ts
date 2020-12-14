@@ -10,9 +10,9 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ChannelFactoryRegistry, createAndAttachContainer, ITestFluidObject } from "@fluidframework/test-utils";
 import {
     DataObjectFactoryType,
-    generateTest,
-    ICompatLocalTestObjectProvider,
+    generateLocalNonCompatTest,
     ITestContainerConfig,
+    ITestObjectProvider,
 } from "./compatUtils";
 
 const mapId = "map";
@@ -49,7 +49,7 @@ const watchContainer = (container) => {
 const testKey = "test key";
 const testValue = "test value";
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     let loader: ILoader;
     let container1: IContainer;
     let map1: SharedMap;
@@ -101,7 +101,6 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         map2.set(testKey, testValue);
         const pendingOps = getSnapshot(container2);
         assert.ok(pendingOps);
-        console.log(pendingOps);
         await args.opProcessingController.process();
         container2.close();
 
@@ -167,7 +166,6 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         [...Array(10).keys()].map((i) => map2.set(i.toString(), i));
         const pendingOps = getSnapshot(container2);
         assert.ok(pendingOps);
-        console.log(pendingOps);
         await args.opProcessingController.process();
         container2.close();
 
@@ -185,12 +183,11 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         await args.opProcessingController.process();
         await Promise.all([...Array(10).keys()].map(
             async (i) => assert.strictEqual(await map1.wait(i.toString()), testValue)));
-        // [...Array(10).keys()].map(async (i) => console.log(await map3.wait(i.toString())));
         await Promise.all([...Array(10).keys()].map(
             async (i) => assert.strictEqual(await map3.wait(i.toString()), testValue)));
     });
 };
 
 describe("asdf", () => {
-    generateTest(tests);
+    generateLocalNonCompatTest(tests);
 });

@@ -363,9 +363,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     protected rebaseCore(content: any, localOpMetadata: unknown) {
-        // this.processCore(content, false, localOpMetadata);
         this.kernel.tryProcessMessage(content, false, localOpMetadata);
-        // this.kernel.trySubmitMessage(content.contents, localOpMetadata);
         this.kernel.tryRebaseMessage(content.contents, localOpMetadata);
     }
 
