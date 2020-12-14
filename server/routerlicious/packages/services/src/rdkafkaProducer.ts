@@ -6,16 +6,24 @@
 import type * as kafkaTypes from "node-rdkafka";
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@fluidframework/server-services-core";
 
-import { IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
+import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 import { PendingBoxcar, MaxBatchSize } from "./pendingBoxcar";
 import { tryImportNodeRdkafka } from "./tryImport";
 
 const kafka = tryImportNodeRdkafka();
 
+export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
+	enableIdempotence: boolean;
+	pollIntervalMs: number;
+	// optional additional options 
+	a
+}
+
 /**
  * Kafka producer using the node-rdkafka library
  */
 export class RdkafkaProducer extends RdkafkaBase implements IProducer {
+	private readonly producerOptions: IKafkaProducerOptions;
 	private readonly messages = new Map<string, IPendingBoxcar[]>();
 	private producer?: kafkaTypes.Producer;
 	private sendPending?: NodeJS.Immediate;
@@ -27,11 +35,14 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		endpoints: IKafkaEndpoints,
 		clientId: string,
 		topic: string,
-		private readonly enableIdempotence: boolean = false,
-		private readonly pollIntervalMs: number = 10,
-		numberOfPartitions?: number,
-		replicationFactor?: number) {
-		super(endpoints, clientId, topic, numberOfPartitions, replicationFactor);
+		options?: Partial<IKafkaProducerOptions>) {
+		super(endpoints, clientId, topic, options);
+
+		this.producerOptions = {
+			enableIdempotence: false,
+			pollIntervalMs: 10,
+			...options,
+		};
 	}
 
 	/**
@@ -50,7 +61,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			"socket.keepalive.enable": true,
 			"socket.nagle.disable": true,
 			"client.id": this.clientId,
-			"enable.idempotence": this.enableIdempotence,
+			"enable.idempotence": this.producerOptions.enableIdempotence,
 			"queue.buffering.max.messages": 100000,
 			"queue.buffering.max.ms": 0.5,
 			"batch.num.messages": 10000,
@@ -88,7 +99,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		this.producer.connect();
 
-		this.producer.setPollInterval(this.pollIntervalMs);
+		this.producer.setPollInterval(this.producerOptions.pollIntervalMs);
 	}
 
 	public async close(reconnecting: boolean = false): Promise<void> {

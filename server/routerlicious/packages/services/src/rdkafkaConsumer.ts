@@ -8,15 +8,25 @@ import type * as kafkaTypes from "node-rdkafka";
 import { Deferred } from "@fluidframework/common-utils";
 import { IConsumer, IPartition, IPartitionWithEpoch, IQueuedMessage } from "@fluidframework/server-services-core";
 import { ZookeeperClient } from "./zookeeperClient";
-import { IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
+import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 import { tryImportNodeRdkafka } from "./tryImport";
 
 const kafka = tryImportNodeRdkafka();
+
+export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
+	optimizedRebalance: boolean;
+	consumeLoopTimeout: number;
+	consumeLoopTimeoutDelay: number;
+
+	// optional additional options 
+	a
+}
 
 /**
  * Kafka consumer using the node-rdkafka library
  */
 export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
+	private readonly consumerOptions: IKafkaConsumerOptions;
 	private consumer?: kafkaTypes.KafkaConsumer;
 	private zooKeeperClient?: ZookeeperClient;
 	private closed = false;
@@ -31,10 +41,15 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		clientId: string,
 		topic: string,
 		public readonly groupId: string,
-		numberOfPartitions?: number,
-		replicationFactor?: number,
-		private readonly optimizedRebalance?: boolean) {
-		super(endpoints, clientId, topic, numberOfPartitions, replicationFactor);
+		options?: Partial<IKafkaConsumerOptions>) {
+		super(endpoints, clientId, topic, options);
+
+		this.consumerOptions = {
+			consumeLoopTimeout: 200,
+			consumeLoopTimeoutDelay: 100,
+			optimizedRebalance: false,
+			...options,
+		};
 	}
 
 	protected connect() {
@@ -59,11 +74,14 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				"fetch.min.bytes": 1,
 				"fetch.max.bytes": 1024 * 1024,
 				"offset_commit_cb": true,
-				"rebalance_cb": this.optimizedRebalance ? this.rebalance.bind(this) : true,
+				"rebalance_cb": this.consumerOptions.optimizedRebalance ? this.rebalance.bind(this) : true,
 			},
 			{
 				"auto.offset.reset": "latest",
 			});
+
+		this.consumer.setDefaultConsumeLoopTimeout(this.consumerOptions.consumeLoopTimeout);
+		this.consumer.setDefaultConsumeLoopTimeoutDelay(this.consumerOptions.consumeLoopTimeoutDelay);
 
 		this.consumer.on("ready", () => {
 			this.consumer.subscribe([this.topic]);
@@ -96,7 +114,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				// a rebalance occurred while we were committing
 				// we can resubmit the commit if we still own the partition
 				shouldRetryCommit =
-					this.optimizedRebalance && err.code === kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION;
+					this.consumerOptions.optimizedRebalance && err.code === kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION;
 			}
 
 			for (const offset of offsets) {
@@ -127,7 +145,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		this.consumer.on("rebalance", async (err, topicPartitions) => {
 			if (err.code === kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS ||
 				err.code === kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
-				const newAssignedPartitions = new Set(topicPartitions.map((tp) => tp.partition));
+				const newAssignedPartitions = new Set<number>(topicPartitions.map((tp) => tp.partition));
 
 				if (newAssignedPartitions.size === this.assignedPartitions.size &&
 					Array.from(this.assignedPartitions).every((ap) => newAssignedPartitions.has(ap))) {
@@ -153,7 +171,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				// clear pending messages
 				this.pendingMessages.clear();
 
-				if (!this.optimizedRebalance) {
+				if (!this.consumerOptions.optimizedRebalance) {
 					if (this.isRebalancing) {
 						this.isRebalancing = false;
 					} else {

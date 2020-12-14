@@ -37,7 +37,7 @@
     "debug": "^4.1.1",
     "kafka-node": "^5.0.0",
     "mongodb": "3.1.13",
-    "node-rdkafka": "^2.9.0",
+    "node-rdkafka": "^2.10.0",
     "node-zookeeper-client": "1.1.0",
     "redis": "^2.8.0",
     "socket.io": "^2.2.0",
