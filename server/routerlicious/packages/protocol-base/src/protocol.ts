@@ -48,7 +48,6 @@ export class ProtocolOpHandler {
     public readonly quorum: Quorum;
     public readonly term: number;
     constructor(
-        branchId: string,
         public minimumSequenceNumber: number,
         public sequenceNumber: number,
         term: number | undefined,

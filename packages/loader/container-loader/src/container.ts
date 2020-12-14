@@ -1265,7 +1265,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private captureProtocolSummary(): ISummaryTree {
-        // These fields can easily be tracked on the server
         const quorumSnapshot = this.protocolHandler.quorum.snapshot();
 
         // Save attributes for the document
