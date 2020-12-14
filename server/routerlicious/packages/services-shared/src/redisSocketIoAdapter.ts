@@ -53,9 +53,11 @@ export interface ISocketIoRedisOptions {
 /**
  * Custom version of the socket.io-redis adapter
  * Differences between this and socket.io-redis:
- * - Creates per room subscriptions which significantly reduces Redis server load for Fluid scenarios when running a large amount of Fluid frontend servers.
- * - Contains a health checker that verifies each room is works * 
- * - Disables rooms for the default "/" namespace to reduce memory usage (https://github.com/socketio/socket.io/issues/3089)
+ * - Creates per room subscriptions which significantly reduces Redis server load for
+ * Fluid scenarios when running a large amount of Fluid frontend servers.
+ * - Contains a health checker that verifies each room is works *
+ * - Disables rooms for the default "/" namespace to reduce memory usage
+ * (https://github.com/socketio/socket.io/issues/3089)
  * - Callbacks for telemetry logging
  * The Redis pubsub channels are compatible with socket.io-redis
  * References:
@@ -366,9 +368,13 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
 
             this.broadcast(packet, opts, true);
 
-            RedisSocketIoAdapter.options.onReceive?.(channel, startTime, packet);
+            if (RedisSocketIoAdapter.options.onReceive) {
+                RedisSocketIoAdapter.options.onReceive(channel, startTime, packet);
+            }
         } catch (ex) {
-            RedisSocketIoAdapter.options.onReceive?.(channel, startTime, packet, ex);
+            if (RedisSocketIoAdapter.options.onReceive) {
+                RedisSocketIoAdapter.options.onReceive(channel, startTime, packet, ex);
+            }
         }
     }
 
@@ -428,12 +434,16 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
     private queueRoomHealthCheck(room: string) {
         this.clearRoomHealthCheckTimeout(room);
 
-        if (!RedisSocketIoAdapter.options.healthChecks || !RedisSocketIoAdapter.options.subConnection.isSubscribed(room)) {
+        if (!RedisSocketIoAdapter.options.healthChecks ||
+            !RedisSocketIoAdapter.options.subConnection.isSubscribed(room)) {
             return;
         }
 
         const timeoutId = setTimeout(
-            () => this.runRoomHealthCheck(room),
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            async () => {
+                return this.runRoomHealthCheck(room);
+            },
             RedisSocketIoAdapter.options.healthChecks.interval);
         this.roomHealthCheckTimeoutIds.set(room, timeoutId);
     }
@@ -459,13 +469,18 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
             // tslint:disable-next-line: no-floating-promises
             await RedisSocketIoAdapter.options.pubConnection.publish(`${this.channel}${room}#`, msg);
 
-            await promiseTimeout(RedisSocketIoAdapter.options.healthChecks.timeout!, healthCheckPromise);
+            await promiseTimeout(RedisSocketIoAdapter.options.healthChecks.timeout, healthCheckPromise);
 
-            RedisSocketIoAdapter.options.healthChecks.onHealthCheck?.(callerId, startTime);
+            if (RedisSocketIoAdapter.options.healthChecks.onHealthCheck) {
+                RedisSocketIoAdapter.options.healthChecks.onHealthCheck(callerId, startTime);
+            }
         } catch (ex) {
-            RedisSocketIoAdapter.options.healthChecks.onHealthCheck?.(callerId, startTime, ex);
+            if (RedisSocketIoAdapter.options.healthChecks.onHealthCheck) {
+                RedisSocketIoAdapter.options.healthChecks.onHealthCheck(callerId, startTime, ex);
+            }
 
             if (RedisSocketIoAdapter.options.healthChecks.resubscribeOnFailure) {
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.subscribeToRooms([room]);
             }
         } finally {
