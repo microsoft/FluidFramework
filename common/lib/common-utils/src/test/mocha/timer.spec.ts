@@ -4,8 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+import process from "process";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { PromiseTimer, Timer, IPromiseTimerResult } from "../src";
+import { PromiseTimer, Timer, IPromiseTimerResult } from "../..";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 type PromiseTimerResultString = IPromiseTimerResult["timerResult"];
@@ -227,6 +228,7 @@ describe("Timers", () => {
 
         function startWithThen(ms?: number, handler?: () => void) {
             timer.start(ms, handler).then(
+                // eslint-disable-next-line  @typescript-eslint/no-unsafe-return
                 (result) => resolveResult = result.timerResult,
                 (error) => assert.fail(error),
             );

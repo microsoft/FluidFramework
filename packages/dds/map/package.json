@@ -19,7 +19,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
-    "build:test": "tsc --project ./test/tsconfig.json",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",

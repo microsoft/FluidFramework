@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { BatchManager } from "../src";
+import { BatchManager } from "../..";
 
 describe("Routerlicious", () => {
     describe("Utils", () => {

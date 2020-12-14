@@ -5,8 +5,7 @@
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import "jsdom-global/register";
-import "mocha";
-import { Template } from "../src/template";
+import { Template } from "../template";
 
 describe("", () => {
     it("", () => {

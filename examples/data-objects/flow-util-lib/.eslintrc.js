@@ -15,6 +15,6 @@ module.exports = {
         "prefer-arrow/prefer-arrow-functions": "off"
     },
     "parserOptions": {
-        "project": [ "./tsconfig.json", "./tsconfig.eslint.json" ]
+        "project": [ "./tsconfig.json", "./src/test/tsconfig.json" ]
     }
 }

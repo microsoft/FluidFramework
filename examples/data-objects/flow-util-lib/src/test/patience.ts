@@ -43,8 +43,7 @@ export function lis(seq: number[]) {
         const pile = piles[pileIndex];
         const entry = pile[cardIndex];
         result.unshift(entry.value);
-        // eslint-disable-next-line max-len
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         cardIndex = entry.prev!;
     }
 

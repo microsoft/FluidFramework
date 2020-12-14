@@ -1,9 +1,5 @@
 {
     "extends": "@fluidframework/build-common/ts-common-config.json",
-    "exclude": [
-        "dist",
-        "node_modules"
-    ],
     "compilerOptions": {
         "composite": true,
         "strictNullChecks": false,
@@ -16,5 +12,8 @@
     },
     "include": [
         "src/**/*"
+    ],
+    "exclude": [
+        "src/test/**/*"
     ]
 }

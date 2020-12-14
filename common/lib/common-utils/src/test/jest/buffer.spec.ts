@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import * as BufferNode from "../src/bufferNode";
-// eslint-disable-next-line import/no-internal-modules
-import * as BufferBrowser from "../src/bufferBrowser";
+import * as BufferNode from "../../bufferNode";
+import * as BufferBrowser from "../../bufferBrowser";
 
 describe("Buffer isomorphism", () => {
     test("from string utf-8/16 is compatible", () => {

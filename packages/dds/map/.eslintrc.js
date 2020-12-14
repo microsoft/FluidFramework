@@ -8,7 +8,7 @@ module.exports = {
         "@fluidframework/eslint-config-fluid/eslint7"
     ],
     "parserOptions": {
-        "project": [ "./tsconfig.json", "./test/tsconfig.json" ]
+        "project": [ "./tsconfig.json", "./src/test/tsconfig.json" ]
     },
     "rules": {
         "@typescript-eslint/no-use-before-define": "off",

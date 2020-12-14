@@ -1,15 +1,11 @@
 {
-    "extends": "../tsconfig.json",
-    "exclude": [
-        "dist",
-        "node_modules"
-    ],
+    "extends": "@fluidframework/build-common/ts-common-config.json",
     "compilerOptions": {
         "composite": false,
         "declaration": false,
         "declarationMap": false,
         "rootDir": "./",
-        "outDir": "../dist/test",
+        "outDir": "../../dist/test",
         "types": [
             "node",
             "mocha"
@@ -18,5 +14,5 @@
     "include": [
         "./**/*"
     ],
-    "references": [ { "path": ".." } ]
+    "references": [ { "path": "../.." } ]
 }

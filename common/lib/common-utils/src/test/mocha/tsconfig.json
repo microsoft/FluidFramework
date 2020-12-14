@@ -5,13 +5,19 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "rootDir": "./src",
-        "outDir": "./dist",
+        "rootDir": "./",
+        "outDir": "../../../dist/test/mocha",
         "types": [
-            "node"
+            "node",
+            "mocha"
         ]
     },
     "include": [
-        "src/**/*.ts"
+        "./**/*"
+    ],
+    "references": [
+        {
+            "path": "../../.."
+        }
     ]
 }

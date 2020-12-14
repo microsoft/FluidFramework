@@ -4,10 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-// eslint-disable-next-line import/no-unassigned-import
-import "mocha";
-// eslint-disable-next-line import/no-internal-modules
-import { bsearch } from "../src/bsearch";
+import { bsearch } from "../bsearch";
 import { bsearch2Shim } from "./bsearch2Shim";
 
 describe("bsearch", () => {
@@ -17,7 +14,7 @@ describe("bsearch", () => {
     });
 
     it("searches all positions", () => {
-        const array = [];
+        const array: number[] = [];
         for (let j = 0; j < 5; j++) {
             assert.equal(bsearch(array, array.length), array.length);
 
@@ -29,7 +26,7 @@ describe("bsearch", () => {
     });
 
     it("returns leftmost match", () => {
-        const array = [];
+        const array: number[] = [];
         for (let j = 0; j < 7; j++) {
             array.unshift(0);
             array.fill(0);
@@ -66,7 +63,7 @@ describe("bsearch2", () => {
     });
 
     it("searches all positions", () => {
-        const array = [];
+        const array: number[] = [];
         for (let j = 0; j < 5; j++) {
             assert.equal(bsearch2Shim(array, array.length), array.length);
 
@@ -78,7 +75,7 @@ describe("bsearch2", () => {
     });
 
     it("returns leftmost match", () => {
-        const array = [];
+        const array: number[] = [];
         for (let j = 0; j < 7; j++) {
             array.unshift(0);
             array.fill(0);

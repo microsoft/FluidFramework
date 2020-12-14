@@ -13,7 +13,7 @@ import {
     MockSharedObjectServices,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { MapFactory, SharedMap } from "..";
+import { MapFactory, SharedMap } from "../map";
 
 function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory) {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -69,10 +69,10 @@ describe("Map", () => {
 
             it("Should reject undefined and null key sets", () => {
                 assert.throws(() => {
-                    map.set(undefined, "one");
+                    map.set(undefined as any, "one");
                 }, "Should throw for key of undefined");
                 assert.throws(() => {
-                    map.set(null, "two");
+                    map.set(null as any, "two");
                 }, "Should throw for key of null");
             });
         });

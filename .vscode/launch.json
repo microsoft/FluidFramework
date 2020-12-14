@@ -243,6 +243,21 @@
             "skipFiles": [
                 "<node_internals>/**/*.js"
             ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Current Test (New)",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "stopOnEntry": false,
+            "env": {
+                "TS_NODE_PROJECT": "${fileDirname}/tsconfig.json",
+            },
+            "args": ["--no-timeouts", "--exit", "--require", "ts-node/register","${file}", ],
+            "cwd": "${workspaceFolder}",
+            "skipFiles": [
+                "<node_internals>/**/*.js"
+            ]
         }
 
     ]

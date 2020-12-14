@@ -4,10 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-// eslint-disable-next-line import/no-unassigned-import
-import "mocha";
-// eslint-disable-next-line import/no-internal-modules
-import { findToken, TokenList } from "../src/tokenlist";
+import { findToken, TokenList } from "../tokenlist";
 
 describe("TokenList", () => {
     describe("findToken", () => {

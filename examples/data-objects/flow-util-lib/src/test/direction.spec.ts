@@ -5,10 +5,7 @@
 
 /* eslint-disable no-bitwise */
 import { strict as assert } from "assert";
-// eslint-disable-next-line import/no-unassigned-import
-import "mocha";
-// eslint-disable-next-line import/no-internal-modules
-import { Direction, getDeltaX, getDeltaY } from "../src/direction";
+import { Direction, getDeltaX, getDeltaY } from "../direction";
 
 const cases = [
     { name: "none",       direction: Direction.none,                      expectedX:  0,    expectedY:  0 },

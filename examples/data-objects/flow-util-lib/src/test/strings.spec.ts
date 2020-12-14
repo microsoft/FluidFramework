@@ -6,12 +6,9 @@
 /* eslint-disable no-null/no-null */
 
 import { strict as assert } from "assert";
-// eslint-disable-next-line import/no-unassigned-import
-import "mocha";
-// eslint-disable-next-line import/no-internal-modules
-import { areStringsEquivalent } from "../src/string";
+import { areStringsEquivalent } from "../string";
 
-function test(left: string, right: string) {
+function test(left: string | undefined | null, right: string | undefined | null) {
     const isLeftEmpty = left === "" || left === null || left === undefined;
     const isRightEmpty = right === "" || right === null || right === undefined;
     const expected = (isLeftEmpty && isRightEmpty) || left === right;

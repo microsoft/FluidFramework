@@ -13,7 +13,8 @@ import {
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 
-import { MapFactory, DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "..";
+import { MapFactory } from "../map";
+import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../directory";
 
 function createConnectedDirectory(id: string, runtimeFactory: MockContainerRuntimeFactory) {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -93,19 +94,19 @@ describe("Directory", () => {
 
             it("Rejects a undefined and null key set", () => {
                 assert.throws(() => {
-                    directory.set(undefined, "testValue");
+                    directory.set(undefined as any, "testValue");
                 }, "Should throw for key of undefined");
                 assert.throws(() => {
-                    directory.set(null, "testValue");
+                    directory.set(null as any, "testValue");
                 }, "Should throw for key of null");
             });
 
             it("Rejects subdirectories with undefined and null names", () => {
                 assert.throws(() => {
-                    directory.createSubDirectory(undefined);
+                    directory.createSubDirectory(undefined as any);
                 }, "Should throw for undefined subdirectory name");
                 assert.throws(() => {
-                    directory.createSubDirectory(null);
+                    directory.createSubDirectory(null as any);
                 }, "Should throw for null subdirectory name");
             });
         });

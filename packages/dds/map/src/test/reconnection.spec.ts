@@ -10,7 +10,8 @@ import {
     MockContainerRuntimeForReconnection,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { DirectoryFactory, SharedDirectory, MapFactory, SharedMap } from "..";
+import { DirectoryFactory, SharedDirectory } from "../directory";
+import { MapFactory, SharedMap } from "../map";
 
 describe("Reconnection", () => {
     describe("SharedMap", () => {

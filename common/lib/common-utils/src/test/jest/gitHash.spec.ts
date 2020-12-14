@@ -6,8 +6,7 @@
 import fs from "fs";
 import path from "path";
 import http from "http";
-// eslint-disable-next-line import/no-internal-modules
-import * as HashNode from "../src/hashFileNode";
+import * as HashNode from "../../hashFileNode";
 
 async function getFileContents(p: string): Promise<Buffer> {
     return new Promise<Buffer>((resolve, reject) => {
@@ -20,7 +19,7 @@ async function getFileContents(p: string): Promise<Buffer> {
     });
 }
 
-const dataDir = ".";
+const dataDir = "../../../src/test/jest";
 
 async function evaluateBrowserHash(page, file: Buffer): Promise<string> {
     // Navigate to the local test server so crypto is available

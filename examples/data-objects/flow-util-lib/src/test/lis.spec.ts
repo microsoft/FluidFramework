@@ -4,10 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-// eslint-disable-next-line import/no-unassigned-import
-import "mocha";
-// eslint-disable-next-line import/no-internal-modules
-import { lis } from "../src/lis";
+import { lis } from "../lis";
 import { lis as patience } from "./patience";
 import { randomSequence } from "./sequence";
 

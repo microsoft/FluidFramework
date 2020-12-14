@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { IErrorEvent } from "@fluidframework/common-definitions";
-import { EventForwarder } from "../src";
+import { EventForwarder } from "../..";
 
 interface ITestEvents extends IErrorEvent {
     (event: "testEvent", listener: (name: string, count: number) => void);
