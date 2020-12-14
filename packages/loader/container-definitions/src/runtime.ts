@@ -13,10 +13,10 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
+    IClientConfiguration,
     IClientDetails,
     IQuorum,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISnapshotTree,
     ITree,
     MessageType,
@@ -132,7 +132,7 @@ export interface IContainerContext extends IDisposable {
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
     readonly logger: ITelemetryLogger;
-    readonly serviceConfiguration: IServiceConfiguration | undefined;
+    readonly serviceConfiguration: IClientConfiguration | undefined;
     readonly version: string;
     readonly previousRuntimeState: IRuntimeState;
     readonly pendingOps?;

@@ -18,7 +18,7 @@
     "docker:build": "docker build -t monitoring .",
     "docker:start": "docker run --rm -t monitoring",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "start": "node dist/index.js",
     "start:debug": "node --inspect=0.0.0.0:5858 dist/index.js",
