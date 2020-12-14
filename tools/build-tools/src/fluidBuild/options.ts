@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import * as path from "path";
 import * as os from "os";
 import { commonOptionString, parseOption } from "../common/commonOptions"
+import { existsSync } from "../common/utils";
 import { IPackageMatchedOptions } from "./fluidRepoBuild";
 import { ISymlinkOptions } from "./symlinkUtils";
 
@@ -37,6 +39,7 @@ export const options: FastBuildOptions = {
     showExec: false,
     clean: false,
     match: [],
+    dirs: [],
     matchedOnly: true,
     buildScriptNames: [],
     vscode: false,
@@ -58,12 +61,13 @@ export const options: FastBuildOptions = {
 function printUsage() {
     console.log(
         `
-Usage: fluid-build <options> [<package regexp> ...]
+Usage: fluid-build <options> [(<package regexp>|<path>) ...]
   [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
      --all            Operate on all packages/monorepo (default: client monorepo)
   -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
   -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
+     --dir <path>     Directory to build
      --fix            Auto fix warning from package check if possible
   -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
   -? --help           Print this message
@@ -254,9 +258,14 @@ export function parseOptions(argv: string[]) {
             continue;
         }
 
-        // Package regexp
+        // Package regexp or paths
         if (!arg.startsWith("-")) {
-            options.match.push(arg);
+            const resolvedPath = path.resolve(arg);
+            if (existsSync(resolvedPath)) {
+                options.dirs.push(arg);
+            } else {
+                options.match.push(arg);
+            }
             continue;
         }
 

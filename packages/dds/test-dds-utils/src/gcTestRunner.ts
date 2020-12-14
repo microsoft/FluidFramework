@@ -25,91 +25,62 @@ export interface IGCTestProvider {
 export const runGCTests = (ctor: new () => IGCTestProvider) => {
     let provider: IGCTestProvider;
 
+    function validateGCData() {
+        const gcNodes = Object.entries(provider.sharedObject.getGCData().gcNodes);
+        assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+
+        const [ id, outboundRoutes ] = gcNodes[0];
+        assert.strictEqual(id, "/", "GC node's id should be /");
+        assert.deepStrictEqual(
+            outboundRoutes.sort(),
+            provider.expectedOutboundRoutes.sort(),
+            "GC node's outbound routes is incorrect");
+    }
+
     beforeEach(() => {
         provider = new ctor();
     });
 
     it("can generate GC nodes with routes to Fluid objects in data", async () => {
-        // Get the shared object and add routes to Fluid object in its data.
-        const dds = provider.sharedObject;
+        // Add outbound routes to Fluid object to the DDS' data.
         await provider.addOutboundRoutes();
 
-        // Verify the GC nodes returned by summarize.
-        const gcNodes = dds.summarize().gcNodes;
-        assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-        assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-        assert.deepStrictEqual(
-            gcNodes[0].outboundRoutes.sort(),
-            provider.expectedOutboundRoutes.sort(),
-            "GC node's outbound routes is incorrect");
+        // Verify the GC nodes returned by getGCData.
+        validateGCData();
     });
 
     it("can generate GC nodes when handles are deleted from data", async () => {
-        // Get the shared object and add routes to Fluid object in its data.
-        const dds = provider.sharedObject;
+        // Add outbound routes to Fluid object to the DDS' data.
         await provider.addOutboundRoutes();
 
-        // Verify the GC nodes returned by summarize.
-        let gcNodes = dds.summarize().gcNodes;
-        assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-        assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-        assert.deepStrictEqual(
-            gcNodes[0].outboundRoutes.sort(),
-            provider.expectedOutboundRoutes.sort(),
-            "GC node's outbound routes is incorrect");
+        // Verify the GC nodes returned by getGCData.
+        validateGCData();
 
         // Delete routes to Fluid objects from the shared object's data.
         await provider.deleteOutboundRoutes();
 
         // Verify that GC node's outbound routes are updated correctly.
-        gcNodes = dds.summarize().gcNodes;
-        assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-        assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-        assert.deepStrictEqual(
-            gcNodes[0].outboundRoutes.sort(),
-            provider.expectedOutboundRoutes.sort(),
-            "GC node's outbound routes should have been udpated after deleting routes");
+        validateGCData();
     });
 
     it("can generate GC nodes when handles are added to data", async () => {
-        // Get the shared object and add routes to Fluid object in its data.
-        const dds = provider.sharedObject;
+        // Add outbound routes to Fluid object to the DDS' data.
         await provider.addOutboundRoutes();
 
-        // Verify the GC nodes returned by summarize.
-        let gcNodes = dds.summarize().gcNodes;
-        assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-        assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-        assert.deepStrictEqual(
-            gcNodes[0].outboundRoutes.sort(),
-            provider.expectedOutboundRoutes.sort(),
-            "GC node's outbound routes is incorrect");
+        validateGCData();
 
         // Add more routes to Fluid object to the shared object's data.
         await provider.addOutboundRoutes();
 
         // Verify that GC node's outbound routes are updated correctly.
-        gcNodes = dds.summarize().gcNodes;
-        assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-        assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-        assert.deepStrictEqual(
-            gcNodes[0].outboundRoutes.sort(),
-            provider.expectedOutboundRoutes.sort(),
-            "GC node's outbound routes should have been updated after adding routes");
+        validateGCData();
     });
 
     it("can generate GC nodes with nested handles in data", async () => {
-        // Get the shared object and add nested handles to its data.
-        const dds = provider.sharedObject;
+        // Add outbound routes to Fluid object to the DDS' data.
         await provider.addNestedHandles();
 
-        // Verify the GC nodes returned by summarize.
-        const gcNodes = dds.summarize().gcNodes;
-        assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
-        assert.strictEqual(gcNodes[0].id, "/", "GC node's id should be /");
-        assert.deepStrictEqual(
-            gcNodes[0].outboundRoutes.sort(),
-            provider.expectedOutboundRoutes.sort(),
-            "GC node's outbound routes is incorrect");
+        // Verify the GC nodes returned by getGCData.
+        validateGCData();
     });
 };

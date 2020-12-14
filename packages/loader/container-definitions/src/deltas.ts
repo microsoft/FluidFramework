@@ -6,11 +6,11 @@
 import { IDisposable, IEventProvider, IEvent, IErrorEvent } from "@fluidframework/common-definitions";
 import {
     ConnectionMode,
+    IClientConfiguration,
     IClientDetails,
     IDocumentMessage,
     IProcessMessageResult,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
@@ -28,7 +28,7 @@ export interface IConnectionDetails {
     version: string;
     initialClients: ISignalClient[];
     maxMessageSize: number;
-    serviceConfiguration: IServiceConfiguration;
+    serviceConfiguration: IClientConfiguration;
     /**
      * Last known sequence number to ordering service at the time of connection
      * It may lap actual last sequence number (quite a bit, if container  is very active).
@@ -139,7 +139,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly maxMessageSize: number;
 
     /** Service configuration provided by the service. */
-    readonly serviceConfiguration: IServiceConfiguration | undefined;
+    readonly serviceConfiguration: IClientConfiguration | undefined;
 
     /** Flag to indicate whether the client can write or not. */
     readonly active: boolean;

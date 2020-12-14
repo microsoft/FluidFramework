@@ -66,10 +66,10 @@ export class BuildPackage {
         return this.buildTask;
     }
 
-    public findTask(command: string): Task | undefined {
+    public findTask(command: string, options?: any): Task | undefined {
         const task = this.task;
         if (!task) { return undefined; }
-        return task.matchTask(command);
+        return task.matchTask(command, options);
     }
 
     public async isUpToDate(): Promise<boolean> {

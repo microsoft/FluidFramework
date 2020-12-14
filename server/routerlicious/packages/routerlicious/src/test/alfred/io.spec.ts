@@ -18,12 +18,13 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
-import { configureWebSocketServices, DefaultServiceConfiguration } from "@fluidframework/server-lambdas";
+import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import { PubSub } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import { generateToken } from "@fluidframework/server-services-utils";
 import {
     DefaultMetricClient,
+    DefaultServiceConfiguration,
     IClientManager,
     IDeliState,
     IOrdererManager,
