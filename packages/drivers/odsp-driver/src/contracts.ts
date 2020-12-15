@@ -190,7 +190,7 @@ export interface ITree {
 export interface IBlob {
     content: string;
     // SPO only uses "base64" today for download.
-    // We are adding undefined to as temp way to roundtrip strings unchanged.
+    // We are adding undefined too, as temp way to roundtrip strings unchanged.
     encoding: "base64" | undefined;
     id: string;
     size: number;
