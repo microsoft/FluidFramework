@@ -38,6 +38,7 @@
         "throttling": {
             "http": {
                 "requestsPerMs": 10000,
+                "maxRequestBurst": 10000,
                 "minCooldownIntervalInMs": 10000,
                 "minThrottleIntervalInMs": 10000
             }

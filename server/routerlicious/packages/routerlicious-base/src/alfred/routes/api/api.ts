@@ -27,8 +27,8 @@ export function create(
     config: Provider,
     producer: core.IProducer,
     tenantManager: core.ITenantManager,
-    throttler: core.IThrottler,
-    storage: core.IDocumentStorage): Router {
+    storage: core.IDocumentStorage,
+    throttler: core.IThrottler): Router {
     const router: Router = Router();
 
     function returnResponse<T>(
@@ -51,14 +51,14 @@ export function create(
         response.sendStatus(200);
     });
 
-    router.patch("/:tenantId/:id/root", async (request, response) => {
+    router.patch("/:tenantId/:id/root", throttle(throttler), async (request, response) => {
         const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
         const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
         const validP = verifyRequest(request, tenantManager, storage, maxTokenLifetimeSec, isTokenExpiryEnabled);
         returnResponse(validP, request, response, mapSetBuilder);
     });
 
-    router.post("/:tenantId/:id/blobs", async (request, response) => {
+    router.post("/:tenantId/:id/blobs", throttle(throttler), async (request, response) => {
         const tenantId = getParam(request.params, "tenantId");
         const blobData = request.body as IBlobData;
         const historian = config.get("worker:blobStorageUrl") as string;
