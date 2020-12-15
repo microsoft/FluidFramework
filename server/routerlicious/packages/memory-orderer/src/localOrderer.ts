@@ -300,7 +300,6 @@ export class LocalOrderer implements IOrderer {
             : { members: [], proposals: [], values: [] };
 
         const protocolHandler = new ProtocolOpHandler(
-            this.documentId,
             scribe.minimumSequenceNumber,
             scribe.sequenceNumber,
             1, // TODO (Change when local orderer also ticks epoch)
