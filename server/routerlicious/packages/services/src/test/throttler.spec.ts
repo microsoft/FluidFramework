@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { TestThrottlerHelper, TestThrottleStorageManager } from "@fluidframework/server-test-utils";
+import { TestThrottlerHelper } from "@fluidframework/server-test-utils";
 import { Throttler } from "../throttler";
 import { IThrottler, ThrottlingError } from "@fluidframework/server-services-core";
 import Sinon from "sinon";
@@ -29,8 +29,8 @@ describe("Throttler", () => {
     ) => {
         const numOperationsToExceedIntervalLimit = Math.ceil(minThrottleCheckInterval / rate);
         // open enough operations to throttle for duration of numIntervalsToBeThrottledFor
-        const numOperationsToOpen = numIntervalsToBeThrottledFor * numOperationsToExceedIntervalLimit;
-        for (let i = 0; i < numOperationsToOpen + 1; i++) {
+        const numOperations = numIntervalsToBeThrottledFor * numOperationsToExceedIntervalLimit;
+        for (let i = 0; i < numOperations + 1; i++) {
             // make sure we give Throttler ability to check Throttler in case it is doing so
             await Sinon.clock.nextAsync();
             // should not throw because no time has passed to allow Throttler to be checked aside from initial update
@@ -41,13 +41,10 @@ describe("Throttler", () => {
     }
 
     it("does not throttle within min throttle check interval", async () => {
-        // Max 10 operations per second
-        const limit = 10;
-        const rate = 100;
-        // only checks Throttler at most once per second
-        const minThrottleCheckInterval = 1000;
-        const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
+        // Max 10 operations per throttle check interval
+        const rate = 10;
+        const minThrottleCheckInterval = 100;
+        const throttlerHelper = new TestThrottlerHelper(rate);
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test1";
 
@@ -55,11 +52,9 @@ describe("Throttler", () => {
     });
 
     it("throttles after min throttle check interval", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
+        const rate = 10;
+        const minThrottleCheckInterval = 100;
+        const throttlerHelper = new TestThrottlerHelper(rate);
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test2";
 
@@ -81,11 +76,9 @@ describe("Throttler", () => {
     });
 
     it("throttles after multiple throttle check intervals", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
+        const rate = 10;
+        const minThrottleCheckInterval = 100;
+        const throttlerHelper = new TestThrottlerHelper(rate);
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test3";
 
@@ -107,11 +100,9 @@ describe("Throttler", () => {
     });
 
     it("throttles fewer heavier operations after min throttle check interval", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
+        const rate = 10;
+        const minThrottleCheckInterval = 100;
+        const throttlerHelper = new TestThrottlerHelper(rate);
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test2";
 
@@ -133,11 +124,9 @@ describe("Throttler", () => {
     });
 
     it("un-throttles early if operations are closed", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
+        const rate = 10;
+        const minThrottleCheckInterval = 100;
+        const throttlerHelper = new TestThrottlerHelper(rate);
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test4";
 
@@ -145,6 +134,7 @@ describe("Throttler", () => {
         await exceedThrottleLimit(id, throttler, rate, minThrottleCheckInterval, 2);
 
         // close enough operations to reduce throttle duration by 1 interval
+        const limit = minThrottleCheckInterval / rate;
         for (let i = 0; i < limit + 1; i++) {
             throttler.decrementCount(id);
         }
@@ -162,11 +152,9 @@ describe("Throttler", () => {
     });
 
     it("un-throttles fewer heavier operations early if operations are closed", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
+        const rate = 10;
+        const minThrottleCheckInterval = 100;
+        const throttlerHelper = new TestThrottlerHelper(rate);
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test4";
 
@@ -174,6 +162,7 @@ describe("Throttler", () => {
         await exceedThrottleLimit(id, throttler, rate, minThrottleCheckInterval, 1, 2);
 
         // close enough operations to reduce throttle duration by 1 interval
+        const limit = minThrottleCheckInterval / rate;
         for (let i = 0; i < limit / 2 + 1; i++) {
             throttler.decrementCount(id, 2);
         }
@@ -191,11 +180,9 @@ describe("Throttler", () => {
     });
 
     it("does not throttle when Throttler fails to update throttle status", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
+        const rate = 10;
+        const minThrottleCheckInterval = 100;
+        const throttlerHelper = new TestThrottlerHelper(rate);
         Sinon.stub(throttlerHelper, "updateCount").rejects();
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test5";
@@ -210,11 +197,9 @@ describe("Throttler", () => {
     });
 
     it("does not throttle when Throttler fails to retrieve throttle status", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
+        const rate = 10;
+        const minThrottleCheckInterval = 100;
+        const throttlerHelper = new TestThrottlerHelper(rate);
         Sinon.stub(throttlerHelper, "getThrottleStatus").rejects();
         const throttler = new Throttler(throttlerHelper, minThrottleCheckInterval);
         const id = "test6";
@@ -229,11 +214,9 @@ describe("Throttler", () => {
     });
 
     it("leniently throttles an un-cached, throttled operation", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
+        const rate = 10;
+        const minThrottleCheckInterval = 100;
+        const throttlerHelper = new TestThrottlerHelper(rate);
         Sinon.stub(throttlerHelper, "updateCount").resolves({
             throttleStatus: true,
             throttleReason: "Exceeded count",
@@ -261,11 +244,9 @@ describe("Throttler", () => {
     });
 
     it("does not cache too many operation ids", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
+        const rate = 10;
+        const minThrottleCheckInterval = 100;
+        const throttlerHelper = new TestThrottlerHelper(rate);
         Sinon.stub(throttlerHelper, "updateCount").resolves({
             throttleStatus: true,
             throttleReason: "Exceeded count",
@@ -326,11 +307,9 @@ describe("Throttler", () => {
     });
 
     it("expires old cached values", async () => {
-        const limit = 10;
-        const rate = 100;
-        const minThrottleCheckInterval = 1000;
-        const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new TestThrottlerHelper(throttleStorageManager, limit, rate);
+        const rate = 10;
+        const minThrottleCheckInterval = 100;
+        const throttlerHelper = new TestThrottlerHelper(rate);
         Sinon.stub(throttlerHelper, "updateCount").resolves({
             throttleStatus: true,
             throttleReason: "Exceeded count",
