@@ -8,7 +8,11 @@ import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
-import { ICreateRefParamsExternal, IPatchRefParamsExternal, IGetRefParamsExternal, IGitManager, IHistorian } from "./storage";
+import { ICreateRefParamsExternal,
+    IPatchRefParamsExternal,
+    IGetRefParamsExternal,
+    IGitManager,
+    IHistorian } from "./storage";
 
 export class GitManager implements IGitManager {
     private readonly blobCache = new Map<string, resources.IBlob>();
@@ -142,7 +146,7 @@ export class GitManager implements IGitManager {
 
     public async getRef(ref: string): Promise<resources.IRef> {
         const getRefParams: IGetRefParamsExternal = {
-            config: { enabled: true},
+            config: { enabled: true },
         };
         return this.historian
             .getRef(`heads/${ref}`, getRefParams)
