@@ -9,11 +9,11 @@ import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluid
 import {
     ConnectionMode,
     IClient,
+    IClientConfiguration,
     IConnect,
     IConnected,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
@@ -102,7 +102,7 @@ export class WSDeltaConnection
         return this.details!.initialClients;
     }
 
-    public get serviceConfiguration(): IServiceConfiguration {
+    public get serviceConfiguration(): IClientConfiguration {
         return this.details!.serviceConfiguration;
     }
 

@@ -108,10 +108,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             lastCheckpoint = JSON.parse(document.scribe);
         }
 
-        const protocolHandler = initializeProtocol(
-            document.documentId,
-            lastCheckpoint.protocolState,
-            latestSummary.term);
+        const protocolHandler = initializeProtocol(lastCheckpoint.protocolState, latestSummary.term);
 
         const summaryWriter = new SummaryWriter(tenantId, documentId, gitManager, this.messageCollection);
         const checkpointManager = new CheckpointManager(

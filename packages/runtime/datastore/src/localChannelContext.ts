@@ -16,6 +16,7 @@ import {
 import {
     IContextSummarizeResult,
     IFluidDataStoreContext,
+    IGCData,
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
@@ -195,5 +196,10 @@ export class LocalChannelContext implements IChannelContext {
         for (const value of Object.values(snapshotTree.trees)) {
             this.collectExtraBlobsAndSanitizeSnapshot(value, blobMap);
         }
+    }
+
+    public async getGCData(): Promise<IGCData> {
+        assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to run GC");
+        return this.channel.getGCData();
     }
 }

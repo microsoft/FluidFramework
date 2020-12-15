@@ -78,9 +78,10 @@ import {
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
+    IGCData,
     IEnvelope,
     IInboundSignalMessage,
-    ISignalEnvelop,
+    ISignalEnvelope,
     NamedFluidDataStoreRegistryEntries,
     ISummaryStats,
     ISummaryTreeWithStats,
@@ -696,11 +697,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             context.baseSnapshot,
             this,
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
-            (id: string, createParam: CreateChildSummarizerNodeParam) =>
-                (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
+            (id: string, createParam: CreateChildSummarizerNodeParam) => (
+                    summarizeInternal: SummarizeInternalFn,
+                    getGCDataFn: () => Promise<IGCData>,
+                    getInitialGCDataFn: () => Promise<IGCData | undefined>,
+                ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,
                     createParam,
+                    undefined,
+                    getGCDataFn,
+                    getInitialGCDataFn,
                 ),
             this._logger);
 
@@ -1059,7 +1066,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
-        const envelope = message.content as ISignalEnvelop;
+        const envelope = message.content as ISignalEnvelope;
         const transformed: IInboundSignalMessage = {
             clientId: message.clientId,
             content: envelope.contents.content,
@@ -1267,12 +1274,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        const envelope: ISignalEnvelop = { address: undefined, contents: { type, content } };
+        const envelope: ISignalEnvelope = { address: undefined, contents: { type, content } };
         return this.context.submitSignalFn(envelope);
     }
 
     public submitDataStoreSignal(address: string, type: string, content: any) {
-        const envelope: ISignalEnvelop = { address, contents: { type, content } };
+        const envelope: ISignalEnvelope = { address, contents: { type, content } };
         return this.context.submitSignalFn(envelope);
     }
 
@@ -1348,13 +1355,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, reason: "disconnected" };
             }
 
+            if (this.runtimeOptions.runGC) {
+                // Get the container's GC data and run GC on the reference graph in the GC data.
+                const gcData = await this.dataStores.getGCData();
+                runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+            }
+
             const trace = Trace.start();
             const summarizeResult = await this.summarize(fullTree || safe, true /* trackState */);
-
-            if (this.runtimeOptions.runGC) {
-                // Run garbage collection on the GC nodes returned by summarize.
-                runGarbageCollection(summarizeResult.gcNodes, [ "/" ], this.logger);
-            }
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: summarizeResult.stats,

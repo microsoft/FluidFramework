@@ -26,7 +26,7 @@
     "build:webpack:min": "npm run webpack:min",
     "clean": "rimraf dist public/scripts/dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css && lessc src/stylesheets/map.less public/stylesheets/dist/map.css",
     "lint": "npm run eslint",
     "start": "docker-compose -f docker-compose.r11s.yml up -V",

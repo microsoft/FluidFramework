@@ -20,7 +20,7 @@ async function main() {
     const timer = new Timer(commonOptions.timer);
     const resolvedRoot = await getResolvedFluidRoot();
 
-    logStatus(`Processing ${resolvedRoot}`);
+    logStatus(`Fluid Repo Root: ${resolvedRoot}`);
 
     // Detect nohoist state mismatch and infer uninstall switch
     if (options.install) {
@@ -35,14 +35,14 @@ async function main() {
     const repo = new FluidRepoBuild(resolvedRoot, options.services);
     timer.time("Package scan completed");
 
-    // Set matched package based on options filter
-    const matched = repo.setMatched(options);
-    if (!matched) {
-        console.error("ERROR: No package matched");
-        process.exit(-4)
-    }
-
     try {
+        // Set matched package based on options filter
+        const matched = repo.setMatched(options);
+        if (!matched) {
+            console.error("ERROR: No package matched");
+            process.exit(-4)
+        }
+
         // Dependency checks
         if (options.depcheck) {
             repo.depcheck();

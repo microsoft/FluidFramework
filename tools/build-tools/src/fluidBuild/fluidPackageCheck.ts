@@ -47,6 +47,7 @@ export class FluidPackageCheck {
             FluidPackageCheck.checkTestScripts(pkg, fix),
             FluidPackageCheck.checkClientTestScripts(pkg, fix),
             FluidPackageCheck.checkJestJunitTestEntry(pkg, fix),
+            FluidPackageCheck.checkLintScripts(pkg, fix),
         ];
         return fixed.some((bool) => bool);
     }
@@ -111,6 +112,21 @@ export class FluidPackageCheck {
         return fixed;
     }
 
+    private static checkScript(pkg: Package, name: string, expected: string | undefined, fix: boolean) {
+        let fixed = false;
+        const actual = pkg.getScript(name);
+        if (expected !== actual) {
+            this.logWarn(pkg, `non-conformant script "${name}"`, fix);
+            this.logWarn(pkg, `  expect: ${expected}`, fix);
+            this.logWarn(pkg, `  actual: ${actual}`, fix);
+            if (fix) {
+                pkg.packageJson.scripts[name] = expected;
+                fixed = true;
+            }
+        }
+        return fixed;
+    }
+
     /**
      * mocha tests in packages/ should be in a "test:mocha" script so they can be run separately from jest tests
      */
@@ -139,15 +155,9 @@ export class FluidPackageCheck {
                     console.warn(`${pkg.nameColored}: couldn't fix: "test" and "test:mocha" scripts both present`)
                 }
             }
-        } else if (expectedTestScript && testScript !== expectedTestScript) {
-            this.logWarn(pkg, `non-conformant script "test"`, fix);
-            this.logWarn(pkg, `  expect: ${expectedTestScript}`, fix);
-            this.logWarn(pkg, `     got: ${testScript}`, fix);
-            if (fix) {
-                pkg.packageJson.scripts["test"] = expectedTestScript;
+        } else if (expectedTestScript && this.checkScript(pkg, "test", expectedTestScript, fix)) {
                 fixed = true;
             }
-        }
 
         return fixed;
     }
@@ -222,12 +232,23 @@ export class FluidPackageCheck {
             // prepack scripts
             const prepack: string[] = [];
 
+            let concurrentBuildCompile = true;
+
             const buildPrefix = pkg.getScript("build:genver") ? "npm run build:genver && " : "";
             if (pkg.getScript("tsc")) {
                 if (pkg.getScript("build:test")) {
-                    buildCommonJs.push("tsc");
-                    buildCommonJs.push("build:test");
-                    buildCompile.push("build:commonjs");
+                    if (pkg.getScript("build:esnext")) {
+                        // If we have build:esnext, that means that we are building it two ways (commonjs and esm)
+                        buildCommonJs.push("tsc");
+                        buildCommonJs.push("build:test");
+                        buildCompile.push("build:commonjs");
+                    } else {
+                        // Only building it one way, so just we only need to to build with tsc and test
+                        buildCompile.push("tsc");
+                        buildCompile.push("build:test");
+                        concurrentBuildCompile = false;
+                    }
+
                 } else {
                     buildCompile.push("tsc");
                 }
@@ -272,27 +293,21 @@ export class FluidPackageCheck {
                 }
             }
 
-            if (buildCompile.length === 0) {
-                this.logWarn(pkg, `can't detect anything to build`, false);
-                return;
-            }
-
             const check = (scriptName: string, parts: string[], concurrently = true, prefix = "") => {
                 const expected = parts.length === 0 ? undefined :
-                    prefix + (parts.length > 1 && concurrently? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts.join(" && npm run ")}`);
-                const script = pkg.getScript(scriptName);
-                if (script !== expected) {
-                    this.logWarn(pkg, `non-conformant script "${scriptName}"`, fix);
-                    this.logWarn(pkg, `  expect: ${expected}`, fix);
-                    this.logWarn(pkg, `     got: ${script}`, fix);
-                    if (fix) {
-                        pkg.packageJson.scripts[scriptName] = expected;
+                    prefix + (parts.length > 1 && concurrently ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts.join(" && npm run ")}`);
+                if (this.checkScript(pkg, scriptName, expected, fix)) {
                         fixed = true;
                     }
                 }
-            }
             check("build", build, true, buildPrefix);
-            check("build:compile", buildCompile);
+            if (buildCompile.length === 0) {
+                if (this.checkScript(pkg, "build:compile", "tsc", fix)) {
+                    fixed = true;
+            }
+            } else {
+            check("build:compile", buildCompile, concurrentBuildCompile);
+            }
             check("build:commonjs", buildCommonJs, false);
             check("build:full", buildFull);
             check("build:full:compile", buildFullCompile);
@@ -325,6 +340,26 @@ export class FluidPackageCheck {
             return fix;
         }
         return false;
+    }
+
+    private static checkLintScripts(pkg: Package, fix: boolean) {
+        let fixed = false;
+        if (pkg.getScript("build")) {
+            if (this.checkScript(pkg, "lint", "npm run eslint", fix)) {
+                fixed = true;
+            }
+            if (this.checkScript(pkg, "lint:fix", "npm run eslint:fix", fix)) {
+                fixed = true;
+            }
+            const expectedEslintScript = "eslint --format stylish src"
+            if (this.checkScript(pkg, "eslint", expectedEslintScript, fix)) {
+                fixed = true;
+            }
+            if (this.checkScript(pkg, "eslint:fix", `${expectedEslintScript} --fix`, fix)) {
+                fixed = true;
+            }
+        }
+        return fixed;
     }
 
     public static async checkNpmIgnore(pkg: Package, fix: boolean) {
