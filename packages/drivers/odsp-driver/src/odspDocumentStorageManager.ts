@@ -586,17 +586,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
-            // If we have 401/403 error then we don't need to fallback to get call for Trees/Latest. Just throw so that we get a refreshed
-            // token for once.
-            if (errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.incorrectServerResponse) {
-                throw error;
-            }
             // If the snapshot size is too big and the host specified the size limitation, then don't try to fetch the snapshot again.
-            if ((error.errorType === OdspErrorType.snapshotTooBig && this.hostPolicy.snapshotOptions?.mds !== undefined) && (this.hostPolicy.summarizerClient !== true)) {
+            if ((errorType === OdspErrorType.snapshotTooBig && this.hostPolicy.snapshotOptions?.mds !== undefined) && (this.hostPolicy.summarizerClient !== true)) {
                 throw error;
             }
             // If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
-            if ((error.errorType === OdspErrorType.snapshotTooBig || error.errorType === OdspErrorType.fetchTimeout) && snapshotOptions.blobs) {
+            if ((errorType === OdspErrorType.snapshotTooBig || errorType === OdspErrorType.fetchTimeout) && snapshotOptions.blobs) {
                 const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined };
                 return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions, usePost);
             }
