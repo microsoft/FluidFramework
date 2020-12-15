@@ -10,7 +10,6 @@ import * as api from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import { ICreateRefParamsExternal,
     IPatchRefParamsExternal,
-    IGetRefParamsExternal,
     IGitManager,
     IHistorian } from "./storage";
 
@@ -145,11 +144,8 @@ export class GitManager implements IGitManager {
     }
 
     public async getRef(ref: string): Promise<resources.IRef> {
-        const getRefParams: IGetRefParamsExternal = {
-            config: { enabled: true },
-        };
         return this.historian
-            .getRef(`heads/${ref}`, getRefParams)
+            .getRef(`heads/${ref}`)
             // eslint-disable-next-line @typescript-eslint/promise-function-async
             .catch((error) => {
                 if (error === 400 || error === 404) {

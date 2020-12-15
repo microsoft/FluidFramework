@@ -59,7 +59,7 @@ export interface IGitService {
     getCommit(sha: string): Promise<git.ICommit>;
     createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit>;
     getRefs(): Promise<git.IRef[]>;
-    getRef(ref: string, params: IGetRefParamsExternal): Promise<git.IRef>;
+    getRef(ref: string): Promise<git.IRef>;
     createRef(params: git.ICreateRefParams): Promise<git.IRef>;
     updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef>;
     deleteRef(ref: string): Promise<void>;
