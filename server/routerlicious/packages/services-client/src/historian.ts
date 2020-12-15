@@ -99,7 +99,8 @@ export class Historian implements IHistorian {
     }
 
     public getRef(ref: string, params: IGetRefParamsExternal): Promise<git.IRef> {
-        return this.restWrapper.post(`/git/refs/${ref}`, params);
+        // TODO: change this to post request and pass params as request body
+        return this.restWrapper.get(`/git/refs/${ref}`);
     }
 
     public createRef(params: git.ICreateRefParams): Promise<git.IRef> {
