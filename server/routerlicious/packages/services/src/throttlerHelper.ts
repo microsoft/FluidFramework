@@ -100,8 +100,7 @@ export class ThrottlerHelper implements IThrottlerHelper {
             const tokensToReplenish = Math.floor(timeSinceLastCooldownInMs * this.rateInOperationsPerMs);
             // don't let the bucket overflow
             if (tokensToReplenish + throttlingMetric.count > this.operationBurstLimit) {
-                const tokensToFillBucket = this.operationBurstLimit - throttlingMetric.count;
-                return tokensToFillBucket;
+                return this.operationBurstLimit - throttlingMetric.count;
             }
             return tokensToReplenish;
         }

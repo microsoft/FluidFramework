@@ -22,12 +22,12 @@ describe("ThrottlerHelper", () => {
     it("throttles on many individual operations", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
-        const operationsPerCooldown = opsPerMs * cooldownInterval;
+        const cooldownIntervalInMs = 10;
+        const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number = 1;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
         for (let i = 0; i < operationsPerCooldown; i++) {
@@ -41,12 +41,12 @@ describe("ThrottlerHelper", () => {
     it("throttles on a few operation batches", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
-        const operationsPerCooldown = opsPerMs * cooldownInterval;
+        const cooldownIntervalInMs = 10;
+        const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number = 2;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
         for (let i = 0; i < operationsPerCooldown / weight; i++) {
@@ -60,12 +60,12 @@ describe("ThrottlerHelper", () => {
     it("throttles on one operation batch", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
-        const operationsPerCooldown = opsPerMs * cooldownInterval;
+        const cooldownIntervalInMs = 10;
+        const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number = operationsPerCooldown + 1;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
 
@@ -76,12 +76,12 @@ describe("ThrottlerHelper", () => {
     it("un-throttles after cooldown", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
-        const operationsPerCooldown = opsPerMs * cooldownInterval;
+        const cooldownIntervalInMs = 10;
+        const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
 
@@ -89,22 +89,22 @@ describe("ThrottlerHelper", () => {
         response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation with ${weight - operationsPerCooldown} excess weight should be throttled`);
 
-        Sinon.clock.tick(cooldownInterval + 1);
+        Sinon.clock.tick(cooldownIntervalInMs + 1);
 
         weight = 1
         response = await throttlerHelper.updateCount(id, weight);
-        assert.strictEqual(response.throttleStatus, false, `operation after ${cooldownInterval + 1}ms should not be throttled`);
+        assert.strictEqual(response.throttleStatus, false, `operation after ${cooldownIntervalInMs + 1}ms should not be throttled`);
     });
 
     it("un-throttles after double cooldown", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
-        const operationsPerCooldown = opsPerMs * cooldownInterval;
+        const cooldownIntervalInMs = 10;
+        const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
 
@@ -112,27 +112,27 @@ describe("ThrottlerHelper", () => {
         response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, `operation with ${weight - operationsPerCooldown} excess weight should be throttled`);
 
-        Sinon.clock.tick(cooldownInterval + 1);
+        Sinon.clock.tick(cooldownIntervalInMs + 1);
 
         weight = 1
         response = await throttlerHelper.updateCount(id, weight);
-        assert.strictEqual(response.throttleStatus, true, `operation after ${cooldownInterval - 1}ms should still be throttled`);
+        assert.strictEqual(response.throttleStatus, true, `operation after ${cooldownIntervalInMs - 1}ms should still be throttled`);
 
-        Sinon.clock.tick(cooldownInterval);
+        Sinon.clock.tick(cooldownIntervalInMs);
 
         weight = 1
         response = await throttlerHelper.updateCount(id, weight);
-        assert.strictEqual(response.throttleStatus, false, `operation after ${cooldownInterval * 2 + 1}ms should not be throttled`);
+        assert.strictEqual(response.throttleStatus, false, `operation after ${cooldownIntervalInMs * 2 + 1}ms should not be throttled`);
     });
 
     it("throttles based on stored throttlingMetrics", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
+        const cooldownIntervalInMs = 10;
         let weight: number = 1;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
 
@@ -140,7 +140,7 @@ describe("ThrottlerHelper", () => {
         await throttleStorageManager.setThrottlingMetric(id, {
             count: 0 - weight,
             lastCoolDownAt: now,
-            retryAfterInMs: cooldownInterval,
+            retryAfterInMs: cooldownIntervalInMs,
             throttleStatus: true,
             throttleReason: "Exceeded count by 1",
         });
@@ -149,22 +149,22 @@ describe("ThrottlerHelper", () => {
         assert.strictEqual(response.throttleStatus, true, "operation after 0ms should be throttled");
 
 
-        Sinon.clock.tick(cooldownInterval + 1);
+        Sinon.clock.tick(cooldownIntervalInMs + 1);
 
         response = await throttlerHelper.updateCount(id, weight);
-        assert.strictEqual(response.throttleStatus, false, `operation after ${cooldownInterval + 1}ms should not be throttled`);
+        assert.strictEqual(response.throttleStatus, false, `operation after ${cooldownIntervalInMs + 1}ms should not be throttled`);
     });
 
 
     it("stores most recently calculated throttlingMetrics", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
-        const operationsPerCooldown = opsPerMs * cooldownInterval;
+        const cooldownIntervalInMs = 10;
+        const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number = operationsPerCooldown + 1;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
 
@@ -177,12 +177,12 @@ describe("ThrottlerHelper", () => {
     it("does not increase throttle duration while throttled", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
+        const cooldownIntervalInMs = 10;
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const operationsPerCooldown = opsPerMs * cooldownInterval;
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
 
@@ -195,22 +195,22 @@ describe("ThrottlerHelper", () => {
         response = await throttlerHelper.updateCount(id, weight);
         assert.strictEqual(response.throttleStatus, true, "operation after 0ms should be throttled");
 
-        Sinon.clock.tick(cooldownInterval + 1);
+        Sinon.clock.tick(cooldownIntervalInMs + 1);
 
         weight = 1;
         response = await throttlerHelper.updateCount(id, weight);
-        assert.strictEqual(response.throttleStatus, false, `operation after ${cooldownInterval + 1}ms should not be throttled`);
+        assert.strictEqual(response.throttleStatus, false, `operation after ${cooldownIntervalInMs + 1}ms should not be throttled`);
     });
 
-    it("gives accurate retryAfterInMs duration when only one cooldownInterval required", async () => {
+    it("gives accurate retryAfterInMs duration when only one cooldownIntervalInMs required", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
-        const operationsPerCooldown = opsPerMs * cooldownInterval;
+        const cooldownIntervalInMs = 10;
+        const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
 
@@ -228,15 +228,15 @@ describe("ThrottlerHelper", () => {
         assert.strictEqual(response.throttleStatus, false, `operation after ${retryAfter}ms should not be throttled`);
     });
 
-    it("gives accurate retryAfterInMs duration when more than one cooldownInterval required", async () => {
+    it("gives accurate retryAfterInMs duration when more than one cooldownIntervalInMs required", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
-        const operationsPerCooldown = opsPerMs * cooldownInterval;
+        const cooldownIntervalInMs = 10;
+        const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
 
@@ -254,15 +254,15 @@ describe("ThrottlerHelper", () => {
         assert.strictEqual(response.throttleStatus, false, `operation after ${retryAfter}ms should not be throttled`);
     });
 
-    it("gives accurate retryAfterInMs duration when exactly two cooldownIntervals required", async () => {
+    it("gives accurate retryAfterInMs duration when exactly two cooldownIntervalInMss required", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
-        const operationsPerCooldown = opsPerMs * cooldownInterval;
+        const cooldownIntervalInMs = 10;
+        const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
 
@@ -280,15 +280,15 @@ describe("ThrottlerHelper", () => {
         assert.strictEqual(response.throttleStatus, false, `operation after ${retryAfter}ms should not be throttled`);
     });
 
-    it("gives minimum retryAfterInMs duration when only one cooldownInterval required", async () => {
+    it("gives minimum retryAfterInMs duration when only one cooldownIntervalInMs required", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
-        const operationsPerCooldown = opsPerMs * cooldownInterval;
+        const cooldownIntervalInMs = 10;
+        const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
 
@@ -306,15 +306,15 @@ describe("ThrottlerHelper", () => {
         assert.strictEqual(response.throttleStatus, true, `operation after ${retryAfter}ms should still be throttled`);
     });
 
-    it("gives minimum retryAfterInMs duration when more than one cooldownInterval required", async () => {
+    it("gives minimum retryAfterInMs duration when more than one cooldownIntervalInMs required", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
-        const operationsPerCooldown = opsPerMs * cooldownInterval;
+        const cooldownIntervalInMs = 10;
+        const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
 
@@ -332,15 +332,15 @@ describe("ThrottlerHelper", () => {
         assert.strictEqual(response.throttleStatus, true, `operation after ${retryAfter}ms should still be throttled`);
     });
 
-    it("gives minimum retryAfterInMs duration when exactly two cooldownIntervals required", async () => {
+    it("gives minimum retryAfterInMs duration when exactly two cooldownIntervalInMss required", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
-        const operationsPerCooldown = opsPerMs * cooldownInterval;
+        const cooldownIntervalInMs = 10;
+        const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
 
@@ -361,9 +361,9 @@ describe("ThrottlerHelper", () => {
     it("returns undefined when trying to retrieve unknown throttleStatus", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
+        const cooldownIntervalInMs = 10;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
 
@@ -373,10 +373,10 @@ describe("ThrottlerHelper", () => {
     it("does not allow operation burst to exceed operation burst limit", async () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
-        const cooldownInterval = 10;
-        const operationsPerCooldown = opsPerMs * cooldownInterval;
+        const cooldownIntervalInMs = 10;
+        const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         const throttleStorageManager = new TestThrottleStorageManager();
-        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownInterval);
+        const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         let response: IThrottlerResponse;
         const weight: number = operationsPerCooldown + 1;
