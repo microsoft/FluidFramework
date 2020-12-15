@@ -399,10 +399,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     snapshotOptions.mds = undefined;
                 }
                 let cachedSnapshot: IOdspSnapshot | undefined;
-
+                const usePost = !!this.hostPolicy.usePostForTreesLatest;
                 // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
                 if (tokenFetchOptions.refresh) {
-                    cachedSnapshot = await this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
+                    cachedSnapshot = await this.fetchSnapshot(snapshotOptions, tokenFetchOptions, usePost);
                 } else {
                     cachedSnapshot = await PerformanceEvent.timedExecAsync(
                         this.logger,
@@ -420,7 +420,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                             let method: string;
                             if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
-                                const snapshotP = this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
+                                const snapshotP = this.fetchSnapshot(snapshotOptions, tokenFetchOptions, usePost);
 
                                 const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
                                 cachedSnapshot = promiseRaceWinner.value;
@@ -439,7 +439,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 method = cachedSnapshot !== undefined ? "cache" : "network";
 
                                 if (cachedSnapshot === undefined) {
-                                    cachedSnapshot = await this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
+                                    cachedSnapshot = await this.fetchSnapshot(snapshotOptions, tokenFetchOptions, usePost);
                                 }
                             }
                             event.end({ method });
@@ -563,7 +563,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         });
     }
 
-    private async fetchSnapshot(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
+    private async fetchSnapshot(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions, usePost: boolean) {
         let abortController: AbortController | undefined;
         if (this.hostPolicy.summarizerClient !== true) {
             abortController = new AbortController();
@@ -576,7 +576,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             );
         }
 
-        const usePost = !!this.hostPolicy.usePostForTreesLatest;
         // If usePost is false, then make get call for TreesLatest.
         // If usePost is true, make a post call. In case of failure other than the reason for which getWithRetryForTokenRefresh
         // will retry, fallback to get call. In case of error for which getWithRetryForTokenRefresh will retry, let it retry
@@ -598,7 +597,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             // If we used the post request first time and got a 400 error from server, then try with a GET request.
             if (usePost && error.statusCode === 400) {
                 this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
-                return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
+                return this.fetchSnapshot(snapshotOptions, tokenFetchOptions, false);
             }
             throw error;
         }
