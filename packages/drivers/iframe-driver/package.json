@@ -36,7 +36,8 @@
     "@fluidframework/protocol-definitions": "^0.1016.0-0",
     "@fluidframework/telemetry-utils": "^0.31.0",
     "comlink": "^4.3.0",
-    "debug": "^4.1.1"
+    "debug": "^4.1.1",
+    "socket.io-client": "^3.0.4"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
@@ -59,7 +60,6 @@
     "mocha": "^8.1.1",
     "nock": "^10.0.1",
     "rimraf": "^2.6.2",
-    "socket.io-client": "^3.0.4",
     "typescript": "~3.7.4",
     "typescript-formatter": "7.1.0"
   }
