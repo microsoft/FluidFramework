@@ -223,9 +223,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     },
                     async (event) => {
                         const res = await this.epochTracker.fetchResponse(url, { headers }, FetchType.blob);
-                        const content = await res.arrayBuffer();
-                        event.end({ size: content.byteLength });
-                        return content;
+                        const blobContent = await res.arrayBuffer();
+                        event.end({ size: blobContent.byteLength });
+                        return blobContent;
                     },
                 );
             });
@@ -492,21 +492,24 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     }
 
                     // Populate the cache with paths from id-to-path mapping.
-                    for (const blob of this.blobCache.values()) {
-                        const path = blobsIdToPathMap.get(blob.id);
+                    for (const [blobId, blob] of this.blobCache.entries()) {
+                        const path = blobsIdToPathMap.get(blobId);
                         // If this is the first container that was created for the service, it cannot be
                         // the summarizing container (because the summarizing container is always created
                         // after the main container). In this case, we do not need to do any hashing
                         if (path) {
                             // Schedule the hashes for later, but keep track of the tasks
                             // to ensure they finish before they might be used
-                            const hashP = hashFile(IsoBuffer.from(blob.content, blob.encoding)).then((hash: string) => {
+                            const hashP = hashFile(
+                                blob instanceof ArrayBuffer ?
+                                IsoBuffer.from(blob) :
+                                IsoBuffer.from(blob.content, blob.encoding ?? "utf-8"));
+                            const hashP2 = hashP.then((hash: string) => {
                                 this.blobsShaToPathCache.set(hash, path);
+                            }).finally(() => {
+                                this.blobsCachePendingHashes.delete(hashP2);
                             });
-                            this.blobsCachePendingHashes.add(hashP);
-                            hashP.finally(() => {
-                                this.blobsCachePendingHashes.delete(hashP);
-                            });
+                            this.blobsCachePendingHashes.add(hashP2);
                         }
                     }
                 }
@@ -1058,27 +1061,24 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     break;
                 }
                 case api.SummaryType.Blob: {
-                    const [content, encoding] = typeof summaryObject.content === "string"
-                        ? [summaryObject.content, "utf-8"]
-                        : [Uint8ArrayToString(summaryObject.content, "base64"), "base64"];
+                    value = typeof summaryObject.content === "string"
+                        ? { content: summaryObject.content, encoding: "utf-8" }
+                        : { content: Uint8ArrayToString(summaryObject.content, "base64"), encoding: "base64" };
 
                     // Promises for pending hashes in blobsCachePendingHashes should all have resolved and removed themselves
                     assert(this.blobsCachePendingHashes.size === 0);
-                    const hash = await hashFile(IsoBuffer.from(content, encoding));
+                    const hash = await hashFile(IsoBuffer.from(value.content, value.encoding));
                     let completePath = this.blobsShaToPathCache.get(hash);
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // to generate complete path for the given blob.
                     if (!completePath || !this.lastSummaryHandle) {
                         blobs++;
-                        value = {
-                            content,
-                            encoding,
-                        };
                         completePath = `/.app${path}/${key}`;
                         blobsShaToPathCacheLatest.set(hash, completePath);
                     } else {
                         reusedBlobs++;
                         id = `${this.lastSummaryHandle}${completePath}`;
+                        value = undefined;
                     }
                     break;
                 }
