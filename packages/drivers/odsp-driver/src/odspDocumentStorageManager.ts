@@ -563,7 +563,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         });
     }
 
-    private async fetchSnapshot(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions, usePost: boolean) {
+    private async fetchSnapshot(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions, usePost: boolean): Promise<IOdspSnapshot> {
         let abortController: AbortController | undefined;
         if (this.hostPolicy.summarizerClient !== true) {
             abortController = new AbortController();
@@ -608,7 +608,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         tokenFetchOptions: TokenFetchOptions,
         usePost: boolean,
         controller?: AbortController,
-    ) {
+    ): Promise<IOdspSnapshot> {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
         let url: string;
         let headers: {[index: string]: any};
