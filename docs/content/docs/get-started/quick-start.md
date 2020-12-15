@@ -9,7 +9,7 @@ localhost. We've already embedded an instance of the application, with two clien
 button in either client to see how the state of the dice is shared between the two clients.
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
-bundleName="dice-roller.9af6bdd702e6cd4ad6cf.js" >}}
+bundleName="dice-roller.12142020.js" >}}
 
 ## Set up your development environment
 
