@@ -15,6 +15,7 @@ import {
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
+import { Socket } from "socket.io-client";
 import { IOdspSocketError } from "./contracts";
 import { errorObjectFromSocketError } from "./odspError";
 
@@ -28,7 +29,7 @@ class SocketReference {
     private references: number = 1;
     private delayDeleteTimeout: ReturnType<typeof setTimeout> | undefined;
     private delayDeleteTimeoutSetTime?: number;
-    private _socket: SocketIOClient.Socket | undefined;
+    private _socket: Socket | undefined;
 
     // When making decisions about socket reuse, we do not reuse disconnected socket.
     // But we want to differentiate the following case from disconnected case:
@@ -100,7 +101,7 @@ class SocketReference {
         return this._socket;
     }
 
-    public constructor(public readonly key: string, socket: SocketIOClient.Socket) {
+    public constructor(public readonly key: string, socket: Socket) {
         this._socket = socket;
         SocketReference.socketIoSockets.set(key, this);
 
@@ -185,7 +186,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         tenantId: string,
         documentId: string,
         token: string | null,
-        io: SocketIOClientStatic,
+        io: typeof import("socket.io-client").io,
         client: IClient,
         url: string,
         telemetryLogger: ITelemetryLogger,
@@ -260,7 +261,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * Gets or create a socket io connection for the given key
      */
     private static getOrCreateSocketIoReference(
-        io: SocketIOClientStatic,
+        io: typeof import("socket.io-client").io,
         timeoutMs: number,
         key: string,
         url: string,
@@ -297,7 +298,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param enableMultiplexing - If the websocket is multiplexing multiple documents
      */
     private constructor(
-        socket: SocketIOClient.Socket,
+        socket: Socket,
         documentId: string,
         socketReference: SocketReference,
         logger: ITelemetryLogger,

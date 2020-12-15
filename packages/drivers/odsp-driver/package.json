@@ -70,7 +70,7 @@
     "node-fetch": "^2.2.1",
     "sha.js": "^2.4.11",
     "sinon": "^7.4.2",
-    "socket.io-client": "^2.1.1",
+    "socket.io-client": "^3.0.4",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

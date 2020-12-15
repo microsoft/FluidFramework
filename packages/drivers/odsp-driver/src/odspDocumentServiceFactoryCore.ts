@@ -105,7 +105,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     constructor(
         private readonly getStorageToken: StorageTokenFetcher,
         private readonly getWebsocketToken: PushTokenFetcher,
-        private readonly getSocketIOClient: () => Promise<SocketIOClientStatic>,
+        private readonly getSocketIOClient: () => Promise<typeof import("socket.io-client").io>,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
     ) {

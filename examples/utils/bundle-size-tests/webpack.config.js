@@ -51,20 +51,7 @@ module.exports = {
       // Also show module that is requiring each duplicate package
       verbose: true,
       // Emit errors instead of warnings
-      emitError: true,
-      /**
-       * We try to avoid duplicate packages, but sometimes we have to allow them since the duplication is coming from a third party library we do not control
-       * IMPORTANT: Do not add any new exceptions to this list without first doing a deep investigation on why a PR adds a new duplication, this hides a bundle size issue
-       */
-      exclude: (instance) =>
-        // object-is depends on es-abstract 1.18.0-next, which does not satisfy the semver of other packages. We should be able to remove this when es-abstract moves to 1.18.0
-        instance.name === 'es-abstract' ||
-        // socket.io and Fluid Framework do not use compatible versions of debug
-        instance.name === 'debug' ||
-        // socket.io and Fluid Framework do not use compatible versions of isarray
-        instance.name === 'isarray' ||
-        // socket.io and Fluid Framework do not use compatible versions of ms
-        instance.name === 'ms'
+      emitError: true
     }),
     new BundleAnalyzerPlugin({
       analyzerMode: 'static',

@@ -23,6 +23,7 @@ import {
     ITokenClaims,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { Socket } from "socket.io-client";
 import { debug } from "./debug";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -77,7 +78,7 @@ export class DocumentDeltaConnection
         tenantId: string,
         id: string,
         token: string | null,
-        io: SocketIOClientStatic,
+        io: typeof import("socket.io-client").io,
         client: IClient,
         url: string,
         logger: ITelemetryLogger,
@@ -160,7 +161,7 @@ export class DocumentDeltaConnection
      * @param documentId - ID of the document
      */
     protected constructor(
-        protected readonly socket: SocketIOClient.Socket,
+        protected readonly socket: Socket,
         public documentId: string,
         protected readonly logger: ITelemetryLogger,
     ) {
@@ -459,12 +460,12 @@ export class DocumentDeltaConnection
     };
 
     private removeEarlyOpHandler() {
-        this.socket.removeListener("op", this.earlyOpHandler);
+        this.socket.off("op", this.earlyOpHandler);
         this.earlyOpHandlerAttached = false;
     }
 
     private removeEarlySignalHandler() {
-        this.socket.removeListener("signal", this.earlySignalHandler);
+        this.socket.off("signal", this.earlySignalHandler);
     }
 
     private addConnectionListener(event: string, listener: (...args: any[]) => void) {

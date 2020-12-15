@@ -42,7 +42,7 @@
     "debug": "^4.1.1",
     "isomorphic-ws": "^4.0.1",
     "jwt-decode": "^2.2.0",
-    "socket.io-client": "^2.1.1",
+    "socket.io-client": "^3.0.4",
     "ws": "^6.1.2"
   },
   "devDependencies": {
@@ -54,7 +54,6 @@
     "@types/jwt-decode": "^2.2.1",
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",
-    "@types/socket.io-client": "^1.4.32",
     "@types/ws": "^6.0.1",
     "@typescript-eslint/eslint-plugin": "~4.2.0",
     "@typescript-eslint/parser": "~4.2.0",
