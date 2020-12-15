@@ -96,7 +96,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private blobsShaToPathCache: Map<string, string> = new Map();
     // A set of pending blob hashes that will be inserted into blobsShaToPathCache
     private readonly blobsCachePendingHashes: Set<Promise<void>> = new Set();
-    private readonly blobCache: Map<string, IBlob> = new Map();
+    private readonly blobCache: Map<string, IBlob | ArrayBuffer> = new Map();
     private readonly treesCache: Map<string, ITree> = new Map();
 
     // Save the timeout so we can cancel and reschedule it as needed
@@ -201,28 +201,73 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return response.content;
     }
 
+    public async readBlobCore(blobId: string): Promise<IBlob | ArrayBuffer> {
+        let blob = this.blobCache.get(blobId);
+        // Reset the timer on attempted cache read
+        this.scheduleClearBlobsCache();
+
+        if (blob === undefined) {
+            this.checkAttachmentGETUrl();
+
+            blob = await getWithRetryForTokenRefresh(async (options) => {
+                const storageToken = await this.getStorageToken(options, "GetBlob");
+                const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
+                const { url, headers } = getUrlAndHeadersWithAuth(unAuthedUrl, storageToken);
+
+                return PerformanceEvent.timedExecAsync(
+                    this.logger,
+                    {
+                        eventName: "readDataBlob",
+                        headers: Object.keys(headers).length !== 0 ? true : undefined,
+                        waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
+                    },
+                    async (event) => {
+                        const res = await this.epochTracker.fetchResponse(url, { headers }, FetchType.blob);
+                        const blobContent = await res.arrayBuffer();
+                        event.end({ size: blobContent.byteLength });
+                        return blobContent;
+                    },
+                );
+            });
+            this.blobCache.set(blobId, blob);
+        }
+
+        if (!this.attributesBlobHandles.has(blobId)) {
+            return blob;
+        }
+        // ODSP document ids are random guids (different per session)
+        // fix the branch name in attributes
+        // this prevents issues when generating summaries
+        let documentAttributes: api.IDocumentAttributes;
+        if (blob instanceof ArrayBuffer) {
+            documentAttributes = JSON.parse(IsoBuffer.from(blob).toString("utf8"));
+        } else {
+            documentAttributes = JSON.parse(blob.encoding === "base64" ? fromBase64ToUtf8(blob.content) : blob.content);
+        }
+
+        documentAttributes.branch = this.documentId;
+        const content = JSON.stringify(documentAttributes);
+
+        const blobPatched: IBlob = {
+            id: blobId,
+            content,
+            size: content.length,
+            encoding: undefined, // string
+        };
+        this.blobCache.set(blobId, blobPatched);
+
+        // No need to patch it again
+        this.attributesBlobHandles.delete(blobId);
+
+        return blobPatched;
+    }
+
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        this.checkAttachmentGETUrl();
-
-        return getWithRetryForTokenRefresh(async (options) => {
-            const storageToken = await this.getStorageToken(options, "ReadDataBlob");
-            const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
-            const { url, headers } = getUrlAndHeadersWithAuth(unAuthedUrl, storageToken);
-
-            return PerformanceEvent.timedExecAsync(
-                this.logger,
-                {
-                    eventName: "readDataBlob",
-                    headers: Object.keys(headers).length !== 0 ? true : undefined,
-                },
-                async (event) => {
-                    const res = await this.epochTracker.fetchResponse(url, { headers }, FetchType.blob);
-                    const content = await res.arrayBuffer();
-                    event.end({ size: content.byteLength });
-                    return content;
-                },
-            );
-        });
+        const blob = await this.readBlobCore(blobId);
+        if (blob instanceof ArrayBuffer) {
+            return blob;
+        }
+        return IsoBuffer.from(blob.content, blob.encoding ?? "utf-8");
     }
 
     public async read(blobId: string): Promise<string> {
@@ -236,63 +281,18 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return this.readWithEncodingOutput(blobId, "string");
     }
 
-    private async readWithEncodingOutput(blobId: string, outputFormat: string): Promise<string> {
-        const blob = this.blobCache.get(blobId);
-        assert(!blob || blob.encoding === "base64" || blob.encoding === undefined, "wrong blob encoding format");
-        let buffer;
-        // Reset the timer on attempted cache read
-        this.scheduleClearBlobsCache();
-        if (blob === undefined) {
-            this.checkAttachmentGETUrl();
+    private async readWithEncodingOutput(blobId: string, outputFormat: "base64" | "string"): Promise<string> {
+        const blob = await this.readBlobCore(blobId);
 
-            const response = await getWithRetryForTokenRefresh(async (options) => {
-                const storageToken = await this.getStorageToken(options, "GetBlob");
-
-                const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
-                const { url, headers } = getUrlAndHeadersWithAuth(unAuthedUrl, storageToken);
-
-                return PerformanceEvent.timedExecAsync(
-                    this.logger,
-                    {
-                        eventName: "readBlob",
-                        headers: Object.keys(headers).length !== 0 ? true : undefined,
-                        waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
-                    },
-                    async () => this.epochTracker.fetchResponse(url, { headers }, FetchType.blob),
-                );
-            });
-            buffer = await response.arrayBuffer();
+        if (blob instanceof ArrayBuffer) {
+            return IsoBuffer.from(blob).toString(outputFormat === "base64" ? "base64" : "utf8");
         }
-
-        if (!this.attributesBlobHandles.has(blobId)) {
-            if (blob) {
-                if (outputFormat === blob.encoding || (outputFormat === "string" && blob.encoding === undefined))  {
-                    return blob.content;
-                } else if (outputFormat === "base64") {
-                    return fromUtf8ToBase64(blob.content);
-                } else {
-                    return fromBase64ToUtf8(blob.content);
-                }
-            }
-
-            return IsoBuffer.from(buffer).toString(outputFormat === "base64" ? "base64" : "utf8");
-        }
-
-        // ODSP document ids are random guids (different per session)
-        // fix the branch name in attributes
-        // this prevents issues when generating summaries
-        let documentAttributes: api.IDocumentAttributes;
-        if (blob) {
-            documentAttributes = JSON.parse(blob.encoding === "base64" ? fromBase64ToUtf8(blob.content) : blob.content);
+        if (outputFormat === blob.encoding || (outputFormat === "string" && blob.encoding === undefined))  {
+            return blob.content;
+        } else if (outputFormat === "base64") {
+            return fromUtf8ToBase64(blob.content);
         } else {
-            documentAttributes = JSON.parse(IsoBuffer.from(buffer).toString("utf8"));
-        }
-        documentAttributes.branch = this.documentId;
-
-        if (outputFormat === "base64") {
-            return fromUtf8ToBase64(JSON.stringify(documentAttributes));
-        } else {
-            return JSON.stringify(documentAttributes);
+            return fromBase64ToUtf8(blob.content);
         }
     }
 
@@ -492,21 +492,24 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     }
 
                     // Populate the cache with paths from id-to-path mapping.
-                    for (const blob of this.blobCache.values()) {
-                        const path = blobsIdToPathMap.get(blob.id);
+                    for (const [blobId, blob] of this.blobCache.entries()) {
+                        const path = blobsIdToPathMap.get(blobId);
                         // If this is the first container that was created for the service, it cannot be
                         // the summarizing container (because the summarizing container is always created
                         // after the main container). In this case, we do not need to do any hashing
                         if (path) {
                             // Schedule the hashes for later, but keep track of the tasks
                             // to ensure they finish before they might be used
-                            const hashP = hashFile(IsoBuffer.from(blob.content, blob.encoding)).then((hash: string) => {
+                            const hashP = hashFile(
+                                blob instanceof ArrayBuffer ?
+                                IsoBuffer.from(blob) :
+                                IsoBuffer.from(blob.content, blob.encoding ?? "utf-8"))
+                            .then((hash: string) => {
                                 this.blobsShaToPathCache.set(hash, path);
-                            });
-                            this.blobsCachePendingHashes.add(hashP);
-                            hashP.finally(() => {
+                            }).finally(() => {
                                 this.blobsCachePendingHashes.delete(hashP);
                             });
+                            this.blobsCachePendingHashes.add(hashP);
                         }
                     }
                 }
@@ -816,7 +819,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     private initBlobsCache(blobs: IBlob[]) {
-        blobs.forEach((blob) => this.blobCache.set(blob.id, blob));
+        blobs.forEach((blob) => {
+            assert(blob.encoding === "base64" || blob.encoding === undefined);
+            this.blobCache.set(blob.id, blob);
+        });
         this.scheduleClearBlobsCache();
     }
 
@@ -1055,27 +1061,24 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     break;
                 }
                 case api.SummaryType.Blob: {
-                    const [content, encoding] = typeof summaryObject.content === "string"
-                        ? [summaryObject.content, "utf-8"]
-                        : [Uint8ArrayToString(summaryObject.content, "base64"), "base64"];
+                    value = typeof summaryObject.content === "string"
+                        ? { content: summaryObject.content, encoding: "utf-8" }
+                        : { content: Uint8ArrayToString(summaryObject.content, "base64"), encoding: "base64" };
 
                     // Promises for pending hashes in blobsCachePendingHashes should all have resolved and removed themselves
                     assert(this.blobsCachePendingHashes.size === 0);
-                    const hash = await hashFile(IsoBuffer.from(content, encoding));
+                    const hash = await hashFile(IsoBuffer.from(value.content, value.encoding));
                     let completePath = this.blobsShaToPathCache.get(hash);
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // to generate complete path for the given blob.
                     if (!completePath || !this.lastSummaryHandle) {
                         blobs++;
-                        value = {
-                            content,
-                            encoding,
-                        };
                         completePath = `/.app${path}/${key}`;
                         blobsShaToPathCacheLatest.set(hash, completePath);
                     } else {
                         reusedBlobs++;
                         id = `${this.lastSummaryHandle}${completePath}`;
+                        value = undefined;
                     }
                     break;
                 }
