@@ -564,7 +564,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     private async fetchSnapshot(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
-        assert(snapshotOptions.timeout !== undefined, "Timeout should be provided for setting a limit");
         let abortController: AbortController | undefined;
         if (this.hostPolicy.summarizerClient !== true) {
             abortController = new AbortController();
@@ -577,7 +576,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             );
         }
 
-        const usePost = this.hostPolicy.usePostForTreesLatest;
+        const usePost = !!this.hostPolicy.usePostForTreesLatest;
         // If usePost is false, then make get call for TreesLatest.
         // If usePost is true, make a post call. In case of failure other than the reason for which getWithRetryForTokenRefresh
         // will retry, fallback to get call. In case of error for which getWithRetryForTokenRefresh will retry, let it retry
@@ -587,7 +586,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
-            if ((errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.incorrectServerResponse) && tokenFetchOptions.refresh === false) {
+            // If we have 401/403 error then we don't need to fallback to get call for Trees/Latest. Just throw so that we get a refreshed
+            // token for once.
+            if (errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.incorrectServerResponse) {
                 throw error;
             }
             // If the snapshot size is too big and the host specified the size limitation, then don't try to fetch the snapshot again.
@@ -599,7 +600,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined };
                 return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions, usePost);
             }
-            if (usePost) {
+            // If we used the post request first time and got a 400 error from server, then try with a GET request.
+            if (usePost && error.statusCode === 400) {
                 this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
                 return this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, false);
             }
@@ -610,7 +612,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private async fetchSnapshotCore(
         snapshotOptions: ISnapshotOptions,
         tokenFetchOptions: TokenFetchOptions,
-        usePost: boolean | undefined,
+        usePost: boolean,
         controller?: AbortController,
     ) {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
