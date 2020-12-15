@@ -6,7 +6,7 @@
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { RestWrapper } from "./restWrapper";
-import { IHistorian } from "./storage";
+import { IGetRefParamsExternal, IHistorian } from "./storage";
 
 function endsWith(value: string, endings: string[]): boolean {
     for (const ending of endings) {
@@ -98,8 +98,8 @@ export class Historian implements IHistorian {
         return this.restWrapper.get(`/git/refs`);
     }
 
-    public getRef(ref: string): Promise<git.IRef> {
-        return this.restWrapper.get(`/git/refs/${ref}`);
+    public getRef(ref: string, params: IGetRefParamsExternal): Promise<git.IRef> {
+        return this.restWrapper.post(`/git/refs/${ref}`, params);
     }
 
     public createRef(params: git.ICreateRefParams): Promise<git.IRef> {
