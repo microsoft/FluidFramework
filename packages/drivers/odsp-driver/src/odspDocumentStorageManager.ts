@@ -603,7 +603,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             // If we used the post request first time and got a 400 error from server, then try with a GET request.
             if (usePost && error.statusCode === 400) {
                 this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
-                return this.fetchSnapshot(undefined, snapshotOptions, tokenFetchOptions, false);
+                return this.fetchSnapshot(hostSnapshotOptions, snapshotOptions, tokenFetchOptions, false);
             }
             throw error;
         }
