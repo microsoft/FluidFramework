@@ -385,24 +385,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall", hasClaims: !!tokenFetchOptions.claims });
                 }
 
-                const snapshotOptions: ISnapshotOptions = {
-                    deltas: 1,
-                    channels: 1,
-                    blobs: 2,
-                    mds: this.maxSnapshotSizeLimit,
-                    ...this.hostPolicy.snapshotOptions,
-                    timeout: this.hostPolicy.snapshotOptions?.timeout ? Math.min(this.hostPolicy.snapshotOptions.timeout, this.maxSnapshotFetchTimeout) : this.maxSnapshotFetchTimeout,
-                };
-
-                // No limit on size of snapshot, as otherwise we fail all clients to summarize
-                if (this.hostPolicy.summarizerClient) {
-                    snapshotOptions.mds = undefined;
-                }
+                const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
                 let cachedSnapshot: IOdspSnapshot | undefined;
-
+                const usePost = !!this.hostPolicy.usePostForTreesLatest;
                 // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
                 if (tokenFetchOptions.refresh) {
-                    cachedSnapshot = await this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
+                    cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions, usePost);
                 } else {
                     cachedSnapshot = await PerformanceEvent.timedExecAsync(
                         this.logger,
@@ -420,7 +408,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                             let method: string;
                             if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
-                                const snapshotP = this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
+                                const snapshotP = this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions, usePost);
 
                                 const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
                                 cachedSnapshot = promiseRaceWinner.value;
@@ -439,7 +427,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 method = cachedSnapshot !== undefined ? "cache" : "network";
 
                                 if (cachedSnapshot === undefined) {
-                                    cachedSnapshot = await this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
+                                    cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions, usePost);
                                 }
                             }
                             event.end({ method });
@@ -566,51 +554,59 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         });
     }
 
-    private async fetchSnapshot(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
-        const usePost = this.hostPolicy.usePostForTreesLatest;
+    private async fetchSnapshot(
+        hostSnapshotOptions: ISnapshotOptions | undefined,
+        driverSnapshotOptions: ISnapshotOptions | undefined,
+        tokenFetchOptions: TokenFetchOptions,
+        usePost: boolean,
+    ): Promise<IOdspSnapshot> {
+        const snapshotOptions: ISnapshotOptions = driverSnapshotOptions ?? {
+            deltas: 1,
+            channels: 1,
+            blobs: 2,
+            mds: this.maxSnapshotSizeLimit,
+            ...hostSnapshotOptions,
+            timeout: hostSnapshotOptions?.timeout ? Math.min(hostSnapshotOptions.timeout, this.maxSnapshotFetchTimeout) : this.maxSnapshotFetchTimeout,
+        };
+
+        // No limit on size of snapshot, as otherwise we fail all clients to summarize
+        if (this.hostPolicy.summarizerClient) {
+            snapshotOptions.mds = undefined;
+        }
+        let abortController: AbortController | undefined;
+        if (this.hostPolicy.summarizerClient !== true) {
+            abortController = new AbortController();
+            const timeout = setTimeout(
+                () => {
+                    clearTimeout(timeout);
+                    abortController?.abort();
+                },
+                snapshotOptions.timeout,
+            );
+        }
+
         // If usePost is false, then make get call for TreesLatest.
         // If usePost is true, make a post call. In case of failure other than the reason for which getWithRetryForTokenRefresh
         // will retry, fallback to get call. In case of error for which getWithRetryForTokenRefresh will retry, let it retry
         // only if it is first failure, otherwise fallback to get call.
-        if (usePost) {
-            try {
-                const odspSnapshot = await this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, true);
-                return odspSnapshot;
-            } catch (error) {
-                const errorType = error.errorType;
-                if ((errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.incorrectServerResponse) && tokenFetchOptions.refresh === false) {
-                    throw error;
-                }
-                this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
-                return this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, false);
-            }
-        } else {
-            return this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, false);
-        }
-    }
-
-    private async fetchSnapshotWithTimeout(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions, usePost: boolean) {
-        assert(snapshotOptions.timeout !== undefined, "Timeout should be provided for setting a limit");
-        const abortController = new AbortController();
-        const timeout = setTimeout(
-            () => {
-                clearTimeout(timeout);
-                abortController.abort();
-            },
-            snapshotOptions.timeout,
-        );
         try {
             const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost, abortController);
             return odspSnapshot;
         } catch (error) {
-            // If the snapshot size is too big and the host specified the size limitation, then don't try to fetch the snapshot again.
-            if (error.errorType === OdspErrorType.snapshotTooBig && this.hostPolicy.snapshotOptions?.mds !== undefined) {
+            const errorType = error.errorType;
+            // If the snapshot size is too big and the host specified the size limitation(specified in hostSnapshotOptions), then don't try to fetch the snapshot again.
+            if ((errorType === OdspErrorType.snapshotTooBig && hostSnapshotOptions?.mds !== undefined) && (this.hostPolicy.summarizerClient !== true)) {
                 throw error;
             }
             // If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
-            if ((error.errorType === OdspErrorType.snapshotTooBig || error.errorType === OdspErrorType.fetchTimeout) && snapshotOptions.blobs) {
+            if ((errorType === OdspErrorType.snapshotTooBig || errorType === OdspErrorType.fetchTimeout) && snapshotOptions.blobs) {
                 const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined };
                 return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions, usePost);
+            }
+            // If we used the post request first time and got a 400 error from server, then try with a GET request.
+            if (usePost && error.statusCode === 400) {
+                this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
+                return this.fetchSnapshot(hostSnapshotOptions, snapshotOptions, tokenFetchOptions, false);
             }
             throw error;
         }
@@ -621,7 +617,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         tokenFetchOptions: TokenFetchOptions,
         usePost: boolean,
         controller?: AbortController,
-    ) {
+    ): Promise<IOdspSnapshot> {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
         let url: string;
         let headers: {[index: string]: any};
