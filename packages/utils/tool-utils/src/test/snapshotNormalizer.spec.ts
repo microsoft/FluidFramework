@@ -88,7 +88,7 @@ describe("Snapshot Normalizer", () => {
             ],
         };
 
-        // Config to normalize the above two blobs.
+        // Config to normalize the above blobs.
         const config: ISnapshotNormalizerConfig = { blobsToNormalize: [ "custom", "normalized" ] };
         const normalizedSnapshot = getNormalizedSnapshot(snapshot, config);
 
@@ -121,7 +121,7 @@ describe("Snapshot Normalizer", () => {
             ],
         };
 
-        // Config to normalize the above two blobs.
+        // Config to normalize the above blobs.
         const config: ISnapshotNormalizerConfig = { blobsToNormalize: [ "custom", "normalized" ] };
         const normalizedSnapshot = getNormalizedSnapshot(snapshot, config);
 
@@ -132,5 +132,27 @@ describe("Snapshot Normalizer", () => {
         assert.strictEqual(normalizedSnapshot.entries[1].path, "normalized");
         const normalizedBlob = normalizedSnapshot.entries[0].value as IBlob;
         assert.deepStrictEqual(JSON.parse(normalizedBlob.contents), normalizedBlobContents, "Normalized blob changed");
+    });
+
+    it ("can normalized blob whose contents are not objects", () => {
+        const snapshot: ITree = {
+            id: "root",
+            entries: [
+                // Create blob entry whose content is a string so that it cannot be JSON parsed.
+                new BlobTreeEntry("custom1", "contents"),
+                // Create another blob whose content is a JSON stringified string which is already normalized.
+                new BlobTreeEntry("custom2", JSON.stringify("contents")),
+            ],
+        };
+
+        // Config to normalize the above blobs.
+        const config: ISnapshotNormalizerConfig = { blobsToNormalize: [ "custom1", "custom2" ] };
+        const normalizedSnapshot = getNormalizedSnapshot(snapshot, config);
+        const customBlob1 = normalizedSnapshot.entries[0].value as IBlob;
+        assert.strictEqual(customBlob1.contents, "contents", "Blob with string not as expected");
+
+        const customBlob2 = normalizedSnapshot.entries[1].value as IBlob;
+        assert.strictEqual(
+            customBlob2.contents, JSON.stringify("contents"), "Blob with JSON strigified string not as expected");
     });
 });

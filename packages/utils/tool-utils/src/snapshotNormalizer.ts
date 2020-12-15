@@ -75,13 +75,18 @@ function getDeepSortedObject(obj: any): any {
  * @returns the sorted blob content.
  */
 function getSortedBlobContent(content: string): string {
-    let contentObj = JSON.parse(content);
-    if (contentObj instanceof Array) {
-        contentObj = getDeepSortedArray(contentObj);
-    } else if (contentObj instanceof Object) {
-        contentObj = getDeepSortedObject(contentObj);
-    }
-    return JSON.stringify(contentObj);
+    let sortedContent = content;
+    // Deep sort the content if it's parseable.
+    try {
+        let contentObj = JSON.parse(content);
+        if (contentObj instanceof Array) {
+            contentObj = getDeepSortedArray(contentObj);
+        } else if (contentObj instanceof Object) {
+            contentObj = getDeepSortedObject(contentObj);
+        }
+        sortedContent = JSON.stringify(contentObj);
+    } catch {}
+    return sortedContent;
 }
 
 /**
