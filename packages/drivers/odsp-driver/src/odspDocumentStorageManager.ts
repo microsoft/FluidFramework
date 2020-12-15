@@ -503,13 +503,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                             const hashP = hashFile(
                                 blob instanceof ArrayBuffer ?
                                 IsoBuffer.from(blob) :
-                                IsoBuffer.from(blob.content, blob.encoding ?? "utf-8"));
-                            const hashP2 = hashP.then((hash: string) => {
+                                IsoBuffer.from(blob.content, blob.encoding ?? "utf-8"))
+                            .then((hash: string) => {
                                 this.blobsShaToPathCache.set(hash, path);
                             }).finally(() => {
-                                this.blobsCachePendingHashes.delete(hashP2);
+                                this.blobsCachePendingHashes.delete(hashP);
                             });
-                            this.blobsCachePendingHashes.add(hashP2);
+                            this.blobsCachePendingHashes.add(hashP);
                         }
                     }
                 }
