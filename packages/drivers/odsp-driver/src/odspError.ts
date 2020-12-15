@@ -35,7 +35,6 @@ export function throwOdspNetworkError(
         }
     }
 
-
     throw networkError;
 }
 
