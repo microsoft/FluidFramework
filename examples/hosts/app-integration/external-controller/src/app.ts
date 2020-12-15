@@ -6,7 +6,7 @@
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 
 import { IKeyValueDataObject, KeyValueContainerRuntimeFactory } from "./kvpair-dataobject";
-import { renderDiceRoller } from "./view";
+import { renderDiceRoller } from "./view"; // change to reactView to render example using React
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
 // an existing one.  We also need to provide the unique ID for the document we are creating or loading from.
