@@ -32,6 +32,8 @@ function getDeepSortedArray(array: any[]): any[] {
             sortedArray.push(getDeepSortedArray(element));
         } else if (element instanceof Object) {
             sortedArray.push(getDeepSortedObject(element));
+        } else {
+            sortedArray.push(element);
         }
     }
 

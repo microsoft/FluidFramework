@@ -1,0 +1,136 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "assert";
+import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
+import { IBlob, ITree } from "@fluidframework/protocol-definitions";
+import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "../snapshotNormalizer";
+
+describe("Snapshot Normalizer", () => {
+    it ("can normalize tree entries", () => {
+        // Snapshot tree with entries whose paths are not sorted.
+        const snapshot: ITree = {
+            id: "root",
+            entries: [
+                new TreeTreeEntry("entry2", {
+                    id: "subTree",
+                    entries: [],
+                }),
+                new BlobTreeEntry("entry3", "blob3"),
+                new BlobTreeEntry("entry1", "blob1"),
+            ],
+        };
+        const normalizedSnapshot = getNormalizedSnapshot(snapshot);
+        assert.strictEqual(normalizedSnapshot.entries[0].path, "entry1", "Snapshot tree entries not sorted");
+        assert.strictEqual(normalizedSnapshot.entries[1].path, "entry2", "Snapshot tree entries not sorted");
+        assert.strictEqual(normalizedSnapshot.entries[2].path, "entry3", "Snapshot tree entries not sorted");
+    });
+
+    it ("can normalize GC blobs", () => {
+        const gcDetails = {
+            isRootNode: true,
+            gcNodes: {
+                node2: [ "node1", "/" ],
+                node1: [ "node2", "/" ],
+            },
+        };
+        const normalizedGCDetails = {
+            isRootNode: true,
+            gcNodes: {
+                node1: [ "/", "node2" ],
+                node2: [ "/", "node1"],
+            },
+        };
+        // Snapshot with couple of GC blobs at different layers.
+        const snapshot: ITree = {
+            id: "root",
+            entries: [
+                new TreeTreeEntry("tree", {
+                    id: "subTree",
+                    entries: [
+                        new BlobTreeEntry(".gc", JSON.stringify(gcDetails)),
+                    ],
+                }),
+                new BlobTreeEntry(".gc", JSON.stringify(gcDetails)),
+            ],
+        };
+
+        const normalizedSnapshot = getNormalizedSnapshot(snapshot);
+        assert.strictEqual(normalizedSnapshot.entries[0].path, ".gc", "Snapshot tree entries not sorted");
+        const gcBlob = normalizedSnapshot.entries[0].value as IBlob;
+        assert.deepStrictEqual(JSON.parse(gcBlob.contents), normalizedGCDetails, "GC blob not normalized");
+
+        const innerGCBlob = (normalizedSnapshot.entries[1].value as ITree).entries[0].value as IBlob;
+        assert.deepStrictEqual(JSON.parse(innerGCBlob.contents), normalizedGCDetails, "Inner blob not normalized");
+    });
+
+    it ("can normalize custom blobs with array of objects", () => {
+        // Blob content which is an array of objects within objects.
+        const blobContents = [
+            { id: "2", content: { key: "2", value: "two" } },
+            { id: "1", content: { key: "1", value: "one" } },
+            { id: "3", content: { key: "3", value: "three" } },
+        ];
+        const normalizedBlobContents = [
+            { id: "1", content: { key: "1", value: "one" } },
+            { id: "2", content: { key: "2", value: "two" } },
+            { id: "3", content: { key: "3", value: "three" } },
+        ];
+
+        const snapshot: ITree = {
+            id: "root",
+            entries: [
+                // Create a blob entry with normalized blob contents to make sure it remains normalized.
+                new BlobTreeEntry("normalized", JSON.stringify(normalizedBlobContents)),
+                new BlobTreeEntry("custom", JSON.stringify(blobContents)),
+            ],
+        };
+
+        // Config to normalize the above two blobs.
+        const config: ISnapshotNormalizerConfig = { blobsToNormalize: [ "custom", "normalized" ] };
+        const normalizedSnapshot = getNormalizedSnapshot(snapshot, config);
+
+        assert.strictEqual(normalizedSnapshot.entries[0].path, "custom", "Snapshot tree entries not sorted");
+        const customBlob = normalizedSnapshot.entries[0].value as IBlob;
+        assert.deepStrictEqual(JSON.parse(customBlob.contents), normalizedBlobContents, "Custom blob not normalized");
+
+        assert.strictEqual(normalizedSnapshot.entries[1].path, "normalized");
+        const normalizedBlob = normalizedSnapshot.entries[0].value as IBlob;
+        assert.deepStrictEqual(JSON.parse(normalizedBlob.contents), normalizedBlobContents, "Normalized blob changed");
+    });
+
+    it ("can normalize custom blobs with object of arrays", () => {
+        // Blob content which is an object whose properties are arrays.
+        const blobContents = {
+            array2: [ "2", "1", "3", "4" ],
+            array1: [ "c", "a", "d", "b" ],
+        };
+        const normalizedBlobContents = {
+            array1: [ "a", "b", "c", "d" ],
+            array2: [ "1", "2", "3", "4" ],
+        };
+
+        const snapshot: ITree = {
+            id: "root",
+            entries: [
+                // Create a blob entry with normalized blob contents to make sure it remains normalized.
+                new BlobTreeEntry("normalized", JSON.stringify(normalizedBlobContents)),
+                new BlobTreeEntry("custom", JSON.stringify(blobContents)),
+            ],
+        };
+
+        // Config to normalize the above two blobs.
+        const config: ISnapshotNormalizerConfig = { blobsToNormalize: [ "custom", "normalized" ] };
+        const normalizedSnapshot = getNormalizedSnapshot(snapshot, config);
+
+        assert.strictEqual(normalizedSnapshot.entries[0].path, "custom", "Snapshot tree entries not sorted");
+        const customBlob = normalizedSnapshot.entries[0].value as IBlob;
+        assert.deepStrictEqual(JSON.parse(customBlob.contents), normalizedBlobContents, "Custom blob not normalized");
+
+        assert.strictEqual(normalizedSnapshot.entries[1].path, "normalized");
+        const normalizedBlob = normalizedSnapshot.entries[0].value as IBlob;
+        assert.deepStrictEqual(JSON.parse(normalizedBlob.contents), normalizedBlobContents, "Normalized blob changed");
+    });
+});
