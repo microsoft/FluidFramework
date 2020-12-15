@@ -164,9 +164,8 @@ export interface ISnapshotTree {
 }
 
 export interface ISnapshotBlob {
-    contents?: string;
-    content?: string;
-    encoding: string;
+    content: string;
+    encoding: "base64" | "utf-8";
 }
 
 export interface ISnapshotCommit {
@@ -186,11 +185,13 @@ export interface ITree {
 }
 
 /**
- * Blob content
+ * Blob content, represents blobs in downloaded snapshot.
  */
 export interface IBlob {
     content: string;
-    encoding: string;
+    // SPO only uses "base64" today for download.
+    // We are adding undefined to as temp way to roundtrip strings unchanged.
+    encoding: "base64" | undefined;
     id: string;
     size: number;
 }
