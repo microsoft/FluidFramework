@@ -8,6 +8,7 @@ import {
     stringFromBuffer,
     TreeBuilder,
     BlobCore,
+    BlobDeepCopy,
     Node,
 } from "../tree";
 
@@ -22,6 +23,14 @@ function compareBuilfers(b1: Node | BlobCore, b2: Node | BlobCore) {
         assert(!(b2 instanceof Node), "Buffer vs. Node");
         assert(stringFromBuffer(b1) === stringFromBuffer(b2), "Buffer sizes not same");
     }
+}
+
+function longBuffer(length: number) {
+    const buffer = new Uint8Array(length);
+    for (let i = 0; i < length; i++) {
+        buffer[i] = 30 + (i % 10); // 0-9
+    }
+    return new BlobDeepCopy(buffer);
 }
 
 describe("Tree test", () => {
@@ -52,6 +61,26 @@ describe("Tree test", () => {
     it("single buffer", async () => {
         builder.addChildBuffer(bufferFromString("first"));
         validate(10);
+    });
+
+    it("single long buffer (255)", async () => {
+        builder.addChildBuffer(longBuffer(255));
+        validate(5 + 255);
+    });
+
+    it("single long buffer (256)", async () => {
+        builder.addChildBuffer(longBuffer(256));
+        validate(5 + 256 + 1);
+    });
+
+    it("single long buffer (257)", async () => {
+        builder.addChildBuffer(longBuffer(257));
+        validate(5 + 257 + 1);
+    });
+
+    it("single long buffer", async () => {
+        builder.addChildBuffer(longBuffer(65538));
+        validate(5 + 65538 + 2);
     });
 
     it("two node", async () => {
