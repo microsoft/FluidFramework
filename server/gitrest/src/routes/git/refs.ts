@@ -116,7 +116,6 @@ async function patchRef(
             await externalStorageManager.write(repo, refId, patchParams.sha, true);
         } catch (e) {
             winston.error(`External storage write failed while trying to update file ${repo} / ${refId}`);
-            winston.error(e);
         }
     }
 
