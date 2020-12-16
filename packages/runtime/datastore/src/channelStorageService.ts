@@ -45,8 +45,7 @@ export class ChannelStorageService implements IChannelStorageService {
         const blob = this.extraBlobs?.get(id);
         if (blob !== undefined) {
             return toBuffer(blob, "base64");
-        }
-        else {
+        } else {
             return this.storage.readBlob(id);
         }
     }

@@ -20,6 +20,7 @@ export class MockStorage implements IChannelStorageService {
 
     public async readBlob(path: string): Promise<ArrayBufferLike> {
         const blob = await this.readBlobInternal(this.tree, path.split("/"));
+        assert(blob !== undefined, "Blob Not Found");
         return toBuffer(blob.contents, blob.encoding);
     }
 
@@ -27,7 +28,7 @@ export class MockStorage implements IChannelStorageService {
     }
 
     public async contains(path: string): Promise<boolean> {
-        return await this.readBlob(path) !== undefined;
+        return await this.readBlobInternal(this.tree, path.split("/")) !== undefined;
     }
 
     public async list(path: string): Promise<string[]> {

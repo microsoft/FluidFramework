@@ -37,3 +37,11 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
         return Buffer.from(arr).toString(encoding);
     }
 }
+
+/**
+ * Convert base64 or utf8 string to array buffer
+ */
+export function toBuffer(input: string, encoding: string): ArrayBufferLike {
+    const iso = IsoBuffer.from(input, encoding);
+    return iso.buffer.slice(iso.byteOffset, iso.byteOffset + iso.byteLength);
+}

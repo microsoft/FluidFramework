@@ -5,7 +5,7 @@
 
 import { assert, gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import { blobToString } from "@fluidframework/driver-utils";
+import { toBuffer } from "@fluidframework/driver-utils";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy } from "@fluidframework/protocol-base";
 import {
@@ -91,15 +91,17 @@ export class DocumentStorageService implements IDocumentStorageService {
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const blob = await this.readBlob(blobId);
-        const iso = IsoBuffer.from(blobToString(blob), "utf8");
+        const value = await this.manager.getBlob(blobId);
+        this.blobsShaCache.set(value.sha, "");
+        return toBuffer(value.content, value.encoding);
+        // const iso = IsoBuffer.from(blobToString(blob), "base64");
 
-        // In a Node environment, IsoBuffer may be a Node.js Buffer.  Node.js will
-        // pool multiple small Buffer instances into a single ArrayBuffer, in which
-        // case we need to slice the appropriate span of bytes.
-        return iso.byteLength === iso.buffer.byteLength
-            ? iso.buffer
-            : iso.buffer.slice(iso.byteOffset, iso.byteOffset + iso.byteLength);
+        // // In a Node environment, IsoBuffer may be a Node.js Buffer.  Node.js will
+        // // pool multiple small Buffer instances into a single ArrayBuffer, in which
+        // // case we need to slice the appropriate span of bytes.
+        // return iso.byteLength === iso.buffer.byteLength
+        //     ? iso.buffer
+        //     : iso.buffer.slice(iso.byteOffset, iso.byteOffset + iso.byteLength);
     }
 
     private async writeSummaryTree(

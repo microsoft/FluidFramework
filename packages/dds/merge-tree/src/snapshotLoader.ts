@@ -68,7 +68,7 @@ export class SnapshotLoader {
             headerChunk.headerMetadata.orderedChunkMetadata.forEach(
                 (md) => blobs.splice(blobs.indexOf(md.id), 1));
             assert(blobs.length === 1, `There should be only one blob with catch up ops: ${blobs.length}`);
-            const blob = services.readBlob(blobs[0]);
+            const blob = await services.readBlob(blobs[0]);
             // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
             return this.loadCatchupOps(blobToString(blob));
@@ -222,7 +222,7 @@ export class SnapshotLoader {
      * @returns The decoded messages, but handles aren't parsed.  Matches the format that will be passed in
      * SharedObject.processCore.
      */
-    private async loadCatchupOps(rawMessages: Promise<string>): Promise<ISequencedDocumentMessage[]> {
-        return JSON.parse(await rawMessages) as ISequencedDocumentMessage[];
+    private async loadCatchupOps(rawMessages: string): Promise<ISequencedDocumentMessage[]> {
+        return JSON.parse(rawMessages) as ISequencedDocumentMessage[];
     }
 }

@@ -9,7 +9,6 @@ import { IsoBuffer } from "@fluidframework/common-utils";
  * Convert base64 or utf8 string to array buffer
  */
 export function toBuffer(input: string, encoding: string): ArrayBufferLike {
-    console.log(IsoBuffer.from(input,encoding));
-    console.log(IsoBuffer.from(input, encoding).buffer);
-    return IsoBuffer.from(input, encoding).buffer;
+    const iso = IsoBuffer.from(input, encoding);
+    return iso.buffer.slice(iso.byteOffset, iso.byteOffset + iso.byteLength);
 }

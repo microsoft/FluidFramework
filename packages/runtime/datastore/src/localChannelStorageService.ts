@@ -5,7 +5,7 @@
 
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { blobToString, toBuffer } from "@fluidframework/driver-utils";
+import { toBuffer } from "@fluidframework/driver-utils";
 import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
@@ -29,7 +29,7 @@ export class LocalChannelStorageService implements IChannelStorageService {
         const blob = this.readSyncInternal(path, this.tree);
         assert(blob !== undefined, "Not Found");
         console.log(toBuffer("hello","utf8"));
-        console.log(blobToString(toBuffer("hello","base64")));
+        // console.log(blobToString(toBuffer("hello","utf8")));
         return toBuffer(blob.contents, blob.encoding);
     }
 

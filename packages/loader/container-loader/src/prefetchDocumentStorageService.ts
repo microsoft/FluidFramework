@@ -6,12 +6,12 @@ import {
     ISnapshotTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { blobToString, DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
+import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
     // BlobId -> blob prefetchCache cache
-    private readonly prefetchCache = new Map<string, Promise<string>>();
+    private readonly prefetchCache = new Map<string, ArrayBufferLike>();
     private prefetchEnabled = true;
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
@@ -33,18 +33,18 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private async cachedRead(blobId: string): Promise<string> {
+    private async cachedRead(blobId: string): Promise<ArrayBufferLike> {
         const blob = await this.internalStorageService.readBlob(blobId);
         if (this.prefetchEnabled) {
-            const prefetchedBlobP: Promise<string> | undefined = this.prefetchCache.get(blobId);
+            const prefetchedBlobP: ArrayBufferLike | undefined = this.prefetchCache.get(blobId);
             if (prefetchedBlobP !== undefined) {
                 return prefetchedBlobP;
             }
-            const prefetchedBlobPFromStorage = blobToString(blob);
+            const prefetchedBlobPFromStorage = blob;
             this.prefetchCache.set(blobId, prefetchedBlobPFromStorage);
             return prefetchedBlobPFromStorage;
         }
-        return blobToString(blob);
+        return blob;
     }
 
     private prefetchTree(tree: ISnapshotTree) {

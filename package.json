@@ -137,5 +137,8 @@
       }
     },
     "generatorName": "generator-fluid"
+  },
+  "dependencies": {
+    "@fluidframework/driver-utils": "^0.30.4"
   }
 }

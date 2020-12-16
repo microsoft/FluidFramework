@@ -11,10 +11,7 @@ import { IsoBuffer } from "@fluidframework/common-utils";
  * @param blob - the binary blob
  * @returns the blob in string format
  */
-export function blobToString(blob: ArrayBufferLike): string {
-    const content = IsoBuffer.from(blob, "utf8").toString("utf8");
-    return content;
-}
+export const blobToString = (blob: ArrayBufferLike) => IsoBuffer.from(blob, "utf8").toString("utf8");
 
 /**
  * Convert binary blob to base64 format
@@ -22,7 +19,4 @@ export function blobToString(blob: ArrayBufferLike): string {
  * @param blob - the binary blob
  * @returns the blob in base64 format
  */
-export function blobToBase64(blob: ArrayBufferLike): string {
-    const content = IsoBuffer.from(blob).toString("base64");
-    return content;
-}
+export const blobToBase64 = (blob: ArrayBufferLike) => IsoBuffer.from(blob, "base64").toString("base64");
