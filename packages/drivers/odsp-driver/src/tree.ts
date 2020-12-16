@@ -4,17 +4,58 @@
  */
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 
-class Buffer {
-    protected data: Uint8Array = new Uint8Array(4096);
+export abstract class Buffer {
+    public abstract get buffer();
+}
+
+export class ReadBuffer {
     protected index = 0;
 
     public get buffer() {
-        return this.data.slice(0, this.index);
+        return this.data;
+    }
+
+    constructor(protected readonly data: Uint8Array) {}
+
+    public get eof() { return this.index === this.data.length; }
+    public get pos() { return this.index; }
+    public get length() { return this.data.length; }
+
+    public slice(start: number, end: number) {
+        return this.data.slice(start, end);
+    }
+
+    public read(lengthArg = 1): number {
+        let res = 0;
+        let multiplier = 1;
+        let length = lengthArg;
+        while (length > 0) {
+            assert(!this.eof, "unexpected end of buffer");
+            res += this.data[this.index] * multiplier;
+            this.index++;
+            multiplier *= 256;
+            length--;
+        }
+        return res;
+    }
+
+    public skip(length: number) {
+        assert(length >= 0);
+        this.index += length;
     }
 }
 
-class WriteBuffer extends Buffer {
+export class WriteBuffer extends Buffer {
+    protected data?: Uint8Array = new Uint8Array(4096);
+    protected index = 0;
+
+    public get buffer() {
+        assert(this.data !== undefined);
+        return this.data.slice(0, this.index);
+    }
+
     protected push(code: number) {
+        assert(this.data !== undefined);
         const length = this.data.length;
         if (this.index === length) {
             const newData = new Uint8Array(length * 1.2 + 4096);
@@ -30,38 +71,21 @@ class WriteBuffer extends Buffer {
         this.index++;
     }
 
-    public write(codeArg: number, length = 1) {
+    public write(codeArg: number, lengthArg = 1) {
         let code = codeArg;
+        let length = lengthArg;
         while (length > 0) {
             this.push(code % 256);
-            code = Math.ceil(code / 256);
+            code = Math.floor(code / 256);
+            length--;
         }
         assert(code === 0);
     }
-}
 
-class ReadBuffer {
-    protected index = 0;
-
-    constructor(protected readonly data: Uint8Array) {}
-
-    public get eof() { return this.index === this.data.length; }
-    public get pos() { return this.index; }
-
-    public slice(start: number, end: number) {
-        return this.data.slice(start, end);
-    }
-
-    public read(length = 1): number {
-        let res = 0;
-        let multiplier = 1;
-        while (length > 0) {
-            assert(!this.eof, "unexpected end of buffer");
-            res += this.data[this.index] * multiplier;
-            this.index++;
-            multiplier *= 256;
-        }
-        return res;
+    public done(): ReadBuffer {
+        const buffer = new ReadBuffer(this.buffer);
+        this.data = undefined;
+        return buffer;
     }
 }
 
@@ -77,14 +101,10 @@ enum Codes {
     EOF = 7,
 }
 
-abstract class BlobCore {
+export abstract class BlobCore {
     public abstract get buffer();
 
-    public static fromString(data: string, encoding = "utf-8"): BlobCore {
-        return new BlobDeepCopy(IsoBuffer.from(data, encoding));
-    }
-
-    public toString(encoding = "utf-8") {
+    public toString(encoding: "utf-8") {
         return IsoBuffer.from(this.buffer).toString(encoding);
     }
 
@@ -104,7 +124,11 @@ abstract class BlobCore {
     }
 }
 
-class BlobDeepCopy extends BlobCore {
+export class BlobDeepCopy extends BlobCore {
+    public static fromString(data: string, encoding: "utf-8"): BlobCore {
+        return new BlobDeepCopy(IsoBuffer.from(data, encoding));
+    }
+
     constructor(protected readonly data: Uint8Array) {
         super();
     }
@@ -126,7 +150,10 @@ class BlobDeepCopy extends BlobCore {
     }
 }
 
-class BlobShallowCopy extends BlobCore {
+export const bufferFromString = (input: string) => BlobDeepCopy.fromString(input, "utf-8");
+export const stringFromBuffer = (blob: BlobCore) => blob.toString("utf-8");
+
+export class BlobShallowCopy extends BlobCore {
     constructor(protected data: ReadBuffer, protected start: number, protected end: number) {
         super();
     }
@@ -137,12 +164,17 @@ class BlobShallowCopy extends BlobCore {
 
     public static read(buffer: ReadBuffer, lengthLen: number): BlobCore {
         const length = buffer.read(lengthLen);
-        return new BlobShallowCopy(buffer, buffer.pos, buffer.pos + length);
+        const pos = buffer.pos;
+        buffer.skip(length);
+        return new BlobShallowCopy(buffer, pos, pos + length);
     }
 }
 
-class Node {
+export class Node {
     protected children: (Node | BlobCore)[] = [];
+
+    public get length() { return this.children.length; }
+    public get(index: number) { return this.children[index]; }
 
     public addChildNode(): Node {
         const node = new Node();
@@ -167,46 +199,50 @@ class Node {
     }
 
     protected load(buffer: ReadBuffer) {
-        const code = buffer.read();
-        switch (code) {
-            case Codes.Array: {
-                const node = new Node();
-                node.load(buffer);
-                break;
+        for (;;) {
+            const code = buffer.read();
+            switch (code) {
+                case Codes.Array: {
+                    const node = new Node();
+                    this.children.push(node);
+                    node.load(buffer);
+                    break;
+                }
+
+                case Codes.Blob1:
+                case Codes.Blob2:
+                case Codes.Blob3:
+                case Codes.Blob4:
+                {
+                    const blob = BlobShallowCopy.read(buffer, code - Codes.Blob0);
+                    this.children.push(blob);
+                    break;
+                }
+
+                case Codes.Up:
+                    return;
+
+                default:
+                    throw new Error("Invalid code");
             }
-
-            case Codes.Blob1:
-            case Codes.Blob2:
-            case Codes.Blob3:
-            case Codes.Blob4:
-            {
-                const blob = BlobShallowCopy.read(buffer, code - Codes.Blob0);
-                this.children.push(blob);
-                break;
-            }
-
-            case Codes.Up:
-                return;
-
-            default:
-                assert(false, "Invalid code");
         }
     }
 }
 
 export class TreeBuilder extends Node {
-    static load(buffer: ReadBuffer) {
-        const root = new TreeBuilder();
+    static load(buffer: ReadBuffer): TreeBuilder {
+        const builder = new TreeBuilder();
         assert(buffer.read() === Codes.Array);
-        root.load(buffer);
+        builder.load(buffer);
         assert(buffer.read() === Codes.EOF, "no eof marker");
         assert(buffer.eof, "unexpected data at the end of buffer");
+        return builder;
     }
 
-    public serialize(): Buffer {
+    public serialize(): ReadBuffer {
         const buffer = new WriteBuffer();
         super.serialize(buffer);
         buffer.write(Codes.EOF);
-        return buffer;
+        return buffer.done();
     }
 }
