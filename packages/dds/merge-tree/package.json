@@ -63,8 +63,8 @@
     "assert": "^2.0.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.19.2",
-    "@fluidframework/eslint-config-fluid": "^0.21.0",
+    "@fluidframework/build-common": "^0.20.0",
+    "@fluidframework/eslint-config-fluid": "^0.22.0",
     "@fluidframework/mocha-test-setup": "^0.32.0",
     "@fluidframework/test-runtime-utils": "^0.32.0",
     "@types/assert": "^1.5.1",
@@ -78,7 +78,7 @@
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
     "diff": "^3.5.0",
-    "eslint": "~7.9.0",
+    "eslint": "~7.11.0",
     "eslint-plugin-eslint-comments": "~3.2.0",
     "eslint-plugin-import": "~2.22.0",
     "eslint-plugin-no-null": "~1.0.2",

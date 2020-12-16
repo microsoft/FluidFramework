@@ -40,7 +40,7 @@
     "react-image-gallery": "^0.9.1"
   },
   "devDependencies": {
-    "@fluidframework/eslint-config-fluid": "^0.21.0",
+    "@fluidframework/eslint-config-fluid": "^0.22.0",
     "@fluidframework/webpack-fluid-loader": "^0.32.0",
     "@types/node": "^10.17.24",
     "@types/react-dom": "^16.9.4",
@@ -49,7 +49,7 @@
     "@typescript-eslint/parser": "~4.2.0",
     "concurrently": "^5.2.0",
     "css-loader": "^1.0.0",
-    "eslint": "~7.9.0",
+    "eslint": "~7.11.0",
     "eslint-plugin-eslint-comments": "~3.2.0",
     "eslint-plugin-import": "~2.22.0",
     "eslint-plugin-no-null": "~1.0.2",

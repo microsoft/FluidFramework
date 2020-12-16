@@ -11,7 +11,7 @@
     "examples/**",
     "server/routerlicious/",
     "common/lib/*",
-    "common/build/eslint-config-fluid"
+    "common/build/*"
   ],
   "scripts": {
     "build": "npm run policy-check && npm run layer-check && npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",

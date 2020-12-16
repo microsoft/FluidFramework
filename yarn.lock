@@ -816,10 +816,10 @@ __metadata:
   resolution: "@fluid-example/app-integration-container-views@workspace:examples/hosts/app-integration/container-views"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-loader": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/get-tinylicious-container": ^0.31.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/test-tools": ^0.2.3074
@@ -837,7 +837,7 @@ __metadata:
     clean-webpack-plugin: ^3.0.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -868,8 +868,8 @@ __metadata:
   resolution: "@fluid-example/app-integration-external-controller@workspace:examples/hosts/app-integration/external-controller"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/get-session-storage-container": ^0.31.0
     "@fluidframework/get-tinylicious-container": ^0.31.0
     "@fluidframework/map": ^0.31.0
@@ -886,7 +886,7 @@ __metadata:
     clean-webpack-plugin: ^3.0.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -917,8 +917,8 @@ __metadata:
   resolution: "@fluid-example/app-integration-external-views@workspace:examples/hosts/app-integration/external-views"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/get-session-storage-container": ^0.31.0
     "@fluidframework/get-tinylicious-container": ^0.31.0
     "@fluidframework/test-tools": ^0.2.3074
@@ -932,7 +932,7 @@ __metadata:
     clean-webpack-plugin: ^3.0.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -961,11 +961,11 @@ __metadata:
   resolution: "@fluid-example/badge@workspace:examples/data-objects/badge"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/cell": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/sequence": ^0.31.0
     "@fluidframework/view-interfaces": ^0.31.0
@@ -977,7 +977,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     "@uifabric/fluent-theme": ^7.1.3
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1003,10 +1003,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluid-example/bundle-size-tests@workspace:examples/utils/bundle-size-tests"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/bundle-size-tools": ^0.0.8505
     "@fluidframework/container-runtime": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/matrix": ^0.31.0
     "@fluidframework/odsp-driver": ^0.31.0
@@ -1019,7 +1019,7 @@ __metadata:
     concurrently: ^5.2.0
     cross-env: ^7.0.2
     duplicate-package-checker-webpack-plugin: ^3.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1041,9 +1041,9 @@ __metadata:
   resolution: "@fluid-example/canvas@workspace:examples/data-objects/canvas"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/ink": ^0.31.0
     "@fluidframework/test-tools": ^0.2.3074
     "@fluidframework/view-interfaces": ^0.31.0
@@ -1058,7 +1058,7 @@ __metadata:
     concurrently: ^5.2.0
     cross-env: ^7.0.2
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1089,8 +1089,8 @@ __metadata:
   resolution: "@fluid-example/clicker-context@workspace:examples/data-objects/clicker-react/clicker-context"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/react": ^0.31.0
     "@fluidframework/webpack-fluid-loader": ^0.31.0
     "@types/expect-puppeteer": 2.2.1
@@ -1104,7 +1104,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1132,8 +1132,8 @@ __metadata:
   resolution: "@fluid-example/clicker-function@workspace:examples/data-objects/clicker-react/clicker-function"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/react": ^0.31.0
     "@fluidframework/webpack-fluid-loader": ^0.31.0
     "@types/expect-puppeteer": 2.2.1
@@ -1147,7 +1147,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1175,9 +1175,9 @@ __metadata:
   resolution: "@fluid-example/clicker-react@workspace:examples/data-objects/clicker-react/clicker-react"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/counter": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/react": ^0.31.0
     "@fluidframework/test-tools": ^0.2.3074
     "@fluidframework/webpack-fluid-loader": ^0.31.0
@@ -1192,7 +1192,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1222,9 +1222,9 @@ __metadata:
   resolution: "@fluid-example/clicker-reducer@workspace:examples/data-objects/clicker-react/clicker-reducer"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/counter": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/react": ^0.31.0
     "@fluidframework/webpack-fluid-loader": ^0.31.0
     "@types/expect-puppeteer": 2.2.1
@@ -1238,7 +1238,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1266,9 +1266,9 @@ __metadata:
   resolution: "@fluid-example/clicker-with-hook@workspace:examples/data-objects/clicker-react/clicker-with-hook"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/counter": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/react": ^0.31.0
     "@fluidframework/webpack-fluid-loader": ^0.31.0
     "@types/expect-puppeteer": 2.2.1
@@ -1282,7 +1282,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1310,10 +1310,10 @@ __metadata:
   resolution: "@fluid-example/clicker@workspace:examples/data-objects/clicker"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/counter": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/runtime-definitions": ^0.31.0
     "@fluidframework/test-tools": ^0.2.3074
     "@fluidframework/view-interfaces": ^0.31.0
@@ -1329,7 +1329,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1361,12 +1361,12 @@ __metadata:
     "@fluid-example/fluid-object-interfaces": ^0.31.0
     "@fluid-example/search-menu": ^0.31.0
     "@fluid-internal/client-api": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/ink": ^0.31.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/merge-tree": ^0.31.0
@@ -1390,7 +1390,7 @@ __metadata:
     concurrently: ^5.2.0
     cross-env: ^7.0.2
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1413,13 +1413,13 @@ __metadata:
   resolution: "@fluid-example/codemirror@workspace:examples/data-objects/codemirror"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-runtime": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/merge-tree": ^0.31.0
     "@fluidframework/request-handler": ^0.31.0
@@ -1435,7 +1435,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1459,9 +1459,9 @@ __metadata:
   resolution: "@fluid-example/collaborative-textarea@workspace:examples/apps/collaborative-textarea"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/get-session-storage-container": ^0.31.0
     "@fluidframework/get-tinylicious-container": ^0.31.0
     "@fluidframework/react-inputs": ^0.31.0
@@ -1480,7 +1480,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1510,8 +1510,8 @@ __metadata:
   resolution: "@fluid-example/diceroller@workspace:examples/data-objects/diceroller"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/test-tools": ^0.2.3074
     "@fluidframework/view-interfaces": ^0.31.0
@@ -1527,7 +1527,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1556,8 +1556,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluid-example/flow-util-lib@workspace:examples/data-objects/flow-util-lib"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@types/benchmark": ^1.0.31
     "@types/mocha": ^5.2.5
@@ -1568,7 +1568,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1593,15 +1593,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluid-example/fluid-object-interfaces@workspace:examples/utils/fluid-object-interfaces"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@microsoft/api-extractor": ^7.7.2
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1618,17 +1618,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluid-example/host-service-interfaces@workspace:examples/hosts/host-service-interfaces"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@microsoft/api-extractor": ^7.7.2
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1647,13 +1647,13 @@ __metadata:
   dependencies:
     "@fluid-example/todo": ^0.31.0
     "@fluidframework/base-host": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-loader": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/get-tinylicious-container": ^0.31.0
     "@fluidframework/iframe-driver": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
@@ -1668,7 +1668,7 @@ __metadata:
     comlink: ^4.3.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1690,11 +1690,11 @@ __metadata:
   dependencies:
     "@fluid-example/client-ui-lib": ^0.31.0
     "@fluid-example/fluid-object-interfaces": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/data-object-base": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/runtime-definitions": ^0.31.0
     "@fluidframework/view-interfaces": ^0.31.0
@@ -1702,7 +1702,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1724,7 +1724,7 @@ __metadata:
   resolution: "@fluid-example/image-gallery@workspace:examples/data-objects/image-gallery"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/view-interfaces": ^0.31.0
     "@fluidframework/webpack-fluid-loader": ^0.31.0
@@ -1735,7 +1735,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1762,9 +1762,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluid-example/intelligence-runner-agent@workspace:packages/agents/intelligence-runner-agent"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/sequence": ^0.31.0
@@ -1773,7 +1773,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1792,14 +1792,14 @@ __metadata:
   resolution: "@fluid-example/key-value-cache@workspace:examples/data-objects/key-value-cache"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-runtime": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/request-handler": ^0.31.0
     "@fluidframework/runtime-definitions": ^0.31.0
@@ -1809,7 +1809,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1858,7 +1858,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1893,11 +1893,11 @@ __metadata:
     "@fluid-example/flow-util-lib": ^0.31.0
     "@fluid-example/fluid-object-interfaces": ^0.31.0
     "@fluid-example/search-menu": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/data-object-base": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/merge-tree": ^0.31.0
     "@fluidframework/runtime-definitions": ^0.31.0
@@ -1910,7 +1910,7 @@ __metadata:
     copyfiles: ^2.1.0
     css-loader: ^1.0.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1937,10 +1937,10 @@ __metadata:
   dependencies:
     "@fluid-example/client-ui-lib": ^0.31.0
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/merge-tree": ^0.31.0
     "@fluidframework/runtime-definitions": ^0.31.0
     "@fluidframework/sequence": ^0.31.0
@@ -1951,7 +1951,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -1985,9 +1985,9 @@ __metadata:
     "@fluid-example/multiview-coordinate-interface": ^0.31.0
     "@fluid-example/multiview-coordinate-model": ^0.31.0
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/test-tools": ^0.2.3074
     "@fluidframework/webpack-fluid-loader": ^0.31.0
@@ -2000,7 +2000,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2029,8 +2029,8 @@ __metadata:
   dependencies:
     "@fluid-example/multiview-coordinate-interface": ^0.31.0
     "@fluid-example/multiview-slider-coordinate-view": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/test-tools": ^0.2.3074
     "@fluidframework/webpack-fluid-loader": ^0.31.0
     "@types/expect-puppeteer": 2.2.1
@@ -2045,7 +2045,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2082,10 +2082,10 @@ __metadata:
     "@fluid-example/multiview-slider-coordinate-view": ^0.31.0
     "@fluid-example/multiview-triangle-view": ^0.31.0
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-runtime": ^0.31.0
     "@fluidframework/container-runtime-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/request-handler": ^0.31.0
     "@fluidframework/runtime-utils": ^0.31.0
     "@fluidframework/test-tools": ^0.2.3074
@@ -2103,7 +2103,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2132,15 +2132,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluid-example/multiview-coordinate-interface@workspace:examples/data-objects/multiview/interface"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@types/expect-puppeteer": 2.2.1
     "@types/node": ^10.17.24
     "@types/puppeteer": 1.3.0
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2165,8 +2165,8 @@ __metadata:
   dependencies:
     "@fluid-example/multiview-coordinate-interface": ^0.31.0
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/test-tools": ^0.2.3074
     "@fluidframework/webpack-fluid-loader": ^0.31.0
@@ -2179,7 +2179,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2207,8 +2207,8 @@ __metadata:
   resolution: "@fluid-example/multiview-plot-coordinate-view@workspace:examples/data-objects/multiview/plot-coordinate-view"
   dependencies:
     "@fluid-example/multiview-coordinate-interface": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/test-tools": ^0.2.3074
     "@fluidframework/webpack-fluid-loader": ^0.31.0
     "@types/expect-puppeteer": 2.2.1
@@ -2223,7 +2223,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2253,8 +2253,8 @@ __metadata:
   resolution: "@fluid-example/multiview-slider-coordinate-view@workspace:examples/data-objects/multiview/slider-coordinate-view"
   dependencies:
     "@fluid-example/multiview-coordinate-interface": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/test-tools": ^0.2.3074
     "@fluidframework/webpack-fluid-loader": ^0.31.0
     "@types/expect-puppeteer": 2.2.1
@@ -2269,7 +2269,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2299,8 +2299,8 @@ __metadata:
   resolution: "@fluid-example/multiview-triangle-view@workspace:examples/data-objects/multiview/triangle-view"
   dependencies:
     "@fluid-example/multiview-coordinate-interface": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/test-tools": ^0.2.3074
     "@fluidframework/webpack-fluid-loader": ^0.31.0
     "@types/expect-puppeteer": 2.2.1
@@ -2315,7 +2315,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2346,8 +2346,8 @@ __metadata:
   dependencies:
     "@babel/plugin-proposal-class-properties": ^7.4.4
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/view-interfaces": ^0.31.0
     "@fluidframework/webpack-fluid-loader": ^0.31.0
@@ -2359,7 +2359,7 @@ __metadata:
     babel-loader: ^8.0.5
     concurrently: ^5.2.0
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2390,11 +2390,11 @@ __metadata:
   resolution: "@fluid-example/pond@workspace:examples/data-objects/pond"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-runtime-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/counter": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/runtime-definitions": ^0.31.0
@@ -2413,7 +2413,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2443,9 +2443,9 @@ __metadata:
   resolution: "@fluid-example/primitives@workspace:examples/data-objects/primitives"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/view-interfaces": ^0.31.0
     "@fluidframework/webpack-fluid-loader": ^0.31.0
@@ -2455,7 +2455,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2480,11 +2480,11 @@ __metadata:
   resolution: "@fluid-example/progress-bars@workspace:examples/data-objects/progress-bars"
   dependencies:
     "@fluid-example/fluid-object-interfaces": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/runtime-definitions": ^0.31.0
     "@fluidframework/view-interfaces": ^0.31.0
@@ -2494,7 +2494,7 @@ __metadata:
     bootstrap: ^3.3.7
     concurrently: ^5.2.0
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2519,14 +2519,14 @@ __metadata:
   resolution: "@fluid-example/prosemirror@workspace:examples/data-objects/prosemirror"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-runtime": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/merge-tree": ^0.31.0
     "@fluidframework/request-handler": ^0.31.0
@@ -2545,7 +2545,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2580,13 +2580,13 @@ __metadata:
     "@fluid-example/host-service-interfaces": ^0.31.0
     "@fluid-internal/client-api": ^0.31.0
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-runtime": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/merge-tree": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
@@ -2605,7 +2605,7 @@ __metadata:
     bootstrap: ^3.3.7
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2627,15 +2627,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluid-example/search-menu@workspace:examples/data-objects/search-menu"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/merge-tree": ^0.31.0
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2661,7 +2661,7 @@ __metadata:
     "@fluid-example/video-players": ^0.31.0
     "@fluid-internal/client-api": ^0.31.0
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/cell": ^0.31.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
@@ -2692,7 +2692,7 @@ __metadata:
     concurrently: ^5.2.0
     cross-env: ^7.0.2
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2727,14 +2727,14 @@ __metadata:
   dependencies:
     "@fluid-example/clicker": ^0.31.0
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/view-interfaces": ^0.31.0
     "@fluidframework/webpack-fluid-loader": ^0.31.0
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2757,14 +2757,14 @@ __metadata:
   resolution: "@fluid-example/smde@workspace:examples/data-objects/smde"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-runtime": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/merge-tree": ^0.31.0
     "@fluidframework/request-handler": ^0.31.0
@@ -2778,7 +2778,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2810,10 +2810,10 @@ __metadata:
     "@fluid-example/multiview-slider-coordinate-view": ^0.31.0
     "@fluid-example/prosemirror": ^0.31.0
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/get-session-storage-container": ^0.31.0
     "@fluidframework/get-tinylicious-container": ^0.31.0
     "@fluidframework/runtime-definitions": ^0.31.0
@@ -2830,7 +2830,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2869,12 +2869,12 @@ __metadata:
   resolution: "@fluid-example/table-document@workspace:examples/data-objects/table-document"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/local-driver": ^0.31.0
     "@fluidframework/merge-tree": ^0.31.0
     "@fluidframework/mocha-test-setup": ^0.31.0
@@ -2893,7 +2893,7 @@ __metadata:
     concurrently: ^5.2.0
     cross-env: ^7.0.2
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2917,10 +2917,10 @@ __metadata:
     "@fluid-example/flow-util-lib": ^0.31.0
     "@fluid-example/table-document": ^0.31.0
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/runtime-utils": ^0.31.0
     "@fluidframework/view-interfaces": ^0.31.0
     "@fluidframework/webpack-fluid-loader": ^0.31.0
@@ -2930,7 +2930,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -2953,10 +2953,10 @@ __metadata:
   dependencies:
     "@fluid-example/clicker": ^0.31.0
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/cell": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/react-inputs": ^0.31.0
     "@fluidframework/runtime-definitions": ^0.31.0
@@ -2972,7 +2972,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3002,11 +3002,11 @@ __metadata:
   dependencies:
     "@fluid-example/client-ui-lib": ^0.31.0
     "@fluid-example/fluid-object-interfaces": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/data-object-base": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/runtime-definitions": ^0.31.0
     "@fluidframework/view-interfaces": ^0.31.0
@@ -3014,7 +3014,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3041,12 +3041,12 @@ __metadata:
     "@fluid-example/prosemirror": ^0.31.0
     "@fluid-example/spaces": ^0.31.0
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-runtime": ^0.31.0
     "@fluidframework/container-runtime-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/last-edited-experimental": ^0.31.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
@@ -3065,7 +3065,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     css-loader: ^1.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3102,12 +3102,12 @@ __metadata:
   resolution: "@fluid-example/webflow@workspace:examples/data-objects/webflow"
   dependencies:
     "@fluid-example/flow-util-lib": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/data-object-base": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/local-driver": ^0.31.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/merge-tree": ^0.31.0
@@ -3129,7 +3129,7 @@ __metadata:
     cross-env: ^7.0.2
     css-loader: ^1.0.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3167,7 +3167,7 @@ __metadata:
   resolution: "@fluid-internal/client-api@workspace:packages/runtime/client-api"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/cell": ^0.31.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
@@ -3176,7 +3176,7 @@ __metadata:
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/ink": ^0.31.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/ordered-collection": ^0.31.0
@@ -3195,7 +3195,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3221,7 +3221,7 @@ __metadata:
     "@fluidframework/agent-scheduler": ^0.31.0
     "@fluidframework/aqueduct": ^0.31.0
     "@fluidframework/base-host": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/cell": ^0.31.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
@@ -3236,7 +3236,7 @@ __metadata:
     "@fluidframework/driver-base": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/ink": ^0.31.0
     "@fluidframework/local-driver": ^0.31.0
     "@fluidframework/map": ^0.31.0
@@ -3267,7 +3267,7 @@ __metadata:
     assert: ^2.0.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3313,13 +3313,13 @@ __metadata:
   resolution: "@fluid-internal/fetch-tool@workspace:packages/tools/fetch-tool"
   dependencies:
     "@fluid-internal/fluidapp-odsp-urlresolver": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-runtime": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/odsp-doclib-utils": ^0.31.0
     "@fluidframework/odsp-driver": ^0.31.0
     "@fluidframework/odsp-urlresolver": ^0.31.0
@@ -3334,7 +3334,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     assert: ^2.0.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3353,11 +3353,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluid-internal/fluidapp-odsp-urlresolver@workspace:packages/drivers/fluidapp-odsp-urlResolver"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/odsp-driver": ^0.31.0
     "@types/assert": ^1.5.1
@@ -3367,7 +3367,7 @@ __metadata:
     assert: ^2.0.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3386,11 +3386,11 @@ __metadata:
   resolution: "@fluid-internal/functional-tests@workspace:packages/test/functional-tests"
   dependencies:
     "@fluid-internal/test-loader-utils": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-loader": ^0.31.0
     "@fluidframework/container-runtime": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/sequence": ^0.31.0
@@ -3402,7 +3402,7 @@ __metadata:
     assert: ^2.0.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3425,11 +3425,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluid-internal/hosts-sample@workspace:examples/hosts/hosts-sample"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-loader": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/routerlicious-driver": ^0.31.0
     "@fluidframework/test-runtime-utils": ^0.31.0
@@ -3438,7 +3438,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3460,10 +3460,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluid-internal/merge-tree-client-replay@workspace:packages/tools/merge-tree-client-replay"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-runtime": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/file-driver": ^0.31.0
     "@fluidframework/merge-tree": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
@@ -3477,7 +3477,7 @@ __metadata:
     assert: ^2.0.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3497,12 +3497,12 @@ __metadata:
   resolution: "@fluid-internal/node-host@workspace:examples/hosts/node-host"
   dependencies:
     "@fluid-example/key-value-cache": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-loader": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/routerlicious-driver": ^0.31.0
     "@fluidframework/routerlicious-host": ^0.31.0
@@ -3510,7 +3510,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3531,14 +3531,14 @@ __metadata:
   resolution: "@fluid-internal/replay-tool@workspace:packages/tools/replay-tool"
   dependencies:
     "@fluid-internal/client-api": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-loader": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/file-driver": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/replay-driver": ^0.31.0
@@ -3551,7 +3551,7 @@ __metadata:
     assert: ^2.0.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3571,11 +3571,11 @@ __metadata:
   resolution: "@fluid-internal/service-load-test@workspace:packages/test/service-load-test"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-loader": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/odsp-driver": ^0.31.0
     "@fluidframework/test-utils": ^0.31.0
@@ -3586,7 +3586,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     commander: ^5.1.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3605,15 +3605,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluid-internal/test-dds-utils@workspace:packages/dds/test-dds-utils"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/shared-object-base": ^0.31.0
     "@types/assert": ^1.5.1
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     assert: ^2.0.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3630,15 +3630,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluid-internal/test-loader-utils@workspace:packages/loader/test-loader-utils"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3656,9 +3656,9 @@ __metadata:
   resolution: "@fluid-internal/test-snapshots@workspace:packages/test/snapshots"
   dependencies:
     "@fluid-internal/replay-tool": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/merge-tree": ^0.31.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
@@ -3670,7 +3670,7 @@ __metadata:
     assert: ^2.0.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3694,7 +3694,7 @@ __metadata:
     "@fluidframework/aqueduct": ^0.31.0
     "@fluidframework/base-host": ^0.31.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/runtime-utils": ^0.31.0
     "@fluidframework/test-tools": ^0.2.3074
     "@fluidframework/view-interfaces": ^0.31.0
@@ -3707,7 +3707,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3745,7 +3745,7 @@ __metadata:
     "@types/react-dom": ^16.9.4
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3769,13 +3769,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/agent-scheduler@workspace:packages/runtime/agent-scheduler"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/register-collection": ^0.31.0
     "@fluidframework/runtime-definitions": ^0.31.0
@@ -3788,7 +3788,7 @@ __metadata:
     assert: ^2.0.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3828,7 +3828,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/aqueduct@workspace:packages/framework/aqueduct"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
@@ -3838,7 +3838,7 @@ __metadata:
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/request-handler": ^0.31.0
@@ -3856,7 +3856,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3902,14 +3902,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/base-host@workspace:packages/hosts/base-host"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-loader": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/telemetry-utils": ^0.31.0
@@ -3927,7 +3927,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     duplicate-package-checker-webpack-plugin: ^3.0.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -3948,17 +3948,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fluidframework/build-common@npm:^0.19.2":
-  version: 0.19.2
-  resolution: "@fluidframework/build-common@npm:0.19.2"
+"@fluidframework/build-common@^0.20.0, @fluidframework/build-common@workspace:common/build/build-common":
+  version: 0.0.0-use.local
+  resolution: "@fluidframework/build-common@workspace:common/build/build-common"
   peerDependencies:
-    api-extractor: ">=7.7.2"
     typescript: ">=3.7.4"
   bin:
     gen-version: bin/gen-version
-  checksum: 50a87dd04e20574b4ed49956e3bf8a107e6390521a715f84e6824b6b984ee0bf63dc2824fcc8d175c93c5fbcca7b5228dcb08e7770f6339a4bd9ddf0d481a006
-  languageName: node
-  linkType: hard
+  languageName: unknown
+  linkType: soft
 
 "@fluidframework/build-tools@npm:^0.2.10790":
   version: 0.2.11488
@@ -4013,11 +4011,11 @@ __metadata:
   resolution: "@fluidframework/cell@workspace:packages/dds/cell"
   dependencies:
     "@fluid-internal/test-dds-utils": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/shared-object-base": ^0.31.0
@@ -4034,7 +4032,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4061,14 +4059,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/common-definitions@workspace:common/lib/common-definitions"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@microsoft/api-extractor": ^7.7.2
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4085,9 +4083,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/common-utils@workspace:common/lib/common-utils"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@microsoft/api-extractor": ^7.7.2
     "@types/assert": ^1.5.1
     "@types/base64-js": ^1.3.0
@@ -4105,7 +4103,7 @@ __metadata:
     benchmark: ^2.1.4
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4150,11 +4148,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/container-definitions@workspace:packages/loader/container-definitions"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@microsoft/api-extractor": ^7.7.2
     "@types/node": ^10.17.24
@@ -4162,7 +4160,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4192,7 +4190,7 @@ __metadata:
   resolution: "@fluidframework/container-loader@workspace:packages/loader/container-loader"
   dependencies:
     "@fluid-internal/test-loader-utils": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
@@ -4200,7 +4198,7 @@ __metadata:
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-base": ^0.1016.0-0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
@@ -4220,7 +4218,7 @@ __metadata:
     cross-env: ^7.0.2
     debug: ^4.1.1
     double-ended-queue: ^2.1.0-0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4266,12 +4264,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/container-runtime-definitions@workspace:packages/runtime/container-runtime-definitions"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/runtime-definitions": ^0.31.0
     "@microsoft/api-extractor": ^7.7.2
@@ -4280,7 +4278,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4314,7 +4312,7 @@ __metadata:
   resolution: "@fluidframework/container-runtime@workspace:packages/runtime/container-runtime"
   dependencies:
     "@fluidframework/agent-scheduler": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
@@ -4324,7 +4322,7 @@ __metadata:
     "@fluidframework/datastore": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/garbage-collector": ^0.31.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-base": ^0.1016.0-0
@@ -4349,7 +4347,7 @@ __metadata:
     cross-env: ^7.0.2
     debug: ^4.1.1
     double-ended-queue: ^2.1.0-0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4398,11 +4396,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/container-utils@workspace:packages/loader/container-utils"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/telemetry-utils": ^0.31.0
     "@microsoft/api-extractor": ^7.7.2
@@ -4415,7 +4413,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4447,15 +4445,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/core-interfaces@workspace:packages/loader/core-interfaces"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@microsoft/api-extractor": ^7.7.2
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4479,11 +4477,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/counter@workspace:packages/dds/counter"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/shared-object-base": ^0.31.0
@@ -4500,7 +4498,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4519,7 +4517,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/data-object-base@workspace:packages/framework/data-object-base"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
@@ -4527,7 +4525,7 @@ __metadata:
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/request-handler": ^0.31.0
     "@fluidframework/runtime-definitions": ^0.31.0
@@ -4540,7 +4538,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4560,12 +4558,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/datastore-definitions@workspace:packages/runtime/datastore-definitions"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/runtime-definitions": ^0.31.0
     "@microsoft/api-extractor": ^7.7.2
@@ -4574,7 +4572,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4607,7 +4605,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/datastore@workspace:packages/runtime/datastore"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
@@ -4616,7 +4614,7 @@ __metadata:
     "@fluidframework/datastore-definitions": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/garbage-collector": ^0.31.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-base": ^0.1016.0-0
@@ -4637,7 +4635,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4684,9 +4682,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/dds-interceptions@workspace:packages/framework/dds-interceptions"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/merge-tree": ^0.31.0
     "@fluidframework/mocha-test-setup": ^0.31.0
@@ -4706,7 +4704,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     diff: ^3.5.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4728,11 +4726,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/debugger@workspace:packages/drivers/debugger"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/replay-driver": ^0.31.0
     "@microsoft/api-extractor": ^7.7.2
@@ -4744,7 +4742,7 @@ __metadata:
     assert: ^2.0.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4762,12 +4760,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/driver-base@workspace:packages/drivers/driver-base"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@microsoft/api-extractor": ^7.7.2
     "@types/assert": ^1.5.1
@@ -4780,7 +4778,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4811,17 +4809,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/driver-definitions@workspace:packages/loader/driver-definitions"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@microsoft/api-extractor": ^7.7.2
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4849,12 +4847,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/driver-utils@workspace:packages/loader/driver-utils"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/gitresources": ^0.1016.0-0
     "@fluidframework/protocol-base": ^0.1016.0-0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
@@ -4867,7 +4865,7 @@ __metadata:
     assert: ^2.0.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4901,35 +4899,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fluidframework/eslint-config-fluid@npm:^0.21.0":
-  version: 0.21.0
-  resolution: "@fluidframework/eslint-config-fluid@npm:0.21.0"
-  dependencies:
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
-    eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
-  peerDependencies:
-    "@typescript-eslint/eslint-plugin": ">=2.17.0"
-    "@typescript-eslint/parser": ">=2.17.0"
-    eslint: ">=6.8.0"
-    eslint-plugin-eslint-comments: ">=3.1.2"
-    eslint-plugin-import: 2.20.0
-    eslint-plugin-no-null: ">=1.0.2"
-    eslint-plugin-prefer-arrow: ">=1.1.7"
-    eslint-plugin-react: ">=7.18.0"
-    eslint-plugin-unicorn: ">=15.0.1"
-  checksum: 023f7c9af0042427601991602e464d0d78eca8a6337bd24dd174ededa8ba553fb1ed6fd620139f4662c7aab9aab1f053dae2f377e7df2ffcddb77ca966165fd0
-  languageName: node
-  linkType: hard
-
-"@fluidframework/eslint-config-fluid@workspace:common/build/eslint-config-fluid":
+"@fluidframework/eslint-config-fluid@^0.22.0, @fluidframework/eslint-config-fluid@workspace:common/build/eslint-config-fluid":
   version: 0.0.0-use.local
   resolution: "@fluidframework/eslint-config-fluid@workspace:common/build/eslint-config-fluid"
   dependencies:
@@ -4953,11 +4923,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/execution-context-loader@workspace:packages/loader/execution-context-loader"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@microsoft/api-extractor": ^7.7.2
     "@types/debug": ^4.1.5
@@ -4967,7 +4937,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -4984,12 +4954,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/file-driver@workspace:packages/drivers/file-driver"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/replay-driver": ^0.31.0
     "@microsoft/api-extractor": ^7.7.2
@@ -5002,7 +4972,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5019,9 +4989,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/garbage-collector@workspace:packages/runtime/garbage-collector"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/runtime-definitions": ^0.31.0
     "@microsoft/api-extractor": ^7.7.2
@@ -5034,7 +5004,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5055,10 +5025,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/get-session-storage-container@workspace:examples/utils/get-session-storage-container"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-loader": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/local-driver": ^0.31.0
     "@fluidframework/server-local-server": ^0.1016.0-0
     "@fluidframework/test-tools": ^0.2.3074
@@ -5066,7 +5036,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5083,13 +5053,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/get-tinylicious-container@workspace:examples/utils/get-tinylicious-container"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-loader": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/routerlicious-driver": ^0.31.0
     "@fluidframework/test-tools": ^0.2.3074
@@ -5099,7 +5069,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5119,12 +5089,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/gitresources@workspace:server/routerlicious/packages/gitresources"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5148,13 +5118,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/iframe-driver@workspace:packages/drivers/iframe-driver"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/telemetry-utils": ^0.31.0
     "@microsoft/api-extractor": ^7.7.2
@@ -5168,7 +5138,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5187,11 +5157,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/ink@workspace:packages/dds/ink"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/shared-object-base": ^0.31.0
@@ -5207,7 +5177,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5229,11 +5199,11 @@ __metadata:
   resolution: "@fluidframework/last-edited-experimental@workspace:packages/framework/last-edited-experimental"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-runtime": ^0.31.0
     "@fluidframework/container-runtime-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/runtime-utils": ^0.31.0
@@ -5245,7 +5215,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5265,13 +5235,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/local-driver@workspace:packages/drivers/local-driver"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/routerlicious-driver": ^0.31.0
@@ -5289,7 +5259,7 @@ __metadata:
     concurrently: ^5.2.0
     cross-env: ^7.0.2
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5335,12 +5305,12 @@ __metadata:
   resolution: "@fluidframework/map@workspace:packages/dds/map"
   dependencies:
     "@fluid-internal/test-dds-utils": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-base": ^0.1016.0-0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
@@ -5358,7 +5328,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5398,12 +5368,12 @@ __metadata:
   resolution: "@fluidframework/matrix@workspace:packages/dds/matrix"
   dependencies:
     "@fluid-internal/test-dds-utils": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/merge-tree": ^0.31.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
@@ -5425,7 +5395,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5450,13 +5420,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/merge-tree@workspace:packages/dds/merge-tree"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/telemetry-utils": ^0.31.0
@@ -5473,7 +5443,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     diff: ^3.5.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5511,15 +5481,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/mocha-test-setup@workspace:packages/test/mocha-test-setup"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@microsoft/api-extractor": ^7.7.2
     "@types/mocha": ^5.2.5
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5539,14 +5509,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/odsp-doclib-utils@workspace:packages/utils/odsp-doclib-utils"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5564,14 +5534,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/odsp-driver@workspace:packages/drivers/odsp-driver"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-base": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/gitresources": ^0.1016.0-0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/odsp-doclib-utils": ^0.31.0
@@ -5591,7 +5561,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5617,10 +5587,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/odsp-urlresolver@workspace:packages/drivers/odsp-urlResolver"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/odsp-driver": ^0.31.0
     "@types/assert": ^1.5.1
@@ -5630,7 +5600,7 @@ __metadata:
     assert: ^2.0.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5649,11 +5619,11 @@ __metadata:
   resolution: "@fluidframework/ordered-collection@workspace:packages/dds/ordered-collection"
   dependencies:
     "@fluid-internal/test-dds-utils": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/shared-object-base": ^0.31.0
@@ -5668,7 +5638,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5689,9 +5659,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/protocol-base@workspace:server/routerlicious/packages/protocol-base"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@microsoft/api-extractor": ^7.7.2
@@ -5704,7 +5674,7 @@ __metadata:
     assert: ^2.0.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5738,15 +5708,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/protocol-definitions@workspace:server/routerlicious/packages/protocol-definitions"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@microsoft/api-extractor": ^7.7.2
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5772,9 +5742,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/react-inputs@workspace:examples/data-objects/react-inputs"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/cell": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/sequence": ^0.31.0
     "@microsoft/api-extractor": ^7.7.2
     "@types/node": ^10.17.24
@@ -5783,7 +5753,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5802,12 +5772,12 @@ __metadata:
   resolution: "@fluidframework/react@workspace:packages/framework/react"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/counter": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/sequence": ^0.31.0
     "@fluidframework/shared-object-base": ^0.31.0
@@ -5819,7 +5789,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5838,11 +5808,11 @@ __metadata:
   resolution: "@fluidframework/register-collection@workspace:packages/dds/register-collection"
   dependencies:
     "@fluid-internal/test-dds-utils": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/shared-object-base": ^0.31.0
@@ -5859,7 +5829,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5893,12 +5863,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/replay-driver@workspace:packages/drivers/replay-driver"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/telemetry-utils": ^0.31.0
     "@microsoft/api-extractor": ^7.7.2
@@ -5913,7 +5883,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5932,11 +5902,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/request-handler@workspace:packages/framework/request-handler"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-runtime-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/runtime-definitions": ^0.31.0
     "@fluidframework/runtime-utils": ^0.31.0
@@ -5954,7 +5924,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     diff: ^3.5.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -5990,13 +5960,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/routerlicious-driver@workspace:packages/drivers/routerlicious-driver"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/driver-base": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/gitresources": ^0.1016.0-0
     "@fluidframework/protocol-base": ^0.1016.0-0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
@@ -6016,7 +5986,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6063,11 +6033,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/routerlicious-host@workspace:packages/drivers/routerlicious-host"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@types/assert": ^1.5.1
     "@types/debug": ^4.1.5
     "@types/mocha": ^5.2.5
@@ -6077,7 +6047,7 @@ __metadata:
     axios: ^0.18.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6095,10 +6065,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/routerlicious-urlresolver@workspace:packages/drivers/routerlicious-urlResolver"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@types/assert": ^1.5.1
@@ -6109,7 +6079,7 @@ __metadata:
     assert: ^2.0.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6128,13 +6098,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/runtime-definitions@workspace:packages/runtime/runtime-definitions"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@microsoft/api-extractor": ^7.7.2
     "@types/node": ^10.17.24
@@ -6142,7 +6112,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6175,12 +6145,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/runtime-utils@workspace:packages/runtime/runtime-utils"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/garbage-collector": ^0.31.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-base": ^0.1016.0-0
@@ -6198,7 +6168,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6236,12 +6206,12 @@ __metadata:
   resolution: "@fluidframework/sequence@workspace:packages/dds/sequence"
   dependencies:
     "@fluid-internal/test-dds-utils": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/gitresources": ^0.1016.0-0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/merge-tree": ^0.31.0
@@ -6268,7 +6238,7 @@ __metadata:
     cross-env: ^7.0.2
     debug: ^4.1.1
     diff: ^3.5.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6290,15 +6260,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/server-kafka-orderer@workspace:server/routerlicious/packages/kafka-orderer"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@fluidframework/server-services-core": ^0.1016.0
     "@types/node": ^12.19.0
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6315,9 +6285,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/server-lambdas-driver@workspace:server/routerlicious/packages/lambdas-driver"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/server-services": ^0.1016.0
     "@fluidframework/server-services-core": ^0.1016.0
     "@fluidframework/server-services-utils": ^0.1016.0
@@ -6331,7 +6301,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     async: ^2.6.1
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6354,9 +6324,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/server-lambdas@workspace:server/routerlicious/packages/lambdas"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-base": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
@@ -6376,7 +6346,7 @@ __metadata:
     async: ^2.6.1
     concurrently: ^5.2.0
     double-ended-queue: ^2.1.0-0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6425,9 +6395,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/server-local-server@workspace:server/routerlicious/packages/local-server"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@fluidframework/server-lambdas": ^0.1016.0
     "@fluidframework/server-memory-orderer": ^0.1016.0
@@ -6443,7 +6413,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6486,9 +6456,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/server-memory-orderer@workspace:server/routerlicious/packages/memory-orderer"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-base": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@fluidframework/server-lambdas": ^0.1016.0
@@ -6505,7 +6475,7 @@ __metadata:
     concurrently: ^5.2.0
     debug: ^4.1.1
     double-ended-queue: ^2.1.0-0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6551,9 +6521,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/server-routerlicious-base@workspace:server/routerlicious/packages/routerlicious-base"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@fluidframework/server-kafka-orderer": ^0.1016.0
@@ -6587,7 +6557,7 @@ __metadata:
     concurrently: ^5.2.0
     cookie-parser: ^1.4.3
     cors: ^2.8.4
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6617,9 +6587,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/server-routerlicious@workspace:server/routerlicious/packages/routerlicious"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@fluidframework/server-kafka-orderer": ^0.1016.0
@@ -6663,7 +6633,7 @@ __metadata:
     cors: ^2.8.4
     css-loader: ^1.0.0
     diff: ^3.5.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6707,9 +6677,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/server-services-client@workspace:server/routerlicious/packages/services-client"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-base": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
@@ -6723,7 +6693,7 @@ __metadata:
     axios: ^0.18.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6766,9 +6736,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/server-services-core@workspace:server/routerlicious/packages/services-core"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@fluidframework/server-services-client": ^0.1016.0
@@ -6778,7 +6748,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6812,9 +6782,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/server-services-shared@workspace:server/routerlicious/packages/services-shared"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-base": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
@@ -6829,7 +6799,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6873,8 +6843,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/server-services-utils@workspace:server/routerlicious/packages/services-utils"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@sentry/node": ^5.6.2
     "@types/debug": ^4.1.5
@@ -6885,7 +6855,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6926,9 +6896,9 @@ __metadata:
   dependencies:
     "@azure/event-hubs": ^1.0.8
     "@azure/event-processor-host": ^1.0.6
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0
     "@fluidframework/server-services-client": ^0.1016.0
     "@fluidframework/server-services-core": ^0.1016.0
@@ -6947,7 +6917,7 @@ __metadata:
     axios: ^0.18.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -6973,9 +6943,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/server-test-utils@workspace:server/routerlicious/packages/test-utils"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/gitresources": ^0.1016.0
     "@fluidframework/protocol-base": ^0.1016.0
     "@fluidframework/protocol-definitions": ^0.1016.0
@@ -6989,7 +6959,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -7030,14 +7000,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/shared-object-base@workspace:packages/dds/shared-object-base"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/runtime-definitions": ^0.31.0
     "@fluidframework/runtime-utils": ^0.31.0
@@ -7052,7 +7022,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -7089,11 +7059,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/shared-summary-block@workspace:packages/dds/shared-summary-block"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/shared-object-base": ^0.31.0
@@ -7110,7 +7080,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -7131,10 +7101,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/synthesize@workspace:packages/framework/synthesize"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/datastore": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@microsoft/api-extractor": ^7.7.2
     "@types/mocha": ^5.2.5
@@ -7144,7 +7114,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -7173,10 +7143,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/telemetry-utils@workspace:packages/utils/telemetry-utils"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@microsoft/api-extractor": ^7.7.2
     "@types/debug": ^4.1.5
@@ -7189,7 +7159,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     debug: ^4.1.1
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -7223,7 +7193,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/test-runtime-utils@workspace:packages/runtime/test-runtime-utils"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
@@ -7231,7 +7201,7 @@ __metadata:
     "@fluidframework/datastore-definitions": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
     "@fluidframework/routerlicious-driver": ^0.31.0
@@ -7250,7 +7220,7 @@ __metadata:
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -7282,7 +7252,7 @@ __metadata:
   resolution: "@fluidframework/test-utils@workspace:packages/test/test-utils"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-loader": ^0.31.0
     "@fluidframework/container-runtime": ^0.31.0
@@ -7290,7 +7260,7 @@ __metadata:
     "@fluidframework/datastore": ^0.31.0
     "@fluidframework/datastore-definitions": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/local-driver": ^0.31.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/protocol-definitions": ^0.1016.0-0
@@ -7313,7 +7283,7 @@ __metadata:
     copyfiles: ^2.1.0
     debug: ^4.1.1
     diff: ^3.5.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -7336,15 +7306,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/tool-utils@workspace:packages/utils/tool-utils"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/odsp-doclib-utils": ^0.31.0
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -7362,8 +7332,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/undo-redo@workspace:packages/framework/undo-redo"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.31.0
     "@fluidframework/matrix": ^0.31.0
     "@fluidframework/merge-tree": ^0.31.0
@@ -7383,7 +7353,7 @@ __metadata:
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
     diff: ^3.5.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -7405,9 +7375,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/view-adapters@workspace:packages/framework/view-adapters"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/view-interfaces": ^0.31.0
     "@microsoft/api-extractor": ^7.7.2
     "@types/react": ^16.9.15
@@ -7415,7 +7385,7 @@ __metadata:
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -7434,15 +7404,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/view-interfaces@workspace:packages/framework/view-interfaces"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@microsoft/api-extractor": ^7.7.2
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -7468,17 +7438,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/web-code-loader@workspace:packages/loader/web-code-loader"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@microsoft/api-extractor": ^7.7.2
     "@types/isomorphic-fetch": ^0.0.35
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -7498,14 +7468,14 @@ __metadata:
   resolution: "@fluidframework/webpack-fluid-loader@workspace:packages/tools/webpack-fluid-loader"
   dependencies:
     "@fluidframework/aqueduct": ^0.31.0
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/common-utils": ^0.26.0-0
     "@fluidframework/container-definitions": ^0.31.0
     "@fluidframework/container-loader": ^0.31.0
     "@fluidframework/core-interfaces": ^0.31.0
     "@fluidframework/driver-definitions": ^0.31.0
     "@fluidframework/driver-utils": ^0.31.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/local-driver": ^0.31.0
     "@fluidframework/mocha-test-setup": ^0.31.0
     "@fluidframework/odsp-doclib-utils": ^0.31.0
@@ -7530,7 +7500,7 @@ __metadata:
     axios: ^0.18.0
     concurrently: ^5.2.0
     cross-env: ^7.0.2
-    eslint: ~7.9.0
+    eslint: ~7.11.0
     eslint-plugin-eslint-comments: ~3.2.0
     eslint-plugin-import: ~2.22.0
     eslint-plugin-no-null: ~1.0.2
@@ -9726,13 +9696,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/eslint-visitor-keys@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@types/eslint-visitor-keys@npm:1.0.0"
-  checksum: 48d1f3263148ac822afbc1e54358b423851a2a28c41aef4d7803b052b4f6c3ebfb219daed419b8a4f2b6ac34b545dab4def916d15e69d2bf3f128f7abc0e6132
-  languageName: node
-  linkType: hard
-
 "@types/estree@npm:*":
   version: 0.0.45
   resolution: "@types/estree@npm:0.0.45"
@@ -10496,25 +10459,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/eslint-plugin@npm:~2.17.0":
-  version: 2.17.0
-  resolution: "@typescript-eslint/eslint-plugin@npm:2.17.0"
-  dependencies:
-    "@typescript-eslint/experimental-utils": 2.17.0
-    eslint-utils: ^1.4.3
-    functional-red-black-tree: ^1.0.1
-    regexpp: ^3.0.0
-    tsutils: ^3.17.1
-  peerDependencies:
-    "@typescript-eslint/parser": ^2.0.0
-    eslint: ^5.0.0 || ^6.0.0
-  peerDependenciesMeta:
-    typescript:
-      optional: true
-  checksum: 4f46a36dfa99169de9d8cee6e100b678ada7f710103123a25a68d633797b6f3cb7bc36693727a12cb0fe2aa55e44ba5481912ad0ebb2669b144a2066a59e0564
-  languageName: node
-  linkType: hard
-
 "@typescript-eslint/eslint-plugin@npm:~4.2.0":
   version: 4.2.0
   resolution: "@typescript-eslint/eslint-plugin@npm:4.2.0"
@@ -10557,19 +10501,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/experimental-utils@npm:2.17.0":
-  version: 2.17.0
-  resolution: "@typescript-eslint/experimental-utils@npm:2.17.0"
-  dependencies:
-    "@types/json-schema": ^7.0.3
-    "@typescript-eslint/typescript-estree": 2.17.0
-    eslint-scope: ^5.0.0
-  peerDependencies:
-    eslint: "*"
-  checksum: f325e138a3d677e249d7e6b096b0a3ddeca5653d805bc5a1bfc7c434b6ea884ab6eac08b4e719be473a643ec6a42cc85a393a17beadcffcdb3f09e557e972b28
-  languageName: node
-  linkType: hard
-
 "@typescript-eslint/experimental-utils@npm:4.2.0":
   version: 4.2.0
   resolution: "@typescript-eslint/experimental-utils@npm:4.2.0"
@@ -10599,23 +10530,6 @@ __metadata:
   peerDependencies:
     eslint: "*"
   checksum: ddebd9ab65b775d3ce11fd1f9bbd76e11e0a545ef64e31b0eac6a0fccab337e86b946c60ff6ee0df60ea0aa9f315b10ac824a054ba49614ddef78f476c64fdd5
-  languageName: node
-  linkType: hard
-
-"@typescript-eslint/parser@npm:~2.17.0":
-  version: 2.17.0
-  resolution: "@typescript-eslint/parser@npm:2.17.0"
-  dependencies:
-    "@types/eslint-visitor-keys": ^1.0.0
-    "@typescript-eslint/experimental-utils": 2.17.0
-    "@typescript-eslint/typescript-estree": 2.17.0
-    eslint-visitor-keys: ^1.1.0
-  peerDependencies:
-    eslint: ^5.0.0 || ^6.0.0
-  peerDependenciesMeta:
-    typescript:
-      optional: true
-  checksum: 3e52936ff9c580e7751b95e5da5c6118c68405c15f4d4863dce0494adc45d3132130547e2b4c6ffcc217191f5e08e45b9dc99cfd5967bdee576360000cd87624
   languageName: node
   linkType: hard
 
@@ -10684,24 +10598,6 @@ __metadata:
   version: 4.8.1
   resolution: "@typescript-eslint/types@npm:4.8.1"
   checksum: ccb647f35828aaa7991bde8a46c40c7ab48fdb1cc6ad6837a5e0f234dbbbd256babd23d83f0516ca797bd0060ca0950e4a5fd9104242ba2a83f74d06cfce59c5
-  languageName: node
-  linkType: hard
-
-"@typescript-eslint/typescript-estree@npm:2.17.0":
-  version: 2.17.0
-  resolution: "@typescript-eslint/typescript-estree@npm:2.17.0"
-  dependencies:
-    debug: ^4.1.1
-    eslint-visitor-keys: ^1.1.0
-    glob: ^7.1.6
-    is-glob: ^4.0.1
-    lodash: ^4.17.15
-    semver: ^6.3.0
-    tsutils: ^3.17.1
-  peerDependenciesMeta:
-    typescript:
-      optional: true
-  checksum: aba995c3aef2912206123b7b0afb7ee92569e9ee229011ea16797c1f2f0483642cf97ae686a37e9c42d62101c11c9509f7f68282adfd80f483bdedc1b821f33d
   languageName: node
   linkType: hard
 
@@ -11821,7 +11717,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"array-includes@npm:^3.0.3, array-includes@npm:^3.1.1":
+"array-includes@npm:^3.1.1":
   version: 3.1.1
   resolution: "array-includes@npm:3.1.1"
   dependencies:
@@ -11862,7 +11758,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"array.prototype.flat@npm:^1.2.1, array.prototype.flat@npm:^1.2.3":
+"array.prototype.flat@npm:^1.2.3":
   version: 1.2.3
   resolution: "array.prototype.flat@npm:1.2.3"
   dependencies:
@@ -13425,7 +13321,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chalk@npm:^4.0.0, chalk@npm:^4.1.0":
+"chalk@npm:^4.0.0":
   version: 4.1.0
   resolution: "chalk@npm:4.1.0"
   dependencies:
@@ -13668,26 +13564,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cli-cursor@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "cli-cursor@npm:3.1.0"
-  dependencies:
-    restore-cursor: ^3.1.0
-  checksum: 15dbfc222f27da8cbc61680e4948b189e811224271f6ee5be9db0dcbabe23ae3b2c5a5663be6f17ee51f6203ab44abddd4f4cffb20d69458fc845fa86976f96a
-  languageName: node
-  linkType: hard
-
 "cli-width@npm:^2.0.0":
   version: 2.2.1
   resolution: "cli-width@npm:2.2.1"
   checksum: f7c830bddca78d8b2706c213d6ffa4e751988b7f70ec3e871c97a87e12a9e17e9f9652f13a5bfcea0e2e8dbae1da4b0939d59cf2bf8c36979541c624043d6315
-  languageName: node
-  linkType: hard
-
-"cli-width@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "cli-width@npm:3.0.0"
-  checksum: 6e5bc71774e202bfd3782d0be56eacee9462bfc7dc4a601dad10636163ab9c8abe625e760b0f28e590f9044bc23df3927ee3406f8c961fd2e4a51ef3f67fab2f
   languageName: node
   linkType: hard
 
@@ -16255,7 +16135,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-import-resolver-node@npm:^0.3.2, eslint-import-resolver-node@npm:^0.3.4":
+"eslint-import-resolver-node@npm:^0.3.4":
   version: 0.3.4
   resolution: "eslint-import-resolver-node@npm:0.3.4"
   dependencies:
@@ -16265,25 +16145,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-module-utils@npm:^2.4.1, eslint-module-utils@npm:^2.6.0":
+"eslint-module-utils@npm:^2.6.0":
   version: 2.6.0
   resolution: "eslint-module-utils@npm:2.6.0"
   dependencies:
     debug: ^2.6.9
     pkg-dir: ^2.0.0
   checksum: f584af176480a702eedcdb3f610797f8b8d1293c3835ed71fadb579ec28400b91ded5283729418f63d48dc27c6358bd66f2bd839614d565a1b78d3c3440ee8f7
-  languageName: node
-  linkType: hard
-
-"eslint-plugin-eslint-comments@npm:~3.1.2":
-  version: 3.1.2
-  resolution: "eslint-plugin-eslint-comments@npm:3.1.2"
-  dependencies:
-    escape-string-regexp: ^1.0.5
-    ignore: ^5.0.5
-  peerDependencies:
-    eslint: ">=4.19.1"
-  checksum: 917da65ad3ed9f1727d5ee024eb8cb324bb507a9871759e8b9732660d7e902eb94f49edc153dee82cdad688bcfaecae8f336e9f42f714c26ed2c21d30acbf957
   languageName: node
   linkType: hard
 
@@ -16296,28 +16164,6 @@ __metadata:
   peerDependencies:
     eslint: ">=4.19.1"
   checksum: 8630a0467b6d4673cd8304f6aa6d430f91fe7f70f588a5022fcaa2c0d01355176910dd6a2b2b053c8dd5ce9222299998277740e269d3589d93f0c52cb744a519
-  languageName: node
-  linkType: hard
-
-"eslint-plugin-import@npm:2.20.0":
-  version: 2.20.0
-  resolution: "eslint-plugin-import@npm:2.20.0"
-  dependencies:
-    array-includes: ^3.0.3
-    array.prototype.flat: ^1.2.1
-    contains-path: ^0.1.0
-    debug: ^2.6.9
-    doctrine: 1.5.0
-    eslint-import-resolver-node: ^0.3.2
-    eslint-module-utils: ^2.4.1
-    has: ^1.0.3
-    minimatch: ^3.0.4
-    object.values: ^1.1.0
-    read-pkg-up: ^2.0.0
-    resolve: ^1.12.0
-  peerDependencies:
-    eslint: 2.x - 6.x
-  checksum: 421e99fc719eb9319c9a9828d15eeafaf2ac981d230100611ca98c469153ab0938a64bf94a5be9905774a0bd228af424b85a579eb42b0ab70d52b6c7644f2592
   languageName: node
   linkType: hard
 
@@ -16353,15 +16199,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-optimize-regex@npm:~1.1.7":
-  version: 1.1.7
-  resolution: "eslint-plugin-optimize-regex@npm:1.1.7"
-  dependencies:
-    regexp-tree: 0.1.11
-  checksum: 164d0226a10c08baaca3e621386221271b24b24d94201917839fe5968e555154512eab3d046e7a3c971d652b422568e5ed9a55a0dcbebf31396e80d922308e4a
-  languageName: node
-  linkType: hard
-
 "eslint-plugin-optimize-regex@npm:~1.2.0":
   version: 1.2.0
   resolution: "eslint-plugin-optimize-regex@npm:1.2.0"
@@ -16371,41 +16208,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-prefer-arrow@npm:~1.1.7":
-  version: 1.1.7
-  resolution: "eslint-plugin-prefer-arrow@npm:1.1.7"
-  peerDependencies:
-    eslint: ">=2.0.0"
-  checksum: 3897f68d1a878ca00917540fa3f62231bbf8d913e1acf4a4a57d01236a381637dc41b903d24b92c266078518a5188584976e0a3dfa8fb61f53e43df9334109c8
-  languageName: node
-  linkType: hard
-
 "eslint-plugin-prefer-arrow@npm:~1.2.2":
   version: 1.2.2
   resolution: "eslint-plugin-prefer-arrow@npm:1.2.2"
   peerDependencies:
     eslint: ">=2.0.0"
   checksum: ae3a641586cd4a0352879480febb4be8575650091c1270c03a34b67d19b6f13036661e772e3030495c53a26db810713bc65b5226ae7e822307c85aadc50ecdb8
-  languageName: node
-  linkType: hard
-
-"eslint-plugin-react@npm:~7.18.0":
-  version: 7.18.3
-  resolution: "eslint-plugin-react@npm:7.18.3"
-  dependencies:
-    array-includes: ^3.1.1
-    doctrine: ^2.1.0
-    has: ^1.0.3
-    jsx-ast-utils: ^2.2.3
-    object.entries: ^1.1.1
-    object.fromentries: ^2.0.2
-    object.values: ^1.1.1
-    prop-types: ^15.7.2
-    resolve: ^1.14.2
-    string.prototype.matchall: ^4.0.2
-  peerDependencies:
-    eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0
-  checksum: 7d775db2d6640b5b593e581fdbb10c357d27258cda50451370b0dc5f43056e1e64bb9022ae6f19d97eec5eae1a85b491c1456886b6829d6066e01fb9e31ffb11
   languageName: node
   linkType: hard
 
@@ -16427,32 +16235,6 @@ __metadata:
   peerDependencies:
     eslint: ^3 || ^4 || ^5 || ^6 || ^7
   checksum: a7123f6feb287ad7e15d36b1c9fda8f78a0f0d39b9ee2d6479a5f0ad0effb8f60f639ef7449cecabb711095060e487f0950b69478b22768547b909c0de4f3afd
-  languageName: node
-  linkType: hard
-
-"eslint-plugin-unicorn@npm:~15.0.1":
-  version: 15.0.1
-  resolution: "eslint-plugin-unicorn@npm:15.0.1"
-  dependencies:
-    ci-info: ^2.0.0
-    clean-regexp: ^1.0.0
-    eslint-ast-utils: ^1.1.0
-    eslint-template-visitor: ^1.1.0
-    import-modules: ^2.0.0
-    lodash.camelcase: ^4.3.0
-    lodash.defaultsdeep: ^4.6.1
-    lodash.kebabcase: ^4.1.1
-    lodash.snakecase: ^4.1.1
-    lodash.upperfirst: ^4.3.1
-    read-pkg-up: ^7.0.1
-    regexp-tree: ^0.1.17
-    regexpp: ^3.0.0
-    reserved-words: ^0.1.2
-    safe-regex: ^2.1.1
-    semver: ^6.3.0
-  peerDependencies:
-    eslint: ">=6.7.1"
-  checksum: 701ed519a89f7123d0de94e21b321398707442950c4467c6d1a9ed686bcac1bca1052a29becdc9610c911586f25300cce176af7ff1832c5f5649a72fe24ca049
   languageName: node
   linkType: hard
 
@@ -16512,26 +16294,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-scope@npm:^5.0.0, eslint-scope@npm:^5.1.0, eslint-scope@npm:^5.1.1":
+"eslint-scope@npm:^5.0.0, eslint-scope@npm:^5.1.1":
   version: 5.1.1
   resolution: "eslint-scope@npm:5.1.1"
   dependencies:
     esrecurse: ^4.3.0
     estraverse: ^4.1.1
   checksum: 79465cf5082f4216176f6d49c7d088de89ee890f912eb87b831f23ee9a5e17ed0f3f2ab6108fb8fefa0474ba5ebeaa9bdefbe49ba704bd879b73f2445e23ee10
-  languageName: node
-  linkType: hard
-
-"eslint-template-visitor@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "eslint-template-visitor@npm:1.1.0"
-  dependencies:
-    eslint-visitor-keys: ^1.1.0
-    espree: ^6.1.1
-    multimap: ^1.0.2
-  peerDependencies:
-    eslint: ^6.4.0
-  checksum: e6e9b885108ce840acfe871827786b04c495f358812a199a0b6d34f89476518dae578f2013c3d97087f48a50fbfefc4126f9e23b28a4d16796da5d5d763ebc96
   languageName: node
   linkType: hard
 
@@ -16546,15 +16315,6 @@ __metadata:
   peerDependencies:
     eslint: ">=7.0.0"
   checksum: c9d1afc8da08ba404d751c63c88897add330bef6b4d132182816745ad21e97431308a9c7bea8a50ab1c8b03ca83a48bcbaf731dc8c65efdfe9b965c97e6fca4d
-  languageName: node
-  linkType: hard
-
-"eslint-utils@npm:^1.4.3":
-  version: 1.4.3
-  resolution: "eslint-utils@npm:1.4.3"
-  dependencies:
-    eslint-visitor-keys: ^1.1.0
-  checksum: 4a7ede9e723a859a8805bd1ae73681c99323be0da90d37799796ec564cc6c3326d57ac80f91667737abc45383170a3a90653e13c00c7368b3af9be0cec662b4c
   languageName: node
   linkType: hard
 
@@ -16581,21 +16341,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:~6.8.0":
-  version: 6.8.0
-  resolution: "eslint@npm:6.8.0"
+"eslint@npm:~7.11.0":
+  version: 7.11.0
+  resolution: "eslint@npm:7.11.0"
   dependencies:
     "@babel/code-frame": ^7.0.0
+    "@eslint/eslintrc": ^0.1.3
     ajv: ^6.10.0
-    chalk: ^2.1.0
-    cross-spawn: ^6.0.5
+    chalk: ^4.0.0
+    cross-spawn: ^7.0.2
     debug: ^4.0.1
     doctrine: ^3.0.0
-    eslint-scope: ^5.0.0
-    eslint-utils: ^1.4.3
-    eslint-visitor-keys: ^1.1.0
-    espree: ^6.1.2
-    esquery: ^1.0.1
+    enquirer: ^2.3.5
+    eslint-scope: ^5.1.1
+    eslint-utils: ^2.1.0
+    eslint-visitor-keys: ^2.0.0
+    espree: ^7.3.0
+    esquery: ^1.2.0
     esutils: ^2.0.2
     file-entry-cache: ^5.0.1
     functional-red-black-tree: ^1.0.1
@@ -16604,27 +16366,25 @@ __metadata:
     ignore: ^4.0.6
     import-fresh: ^3.0.0
     imurmurhash: ^0.1.4
-    inquirer: ^7.0.0
     is-glob: ^4.0.0
     js-yaml: ^3.13.1
     json-stable-stringify-without-jsonify: ^1.0.1
-    levn: ^0.3.0
-    lodash: ^4.17.14
+    levn: ^0.4.1
+    lodash: ^4.17.19
     minimatch: ^3.0.4
-    mkdirp: ^0.5.1
     natural-compare: ^1.4.0
-    optionator: ^0.8.3
+    optionator: ^0.9.1
     progress: ^2.0.0
-    regexpp: ^2.0.1
-    semver: ^6.1.2
-    strip-ansi: ^5.2.0
-    strip-json-comments: ^3.0.1
+    regexpp: ^3.1.0
+    semver: ^7.2.1
+    strip-ansi: ^6.0.0
+    strip-json-comments: ^3.1.0
     table: ^5.2.3
     text-table: ^0.2.0
     v8-compile-cache: ^2.0.3
   bin:
-    eslint: ./bin/eslint.js
-  checksum: 796be0e038188d4cd8062541394d29f35606a7cee00cead5f6c8e3f9db932f0d19ee946df16fd593e0bcd614f896a416afa916bf82d9420576537ac349f2a06d
+    eslint: bin/eslint.js
+  checksum: 45ef6dc7b31684ca0f383ed9c6224e763197e1d49745542f4440e37286c947973388a6a7ebbf103eeee91ddb4af2652c5d22718f4130bfbbf4bd16a04103f82a
   languageName: node
   linkType: hard
 
@@ -16675,64 +16435,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:~7.9.0":
-  version: 7.9.0
-  resolution: "eslint@npm:7.9.0"
-  dependencies:
-    "@babel/code-frame": ^7.0.0
-    "@eslint/eslintrc": ^0.1.3
-    ajv: ^6.10.0
-    chalk: ^4.0.0
-    cross-spawn: ^7.0.2
-    debug: ^4.0.1
-    doctrine: ^3.0.0
-    enquirer: ^2.3.5
-    eslint-scope: ^5.1.0
-    eslint-utils: ^2.1.0
-    eslint-visitor-keys: ^1.3.0
-    espree: ^7.3.0
-    esquery: ^1.2.0
-    esutils: ^2.0.2
-    file-entry-cache: ^5.0.1
-    functional-red-black-tree: ^1.0.1
-    glob-parent: ^5.0.0
-    globals: ^12.1.0
-    ignore: ^4.0.6
-    import-fresh: ^3.0.0
-    imurmurhash: ^0.1.4
-    is-glob: ^4.0.0
-    js-yaml: ^3.13.1
-    json-stable-stringify-without-jsonify: ^1.0.1
-    levn: ^0.4.1
-    lodash: ^4.17.19
-    minimatch: ^3.0.4
-    natural-compare: ^1.4.0
-    optionator: ^0.9.1
-    progress: ^2.0.0
-    regexpp: ^3.1.0
-    semver: ^7.2.1
-    strip-ansi: ^6.0.0
-    strip-json-comments: ^3.1.0
-    table: ^5.2.3
-    text-table: ^0.2.0
-    v8-compile-cache: ^2.0.3
-  bin:
-    eslint: bin/eslint.js
-  checksum: 295fe8c442b9e9cc677fa03c88a873ad74c1d06620f4600745de83e5d4d10d53898cd1e15276e3420c976f00469d1ea8bbc5a4157c1f198753cece98f8903f5c
-  languageName: node
-  linkType: hard
-
-"espree@npm:^6.1.1, espree@npm:^6.1.2":
-  version: 6.2.1
-  resolution: "espree@npm:6.2.1"
-  dependencies:
-    acorn: ^7.1.1
-    acorn-jsx: ^5.2.0
-    eslint-visitor-keys: ^1.1.0
-  checksum: 8651a6c1625436a5ff42b0927fb7c9cfa3f87697b9522251b87a343a26655e46d3ce6b03654ac53d4558b41070fef2cdcd1ec4a73cc633661ea40aa1cefdb5e5
-  languageName: node
-  linkType: hard
-
 "espree@npm:^7.3.0":
   version: 7.3.0
   resolution: "espree@npm:7.3.0"
@@ -16774,7 +16476,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esquery@npm:^1.0.1, esquery@npm:^1.2.0, esquery@npm:^1.3.1":
+"esquery@npm:^1.2.0, esquery@npm:^1.3.1":
   version: 1.3.1
   resolution: "esquery@npm:1.3.1"
   dependencies:
@@ -17341,15 +17043,6 @@ __metadata:
   dependencies:
     escape-string-regexp: ^1.0.5
   checksum: de1145903784bd0b8bca1716426825d0a608fa81f370e0779047ef3f8d4509896f81435093e62a887717aeed0b8c8a92da7953f7f506ca57e62cf95d12b6c65a
-  languageName: node
-  linkType: hard
-
-"figures@npm:^3.0.0":
-  version: 3.2.0
-  resolution: "figures@npm:3.2.0"
-  dependencies:
-    escape-string-regexp: ^1.0.5
-  checksum: 6c8acb1c17c4d27eeb6ff06801b5ae39a999c4794ec50eacf858a1e32746d92af77a9a907c3e1865e2e6ac7d9f1aa765f0f8a01a16a4676b79b6e90a7cc23f44
   languageName: node
   linkType: hard
 
@@ -19633,27 +19326,6 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"inquirer@npm:^7.0.0":
-  version: 7.3.3
-  resolution: "inquirer@npm:7.3.3"
-  dependencies:
-    ansi-escapes: ^4.2.1
-    chalk: ^4.1.0
-    cli-cursor: ^3.1.0
-    cli-width: ^3.0.0
-    external-editor: ^3.0.3
-    figures: ^3.0.0
-    lodash: ^4.17.19
-    mute-stream: 0.0.8
-    run-async: ^2.4.0
-    rxjs: ^6.6.0
-    string-width: ^4.1.0
-    strip-ansi: ^6.0.0
-    through: ^2.3.6
-  checksum: fa0cbd9594a04e04c5c10a806e9a86b23986acdc7d07c75afdbc03412ff03b1d201efa83d9d64929afe99a901a093bfc9ae7ab13560f8e557cb98eddbe5bf37d
-  languageName: node
-  linkType: hard
-
 "int64-buffer@npm:^0.1.9":
   version: 0.1.10
   resolution: "int64-buffer@npm:0.1.10"
@@ -21464,7 +21136,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"jsx-ast-utils@npm:^2.2.3, jsx-ast-utils@npm:^2.4.1 || ^3.0.0":
+"jsx-ast-utils@npm:^2.4.1 || ^3.0.0":
   version: 2.4.1
   resolution: "jsx-ast-utils@npm:2.4.1"
   dependencies:
@@ -21978,16 +21650,6 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"levn@npm:^0.3.0, levn@npm:~0.3.0":
-  version: 0.3.0
-  resolution: "levn@npm:0.3.0"
-  dependencies:
-    prelude-ls: ~1.1.2
-    type-check: ~0.3.2
-  checksum: 775861da38dcb7e5f1de5bea2a1c7ffaede6e9e8632cfbac76be145ecb295370f46bb41307613c283d66f1fee5d8cc448ca3323c4a02d0fb1e913b2f78de2abb
-  languageName: node
-  linkType: hard
-
 "levn@npm:^0.4.1":
   version: 0.4.1
   resolution: "levn@npm:0.4.1"
@@ -21995,6 +21657,16 @@ fsevents@^1.2.7:
     prelude-ls: ^1.2.1
     type-check: ~0.4.0
   checksum: 2f6ddfb0b956f2cb6b1608253a62b0c30e7392dd3c7b4cf284dfe2889b44d8385eaa81597646e253752c312a960ccb5e4d596968e476d5f6614f4ca60e5218e9
+  languageName: node
+  linkType: hard
+
+"levn@npm:~0.3.0":
+  version: 0.3.0
+  resolution: "levn@npm:0.3.0"
+  dependencies:
+    prelude-ls: ~1.1.2
+    type-check: ~0.3.2
+  checksum: 775861da38dcb7e5f1de5bea2a1c7ffaede6e9e8632cfbac76be145ecb295370f46bb41307613c283d66f1fee5d8cc448ca3323c4a02d0fb1e913b2f78de2abb
   languageName: node
   linkType: hard
 
@@ -22178,13 +21850,6 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"lodash.camelcase@npm:^4.3.0":
-  version: 4.3.0
-  resolution: "lodash.camelcase@npm:4.3.0"
-  checksum: 3cb674ed3b37bb698f2ec5a1c3f607d157279f3015877132e8be5c22cf8048988cb9bf1e61c90dbefea3895a459c095773cc266a5b1a9f4202bcd062b3983e37
-  languageName: node
-  linkType: hard
-
 "lodash.clonedeep@npm:^4.5.0":
   version: 4.5.0
   resolution: "lodash.clonedeep@npm:4.5.0"
@@ -22196,13 +21861,6 @@ fsevents@^1.2.7:
   version: 4.0.8
   resolution: "lodash.debounce@npm:4.0.8"
   checksum: b6042bd8c09ff1961c9127d32266316bc21f946ece5e3464a663ec61fadb98e7d56ec0ef7e23b47d393695310c19cf24e651c1756be6da91ac02c72be7f79465
-  languageName: node
-  linkType: hard
-
-"lodash.defaultsdeep@npm:^4.6.1":
-  version: 4.6.1
-  resolution: "lodash.defaultsdeep@npm:4.6.1"
-  checksum: 143c2bfa5ee476efa38c05ae2cc4245d53d9ff988ac7667d1b7aa4a069cf5015475530d649d95ef325e4a47fa1d4d8f135d3ef14ad07c63e8847aeeec46f1ca9
   languageName: node
   linkType: hard
 
@@ -22297,13 +21955,6 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"lodash.kebabcase@npm:^4.1.1":
-  version: 4.1.1
-  resolution: "lodash.kebabcase@npm:4.1.1"
-  checksum: cee7b365bf62c9ae357d8c5cbd1dc767ce626fecea31b8ff7919cb15adaf2c36652fb07688bf8d55e71c456ac8e5dc7c85bf12f88716114bde232645714d538f
-  languageName: node
-  linkType: hard
-
 "lodash.keys@npm:^4.0.8":
   version: 4.2.0
   resolution: "lodash.keys@npm:4.2.0"
@@ -22336,13 +21987,6 @@ fsevents@^1.2.7:
   version: 4.3.2
   resolution: "lodash.set@npm:4.3.2"
   checksum: 4dfedacae1c1cf86385a2b6e30ba538f06c90d703a0abd83a11432d80ec24b4016fe27359cdc0554a02a31a468789cbb282801dd755e54581cf0295477e2341d
-  languageName: node
-  linkType: hard
-
-"lodash.snakecase@npm:^4.1.1":
-  version: 4.1.1
-  resolution: "lodash.snakecase@npm:4.1.1"
-  checksum: 3b3d1457597b45952d7c4e7975dfe10203f667d2f78bfe0d604f818d462628ad9f100f0fe95328a55ccf96fab4465a1f22602ca20a0ac0ed8e7ecf8067a972e6
   languageName: node
   linkType: hard
 
@@ -22383,13 +22027,6 @@ fsevents@^1.2.7:
   version: 4.5.0
   resolution: "lodash.uniq@npm:4.5.0"
   checksum: 47cb25b59bf40ef3bdf441b7b6cb41d0b95ae0ca576be2c206724dd66041fa8aadab55c1210792671aa0b1c9878d5c0be48927bf4d22f3ed50e5f79d3b2e90b7
-  languageName: node
-  linkType: hard
-
-"lodash.upperfirst@npm:^4.3.1":
-  version: 4.3.1
-  resolution: "lodash.upperfirst@npm:4.3.1"
-  checksum: 2d9fc60a1fadf41ac49220d0b0762c6ce493519470d7288d6b564779754a7eac85c496ccc23d4bfda35d279639ced2d71fe0a9c305b102d8cf57be56b9863b68
   languageName: node
   linkType: hard
 
@@ -23531,7 +23168,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"multimap@npm:^1.0.2, multimap@npm:^1.1.0":
+"multimap@npm:^1.1.0":
   version: 1.1.0
   resolution: "multimap@npm:1.1.0"
   checksum: 74e4affbac66dcdc3ba42d1b14a6a96b39e7e9067ef65c14f5f797fc701a2eb3f7d377a6eaf5c1acfa0b42892e842e5ad18ceeee734b84bf53d74d1a6a72aec0
@@ -23570,7 +23207,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"mute-stream@npm:0.0.8, mute-stream@npm:~0.0.4":
+"mute-stream@npm:~0.0.4":
   version: 0.0.8
   resolution: "mute-stream@npm:0.0.8"
   checksum: 315c40f463ec31deee54c5b8779207feb6b63dd4c58fe0f84ad46abdd6dac1ada578d53efde4a47b0ae4d29d453d35bb39ecdd98ee9ebf538929039a3a9945df
@@ -24417,7 +24054,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"object.entries@npm:^1.1.1, object.entries@npm:^1.1.2":
+"object.entries@npm:^1.1.2":
   version: 1.1.2
   resolution: "object.entries@npm:1.1.2"
   dependencies:
@@ -24459,7 +24096,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"object.values@npm:^1.1.0, object.values@npm:^1.1.1":
+"object.values@npm:^1.1.1":
   version: 1.1.1
   resolution: "object.values@npm:1.1.1"
   dependencies:
@@ -24740,7 +24377,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"optionator@npm:^0.8.1, optionator@npm:^0.8.3":
+"optionator@npm:^0.8.1":
   version: 0.8.3
   resolution: "optionator@npm:0.8.3"
   dependencies:
@@ -27241,16 +26878,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"regexp-tree@npm:0.1.11":
-  version: 0.1.11
-  resolution: "regexp-tree@npm:0.1.11"
-  bin:
-    regexp-tree: ./bin/regexp-tree
-  checksum: f3bdee52a65c1930b30bc0cc07ca75ee3552e0f203738e2725edbc72b6bcd88ec784755d763fcc3d2c180b787e0e12c99f6591ec8720c6919863cf74288044bc
-  languageName: node
-  linkType: hard
-
-"regexp-tree@npm:^0.1.17, regexp-tree@npm:^0.1.20, regexp-tree@npm:^0.1.21, regexp-tree@npm:~0.1.1":
+"regexp-tree@npm:^0.1.20, regexp-tree@npm:^0.1.21, regexp-tree@npm:~0.1.1":
   version: 0.1.21
   resolution: "regexp-tree@npm:0.1.21"
   bin:
@@ -27266,13 +26894,6 @@ fsevents@^1.2.7:
     define-properties: ^1.1.3
     es-abstract: ^1.17.0-next.1
   checksum: 468e19b3aed632653333741346cab170787b9bc79eecdfdd3d7ba5be26574c135edc2ce286d9d4154b635158c3c44f9614fca51cbf6d4d3f529ef89cf7e03908
-  languageName: node
-  linkType: hard
-
-"regexpp@npm:^2.0.1":
-  version: 2.0.1
-  resolution: "regexpp@npm:2.0.1"
-  checksum: e537f6c1b59f31a8d6381c64408d7a852aa98794896702fdadef2fa8b049f7d876da30cd0c6f6a64488aa58ad3b225d606cc689059628056b5a593e5422c38d6
   languageName: node
   linkType: hard
 
@@ -27583,7 +27204,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"resolve@^1.1.6, resolve@^1.10.0, resolve@^1.12.0, resolve@^1.13.1, resolve@^1.14.2, resolve@^1.17.0, resolve@^1.18.1, resolve@^1.3.2":
+"resolve@^1.1.6, resolve@^1.10.0, resolve@^1.12.0, resolve@^1.13.1, resolve@^1.17.0, resolve@^1.18.1, resolve@^1.3.2":
   version: 1.19.0
   resolution: "resolve@npm:1.19.0"
   dependencies:
@@ -27593,7 +27214,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"resolve@patch:resolve@^1.1.6#builtin<compat/resolve>, resolve@patch:resolve@^1.10.0#builtin<compat/resolve>, resolve@patch:resolve@^1.12.0#builtin<compat/resolve>, resolve@patch:resolve@^1.13.1#builtin<compat/resolve>, resolve@patch:resolve@^1.14.2#builtin<compat/resolve>, resolve@patch:resolve@^1.17.0#builtin<compat/resolve>, resolve@patch:resolve@^1.18.1#builtin<compat/resolve>, resolve@patch:resolve@^1.3.2#builtin<compat/resolve>":
+"resolve@patch:resolve@^1.1.6#builtin<compat/resolve>, resolve@patch:resolve@^1.10.0#builtin<compat/resolve>, resolve@patch:resolve@^1.12.0#builtin<compat/resolve>, resolve@patch:resolve@^1.13.1#builtin<compat/resolve>, resolve@patch:resolve@^1.17.0#builtin<compat/resolve>, resolve@patch:resolve@^1.18.1#builtin<compat/resolve>, resolve@patch:resolve@^1.3.2#builtin<compat/resolve>":
   version: 1.19.0
   resolution: "resolve@patch:resolve@npm%3A1.19.0#builtin<compat/resolve>::version=1.19.0&hash=3388aa"
   dependencies:
@@ -27637,16 +27258,6 @@ resolve@~1.17.0:
     onetime: ^2.0.0
     signal-exit: ^3.0.2
   checksum: 950c88d84a4cb44d4db29766ab1f2c95e2d23e89a9c65e95e5ecc83be061d0405c5f9366ce6e53b769c9e718acd3be523cba55a9bd5e898b0d7ca1e69194438d
-  languageName: node
-  linkType: hard
-
-"restore-cursor@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "restore-cursor@npm:3.1.0"
-  dependencies:
-    onetime: ^5.1.0
-    signal-exit: ^3.0.2
-  checksum: 38e0af0830336dbc7d36b8d02e9194489dc52aaf64f41d02c427303a78552019434ad87082d67ce171a569a8be898caf7c70d5e17bd347cf6f7bd38d332d0bd4
   languageName: node
   linkType: hard
 
@@ -27812,7 +27423,7 @@ resolve@~1.17.0:
   languageName: node
   linkType: hard
 
-"run-async@npm:^2.2.0, run-async@npm:^2.4.0":
+"run-async@npm:^2.2.0":
   version: 2.4.1
   resolution: "run-async@npm:2.4.1"
   checksum: b1f06da336029be9c08312309ccdda107558ebf3e1212e960d7a54020f888a449ade2cb8b432a9a6750537ed80119a3c798f7592e8f8518f193ff4c50c13d4a3
@@ -27852,7 +27463,7 @@ resolve@~1.17.0:
   languageName: node
   linkType: hard
 
-"rxjs@npm:^6.4.0, rxjs@npm:^6.5.2, rxjs@npm:^6.5.5, rxjs@npm:^6.6.0":
+"rxjs@npm:^6.4.0, rxjs@npm:^6.5.2, rxjs@npm:^6.5.5":
   version: 6.6.3
   resolution: "rxjs@npm:6.6.3"
   dependencies:
@@ -28091,7 +27702,7 @@ resolve@~1.17.0:
   languageName: node
   linkType: hard
 
-"semver@npm:^6.0.0, semver@npm:^6.1.2, semver@npm:^6.2.0, semver@npm:^6.3.0":
+"semver@npm:^6.0.0, semver@npm:^6.2.0, semver@npm:^6.3.0":
   version: 6.3.0
   resolution: "semver@npm:6.3.0"
   bin:
@@ -29388,7 +28999,7 @@ resolve@~1.17.0:
   languageName: node
   linkType: hard
 
-"strip-json-comments@npm:3.1.1, strip-json-comments@npm:^3.0.1, strip-json-comments@npm:^3.1.0, strip-json-comments@npm:^3.1.1, strip-json-comments@npm:~3.1.1":
+"strip-json-comments@npm:3.1.1, strip-json-comments@npm:^3.1.0, strip-json-comments@npm:^3.1.1, strip-json-comments@npm:~3.1.1":
   version: 3.1.1
   resolution: "strip-json-comments@npm:3.1.1"
   checksum: f16719ce25abc58a55ef82b1c27f541dcfa5d544f17158f62d10be21ff9bd22fde45a53c592b29d80ad3c97ccb67b7451c4833913fdaeadb508a40f5e0a9c206
