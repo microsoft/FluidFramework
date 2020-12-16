@@ -8,12 +8,12 @@ import ReactDOM from "react-dom";
 import { IKeyValueDataObject } from "./kvpair-dataobject";
 
 /**
- * Render an IDiceRoller into a given div as a text character, with a button to roll it.
+ * Render Dice into a given HTMLElement as a text character, with a button to roll it.
  * @param dataObject - The Data Object to be rendered
- * @param div - The div to render into
+ * @param div - The HTMLElement to render into
  */
-export function renderDiceRoller(DO: IKeyValueDataObject, div: HTMLDivElement) {
-    ReactDOM.render(<ReactView dataObject={DO} />, div);
+export function renderDiceRoller(dataObject: IKeyValueDataObject, div: HTMLDivElement) {
+    ReactDOM.render(<ReactView dataObject={dataObject} />, div);
 }
 
 interface IReactViewProps {

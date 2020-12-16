@@ -12,17 +12,17 @@ import { IDirectoryValueChanged, IValueChanged } from "@fluidframework/map";
  */
 export interface IKeyValueDataObject extends EventEmitter {
     /**
-     * Get the dice value as a number.
+     * Get value at Key
      */
     get: (key: string) => any
 
     /**
-     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
+     * Set Value at Key
      */
     set: (key: string, value: any) => void;
 
     /**
-     * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
+     * Event on value change
      */
     on(event: "changed", listener: (args: IDirectoryValueChanged) => void): this;
 }
