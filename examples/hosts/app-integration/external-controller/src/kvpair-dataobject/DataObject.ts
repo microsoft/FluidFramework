@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IDirectoryValueChanged, IValueChanged } from "@fluidframework/map";
 
 /**
  * IKeyValueDataObject describes the public API surface for our KeyValue DataObject.
  */
-export interface IKeyValueDataObject {
+export interface IKeyValueDataObject extends EventEmitter {
     /**
      * Get the dice value as a number.
      */

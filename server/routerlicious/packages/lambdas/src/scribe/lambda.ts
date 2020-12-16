@@ -109,7 +109,7 @@ export class ScribeLambda extends SequencedLambda {
                         this.term = lastSummary.term;
                         const lastScribe = JSON.parse(lastSummary.scribe) as IScribe;
                         this.protocolHead = lastSummary.protocolHead;
-                        this.protocolHandler = initializeProtocol(this.documentId, lastScribe.protocolState, this.term);
+                        this.protocolHandler = initializeProtocol(lastScribe.protocolState, this.term);
                         this.setStateFromCheckpoint(lastScribe);
                         this.pendingMessages = new Deque<ISequencedDocumentMessage>(
                             lastSummary.messages.filter(
@@ -312,7 +312,7 @@ export class ScribeLambda extends SequencedLambda {
     }
 
     private revertProtocolState(protocolState: IProtocolState, pendingOps: ISequencedDocumentMessage[]) {
-        this.protocolHandler = initializeProtocol(this.documentId, protocolState, this.term);
+        this.protocolHandler = initializeProtocol(protocolState, this.term);
         this.pendingMessages = new Deque(pendingOps);
     }
 

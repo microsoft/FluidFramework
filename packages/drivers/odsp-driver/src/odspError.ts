@@ -7,6 +7,8 @@ import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { IOdspSocketError } from "./contracts";
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 
+const nullToUndefined = (a: string | null) => a ?? undefined;
+
 /**
  * Throws network error - an object with a bunch of network related properties
  */
@@ -18,12 +20,20 @@ export function throwOdspNetworkError(
     const claims = statusCode === 401 && response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
 
     const networkError = createOdspNetworkError(
-        response ? `${errorMessage}, msg = ${response.statusText}, type = ${response.type}` : errorMessage,
+        response ? `${errorMessage} (${response.statusText})` : errorMessage,
         statusCode,
         undefined /* retryAfterSeconds */,
         claims);
 
-    (networkError as any).sprequestguid = response?.headers ? `${response.headers.get("sprequestguid")}` : undefined;
+    const errorAsAny = networkError as any;
+
+    if (response) {
+        errorAsAny.type = response.type;
+        if (response.headers) {
+            errorAsAny.sprequestguid = nullToUndefined(response.headers.get("sprequestguid"));
+            errorAsAny.serverEpoch = nullToUndefined(response.headers.get("x-fluid-epoch"));
+        }
+    }
 
     throw networkError;
 }
