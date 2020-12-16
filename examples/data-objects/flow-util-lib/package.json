@@ -21,7 +21,7 @@
     "build:test": "tsc --project ./src/test/tsconfig.json",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",

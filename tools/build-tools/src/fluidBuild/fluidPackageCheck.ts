@@ -9,6 +9,8 @@ import * as path from "path";
 import { existsSync, readFileAsync, writeFileAsync, resolveNodeModule } from "../common/utils";
 import * as TscUtils from "./tscUtils";
 import sortPackageJson from "sort-package-json";
+import isEqual from "lodash.isequal";
+import chalk from "chalk";
 
 export class FluidPackageCheck {
     private static fixPackageVersions: { [key: string]: string } = {
@@ -53,7 +55,7 @@ export class FluidPackageCheck {
     }
 
     private static logWarn(pkg: Package, message: string, fix: boolean) {
-        console.warn(`${pkg.nameColored}: warning:${fix ? " [FIXED]" : ""} ${message}`);
+        console.warn(`${pkg.nameColored}: warning: ${message}${chalk.greenBright(fix ? " [FIXED]" : "")}`);
     }
 
     /**
@@ -156,8 +158,8 @@ export class FluidPackageCheck {
                 }
             }
         } else if (expectedTestScript && this.checkScript(pkg, "test", expectedTestScript, fix)) {
-                fixed = true;
-            }
+            fixed = true;
+        }
 
         return fixed;
     }
@@ -232,11 +234,13 @@ export class FluidPackageCheck {
             // prepack scripts
             const prepack: string[] = [];
 
+            const hasTestSrc = pkg.getScript("build:test"); // this.hasTestDir(pkg);
+
             let concurrentBuildCompile = true;
 
             const buildPrefix = pkg.getScript("build:genver") ? "npm run build:genver && " : "";
             if (pkg.getScript("tsc")) {
-                if (pkg.getScript("build:test")) {
+                if (hasTestSrc) {
                     if (pkg.getScript("build:esnext")) {
                         // If we have build:esnext, that means that we are building it two ways (commonjs and esm)
                         buildCommonJs.push("tsc");
@@ -297,16 +301,16 @@ export class FluidPackageCheck {
                 const expected = parts.length === 0 ? undefined :
                     prefix + (parts.length > 1 && concurrently ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts.join(" && npm run ")}`);
                 if (this.checkScript(pkg, scriptName, expected, fix)) {
-                        fixed = true;
-                    }
+                    fixed = true;
                 }
+            }
             check("build", build, true, buildPrefix);
             if (buildCompile.length === 0) {
                 if (this.checkScript(pkg, "build:compile", "tsc", fix)) {
                     fixed = true;
-            }
+                }
             } else {
-            check("build:compile", buildCompile, concurrentBuildCompile);
+                check("build:compile", buildCompile, concurrentBuildCompile);
             }
             check("build:commonjs", buildCommonJs, false);
             check("build:full", buildFull);
@@ -314,6 +318,19 @@ export class FluidPackageCheck {
             if (!pkg.packageJson.private) {
                 check("prepack", prepack);
             }
+
+            /*
+            if (hasTestSrc) {
+                if (!existsSync(path.join(pkg.directory, "src", "test", "mocha"))) {
+                    const expectedBuildTest = "tsc --project ./src/test/tsconfig.json";
+                    if (this.checkScript(pkg, "build:test", expectedBuildTest, fix)) {
+                        fixed = true;
+                    }
+                } else {
+                    check("build:test", ["build:test:mocha", "build:test:jest"]);
+                }
+            }
+            */
         }
         return fixed;
     }
@@ -351,7 +368,10 @@ export class FluidPackageCheck {
             if (this.checkScript(pkg, "lint:fix", "npm run eslint:fix", fix)) {
                 fixed = true;
             }
-            const expectedEslintScript = "eslint --format stylish src"
+            // TODO: for now, some jest test at the root isn't linted yet
+            const lintOnlySrc = pkg.getScript("eslint") === `eslint --format stylish src`;
+            const dirs = !lintOnlySrc && existsSync(path.join(pkg.directory, "tests")) ? "src tests" : "src";
+            const expectedEslintScript = `eslint --format stylish ${dirs}`;
             if (this.checkScript(pkg, "eslint", expectedEslintScript, fix)) {
                 fixed = true;
             }
@@ -403,6 +423,44 @@ export class FluidPackageCheck {
         }
     }
 
+    private static readonly commonConfig = "@fluidframework/build-common/ts-common-config.json";
+
+    private static async checkTsConfigExtend(pkg: Package, fix: boolean, configJson: any) {
+        let changed = false;
+        if (configJson.extends !== this.commonConfig) {
+            this.logWarn(pkg, `tsc config not extending ts-common-config.json`, fix);
+            if (fix) {
+                configJson.extends = this.commonConfig;
+                changed = true;
+            }
+        }
+
+        if (configJson.extends === this.commonConfig) {
+            let loaded = false;
+            const commonConfigFullPath = resolveNodeModule(pkg.directory, this.commonConfig);
+            if (commonConfigFullPath) {
+                const commonConfigJson = TscUtils.readConfigFile(commonConfigFullPath);
+                if (commonConfigJson) {
+                    loaded = true;
+                    for (const option in configJson.compilerOptions) {
+                        if (configJson.compilerOptions[option] === commonConfigJson.compilerOptions[option]) {
+                            this.logWarn(pkg, `duplicate compilerOptions ${option}: ${configJson.compilerOptions[option]}`, fix);
+                            if (fix) {
+                                delete configJson.compilerOptions[option];
+                                changed = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!loaded) {
+                this.logWarn(pkg, `can't find ${this.commonConfig}`, false);
+            }
+        }
+        return changed;
+    }
+
     public static async checkTsConfig(pkg: Package, fix: boolean) {
         const command = pkg.getScript("tsc");
         if (command) {
@@ -413,44 +471,108 @@ export class FluidPackageCheck {
             const configFile = TscUtils.findConfigFile(pkg.directory, parsedCommand);
             const configJson = TscUtils.readConfigFile(configFile);
 
-            const commonConfig = "@fluidframework/build-common/ts-common-config.json";
             let changed = false;
-            if (configJson.extends !== commonConfig) {
-                this.logWarn(pkg, `tsc config not extending ts-common-config.json`, fix);
-                if (fix) {
-                    configJson.extends = commonConfig;
-                    changed = true;
-                }
+            if (await this.checkTsConfigExtend(pkg, fix, configJson)) {
+                changed = true;
             }
 
-            if (configJson.extends === commonConfig) {
-                let loaded = false;
-                const commonConfigFullPath = resolveNodeModule(pkg.directory, commonConfig);
-                if (commonConfigFullPath) {
-                    const commonConfigJson = TscUtils.readConfigFile(commonConfigFullPath);
-                    if (commonConfigJson) {
-                        loaded = true;
-                        for (const option in configJson.compilerOptions) {
-                            if (configJson.compilerOptions[option] === commonConfigJson.compilerOptions[option]) {
-                                this.logWarn(pkg, `duplicate compilerOptions ${option}: ${configJson.compilerOptions[option]}`, fix);
-                                if (fix) {
-                                    delete configJson.compilerOptions[option];
-                                    changed = true;
-                                }
-                            }
+            if (this.hasTestDir(pkg)) {
+                if (!configJson.compilerOptions?.composite) {
+                    this.logWarn(pkg, "Missing 'composite' in tsc config with test directory", fix);
+                    if (fix) {
+                        if (!configJson.compilerOptions) {
+                            configJson.compilerOptions = {};
                         }
+                        configJson.compilerOptions.composite = true;
+                        changed = true;
                     }
                 }
-
-                if (!loaded) {
-                    this.logWarn(pkg, `can't find ${commonConfig}`, false);
+                const exclude = ["src/test/**/*"];
+                if (!isEqual(configJson.exclude, exclude)) {
+                    this.logWarn(pkg, "unexpected exclude in tsc config", fix);
+                    if (fix) {
+                        configJson.exclude = exclude;
+                        changed = true;
+                    }
                 }
             }
-
 
             if (changed) {
                 await writeFileAsync(configFile, JSON.stringify(configJson, undefined, 4));
             }
         }
+    }
+
+    private static async checkOneTestDir(pkg: Package, fix: boolean, testSrcDir: string, subDir?: string) {
+        const configFile = path.join(testSrcDir, subDir ?? "", "tsconfig.json");
+        const outDir = subDir ? `../../../dist/test/${subDir}` : `../../dist/test`;
+        const referencePath = subDir ? "../../.." : "../..";
+        const compilerOptions = {
+            rootDir: "./",
+            outDir,
+            types: ["node", ...(subDir === "jest" ?
+                ["jest", "jest-environment-puppeteer", "puppeteer"] : ["mocha"])]
+        };
+        const references = [{ path: referencePath }];
+        let configJson;
+        let changed = false;
+        if (!existsSync(configFile)) {
+            // this.logWarn(pkg, `test src doesn't have tsconfig.json`, fix);
+            if (fix) {
+                configJson = {
+                    extends: this.commonConfig,
+                    compilerOptions,
+                    include: ["./**/*"],
+                    references,
+                };
+                changed = true;
+            }
+        } else {
+            configJson = TscUtils.readConfigFile(configFile);
+            if (await this.checkTsConfigExtend(pkg, fix, configJson)) {
+                changed = true;
+            }
+            if (!configJson.compilerOptions) {
+                this.logWarn(pkg, `Missing compilerOptions in test tsconfig.json`, fix);
+                if (fix) {
+                    configJson.compilerOptions = compilerOptions;
+                    changed = true;
+                }
+            } else if (configJson.compilerOptions.outDir !== outDir) {
+                this.logWarn(pkg, `Incorrect test tsconfig.json outDir`, fix);
+                if (fix) {
+                    configJson.compilerOptions.outDir = outDir;
+                    changed = true;
+                }
+            }
+
+            if (!isEqual(configJson.references, references)) {
+                this.logWarn(pkg, `Unexpected references in test tsconfig.json`, fix);
+                if (fix) {
+                    configJson.references = references;
+                    changed = true;
+                }
+            }
+        }
+        if (changed) {
+            await writeFileAsync(configFile, JSON.stringify(configJson, undefined, 4));
+        }
+    }
+
+    public static async checkTestDir(pkg: Package, fix: boolean) {
+        if (!this.hasTestDir(pkg)) { return; }
+
+        const testSrcDir = path.join(pkg.directory, "src", "test");
+        const mochaTestDir = path.join(testSrcDir, "mocha");
+        if (existsSync(mochaTestDir)) {
+            await this.checkOneTestDir(pkg, fix, testSrcDir, "mocha");
+            return this.checkOneTestDir(pkg, fix, testSrcDir, "jest");
+        }
+        return this.checkOneTestDir(pkg, fix, testSrcDir);
+    }
+
+    public static hasTestDir(pkg: Package) {
+        const testSrcDir = path.join(pkg.directory, "src", "test");
+        return existsSync(testSrcDir);
     }
 };

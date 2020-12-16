@@ -18,6 +18,7 @@
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "start": "forever start dist/index.js",
     "start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
     "stop": "forever stop dist/index.js",
