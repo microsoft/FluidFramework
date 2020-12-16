@@ -78,7 +78,8 @@
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
     "webpack": "lerna run --no-sort webpack --stream",
-    "webpack:profile": "lerna run --no-sort webpack:profile --stream"
+    "webpack:profile": "lerna run --no-sort webpack:profile --stream",
+    "lage": "lage"
   },
   "nyc": {
     "all": true,
@@ -117,6 +118,7 @@
     "concurrently": "^5.2.0",
     "copyfiles": "^2.1.0",
     "forever": "^3.0.4",
+    "lage": "0.26.2",
     "lerna": "^3.14.1",
     "markdown-magic": "^1.0.0",
     "nyc": "^15.0.0",
