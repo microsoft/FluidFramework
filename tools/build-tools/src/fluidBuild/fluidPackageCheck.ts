@@ -5,12 +5,13 @@
 
 import { MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
-import * as path from "path";
+import path from "path";
 import { existsSync, readFileAsync, writeFileAsync, resolveNodeModule } from "../common/utils";
 import * as TscUtils from "./tscUtils";
 import sortPackageJson from "sort-package-json";
 import isEqual from "lodash.isequal";
 import chalk from "chalk";
+import fs from "fs";
 
 export class FluidPackageCheck {
     private static fixPackageVersions: { [key: string]: string } = {
@@ -234,13 +235,11 @@ export class FluidPackageCheck {
             // prepack scripts
             const prepack: string[] = [];
 
-            const hasTestSrc = pkg.getScript("build:test"); // this.hasTestDir(pkg);
-
             let concurrentBuildCompile = true;
 
             const buildPrefix = pkg.getScript("build:genver") ? "npm run build:genver && " : "";
             if (pkg.getScript("tsc")) {
-                if (hasTestSrc) {
+                if (pkg.getScript("build:test")) {
                     if (pkg.getScript("build:esnext")) {
                         // If we have build:esnext, that means that we are building it two ways (commonjs and esm)
                         buildCommonJs.push("tsc");
@@ -252,7 +251,6 @@ export class FluidPackageCheck {
                         buildCompile.push("build:test");
                         concurrentBuildCompile = false;
                     }
-
                 } else {
                     buildCompile.push("tsc");
                 }
@@ -319,9 +317,8 @@ export class FluidPackageCheck {
                 check("prepack", prepack);
             }
 
-            /*
-            if (hasTestSrc) {
-                if (!existsSync(path.join(pkg.directory, "src", "test", "mocha"))) {
+            if (this.splitTestBuild(pkg)) {
+                if (!existsSync(path.join(this.getTestDir(pkg), "mocha"))) {
                     const expectedBuildTest = "tsc --project ./src/test/tsconfig.json";
                     if (this.checkScript(pkg, "build:test", expectedBuildTest, fix)) {
                         fixed = true;
@@ -330,7 +327,6 @@ export class FluidPackageCheck {
                     check("build:test", ["build:test:mocha", "build:test:jest"]);
                 }
             }
-            */
         }
         return fixed;
     }
@@ -476,7 +472,7 @@ export class FluidPackageCheck {
                 changed = true;
             }
 
-            if (this.hasTestDir(pkg)) {
+            if (this.splitTestBuild(pkg)) {
                 if (!configJson.compilerOptions?.composite) {
                     this.logWarn(pkg, "Missing 'composite' in tsc config with test directory", fix);
                     if (fix) {
@@ -516,42 +512,29 @@ export class FluidPackageCheck {
         const references = [{ path: referencePath }];
         let configJson;
         let changed = false;
-        if (!existsSync(configFile)) {
-            // this.logWarn(pkg, `test src doesn't have tsconfig.json`, fix);
+        configJson = TscUtils.readConfigFile(configFile);
+        if (await this.checkTsConfigExtend(pkg, fix, configJson)) {
+            changed = true;
+        }
+        if (!configJson.compilerOptions) {
+            this.logWarn(pkg, `Missing compilerOptions in test tsconfig.json`, fix);
             if (fix) {
-                configJson = {
-                    extends: this.commonConfig,
-                    compilerOptions,
-                    include: ["./**/*"],
-                    references,
-                };
+                configJson.compilerOptions = compilerOptions;
                 changed = true;
             }
-        } else {
-            configJson = TscUtils.readConfigFile(configFile);
-            if (await this.checkTsConfigExtend(pkg, fix, configJson)) {
+        } else if (configJson.compilerOptions.outDir !== outDir) {
+            this.logWarn(pkg, `Incorrect test tsconfig.json outDir`, fix);
+            if (fix) {
+                configJson.compilerOptions.outDir = outDir;
                 changed = true;
             }
-            if (!configJson.compilerOptions) {
-                this.logWarn(pkg, `Missing compilerOptions in test tsconfig.json`, fix);
-                if (fix) {
-                    configJson.compilerOptions = compilerOptions;
-                    changed = true;
-                }
-            } else if (configJson.compilerOptions.outDir !== outDir) {
-                this.logWarn(pkg, `Incorrect test tsconfig.json outDir`, fix);
-                if (fix) {
-                    configJson.compilerOptions.outDir = outDir;
-                    changed = true;
-                }
-            }
+        }
 
-            if (!isEqual(configJson.references, references)) {
-                this.logWarn(pkg, `Unexpected references in test tsconfig.json`, fix);
-                if (fix) {
-                    configJson.references = references;
-                    changed = true;
-                }
+        if (!isEqual(configJson.references, references)) {
+            this.logWarn(pkg, `Unexpected references in test tsconfig.json`, fix);
+            if (fix) {
+                configJson.references = references;
+                changed = true;
             }
         }
         if (changed) {
@@ -560,9 +543,8 @@ export class FluidPackageCheck {
     }
 
     public static async checkTestDir(pkg: Package, fix: boolean) {
-        if (!this.hasTestDir(pkg)) { return; }
-
-        const testSrcDir = path.join(pkg.directory, "src", "test");
+        if (!this.splitTestBuild(pkg)) { return; }
+        const testSrcDir = this.getTestDir(pkg);
         const mochaTestDir = path.join(testSrcDir, "mocha");
         if (existsSync(mochaTestDir)) {
             await this.checkOneTestDir(pkg, fix, testSrcDir, "mocha");
@@ -571,8 +553,11 @@ export class FluidPackageCheck {
         return this.checkOneTestDir(pkg, fix, testSrcDir);
     }
 
-    public static hasTestDir(pkg: Package) {
-        const testSrcDir = path.join(pkg.directory, "src", "test");
-        return existsSync(testSrcDir);
+    public static getTestDir(pkg: Package) {
+        return path.join(pkg.directory, "src", "test");
+    }
+
+    public static splitTestBuild(pkg: Package) {
+        return existsSync(path.join(this.getTestDir(pkg), "tsconfig.json"));
     }
 };

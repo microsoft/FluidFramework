@@ -7,10 +7,14 @@
         "outDir": "../../dist/test",
         "types": [
             "mocha"
-        ]
+        ],
     },
     "include": [
         "./**/*"
     ],
-    "references": [ { "path": "../.." } ]
+    "references": [
+        {
+            "path": "../.."
+        }
+    ]
 }
