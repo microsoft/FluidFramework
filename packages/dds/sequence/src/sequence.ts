@@ -124,6 +124,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     ) {
         super(id, dataStoreRuntime, attributes);
 
+        this.loadedDeferred.promise.catch((error)=>{
+            this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
+        });
+
         this.client = new MergeTree.Client(
             segmentFromSpec,
             ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
@@ -654,8 +658,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             // Initialize the interval collections
             this.initializeIntervalCollections();
             if (error) {
-                this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
                 this.loadedDeferred.reject(error);
+                throw error;
             } else {
                 // it is important this series remains synchronous
                 // first we stop defering incoming ops, and apply then all
