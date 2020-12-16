@@ -8,7 +8,6 @@ import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-contain
 import { IKeyValueDataObject, KeyValueContainerRuntimeFactory } from "./kvpair-dataobject";
 import { renderDiceRoller } from "./view";
 // import { renderDiceRoller } from "./reactView";
-// import { renderDiceRoller } from "./vueView";
 
 let createNew = false;
 if (location.hash.length === 0) {
