@@ -80,7 +80,7 @@
     "eslint-plugin-react": "~7.21.2",
     "eslint-plugin-unicorn": "~22.0.0",
     "html-loader": "^0.5.5",
-    "jest": "^26.4.2",
+    "jest": "^25.5.4",
     "jest-junit": "^10.0.0",
     "jest-puppeteer": "^4.3.0",
     "puppeteer": "^1.20.0",
