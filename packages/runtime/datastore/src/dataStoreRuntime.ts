@@ -301,7 +301,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
 
                 return {
-                    status: 404,
+                    status: 500,
                     mimeType: "text/plain",
                     value: `Failed to get Channel with id:[${id}] error:{${error}}`,
                 };

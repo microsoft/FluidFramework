@@ -656,6 +656,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             if (error) {
                 this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
                 this.loadedDeferred.reject(error);
+                throw error;
             } else {
                 // it is important this series remains synchronous
                 // first we stop defering incoming ops, and apply then all
