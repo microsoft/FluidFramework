@@ -443,6 +443,14 @@ export class SharedTree extends SharedObject {
 				return SharedTreeEvent.DroppedMalformedEdit;
 		}
 	}
+
+	/**
+	 * release all resources
+	 */
+	public dispose(): void {
+		// remove all listeners for all events associated with SharedTree instance.
+		this.removeAllListeners();
+	}
 }
 
 function loadSummary(
