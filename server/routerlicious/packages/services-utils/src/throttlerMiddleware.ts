@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { RequestHandler, Request } from "express";
+import { RequestHandler, Request, Response, NextFunction } from "express";
+import safeStringify from "json-stringify-safe";
 import onFinished from "on-finished";
 import { IThrottler, ILogger, ThrottlingError } from "@fluidframework/server-services-core";
 
@@ -55,6 +56,10 @@ const getThrottleId = (req: Request, throttleOptions: IThrottleMiddlewareOptions
     return prefix || throttleOptions.throttleIdSuffix || "-";
 };
 
+function noopMiddleware(req: Request, res: Response, next: NextFunction) {
+    next();
+}
+
 /**
  * Express middleware for API throttling.
  */
@@ -66,6 +71,11 @@ export function throttle(
             ...defaultThrottleMiddlewareOptions,
             ...options,
         };
+
+        if (throttleOptions.weight === 0) {
+            logger?.info("Throttle middleware created with 0 weight: Replacing with no-op middleware.");
+            return noopMiddleware;
+        }
 
         return (req, res, next) => {
             const throttleId = getThrottleId(req, throttleOptions);
@@ -86,6 +96,8 @@ export function throttle(
                         retryAfterInSeconds: e.retryAfter,
                     } });
                     return res.status(e.code).json(e);
+                } else {
+                    logger?.error(`Throttle increment failed: ${safeStringify(e, undefined, 2)}`, { messageMetaData });
                 }
             }
 
