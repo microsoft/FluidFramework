@@ -46,7 +46,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.26.0-0",
+    "@fluidframework/common-utils": "^0.26.0",
     "@fluidframework/server-services": "^0.1016.0",
     "@fluidframework/server-services-core": "^0.1016.0",
     "@fluidframework/server-services-utils": "^0.1016.0",
