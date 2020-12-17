@@ -13,10 +13,11 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build-v2": "cd @fluid-internal/version-test-2 && test -e dist/main.bundle.js || npm run webpack",
-    "build:compile": "npm run tsc",
+    "build:compile": "npm run tsc && npm run build:test",
     "build:compile:min": "npm run build:compile",
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
+    "build:test": "tsc --project tests/tsconfig.json",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src tests",
     "eslint:fix": "eslint --format stylish src tests --fix",

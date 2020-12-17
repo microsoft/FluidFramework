@@ -83,6 +83,7 @@ export class FluidRepoBuild extends FluidRepo {
             }
             await FluidPackageCheck.checkNpmIgnore(pkg, fix);
             await FluidPackageCheck.checkTsConfig(pkg, fix);
+            await FluidPackageCheck.checkTestDir(pkg, fix);
         }
     }
     public async depcheck() {

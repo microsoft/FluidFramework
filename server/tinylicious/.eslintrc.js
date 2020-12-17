@@ -7,6 +7,9 @@
     "extends": [
         "@fluidframework/eslint-config-fluid/eslint7"
     ],
+    "parserOptions": {
+        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
+    },
     "rules": {
         "@typescript-eslint/no-use-before-define":"off",
         "@typescript-eslint/promise-function-async":"off",
