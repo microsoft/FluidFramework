@@ -23,10 +23,6 @@ parameters:
     - skip
     - force
 
-variables:
-- group: prague-key-vault
-
-
 trigger:
   branches:
     include:
@@ -72,6 +68,8 @@ pr:
 
 extends:
   template: templates/build-npm-package.yml
+  variables:
+  - group: prague-key-vault
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
