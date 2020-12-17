@@ -299,7 +299,7 @@ export class Loader extends EventEmitter implements ILoader {
         });
     }
 
-    public async resolveWithPendingOps(request: IRequest, pendingOps): Promise<Container> {
+    public async resolveWithLocallySavedState(request: IRequest, pendingOps): Promise<Container> {
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Resolve" }, async () => {
             const resolved = await this.resolveCore(request, pendingOps);
             return resolved.container;

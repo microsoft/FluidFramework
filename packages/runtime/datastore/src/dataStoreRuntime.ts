@@ -791,6 +791,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
     }
 
+    public rebaseOp(content: any, localOpMetadata: unknown) {
+        const envelope = content as IEnvelope;
+        const channelContext = this.contexts.get(envelope.address);
+        assert(!!channelContext, "There should be a channel context for the op");
+        channelContext.rebaseOp(envelope.contents, localOpMetadata);
+    }
+
     private setChannelDirty(address: string): void {
         this.verifyNotClosed();
         this.dataStoreContext.setChannelDirty(address);

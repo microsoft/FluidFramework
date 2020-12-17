@@ -71,7 +71,7 @@ export interface IDeltaHandler {
      */
     reSubmit(message: any, localOpMetadata: unknown): void;
 
-    rebase(message: any, localOpMetadata: unknown): void;
+    rebaseOp(message: any, localOpMetadata: unknown): void;
 }
 
 /**

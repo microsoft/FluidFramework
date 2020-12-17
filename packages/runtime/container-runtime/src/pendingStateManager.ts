@@ -45,8 +45,14 @@ interface IPendingFlush {
 
 type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
 
-interface IPendingSnapshot {
+interface IPendingLocalState {
+    /**
+     * client ID we most recently connected with, or undefined if we never connected
+     */
     clientId?: string;
+    /**
+     * list of pending states, including ops and batch information
+     */
     pendingStates: IPendingState[];
 }
 
@@ -62,7 +68,6 @@ interface IPendingSnapshot {
 export class PendingStateManager {
     private readonly pendingStates = new Deque<IPendingState>();
     private readonly initialStates: Deque<IPendingState>;
-    private readonly pendingRebase = new Deque<IPendingState>();
     private readonly initialClientId: string | undefined;
     private readonly initialClientSeqNum: number;
 
@@ -90,7 +95,7 @@ export class PendingStateManager {
         return this.pendingMessagesCount !== 0;
     }
 
-    public snapshot(): IPendingSnapshot | undefined {
+    public getLocalState(): IPendingLocalState | undefined {
         if (this.pendingStates.length > 0) {
             return {
                 clientId: this.clientId,
@@ -99,10 +104,14 @@ export class PendingStateManager {
         }
     }
 
-    constructor(private readonly containerRuntime: ContainerRuntime, initialSnapshot: IPendingSnapshot | undefined) {
-        this.initialStates = new Deque<IPendingState>(initialSnapshot?.pendingStates ?? []);
-        this.initialClientId = initialSnapshot?.clientId;
-        const firstPending = initialSnapshot?.pendingStates[0];
+    constructor(
+        private readonly containerRuntime: ContainerRuntime,
+        private readonly rebaseOp: (content, localOpMetadata) => void,
+        initialState: IPendingLocalState | undefined,
+    ) {
+        this.initialStates = new Deque<IPendingState>(initialState?.pendingStates ?? []);
+        this.initialClientId = initialState?.clientId;
+        const firstPending = initialState?.pendingStates[0];
         assert(!firstPending || firstPending.type === "message");
         this.initialClientSeqNum = (firstPending as IPendingMessage)?.clientSequenceNumber ?? -1;
     }
@@ -193,6 +202,7 @@ export class PendingStateManager {
     }
 
     public processRemoteMessage(message: ISequencedDocumentMessage) {
+        // rebase initial ops up to and including message sequence number
         while (!this.initialStates.isEmpty()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const nextMessage = this.initialStates.peekFront()!;
@@ -200,19 +210,18 @@ export class PendingStateManager {
             if (nextMessage.referenceSequenceNumber > message.sequenceNumber) {
                 break;
             }
-            const context = (this.containerRuntime as any).dataStores.contexts.get(nextMessage.content?.address);
-            const channelContext = context.channel.contexts.get(nextMessage.content.contents?.content?.address);
-
             // rebaseOp will cause the DDS to behave as if it has sent the op but not actually send it
-            channelContext.rebaseOp(nextMessage.content.contents.content, nextMessage.localOpMetadata);
+            this.rebaseOp(nextMessage.content, nextMessage.localOpMetadata);
+
+            // then we push onto pendingStates which will cause PendingStateManager to resubmit when we connect
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pendingRebase.push(this.initialStates.shift()!);
+            this.pendingStates.push(this.initialStates.shift()!);
         }
+
+        // if this is an ack for a pending initial op, dequeue one message (possibly one we just queued)
         if (message.clientId === this.initialClientId && message.clientSequenceNumber >= this.initialClientSeqNum) {
-            // must be a pending op that was successfully sent
-            assert(!this.pendingRebase.isEmpty());
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const ackedMessage = this.pendingRebase.shift()!;
+            const ackedMessage = this.pendingStates.shift();
+            assert(ackedMessage !== undefined);
             assert(ackedMessage.type === "message");
             return { localAck: true, localOpMetadata: ackedMessage.localOpMetadata };
         }
@@ -339,29 +348,6 @@ export class PendingStateManager {
         return nextPendingState;
     }
 
-    public replayInitialStates() {
-        // assert(this.connected, "The connection state is not consistent with the runtime");
-
-        // rebase all remaining pending initial ops
-        while (!this.initialStates.isEmpty()) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const nextMessage = this.initialStates.shift()!;
-            assert(nextMessage.type === "message");
-            const context = (this.containerRuntime as any).dataStores.contexts.get(nextMessage.content?.address);
-            const channelContext = context.channel.contexts.get(nextMessage.content.contents?.content?.address, false);
-
-            channelContext.rebaseOp(nextMessage.content.contents.content, nextMessage.localOpMetadata);
-            this.pendingRebase.push(nextMessage);
-        }
-
-        // at this point we know we have seen and dequeued any pending ops that were actually sent
-        // successfully, so we resubmit everything in this queue
-        while (!this.pendingRebase.isEmpty()) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.replayState(this.pendingRebase.shift()!);
-        }
-    }
-
     /**
      * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
      * states in its queue. This includes setting the FlushMode and triggering resubmission of unacked ops.
@@ -372,6 +358,15 @@ export class PendingStateManager {
         // This assert suggests we are about to send same ops twice, which will result in data loss.
         assert(this.clientId !== this.containerRuntime.clientId, "replayPendingStates called twice for same clientId!");
         this.clientId = this.containerRuntime.clientId;
+
+        // rebase all remaining initial ops
+        while (!this.initialStates.isEmpty()) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const nextMessage = this.initialStates.shift()!;
+            assert(nextMessage.type === "message");
+            this.rebaseOp(nextMessage.content, nextMessage.localOpMetadata);
+            this.pendingStates.push(nextMessage);
+        }
 
         let pendingStatesCount = this.pendingStates.length;
         if (pendingStatesCount === 0) {

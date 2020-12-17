@@ -31,30 +31,30 @@ import { ChannelStorageService } from "./channelStorageService";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
 import { debug } from "./debug";
 
-interface IThing1 {
+interface IPendingProcess {
     type: "process";
     message: ISequencedDocumentMessage;
     local: boolean;
     localOpMetadata: unknown;
 }
 
-interface IThing2 {
+interface IPendingRebase {
     type: "rebase";
     message: ISequencedDocumentMessage;
     localOpMetadata: unknown;
 }
 
-interface IThing3 {
+interface IPendingResubmit {
     type: "resubmit";
     content: any;
     localOpMetadata: unknown;
 }
 
-type IThing = IThing1 | IThing2 | IThing3;
+type IPendingAction = IPendingProcess | IPendingRebase | IPendingResubmit;
 
 export class RemoteChannelContext implements IChannelContext {
     private isLoaded = false;
-    private pending: IThing[] | undefined = [];
+    private pending: IPendingAction[] | undefined = [];
     private channelP: Promise<IChannel> | undefined;
     private channel: IChannel | undefined;
     private readonly services: {
@@ -113,7 +113,7 @@ export class RemoteChannelContext implements IChannelContext {
 
     public rebaseOp(message: ISequencedDocumentMessage, localOpMetadata: unknown) {
         if (this.isLoaded) {
-            this.services.deltaConnection.rebase(message, localOpMetadata);
+            this.services.deltaConnection.rebaseOp(message, localOpMetadata);
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pending!.push({ type: "rebase", message, localOpMetadata });
@@ -231,7 +231,7 @@ export class RemoteChannelContext implements IChannelContext {
                         this.services.deltaConnection.process(message.message, message.local, message.localOpMetadata);
                         break;
                     case "rebase":
-                        this.services.deltaConnection.rebase(message.message, message.localOpMetadata);
+                        this.services.deltaConnection.rebaseOp(message.message, message.localOpMetadata);
                         break;
                     case "resubmit":
                         this.services.deltaConnection.reSubmit(message.content, message.localOpMetadata);
@@ -241,7 +241,9 @@ export class RemoteChannelContext implements IChannelContext {
             } catch (err) {
                 // record sequence number for easier debugging
                 const error = CreateContainerError(err);
-                // error.sequenceNumber = message.sequenceNumber;
+                if (message.type === "process") {
+                    error.sequenceNumber = message.message.sequenceNumber;
+                }
                 throw error;
             }
         }

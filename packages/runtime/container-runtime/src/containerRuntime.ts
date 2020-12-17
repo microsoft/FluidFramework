@@ -726,7 +726,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.deltaSender = this.deltaManager;
 
-        this.pendingStateManager = new PendingStateManager(this, context.pendingOps);
+        this.pendingStateManager = new PendingStateManager(
+            this,
+            (content, localOpMetadata) => this.dataStores.rebaseOp(content, localOpMetadata),
+            context.pendingOps);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);
@@ -984,7 +987,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._connected = connected;
 
         if (changeOfState) {
-            this.pendingStateManager.replayInitialStates();
             this.replayPendingStates();
         }
 

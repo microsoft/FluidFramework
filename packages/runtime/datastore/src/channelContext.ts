@@ -24,6 +24,8 @@ export interface IChannelContext {
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 
+    rebaseOp(content: any, localOpMetadata: unknown): void;
+
     getGCData(): Promise<IGCData>;
 }
 

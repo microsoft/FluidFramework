@@ -362,9 +362,10 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         this.kernel.trySubmitMessage(content, localOpMetadata);
     }
 
-    protected rebaseCore(content: any, localOpMetadata: unknown) {
-        this.kernel.tryProcessMessage(content, false, localOpMetadata);
-        this.kernel.tryRebaseMessage(content.contents, localOpMetadata);
+    protected rebaseOpCore(content: any, localOpMetadata: unknown) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        this.kernel.tryProcessMessage({ contents: content } as ISequencedDocumentMessage, false, localOpMetadata);
+        this.kernel.tryRebaseOp(content, localOpMetadata);
     }
 
     /**

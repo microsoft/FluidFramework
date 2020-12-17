@@ -433,8 +433,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             reSubmit: (content: any, localOpMetadata: unknown) => {
                 this.reSubmit(content, localOpMetadata);
             },
-            rebase: (content: any, localOpMetadata: unknown) => {
-                this.rebase(content, localOpMetadata);
+            rebaseOp: (content: any, localOpMetadata: unknown) => {
+                this.rebaseOp(content, localOpMetadata);
             },
         });
 
@@ -493,11 +493,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.reSubmitCore(content, localOpMetadata);
     }
 
-    private rebase(content: any, localOpMetadata: unknown) {
-        this.rebaseCore(content, localOpMetadata);
+    private rebaseOp(content: any, localOpMetadata: unknown) {
+        this.rebaseOpCore(content, localOpMetadata);
     }
 
-    protected rebaseCore(content: any, localOpMetadata: unknown) {
+    protected rebaseOpCore(content: any, localOpMetadata: unknown) {
         // do nothing
     }
 }

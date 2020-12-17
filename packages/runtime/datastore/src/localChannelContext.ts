@@ -121,6 +121,10 @@ export class LocalChannelContext implements IChannelContext {
         this.services.value.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
+    public rebaseOp() {
+        throw new Error("no rebase on local channel");
+    }
+
     /**
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree

@@ -24,7 +24,7 @@ const testContainerConfig: ITestContainerConfig = {
 
 const getSnapshot = (container: IContainer) =>
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        (container as any).context.runtime.pendingStateManager.snapshot();
+        (container as any).context.runtime.pendingStateManager.getLocalState();
 
 const watchContainer = (container) => {
     container.on("op", (op) => {
@@ -79,7 +79,7 @@ const tests = (args: ITestObjectProvider) => {
         container2.close();
 
         // load container with pending ops, which should resend the op not sent by previous container
-        const container3: IContainer = await (loader as any).resolveWithPendingOps(
+        const container3: IContainer = await (loader as any).resolveWithLocallySavedState(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
             pendingOps,
         );
@@ -111,7 +111,7 @@ const tests = (args: ITestObjectProvider) => {
         });
 
         // load with pending ops, which it should not resend because they were already sent successfully
-        const container3: IContainer = await (loader as any).resolveWithPendingOps(
+        const container3: IContainer = await (loader as any).resolveWithLocallySavedState(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
             pendingOps,
         );
@@ -141,7 +141,7 @@ const tests = (args: ITestObjectProvider) => {
         container2.close();
 
         // load container with pending ops, which should resend the ops not sent by previous container
-        const container3: IContainer = await (loader as any).resolveWithPendingOps(
+        const container3: IContainer = await (loader as any).resolveWithLocallySavedState(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
             pendingOps,
         );
@@ -173,7 +173,7 @@ const tests = (args: ITestObjectProvider) => {
         [...Array(10).keys()].map((i) => map1.set(i.toString(), testValue));
 
         // load container with pending ops, which should not resend the ops sent by previous container
-        const container3: IContainer = await (loader as any).resolveWithPendingOps(
+        const container3: IContainer = await (loader as any).resolveWithLocallySavedState(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
             pendingOps,
         );
