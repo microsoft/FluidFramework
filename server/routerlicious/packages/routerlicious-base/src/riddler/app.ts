@@ -9,6 +9,7 @@ import express from "express";
 import morgan from "morgan";
 import * as winston from "winston";
 import { getTenantIdFromRequest } from "../utils";
+import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import * as api from "./api";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -60,6 +61,9 @@ export function create(
     }
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
+
+    app.use(bindCorrelationId());
+
     app.use(
         "/api",
         api.create(

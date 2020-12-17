@@ -20,6 +20,7 @@ import morgan from "morgan";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import { getTenantIdFromRequest } from "../utils";
 import * as alfredRoutes from "./routes";
 
@@ -75,6 +76,8 @@ export function create(
     app.use(cookieParser());
     app.use(bodyParser.json({ limit: requestSize }));
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
+
+    app.use(bindCorrelationId());
 
     // Bind routes
     const routes = alfredRoutes.create(
