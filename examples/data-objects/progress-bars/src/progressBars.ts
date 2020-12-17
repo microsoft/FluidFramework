@@ -111,11 +111,11 @@ export class ProgressBar extends EventEmitter implements
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return {
-            mimeType: "fluid/object",
-            status: 200,
-            value: this,
-        };
+        if (request.url === "" || request.url === "/") {
+            return { status: 200, mimeType: "fluid/object", value: this };
+        } else {
+            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+        }
     }
 }
 
