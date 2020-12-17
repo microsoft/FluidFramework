@@ -14,11 +14,11 @@ export function sharedStringWithSequentialIdMixin(Base: typeof SharedString = Sh
     return class SequenceWithSequentialId extends Base {
         protected processMergeTreeMsg(
             rawMessage: ISequencedDocumentMessage): void {
-                super.processMergeTreeMsg(rawMessage);
                 const message = parseHandles(
                     rawMessage,
                     this.runtime.IFluidSerializer);
                 this.applySequentialId(message);
+                super.processMergeTreeMsg(rawMessage);
         }
 
         private applySequentialId(msg: ISequencedDocumentMessage) {
@@ -41,22 +41,27 @@ export function sharedStringWithSequentialIdMixin(Base: typeof SharedString = Sh
                 const newMarker = insertSegment.segment;
                 let newMarkerProps = newMarker.properties ?? {};
                 const newMarkerCp = this.getPosition(newMarker);
-                let previousMarker: Marker | undefined;
-                let nextMarker: Marker | undefined;
+                const beforeMarkers: Marker[] = [];
+                const afterMarkers: Marker[] = [];
+
+                const beforeBoundaryStart = 0;
+                const beforeBoundaryEnd = newMarkerCp - 1 > 0 ? newMarkerCp - 1 : 0;
                 this.walkSegments((segment) => {
-                    if (segment.type === Marker.type) {
-                        previousMarker = segment as Marker;
+                    if (Marker.is(segment)) {
+                        beforeMarkers.push(segment);
                     }
                     return true;
-                }, 0, newMarkerCp - 1);
+                }, beforeBoundaryStart, beforeBoundaryEnd);
 
                 this.walkSegments((segment) => {
-                    if (segment.type === Marker.type) {
-                        nextMarker = segment as Marker;
+                    if (Marker.is(segment)) {
+                        afterMarkers.push(segment);
                     }
                     return true;
                 }, newMarkerCp + 1, this.getLength());
 
+                const previousMarker: Marker | undefined = beforeMarkers.pop();
+                const nextMarker: Marker | undefined = afterMarkers.shift();
                 const previousMarkerId = previousMarker ? previousMarker.getId() : "";
                 const nextMarkerId =  nextMarker ? nextMarker.getId() : "";
 
@@ -65,9 +70,13 @@ export function sharedStringWithSequentialIdMixin(Base: typeof SharedString = Sh
                 const nextMarkerCp = nextMarker ? this.getPosition(nextMarker) : this.getLength();
                 const distancePreviousMarker = Math.abs(newMarkerCp - previousMarkerCp);
                 const distanceToNextMarker = Math.abs(newMarkerCp - nextMarkerCp);
-                const id = distancePreviousMarker < distanceToNextMarker ?
-                createIdAfterMin(previousMarkerId, nextMarkerId)
-                : createIdBeforeMax(previousMarkerId, nextMarkerId);
+
+                let id: string;
+                if (distancePreviousMarker > 0 && distancePreviousMarker < distanceToNextMarker) {
+                 id = createIdAfterMin(previousMarkerId, nextMarkerId);
+                } else {
+                    id = createIdBeforeMax(previousMarkerId, nextMarkerId);
+                }
                 newMarkerProps = { ...newMarkerProps, [reservedMarkerIdKey]: id };
                 newMarker.properties = newMarkerProps;
             }
