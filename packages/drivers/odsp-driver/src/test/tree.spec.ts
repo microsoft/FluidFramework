@@ -4,11 +4,8 @@
  */
 import { assert } from "@fluidframework/common-utils";
 import {
-    bufferFromString,
-    stringFromBuffer,
     TreeBuilder,
     BlobCore,
-    BlobDeepCopy,
     Node,
 } from "../tree";
 
@@ -21,7 +18,7 @@ function compareBuilfers(b1: Node | BlobCore, b2: Node | BlobCore) {
         }
     } else {
         assert(!(b2 instanceof Node), "Buffer vs. Node");
-        assert(stringFromBuffer(b1) === stringFromBuffer(b2), "Buffer sizes not same");
+        assert(b1.toString() === b2.toString(), "Buffer sizes not same");
     }
 }
 
@@ -30,7 +27,7 @@ function longBuffer(length: number) {
     for (let i = 0; i < length; i++) {
         buffer[i] = 30 + (i % 10); // 0-9
     }
-    return new BlobDeepCopy(buffer);
+    return buffer;
 }
 
 describe("Tree test", () => {
@@ -54,59 +51,59 @@ describe("Tree test", () => {
     });
 
     it("single node", async () => {
-        builder.addChildNode();
+        builder.addNode();
         validate(5);
     });
 
     it("single buffer", async () => {
-        builder.addChildBuffer(bufferFromString("first"));
+        builder.addString("first");
         validate(10);
     });
 
     it("single long buffer (255)", async () => {
-        builder.addChildBuffer(longBuffer(255));
+        builder.addBlob(longBuffer(255));
         validate(5 + 255);
     });
 
     it("single long buffer (256)", async () => {
-        builder.addChildBuffer(longBuffer(256));
+        builder.addBlob(longBuffer(256));
         validate(5 + 256 + 1);
     });
 
     it("single long buffer (257)", async () => {
-        builder.addChildBuffer(longBuffer(257));
+        builder.addBlob(longBuffer(257));
         validate(5 + 257 + 1);
     });
 
     it("single long buffer", async () => {
-        builder.addChildBuffer(longBuffer(65538));
+        builder.addBlob(longBuffer(65538));
         validate(5 + 65538 + 2);
     });
 
     it("two node", async () => {
-        builder.addChildNode();
-        builder.addChildNode();
+        builder.addNode();
+        builder.addNode();
         validate(7);
     });
 
     it("two buffer", async () => {
-        builder.addChildBuffer(bufferFromString("first"));
-        builder.addChildBuffer(bufferFromString("second"));
+        builder.addString("first");
+        builder.addString("second");
         validate(18);
     });
 
     it("single node + buffer", async () => {
-        builder.addChildNode().addChildBuffer(bufferFromString("first"));
+        builder.addNode().addString("first");
         validate(12);
     });
 
     it("complex", async () => {
-        builder.addChildBuffer(bufferFromString("first"));
-        const node = builder.addChildNode();
-        node.addChildBuffer(bufferFromString("second"));
-        node.addChildBuffer(bufferFromString("third"));
-        const node2 = node.addChildNode();
-        node2.addChildBuffer(bufferFromString("fourth"));
+        builder.addString("first");
+        const node = builder.addNode();
+        node.addString("second");
+        node.addString("third");
+        const node2 = node.addNode();
+        node2.addString("fourth");
         validate(37);
     });
 });

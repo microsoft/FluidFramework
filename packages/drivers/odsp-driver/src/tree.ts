@@ -4,9 +4,7 @@
  */
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 
-export abstract class Buffer {
-    public abstract get buffer();
-}
+const stringEncoding = "utf-8";
 
 export class ReadBuffer {
     protected index = 0;
@@ -45,7 +43,7 @@ export class ReadBuffer {
     }
 }
 
-export class WriteBuffer extends Buffer {
+class WriteBuffer {
     protected data?: Uint8Array = new Uint8Array(4096);
     protected index = 0;
 
@@ -104,7 +102,7 @@ enum Codes {
 export abstract class BlobCore {
     public abstract get buffer();
 
-    public toString(encoding: "utf-8") {
+    public toString(encoding = stringEncoding) {
         return IsoBuffer.from(this.buffer).toString(encoding);
     }
 
@@ -124,11 +122,7 @@ export abstract class BlobCore {
     }
 }
 
-export class BlobDeepCopy extends BlobCore {
-    public static fromString(data: string, encoding: "utf-8"): BlobCore {
-        return new BlobDeepCopy(IsoBuffer.from(data, encoding));
-    }
-
+class BlobDeepCopy extends BlobCore {
     constructor(protected readonly data: Uint8Array) {
         super();
     }
@@ -150,10 +144,7 @@ export class BlobDeepCopy extends BlobCore {
     }
 }
 
-export const bufferFromString = (input: string) => BlobDeepCopy.fromString(input, "utf-8");
-export const stringFromBuffer = (blob: BlobCore) => blob.toString("utf-8");
-
-export class BlobShallowCopy extends BlobCore {
+class BlobShallowCopy extends BlobCore {
     constructor(protected data: ReadBuffer, protected start: number, protected end: number) {
         super();
     }
@@ -174,16 +165,43 @@ export class Node {
     protected children: (Node | BlobCore)[] = [];
 
     public get length() { return this.children.length; }
+
+    // Mostly for internal tools. Please use getString / getBlob / getNode API
     public get(index: number) { return this.children[index]; }
 
-    public addChildNode(): Node {
+    public getString(index: number)
+    {
+        const node = this.children[index];
+        assert(!(node instanceof Node));
+        return node.toString(stringEncoding);
+    }
+
+    public getBlob(index: number)
+    {
+        const node = this.children[index];
+        assert(!(node instanceof Node));
+        return node;
+    }
+
+    public getNode(index: number)
+    {
+        const node = this.children[index];
+        assert(node instanceof Node);
+        return node;
+    }
+
+    public addNode(): Node {
         const node = new Node();
         this.children.push(node);
         return node;
     }
 
-    public addChildBuffer(blob: BlobCore) {
-        this.children.push(blob);
+    public addBlob(blob: Uint8Array) {
+        this.children.push(new BlobDeepCopy(blob));
+    }
+
+    public addString(payload: string) {
+        this.addBlob(IsoBuffer.from(payload, stringEncoding));
     }
 
     public serialize(buffer: WriteBuffer) {
