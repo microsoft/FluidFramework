@@ -89,6 +89,7 @@ export interface IDocumentStorageService {
      * server has deleted it this call may result in a broken promise.
      */
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+
 }
 
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {

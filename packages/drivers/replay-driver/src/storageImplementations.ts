@@ -123,8 +123,8 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
      *
      * @deprecated - only here for back compat, will be removed after release
      */
-    public async read(blobId: string): Promise<string> {
-        return this.storage.read(blobId) as string;
+    public async read(blobId: string): Promise<ArrayBufferLike> {
+        return this.storage.readBlob(blobId);
     }
 }
 

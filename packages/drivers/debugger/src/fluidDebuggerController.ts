@@ -250,7 +250,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
      */
     public async read(blobId: string): Promise<string> {
         if (this.storage !== undefined) {
-            return this.storage.read(blobId) as string;
+            return this.storage.readBlob(blobId);
         }
         throw new Error("Reading blob before storage is setup properly");
     }

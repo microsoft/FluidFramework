@@ -4,7 +4,7 @@
  */
 
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import { blobToString } from "@fluidframework/driver-utils"
+import { blobToString } from "@fluidframework/driver-utils";
 import {
     MapKernel,
 } from "@fluidframework/map";
