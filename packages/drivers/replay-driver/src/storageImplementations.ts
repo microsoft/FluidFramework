@@ -12,7 +12,7 @@ import {
     IDocumentStorageService,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { buildSnapshotTree, toBuffer } from "@fluidframework/driver-utils";
 import {
     IClient,
     ISnapshotTree,
@@ -84,6 +84,14 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
         return snapshotTree;
     }
 
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        const blob = this.blobs.get(blobId);
+        if (blob !== undefined) {
+            return toBuffer(blob, "base64");
+        }
+        throw new Error(`Unknown blob ID: ${blobId}`);
+    }
+
     public async read(blobId: string): Promise<string> {
         const blob = this.blobs.get(blobId);
         if (blob !== undefined) {
@@ -126,6 +134,10 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
     public async read(blobId: string): Promise<ArrayBufferLike> {
         return this.storage.readBlob(blobId);
     }
+
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        return this.storage.readBlob(blobId);
+    }
 }
 
 export class OpStorage extends ReadDocumentStorageServiceBase {
@@ -137,7 +149,15 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
         throw new Error("no snapshot tree should be asked when playing ops");
     }
 
+    /**
+     *
+     * @deprecated - only here for back compat, will be removed after release
+     */
     public async read(blobId: string): Promise<string> {
+        throw new Error(`Unknown blob ID: ${blobId}`);
+    }
+
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         throw new Error(`Unknown blob ID: ${blobId}`);
     }
 }

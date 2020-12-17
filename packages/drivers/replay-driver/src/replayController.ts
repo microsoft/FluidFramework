@@ -16,11 +16,7 @@ import * as api from "@fluidframework/protocol-definitions";
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
     public abstract getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
     public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
-
-    /**
-     * @deprecated - only here for back compat, will be removed after release
-     */
-    // public abstract read(blobId: string): Promise<string>;
+    public abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
 
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         return Promise.reject(new Error("Invalid operation"));
@@ -31,10 +27,6 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
-        return Promise.reject(new Error("Invalid operation"));
-    }
-
-    public async readBlob(blobId) {
         return Promise.reject(new Error("Invalid operation"));
     }
 
