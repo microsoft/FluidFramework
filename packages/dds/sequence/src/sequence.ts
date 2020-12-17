@@ -597,7 +597,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return this.client.snapshot(this.runtime, this.handle, serializer, this.messagesSinceMSNChange);
     }
 
-    private processMergeTreeMsg(
+    protected processMergeTreeMsg(
         rawMessage: ISequencedDocumentMessage) {
         const message = parseHandles(rawMessage, this.serializer);
 
