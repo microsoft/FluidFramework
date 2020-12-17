@@ -31,7 +31,7 @@
     "@fluidframework/common-definitions": "^0.19.1",
     "@fluidframework/core-interfaces": "^0.31.0",
     "@fluidframework/driver-definitions": "^0.31.0",
-    "@fluidframework/protocol-definitions": "^0.1016.0-0"
+    "@fluidframework/protocol-definitions": "^0.1016.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",

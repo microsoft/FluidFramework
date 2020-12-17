@@ -38,7 +38,7 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.31.0",
     "@fluidframework/base-host": "^0.31.0",
-    "@fluidframework/common-utils": "^0.26.0-0",
+    "@fluidframework/common-utils": "^0.26.0",
     "@fluidframework/runtime-utils": "^0.31.0",
     "@fluidframework/view-interfaces": "^0.31.0",
     "react": "^16.10.2",
