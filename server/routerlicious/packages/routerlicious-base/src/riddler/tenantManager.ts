@@ -76,6 +76,11 @@ export class TenantManager {
         if (!tenant) {
             winston.error("Tenant is disabled or does not exist.");
             return Promise.reject(new Error("Tenant is disabled or does not exist."));
+        } else {
+            let externalStorageData = tenant.customData.externalStorageData;
+            if (tenant.customData.externalStorageData !== undefined) {
+                externalStorageData = this.decryptAccessInfo(externalStorageData);
+            }
         }
 
         return {
@@ -169,7 +174,10 @@ export class TenantManager {
     public async updateCustomData(tenantId: string, customData: ITenantCustomData): Promise<ITenantCustomData> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
-
+        let externalStorageData = customData.externalStorageData;
+        if (externalStorageData !== undefined) {
+            externalStorageData = this.encryptAccessInfo(externalStorageData);
+        }
         await collection.update({ _id: tenantId }, { customData }, null);
 
         return (await this.getTenantDocument(tenantId)).customData;
@@ -277,5 +285,39 @@ export class TenantManager {
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
         await collection.update({ _id: tenantId }, { disabled: true }, null);
+    }
+
+    private encryptAccessInfo(externalStorageData :any): any {
+        let accessInfo = externalStorageData.accessInfo;
+        if (accessInfo.connectionString !== undefined) {
+            accessInfo.connectionString = this.secretManager.encryptSecret(accessInfo.connectionString);
+        }
+
+        if (accessInfo.accessToken !== undefined) {
+            accessInfo.accessToken = this.secretManager.encryptSecret(accessInfo.accessToken);
+        }
+
+        if (accessInfo.refreshToken !== undefined) {
+            accessInfo.refreshToken = this.secretManager.encryptSecret(accessInfo.refreshToken);
+        }
+
+        return externalStorageData;
+    }
+
+    private decryptAccessInfo(externalStorageData :any): any {
+        let accessInfo = externalStorageData.accessInfo;
+        if (accessInfo.connectionString !== undefined) {
+            accessInfo.connectionString = this.secretManager.decryptSecret(accessInfo.connectionString);
+        }
+
+        if (accessInfo.accessToken !== undefined) {
+            accessInfo.accessToken = this.secretManager.decryptSecret(accessInfo.accessToken);
+        }
+
+        if (accessInfo.refreshToken !== undefined) {
+            accessInfo.refreshToken = this.secretManager.decryptSecret(accessInfo.refreshToken);
+        }
+
+        return externalStorageData;
     }
 }
