@@ -111,9 +111,17 @@ export class PendingStateManager {
     ) {
         this.initialStates = new Deque<IPendingState>(initialState?.pendingStates ?? []);
         this.initialClientId = initialState?.clientId;
-        const firstPending = initialState?.pendingStates[0];
-        assert(!firstPending || firstPending.type === "message");
-        this.initialClientSeqNum = (firstPending as IPendingMessage)?.clientSequenceNumber ?? -1;
+
+        // get client sequence number of first actual message
+        this.initialClientSeqNum = -1;
+        for (let i = 0; i < this.initialStates.length; ++i) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const state = this.initialStates.get(i)!;
+            if (state.type === "message") {
+                this.initialClientSeqNum = state.clientSequenceNumber;
+                break;
+            }
+        }
     }
 
     /**
@@ -205,13 +213,15 @@ export class PendingStateManager {
         // rebase initial ops up to and including message sequence number
         while (!this.initialStates.isEmpty()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const nextMessage = this.initialStates.peekFront()!;
-            assert(nextMessage.type === "message"); // assume it's not flush for now
-            if (nextMessage.referenceSequenceNumber > message.sequenceNumber) {
+            const nextState = this.initialStates.peekFront()!;
+            if (nextState.type === "message" && nextState.referenceSequenceNumber > message.sequenceNumber) {
                 break;
             }
-            // rebaseOp will cause the DDS to behave as if it has sent the op but not actually send it
-            this.rebaseOp(nextMessage.content, nextMessage.localOpMetadata);
+
+            if (nextState.type === "message") {
+                // rebaseOp will cause the DDS to behave as if it has sent the op but not actually send it
+                this.rebaseOp(nextState.content, nextState.localOpMetadata);
+            }
 
             // then we push onto pendingStates which will cause PendingStateManager to resubmit when we connect
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -220,10 +230,14 @@ export class PendingStateManager {
 
         // if this is an ack for a pending initial op, dequeue one message (possibly one we just queued)
         if (message.clientId === this.initialClientId && message.clientSequenceNumber >= this.initialClientSeqNum) {
-            const ackedMessage = this.pendingStates.shift();
-            assert(ackedMessage !== undefined);
-            assert(ackedMessage.type === "message");
-            return { localAck: true, localOpMetadata: ackedMessage.localOpMetadata };
+            while (!this.pendingStates.isEmpty()) {
+                const nextState = this.pendingStates.shift()!;
+                // if it's not a message just drop it and keep looking
+                if (nextState.type === "message") {
+                    return { localAck: true, localOpMetadata: nextState.localOpMetadata };
+                }
+            }
+            throw new Error("no pending initial message matching ack")
         }
 
         return { localAck: false, localOpMetadata: undefined };
@@ -363,8 +377,9 @@ export class PendingStateManager {
         while (!this.initialStates.isEmpty()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const nextMessage = this.initialStates.shift()!;
-            assert(nextMessage.type === "message");
-            this.rebaseOp(nextMessage.content, nextMessage.localOpMetadata);
+            if (nextMessage.type === "message") {
+                this.rebaseOp(nextMessage.content, nextMessage.localOpMetadata);
+            }
             this.pendingStates.push(nextMessage);
         }
 
