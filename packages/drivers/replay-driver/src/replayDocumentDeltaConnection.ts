@@ -67,6 +67,14 @@ export class ReplayControllerStatic extends ReplayController {
         return version ? Promise.reject(new Error("Invalid operation")) : null;
     }
 
+    /**
+     *
+     * @deprecated - only here for back compat, will be removed after release
+     */
+    public async read(blobId: string): Promise<string> {
+        return Promise.reject(new Error("Invalid operation"));
+    }
+
     public async getStartingOpSequence(): Promise<number> {
         return 0;
     }

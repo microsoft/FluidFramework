@@ -31,6 +31,14 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.internalStorageService.getVersions(versionId, count);
     }
 
+    /**
+     *
+     * @deprecated - only here for back compat, will be removed after release
+     */
+    public async read(blobId: string): Promise<ArrayBufferLike> {
+        return this.internalStorageService.read(blobId) as ArrayBufferLike;
+    }
+
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         return this.internalStorageService.write(tree, parents, message, ref);
     }

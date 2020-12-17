@@ -244,6 +244,17 @@ export class DebugReplayController extends ReplayController implements IDebugger
         return this.shouldUseController;
     }
 
+    /**
+     *
+     * @deprecated - only here for back compat, will be removed after release
+     */
+    public async read(blobId: string): Promise<string> {
+        if (this.storage !== undefined) {
+            return this.storage.read(blobId) as string;
+        }
+        throw new Error("Reading blob before storage is setup properly");
+    }
+
     public async getVersions(
         versionId: string,
         count: number): Promise<IVersion[]> {

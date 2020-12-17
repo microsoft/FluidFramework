@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// import { blobToString } from "@fluidframework/driver-utils";
 // eslint-disable-next-line import/no-internal-modules
 import * as BufferNode from "../src/bufferNode";
 // eslint-disable-next-line import/no-internal-modules
@@ -125,5 +126,16 @@ describe("Buffer isomorphism", () => {
         const nodeStringBase64 = BufferNode.Uint8ArrayToString(testArray, "base64");
         const browserStringBase64 = BufferBrowser.Uint8ArrayToString(testArray, "base64");
         expect(nodeStringBase64).toEqual(browserStringBase64);
+    });
+
+    test("toBuffer is compatible", () => {
+        const test = "hello";
+        const nodeBufferUtf8 = BufferNode.toBuffer(test, "utf8");
+        const browserBufferUtf8 = BufferBrowser.toBuffer(test, "utf8");
+        expect(nodeBufferUtf8).toEqual(browserBufferUtf8);
+
+        const nodeBufferBase64 = BufferNode.toBuffer(test, "base64");
+        const browserBufferBase64 = BufferBrowser.toBuffer(test, "base64");
+        expect(nodeBufferBase64).toEqual(browserBufferBase64);
     });
 });

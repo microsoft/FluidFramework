@@ -59,6 +59,16 @@ export class DocumentStorageService implements IDocumentStorageService {
         }));
     }
 
+    /**
+     *
+     * @deprecated - only here for back compat, will be removed after release
+     */
+    public async read(blobId: string): Promise<string> {
+        const value = await this.manager.getBlob(blobId);
+        this.blobsShaCache.set(value.sha, "");
+        return value.content;
+    }
+
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         const branch = ref ? `datastores/${this.id}/${ref}` : this.id;
         const commit = await this.manager.write(branch, tree, parents, message);

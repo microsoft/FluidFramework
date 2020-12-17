@@ -9,7 +9,7 @@ import * as base64js from "base64-js";
  */
 export function toBuffer(input: string, encoding: string): ArrayBufferLike {
     const iso = IsoBuffer.from(input, encoding);
-    return iso.buffer.slice(iso.byteOffset, iso.byteOffset + iso.byteLength);
+    return iso.buffer;
 }
 
 /**

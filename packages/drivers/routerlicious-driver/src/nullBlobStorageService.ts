@@ -23,6 +23,14 @@ export class NullBlobStorageService implements IDocumentStorageService {
         return [];
     }
 
+    /**
+     *
+     * @deprecated - only here for back compat, will be removed after release
+     */
+    public async read(blobId: string): Promise<string> {
+        return Promise.reject(new Error("Invalid operation"));
+    }
+
     public async write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion> {
         return Promise.reject(new Error("Null blob storage can not write commit"));
     }

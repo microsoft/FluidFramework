@@ -27,12 +27,19 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         return p;
     }
 
+    /**
+     *
+     * @deprecated - only here for back compat, will be removed after release
+     */
+    public async read(blobId: string): Promise<ArrayBufferLike > {
+        return this.cachedRead(blobId);
+    }
+
     public stopPrefetch() {
         this.prefetchEnabled = false;
         this.prefetchCache.clear();
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private async cachedRead(blobId: string): Promise<ArrayBufferLike> {
         const blob = await this.internalStorageService.readBlob(blobId);
         if (this.prefetchEnabled) {

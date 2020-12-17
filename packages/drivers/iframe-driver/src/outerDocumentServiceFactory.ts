@@ -168,6 +168,12 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             createBlob: async (file) => {
                 return storage.createBlob(file);
             },
+            /**
+            * @deprecated - only here for back compat, will be removed after release
+            */
+            read: async (id) => {
+                return storage.read(id) as string;
+            },
             readBlob: async (blobId) => {
                 return storage.readBlob(blobId);
             },
