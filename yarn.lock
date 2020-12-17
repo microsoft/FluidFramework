@@ -6748,6 +6748,7 @@ __metadata:
     typescript: ~3.8.2
     typescript-formatter: 7.1.0
     url-loader: ^2.1.0
+    webpack: ^4.43.0
     winston: ^3.1.0
     ws: ^6.1.2
   languageName: unknown
