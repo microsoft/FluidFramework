@@ -97,6 +97,7 @@ describe("SharedStringWithSequential Id", () => {
         sharedStringWithSequentialId.insertMarker(1, ReferenceType.Tile);
         containerRuntimeFactory.processAllMessages();
         sharedStringWithSequentialId.insertMarker(1, ReferenceType.Tile);
+        containerRuntimeFactory.processAllMessages();
 
         const segmentAt0 = sharedStringWithSequentialId.getContainingSegment(0).segment;
         const segmentAt1 = sharedStringWithSequentialId.getContainingSegment(1).segment;
@@ -109,7 +110,7 @@ describe("SharedStringWithSequential Id", () => {
 
         const id0 = segmentAt0.getId();
         const id1 = segmentAt1.getId();
-        const id2 = segmentAt1.getId();
+        const id2 = segmentAt2.getId();
         assert(id0 < id1, "Id at 0 should be smaller than id at 1");
         assert(id1 < id2, "Id at 1 should be smaller than id at 2");
     });

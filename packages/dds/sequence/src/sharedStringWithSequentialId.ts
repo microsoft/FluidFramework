@@ -44,14 +44,12 @@ export function sharedStringWithSequentialIdMixin(Base: typeof SharedString = Sh
                 const beforeMarkers: Marker[] = [];
                 const afterMarkers: Marker[] = [];
 
-                const beforeBoundaryStart = 0;
-                const beforeBoundaryEnd = newMarkerCp - 1 > 0 ? newMarkerCp - 1 : 0;
                 this.walkSegments((segment) => {
                     if (Marker.is(segment)) {
                         beforeMarkers.push(segment);
                     }
                     return true;
-                }, beforeBoundaryStart, beforeBoundaryEnd);
+                }, 0, newMarkerCp);
 
                 this.walkSegments((segment) => {
                     if (Marker.is(segment)) {
@@ -67,16 +65,22 @@ export function sharedStringWithSequentialIdMixin(Base: typeof SharedString = Sh
 
                 // Generate sequentialId
                 const previousMarkerCp = previousMarker ? this.getPosition(previousMarker) : 0;
-                const nextMarkerCp = nextMarker ? this.getPosition(nextMarker) : this.getLength();
+                const nextMarkerCp = nextMarker ? this.getPosition(nextMarker) : 0;
                 const distancePreviousMarker = Math.abs(newMarkerCp - previousMarkerCp);
                 const distanceToNextMarker = Math.abs(newMarkerCp - nextMarkerCp);
 
                 let id: string;
-                if (distancePreviousMarker > 0 && distancePreviousMarker < distanceToNextMarker) {
-                 id = createIdAfterMin(previousMarkerId, nextMarkerId);
-                } else {
+                if ((previousMarkerId.length === 0 && nextMarkerId.length === 0) ||
+                 (previousMarkerId.length > 0 && nextMarkerId.length === 0)) {
+                    id = createIdAfterMin(previousMarkerId, nextMarkerId);
+                } else if (nextMarkerId.length > 0 && previousMarkerId.length === 0) {
                     id = createIdBeforeMax(previousMarkerId, nextMarkerId);
+                } else {
+                    id = distancePreviousMarker <= distanceToNextMarker ?
+                     createIdAfterMin(previousMarkerId, nextMarkerId) :
+                      createIdBeforeMax(previousMarkerId, nextMarkerId);
                 }
+
                 newMarkerProps = { ...newMarkerProps, [reservedMarkerIdKey]: id };
                 newMarker.properties = newMarkerProps;
             }
