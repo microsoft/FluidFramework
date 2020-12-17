@@ -23,6 +23,10 @@ parameters:
     - skip
     - force
 
+variables:
+- group: prague-key-vault
+
+
 trigger:
   branches:
     include:
@@ -45,9 +49,6 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
-
-variables:
-- group: prague-key-vault
 
 pr:
   branches:
