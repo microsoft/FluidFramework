@@ -3,25 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IDirectoryValueChanged, IValueChanged } from "@fluidframework/map";
 
 /**
  * IKeyValueDataObject describes the public API surface for our KeyValue DataObject.
  */
-export interface IKeyValueDataObject {
+export interface IKeyValueDataObject extends EventEmitter {
     /**
-     * Get the dice value as a number.
+     * Get value at Key
      */
     get: (key: string) => any
 
     /**
-     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
+     * Set Value at Key
      */
     set: (key: string, value: any) => void;
 
     /**
-     * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
+     * Event on value change
      */
     on(event: "changed", listener: (args: IDirectoryValueChanged) => void): this;
 }
