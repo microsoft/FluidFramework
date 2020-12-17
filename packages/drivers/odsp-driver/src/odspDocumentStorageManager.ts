@@ -91,13 +91,129 @@ async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index
     });
 }
 
-export class OdspDocumentStorageService implements IDocumentStorageService {
+export class OdspSnapshotCache {
+    public readonly blobCache: Map<string, IBlob> = new Map();
+    public readonly treesCache: Map<string, ITree> = new Map();
+    public readonly attributesBlobHandles: Set<string> = new Set();
+
+    public initTreesCache(trees: ITree[]) {
+        trees.forEach((tree) => {
+            this.treesCache.set(tree.id, tree);
+        });
+    }
+
+    public initBlobsCache(blobs: IBlob[]) {
+        blobs.forEach((blob) => this.blobCache.set(blob.id, blob));
+    }
+
+    public snapshotTreeFromITree(tree: ITree): api.ISnapshotTree {
+        const hierarchicalTree = buildHierarchy(convertOdspTree(tree));
+
+        // Decode commit paths
+        const commits = {};
+
+        const keys = Object.keys(hierarchicalTree.commits);
+        for (const key of keys) {
+            commits[decodeURIComponent(key)] = hierarchicalTree.commits[key];
+        }
+
+        if (commits && commits[".app"]) {
+            // The latest snapshot is a summary
+            // attempt to read .protocol from commits for backwards compat
+            return this.constructSummaryTree(tree.id, commits[".protocol"] || hierarchicalTree.trees[".protocol"], commits[".app"] as string);
+        }
+
+        if (hierarchicalTree.blobs) {
+            const attributesBlob = hierarchicalTree.blobs.attributes;
+            if (attributesBlob) {
+                this.attributesBlobHandles.add(attributesBlob);
+            }
+        }
+
+        hierarchicalTree.commits = commits;
+
+        // When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
+        // So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
+        const appTree = hierarchicalTree.trees[".app"];
+        const protocolTree = hierarchicalTree.trees[".protocol"];
+        if (appTree && protocolTree) {
+            return this.combineProtocolAndAppSnapshotTree(tree.id, appTree, protocolTree);
+        }
+
+        return hierarchicalTree;
+    }
+
+    /**
+     * Reads a summary tree
+     * @param snapshotTreeId - Id of the snapshot
+     * @param protocolTreeOrId - Protocol snapshot tree or id of the protocol tree
+     * @param appTreeId - Id of the app tree
+     */
+    private constructSummaryTree(snapshotTreeId: string, protocolTreeOrId: api.ISnapshotTree | string, appTreeId: string): api.ISnapshotTree {
+        // Load the app and protocol trees and return them
+        let hierarchicalProtocolTree: api.ISnapshotTree;
+        let appTree: ITree | undefined;
+
+        if (typeof (protocolTreeOrId) === "string") {
+            // Backwards compat for older summaries
+            const protocolTree = this.treesCache.get(protocolTreeOrId);
+            if (!protocolTree) {
+                throw new Error("Invalid protocol tree");
+            }
+
+            appTree = this.treesCache.get(appTreeId);
+
+            hierarchicalProtocolTree = buildHierarchy(convertOdspTree(protocolTree));
+        } else {
+            appTree = this.treesCache.get(appTreeId);
+
+            hierarchicalProtocolTree = protocolTreeOrId;
+        }
+
+        if (!appTree) {
+            throw new Error("Invalid app tree");
+        }
+
+        const hierarchicalAppTree = buildHierarchy(convertOdspTree(appTree));
+
+        if (hierarchicalProtocolTree.blobs) {
+            const attributesBlob = hierarchicalProtocolTree.blobs.attributes;
+            if (attributesBlob) {
+                this.attributesBlobHandles.add(attributesBlob);
+            }
+        }
+
+        return this.combineProtocolAndAppSnapshotTree(snapshotTreeId, hierarchicalAppTree, hierarchicalProtocolTree);
+    }
+
+    private combineProtocolAndAppSnapshotTree(
+        snapshotTreeId: string,
+        hierarchicalAppTree: api.ISnapshotTree,
+        hierarchicalProtocolTree: api.ISnapshotTree,
+    ) {
+        const summarySnapshotTree: api.ISnapshotTree = {
+            blobs: {
+                ...hierarchicalAppTree.blobs,
+            },
+            commits: {
+                ...hierarchicalAppTree.commits,
+            },
+            id: snapshotTreeId,
+            trees: {
+                ".protocol": hierarchicalProtocolTree,
+                ...hierarchicalAppTree.trees,
+            },
+        };
+
+        return summarySnapshotTree;
+    }
+}
+
+export class OdspDocumentStorageService extends OdspSnapshotCache implements IDocumentStorageService {
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private blobsShaToPathCache: Map<string, string> = new Map();
     // A set of pending blob hashes that will be inserted into blobsShaToPathCache
     private readonly blobsCachePendingHashes: Set<Promise<void>> = new Set();
-    private readonly blobCache: Map<string, IBlob> = new Map();
-    private readonly treesCache: Map<string, ITree> = new Map();
 
     // Save the timeout so we can cancel and reschedule it as needed
     private blobCacheTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -105,8 +221,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     // This deferral approach is used (rather than clearing/resetting the timer) as current calling patterns trigger
     // too many calls to setTimeout/clearTimeout.
     private deferBlobCacheClear: boolean = false;
-
-    private readonly attributesBlobHandles: Set<string> = new Set();
 
     private lastSummaryHandle: string | undefined;
     // Last proposed handle of the uploaded app summary.
@@ -156,6 +270,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
     ) {
+        super();
         this.documentId = odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
         this.redeemSharingLink = odspResolvedUrl.sharingLinkToRedeem;
@@ -318,40 +433,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             return null;
         }
 
-        const hierarchicalTree = buildHierarchy(convertOdspTree(tree));
-
-        // Decode commit paths
-        const commits = {};
-
-        const keys = Object.keys(hierarchicalTree.commits);
-        for (const key of keys) {
-            commits[decodeURIComponent(key)] = hierarchicalTree.commits[key];
-        }
-
-        if (commits && commits[".app"]) {
-            // The latest snapshot is a summary
-            // attempt to read .protocol from commits for backwards compat
-            return this.readSummaryTree(tree.id, commits[".protocol"] || hierarchicalTree.trees[".protocol"], commits[".app"] as string);
-        }
-
-        if (hierarchicalTree.blobs) {
-            const attributesBlob = hierarchicalTree.blobs.attributes;
-            if (attributesBlob) {
-                this.attributesBlobHandles.add(attributesBlob);
-            }
-        }
-
-        hierarchicalTree.commits = commits;
-
-        // When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
-        // So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
-        const appTree = hierarchicalTree.trees[".app"];
-        const protocolTree = hierarchicalTree.trees[".protocol"];
-        if (appTree && protocolTree) {
-            return this.combineProtocolAndAppSnapshotTree(tree.id, appTree, protocolTree);
-        }
-
-        return hierarchicalTree;
+        return this.snapshotTreeFromITree(tree);
     }
 
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
@@ -462,6 +544,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 }
                 if (blobs) {
                     this.initBlobsCache(blobs);
+                    this.scheduleClearBlobsCache();
                 }
 
                 if (this.hostPolicy.summarizerClient && trees && blobs) {
@@ -810,17 +893,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         throw new Error("Not implemented yet");
     }
 
-    private initTreesCache(trees: ITree[]) {
-        trees.forEach((tree) => {
-            this.treesCache.set(tree.id, tree);
-        });
-    }
-
-    private initBlobsCache(blobs: IBlob[]) {
-        blobs.forEach((blob) => this.blobCache.set(blob.id, blob));
-        this.scheduleClearBlobsCache();
-    }
-
     /**
      * Schedule a timer for clearing the blob cache or defer the current one.
      */
@@ -884,6 +956,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     }
                     if (odspSnapshot.blobs) {
                         this.initBlobsCache(odspSnapshot.blobs);
+                        this.scheduleClearBlobsCache();
                     }
                 }
                 // If the version id doesn't match with the id of the tree, then use the id of first tree which in that case
@@ -897,76 +970,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
 
         return tree;
-    }
-
-    /**
-     * Reads a summary tree
-     * @param snapshotTreeId - Id of the snapshot
-     * @param protocolTreeOrId - Protocol snapshot tree or id of the protocol tree
-     * @param appTreeId - Id of the app tree
-     */
-    private async readSummaryTree(snapshotTreeId: string, protocolTreeOrId: api.ISnapshotTree | string, appTreeId: string): Promise<api.ISnapshotTree> {
-        // Load the app and protocol trees and return them
-        let hierarchicalProtocolTree: api.ISnapshotTree;
-        let appTree: ITree | null;
-
-        if (typeof (protocolTreeOrId) === "string") {
-            // Backwards compat for older summaries
-            const trees = await Promise.all([
-                this.readTree(protocolTreeOrId),
-                this.readTree(appTreeId),
-            ]);
-
-            const protocolTree = trees[0];
-            if (!protocolTree) {
-                throw new Error("Invalid protocol tree");
-            }
-
-            appTree = trees[1];
-
-            hierarchicalProtocolTree = buildHierarchy(convertOdspTree(protocolTree));
-        } else {
-            appTree = await this.readTree(appTreeId);
-
-            hierarchicalProtocolTree = protocolTreeOrId;
-        }
-
-        if (!appTree) {
-            throw new Error("Invalid app tree");
-        }
-
-        const hierarchicalAppTree = buildHierarchy(convertOdspTree(appTree));
-
-        if (hierarchicalProtocolTree.blobs) {
-            const attributesBlob = hierarchicalProtocolTree.blobs.attributes;
-            if (attributesBlob) {
-                this.attributesBlobHandles.add(attributesBlob);
-            }
-        }
-
-        return this.combineProtocolAndAppSnapshotTree(snapshotTreeId, hierarchicalAppTree, hierarchicalProtocolTree);
-    }
-
-    private combineProtocolAndAppSnapshotTree(
-        snapshotTreeId: string,
-        hierarchicalAppTree: api.ISnapshotTree,
-        hierarchicalProtocolTree: api.ISnapshotTree,
-    ) {
-        const summarySnapshotTree: api.ISnapshotTree = {
-            blobs: {
-                ...hierarchicalAppTree.blobs,
-            },
-            commits: {
-                ...hierarchicalAppTree.commits,
-            },
-            id: snapshotTreeId,
-            trees: {
-                ".protocol": hierarchicalProtocolTree,
-                ...hierarchicalAppTree.trees,
-            },
-        };
-
-        return summarySnapshotTree;
     }
 
     private async writeSummaryTree(
@@ -1027,10 +1030,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         blobsShaToPathCacheLatest: Map<string, string>,
         depth: number = 0,
         path: string = "",
-    ) {
+    ): Promise<{ snapshotTree: ISnapshotTree, blobs: number, reusedBlobs: number }> {
         const snapshotTree: ISnapshotTree = {
-            entries: [],
-        }!;
+            type: "tree",
+            entries: [] as SnapshotTreeEntry[],
+        };
 
         let reusedBlobs = 0;
         let blobs = 0;
@@ -1069,6 +1073,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     if (!completePath || !this.lastSummaryHandle) {
                         blobs++;
                         value = {
+                            type: "blob",
                             content,
                             encoding,
                         };
@@ -1090,13 +1095,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     }
                     id = `${parentHandle}/.app${handlePath}`;
 
-                    // TODO: SPO will deprecate this soon
-                    if (summaryObject.handleType === api.SummaryType.Commit) {
-                        value = {
-                            content: id,
-                        };
-                    }
-
                     break;
                 }
                 case api.SummaryType.Attachment: {
@@ -1108,18 +1106,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 }
             }
 
+            const type = getGitType(summaryObject) as "blob" | "commit" | "tree" | "attachment";
             const baseEntry: ISnapshotTreeBaseEntry = {
                 path: encodeURIComponent(key),
-                type: getGitType(summaryObject) === "attachment" ? "blob" : getGitType(summaryObject),
+                type: type === "attachment" ? "blob" : type,
             };
 
             let entry: SnapshotTreeEntry;
 
             if (value) {
+                assert(id === undefined);
                 entry = {
-                    ...baseEntry,
-                    id,
                     value,
+                    ...baseEntry,
                 };
             } else if (id) {
                 entry = {

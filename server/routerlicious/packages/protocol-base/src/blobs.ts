@@ -42,7 +42,7 @@ export function getGitMode(value: SummaryObject): string {
  * @param value - summary object
  * @returns the type of summary object
  */
-export function getGitType(value: SummaryObject): string {
+export function getGitType(value: SummaryObject): "blob" | "commit" | "tree" | "attachment" {
     const type = value.type === SummaryType.Handle ? value.handleType : value.type;
 
     switch (type) {
