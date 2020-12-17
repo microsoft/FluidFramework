@@ -473,23 +473,30 @@ export class FluidPackageCheck {
             }
 
             if (this.splitTestBuild(pkg)) {
-                if (!configJson.compilerOptions?.composite) {
-                    this.logWarn(pkg, "Missing 'composite' in tsc config with test directory", fix);
+                if (!configJson.compilerOptions) {
+                    configJson.compilerOptions = {};
+                }
+                if (this.checkProperty(configFile, pkg, configJson.compilerOptions, "composite", true, fix)) {
+                    changed = true;
+                }
+
+                const types: string[] | undefined = configJson.compilerOptions.types;
+                if (types && types.includes("mocha")) {
+                    this.logWarn(pkg, "tsc config for main src shouldn't depend on mocha", fix);
                     if (fix) {
-                        if (!configJson.compilerOptions) {
-                            configJson.compilerOptions = {};
+                        const newTypes = types.filter((v) => v !== "mocha");
+                        if (newTypes.length === 0) {
+                            delete configJson.compilerOptions.types;
+                        } else {
+                            configJson.compilerOptions.types = newTypes;
                         }
-                        configJson.compilerOptions.composite = true;
                         changed = true;
                     }
                 }
+
                 const exclude = ["src/test/**/*"];
-                if (!isEqual(configJson.exclude, exclude)) {
-                    this.logWarn(pkg, "unexpected exclude in tsc config", fix);
-                    if (fix) {
-                        configJson.exclude = exclude;
-                        changed = true;
-                    }
+                if (this.checkProperty(configFile, pkg, configJson, "exclude", exclude, fix)) {
+                    changed = true;
                 }
             }
 
@@ -499,6 +506,16 @@ export class FluidPackageCheck {
         }
     }
 
+    private static checkProperty<T>(file: string, pkg: Package, configJson: any, name: string, value: T, fix: boolean) {
+        if (!isEqual(configJson[name], value)) {
+            this.logWarn(pkg, `Unexpected ${name} value in ${file}`, fix);
+            if (fix) {
+                configJson[name] = value;
+                return true;
+            }
+        }
+        return false;
+    }
     private static async checkOneTestDir(pkg: Package, fix: boolean, testSrcDir: string, subDir?: string) {
         const configFile = path.join(testSrcDir, subDir ?? "", "tsconfig.json");
         const outDir = subDir ? `../../../dist/test/${subDir}` : `../../dist/test`;
@@ -522,10 +539,8 @@ export class FluidPackageCheck {
                 configJson.compilerOptions = compilerOptions;
                 changed = true;
             }
-        } else if (configJson.compilerOptions.outDir !== outDir) {
-            this.logWarn(pkg, `Incorrect test tsconfig.json outDir`, fix);
-            if (fix) {
-                configJson.compilerOptions.outDir = outDir;
+        } else {
+            if (this.checkProperty(configFile, pkg, configJson.compilerOptions, "outDir", outDir, fix)) {
                 changed = true;
             }
         }

@@ -7,9 +7,6 @@
         "declarationDir": "./dist",
         "rootDir": "./src",
         "outDir": "./dist",
-        "types": [
-            "mocha"
-        ],
         "composite": true
     },
     "include": [

@@ -7,7 +7,7 @@
         "outDir": "../../dist/test",
         "types": [
             "mocha"
-        ],
+        ]
     },
     "include": [
         "./**/*"

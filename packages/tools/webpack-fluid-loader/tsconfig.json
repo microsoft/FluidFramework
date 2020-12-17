@@ -9,7 +9,6 @@
         "jsx": "react",
         "outDir": "./dist",
         "types": [
-            "mocha",
             "node"
         ],
         "composite": true

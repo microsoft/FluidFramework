@@ -8,6 +8,8 @@
             "node",
             "mocha"
         ],
+        "declaration": false,
+        "declarationMap": false
     },
     "include": [
         "./**/*"
