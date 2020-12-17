@@ -28,7 +28,7 @@
     "@fluidframework/container-definitions": "^0.31.0",
     "@fluidframework/container-loader": "^0.31.0",
     "@fluidframework/local-driver": "^0.31.0",
-    "@fluidframework/server-local-server": "^0.1016.0"
+    "@fluidframework/server-local-server": "^0.1016.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",

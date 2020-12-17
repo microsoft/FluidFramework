@@ -56,7 +56,7 @@
     "@fluidframework/container-definitions": "^0.31.0",
     "@fluidframework/core-interfaces": "^0.31.0",
     "@fluidframework/datastore-definitions": "^0.31.0",
-    "@fluidframework/protocol-definitions": "^0.1016.0",
+    "@fluidframework/protocol-definitions": "^0.1016.1",
     "@fluidframework/telemetry-utils": "^0.31.0",
     "assert": "^2.0.0"
   },

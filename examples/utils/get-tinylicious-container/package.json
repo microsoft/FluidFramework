@@ -30,7 +30,7 @@
     "@fluidframework/core-interfaces": "^0.31.0",
     "@fluidframework/driver-definitions": "^0.31.0",
     "@fluidframework/driver-utils": "^0.31.0",
-    "@fluidframework/protocol-definitions": "^0.1016.0",
+    "@fluidframework/protocol-definitions": "^0.1016.1",
     "@fluidframework/routerlicious-driver": "^0.31.0",
     "jsrsasign": "^10.0.2",
     "uuid": "^8.3.1"
