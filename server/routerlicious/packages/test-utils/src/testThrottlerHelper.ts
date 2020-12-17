@@ -65,7 +65,7 @@ export class TestThrottlerHelper implements IThrottlerHelper {
         return this.getThrottlerResponseFromThrottlingMetrics(throttlingMetrics);
     }
 
-    public async getThrottleStatus(id: string): Promise<IThrottlerResponse | undefined> {
+    public async getThrottleStatus(id: string): Promise<IThrottlerResponse> {
         const throttlingMetrics = this.throttleStorage[id];
 
         if (!throttlingMetrics) {
