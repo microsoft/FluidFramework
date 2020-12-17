@@ -41,7 +41,7 @@
     "@fluidframework/driver-utils": "^0.31.0",
     "@fluidframework/get-tinylicious-container": "^0.31.0",
     "@fluidframework/iframe-driver": "^0.31.0",
-    "@fluidframework/protocol-definitions": "^0.1016.0-0",
+    "@fluidframework/protocol-definitions": "^0.1016.0",
     "@fluidframework/routerlicious-driver": "^0.31.0",
     "@fluidframework/test-runtime-utils": "^0.31.0",
     "@fluidframework/view-adapters": "^0.31.0",

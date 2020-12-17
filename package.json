@@ -115,7 +115,7 @@
     "rimraf": "^2.6.2",
     "run-script-os": "^1.0.7",
     "start-server-and-test": "^1.11.6",
-    "tinylicious": "^0.3.10860",
+    "tinylicious": "^0.4.11798",
     "typescript": "~3.7.4"
   },
   "fluidBuild": {

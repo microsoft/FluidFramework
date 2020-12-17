@@ -69,7 +69,7 @@
   "dependencies": {
     "@fluid-example/flow-util-lib": "^0.31.0",
     "@fluidframework/common-definitions": "^0.19.1",
-    "@fluidframework/common-utils": "^0.26.0-0",
+    "@fluidframework/common-utils": "^0.26.0",
     "@fluidframework/core-interfaces": "^0.31.0",
     "@fluidframework/data-object-base": "^0.31.0",
     "@fluidframework/map": "^0.31.0",
@@ -85,7 +85,7 @@
     "@fluidframework/local-driver": "^0.31.0",
     "@fluidframework/mocha-test-setup": "^0.31.0",
     "@fluidframework/runtime-utils": "^0.31.0",
-    "@fluidframework/server-local-server": "^0.1016.0-0",
+    "@fluidframework/server-local-server": "^0.1016.0",
     "@fluidframework/test-utils": "^0.31.0",
     "@fluidframework/webpack-fluid-loader": "^0.31.0",
     "@types/debug": "^4.1.5",
