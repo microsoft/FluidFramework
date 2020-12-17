@@ -18,7 +18,7 @@ export interface IThrottleMiddlewareOptions {
      * For example, this could be a tenantId, clientId, or endpoint name.
      *
      * Can be a function that takes in the `express.Request` and returns the prefix as a string,
-     * which is useful for getting the id prefix from route params.
+     * which is useful for getting the id prefix from route params, such as `tenantId`.
      */
     throttleIdPrefix?: string | ((req: Request) => string);
 
@@ -26,7 +26,7 @@ export interface IThrottleMiddlewareOptions {
      * Distinguishes throttle id amongst other tracked ids with same prefix.
      * For example, this could be "HistorianRest", "AlfredRest", "OpenSocketConn", or "SubmitOp".
      */
-    throttleIdSuffix: string;
+    throttleIdSuffix?: string;
 
     /**
      * If true, will decrement tracked throttler count for the given id when the response has been sent.
@@ -37,31 +37,41 @@ export interface IThrottleMiddlewareOptions {
 const defaultThrottleMiddlewareOptions: IThrottleMiddlewareOptions = {
     weight: 1,
     throttleIdPrefix: undefined,
-    throttleIdSuffix: "-",
+    throttleIdSuffix: undefined,
     decrementOnFinish: false,
 };
 
+const getThrottleId = (req: Request, throttleOptions: IThrottleMiddlewareOptions) => {
+    let prefix: string | undefined;
+    if (typeof throttleOptions.throttleIdPrefix === "function") {
+        prefix = throttleOptions.throttleIdPrefix(req);
+    } else {
+        prefix = throttleOptions.throttleIdPrefix;
+    }
+
+    if (prefix && throttleOptions.throttleIdSuffix) {
+        return `${prefix}_${throttleOptions.throttleIdSuffix}`;
+    }
+    return prefix || throttleOptions.throttleIdSuffix || "-";
+};
+
+/**
+ * Express middleware for API throttling.
+ */
 export function throttle(
     throttler: IThrottler,
     logger?: ILogger,
     options?: Partial<IThrottleMiddlewareOptions>): RequestHandler {
         const throttleOptions = {
-            ...options,
             ...defaultThrottleMiddlewareOptions,
+            ...options,
         };
 
-        const getThrottleIdPrefix = (req: Request) =>
-            typeof throttleOptions.throttleIdPrefix === "function"
-                ? throttleOptions.throttleIdPrefix(req)
-                : throttleOptions.throttleIdPrefix;
-
         return (req, res, next) => {
-            const throttleIdPrefix = getThrottleIdPrefix(req);
-            const throttleId = throttleIdPrefix
-                ? `${throttleIdPrefix}_${throttleOptions.throttleIdSuffix}`
-                : throttleOptions.throttleIdSuffix;
+            const throttleId = getThrottleId(req, throttleOptions);
             const messageMetaData = {
                 key: throttleId,
+                weight: throttleOptions.weight,
                 event_type: "throttling",
             };
 
@@ -74,13 +84,14 @@ export function throttle(
                         ...messageMetaData,
                         reason: e.message,
                         retryAfterInSeconds: e.retryAfter,
-                    }});
+                    } });
                     return res.status(e.code).json(e);
                 }
             }
 
             if (throttleOptions.decrementOnFinish) {
                 onFinished(res, () => {
+                    logger?.info(`Decrementing throttle count: ${throttleId}`, { messageMetaData });
                     throttler.decrementCount(throttleId, throttleOptions.weight);
                 });
             }
