@@ -5,7 +5,8 @@
         "outDir": "../../dist/test",
         "types": [
             "node",
-            "mocha"
+            "mocha",
+            "@types/socket.io"
         ],
         "declaration": false,
         "declarationMap": false
