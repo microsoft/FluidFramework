@@ -52,7 +52,7 @@ export function create(
         const start = Date.now();
         const chaincode: string = queryParamAsString(request.query.chaincode);
         const claims = getJWTClaims(request);
-        const jwtToken = jwt.sign(claims, jwtKey);
+        const hostToken = jwt.sign(claims, jwtKey);
 
         const rawPath = request.params[0];
         const slash = rawPath.indexOf("/");
@@ -67,11 +67,12 @@ export function create(
         let fullTreeP: Promise<undefined | FullTree>;
         let resolvedP: Promise<IFluidResolvedUrl>;
         const isSpoTenantPath = isSpoTenant(tenantId);
+        let r11sAccessToken = "";
         if (isSpoTenantPath) {
             [resolvedP, fullTreeP] =
                 resolveSpoUrl(config, tenantId, documentId, request);
         } else {
-            const r11sAccessToken = getR11sToken(
+            r11sAccessToken = getR11sToken(
                 tenantId, documentId, appTenants, scopes, user as IExtendedUser);
             [resolvedP, fullTreeP] =
                 resolveR11sUrl(config, alfred, tenantId, documentId, r11sAccessToken, request);
@@ -174,7 +175,8 @@ export function create(
                             ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : configClientId,
                         config: workerConfig,
                         isSpoTenantPath,
-                        jwt: jwtToken,
+                        hostToken,
+                        accessToken: r11sAccessToken,
                         partials: defaultPartials,
                         resolved: JSON.stringify(resolved),
                         scripts,
