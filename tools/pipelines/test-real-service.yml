@@ -28,7 +28,7 @@ variables:
   # basic ANSI color support though, so force that in the pipeline
   - name: FORCE_COLOR
     value: 1
-  - template: include-vars.yml
+  - template: templates/include-vars.yml
 
 stages:
   # Install / Build / Test Stage
