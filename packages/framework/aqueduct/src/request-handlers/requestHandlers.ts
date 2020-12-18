@@ -70,21 +70,12 @@ export const defaultRouteRequestHandler = (defaultRootId: string) => {
  * Default request handler for a Fluid object that returns the object itself if:
  *  1. the request url is a "/"
  *  2. the request url is empty
- * Returns a 404 error for any other request.
+ * Returns a 404 error for any other url.
  */
 export function defaultFluidObjectRequestHandler(fluidObject: IFluidObject, request: IRequest): IResponse {
-    const pathParts = RequestParser.getPathParts(request.url);
-    const requestUrl = (pathParts.length > 0) ? pathParts[0] : request.url;
-    if (requestUrl === "/" || requestUrl === "") {
-        return {
-            mimeType: "fluid/object",
-            status: 200,
-            value: fluidObject,
-        };
+    if (request.url === "/" || request.url === "") {
+        return { mimeType: "fluid/object", status: 200, value: fluidObject };
+    } else {
+        return { mimeType: "text/plain", status: 404, value: `unknown request url: ${request.url}` };
     }
-    return {
-        mimeType: "text/plain",
-        status: 404,
-        value: `unknown request url: ${request.url}`,
-    };
 }
