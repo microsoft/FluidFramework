@@ -22,17 +22,15 @@ parameters:
   type: boolean
   default: false
 
-- name: buildNumberInPatch
-  type: string
-  default: true
-
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
   # basic ANSI color support though, so force that in the pipeline
   - name: FORCE_COLOR
     value: 1
-  - template: templates/include-vars.yml
+  - template: include-vars.yml
+    parameters:
+    buildNumberInPatch: true
 
 stages:
   # Install / Build / Test Stage
