@@ -38,10 +38,10 @@ export function create(
     const codeResolver = new SemVerCdnCodeResolver();
 
     // FRS
-    const blobStorage = config.get("worker.frsBlobStorage");
+    const blobStorage = config.get("worker.frsBlobStorageUrl");
     const serverUrl = config.get("worker.frsServerUrl");
     if (blobStorage !== undefined && serverUrl !== undefined) {
-        config.set("worker:blobStorage", blobStorage);
+        config.set("worker:blobStorageUrl", blobStorage);
         config.set("worker:serverUrl", serverUrl);
     }
 
