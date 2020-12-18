@@ -157,21 +157,5 @@ describe("Throttler Middleware", () => {
             assert.strictEqual(response2.body.retryAfter, 1);
             assert.strictEqual(response2.body.message, "throttled");
         });
-
-        it("decrements count when requests finish", async () => {
-            setUpThrottledRoute({ decrementOnFinish: true }, undefined, 5);
-            supertest = request(app);
-            // send 5*limit requests, but wait for each 1*limit to finish before sending next
-            for (let j = 0; j < 5; j++) {
-                const requestPromises: Promise<any>[] = [];
-                for (let i = 0; i < limit; i++) {
-                    requestPromises.push(supertest
-                        .get(endpoint)
-                        .expect(200)
-                    );
-                }
-                await Promise.all(requestPromises);
-            }
-        });
     });
 });

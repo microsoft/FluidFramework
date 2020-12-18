@@ -55,7 +55,6 @@
     "json-stringify-safe": "^5.0.1",
     "jsonwebtoken": "^8.4.0",
     "nconf": "^0.10.0",
-    "on-finished": "^2.3.0",
     "sillyname": "0.1.0",
     "uuid": "^8.3.1",
     "winston": "^3.1.0"
@@ -69,7 +68,6 @@
     "@types/mocha": "^5.2.5",
     "@types/nconf": "^0.0.37",
     "@types/node": "^12.19.0",
-    "@types/on-finished": "^2.3.1",
     "@types/supertest": "^2.0.5",
     "@typescript-eslint/eslint-plugin": "~4.2.0",
     "@typescript-eslint/parser": "~4.2.0",

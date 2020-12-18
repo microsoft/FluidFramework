@@ -5,7 +5,6 @@
 
 import { RequestHandler, Request, Response, NextFunction } from "express";
 import safeStringify from "json-stringify-safe";
-import onFinished from "on-finished";
 import { IThrottler, ILogger, ThrottlingError } from "@fluidframework/server-services-core";
 
 export interface IThrottleMiddlewareOptions {
@@ -28,18 +27,12 @@ export interface IThrottleMiddlewareOptions {
      * For example, this could be "HistorianRest", "AlfredRest", "OpenSocketConn", or "SubmitOp".
      */
     throttleIdSuffix?: string;
-
-    /**
-     * If true, will decrement tracked throttler count for the given id when the response has been sent.
-     */
-    decrementOnFinish: boolean;
 }
 
 const defaultThrottleMiddlewareOptions: IThrottleMiddlewareOptions = {
     weight: 1,
     throttleIdPrefix: undefined,
     throttleIdSuffix: undefined,
-    decrementOnFinish: false,
 };
 
 const getThrottleId = (req: Request, throttleOptions: IThrottleMiddlewareOptions) => {
@@ -99,13 +92,6 @@ export function throttle(
                 } else {
                     logger?.error(`Throttle increment failed: ${safeStringify(e, undefined, 2)}`, { messageMetaData });
                 }
-            }
-
-            if (throttleOptions.decrementOnFinish) {
-                onFinished(res, () => {
-                    logger?.info(`Decrementing throttle count: ${throttleId}`, { messageMetaData });
-                    throttler.decrementCount(throttleId, throttleOptions.weight);
-                });
             }
 
             next();
