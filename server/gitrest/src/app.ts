@@ -16,6 +16,7 @@ import * as winston from "winston";
 import { IExternalStorageManager } from "./externalStorageManager";
 import * as routes from "./routes";
 import * as utils from "./utils";
+import { bindCorrelationId } from "@fluidframework/server-services-utils";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
@@ -36,6 +37,8 @@ export function create(
     const requestSize = store.get("requestSizeLimit");
     app.use(bodyParser.json({ limit: requestSize }));
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
+
+    app.use(bindCorrelationId());
 
     app.use(cors());
     const repoManager = new utils.RepositoryManager(store.get("storageDir"));

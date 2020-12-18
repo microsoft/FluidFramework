@@ -14,6 +14,7 @@ import split = require("split");
 import * as winston from "winston";
 import * as routes from "./routes";
 import { ICache, ITenantService } from "./services";
+import { bindCorrelationId } from "@fluidframework/server-services-utils";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
@@ -35,6 +36,8 @@ export function create(config: nconf.Provider, tenantService: ITenantService, ca
 
     app.use(compression());
     app.use(cors());
+
+    app.use(bindCorrelationId());
 
     const apiRoutes = routes.create(config, tenantService, cache);
     app.use(apiRoutes.git.blobs);
