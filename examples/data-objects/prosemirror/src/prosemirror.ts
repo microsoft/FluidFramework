@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import {
     IFluidLoadable,
     IFluidRouter,
@@ -129,11 +130,7 @@ export class ProseMirror extends EventEmitter
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "" || request.url === "/") {
-            return { status: 200, mimeType: "fluid/object", value: this };
-        } else {
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-        }
+        return defaultFluidObjectRequestHandler(this, request);
     }
 
     private async initialize() {

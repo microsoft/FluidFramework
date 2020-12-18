@@ -35,7 +35,7 @@ import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
-import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import Axios from "axios";
 
 import * as scribe from "./tools-core";
@@ -409,11 +409,7 @@ export class Scribe
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "" || request.url === "/") {
-            return { status: 200, mimeType: "fluid/object", value: this };
-        } else {
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-        }
+        return defaultFluidObjectRequestHandler(this, request);
     }
 
     public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {

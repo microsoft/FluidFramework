@@ -29,7 +29,7 @@ import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
-import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 
 export const IKeyValue: keyof IProvideKeyValue = "IKeyValue";
@@ -89,11 +89,7 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "" || request.url === "/") {
-            return { status: 200, mimeType: "fluid/object", value: this };
-        } else {
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-        }
+        return defaultFluidObjectRequestHandler(this, request);
     }
 
     private async initialize() {
