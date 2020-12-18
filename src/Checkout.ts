@@ -4,6 +4,7 @@
  */
 
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { assert } from './Common';
 import { EditId } from './Identifiers';
 import { Change, Edit, EditResult } from './PersistedTypes';
@@ -36,7 +37,7 @@ export enum CheckoutEvent {
  * @public
  * @sealed
  */
-export abstract class Checkout extends EventEmitterWithErrorHandling {
+export abstract class Checkout extends EventEmitterWithErrorHandling implements IDisposable {
 	/**
 	 * The view of the latest committed revision.
 	 * Does not include changes from any open edits.
@@ -59,6 +60,8 @@ export abstract class Checkout extends EventEmitterWithErrorHandling {
 	 * operations that modify `currentEdit.view` must call `emitChange` to handle invalidation.
 	 */
 	private currentEdit?: Transaction;
+
+	public disposed: boolean = false;
 
 	protected constructor(currentView: Snapshot) {
 		super();
@@ -214,4 +217,13 @@ export abstract class Checkout extends EventEmitterWithErrorHandling {
 	 * @returns a Promise which completes after all currently known edits are available in this checkout.
 	 */
 	public abstract async waitForPendingUpdates(): Promise<void>;
+
+	/**
+	 * release all unmanaged resources
+	 * e.g. unregister event listeners
+	 */
+	public dispose(error?: Error): void {
+		assert(!this.disposed, 'Checkout must not be disposed twice');
+		this.disposed = true;
+	}
 }

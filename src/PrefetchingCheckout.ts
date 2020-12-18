@@ -198,7 +198,9 @@ export class PrefetchingCheckout extends Checkout {
 	 * release all resources
 	 */
 	public dispose(): void {
-		// remove registered listner
+		super.dispose();
+
+		// remove registered listener
 		this.tree.off(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
 	}
 
