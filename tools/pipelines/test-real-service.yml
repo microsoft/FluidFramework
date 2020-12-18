@@ -30,7 +30,7 @@ variables:
     value: 1
   - template: include-vars.yml
     parameters:
-    buildNumberInPatch: true
+      buildNumberInPatch: true
 
 stages:
   # Install / Build / Test Stage
