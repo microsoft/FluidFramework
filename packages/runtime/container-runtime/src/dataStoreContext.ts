@@ -18,7 +18,7 @@ import {
     BindState,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { Deferred, assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, Deferred, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
@@ -56,17 +56,18 @@ import { ContainerRuntime } from "./containerRuntime";
 export const currentSnapshotFormatVersion = "0.1";
 
 export const attributesBlobKey = ".component";
-export const gcBlobKey = ".gc";
+export const gcBlobKey = "gc";
 
-function createAttributes(pkg: readonly string[]): IFluidDataStoreAttributes {
+function createAttributes(pkg: readonly string[], isRootDataStore: boolean): IFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
     return {
         pkg: stringifiedPkg,
         snapshotFormatVersion: currentSnapshotFormatVersion,
+        isRootDataStore,
     };
 }
-export function createAttributesBlob(pkg: readonly string[]): ITreeEntry {
-    const attributes = createAttributes(pkg);
+export function createAttributesBlob(pkg: readonly string[], isRootDataStore: boolean): ITreeEntry {
+    const attributes = createAttributes(pkg, isRootDataStore);
     return new BlobTreeEntry(attributesBlobKey, JSON.stringify(attributes));
 }
 
@@ -78,10 +79,21 @@ export function createAttributesBlob(pkg: readonly string[]): ITreeEntry {
 export interface IFluidDataStoreAttributes {
     pkg: string;
     readonly snapshotFormatVersion?: string;
+    /**
+     * This tells whether a data store is root. Root data stores are never collected.
+     * Non-root data stores may be collected if they are not used. If this is not present, default it to
+     * true. This will ensure that older data stores are incorrectly collected.
+     */
+    readonly isRootDataStore?: boolean;
 }
 
 interface ISnapshotDetails {
     pkg: readonly string[];
+    /**
+     * This tells whether a data store is root. Root data stores are never collected.
+     * Non-root data stores may be collected if they are not used.
+     */
+    isRootDataStore: boolean;
     snapshot?: ISnapshotTree;
 }
 
@@ -170,8 +182,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public async isRoot(): Promise<boolean> {
-        const initialGCDetails = await this.getInitialGCDetails();
-        return initialGCDetails.isRootNode;
+        return (await this.getInitialSnapshotDetails()).isRootDataStore;
     }
 
     protected registry: IFluidDataStoreRegistry | undefined;
@@ -389,13 +400,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const summarizeResult = await this.channel!.summarize(fullTree, trackState);
 
         // Add data store's attributes to the summary.
-        const { pkg } = await this.getInitialSnapshotDetails();
-        const attributes: IFluidDataStoreAttributes = createAttributes(pkg);
+        const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
+        const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
         addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(attributes));
 
         // Add GC details to the summary.
         const gcDetails: IGCDetails = {
-            isRootNode: await this.isRoot(),
             gcData: summarizeResult.gcData,
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
@@ -587,8 +597,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 }
 
 export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
-    private details: ISnapshotDetails | undefined;
-    private initialGCDetails: IGCDetails | undefined;
+    private readonly intialSnapshotDetailsP =
+        new LazyPromise<ISnapshotDetails>(async () => this.loadInitialSnapshotDetails());
+    private readonly initialGCDetailsP = new LazyPromise<IGCDetails>(async () => this.loadInitialGCDetails());
 
     constructor(
         id: string,
@@ -619,75 +630,79 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         throw new Error("Cannot attach remote store");
     }
 
-    // This should only be called during realize to get the baseSnapshot,
-    // or it can be called at any time to get the pkg, but that assumes the
-    // pkg can never change for a store.
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
-        if (!this.details) {
-            let tree: ISnapshotTree | null;
+        return this.intialSnapshotDetailsP;
+    }
 
-            if (typeof this.initSnapshotValue === "string") {
-                const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
-                tree = await this.storage.getSnapshotTree(commit);
-            } else {
-                tree = this.initSnapshotValue;
-            }
+    private async loadInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+        let tree: ISnapshotTree | null;
+        let isRootDataStore = true;
 
-            const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
-            if (tree) {
-                const loadedSummary = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
-                tree = loadedSummary.baseSummary;
-                // Prepend outstanding ops to pending queue of ops to process.
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.pending = loadedSummary.outstandingOps.concat(this.pending!);
-            }
-
-            if (tree !== null && tree.blobs[attributesBlobKey] !== undefined) {
-                // Need to rip through snapshot and use that to populate extraBlobs
-                const { pkg, snapshotFormatVersion } =
-                    await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[attributesBlobKey]);
-
-                let pkgFromSnapshot: string[];
-                // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
-                // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
-                if (snapshotFormatVersion === undefined) {
-                    if (pkg.startsWith("[\"") && pkg.endsWith("\"]")) {
-                        pkgFromSnapshot = JSON.parse(pkg) as string[];
-                    } else {
-                        pkgFromSnapshot = [pkg];
-                    }
-                } else if (snapshotFormatVersion === currentSnapshotFormatVersion) {
-                    pkgFromSnapshot = JSON.parse(pkg) as string[];
-                } else {
-                    throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
-                }
-                this.pkg = pkgFromSnapshot;
-            }
-
-            this.details = {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                pkg: this.pkg!,
-                snapshot: tree ?? undefined,
-            };
+        if (typeof this.initSnapshotValue === "string") {
+            const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
+            tree = await this.storage.getSnapshotTree(commit);
+        } else {
+            tree = this.initSnapshotValue;
         }
 
-        return this.details;
+        const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
+        if (tree) {
+            const loadedSummary = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
+            tree = loadedSummary.baseSummary;
+            // Prepend outstanding ops to pending queue of ops to process.
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.pending = loadedSummary.outstandingOps.concat(this.pending!);
+        }
+
+        if (tree !== null && tree.blobs[attributesBlobKey] !== undefined) {
+            // Need to rip through snapshot and use that to populate extraBlobs
+            const attributes = await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[attributesBlobKey]);
+
+            let pkgFromSnapshot: string[];
+            // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
+            // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
+            if (attributes.snapshotFormatVersion === undefined) {
+                if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
+                    pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
+                } else {
+                    pkgFromSnapshot = [attributes.pkg];
+                }
+            } else if (attributes.snapshotFormatVersion === currentSnapshotFormatVersion) {
+                pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
+            } else {
+                throw new Error(`Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
+            }
+            this.pkg = pkgFromSnapshot;
+
+            /**
+             * If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that
+             * data stores in older documents are not garbage collected incorrectly. This may lead to additional
+             * roots in the document but they won't break.
+             */
+            isRootDataStore = attributes.isRootDataStore ?? true;
+        }
+
+        return {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            pkg: this.pkg!,
+            snapshot: tree ?? undefined,
+            isRootDataStore,
+        };
     }
 
     protected async getInitialGCDetails(): Promise<IGCDetails> {
-        if (this.initialGCDetails === undefined) {
-             // If the initial snapshot is null or string, the snapshot is in old format and won't have GC details.
-            if (!(this.initSnapshotValue === null || typeof this.initSnapshotValue === "string")
-                && this.initSnapshotValue.blobs[gcBlobKey] !== undefined) {
-                this.initialGCDetails =
-                    await readAndParse<IGCDetails>(this.storage, this.initSnapshotValue.blobs[gcBlobKey]);
-            } else {
-                // Default value of initial GC details in case the initial snapshot does not have GC details.
-                // isRootNode is set to true so that data stores in older documents are not collected by GC.
-                this.initialGCDetails = { isRootNode: true };
-            }
+        return this.initialGCDetailsP;
+    }
+
+    private async loadInitialGCDetails(): Promise<IGCDetails> {
+        // If the initial snapshot is null or string, the snapshot is in old format and won't have GC details.
+        if (!(this.initSnapshotValue === null || typeof this.initSnapshotValue === "string")
+            && this.initSnapshotValue.blobs[gcBlobKey] !== undefined) {
+            return readAndParse<IGCDetails>(this.storage, this.initSnapshotValue.blobs[gcBlobKey]);
+        } else {
+            // Default value of initial GC details in case the initial snapshot does not have GC details.
+            return {};
         }
-        return this.initialGCDetails;
     }
 }
 
@@ -743,12 +758,11 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         const summarizeResult = this.channel.getAttachSummary();
 
         // Add data store's attributes to the summary.
-        const attributes: IFluidDataStoreAttributes = createAttributes(this.pkg);
+        const attributes: IFluidDataStoreAttributes = createAttributes(this.pkg, this.isRootDataStore);
         addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(attributes));
 
         // Add GC details to the summary.
         const gcDetails: IGCDetails = {
-            isRootNode: this.isRootDataStore,
             gcData: summarizeResult.gcData,
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
@@ -766,18 +780,18 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     }
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
-        assert(this.pkg !== undefined, "pkg should be available in local data store context");
+        assert(this.pkg !== undefined, "pkg should be available in local data store");
+        assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store");
         return {
             pkg: this.pkg,
             snapshot: this.snapshotTree,
+            isRootDataStore: this.isRootDataStore,
         };
     }
 
     protected async getInitialGCDetails(): Promise<IGCDetails> {
-        assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store context");
-        return {
-            isRootNode: this.isRootDataStore,
-        };
+        // There is no initial GC details for local data stores.
+        return {};
     }
 }
 

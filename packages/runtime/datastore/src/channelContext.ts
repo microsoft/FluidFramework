@@ -17,7 +17,7 @@ import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 
 export const attributesBlobKey = ".attributes";
-export const gcBlobKey = ".gc";
+export const gcBlobKey = "gc";
 
 export interface IChannelContext {
     getChannel(): Promise<IChannel>;
@@ -67,7 +67,6 @@ export function summarizeChannel(
 
     // Add GC details to the summary.
     const gcDetails: IGCDetails = {
-        isRootNode: true,
         gcData: summarizeResult.gcData,
     };
     addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));

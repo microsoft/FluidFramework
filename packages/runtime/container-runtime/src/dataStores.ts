@@ -20,7 +20,6 @@ import {
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
     IGCData,
-    IGCDetails,
     IInboundSignalMessage,
     InboundAttachMessage,
     ISummarizeResult,
@@ -44,7 +43,6 @@ import { ContainerRuntime, nonDataStorePaths } from "./containerRuntime";
 import {
     attributesBlobKey,
     FluidDataStoreContext,
-    gcBlobKey,
     RemotedFluidDataStoreContext,
     IFluidDataStoreAttributes,
     currentSnapshotFormatVersion,
@@ -108,30 +106,17 @@ export class DataStores implements IDisposable {
                 }
                 const snapshotTree = value;
                 // Need to rip through snapshot.
-                const { pkg, snapshotFormatVersion } = readAndParseFromBlobs<IFluidDataStoreAttributes>(
+                const attributes = readAndParseFromBlobs<IFluidDataStoreAttributes>(
                         snapshotTree.blobs,
                         snapshotTree.blobs[attributesBlobKey]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
                 // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
                 // However the feature of loading a detached container from snapshot, is added when the
                 // snapshotFormatVersion is "0.1", so we don't expect it to be anything else.
-                if (snapshotFormatVersion === currentSnapshotFormatVersion) {
-                    pkgFromSnapshot = JSON.parse(pkg) as string[];
+                if (attributes.snapshotFormatVersion === currentSnapshotFormatVersion) {
+                    pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
                 } else {
-                    throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
-                }
-
-                /**
-                 * Read the GC blob from summary. If there is no GC blob, set isRootDataStore to true. This will
-                 * ensure that data stores in older documents are not garbage collected incorrectly. This may lead
-                 * to additional roots in the document but they won't break.
-                 */
-                let isRootDataStore = true;
-                if (snapshotTree.blobs[gcBlobKey] !== undefined) {
-                    const { isRootNode } = readAndParseFromBlobs<IGCDetails>(
-                        snapshotTree.blobs,
-                        snapshotTree.blobs[gcBlobKey]);
-                    isRootDataStore = isRootNode;
+                    throw new Error(`Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
                 }
 
                 dataStoreContext = new LocalFluidDataStoreContext(
@@ -143,7 +128,10 @@ export class DataStores implements IDisposable {
                     this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
                     (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
                     snapshotTree,
-                    isRootDataStore);
+                    // If there is no isRootDataStore in the attributes blob, set it to true. This ensures that data
+                    // stores in older documents are not garbage collected incorrectly. This may lead to additional
+                    // roots in the document but they won't break.
+                    attributes.isRootDataStore ?? true);
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
@@ -193,7 +181,7 @@ export class DataStores implements IDisposable {
                     sequenceNumber: message.sequenceNumber,
                     snapshot: attachMessage.snapshot ?? {
                         id: null,
-                        entries: [createAttributesBlob(pkg)],
+                        entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
                     },
                 }),
             pkg);

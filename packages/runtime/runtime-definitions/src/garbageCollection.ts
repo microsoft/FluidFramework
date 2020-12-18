@@ -16,8 +16,6 @@ export interface IGCData {
  * Represents the format of the GC details that is stored in the summary for each node.
  */
 export interface IGCDetails {
-    /** Whether this node is a root node. Root nodes are never collected. */
-    isRootNode: boolean;
     /** The GC data of this node. */
     gcData?: IGCData;
 }

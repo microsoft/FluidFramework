@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
     IChannel,
@@ -48,7 +48,7 @@ export class RemoteChannelContext implements IChannelContext {
         readonly objectStorage: ChannelStorageService,
     };
     private readonly summarizerNode: ISummarizerNodeWithGC;
-    private initialGCDetails: IGCDetails | undefined;
+    private readonly initialGCDetailsP = new LazyPromise<IGCDetails>(async () => this.loadInitialGCDetails());
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -232,17 +232,21 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     /**
-     * This returns the GC data retrieved from the base snapshot of this context.
+     * This returns the GC data in the initial GC details of this context.
      */
     private async getInitialGCData(): Promise<IGCData | undefined> {
-        if (this.initialGCDetails === undefined) {
-            if (await this.services.objectStorage.contains(gcBlobKey)) {
-                this.initialGCDetails = await readAndParse<IGCDetails>(this.services.objectStorage, gcBlobKey);
-            } else {
-                // Default value of initial GC details in case the initial snapshot does not have GC details blob.
-                this.initialGCDetails = { isRootNode: true };
-            }
+        return (await this.initialGCDetailsP).gcData;
+    }
+
+    /**
+     * This loads the GC details from the base snapshot of this context.
+     */
+    private async loadInitialGCDetails(): Promise<IGCDetails> {
+        if (await this.services.objectStorage.contains(gcBlobKey)) {
+            return readAndParse<IGCDetails>(this.services.objectStorage, gcBlobKey);
+        } else {
+            // Default value of initial GC details in case the initial snapshot does not have GC details blob.
+            return {};
         }
-        return this.initialGCDetails.gcData;
     }
 }
