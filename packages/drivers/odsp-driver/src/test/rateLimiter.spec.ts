@@ -74,4 +74,21 @@ describe("Rate Limiter", () => {
         assert(counter === tasks);
         assert(limiter.waitQueueLength === 0);
     });
+
+    it ("can run many tasks sequentially", async () => {
+        let counter = 0;
+        const promises: Promise<void>[] = [];
+        for (let i = 0; i < 3; i++) {
+            promises.push(limiter.schedule(async () => {
+                counter++;
+            }));
+        }
+        await Promise.all(promises);
+        // Now check that we can schedule another task.
+        await limiter.schedule(async () => {
+            counter++;
+        });
+        assert(counter === 4);
+        assert(limiter.waitQueueLength === 0);
+    });
 });

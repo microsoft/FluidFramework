@@ -103,7 +103,7 @@ async function fetchBlobs(prefix: string,
 function createTreeBlob(tree: ISnapshotTree, prefix: string, patched: boolean): IFetchedTree {
     assert(!!tree.id);
     const content = JSON.stringify(tree);
-    const filename = `tree-${tree.id}${patched ? "-patched" : ""}`;
+    const filename = patched ? "tree" : `tree-${tree.id}`;
     const treePath = `${prefix}${filename}`;
     return { treePath, blobId: tree.id, filename, blob: content, patched, reused: false };
 }

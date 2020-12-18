@@ -4,10 +4,13 @@
  */
 
 module.exports = {
-"extends": [
+    "extends": [
         "@fluidframework/eslint-config-fluid/eslint7"
     ],
-    rules: {
+    "parserOptions": {
+        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
+    },
+    "rules": {
         "@typescript-eslint/no-use-before-define": "off",
         "no-case-declarations": "off"
     }

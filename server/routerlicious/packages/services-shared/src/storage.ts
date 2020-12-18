@@ -282,7 +282,11 @@ export class DocumentStorage implements IDocumentStorage {
             // TODO: Make the rest endpoint handle this case.
             const opsContent = await gitManager.getContent(existingRef.object.sha, ".logTail/logTail");
             const ops = JSON.parse(
-                Buffer.from(opsContent.content, opsContent.encoding).toString()) as ISequencedDocumentMessage[];
+                            Buffer.from(
+                                opsContent.content,
+                                Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : undefined,
+                            ).toString(),
+                        ) as ISequencedDocumentMessage[];
             const dbOps: ISequencedOperationMessage[] = ops.map((op: ISequencedDocumentMessage) => {
                 return {
                     documentId,

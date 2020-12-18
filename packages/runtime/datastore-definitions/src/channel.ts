@@ -5,7 +5,7 @@
 
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult } from "@fluidframework/runtime-definitions";
+import { IChannelSummarizeResult, IGCData } from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
@@ -34,6 +34,12 @@ export interface IChannel extends IFluidLoadable {
      * Enables the channel to send and receive ops
      */
     connect(services: IChannelServices): void;
+
+    /**
+     * Returns the GC data for this channel. It contains a list of GC nodes that contains references to
+     * other GC nodes.
+     */
+    getGCData(): IGCData;
 }
 
 /**

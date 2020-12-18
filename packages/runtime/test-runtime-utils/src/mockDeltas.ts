@@ -5,10 +5,10 @@
 
 import { EventEmitter } from "events";
 import {
+    IClientConfiguration,
     IClientDetails,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
@@ -109,7 +109,7 @@ export class MockDeltaManager extends EventEmitter
         return 0;
     }
 
-    public get serviceConfiguration(): IServiceConfiguration {
+    public get serviceConfiguration(): IClientConfiguration {
         return undefined;
     }
 

@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/test-dds-utils",
-  "version": "0.31.0",
+  "version": "0.32.0",
   "private": true,
   "description": "Fluid DDS test utilities",
   "homepage": "https://fluidframework.com",
@@ -19,7 +19,7 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
@@ -47,7 +47,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/shared-object-base": "^0.31.0",
+    "@fluidframework/shared-object-base": "^0.32.0",
     "assert": "^2.0.0"
   },
   "devDependencies": {

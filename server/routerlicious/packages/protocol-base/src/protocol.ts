@@ -6,16 +6,13 @@
 import {
     IClientJoin,
     ICommittedProposal,
-    IDocumentAttributes,
     IProcessMessageResult,
     IProposal,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISequencedProposal,
-    ISummaryTree,
     MessageType,
-    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { Quorum } from "./quorum";
 
@@ -51,7 +48,6 @@ export class ProtocolOpHandler {
     public readonly quorum: Quorum;
     public readonly term: number;
     constructor(
-        private readonly branchId: string,
         public minimumSequenceNumber: number,
         public sequenceNumber: number,
         term: number | undefined,
@@ -137,42 +133,5 @@ export class ProtocolOpHandler {
             sequenceNumber: this.sequenceNumber,
             values: quorumSnapshot.values,
         };
-    }
-
-    public captureSummary(): ISummaryTree {
-        // These fields can easily be tracked on the server
-        const quorumSnapshot = this.quorum.snapshot();
-
-        // Save attributes for the document
-        const documentAttributes: IDocumentAttributes = {
-            branch: this.branchId,
-            minimumSequenceNumber: this.minimumSequenceNumber,
-            sequenceNumber: this.sequenceNumber,
-            term: this.term,
-        };
-
-        const summary: ISummaryTree = {
-            tree: {
-                attributes: {
-                    content: JSON.stringify(documentAttributes),
-                    type: SummaryType.Blob,
-                },
-                quorumMembers: {
-                    content: JSON.stringify(quorumSnapshot.members),
-                    type: SummaryType.Blob,
-                },
-                quorumProposals: {
-                    content: JSON.stringify(quorumSnapshot.proposals),
-                    type: SummaryType.Blob,
-                },
-                quorumValues: {
-                    content: JSON.stringify(quorumSnapshot.values),
-                    type: SummaryType.Blob,
-                },
-            },
-            type: SummaryType.Tree,
-        };
-
-        return summary;
     }
 }

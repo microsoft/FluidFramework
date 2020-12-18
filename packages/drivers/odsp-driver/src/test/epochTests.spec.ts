@@ -29,7 +29,7 @@ describe("Tests for Epoch Tracker", () => {
         };
     });
 
-    it.skip("Epoch error when fetch error from cache should throw epoch error and clear cache", async () => {
+    it("Epoch error when fetch error from cache should throw epoch error and clear cache", async () => {
         let success: boolean = true;
         const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
         const cacheEntry1: ICacheEntry = {
@@ -56,7 +56,7 @@ describe("Tests for Epoch Tracker", () => {
         assert.strictEqual(success, false, "Fetching fro cache should fail!!");
     });
 
-    it.skip("Epoch error when fetch response and should clear cache", async () => {
+    it("Epoch error when fetch response and should clear cache", async () => {
         let success: boolean = true;
         const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
         const cacheEntry1: ICacheEntry = {
@@ -80,7 +80,7 @@ describe("Tests for Epoch Tracker", () => {
         assert.strictEqual(success, false, "Fetching should fail!!");
     });
 
-    it.skip("Epoch error when fetch response as json and should clear cache", async () => {
+    it("Epoch error when fetch response as json and should clear cache", async () => {
         let success: boolean = true;
         const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
         const cacheEntry1: ICacheEntry = {

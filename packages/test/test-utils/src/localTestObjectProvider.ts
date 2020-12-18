@@ -5,7 +5,7 @@
 
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
+import { IClientConfiguration } from "@fluidframework/protocol-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { BaseTestObjectProvider } from "./baseTestObjectProvider";
 import { fluidEntryPoint } from "./localCodeLoader";
@@ -23,7 +23,7 @@ const defaultDocumentId = "defaultDocumentId";
  * Since the channel is just a pass thru to the call back, the type is parameterized to allow use channel
  * from different version. The only types that required to compatible when using different versions are:
  *   fluidEntryPoint
- *   IServiceConfiguration
+ *   IClientConfiguration
  *   ILocalDeltaConnectionServer
  */
 export class LocalTestObjectProvider<TestContainerConfigType>
@@ -41,7 +41,7 @@ export class LocalTestObjectProvider<TestContainerConfigType>
      */
     constructor(
         createFluidEntryPoint: (testContainerConfig?: TestContainerConfigType) => fluidEntryPoint,
-        private readonly serviceConfiguration?: Partial<IServiceConfiguration>,
+        private readonly serviceConfiguration?: Partial<IClientConfiguration>,
         private _deltaConnectionServer?: ILocalDeltaConnectionServer | undefined,
     ) {
         super(createFluidEntryPoint);

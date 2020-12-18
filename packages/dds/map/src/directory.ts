@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { blobToString } from "@fluidframework/driver-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
@@ -24,6 +24,7 @@ import * as path from "path-browserify";
 import { debug } from "./debug";
 import {
     IDirectory,
+    IDirectoryEvents,
     IDirectoryValueChanged,
     ISerializableValue,
     ISerializedValue,
@@ -31,6 +32,7 @@ import {
     IValueOpEmitter,
     IValueTypeOperationValue,
     ISharedDirectoryEvents,
+    IValueChanged,
 } from "./interfaces";
 import {
     ILocalValue,
@@ -429,6 +431,13 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         super(id, runtime, attributes);
         this.localValueMaker = new LocalValueMaker(this.serializer);
         this.setMessageHandlers();
+        // Mirror the containedValueChanged op on the SharedDirectory
+        this.root.on(
+            "containedValueChanged",
+            (changed: IValueChanged, local: boolean) => {
+                this.emit("containedValueChanged", changed, local);
+            },
+        );
     }
 
     /**
@@ -908,7 +917,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
  * Node of the directory tree.
  * @sealed
  */
-class SubDirectory implements IDirectory {
+class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirectory {
     /**
      * String representation for the class.
      */
@@ -956,7 +965,9 @@ class SubDirectory implements IDirectory {
         private readonly directory: SharedDirectory,
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly serializer: IFluidSerializer,
-        public readonly absolutePath: string) {
+        public readonly absolutePath: string,
+    ) {
+        super();
     }
 
     /**
@@ -1560,6 +1571,8 @@ class SubDirectory implements IDirectory {
         if (successfullyRemoved) {
             const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
             this.directory.emit("valueChanged", event, local, op);
+            const containedEvent: IValueChanged = { key, previousValue };
+            this.emit("containedValueChanged", containedEvent, local);
         }
         return successfullyRemoved;
     }
@@ -1576,6 +1589,8 @@ class SubDirectory implements IDirectory {
         this._storage.set(key, value);
         const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
         this.directory.emit("valueChanged", event, local, op);
+        const containedEvent: IValueChanged = { key, previousValue };
+        this.emit("containedValueChanged", containedEvent, local);
     }
 
     /**

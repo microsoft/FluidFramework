@@ -56,6 +56,7 @@ import {
 import {
     FileMode,
     IClient,
+    IClientConfiguration,
     IClientDetails,
     ICommittedProposal,
     IDocumentAttributes,
@@ -65,7 +66,6 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
@@ -76,6 +76,7 @@ import {
     TreeEntry,
     ISummaryTree,
     IPendingProposal,
+    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -374,7 +375,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Service configuration details. If running in offline mode will be undefined otherwise will contain service
      * configuration details returned as part of the initial connection.
      */
-    public get serviceConfiguration(): IServiceConfiguration | undefined {
+    public get serviceConfiguration(): IClientConfiguration | undefined {
         return this._deltaManager.serviceConfiguration;
     }
 
@@ -535,7 +536,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.attachState === AttachState.Detached, "Should only be called in detached container");
 
         const appSummary: ISummaryTree = this.context.createSummary();
-        const protocolSummary = this.protocolHandler.captureSummary();
+        const protocolSummary = this.captureProtocolSummary();
         const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
         return JSON.stringify(snapshotTree);
     }
@@ -573,7 +574,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 if (this.protocolHandler === undefined) {
                     throw new Error("Protocol Handler is undefined");
                 }
-                const protocolSummary = this.protocolHandler.captureSummary();
+                const protocolSummary = this.captureProtocolSummary();
                 this.cachedAttachSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
                 // Set the state as attaching as we are starting the process of attaching container.
@@ -1207,7 +1208,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         values: [string, any][],
     ): ProtocolOpHandler {
         const protocol = new ProtocolOpHandler(
-            attributes.branch,
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
             attributes.term,
@@ -1261,6 +1261,42 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             });
 
         return protocol;
+    }
+
+    private captureProtocolSummary(): ISummaryTree {
+        const quorumSnapshot = this.protocolHandler.quorum.snapshot();
+
+        // Save attributes for the document
+        const documentAttributes: IDocumentAttributes = {
+            branch: this.id,
+            minimumSequenceNumber: this.protocolHandler.minimumSequenceNumber,
+            sequenceNumber: this.protocolHandler.sequenceNumber,
+            term: this.protocolHandler.term,
+        };
+
+        const summary: ISummaryTree = {
+            tree: {
+                attributes: {
+                    content: JSON.stringify(documentAttributes),
+                    type: SummaryType.Blob,
+                },
+                quorumMembers: {
+                    content: JSON.stringify(quorumSnapshot.members),
+                    type: SummaryType.Blob,
+                },
+                quorumProposals: {
+                    content: JSON.stringify(quorumSnapshot.proposals),
+                    type: SummaryType.Blob,
+                },
+                quorumValues: {
+                    content: JSON.stringify(quorumSnapshot.values),
+                    type: SummaryType.Blob,
+                },
+            },
+            type: SummaryType.Tree,
+        };
+
+        return summary;
     }
 
     private getCodeDetailsFromQuorum(): IFluidCodeDetails {

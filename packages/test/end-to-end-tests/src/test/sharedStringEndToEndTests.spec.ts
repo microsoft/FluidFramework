@@ -62,7 +62,8 @@ const tests = (args: ITestObjectProvider) => {
         const newContainer = await args.loadTestContainer(testContainerConfig) as Container;
         const newComponent = await requestFluidObject<ITestFluidObject>(newContainer, "default");
         const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
-        assert.equal(newSharedString.getText(), text, "The new container should receive the inserted text on creation");
+        assert.equal(
+            newSharedString.getText(), text, "The new container should receive the inserted text on creation");
     });
 };
 

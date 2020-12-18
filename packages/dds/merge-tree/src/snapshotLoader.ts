@@ -47,6 +47,9 @@ export class SnapshotLoader {
         const catchupOpsP =
             this.loadBodyAndCatchupOps(headerLoadedP, services);
 
+        catchupOpsP.catch(
+            (err)=>this.logger.sendErrorEvent({ eventName: "CatchupOpsLoadFailure" },err));
+
         await headerLoadedP;
 
         return { catchupOpsP };

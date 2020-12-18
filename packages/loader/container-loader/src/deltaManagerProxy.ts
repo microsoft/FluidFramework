@@ -12,10 +12,10 @@ import {
 } from "@fluidframework/container-definitions";
 import { EventForwarder } from "@fluidframework/common-utils";
 import {
+    IClientConfiguration,
     IClientDetails,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
@@ -116,7 +116,7 @@ export class DeltaManagerProxy
         return this.deltaManager.maxMessageSize;
     }
 
-    public get serviceConfiguration(): IServiceConfiguration | undefined {
+    public get serviceConfiguration(): IClientConfiguration | undefined {
         return this.deltaManager.serviceConfiguration;
     }
 

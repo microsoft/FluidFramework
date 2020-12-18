@@ -27,4 +27,4 @@ The caller is responsible for the following:
 3. Maintaining the list of expected outbound routes. The tests query this and validates that the GC data returned by the DDS matches these routes.
 
 ### Examples
-[SharedCell](../cell/src/test/cell.spec.ts) and [SharedDirectory](../map/src/test/directory.spec.ts) have tests that use the gcTestRunner for validating GC data.
+[SharedCell](../cell/src/test/cell.spec.ts) and [SharedDirectory](../map/test/directory.spec.ts) have tests that use the gcTestRunner for validating GC data.

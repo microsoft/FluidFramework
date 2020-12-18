@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BroadcasterLambda, DefaultServiceConfiguration, DeliLambdaFactory } from "@fluidframework/server-lambdas";
+import { BroadcasterLambda, DeliLambdaFactory } from "@fluidframework/server-lambdas";
 import { create as createDocumentRouter } from "@fluidframework/server-lambdas-driver";
 import { LocalKafka, LocalContext, LocalLambdaController } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
@@ -62,7 +62,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         tenantManager,
         combinedProducer,
         reverseProducer,
-        DefaultServiceConfiguration);
+        core.DefaultServiceConfiguration);
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {

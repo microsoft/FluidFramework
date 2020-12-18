@@ -155,8 +155,7 @@ export function throwOdspNetworkError(
     const networkError = createOdspNetworkError(
         response ? `${errorMessage}, msg = ${response.statusText}, type = ${response.type}` : errorMessage,
         statusCode,
-        undefined /* retryAfterSeconds */,
-        undefined);
+        undefined /* retryAfterSeconds */);
 
     throw networkError;
 }

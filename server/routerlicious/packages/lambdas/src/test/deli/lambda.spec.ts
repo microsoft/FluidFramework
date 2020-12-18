@@ -4,6 +4,7 @@
  */
 
 import {
+    DefaultServiceConfiguration,
     ICollection,
     IPartitionLambda,
     IProducer,
@@ -23,7 +24,6 @@ import {
 import { strict as assert } from "assert";
 import * as _ from "lodash";
 import nconf from "nconf";
-import { DefaultServiceConfiguration } from "../../alfred";
 import { DeliLambdaFactory } from "../../deli/lambdaFactory";
 
 const MinSequenceNumberWindow = 2000;
