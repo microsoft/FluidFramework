@@ -1030,33 +1030,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // once all pieces are available
             message = this.processRemoteChunkedMessage(message);
 
-            let localMessageMetadata: unknown;
-            if (local) {
-                // Call the PendingStateManager to process local messages.
-                // Do not process local chunked ops until all pieces are available.
-                if (message.type !== ContainerMessageType.ChunkedOp) {
-                    localMessageMetadata = this.pendingStateManager.processPendingLocalMessage(message);
-                }
+            // Call the PendingStateManager to process messages.
+            const { localAck, localOpMetadata } = this.pendingStateManager.processMessage(message, local);
 
-                // If there are no more pending messages after processing a local message,
-                // the document is no longer dirty.
-                if (!this.pendingStateManager.hasPendingMessages()) {
-                    this.updateDocumentDirtyState(false);
-                }
+            // If there are no more pending messages after processing a local message,
+            // the document is no longer dirty.
+            if (!this.pendingStateManager.hasPendingMessages()) {
+                this.updateDocumentDirtyState(false);
             }
-
-            const pending = this.pendingStateManager.processRemoteMessage(message);
 
             switch (message.type) {
                 case ContainerMessageType.Attach:
                     this.dataStores.processAttachMessage(message, local);
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
-                    if (pending.localAck) {
+                    if (localAck) {
                         // treat this as a local op because it's one we sent on a previous container
-                        this.dataStores.processFluidDataStoreOp(message, true, pending.localOpMetadata);
+                        this.dataStores.processFluidDataStoreOp(message, true, localOpMetadata);
                     } else {
-                        this.dataStores.processFluidDataStoreOp(message, local, localMessageMetadata);
+                        this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
                     }
                     break;
                 case ContainerMessageType.BlobAttach:

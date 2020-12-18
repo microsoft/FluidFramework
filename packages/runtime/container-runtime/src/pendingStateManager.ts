@@ -209,7 +209,30 @@ export class PendingStateManager {
         this.pendingStates.push(pendingFlush);
     }
 
-    public processRemoteMessage(message: ISequencedDocumentMessage) {
+    /**
+     * Processes a local message once it's ack'd by the server to verify that there was no data corruption and that
+     * the batch information was preserved for batch messages. Also process remote messages that might have been
+     * sent from a previous container.
+     * @param message - The messsage that got ack'd and needs to be processed.
+     */
+    public processMessage(message: ISequencedDocumentMessage, local: boolean) {
+        // Do not process chunked ops until all pieces are available.
+        if (message.type === ContainerMessageType.ChunkedOp) {
+            return { localAck: false, localOpMetadata: undefined };
+        }
+
+        if (local) {
+            return { localAck: false, localOpMetadata: this.processPendingLocalMessage(message) };
+        } else {
+            return this.processRemoteMessage(message);
+        }
+    }
+
+    /**
+     * Listens for ops sent by a previous container and rebases initially loaded ops so they are ready to
+     * be acked or resubmitted.
+     */
+    private processRemoteMessage(message: ISequencedDocumentMessage) {
         // rebase initial ops up to and including message sequence number
         while (!this.initialStates.isEmpty()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -231,13 +254,14 @@ export class PendingStateManager {
         // if this is an ack for a pending initial op, dequeue one message (possibly one we just queued)
         if (message.clientId === this.initialClientId && message.clientSequenceNumber >= this.initialClientSeqNum) {
             while (!this.pendingStates.isEmpty()) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const nextState = this.pendingStates.shift()!;
                 // if it's not a message just drop it and keep looking
                 if (nextState.type === "message") {
                     return { localAck: true, localOpMetadata: nextState.localOpMetadata };
                 }
             }
-            throw new Error("no pending initial message matching ack")
+            throw new Error("no pending initial message matching ack");
         }
 
         return { localAck: false, localOpMetadata: undefined };
@@ -248,7 +272,7 @@ export class PendingStateManager {
      * the batch information was preserved for batch messages.
      * @param message - The messsage that got ack'd and needs to be processed.
      */
-    public processPendingLocalMessage(message: ISequencedDocumentMessage): unknown {
+    private processPendingLocalMessage(message: ISequencedDocumentMessage): unknown {
         // Pre-processing part - This may be the start of a batch.
         this.maybeProcessBatchBegin(message);
 
@@ -400,37 +424,33 @@ export class PendingStateManager {
         while (pendingStatesCount > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pendingState = this.pendingStates.shift()!;
-            this.replayState(pendingState);
+            switch (pendingState.type) {
+                case "message":
+                    {
+                        this.containerRuntime.reSubmitFn(
+                            pendingState.messageType,
+                            pendingState.content,
+                            pendingState.localOpMetadata,
+                            pendingState.opMetadata);
+                    }
+                    break;
+                case "flushMode":
+                    {
+                        this.containerRuntime.setFlushMode(pendingState.flushMode);
+                    }
+                    break;
+                case "flush":
+                    {
+                        this.containerRuntime.flush();
+                    }
+                    break;
+                default:
+                    break;
+            }
             pendingStatesCount--;
         }
 
         // Revert the FlushMode.
         this.containerRuntime.setFlushMode(savedFlushMode);
-    }
-
-    private replayState(pendingState: IPendingState) {
-        switch (pendingState.type) {
-            case "message":
-                {
-                    this.containerRuntime.reSubmitFn(
-                        pendingState.messageType,
-                        pendingState.content,
-                        pendingState.localOpMetadata,
-                        pendingState.opMetadata);
-                }
-                break;
-            case "flushMode":
-                {
-                    this.containerRuntime.setFlushMode(pendingState.flushMode);
-                }
-                break;
-            case "flush":
-                {
-                    this.containerRuntime.flush();
-                }
-                break;
-            default:
-                break;
-        }
     }
 }

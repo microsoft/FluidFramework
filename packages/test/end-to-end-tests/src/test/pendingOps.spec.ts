@@ -14,7 +14,6 @@ import {
     ITestContainerConfig,
     ITestObjectProvider,
 } from "./compatUtils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
 
 const mapId = "map";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -49,6 +48,7 @@ const watchContainer = (container) => {
 console.log(watchContainer);
 
 const testKey = "test key";
+const testKey2 = "another test key";
 const testValue = "test value";
 
 const tests = (args: ITestObjectProvider) => {
@@ -196,11 +196,6 @@ const tests = (args: ITestObjectProvider) => {
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         assert(dataStore2.runtime.deltaManager.outbound.paused);
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        (container2 as any).context.runtime.setFlushMode(FlushMode.Manual);
-        map2.set(testKey, testValue);
-        (container2 as any).context.runtime.flush();
-        (container2 as any).context.runtime.setFlushMode(FlushMode.Automatic);
-        (container2 as any).context.runtime.setFlushMode(FlushMode.Manual);
         (container2 as any).context.runtime.orderSequentially(() => {
             [...Array(50).keys()].map((i) => map2.set(i.toString(), i));
         });
@@ -228,11 +223,6 @@ const tests = (args: ITestObjectProvider) => {
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         assert(dataStore2.runtime.deltaManager.outbound.paused);
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        (container2 as any).context.runtime.setFlushMode(FlushMode.Manual);
-        map2.set(testKey, testValue);
-        (container2 as any).context.runtime.flush();
-        (container2 as any).context.runtime.setFlushMode(FlushMode.Automatic);
-        (container2 as any).context.runtime.setFlushMode(FlushMode.Manual);
         (container2 as any).context.runtime.orderSequentially(() => {
             [...Array(50).keys()].map((i) => map2.set(i.toString(), i));
         });
@@ -257,6 +247,72 @@ const tests = (args: ITestObjectProvider) => {
             async (i) => assert.strictEqual(await map1.wait(i.toString()), testValue)));
         await Promise.all([...Array(50).keys()].map(
             async (i) => assert.strictEqual(await map3.wait(i.toString()), testValue)));
+    });
+
+    it("resends chunked op", async function() {
+        const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
+
+        const container2: IContainer = await args.loadTestContainer(testContainerConfig);
+        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
+        await args.opProcessingController.pauseProcessing(container2.deltaManager as any);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        assert(dataStore2.runtime.deltaManager.outbound.paused);
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+
+        map2.set(testKey, bigString);
+
+        const pendingOps = getSnapshot(container2);
+        assert.ok(pendingOps);
+        container2.close();
+
+        // load container with pending ops, which should resend the ops not sent by previous container
+        const container3: IContainer = await (loader as any).resolveWithLocallySavedState(
+            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            pendingOps,
+        );
+        args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
+        const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+        assert.strictEqual(await map1.wait(testKey), bigString);
+        assert.strictEqual(await map3.wait(testKey), bigString);
+    });
+
+    it("doesn't resend successful chunked op", async function() {
+        const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
+
+        const container2: IContainer = await args.loadTestContainer(testContainerConfig);
+        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
+        await args.opProcessingController.process();
+        await args.opProcessingController.pauseProcessing(container2.deltaManager as any);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        assert(dataStore2.runtime.deltaManager.outbound.paused);
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+
+        map2.set(testKey, bigString);
+        map2.set(testKey2, bigString);
+
+        const pendingOps = getSnapshot(container2);
+        assert.ok(pendingOps);
+        await args.opProcessingController.process();
+        container2.close();
+
+        // set on first container which should not be overwritten
+        map1.set(testKey, testValue);
+        map1.set(testKey2, testValue);
+
+        // load container with pending ops, which should resend the ops not sent by previous container
+        const container3: IContainer = await (loader as any).resolveWithLocallySavedState(
+            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            pendingOps,
+        );
+        args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
+        const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+        await args.opProcessingController.process();
+        assert.strictEqual(await map1.wait(testKey), testValue);
+        assert.strictEqual(await map3.wait(testKey), testValue);
+        assert.strictEqual(await map1.wait(testKey2), testValue);
+        assert.strictEqual(await map3.wait(testKey2), testValue);
     });
 };
 
