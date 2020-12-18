@@ -114,11 +114,6 @@ class LoadedView {
  */
 export class PrefetchingCheckout extends Checkout {
 	/**
-	 * The shared tree this checkout views/edits.
-	 */
-	public readonly tree: SharedTree;
-
-	/**
 	 * A revision newer than loadedView that is still loading.
 	 */
 	private loadingView?: Promise<LoadedView>;
@@ -131,7 +126,7 @@ export class PrefetchingCheckout extends Checkout {
 	/**
 	 * A bound handler for 'committedEdit' SharedTreeEvent
 	 */
-	private readonly editCommittedHandler = this.setLoadingView.bind(this);
+	protected readonly editCommittedHandler = this.setLoadingView.bind(this);
 
 	/**
 	 * @param tree - the shared tree to view and edit.
@@ -155,9 +150,7 @@ export class PrefetchingCheckout extends Checkout {
 	 * @param loadedView - the view to start at
 	 */
 	private constructor(tree: SharedTree, loadedView: LoadedView) {
-		super(loadedView.view);
-		this.tree = tree;
-		this.tree.on(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
+		super(tree, loadedView.view);
 		this.loadedView = loadedView;
 	}
 
@@ -192,16 +185,6 @@ export class PrefetchingCheckout extends Checkout {
 		// There may have been edits known at the beginning of this function that were not included in the pending batch.
 		// Waiting for this second update is guaranteed to include at least all edits in the shared tree when this was called.
 		await this.loadingView;
-	}
-
-	/**
-	 * release all resources
-	 */
-	public dispose(): void {
-		super.dispose();
-
-		// remove registered listener
-		this.tree.off(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
 	}
 
 	private setLoadingView(): void {

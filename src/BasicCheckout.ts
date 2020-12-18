@@ -17,24 +17,15 @@ import { Checkout } from './Checkout';
  */
 export class BasicCheckout extends Checkout {
 	/**
-	 * The shared tree this checkout views/edits.
-	 */
-	public readonly tree: SharedTree;
-
-	/**
 	 * A bound handler for 'committedEdit' SharedTreeEvent
 	 */
-	private readonly editCommittedHandler = this.emitChange.bind(this);
+	protected readonly editCommittedHandler = this.emitChange.bind(this);
 
 	/**
 	 * @param tree - the tree
 	 */
 	public constructor(tree: SharedTree) {
-		super(tree.currentView);
-		this.tree = tree;
-
-		// If there is an ongoing edit, emitChange will no-op, which is fine.
-		this.tree.on(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
+		super(tree, tree.currentView);
 	}
 
 	protected handleNewEdit(edit: Edit, view: Snapshot): void {

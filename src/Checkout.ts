@@ -11,6 +11,7 @@ import { Change, Edit, EditResult } from './PersistedTypes';
 import { newEdit } from './EditUtilities';
 import { EditValidationResult, Snapshot } from './Snapshot';
 import { Transaction } from './Transaction';
+import { SharedTree, SharedTreeEvent } from './SharedTree';
 
 /**
  * An event emitted by a `Checkout` to indicate a state change
@@ -53,6 +54,16 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 	private previousView: Snapshot;
 
 	/**
+	 * A bound handler for 'committedEdit' SharedTreeEvent
+	 */
+	protected readonly editCommittedHandler;
+
+	/**
+	 * The shared tree this checkout views/edits.
+	 */
+	public readonly tree: SharedTree;
+
+	/**
 	 * Holds the state required to manage the currently open edit.
 	 * Undefined if there is currently not an open edit.
 	 *
@@ -63,9 +74,13 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 
 	public disposed: boolean = false;
 
-	protected constructor(currentView: Snapshot) {
+	protected constructor(tree: SharedTree, currentView: Snapshot) {
 		super();
+		this.tree = tree;
 		this.previousView = currentView;
+
+		// If there is an ongoing edit, emitChange will no-op, which is fine.
+		this.tree.on(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
 	}
 
 	/**
@@ -225,5 +240,8 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 	public dispose(error?: Error): void {
 		assert(!this.disposed, 'Checkout must not be disposed twice');
 		this.disposed = true;
+
+		// remove registered listener
+		this.tree.off(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
 	}
 }
