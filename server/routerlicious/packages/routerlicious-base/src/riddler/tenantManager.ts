@@ -76,19 +76,18 @@ export class TenantManager {
         if (!tenant) {
             winston.error("Tenant is disabled or does not exist.");
             return Promise.reject(new Error("Tenant is disabled or does not exist."));
-        } 
+        }
 
-        const customData = {...tenant.customData};
-        if (customData?.externalStorageData) {
+        const customData = { ...tenant.customData };
+        if (customData.externalStorageData) {
             customData.externalStorageData = this.decryptAccessInfo(customData.externalStorageData);
         }
-        
 
         return {
             id: tenant._id,
             orderer: tenant.orderer,
             storage: tenant.storage,
-            customData: customData,
+            customData,
         };
     }
 
@@ -300,8 +299,8 @@ export class TenantManager {
         if (accessInfo.refreshToken) {
             accessInfo.refreshToken = this.secretManager.encryptSecret(accessInfo.refreshToken);
         }
-
-        return externalStorageData
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return externalStorageData;
     }
 
     private decryptAccessInfo(externalStorageData: any): any {
@@ -317,7 +316,7 @@ export class TenantManager {
         if (accessInfo.refreshToken) {
             accessInfo.refreshToken = this.secretManager.decryptSecret(accessInfo.refreshToken);
         }
-
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return externalStorageData;
     }
 }
