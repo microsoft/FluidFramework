@@ -12,11 +12,13 @@ import {
     IThrottler,
     MongoManager,
 } from "@fluidframework/server-services-core";
+import { throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import { Provider } from "nconf";
+import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { getParam } from "../../../utils";
-import { throttle } from "./restHelper";
+import { Constants } from "./restHelper";
 
 export async function getDeltas(
     mongoManager: MongoManager,
@@ -174,6 +176,11 @@ export function create(
     const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
     const router: Router = Router();
 
+    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
+        throttleIdSuffix: Constants.throttleIdSuffix,
+    };
+
     function stringToSequenceNumber(value: any): number {
         if (typeof value !== "string") { return undefined; }
         const parsedValue = parseInt(value, 10);
@@ -183,29 +190,33 @@ export function create(
     /**
      * Retrieves raw (unsequenced) deltas for the given document.
      */
-    router.get("/raw/:tenantId?/:id", throttle(throttler, 1, appTenants[0].id), (request, response, next) => {
-        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+    router.get(
+        "/raw/:tenantId?/:id",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
-        // Query for the raw deltas (no from/to since we want all of them)
-        const deltasP = getRawDeltas(
-            mongoManager,
-            rawDeltasCollectionName,
-            tenantId,
-            getParam(request.params, "id"));
+            // Query for the raw deltas (no from/to since we want all of them)
+            const deltasP = getRawDeltas(
+                mongoManager,
+                rawDeltasCollectionName,
+                tenantId,
+                getParam(request.params, "id"));
 
-        deltasP.then(
-            (deltas) => {
-                response.status(200).json(deltas);
-            },
-            (error) => {
-                response.status(500).json(error);
-            });
-    });
+            deltasP.then(
+                (deltas) => {
+                    response.status(200).json(deltas);
+                },
+                (error) => {
+                    response.status(500).json(error);
+                });
+        },
+    );
 
     /**
      * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
      */
-    router.get("/:tenantId?/:id", throttle(throttler, 1, appTenants[0].id), (request, response, next) => {
+    router.get("/:tenantId?/:id", throttle(throttler, winston, commonThrottleOptions), (request, response, next) => {
         const from = stringToSequenceNumber(request.query.from);
         const to = stringToSequenceNumber(request.query.to);
         const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
@@ -234,7 +245,7 @@ export function create(
      */
     router.get(
         ["/v1/:tenantId?/:id", "/:tenantId?/:id/v1"],
-        throttle(throttler, 1, appTenants[0].id),
+        throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const from = stringToSequenceNumber(request.query.from);
             const to = stringToSequenceNumber(request.query.to);

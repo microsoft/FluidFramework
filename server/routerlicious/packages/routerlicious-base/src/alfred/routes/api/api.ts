@@ -7,11 +7,12 @@ import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
-import { validateTokenClaims } from "@fluidframework/server-services-utils";
+import { validateTokenClaims, throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
 import { Request, Response, Router } from "express";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import requestAPI from "request";
+import winston from "winston";
 import { getParam } from "../../../utils";
 import {
     craftClientJoinMessage,
@@ -20,7 +21,7 @@ import {
     craftOpMessage,
     IBlobData,
     IMapSetOperation,
-    throttle,
+    Constants,
 } from "./restHelper";
 
 export function create(
@@ -30,6 +31,11 @@ export function create(
     storage: core.IDocumentStorage,
     throttler: core.IThrottler): Router {
     const router: Router = Router();
+
+    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+        throttleIdSuffix: Constants.throttleIdSuffix,
+    };
 
     function returnResponse<T>(
         resultP: Promise<T>,
@@ -47,33 +53,44 @@ export function create(
         }, (error) => response.status(400).end(error.toString()));
     }
 
-    router.get("/ping", throttle(throttler, 1, "ping"), async (request, response) => {
+    router.get("/ping", throttle(throttler, winston, {
+        ...commonThrottleOptions,
+        throttleIdPrefix: "ping",
+    }), async (request, response) => {
         response.sendStatus(200);
     });
 
-    router.patch("/:tenantId/:id/root", throttle(throttler), async (request, response) => {
-        const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
-        const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
-        const validP = verifyRequest(request, tenantManager, storage, maxTokenLifetimeSec, isTokenExpiryEnabled);
-        returnResponse(validP, request, response, mapSetBuilder);
-    });
+    router.patch(
+        "/:tenantId/:id/root",
+        throttle(throttler, winston, commonThrottleOptions),
+        async (request, response) => {
+            const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
+            const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
+            const validP = verifyRequest(request, tenantManager, storage, maxTokenLifetimeSec, isTokenExpiryEnabled);
+            returnResponse(validP, request, response, mapSetBuilder);
+        },
+    );
 
-    router.post("/:tenantId/:id/blobs", throttle(throttler), async (request, response) => {
-        const tenantId = getParam(request.params, "tenantId");
-        const blobData = request.body as IBlobData;
-        const historian = config.get("worker:blobStorageUrl") as string;
-        const requestToken = fromUtf8ToBase64(tenantId);
-        const uri = `${historian}/repos/${tenantId}/git/blobs?token=${requestToken}`;
-        const requestBody: git.ICreateBlobParams = {
-            content: blobData.content,
-            encoding: "base64",
-        };
-        uploadBlob(uri, requestBody).then((data: git.ICreateBlobResponse) => {
-            response.status(200).json(data);
-        }, (err) => {
-            response.status(400).end(err.toString());
-        });
-    });
+    router.post(
+        "/:tenantId/:id/blobs",
+        throttle(throttler, winston, commonThrottleOptions),
+        async (request, response) => {
+            const tenantId = getParam(request.params, "tenantId");
+            const blobData = request.body as IBlobData;
+            const historian = config.get("worker:blobStorageUrl") as string;
+            const requestToken = fromUtf8ToBase64(tenantId);
+            const uri = `${historian}/repos/${tenantId}/git/blobs?token=${requestToken}`;
+            const requestBody: git.ICreateBlobParams = {
+                content: blobData.content,
+                encoding: "base64",
+            };
+            uploadBlob(uri, requestBody).then((data: git.ICreateBlobResponse) => {
+                response.status(200).json(data);
+            }, (err) => {
+                response.status(400).end(err.toString());
+            });
+        },
+    );
 
     return router;
 }
