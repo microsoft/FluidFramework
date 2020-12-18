@@ -9,7 +9,12 @@ module.exports = {
         "test": [
             "build"
         ],
-        "lint": []
+        "lint": [
+            "^eslint"
+        ],
+        "clean": [
+            "clean",
+        ]
     },
     "npmClient": "yarn"
 };
