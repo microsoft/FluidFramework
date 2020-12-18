@@ -27,8 +27,8 @@ async function fluidFetchOneFile(urlStr: string, name?: string) {
         await writeFile(`${saveDir}/info.json`, JSON.stringify(info, undefined, 2));
     }
 
-    await fluidFetchMessages(documentService, saveDir);
     await fluidFetchSnapshot(documentService, saveDir);
+    await fluidFetchMessages(documentService, saveDir);
 }
 
 async function tryFluidFetchOneSharePointFile(server: string, driveItem: IOdspDriveItem) {
