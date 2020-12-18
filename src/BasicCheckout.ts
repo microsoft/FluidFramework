@@ -22,15 +22,19 @@ export class BasicCheckout extends Checkout {
 	public readonly tree: SharedTree;
 
 	/**
+	 * A bound handler for 'committedEdit' SharedTreeEvent
+	 */
+	private readonly editCommittedHandler = this.emitChange.bind(this);
+
+	/**
 	 * @param tree - the tree
 	 */
 	public constructor(tree: SharedTree) {
 		super(tree.currentView);
 		this.tree = tree;
 
-		// TODO:#49101: unsubscribe? Use addListener?
 		// If there is an ongoing edit, emitChange will no-op, which is fine.
-		this.tree.on(SharedTreeEvent.EditCommitted, () => this.emitChange());
+		this.tree.on(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
 	}
 
 	protected handleNewEdit(edit: Edit, view: Snapshot): void {
@@ -46,5 +50,13 @@ export class BasicCheckout extends Checkout {
 
 	public async waitForPendingUpdates(): Promise<void> {
 		return Promise.resolve();
+	}
+		
+	/**
+	 * release all resources
+	 */
+	public dispose(): void {
+		// remove registered listner
+		this.tree.off(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
 	}
 }

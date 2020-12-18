@@ -196,14 +196,6 @@ export abstract class Checkout extends EventEmitterWithErrorHandling {
 		// TODO: shouldn't this be an EditValidationResult since 'Applied' does not indicate the edit has been applied?
 		return currentEdit.result;
 	}
-		
-	/**
-	 * release all resources
-	 */
-	public dispose(): void {
-		// remove all listeners for all events associated with checkout instance.
-		this.removeAllListeners();
-	}
 
 	/**
 	 * Send invalidation message for all changes since last call to emitChange.

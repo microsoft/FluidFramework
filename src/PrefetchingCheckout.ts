@@ -129,6 +129,11 @@ export class PrefetchingCheckout extends Checkout {
 	private loadedView: LoadedView;
 
 	/**
+	 * A bound handler for 'committedEdit' SharedTreeEvent
+	 */
+	private readonly editCommittedHandler = this.setLoadingView.bind(this);
+
+	/**
 	 * @param tree - the shared tree to view and edit.
 	 * @param prefetchFilter - filter which selects which nodes (based on their definition)
 	 * will be guaranteed to have their payloads available synchronously.
@@ -152,8 +157,7 @@ export class PrefetchingCheckout extends Checkout {
 	private constructor(tree: SharedTree, loadedView: LoadedView) {
 		super(loadedView.view);
 		this.tree = tree;
-		// TODO:#49101: unsubscribe? Use addListener?
-		this.tree.on(SharedTreeEvent.EditCommitted, () => this.setLoadingView());
+		this.tree.on(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
 		this.loadedView = loadedView;
 	}
 
@@ -188,6 +192,14 @@ export class PrefetchingCheckout extends Checkout {
 		// There may have been edits known at the beginning of this function that were not included in the pending batch.
 		// Waiting for this second update is guaranteed to include at least all edits in the shared tree when this was called.
 		await this.loadingView;
+	}
+
+	/**
+	 * release all resources
+	 */
+	public dispose(): void {
+		// remove registered listner
+		this.tree.off(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
 	}
 
 	private setLoadingView(): void {
