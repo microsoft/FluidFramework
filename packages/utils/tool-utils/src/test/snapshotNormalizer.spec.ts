@@ -134,7 +134,7 @@ describe("Snapshot Normalizer", () => {
         assert.deepStrictEqual(JSON.parse(normalizedBlob.contents), normalizedBlobContents, "Normalized blob changed");
     });
 
-    it ("can normalized blob whose contents are not objects", () => {
+    it ("can normalize blob whose contents are not objects", () => {
         const snapshot: ITree = {
             id: "root",
             entries: [
