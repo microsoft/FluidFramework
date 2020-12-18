@@ -2902,6 +2902,7 @@ __metadata:
     "@fluidframework/view-adapters": ^0.31.0
     "@fluidframework/view-interfaces": ^0.31.0
     "@types/node": ^10.17.24
+    "@types/prop-types": ^15
     "@types/react": ^16.9.15
     "@types/react-dom": ^16.9.4
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -2923,6 +2924,7 @@ __metadata:
     jest-junit: ^10.0.0
     jest-puppeteer: ^4.3.0
     office-ui-fabric-react: ^7.28.1
+    prop-types: ^15.7.2
     puppeteer: ^1.20.0
     react: ^16.10.2
     react-collapsible: ^2.7.0
@@ -10179,7 +10181,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/prop-types@npm:*":
+"@types/prop-types@npm:*, @types/prop-types@npm:^15":
   version: 15.7.3
   resolution: "@types/prop-types@npm:15.7.3"
   checksum: bd0eab69d5120ad3784d0c9985f902653d5924707a7f2b3702a330e762dfd61b6494954cb54ad0c52b918ffd6f1e7e27c9270e4442bc15250de348596f2f60cb
