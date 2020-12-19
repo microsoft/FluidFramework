@@ -9,7 +9,7 @@ import { IOdspSnapshot } from "../contracts";
 import {
     convertOdspSnapshotToCompactSnapshot,
     convertOdspSnapshotToSnapsohtTreeAndBlobs,
-    convertCompactSnapshotToSnapshotTree,
+    // convertCompactSnapshotToSnapshotTree,
 } from "../snapshot";
 
 describe("Snapshot test", () => {
@@ -23,13 +23,14 @@ describe("Snapshot test", () => {
         }
         */
 
-        // fs.writeFileSync("output1.bin", buffer.buffer);
-
         const odspSnapshot: IOdspSnapshot = JSON.parse(data.toString("utf-8"));
         const { snapshotTree, blobs } = convertOdspSnapshotToSnapsohtTreeAndBlobs(odspSnapshot);
         const buffer = convertOdspSnapshotToCompactSnapshot(snapshotTree, blobs, odspSnapshot.ops);
+        fs.writeFileSync("output1.bin", buffer.buffer);
+        /*
         for (let i = 0; i < 1000; i++) {
             convertCompactSnapshotToSnapshotTree(buffer);
         }
+        */
     }).timeout(1000000);
 });

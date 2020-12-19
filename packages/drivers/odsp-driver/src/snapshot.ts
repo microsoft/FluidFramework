@@ -13,52 +13,6 @@ import {
 } from "./tree";
 import { OdspSnapshotCache } from "./odspDocumentStorageManager";
 
-/*
-export interface ISnapshotTree {
-    id: string | null;
-    blobs: { [path: string]: string };
-    commits: { [path: string]: string };
-    trees: { [path: string]: ISnapshotTree };
-}
-*/
-
-function processTree(trees: Node, tree: ISnapshotTree) {
-    const treeNode = trees.addNode();
-    treeNode.addString(tree.id!);
-
-    const subTree = treeNode.addNode();
-    for (const [path, value] of Object.entries(tree.trees)) {
-        subTree.addString(path);
-        subTree.addString(value.id!);
-        processTree(trees, value);
-    }
-
-    if (tree.blobs) {
-        const subBlobs = treeNode.addNode();
-        for (const [path, id] of Object.entries(tree.blobs)) {
-            subBlobs.addString(path);
-            subBlobs.addString(id);
-        }
-    }
-}
-
-function convertSnapshotTreeToCompactTree(
-    builder: TreeBuilder,
-    snapshotTree: ISnapshotTree,
-    ops?: ISequencedDeltaOpMessage[])
-{
-    const trees = builder.addNode();
-    trees.addString("trees");
-
-    processTree(trees, snapshotTree);
-
-    if (ops) {
-        const opsNode = builder.addNode();
-        opsNode.addString("ops");
-        opsNode.addString(JSON.stringify(ops));
-    }
-}
-
 export function convertOdspSnapshotToSnapsohtTreeAndBlobs(odspSnapshot: IOdspSnapshot) {
     const cache = new OdspSnapshotCache();
     cache.initTreesCache(odspSnapshot.trees);
@@ -72,20 +26,72 @@ export function convertOdspSnapshotToSnapsohtTreeAndBlobs(odspSnapshot: IOdspSna
     return { snapshotTree, blobs: cache.blobCache };
 }
 
+function buildDictionary(tree: ISnapshotTree, dict: Set<string>) {
+    for (const [path, value] of Object.entries(tree.trees)) {
+        dict.add(path);
+        buildDictionary(value, dict);
+    }
+
+    for (const path of Object.keys(tree.blobs)) {
+        dict.add(path);
+    }
+}
+
+function processTree(trees: Node, tree: ISnapshotTree, mapping: Map<string, number>) {
+    for (const [path, value] of Object.entries(tree.trees)) {
+        const treeNode = trees.addNode();
+        treeNode.addNumber(mapping[path]);
+        processTree(treeNode, value, mapping);
+    }
+
+    if (tree.blobs) {
+        for (const [path, id] of Object.entries(tree.blobs)) {
+            trees.addNumber(mapping[path]);
+            trees.addNumber(mapping[id]);
+        }
+    }
+}
+
 export function convertOdspSnapshotToCompactSnapshot(
     snapshotTree: ISnapshotTree,
     blobs: Map<string, IBlob>,
     ops?: ISequencedDeltaOpMessage[])
 {
+    const dict: Set<string> = new Set();
+    buildDictionary(snapshotTree, dict);
+    for (const id of blobs.keys()) {
+        dict.add(id);
+    }
+
     const builder = new TreeBuilder();
 
-    convertSnapshotTreeToCompactTree(builder, snapshotTree, ops);
+    const mappingNode = builder.addNode();
+    mappingNode.addString("mappings");
+
+    const mapping = new Map<string, number>();
+    let i = 0;
+    for (const id of dict) {
+        mapping[id] = i;
+        mappingNode.addString(id);
+        i++;
+    }
+
+    const trees = builder.addNode();
+    trees.addString("trees");
+
+    processTree(trees, snapshotTree, mapping);
 
     const blobsNode = builder.addNode();
     blobsNode.addString("blobs");
     for (const [id, blob] of blobs) {
-        blobsNode.addString(id);
+        blobsNode.addNumber(mapping[id]);
         blobsNode.addBlob(IsoBuffer.from(blob.content, blob.encoding ?? "utf-8"));
+    }
+
+    if (ops) {
+        const opsNode = builder.addNode();
+        opsNode.addString("ops");
+        opsNode.addString(JSON.stringify(ops));
     }
 
     return builder.serialize();

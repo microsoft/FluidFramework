@@ -94,9 +94,26 @@ enum Codes {
     Blob2 = 2,
     Blob3 = 3,
     Blob4 = 4,
-    Array = 5,
-    Up = 6,
-    EOF = 7,
+
+    Number0 = 5, // Used only for math.
+    Number1 = 6,
+    Number2 = 7,
+    Number3 = 8,
+    Number4 = 9,
+
+    Array = 10,
+    Up = 11,
+    EOF = 12,
+}
+
+function calcLength(dataLength: number) {
+    let max = 256;
+    let lengthLen = 1;
+    while (dataLength >= max) {
+        max *= 256;
+        lengthLen++;
+    }
+    return lengthLen;
 }
 
 export abstract class BlobCore {
@@ -107,13 +124,8 @@ export abstract class BlobCore {
     }
 
     public write(buffer: WriteBuffer) {
-        let max = 256;
-        let lengthLen = 1;
         const data = this.buffer;
-        while (data.length >= max) {
-            max *= 256;
-            lengthLen++;
-        }
+        const lengthLen = calcLength(data.length);
         buffer.write(Codes.Blob0 + lengthLen);
         buffer.write(data.length, lengthLen);
         for (const el of data) {
@@ -206,6 +218,17 @@ export class Node {
 
     public addString(payload: string) {
         this.addBlob(IsoBuffer.from(payload, stringEncoding));
+    }
+
+    public addNumber(payload: number) {
+        assert(payload !== undefined, "undefined");
+        assert(payload < 65536, "too big");
+        /*
+        const len = calcLength(payload);
+        this.write(Codes.Number0 + lengthLen);
+        buffer.write(data.length, lengthLen);
+        */
+       this.addString("x");
     }
 
     public serialize(buffer: WriteBuffer) {
