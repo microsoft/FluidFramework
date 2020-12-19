@@ -1074,6 +1074,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     } else {
                         reusedBlobs++;
                         id = `${this.lastSummaryHandle}${completePath}`;
+                        const updatedPath = `/.app${path}/${key}`;
+                        blobsShaToPathCacheLatest.set(hash, updatedPath);
                         value = undefined;
                     }
                     break;
