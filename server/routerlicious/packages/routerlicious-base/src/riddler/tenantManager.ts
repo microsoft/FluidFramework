@@ -287,35 +287,15 @@ export class TenantManager {
     }
 
     private encryptAccessInfo(externalStorageData: any): any {
-        const accessInfo = externalStorageData.accessInfo;
-        if (accessInfo.connectionString) {
-            accessInfo.connectionString = this.secretManager.encryptSecret(accessInfo.connectionString);
-        }
-
-        if (accessInfo.accessToken) {
-            accessInfo.accessToken = this.secretManager.encryptSecret(accessInfo.accessToken);
-        }
-
-        if (accessInfo.refreshToken) {
-            accessInfo.refreshToken = this.secretManager.encryptSecret(accessInfo.refreshToken);
-        }
+        const accessInfo = JSON.stringify(externalStorageData.accessInfo);
+        externalStorageData.accessInfo = this.secretManager.encryptSecret(accessInfo);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return externalStorageData;
     }
 
     private decryptAccessInfo(externalStorageData: any): any {
-        const accessInfo = externalStorageData.accessInfo;
-        if (accessInfo.connectionString) {
-            accessInfo.connectionString = this.secretManager.decryptSecret(accessInfo.connectionString);
-        }
-
-        if (accessInfo.accessToken) {
-            accessInfo.accessToken = this.secretManager.decryptSecret(accessInfo.accessToken);
-        }
-
-        if (accessInfo.refreshToken) {
-            accessInfo.refreshToken = this.secretManager.decryptSecret(accessInfo.refreshToken);
-        }
+        const accessInfo = this.secretManager.decryptSecret(externalStorageData.accessInfo);
+        externalStorageData.accessInfo = JSON.parse(accessInfo);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return externalStorageData;
     }
