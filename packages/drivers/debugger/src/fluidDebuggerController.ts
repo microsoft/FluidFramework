@@ -248,14 +248,14 @@ export class DebugReplayController extends ReplayController implements IDebugger
      *
      * @deprecated - only here for back compat, will be removed after release
      */
-    public async read(blobId: string): Promise<never> {
+    public async read(blobId: string): Promise<ArrayBufferLike> {
         if (this.storage !== undefined) {
             return this.storage.readBlob(blobId);
         }
         throw new Error("Reading blob before storage is setup properly");
     }
 
-    public async readBlob(blobId: string): Promise<never> {
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         if (this.storage !== undefined) {
             return this.storage.readBlob(blobId);
         }
