@@ -100,7 +100,7 @@ enum Codes {
 }
 
 export abstract class BlobCore {
-    public abstract get buffer();
+    public abstract get buffer(): Uint8Array;
 
     public toString(encoding = stringEncoding) {
         return IsoBuffer.from(this.buffer).toString(encoding);
@@ -163,6 +163,10 @@ class BlobShallowCopy extends BlobCore {
 
 export class Node {
     protected children: (Node | BlobCore)[] = [];
+
+    public [Symbol.iterator]() {
+        return this.children[Symbol.iterator]();
+    }
 
     public get length() { return this.children.length; }
 

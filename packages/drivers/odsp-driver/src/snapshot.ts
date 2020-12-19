@@ -9,6 +9,7 @@ import { IBlob, IOdspSnapshot, ISequencedDeltaOpMessage } from "./contracts";
 import {
     TreeBuilder,
     Node,
+    ReadBuffer,
 } from "./tree";
 import { OdspSnapshotCache } from "./odspDocumentStorageManager";
 
@@ -88,4 +89,53 @@ export function convertOdspSnapshotToCompactSnapshot(
     }
 
     return builder.serialize();
+}
+
+export function convertCompactSnapshotToSnapshotTree(buffer: ReadBuffer) {
+    const builder = TreeBuilder.load(buffer);
+    let ops: string | undefined;
+    const blobs: Map<string, Uint8Array> = new Map();
+
+    for (const n of builder) {
+        const node = (n as Node);
+        const el = node.getString(0);
+        switch (el) {
+            case "trees":
+                for (let i = 1; i < node.length; i++) {
+                    const trees = node.getNode(i);
+                    assert(trees.length === 3);
+
+                    trees.getString(0);
+                    /*
+                    const tree: ISnapshotTree = {
+                        id: treeNode.getString(0),
+                        blobs: {},
+                        commits: {},
+                        trees: {},
+                    };
+                    */
+                    const subTrees = trees.getNode(1);
+                    for (let j = 0; j < subTrees.length;) {
+                        // tree.trees[]
+                        subTrees.getString(j); // path
+                        subTrees.getString(j + 1); // id
+                        j += 2;
+                    }
+
+                    const blobNode = trees.getNode(2);
+                    for (let j = 0; j < blobNode.length;) {
+                        blobs.set(blobNode.getString(j), blobNode.getBlob(j + 1).buffer);
+                        j += 2;
+                    }
+                    break;
+                }
+            case "blobs":
+            case "ops":
+                ops = node.getString(1);
+                break;
+            default:
+                throw new Error(`Unknown node: ${el}`);
+        }
+    }
+    return ops;
 }
