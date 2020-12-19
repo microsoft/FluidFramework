@@ -11,7 +11,6 @@ import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver
 import { IOdspResolvedUrl } from "../contracts";
 import { EpochTracker } from "../epochTracker";
 import { createOdspCache, LocalPersistentCache, LocalPersistentCacheAdapter, NonPersistentCache } from "../odspCache";
-import { getHashedDocumentId } from "../odspUtils";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { TokenFetchOptions } from "../tokenFetch";
 import { mockFetch } from "./mockFetch";
@@ -22,7 +21,6 @@ describe("Summary Blobs Cache Tests", () => {
     const itemId = "fileId";
     let epochTracker: EpochTracker;
     let cache: LocalPersistentCacheAdapter;
-    const hashedDocumentId = getHashedDocumentId(driveId, itemId);
     let storageService: IDocumentStorageService;
     beforeEach(() => {
         const logger = new TelemetryNullLogger();
@@ -36,10 +34,6 @@ describe("Summary Blobs Cache Tests", () => {
                 snapshotStorageUrl: "snapshotStorageUrl",
             },
         } as any) as IOdspResolvedUrl;
-        epochTracker.fileEntry = {
-            docId: hashedDocumentId,
-            resolvedUrl,
-        };
         storageService = new OdspDocumentStorageService(
             resolvedUrl,
             async (options: TokenFetchOptions, name?: string) => "token",
@@ -83,7 +77,6 @@ describe("Summary Blobs Cache Tests", () => {
             },
         };
 
-        // This will set the initial epoch value in epoch tracker.
         await mockFetch({ id: summaryContext.proposalHandle }, async () => {
             return storageService.uploadSummaryWithContext(
                 appSummary,
