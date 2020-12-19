@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
+import { IFluidObject, IRequest, IRequestHeader, IResponse } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidMountableViewClass } from "@fluidframework/view-interfaces";
 import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
@@ -65,3 +65,17 @@ export const defaultRouteRequestHandler = (defaultRootId: string) => {
         return undefined; // continue search
     };
 };
+
+/**
+ * Default request handler for a Fluid object that returns the object itself if:
+ *  1. the request url is a "/"
+ *  2. the request url is empty
+ * Returns a 404 error for any other url.
+ */
+export function defaultFluidObjectRequestHandler(fluidObject: IFluidObject, request: IRequest): IResponse {
+    if (request.url === "/" || request.url === "") {
+        return { mimeType: "fluid/object", status: 200, value: fluidObject };
+    } else {
+        return { mimeType: "text/plain", status: 404, value: `unknown request url: ${request.url}` };
+    }
+}
