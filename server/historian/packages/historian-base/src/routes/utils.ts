@@ -4,6 +4,9 @@
  */
 
 import { Response } from "express";
+// In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
+// eslint-disable-next-line import/no-unresolved
+import { Params } from "express-serve-static-core";
 import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
 
 /**
@@ -80,3 +83,12 @@ export function queryParamToString(value: any): string {
     if (typeof value !== "string") { return undefined; }
     return value;
 }
+
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export function getParam(params: Params, key: string) {
+    return Array.isArray(params) ? undefined : params[key];
+}
+
+export const Constants = Object.freeze({
+    throttleIdSuffix: "HistorianRest",
+});

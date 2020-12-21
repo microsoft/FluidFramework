@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IThrottler } from "@fluidframework/server-services-core";
 import * as bodyParser from "body-parser";
 import compression from "compression";
 import cors from "cors";
@@ -22,7 +23,7 @@ const stream = split().on("data", (message) => {
     winston.info(message);
 });
 
-export function create(config: nconf.Provider, tenantService: ITenantService, cache: ICache) {
+export function create(config: nconf.Provider, tenantService: ITenantService, cache: ICache, throttler: IThrottler) {
     // Express app configuration
     const app: express.Express = express();
 
@@ -36,7 +37,7 @@ export function create(config: nconf.Provider, tenantService: ITenantService, ca
     app.use(compression());
     app.use(cors());
 
-    const apiRoutes = routes.create(config, tenantService, cache);
+    const apiRoutes = routes.create(config, tenantService, cache, throttler);
     app.use(apiRoutes.git.blobs);
     app.use(apiRoutes.git.refs);
     app.use(apiRoutes.git.tags);

@@ -10,6 +10,7 @@ import * as redis from "redis";
 import * as historianServices from "./services";
 import { normalizePort } from "./utils";
 import { HistorianRunner } from "./runner";
+import winston from "winston";
 
 export class HistorianResources implements utils.IResources {
     public webServerFactory: core.IWebServerFactory;
@@ -19,6 +20,7 @@ export class HistorianResources implements utils.IResources {
         public readonly port: string | number,
         public readonly riddler: historianServices.ITenantService,
         public readonly cache: historianServices.RedisCache,
+        public readonly throttler: core.IThrottler
     ) {
         this.webServerFactory = new services.BasicWebServerFactory();
     }
@@ -48,9 +50,21 @@ export class HistorianResourcesFactory implements utils.IResourcesFactory<Histor
         const riddlerEndpoint = config.get("riddler");
         const riddler = new historianServices.RiddlerService(riddlerEndpoint, tenantCache);
 
+        const throttleRequestsPerMs = config.get("throttling:requestsPerMs") as number || 1000000;
+        const throttleMaxRequestBurst = config.get("throttling:maxRequestBurst") as number || 1000000;
+        const throttleMinCooldownIntervalInMs = config.get("throttling:minCooldownIntervalInMs") as number || 1000000;
+        const minThrottleIntervalInMs = config.get("throttling:minThrottleIntervalInMs") as number || 1000000;
+        const throttleStorageManager = new services.RedisThrottleStorageManager(redisClient);
+        const throttlerHelper = new services.ThrottlerHelper(
+            throttleStorageManager,
+            throttleRequestsPerMs,
+            throttleMaxRequestBurst,
+            throttleMinCooldownIntervalInMs);
+        const throttler = new services.Throttler(throttlerHelper, minThrottleIntervalInMs, winston);
+
         const port = normalizePort(process.env.PORT || "3000");
 
-        return new HistorianResources(config, port, riddler, gitCache);
+        return new HistorianResources(config, port, riddler, gitCache, throttler);
     }
 }
 
@@ -61,6 +75,7 @@ export class HistorianRunnerFactory implements utils.IRunnerFactory<HistorianRes
             resources.config,
             resources.port,
             resources.riddler,
-            resources.cache);
+            resources.cache,
+            resources.throttler);
     }
 }

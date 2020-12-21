@@ -29,5 +29,11 @@ data:
         "error": {
             "track": {{ .Values.historian.error.track }},
             "endpoint": "{{ .Values.historian.error.endpoint }}"
+        },
+        "throttling": {
+            "requestsPerMs": {{ .Values.historian.throttling.requestsPerMs }},
+            "maxRequestBurst": {{ .Values.historian.throttling.maxRequestBurst }},
+            "minCooldownIntervalInMs": {{ .Values.historian.throttling.minCooldownIntervalInMs }},
+            "minThrottleIntervalInMs": {{ .Values.historian.throttling.minThrottleIntervalInMs }}
         }
     }

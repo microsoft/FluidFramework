@@ -4,13 +4,21 @@
  */
 
 import * as git from "@fluidframework/gitresources";
+import { IThrottler } from "@fluidframework/server-services-core";
+import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import * as nconf from "nconf";
+import winston from "winston";
 import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache): Router {
+export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache, throttler: IThrottler): Router {
     const router: Router = Router();
+    
+    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: (req) => utils.getParam(req.params, "tenantId"),
+        throttleIdSuffix: utils.Constants.throttleIdSuffix,
+    };
 
     async function createTag(
         tenantId: string,
@@ -25,21 +33,25 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         return service.getTag(tag);
     }
 
-    router.post("/repos/:ignored?/:tenantId/git/tags", (request, response, next) => {
-        const tagP = createTag(request.params.tenantId, request.get("Authorization"), request.body);
-        utils.handleResponse(
-            tagP,
-            response,
-            false,
-            201);
+    router.post("/repos/:ignored?/:tenantId/git/tags",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const tagP = createTag(request.params.tenantId, request.get("Authorization"), request.body);
+            utils.handleResponse(
+                tagP,
+                response,
+                false,
+                201);
     });
 
-    router.get("/repos/:ignored?/:tenantId/git/tags/*", (request, response, next) => {
-        const tagP = getTag(request.params.tenantId, request.get("Authorization"), request.params[0]);
-        utils.handleResponse(
-            tagP,
-            response,
-            false);
+    router.get("/repos/:ignored?/:tenantId/git/tags/*",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const tagP = getTag(request.params.tenantId, request.get("Authorization"), request.params[0]);
+            utils.handleResponse(
+                tagP,
+                response,
+                false);
     });
 
     return router;

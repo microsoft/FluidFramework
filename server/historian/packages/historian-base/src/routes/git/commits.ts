@@ -4,13 +4,21 @@
  */
 
 import { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
+import { IThrottler } from "@fluidframework/server-services-core";
+import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import * as nconf from "nconf";
+import winston from "winston";
 import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache): Router {
+export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache, throttler: IThrottler): Router {
     const router: Router = Router();
+
+    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: (req) => utils.getParam(req.params, "tenantId"),
+        throttleIdSuffix: utils.Constants.throttleIdSuffix,
+    };
 
     async function createCommit(
         tenantId: string,
@@ -29,21 +37,25 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         return service.getCommit(sha, useCache);
     }
 
-    router.post("/repos/:ignored?/:tenantId/git/commits", (request, response, next) => {
-        const commitP = createCommit(request.params.tenantId, request.get("Authorization"), request.body);
+    router.post("/repos/:ignored?/:tenantId/git/commits",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const commitP = createCommit(request.params.tenantId, request.get("Authorization"), request.body);
 
-        utils.handleResponse(
-            commitP,
-            response,
-            false,
-            201);
+            utils.handleResponse(
+                commitP,
+                response,
+                false,
+                201);
     });
 
-    router.get("/repos/:ignored?/:tenantId/git/commits/:sha", (request, response, next) => {
-        const useCache = !("disableCache" in request.query);
-        const commitP = getCommit(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
+    router.get("/repos/:ignored?/:tenantId/git/commits/:sha",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const useCache = !("disableCache" in request.query);
+            const commitP = getCommit(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
 
-        utils.handleResponse(commitP, response, useCache);
+            utils.handleResponse(commitP, response, useCache);
     });
 
     return router;

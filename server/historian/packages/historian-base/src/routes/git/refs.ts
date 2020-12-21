@@ -4,14 +4,21 @@
  */
 
 import * as git from "@fluidframework/gitresources";
-import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-core";
+import { ICreateRefParamsExternal, IPatchRefParamsExternal, IThrottler } from "@fluidframework/server-services-core";
+import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import * as nconf from "nconf";
+import winston from "winston";
 import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache): Router {
+export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache, throttler: IThrottler): Router {
     const router: Router = Router();
+
+    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: (req) => utils.getParam(req.params, "tenantId"),
+        throttleIdSuffix: utils.Constants.throttleIdSuffix,
+    };
 
     async function getRefs(tenantId: string, authorization: string): Promise<git.IRef[]> {
         const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
@@ -48,50 +55,60 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         return service.deleteRef(ref);
     }
 
-    router.get("/repos/:ignored?/:tenantId/git/refs", (request, response, next) => {
-        const refsP = getRefs(request.params.tenantId, request.get("Authorization"));
-        utils.handleResponse(
-            refsP,
-            response,
-            false);
+    router.get("/repos/:ignored?/:tenantId/git/refs",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const refsP = getRefs(request.params.tenantId, request.get("Authorization"));
+            utils.handleResponse(
+                refsP,
+                response,
+                false);
     });
 
-    router.get("/repos/:ignored?/:tenantId/git/refs/*", (request, response, next) => {
-        const refP = getRef(request.params.tenantId, request.get("Authorization"), request.params[0]);
-        utils.handleResponse(
-            refP,
-            response,
-            false);
+    router.get("/repos/:ignored?/:tenantId/git/refs/*",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const refP = getRef(request.params.tenantId, request.get("Authorization"), request.params[0]);
+            utils.handleResponse(
+                refP,
+                response,
+                false);
     });
 
-    router.post("/repos/:ignored?/:tenantId/git/refs", (request, response, next) => {
-        const refP = createRef(request.params.tenantId, request.get("Authorization"), request.body);
-        utils.handleResponse(
-            refP,
-            response,
-            false,
-            201);
+    router.post("/repos/:ignored?/:tenantId/git/refs",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const refP = createRef(request.params.tenantId, request.get("Authorization"), request.body);
+            utils.handleResponse(
+                refP,
+                response,
+                false,
+                201);
     });
 
-    router.patch("/repos/:ignored?/:tenantId/git/refs/*", (request, response, next) => {
-        const refP = updateRef(
-            request.params.tenantId,
-            request.get("Authorization"),
-            request.params[0],
-            request.body);
-        utils.handleResponse(
-            refP,
-            response,
-            false);
+    router.patch("/repos/:ignored?/:tenantId/git/refs/*",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const refP = updateRef(
+                request.params.tenantId,
+                request.get("Authorization"),
+                request.params[0],
+                request.body);
+            utils.handleResponse(
+                refP,
+                response,
+                false);
     });
 
-    router.delete("/repos/:ignored?/:tenantId/git/refs/*", (request, response, next) => {
-        const refP = deleteRef(request.params.tenantId, request.get("Authorization"), request.params[0]);
-        utils.handleResponse(
-            refP,
-            response,
-            false,
-            204);
+    router.delete("/repos/:ignored?/:tenantId/git/refs/*",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const refP = deleteRef(request.params.tenantId, request.get("Authorization"), request.params[0]);
+            utils.handleResponse(
+                refP,
+                response,
+                false,
+                204);
     });
 
     return router;
