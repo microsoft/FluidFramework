@@ -48,7 +48,19 @@ export class RemoteChannelContext implements IChannelContext {
         readonly objectStorage: ChannelStorageService,
     };
     private readonly summarizerNode: ISummarizerNodeWithGC;
-    private readonly initialGCDetailsP = new LazyPromise<IGCDetails>(async () => this.loadInitialGCDetails());
+
+    /**
+     * This loads the GC details from the base snapshot of this context.
+     */
+    private readonly initialGCDetailsP = new LazyPromise<IGCDetails>(async () => {
+        if (await this.services.objectStorage.contains(gcBlobKey)) {
+            return readAndParse<IGCDetails>(this.services.objectStorage, gcBlobKey);
+        } else {
+            // Default value of initial GC details in case the initial snapshot does not have GC details blob.
+            return {};
+        }
+    });
+
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -236,17 +248,5 @@ export class RemoteChannelContext implements IChannelContext {
      */
     private async getInitialGCData(): Promise<IGCData | undefined> {
         return (await this.initialGCDetailsP).gcData;
-    }
-
-    /**
-     * This loads the GC details from the base snapshot of this context.
-     */
-    private async loadInitialGCDetails(): Promise<IGCDetails> {
-        if (await this.services.objectStorage.contains(gcBlobKey)) {
-            return readAndParse<IGCDetails>(this.services.objectStorage, gcBlobKey);
-        } else {
-            // Default value of initial GC details in case the initial snapshot does not have GC details blob.
-            return {};
-        }
     }
 }
