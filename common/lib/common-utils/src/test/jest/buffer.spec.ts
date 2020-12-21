@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// import { blobToString } from "@fluidframework/driver-utils";
 import * as BufferNode from "../../bufferNode";
 import * as BufferBrowser from "../../bufferBrowser";
 

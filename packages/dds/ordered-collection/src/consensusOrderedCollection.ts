@@ -281,18 +281,14 @@ export class ConsensusOrderedCollection<T = any>
         assert(this.jobTracking.size === 0);
         const blob = await storage.readBlob(snapshotFileNameTracking);
         const rawContentTracking = blobToString(blob);
-        if (rawContentTracking !== undefined) {
-            const content = this.deserializeValue(rawContentTracking, this.serializer);
-            this.jobTracking = new Map(content) as JobTrackingInfo<T>;
-        }
+        const content = this.deserializeValue(rawContentTracking, this.serializer);
+        this.jobTracking = new Map(content) as JobTrackingInfo<T>;
 
         assert(this.data.size() === 0);
-        const blob_ = await storage.readBlob(snapshotFileNameData);
-        const rawContentData = blobToString(blob_);
-        if (rawContentData !== undefined) {
-            const content = this.deserializeValue(rawContentData, this.serializer) as T[];
-            this.data.loadFrom(content);
-        }
+        const blob2 = await storage.readBlob(snapshotFileNameData);
+        const rawContentData = blobToString(blob2);
+        const content2 = this.deserializeValue(rawContentData, this.serializer) as T[];
+        this.data.loadFrom(content2);
     }
 
     protected registerCore() {
