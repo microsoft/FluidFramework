@@ -25,7 +25,7 @@ import {
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { createRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
+import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     attributesBlobKey,
@@ -47,9 +47,10 @@ describe("Data Store Context Tests", () => {
         let scope: IFluidObject;
         const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
+        let summarizerNode: IRootSummarizerNodeWithGC;
 
         beforeEach(async () => {
-            const summarizerNode = createRootSummarizerNodeWithGC(
+            summarizerNode = createRootSummarizerNodeWithGC(
                 new TelemetryNullLogger(),
                 (() => undefined) as unknown as SummarizeInternalFn,
                 0,
@@ -252,6 +253,31 @@ describe("Data Store Context Tests", () => {
                 assert.deepStrictEqual(contents.gcData, emptyGCData, "GC data from summary should be empty.");
             });
         });
+
+        it("can successfully update used state", () => {
+            localDataStoreContext = new LocalFluidDataStoreContext(
+                dataStoreId,
+                ["TestComp", "SubComp"],
+                containerRuntime,
+                storage,
+                scope,
+                createSummarizerNodeFn,
+                attachCb,
+                undefined,
+                false /* isRootDataStore */);
+
+            // Get the summarizer node for this data store which tracks its used state.
+            const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
+            assert.strictEqual(dataStoreSummarizerNode?.used, true, "Data store is used by default");
+
+            // Update the data store to not have any used routes.
+            localDataStoreContext.updateUsedRoutes([]);
+            assert.strictEqual(dataStoreSummarizerNode?.used, false, "Data store should be unused without used routes");
+
+            // Update the data store to be used.
+            localDataStoreContext.updateUsedRoutes([""]);
+            assert.strictEqual(dataStoreSummarizerNode?.used, true, "Data store should now be used");
+        });
     });
 
     describe("RemoteDataStoreContext", () => {
@@ -260,9 +286,10 @@ describe("Data Store Context Tests", () => {
         const storage: Partial<IDocumentStorageService> = {};
         let scope: IFluidObject;
         let containerRuntime: ContainerRuntime;
+        let summarizerNode: IRootSummarizerNodeWithGC;
 
         beforeEach(async () => {
-            const summarizerNode = createRootSummarizerNodeWithGC(
+            summarizerNode = createRootSummarizerNodeWithGC(
                 new TelemetryNullLogger(),
                 (() => undefined) as unknown as SummarizeInternalFn,
                 0,
@@ -510,6 +537,41 @@ describe("Data Store Context Tests", () => {
                 const gcData = await remotedDataStoreContext.getGCData();
                 assert.deepStrictEqual(gcData, gcDetails.gcData, "GC data from getGCData is incorrect.");
             });
+        });
+
+        it("can successfully update used state", () => {
+            dataStoreAttributes = {
+                pkg: "TestDataStore1",
+            };
+            const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
+            const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
+            const snapshotTree: ISnapshotTree = {
+                id: "dummy",
+                blobs: { [".component"]: "fluidDataStoreAttributes" },
+                commits: {},
+                trees: {},
+            };
+
+            remotedDataStoreContext = new RemotedFluidDataStoreContext(
+                dataStoreId,
+                snapshotTree,
+                containerRuntime,
+                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                scope,
+                createSummarizerNodeFn,
+            );
+
+            // Get the summarizer node for this data store which tracks its used state.
+            const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
+            assert.strictEqual(dataStoreSummarizerNode?.used, true, "Data store is used by default");
+
+            // Update the data store to not have any used routes.
+            remotedDataStoreContext.updateUsedRoutes([]);
+            assert.strictEqual(dataStoreSummarizerNode?.used, false, "Data store should be unused without used routes");
+
+            // Update the data store to be used.
+            remotedDataStoreContext.updateUsedRoutes([""]);
+            assert.strictEqual(dataStoreSummarizerNode?.used, true, "Data store should now be used");
         });
     });
 });

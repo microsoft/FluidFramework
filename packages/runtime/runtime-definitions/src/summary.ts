@@ -138,8 +138,9 @@ export interface ISummarizerNode {
 }
 
 /**
- * Extends the functionality of ISummarizerNode to support garbage collection. It adds / udpates the following APIs:
+ * Extends the functionality of ISummarizerNode to support garbage collection. It adds / udpates the following:
  * - getGCData - A new API that can be used to get the garbage collection data for this node.
+ * - used - Returns whether this node is in use or not.
  * - summarize - Added a trackState flag which indicates whether the summarizer node should track the state of the
  *   summary or not.
  * - createChild - Added the following params:
@@ -147,6 +148,9 @@ export interface ISummarizerNode {
  *   - getInitialGCDataFn - This gets the initial GC data for this node from the caller.
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
+    // This tells whether this node is in use or not. Unused node can be garbage collected and reclaimed.
+    used: boolean;
+
     summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
     createChild(
         /** Summarize function */
