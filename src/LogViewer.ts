@@ -1,0 +1,152 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import BTree from 'sorted-btree';
+import { assert, fail, noop } from './Common';
+import { EditLog } from './EditLog';
+import { Snapshot } from './Snapshot';
+import { EditResult } from './PersistedTypes';
+import { EditId } from './Identifiers';
+import { Transaction } from './Transaction';
+import { initialTree } from './InitialTree';
+
+/**
+ * Callback for when an edit is applied.
+ * Note that edits may be applied multiple times (and with different results due to concurrent edits),
+ * and might not be applied when added.
+ * This callback cannot be used to simply log each edit as it comes it to see its status.
+ */
+export type EditResultCallback = (editResult: EditResult, editId: EditId) => void;
+
+/**
+ * Creates `Snapshot`s for the revisions in an `EditLog`
+ * @internal
+ */
+export interface LogViewer {
+	/**
+	 * Returns the snapshot at a revision.
+	 *
+	 * Revision numbers correspond to indexes in `editLog`.
+	 * Revision X means the revision output by the largest index in `editLog` less than (but not equal to) X.
+	 *
+	 * For example:
+	 *  - revision 0 means the initialSnapshot.
+	 *  - revision 1 means the output of editLog.getAtIndex(0) (or initialSnapshot if there is no edit 0).
+	 *  - revision Number.POSITIVE_INFINITY means the newest revision.
+	 */
+	getSnapshot(revision: number): Snapshot;
+
+	/**
+	 * Specify that a particular revision is known to have the specified snapshot.
+	 * The LogViewer may optionally use this to optimize future getSnapshot requests.
+	 *
+	 * It is invalid to call this with a snapshot that is not equal to one
+	 * that would be produced by getSnapshot at the same revision.
+	 */
+	setKnownRevision(revision: number, view: Snapshot): void;
+}
+
+/**
+ * Creates Snapshots for revisions associated with an EditLog and caches the results.
+ */
+export class CachingLogViewer implements LogViewer {
+	public readonly log: EditLog;
+
+	/**
+	 * A cache of previously generated revision snapshots.
+	 * Only contains revision snapshots for sequenced revisions.
+	 * See `getSnapshot` for details.
+	 */
+	private readonly sequencedSnapshotCache = new BTree<number, Snapshot>();
+
+	/**
+	 * The value of log.versionIdentifier when lastHeadSnapshot was cached.
+	 */
+	private lastVersionIdentifier: unknown = undefined;
+
+	/**
+	 * A cached Snapshot for Head (the newest revision) of log when it was at lastVersionIdentifier.
+	 * This cache is important as the Head revision is frequently viewed, and just using the sequencedSnapshotCache
+	 * would not cache processing of local edits in this case.
+	 */
+	private lastHeadSnapshot: Snapshot;
+
+	/**
+	 * Called whenever an edit is processed.
+	 * This will have been called at least once for any edit if a revision after than edit has been requested.
+	 * It may be called multiple times: the number of calls and when they occur depends on caching and is an implementation detail.
+	 */
+	private readonly processEditResult: EditResultCallback;
+
+	/**
+	 * Iff true, the snapshots passed to setKnownRevision will be asserted to be correct.
+	 */
+	private readonly expensiveValidation: boolean;
+
+	/**
+	 * Create a new LogViewer
+	 * @param log - the edit log which snapshots will be based on.
+	 * @param processEditResult - will be called when an edit is actually computed.
+	 * @param expensiveValidation - Iff true, the snapshots passed to setKnownRevision will be asserted to be correct.
+	 */
+	public constructor(log: EditLog, processEditResult?: EditResultCallback, expensiveValidation = false) {
+		this.log = log;
+		const initialSnapshot = Snapshot.fromTree(initialTree);
+		this.lastHeadSnapshot = initialSnapshot;
+		this.sequencedSnapshotCache.set(0, initialSnapshot);
+		this.processEditResult = processEditResult ?? noop;
+		this.expensiveValidation = expensiveValidation;
+	}
+
+	public getSnapshot(revision: number): Snapshot {
+		if (revision === Number.POSITIVE_INFINITY) {
+			if (this.lastVersionIdentifier === this.log.versionIdentifier()) {
+				return this.lastHeadSnapshot;
+			}
+		}
+
+		const [startRevision, startSnapshot] =
+			this.sequencedSnapshotCache.nextLowerPair(revision + 1) ?? fail('No preceding snapshot cached.');
+
+		let currentSnapshot = startSnapshot;
+		for (let i = startRevision; i < revision && i < this.log.length; i++) {
+			const edit = this.log.getAtIndex(i);
+			const editingResult = new Transaction(currentSnapshot).applyChanges(edit.changes).close();
+			if (editingResult.result === EditResult.Applied) {
+				currentSnapshot = editingResult.snapshot;
+			}
+
+			// Only cache the snapshot if the edit has a final revision number assigned by Fluid.
+			// This avoids having to invalidate cache entries when concurrent edits cause local revision
+			// numbers to change when acknowledged.
+			if (i < this.log.numberOfSequencedEdits) {
+				const revision = i + 1; // Revision is the result of the edit being applied.
+				this.sequencedSnapshotCache.set(revision, currentSnapshot);
+			}
+
+			this.processEditResult(editingResult.result, edit.id);
+		}
+
+		if (revision === Number.POSITIVE_INFINITY) {
+			this.lastVersionIdentifier = this.log.versionIdentifier();
+			this.lastHeadSnapshot = currentSnapshot;
+		}
+
+		return currentSnapshot;
+	}
+
+	public setKnownRevision(revision: number, snapshot: Snapshot): void {
+		if (this.expensiveValidation) {
+			assert(Number.isInteger(revision), 'revision must be an integer');
+			assert(
+				revision <= this.log.numberOfSequencedEdits + 1,
+				'revision must correspond to the result of a SequencedEdit'
+			);
+			const computed = this.getSnapshot(revision);
+			assert(computed.equals(snapshot), 'setKnownRevision passed invalid snapshot');
+		}
+		this.sequencedSnapshotCache.set(revision, snapshot);
+	}
+}
