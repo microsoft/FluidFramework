@@ -8,8 +8,7 @@ import { throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-ser
 import { Router } from "express";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { getParam } from "../../../utils";
-import { Constants } from "./restHelper";
+import { getParam, Constants } from "../../../utils";
 
 export function create(
     storage: IDocumentStorage,

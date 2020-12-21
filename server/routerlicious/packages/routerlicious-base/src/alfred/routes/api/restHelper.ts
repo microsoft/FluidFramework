@@ -127,7 +127,3 @@ export function craftMapSet(op: IMapSetOperation) {
 
     return opMessage;
 }
-
-export const Constants = Object.freeze({
-    throttleIdSuffix: "AlfredRest",
-});

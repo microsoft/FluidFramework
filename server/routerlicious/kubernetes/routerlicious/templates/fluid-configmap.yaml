@@ -52,6 +52,14 @@ data:
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
+            "throttling": {
+                "http": {
+                    "requestsPerMs": {{ .Values.alfred.httpThrottling.requestsPerMs }},
+                    "maxRequestBurst": {{ .Values.alfred.httpThrottling.maxRequestBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.httpThrottling.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.httpThrottling.minThrottleIntervalInMs }}
+                }
+            },
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
             "restJsonSize": "50mb",

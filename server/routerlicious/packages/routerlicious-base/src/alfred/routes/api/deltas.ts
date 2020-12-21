@@ -17,8 +17,7 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { getParam } from "../../../utils";
-import { Constants } from "./restHelper";
+import { getParam, Constants } from "../../../utils";
 
 export async function getDeltas(
     mongoManager: MongoManager,
@@ -216,28 +215,32 @@ export function create(
     /**
      * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
      */
-    router.get("/:tenantId?/:id", throttle(throttler, winston, commonThrottleOptions), (request, response, next) => {
-        const from = stringToSequenceNumber(request.query.from);
-        const to = stringToSequenceNumber(request.query.to);
-        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+    router.get(
+        "/:tenantId?/:id",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const from = stringToSequenceNumber(request.query.from);
+            const to = stringToSequenceNumber(request.query.to);
+            const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
-        // Query for the deltas and return a filtered version of just the operations field
-        const deltasP = getDeltas(
-            mongoManager,
-            deltasCollectionName,
-            tenantId,
-            getParam(request.params, "id"),
-            from,
-            to);
+            // Query for the deltas and return a filtered version of just the operations field
+            const deltasP = getDeltas(
+                mongoManager,
+                deltasCollectionName,
+                tenantId,
+                getParam(request.params, "id"),
+                from,
+                to);
 
-        deltasP.then(
-            (deltas) => {
-                response.status(200).json(deltas);
-            },
-            (error) => {
-                response.status(500).json(error);
-            });
-    });
+            deltasP.then(
+                (deltas) => {
+                    response.status(200).json(deltas);
+                },
+                (error) => {
+                    response.status(500).json(error);
+                });
+        },
+    );
 
     /**
      * New api that fetches ops from summary and storage.

@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./constants";
-export * from "./params";
+export const Constants = Object.freeze({
+    throttleIdSuffix: "AlfredRest",
+});

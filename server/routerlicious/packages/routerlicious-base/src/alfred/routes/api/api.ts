@@ -13,7 +13,7 @@ import * as moniker from "moniker";
 import { Provider } from "nconf";
 import requestAPI from "request";
 import winston from "winston";
-import { getParam } from "../../../utils";
+import { getParam, Constants } from "../../../utils";
 import {
     craftClientJoinMessage,
     craftClientLeaveMessage,
@@ -21,7 +21,6 @@ import {
     craftOpMessage,
     IBlobData,
     IMapSetOperation,
-    Constants,
 } from "./restHelper";
 
 export function create(
