@@ -44,13 +44,7 @@ interface IPendingRebase {
     localOpMetadata: unknown;
 }
 
-interface IPendingResubmit {
-    type: "resubmit";
-    content: any;
-    localOpMetadata: unknown;
-}
-
-type IPendingAction = IPendingProcess | IPendingRebase | IPendingResubmit;
+type IPendingAction = IPendingProcess | IPendingRebase;
 
 export class RemoteChannelContext implements IChannelContext {
     private isLoaded = false;
@@ -132,12 +126,8 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
-        if (this.isLoaded) {
-            this.services.deltaConnection.reSubmit(content, localOpMetadata);
-        } else {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pending!.push({ type: "resubmit", content, localOpMetadata });
-        }
+        assert(this.isLoaded, "Remote channel must be loaded when resubmitting op");
+        this.services.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
     /**
@@ -232,9 +222,6 @@ export class RemoteChannelContext implements IChannelContext {
                         break;
                     case "rebase":
                         this.services.deltaConnection.rebaseOp(message.message, message.localOpMetadata);
-                        break;
-                    case "resubmit":
-                        this.services.deltaConnection.reSubmit(message.content, message.localOpMetadata);
                         break;
                     default:
                 }

@@ -979,7 +979,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.updateDocumentDirtyState(newState);
     }
 
-    public setConnectionState(connected: boolean, clientId?: string) {
+    public async setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // There might be no change of state due to Container calling this API after loading runtime.
@@ -987,6 +987,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._connected = connected;
 
         if (changeOfState) {
+            const pendingOps = this.pendingStateManager.getPendingMessages();
+            if (pendingOps.length > 0) {
+                await Promise.all(pendingOps.map(async (op) => {
+                    return this.dataStores.loadChannelFromOp(op);
+                }));
+            }
             this.replayPendingStates();
         }
 

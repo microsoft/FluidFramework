@@ -434,7 +434,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     constructor(
         private readonly loader: Loader,
         config: IContainerConfig,
-        pendingOps?,
     ) {
         super();
         this._audience = new Audience();

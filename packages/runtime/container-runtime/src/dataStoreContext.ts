@@ -565,6 +565,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.channel.rebaseOp(innerContents.content, localOpMetadata);
     }
 
+    public async loadChannelFromOp(contents: any): Promise<void> {
+        assert(!!this.channel, "Channel must exist");
+        const innerContents = contents as FluidDataStoreMessage;
+        return this.channel.loadChannelFromOp(innerContents.content);
+    }
+
     private verifyNotClosed() {
         if (this._disposed) {
             throw new Error("Context is closed");

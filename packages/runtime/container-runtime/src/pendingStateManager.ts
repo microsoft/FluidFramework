@@ -96,12 +96,19 @@ export class PendingStateManager {
     }
 
     public getLocalState(): IPendingLocalState | undefined {
-        if (this.pendingStates.length > 0) {
+        if (this.hasPendingMessages()) {
             return {
                 clientId: this.clientId,
                 pendingStates: this.pendingStates.toArray(),
             };
         }
+    }
+
+    public getPendingMessages(): any[] {
+        const pendingStates = [...this.pendingStates.toArray(), ...this.initialStates.toArray()];
+        const pendingMessages = pendingStates.filter((state) => state.type === "message");
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return (pendingMessages as IPendingMessage[]).map((message) => message.content);
     }
 
     constructor(
@@ -229,8 +236,8 @@ export class PendingStateManager {
     }
 
     /**
-     * Listens for ops sent by a previous container and rebases initially loaded ops so they are ready to
-     * be acked or resubmitted.
+     * Listens for ops sent by a previous container and rebases initially loaded ops at the right sequence number so
+     * they are ready to be acked or resubmitted.
      */
     private processRemoteMessage(message: ISequencedDocumentMessage) {
         // rebase initial ops up to and including message sequence number

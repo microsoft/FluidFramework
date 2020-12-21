@@ -196,7 +196,7 @@ export class DataStores implements IDisposable {
         Promise.resolve().then(async () => remotedFluidDataStoreContext.realize());
     }
 
-    public  bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
+    public bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
         const id = fluidDataStoreRuntime.id;
         const localContext = this.contexts.getUnbound(id);
         assert(!!localContext, "Could not find unbound context to bind");
@@ -274,6 +274,13 @@ export class DataStores implements IDisposable {
         const context = this.contexts.get(envelope.address);
         assert(!!context, "There should be a store context for the op");
         context.rebaseOp(envelope.contents, localOpMetadata);
+    }
+
+    public async loadChannelFromOp(content: any) {
+        const envelope = content as IEnvelope;
+        const context = this.contexts.get(envelope.address);
+        assert(!!context, "There should be a store context for the op");
+        return context.loadChannelFromOp(envelope.contents);
     }
 
     public processFluidDataStoreOp(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {

@@ -557,6 +557,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public rebaseOp(content: any, localOpMetadata: unknown) {
         return;
     }
+
+    public async loadChannelFromOp(content: any) {
+        return;
+    }
 }
 
 /**
