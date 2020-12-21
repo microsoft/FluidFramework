@@ -66,12 +66,12 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
 
-            // Error message can container PII information.
+            // Error message can contain PII information.
             // If we know for sure it does, we have to not log it.
             if (error.containsPII) {
                 event.error = "Error message was removed as it contained PII";
-            } else if (error.getCustomProperties) {
-                const customProps: ITelemetryProperties = error.getCustomProperties();
+            } else if (error.getProperties) {
+                const customProps: ITelemetryProperties = error.getProperties();
                 for (const key of Object.keys(customProps)) {
                     if (event[key] === undefined) {
                         event[key] = customProps[key];
@@ -461,14 +461,15 @@ export class PerformanceEvent {
 }
 
 /**
- * Helper class for error tracking.
- * Object of this instance will record all of their properties when logged with logger.
- * Care needs to be taken not to log PII information!
- * Logger ignores all properties from any other error objects (not being instance of CustomErrorWithProps),
- * with exception of 'message' & 'stack' properties if they exists on error object.
- * In other words, logger logs only what it knows about and has good confidence it does not container PII information.
+ * - Helper class for error tracking that can be used to log an error in telemetry.
+ * - Care needs to be taken not to log PII information!
+ * - This allows additional properties to be logged because object of this instance will record all of their properties
+ *   when logged with a logger.
+ * - Logger ignores all properties from any other error objects (not being instance of LoggingError), with exception of
+ *   'message' & 'stack' properties if they exists on error object.
+ * - In other words, logger logs only what it knows about and has good confidence it does not container PII information.
  */
-export class CustomErrorWithProps extends Error {
+export class LoggingError extends Error {
     constructor(
         message: string,
         props?: ITelemetryProperties,
@@ -478,7 +479,7 @@ export class CustomErrorWithProps extends Error {
     }
 
     // Return all properties
-    public getCustomProperties(): ITelemetryProperties {
+    public getProperties(): ITelemetryProperties {
         const props: ITelemetryProperties = {};
         // Could not use {...this} because it does not return properties of base class.
         for (const key of Object.getOwnPropertyNames(this)) {

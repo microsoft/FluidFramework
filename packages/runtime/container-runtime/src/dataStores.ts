@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
+import { DataCorruptionError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -151,13 +152,15 @@ export class DataStores implements IDisposable {
 
          // If a non-local operation then go and create the object, otherwise mark it as officially attached.
         if (this.contexts.has(attachMessage.id)) {
-            const error = new Error("DataCorruption: Duplicate data store created with existing ID");
-            this.logger.sendErrorEvent({
-                eventName: "DuplicateDataStoreId",
-                sequenceNumber: message.sequenceNumber,
-                clientId: message.clientId,
-                referenceSequenceNumber: message.referenceSequenceNumber,
-            }, error);
+            const error = new DataCorruptionError(
+                "Duplicate data store created with existing ID",
+                {
+                    sequenceNumber: message.sequenceNumber,
+                    clientId: message.clientId,
+                    referenceSequenceNumber: message.referenceSequenceNumber,
+                },
+            );
+            this.logger.sendErrorEvent({ eventName: "DuplicateDataStoreId" }, error);
             throw error;
         }
 

@@ -23,7 +23,7 @@ import {
     invalidFileNameStatusCode,
     OdspErrorType,
 } from "@fluidframework/odsp-doclib-utils";
-import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 
@@ -81,19 +81,19 @@ describe("Errors Types", () => {
             userData: "My name is Mark",
             message: "Some message",
         };
-        const iError = (CreateContainerError(err) as any) as CustomErrorWithProps;
-        const props = iError.getCustomProperties();
+        const iError = (CreateContainerError(err) as any) as LoggingError;
+        const props = iError.getProperties();
         assert.equal(props.userData, undefined, "We shouldn't expose the properties of the inner/original error");
         assert.equal(props.message, err.message, "But name is copied over!");
     });
 
     function assertCustomPropertySupport(err: any) {
         err.asdf = "asdf";
-        if (err.getCustomProperties !== undefined) {
-            assert.equal(err.getCustomProperties().asdf, "asdf", "Error should have property asdf");
+        if (err.getProperties !== undefined) {
+            assert.equal(err.getProperties().asdf, "asdf", "Error should have property asdf");
         }
         else {
-            assert.fail("Error should support getCustomProperties()");
+            assert.fail("Error should support getProperties()");
         }
     }
 
