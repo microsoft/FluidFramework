@@ -5,8 +5,11 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "declaration": false,
+        "declarationMap": false,
         "rootDir": "../",
-        "outDir": "../dist/test"
+        "outDir": "../dist",
+        "types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer", "react", "react-dom"],
     },
     "include": [
         "./**/*"

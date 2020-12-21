@@ -80,7 +80,7 @@ export class RiddlerService implements ITenantService {
         // in case the service clock is behind, reducing the lifetime of token by 5%
         // to avoid using an expired token.
         if (tokenLifetimeInSec) {
-            tokenLifetimeInSec = tokenLifetimeInSec - ((tokenLifetimeInSec * 5) / 100);
+            tokenLifetimeInSec = Math.round(tokenLifetimeInSec - ((tokenLifetimeInSec * 5) / 100));
         }
         this.cache.set(token, "", tokenLifetimeInSec).catch((error) => {
             winston.error(`Error caching token to redis`, error);

@@ -45,10 +45,21 @@ export class TscTask extends LeafTask {
         if (this.addChildTask(dependentTasks, this.node, "npm run build:genver")) {
             this.logVerboseDependency(this.node, "build:genver");
         }
+
+        const testConfig = path.join("src", "test", "tsconfig.json");
+        const isTestTsc = this.configFileFullPath && isSameFileOrDir(this.configFileFullPath, this.getPackageFileFullPath(testConfig));
         for (const child of this.node.dependentPackages) {
             // TODO: Need to look at the output from tsconfig
             if (this.addChildTask(dependentTasks, child, "tsc")) {
                 this.logVerboseDependency(child, "tsc");
+            }
+
+            if (isTestTsc) {
+                // TODO: Not all test package depends on test from dependents.
+                // Can check if the dependent's tsconfig has declaration generated or not
+                if (this.addChildTask(dependentTasks, child, "npm run build:test")) {
+                    this.logVerboseDependency(child, "build:test");
+                }
             }
         }
 

@@ -122,11 +122,11 @@ describe("SharedString", () => {
 
             const container = await loader.resolve(urlResolver.createCreateNewRequest(documentId));
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-            // TODO: this should probably throw, but currently returns the dataObject due to #4613
-            // this test should be updated when that issue is fix
-            const sharedString  = await dataObject.root.get<IFluidHandle<SharedString>>(stringId).get();
-            // eslint-disable-next-line dot-notation
-            assert.strictEqual(sharedString["getText"], undefined);
+
+            try {
+                await dataObject.root.get<IFluidHandle<SharedString>>(stringId).get();
+                assert.fail("expected failure");
+            } catch {}
         }
     });
 });
