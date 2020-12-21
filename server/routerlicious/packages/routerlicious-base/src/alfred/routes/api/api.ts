@@ -33,7 +33,7 @@ export function create(
 
     const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
         throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
-        throttleIdSuffix: Constants.throttleIdSuffix,
+        throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
     };
 
     function returnResponse<T>(

@@ -80,7 +80,7 @@ export class AlfredResources implements utils.IResources {
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
-        public throttler: core.IThrottler,
+        public restThrottler: core.IThrottler,
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
         public mongoManager: core.MongoManager,
@@ -167,12 +167,12 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         const tenantManager = new services.TenantManager(authEndpoint);
 
-        const throttleRequestsPerMs = config.get("alfred:throttling:http:requestsPerMs") as number || 1000000;
-        const throttleMaxRequestBurst = config.get("alfred:throttling:http:maxRequestBurst") as number || 1000000;
+        const throttleRequestsPerMs = config.get("alfred:restThrottling:requestsPerMs") as number || 1000000;
+        const throttleMaxRequestBurst = config.get("alfred:restThrottling:maxRequestBurst") as number || 1000000;
         const throttleMinCooldownIntervalInMs =
-            config.get("alfred:throttling:http:minCooldownIntervalInMs") as number || 1000000;
+            config.get("alfred:restThrottling:minCooldownIntervalInMs") as number || 1000000;
         const minThrottleIntervalInMs =
-            config.get("alfred:throttling:http:minThrottleIntervalInMs") as number || 1000000;
+            config.get("alfred:restThrottling:minThrottleIntervalInMs") as number || 1000000;
         const throttleStorageManager = new services.RedisThrottleStorageManager(redisClient);
         const restThrottlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,
@@ -261,7 +261,7 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.port,
             resources.orderManager,
             resources.tenantManager,
-            resources.throttler,
+            resources.restThrottler,
             resources.storage,
             resources.clientManager,
             resources.appTenants,

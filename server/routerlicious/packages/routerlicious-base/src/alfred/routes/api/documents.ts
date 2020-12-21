@@ -18,7 +18,7 @@ export function create(
 
     const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
         throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
-        throttleIdSuffix: Constants.throttleIdSuffix,
+        throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
     };
 
     router.get("/:tenantId?/:id", throttle(throttler, winston, commonThrottleOptions), (request, response, next) => {

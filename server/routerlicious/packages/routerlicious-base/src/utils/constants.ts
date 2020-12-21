@@ -4,5 +4,5 @@
  */
 
 export const Constants = Object.freeze({
-    throttleIdSuffix: "AlfredRest",
+    alfredRestThrottleIdSuffix: "AlfredRest",
 });
