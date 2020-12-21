@@ -52,11 +52,11 @@ data:
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
-            "restThrottling": {
-                "requestsPerMs": {{ .Values.alfred.restThrottling.requestsPerMs }},
-                "maxRequestBurst": {{ .Values.alfred.restThrottling.maxRequestBurst }},
-                "minCooldownIntervalInMs": {{ .Values.alfred.restThrottling.minCooldownIntervalInMs }},
-                "minThrottleIntervalInMs": {{ .Values.alfred.restThrottling.minThrottleIntervalInMs }}
+            "throttling": {
+                "maxRequestsPerMs": {{ .Values.alfred.throttling.maxRequestsPerMs }},
+                "maxRequestBurst": {{ .Values.alfred.throttling.maxRequestBurst }},
+                "minCooldownIntervalInMs": {{ .Values.alfred.throttling.minCooldownIntervalInMs }},
+                "minThrottleIntervalInMs": {{ .Values.alfred.throttling.minThrottleIntervalInMs }}
             },
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",

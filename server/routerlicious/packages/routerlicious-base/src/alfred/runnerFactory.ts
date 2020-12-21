@@ -167,16 +167,16 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         const tenantManager = new services.TenantManager(authEndpoint);
 
-        const throttleRequestsPerMs = config.get("alfred:restThrottling:requestsPerMs") as number || 1000000;
-        const throttleMaxRequestBurst = config.get("alfred:restThrottling:maxRequestBurst") as number || 1000000;
+        const throttleMaxRequestsPerMs = config.get("alfred:throttling:maxRequestsPerMs") as number || 1000000;
+        const throttleMaxRequestBurst = config.get("alfred:throttling:maxRequestBurst") as number || 1000000;
         const throttleMinCooldownIntervalInMs =
-            config.get("alfred:restThrottling:minCooldownIntervalInMs") as number || 1000000;
+            config.get("alfred:throttling:minCooldownIntervalInMs") as number || 1000000;
         const minThrottleIntervalInMs =
-            config.get("alfred:restThrottling:minThrottleIntervalInMs") as number || 1000000;
+            config.get("alfred:throttling:minThrottleIntervalInMs") as number || 1000000;
         const throttleStorageManager = new services.RedisThrottleStorageManager(redisClient);
         const restThrottlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,
-            throttleRequestsPerMs,
+            throttleMaxRequestsPerMs,
             throttleMaxRequestBurst,
             throttleMinCooldownIntervalInMs);
         const restThrottler = new services.Throttler(restThrottlerHelper, minThrottleIntervalInMs, winston);
