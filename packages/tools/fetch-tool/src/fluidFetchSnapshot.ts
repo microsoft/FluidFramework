@@ -38,7 +38,7 @@ interface IFetchedBlob {
     treePath: string;
     filename: string;
     blobId: string;
-    blob: Promise<string | undefined>;
+    blob: string | undefined;
     reused: boolean;
 }
 
@@ -57,9 +57,9 @@ function isFetchedTree(fetchedData: IFetchedData): fetchedData is IFetchedTree {
     return "patched" in fetchedData;
 }
 
-const blobCache = new Map<string, Promise<string>>();
-let blobCachePrevious = new Map<string, Promise<string>>();
-let blobCacheCurrent = new Map<string, Promise<string>>();
+const blobCache = new Map<string, string>();
+let blobCachePrevious = new Map<string, string>();
+let blobCacheCurrent = new Map<string, string>();
 
 async function fetchBlobs(prefix: string,
     tree: ISnapshotTree,
@@ -77,7 +77,7 @@ async function fetchBlobs(prefix: string,
                 reused = false;
                 blob = blobCache.get(blobId);
                 if (blob === undefined) {
-                    blob = storage.readBlob(blobId);
+                    blob = blobToString(await storage.readBlob(blobId));
                     blobCache.set(blobId, blob);
                 }
             }
@@ -121,7 +121,7 @@ async function fetchBlobsFromSnapshotTree(
 
     if (prefix === "/") {
         blobCachePrevious = blobCacheCurrent;
-        blobCacheCurrent = new Map<string, Promise<string>>();
+        blobCacheCurrent = new Map<string, string>();
     }
 
     // Create the tree info before fetching blobs (which will modify it)
@@ -131,7 +131,7 @@ async function fetchBlobsFromSnapshotTree(
     }
 
     const blobIdMap = perCommitBlobIdMap ?? new Map<string, number>();
-    let result: IFetchedData[] = fetchBlobs(prefix, tree, storage, blobIdMap);
+    let result: IFetchedData[] = await fetchBlobs(prefix, tree, storage, blobIdMap);
 
     for (const dataStore of Object.keys(tree.commits)) {
         const dataStoreVersions = await storage.getVersions(tree.commits[dataStore], 1);
@@ -191,7 +191,7 @@ async function dumpSnapshotTreeVerbose(name: string, fetchedData: IFetchedData[]
     console.log(`${"Blob Path".padEnd(nameLength)} | Reused |      Bytes`);
     console.log("-".repeat(nameLength + 26));
     for (const item of sorted) {
-        const blob = await item.blob;
+        const blob = item.blob;
         if (blob === undefined) {
             continue;
         }
@@ -211,7 +211,7 @@ async function dumpSnapshotTree(name: string, fetchedData: IFetchedData[]): Prom
     const sorted = getDumpFetchedData(fetchedData);
 
     for (const item of sorted) {
-        const blob = await item.blob;
+        const blob = item.blob;
         if (blob === undefined) {
             continue;
         }
@@ -231,7 +231,7 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
 
     await mkdir(`${outDir}/decoded`, { recursive: true });
     await Promise.all(fetchedData.map(async (item) => {
-        const data = await item.blob;
+        const data = item.blob;
         if (data === undefined) {
             console.error(`ERROR: Unable to get data for blob ${item.blobId}`);
             return;

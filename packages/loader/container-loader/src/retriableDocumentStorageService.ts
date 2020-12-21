@@ -31,8 +31,8 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
      *
      * @deprecated - only here for back compat, will be removed after release
      */
-    public async read(blobId: string): Promise<string> {
-        return this.readWithRetry(async () => this.internalStorageService.read(blobId) as string);
+    public async read(blobId: string): Promise<ArrayBufferLike> {
+        return this.readWithRetry(async () => this.internalStorageService.readBlob(blobId));
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
