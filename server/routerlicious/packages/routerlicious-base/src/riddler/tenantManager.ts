@@ -78,16 +78,16 @@ export class TenantManager {
             return Promise.reject(new Error("Tenant is disabled or does not exist."));
         }
 
-        const customData = { ...tenant.customData };
-        if (customData.externalStorageData) {
-            customData.externalStorageData = this.decryptAccessInfo(customData.externalStorageData);
+        const accessInfo = tenant.customData.externalStorageData?.accessInfo;
+        if (accessInfo) {
+            tenant.customData.externalStorageData.accessInfo = this.decryptAccessInfo(accessInfo);
         }
 
         return {
             id: tenant._id,
             orderer: tenant.orderer,
             storage: tenant.storage,
-            customData,
+            customData: tenant.customData,
         };
     }
 
@@ -174,8 +174,9 @@ export class TenantManager {
     public async updateCustomData(tenantId: string, customData: ITenantCustomData): Promise<ITenantCustomData> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
-        if (customData.externalStorageData) {
-            customData.externalStorageData = this.encryptAccessInfo(customData.externalStorageData);
+        const accessInfo = customData.externalStorageData?.accessInfo;
+        if (accessInfo) {
+            customData.externalStorageData.accessInfo = this.encryptAccessInfo(accessInfo);
         }
         await collection.update({ _id: tenantId }, { customData }, null);
 
@@ -286,17 +287,14 @@ export class TenantManager {
         await collection.update({ _id: tenantId }, { disabled: true }, null);
     }
 
-    private encryptAccessInfo(externalStorageData: any): any {
-        const accessInfo = JSON.stringify(externalStorageData.accessInfo);
-        externalStorageData.accessInfo = this.secretManager.encryptSecret(accessInfo);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return externalStorageData;
+    private encryptAccessInfo(accessInfo: any): string {
+        const encryptedAccessInfo = this.secretManager.encryptSecret(JSON.stringify(accessInfo));
+        return encryptedAccessInfo;
     }
 
-    private decryptAccessInfo(externalStorageData: any): any {
-        const accessInfo = this.secretManager.decryptSecret(externalStorageData.accessInfo);
-        externalStorageData.accessInfo = JSON.parse(accessInfo);
+    private decryptAccessInfo(encryptedAccessInfo: string): any {
+        const accessInfo = JSON.parse(this.secretManager.decryptSecret(encryptedAccessInfo));
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return externalStorageData;
+        return accessInfo;
     }
 }
