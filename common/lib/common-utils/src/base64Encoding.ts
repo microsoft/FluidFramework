@@ -24,9 +24,3 @@ export const toUtf8 = (input: string, encoding: string): string => {
             return IsoBuffer.from(input, encoding).toString();
     }
 };
-
-/**
- * Convert base64 or utf8 string to array buffer
- */
-export const toBuffer = (input: string, encoding: string): ArrayBufferLike =>
-    IsoBuffer.from(input, encoding).buffer;

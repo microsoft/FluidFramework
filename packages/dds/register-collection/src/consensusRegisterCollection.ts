@@ -216,7 +216,7 @@ export class ConsensusRegisterCollection<T>
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const blob = await storage.readBlob(snapshotFileName);
         const header = blobToString(blob);
-        const dataObj = header !== undefined ? this.parse(header, this.serializer) : {};
+        const dataObj = this.parse(header, this.serializer);
 
         for (const key of Object.keys(dataObj)) {
             assert(dataObj[key].atomic?.value.type !== "Shared",
