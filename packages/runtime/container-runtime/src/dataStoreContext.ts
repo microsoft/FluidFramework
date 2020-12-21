@@ -597,10 +597,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 }
 
 export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
-    private readonly intialSnapshotDetailsP =
-        new LazyPromise<ISnapshotDetails>(async () => this.loadInitialSnapshotDetails());
-    private readonly initialGCDetailsP = new LazyPromise<IGCDetails>(async () => this.loadInitialGCDetails());
-
     constructor(
         id: string,
         private readonly initSnapshotValue: ISnapshotTree | string | null,
@@ -626,15 +622,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         );
     }
 
-    public generateAttachMessage(): IAttachMessage {
-        throw new Error("Cannot attach remote store");
-    }
-
-    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
-        return this.intialSnapshotDetailsP;
-    }
-
-    private async loadInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+    private readonly initialSnapshotDetailsP =  new LazyPromise<ISnapshotDetails>(async () => {
         let tree: ISnapshotTree | null;
         let isRootDataStore = true;
 
@@ -688,13 +676,9 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             snapshot: tree ?? undefined,
             isRootDataStore,
         };
-    }
+    });
 
-    protected async getInitialGCDetails(): Promise<IGCDetails> {
-        return this.initialGCDetailsP;
-    }
-
-    private async loadInitialGCDetails(): Promise<IGCDetails> {
+    private readonly initialGCDetailsP = new LazyPromise<IGCDetails>(async () => {
         // If the initial snapshot is null or string, the snapshot is in old format and won't have GC details.
         if (!(this.initSnapshotValue === null || typeof this.initSnapshotValue === "string")
             && this.initSnapshotValue.blobs[gcBlobKey] !== undefined) {
@@ -703,6 +687,18 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             // Default value of initial GC details in case the initial snapshot does not have GC details.
             return {};
         }
+    });
+
+    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+        return this.initialSnapshotDetailsP;
+    }
+
+    protected async getInitialGCDetails(): Promise<IGCDetails> {
+        return this.initialGCDetailsP;
+    }
+
+    public generateAttachMessage(): IAttachMessage {
+        throw new Error("Cannot attach remote store");
     }
 }
 
