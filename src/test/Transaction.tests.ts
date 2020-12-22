@@ -17,6 +17,7 @@ import {
 	StablePlace,
 } from '../PersistedTypes';
 import { initialTree } from '../InitialTree';
+import { Transaction } from '../Transaction';
 import {
 	makeEmptyNode,
 	testTrait,
@@ -27,7 +28,6 @@ import {
 	right,
 	rightTraitLocation,
 } from './utilities/TestUtilities';
-import { Transaction } from '../Transaction';
 
 describe('Transaction', () => {
 	describe('Constraints', () => {

@@ -1,6 +1,6 @@
 {
 	"name": "@intentional/shared-tree",
-	"version": "0.14.0",
+	"version": "0.17.1",
 	"description": "Microsoft Whiteboard collaboration libraries",
 	"bugs": {
 		"url": "https://dev.azure.com/intentional/intent/_workitems"
@@ -16,7 +16,7 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+		"build": "concurrently npm:build:compile && npm run build:docs",
 		"build:compile": "concurrently npm:tsc npm:build:esnext",
 		"build:docs": "api-extractor run --local && copyfiles -u 2 ./_api-extractor-temp/doc-models/* ../../api-metadata/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -27,22 +27,17 @@
 		"eslint:fix": "eslint src --fix",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
-		"perf": "env-cmd -e production mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js --expose-gc --perfMode --grep @Benchmark --reporter ../../node_modules/@intentional/test-utilities/MochaBenchmarkReporter.js",
-		"perf:debug": "env-cmd -e production mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js --inspect-brk=45345 --expose-gc --perfMode --grep @Benchmark --reporter ../../node_modules/@intentional/test-utilities/MochaBenchmarkReporter.js",
-		"perf:measure": "env-cmd -e production mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js --expose-gc --perfMode --grep @Measurement --reporter ../../node_modules/@intentional/test-utilities/MochaBenchmarkReporter.js",
-		"perf:profile": "env-cmd -e production npm run perf -- --inspect-brk",
-		"perf:test": "env-cmd -e test mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js --expose-gc --perfMode --grep @Benchmark --reporter ../../node_modules/@intentional/test-utilities/MochaBenchmarkReporter.js",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js",
+		"test:mocha": "nyc --report-dir='./coverage' mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js",
 		"tsc": "tsc --pretty"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^0.25.0",
-		"@fluidframework/container-definitions": "^0.28.7",
-		"@fluidframework/datastore-definitions": "^0.28.7",
-		"@fluidframework/protocol-definitions": "^0.1014.1",
-		"@fluidframework/shared-object-base": "^0.28.7",
-		"@fluidframework/telemetry-utils": "^0.28.7",
+		"@fluidframework/common-utils": "^0.26.0",
+		"@fluidframework/container-definitions": "^0.31.1",
+		"@fluidframework/datastore-definitions": "^0.31.1",
+		"@fluidframework/protocol-definitions": "^0.1016.0",
+		"@fluidframework/shared-object-base": "^0.31.1",
+		"@fluidframework/telemetry-utils": "^0.31.1",
 		"buffer": "^6.0.2",
 		"immutable": "^4.0.0-rc.12",
 		"sorted-btree": "^1.4.0",
@@ -51,12 +46,14 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^0.19.2",
 		"@fluidframework/eslint-config-fluid": "^0.21.0",
-		"@fluidframework/test-runtime-utils": "^0.28.7",
+		"@fluidframework/test-runtime-utils": "^0.31.1",
 		"@typescript-eslint/parser": "^4.7.0",
 		"chai": "^4.2.0",
 		"concurrently": "^5.2.0",
 		"easy-table": "^1.1.1",
 		"env-cmd": "^10.1.0",
+		"mocha": "^8.2.1",
+		"nyc": "^15.1.0",
 		"rimraf": "^2.6.2"
 	},
 	"publishConfig": {

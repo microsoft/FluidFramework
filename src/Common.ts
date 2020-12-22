@@ -51,7 +51,7 @@ export function assert(condition: unknown, message?: string, containsPII = false
 export function fail(message: string = defaultFailMessage, containsPII = false): never {
 	if (process.env.NODE_ENV !== 'production') {
 		debugger;
-		console.error(message); // eslint-disable-line no-console
+		console.error(message);
 	}
 
 	throw new SharedTreeAssertionError(containsPII ? 'Assertion failed' : message);

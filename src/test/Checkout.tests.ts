@@ -4,6 +4,11 @@
  */
 
 import { expect } from 'chai';
+import { SharedTree, SharedTreeEvent } from '../SharedTree';
+import { Delete, EditResult, Insert, Move, StableRange, StablePlace, Side } from '../PersistedTypes';
+import { Checkout, CheckoutEvent } from '../Checkout';
+import { setTrait } from '../EditUtilities';
+import { EditValidationResult } from '../Snapshot';
 import {
 	left,
 	leftTraitLocation,
@@ -14,11 +19,6 @@ import {
 	SharedTreeTestingOptions,
 	simpleTestTree,
 } from './utilities/TestUtilities';
-import { SharedTree, SharedTreeEvent } from '../SharedTree';
-import { Delete, EditResult, Insert, Move, StableRange, StablePlace, Side } from '../PersistedTypes';
-import { Checkout, CheckoutEvent } from '../Checkout';
-import { setTrait } from '../EditUtilities';
-import { EditValidationResult } from '../Snapshot';
 
 /**
  * Checkout test suite
@@ -270,11 +270,10 @@ export function checkoutTests(
 		it('connected state with a remote SharedTree equates correctly during edits', async () => {
 			// Invalid edits are allowed here because this test creates edits concurrently in two trees,
 			// which after syncing, end up with one being invalid.
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, allowInvalid: true });
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions });
 			const { tree: secondTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
 				...secondTreeOptions,
-				allowInvalid: true,
 			});
 
 			containerRuntimeFactory.processAllMessages();

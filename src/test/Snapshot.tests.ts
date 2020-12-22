@@ -6,8 +6,8 @@
 import { expect } from 'chai';
 import { NodeId } from '../Identifiers';
 import { Side } from '../PersistedTypes';
-import { simpleTreeSnapshot, left, right, leftTraitLocation } from './utilities/TestUtilities';
 import { EditValidationResult } from '../Snapshot';
+import { simpleTreeSnapshot, left, right, leftTraitLocation } from './utilities/TestUtilities';
 
 describe('Snapshot', () => {
 	describe('StableRange validation', () => {

@@ -76,7 +76,7 @@ class LoadedView {
 		const delta = this.view.delta(targetView);
 
 		// Nodes which require payload prefetching
-		const requirePayloads: NodeId[] = delta.filter((id) => {
+		const requirePayloads: NodeId[] = delta.changed.filter((id) => {
 			const node = targetView.getSnapshotNode(id);
 			if (!isReferencePayload(node.payload)) {
 				return false;

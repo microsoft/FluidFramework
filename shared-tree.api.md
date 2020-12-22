@@ -10,6 +10,7 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import type { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITree } from '@fluidframework/protocol-definitions';
@@ -32,7 +33,7 @@ export interface Build {
     // (undocumented)
     readonly destination: DetachedSequenceId;
     // (undocumented)
-    readonly source: ChangeNodeSequence<EditNode>;
+    readonly source: TreeNodeSequence<EditNode>;
     // (undocumented)
     readonly type: typeof ChangeType.Build;
 }
@@ -42,7 +43,7 @@ export type Change = Insert | Detach | Build | SetValue | Constraint;
 
 // @public (undocumented)
 export const Change: {
-    build: (source: ChangeNodeSequence<EditNode>, destination: DetachedSequenceId) => Build;
+    build: (source: TreeNodeSequence<EditNode>, destination: DetachedSequenceId) => Build;
     insert: (source: DetachedSequenceId, destination: StablePlace) => Insert;
     detach: (source: StableRange, destination?: DetachedSequenceId | undefined) => Detach;
     setPayload: (nodeToModify: NodeId, payload: Payload) => SetValue;
@@ -51,10 +52,7 @@ export const Change: {
 };
 
 // @public
-export type ChangeNode = NodeData<ChangeNode>;
-
-// @public
-export type ChangeNodeSequence<TChild = ChangeNode> = readonly TChild[];
+export type ChangeNode = TreeNode<ChangeNode>;
 
 // @public
 export enum ChangeType {
@@ -127,6 +125,13 @@ export const Delete: {
 };
 
 // @public
+export interface Delta<ID> {
+    readonly added: readonly ID[];
+    readonly changed: readonly ID[];
+    readonly removed: readonly ID[];
+}
+
+// @public
 export interface Detach {
     // (undocumented)
     readonly destination?: DetachedSequenceId;
@@ -179,7 +184,7 @@ export class EditLog implements OrderedEditSet {
 }
 
 // @public
-export type EditNode = NodeData<EditNode> | DetachedSequenceId;
+export type EditNode = TreeNode<EditNode> | DetachedSequenceId;
 
 // @public
 export enum EditResult {
@@ -233,13 +238,11 @@ export const Move: {
 };
 
 // @public
-export interface NodeData<TChild> {
+export interface NodeData {
     readonly definition: Definition;
     readonly identifier: NodeId;
     // (undocumented)
     readonly payload?: Payload;
-    // (undocumented)
-    readonly traits: TraitMap<TChild>;
 }
 
 // @public
@@ -297,7 +300,7 @@ export class PrefetchingCheckout extends Checkout {
 export function revert(edit: Edit, view: Snapshot): Change[];
 
 // @public
-export function setTrait(trait: TraitLocation, nodes: ChangeNodeSequence<EditNode>): readonly Change[];
+export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[];
 
 // @public
 export interface SetValue {
@@ -324,7 +327,7 @@ export class SharedTree extends SharedObject {
     equals(sharedTree: SharedTree): boolean;
     static getFactory(): SharedTreeFactory;
     // (undocumented)
-    protected loadCore(branchId: string, storage: IChannelStorageService): Promise<void>;
+    protected loadCore(storage: IChannelStorageService): Promise<void>;
     // @internal
     loadSummary(summary: SharedTreeSummary): void;
     // @internal
@@ -344,7 +347,7 @@ export class SharedTree extends SharedObject {
     // @internal
     saveSummary(): SharedTreeSummary;
     // (undocumented)
-    snapshot(): ITree;
+    snapshotCore(_serializer: IFluidSerializer): ITree;
     summarizer: SharedTreeSummarizer;
 }
 
@@ -365,9 +368,6 @@ export class SharedTreeEditor {
 
 // @public
 export enum SharedTreeEvent {
-    AppliedEdit = "appliedEdit",
-    DroppedInvalidEdit = "droppedInvalidEdit",
-    DroppedMalformedEdit = "droppedMalformedEdit",
     EditCommitted = "committedEdit"
 }
 
@@ -379,7 +379,7 @@ export class SharedTreeFactory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedObject;
     // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, branchId: string): Promise<ISharedObject>;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, _channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedObject>;
     // (undocumented)
     static Type: string;
     // (undocumented)
@@ -412,7 +412,7 @@ export class Snapshot {
     [Symbol.iterator](): IterableIterator<SnapshotNode>;
     assertConsistent(): void;
     deleteNodes(nodes: Iterable<NodeId>): Snapshot;
-    delta(snapshot: Snapshot): NodeId[];
+    delta(snapshot: Snapshot): Delta<NodeId>;
     equals(snapshot: Snapshot): boolean;
     // (undocumented)
     findIndexWithinTrait(place: SnapshotPlace): PlaceIndex;
@@ -444,13 +444,7 @@ export class Snapshot {
 }
 
 // @public
-export interface SnapshotNode {
-    // (undocumented)
-    readonly definition: Definition;
-    // (undocumented)
-    readonly identifier: NodeId;
-    // (undocumented)
-    readonly payload?: Payload;
+export interface SnapshotNode extends NodeData {
     // (undocumented)
     readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
 }
@@ -521,13 +515,22 @@ export interface TraitLocation {
 // @public
 export interface TraitMap<TChild = ChangeNode> {
     // (undocumented)
-    readonly [key: string]: ChangeNodeSequence<TChild>;
+    readonly [key: string]: TreeNodeSequence<TChild>;
 }
 
 // @public
 export type TraitNodeIndex = number & {
     readonly TraitNodeIndex: unique symbol;
 };
+
+// @public
+export interface TreeNode<TChild> extends NodeData {
+    // (undocumented)
+    readonly traits: TraitMap<TChild>;
+}
+
+// @public
+export type TreeNodeSequence<TChild = ChangeNode> = readonly TChild[];
 
 // @public
 export type UuidString = string & {

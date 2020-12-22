@@ -13,7 +13,7 @@ import {
 	Detach,
 	EditNode,
 	Insert,
-	NodeData,
+	TreeNode,
 	Constraint,
 	ConstraintEffect,
 	SetValue,
@@ -21,7 +21,6 @@ import {
 } from './PersistedTypes';
 import { EditValidationResult, SnapshotNode, Snapshot } from './Snapshot';
 
-// eslint-disable-next-line import/no-unused-modules
 export type EditingResult =
 	| { result: EditResult.Invalid | EditResult.Malformed; changes: readonly Change[] }
 	| { result: EditResult.Applied; changes: readonly Change[]; snapshot: Snapshot };
@@ -270,7 +269,7 @@ export class Transaction {
 	}
 
 	private createSnapshotNodeForTree(
-		node: NodeData<EditNode>,
+		node: TreeNode<EditNode>,
 		map: Map<NodeId, SnapshotNode>,
 		onInvalidDetachedId: () => void
 	): NodeId {

@@ -223,7 +223,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 	protected emitChange(): void {
 		const delta = this.previousView.delta(this.currentView);
 		this.previousView = this.currentView;
-		if (delta.length !== 0) {
+		if (delta.changed.length !== 0 || delta.removed.length !== 0 || delta.added.length !== 0) {
 			this.emit(CheckoutEvent.ViewChange, delta);
 		}
 	}
@@ -231,14 +231,17 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 	/**
 	 * @returns a Promise which completes after all currently known edits are available in this checkout.
 	 */
-	public abstract async waitForPendingUpdates(): Promise<void>;
+	public abstract waitForPendingUpdates(): Promise<void>;
 
 	/**
 	 * release all unmanaged resources
 	 * e.g. unregister event listeners
 	 */
 	public dispose(error?: Error): void {
-		assert(!this.disposed, 'Checkout must not be disposed twice');
+		if (this.disposed) {
+			return;
+		}
+
 		this.disposed = true;
 
 		// remove registered listener
