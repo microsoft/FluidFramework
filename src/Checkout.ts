@@ -213,5 +213,5 @@ export abstract class Checkout extends EventEmitterWithErrorHandling {
 	/**
 	 * @returns a Promise which completes after all currently known edits are available in this checkout.
 	 */
-	public abstract async waitForPendingUpdates(): Promise<void>;
+	public abstract waitForPendingUpdates(): Promise<void>;
 }
