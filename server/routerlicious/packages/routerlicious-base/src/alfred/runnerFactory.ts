@@ -81,6 +81,8 @@ export class AlfredResources implements utils.IResources {
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
         public restThrottler: core.IThrottler,
+        public socketConnectThrottler: core.IThrottler,
+        public socketOpThrottler: core.IThrottler,
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
         public mongoManager: core.MongoManager,
@@ -182,6 +184,26 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             throttleMaxRequestBurst,
             throttleMinCooldownIntervalInMs);
         const restThrottler = new services.Throttler(restThrottlerHelper, minThrottleIntervalInMs, winston);
+        const throttleMaxOpenSocketConnections =
+            config.get("alfred:throttling:maxOpenSocketConnections") as number || 1000000;
+        const socketConnectThrottlerHelper = new services.ThrottlerHelper(
+            throttleStorageManager,
+            0,
+            throttleMaxOpenSocketConnections,
+            throttleMinCooldownIntervalInMs,
+        );
+        const socketConnectThrottler = new services.Throttler(
+            socketConnectThrottlerHelper,
+            minThrottleIntervalInMs,
+            winston);
+        const throttleMaxSubmitOpsPerMs = config.get("alfred:throttling:maxSubmitOpsPerMs") as number || 1000000;
+        const throttleMaxSubmitOpsBurst = config.get("alfred:throttling:maxSubmitOpsBurst") as number || 1000000;
+        const socketOpThrottlerHelper = new services.ThrottlerHelper(
+            throttleStorageManager,
+            throttleMaxSubmitOpsPerMs,
+            throttleMaxSubmitOpsBurst,
+            throttleMinCooldownIntervalInMs);
+        const socketOpThrottler = new services.Throttler(socketOpThrottlerHelper, minThrottleIntervalInMs, winston);
 
         const databaseManager = new core.MongoDatabaseManager(
             mongoManager,
@@ -246,6 +268,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             orderManager,
             tenantManager,
             restThrottler,
+            socketConnectThrottler,
+            socketOpThrottler,
             storage,
             appTenants,
             mongoManager,
@@ -264,6 +288,8 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.orderManager,
             resources.tenantManager,
             resources.restThrottler,
+            resources.socketConnectThrottler,
+            resources.socketOpThrottler,
             resources.storage,
             resources.clientManager,
             resources.appTenants,

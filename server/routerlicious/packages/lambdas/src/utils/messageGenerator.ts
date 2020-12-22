@@ -11,13 +11,14 @@ import {
     NackErrorType,
 } from "@fluidframework/protocol-definitions";
 
-export const createNackMessage = (code: number, type: NackErrorType, message: string): INack => ({
+export const createNackMessage = (code: number, type: NackErrorType, message: string, retryAfter?: number): INack => ({
     operation: undefined,
     sequenceNumber: -1,
     content: {
         code,
         type,
         message,
+        retryAfter,
     },
 });
 
