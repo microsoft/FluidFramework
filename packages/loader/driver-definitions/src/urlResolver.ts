@@ -45,7 +45,10 @@ export interface DriverPreCheckInfo {
     // resolves pathing properly, this can be removed. #4489, #4491
     componentPath: string;
 
+    // Container name, if known. This could be used to eagerly prefetch container code prior to having a snapshot.
     containerCodeHint?: string;
+
+    // Domains that will be connected to on the critical boot path. Can be preconnected to in certain flows.
     preconnectDomains?: string[];
   }
 
