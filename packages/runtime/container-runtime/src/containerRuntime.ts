@@ -900,7 +900,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // We always expect createSubRequest to include a leading slash, but asserting here to protect against
             // unintentionally modifying the url if that changes.
             assert(subRequest.url.startsWith("/"), "Expected createSubRequest url to include a leading slash");
-            subRequest.url = subRequest.url.slice(1);
             return dataStore.IFluidRouter.request(subRequest);
         }
 

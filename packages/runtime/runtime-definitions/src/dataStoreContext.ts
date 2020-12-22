@@ -26,7 +26,6 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
-    ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -164,12 +163,6 @@ export interface IFluidDataStoreChannel extends
      * If the container is not attached to storage, then this would also be unknown to other clients.
      */
     bindToContext(): void;
-
-    /**
-     * @deprecated - Replaced by getAttachSummary()
-     * Retrieves the snapshot used as part of the initial snapshot message
-     */
-    getAttachSnapshot(): ITreeEntry[];
 
     /**
      * Retrieves the summary used as part of the initial summary message

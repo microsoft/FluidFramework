@@ -104,10 +104,10 @@ extends:
         - task: Npm@1
           displayName: '[end-to-end tests] npm run ci:test:realsvc'
           env:
-            fluid__webpack__bearerSecret: $(fluid__webpack__bearerSecret)
-            fluid__webpack__fluidHost: $(fluid__webpack__fluidHost)
-            fluid__webpack__tenantId: $(fluid__webpack__tenantId)
-            fluid__webpack__tenantSecret: $(fluid__webpack__tenantSecret)
+            fluid__webpack__bearerSecret: $(fluid-webpack-bearerSecret)
+            fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
+            fluid__webpack__tenantId: $(fluid-webpack-tenantId)
+            fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
           inputs:
             command: 'custom'
             workingDir: packages/test/end-to-end-tests

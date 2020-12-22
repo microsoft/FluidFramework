@@ -78,6 +78,11 @@ export class TenantManager {
             return Promise.reject(new Error("Tenant is disabled or does not exist."));
         }
 
+        const accessInfo = tenant.customData.externalStorageData?.accessInfo;
+        if (accessInfo) {
+            tenant.customData.externalStorageData.accessInfo = this.decryptAccessInfo(accessInfo);
+        }
+
         return {
             id: tenant._id,
             orderer: tenant.orderer,
@@ -169,7 +174,10 @@ export class TenantManager {
     public async updateCustomData(tenantId: string, customData: ITenantCustomData): Promise<ITenantCustomData> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
-
+        const accessInfo = customData.externalStorageData?.accessInfo;
+        if (accessInfo) {
+            customData.externalStorageData.accessInfo = this.encryptAccessInfo(accessInfo);
+        }
         await collection.update({ _id: tenantId }, { customData }, null);
 
         return (await this.getTenantDocument(tenantId)).customData;
@@ -277,5 +285,16 @@ export class TenantManager {
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
         await collection.update({ _id: tenantId }, { disabled: true }, null);
+    }
+
+    private encryptAccessInfo(accessInfo: any): string {
+        const encryptedAccessInfo = this.secretManager.encryptSecret(JSON.stringify(accessInfo));
+        return encryptedAccessInfo;
+    }
+
+    private decryptAccessInfo(encryptedAccessInfo: string): any {
+        const accessInfo = JSON.parse(this.secretManager.decryptSecret(encryptedAccessInfo));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return accessInfo;
     }
 }

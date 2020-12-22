@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
@@ -80,11 +81,7 @@ export class TestFluidObject implements ITestFluidObject {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return {
-            mimeType: "fluid/object",
-            status: 200,
-            value: this,
-        };
+        return defaultFluidObjectRequestHandler(this, request);
     }
 
     private async initialize() {
