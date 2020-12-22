@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { getLocatorFromOdspUrl } from "./odspFluidFileLink";
 import { DriverPreCheckInfo } from "@fluidframework/driver-definitions";
+import { getLocatorFromOdspUrl } from "./odspFluidFileLink";
 
 /**
- * A check that returns DriverPreCheckInfo if the URL is likely supported by this driver. 
+ * A check that returns DriverPreCheckInfo if the URL is likely supported by this driver.
  */
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined {
   const locator = getLocatorFromOdspUrl(documentUrl);
@@ -27,6 +27,6 @@ export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined {
     componentPath: locator.dataStorePath,
     containerCodeHint: locator?.containerPackageName,
     // We want to preconnect to the snapshot endpoint, which has the same domain as the site URL
-    preconnectDomains: siteOrigin ? [siteOrigin] : undefined
+    preconnectDomains: siteOrigin ? [siteOrigin] : undefined,
   };
-};
+}
