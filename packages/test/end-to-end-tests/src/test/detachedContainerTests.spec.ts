@@ -378,6 +378,7 @@ const tests = (args: ILocalTestObjectProvider) => {
             assert.strictEqual(contents.contents.type,
                 testDataStoreType, "DataStore type should match");
             defPromise.resolve();
+            container.deltaManager.submit = () => 0;
             return 0;
         };
 
