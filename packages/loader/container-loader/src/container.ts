@@ -29,6 +29,7 @@ import {
     ContainerWarning,
     AttachState,
     IThrottlingWarning,
+    IPendingLocalState,
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, GenericError } from "@fluidframework/container-utils";
 import {
@@ -204,7 +205,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
             return new Promise<Container>((res, rej) => {
                 const version = request.headers?.[LoaderHeader.version];
-                const pause = request.headers?.[LoaderHeader.pause];
+                // always load unpaused with pending ops
+                const pause = pendingOps !== undefined ? false : request.headers?.[LoaderHeader.pause];
 
                 const onClosed = (err?: ICriticalContainerError) => {
                     // Depending where error happens, we can be attempting to connect to web socket
@@ -527,6 +529,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.emit("closed", error);
 
         this.removeAllListeners();
+    }
+
+    public closeAndGetPendingLocalState(): string {
+        this._deltaManager.close();
+
+        assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid");
+        const pendingState: IPendingLocalState = {
+            pendingRuntimeState: this.context.getPendingLocalState(),
+            url: this.resolvedUrl.url,
+        };
+
+        this.close();
+
+        return JSON.stringify(pendingState);
     }
 
     public get attachState(): AttachState {

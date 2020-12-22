@@ -99,6 +99,8 @@ export interface IRuntime extends IDisposable {
      */
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 
+    getPendingLocalState(): unknown;
+
     // 0.24 back-compat attachingBeforeSummary
     readonly runtimeVersion?: string;
 }
@@ -135,7 +137,7 @@ export interface IContainerContext extends IDisposable {
     readonly serviceConfiguration: IClientConfiguration | undefined;
     readonly version: string;
     readonly previousRuntimeState: IRuntimeState;
-    readonly pendingOps?;
+    pendingOps?: unknown;
 
     /**
      * Ambient services provided with the context

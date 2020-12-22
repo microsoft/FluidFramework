@@ -136,6 +136,8 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      */
     close(error?: ICriticalContainerError): void;
 
+    closeAndGetPendingLocalState(): string;
+
     /**
      * Propose new code details that define the code to be loaded
      * for this container's runtime. The returned promise will
@@ -184,6 +186,8 @@ export interface ILoader extends IFluidRouter {
      * a request against the server found from the resolve step.
      */
     resolve(request: IRequest): Promise<IContainer>;
+
+    resolveWithPendingLocalState(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 
     /**
      * Creates a new container using the specified chaincode but in an unattached state. While unattached all
@@ -245,4 +249,9 @@ export interface ILoaderHeader {
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
+}
+
+export interface IPendingLocalState {
+    url: string;
+    pendingRuntimeState: unknown;
 }

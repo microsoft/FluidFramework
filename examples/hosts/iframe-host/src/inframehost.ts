@@ -93,6 +93,9 @@ class ProxyRuntime implements IRuntime {
     }
     setAttachState(state: AttachState.Attaching | AttachState.Attached) {
     }
+    getPendingLocalState() {
+        throw new Error("Method not implemented.");
+    }
 }
 
 class ProxyChaincode implements IRuntimeFactory {

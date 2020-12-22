@@ -17,6 +17,7 @@ import {
     ICodeLoader,
     IContainer,
     ILoader,
+    IPendingLocalState,
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
@@ -100,6 +101,10 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         }
 
         return this.loader.request(request);
+    }
+
+    public async resolveWithPendingLocalState(request: IRequest): Promise<IContainer> {
+        throw new Error("Relative loader should not resolve with pending state");
     }
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
@@ -299,9 +304,12 @@ export class Loader extends EventEmitter implements ILoader {
         });
     }
 
-    public async resolveWithLocallySavedState(request: IRequest, pendingOps): Promise<Container> {
+    public async resolveWithPendingLocalState(request: IRequest, pendingLocalState?: string): Promise<Container> {
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Resolve" }, async () => {
-            const resolved = await this.resolveCore(request, pendingOps);
+            const resolved = await this.resolveCore(
+                request,
+                pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
+            );
             return resolved.container;
         });
     }
@@ -360,7 +368,7 @@ export class Loader extends EventEmitter implements ILoader {
 
     private async resolveCore(
         request: IRequest,
-        pendingOps?,
+        pendingLocalState?: IPendingLocalState,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
@@ -371,13 +379,19 @@ export class Loader extends EventEmitter implements ILoader {
             return Promise.reject(new Error(`Invalid URL ${resolvedAsFluid.url}`));
         }
 
+        if (pendingLocalState !== undefined && resolvedAsFluid.url !== pendingLocalState.url) {
+            const message = `URL ${resolvedAsFluid.url} does not match pending state URL ${pendingLocalState.url}`;
+            return Promise.reject(new Error(message));
+        }
+
         request.headers = request.headers ?? {};
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
+        const shouldCache = pendingLocalState !== undefined ? false : canCache;
 
-        debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
+        debug(`${shouldCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
 
         let container: Container;
-        if (canCache) {
+        if (shouldCache) {
             const key = this.getKeyForContainerCache(request, parsed);
             const maybeContainer = await this.containers.get(key);
             if (maybeContainer !== undefined) {
@@ -387,8 +401,7 @@ export class Loader extends EventEmitter implements ILoader {
                     this.loadContainer(
                         parsed.id,
                         request,
-                        resolvedAsFluid,
-                        pendingOps);
+                        resolvedAsFluid);
                 this.containers.set(key, containerP);
                 container = await containerP;
             }
@@ -398,7 +411,7 @@ export class Loader extends EventEmitter implements ILoader {
                     parsed.id,
                     request,
                     resolvedAsFluid,
-                    pendingOps);
+                    pendingLocalState?.pendingRuntimeState);
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {

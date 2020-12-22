@@ -45,7 +45,7 @@ interface IPendingFlush {
 
 type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
 
-interface IPendingLocalState {
+export interface IPendingLocalState {
     /**
      * client ID we most recently connected with, or undefined if we never connected
      */

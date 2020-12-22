@@ -112,7 +112,7 @@ import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
-import { PendingStateManager } from "./pendingStateManager";
+import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager } from "./blobManager";
 import { DataStores } from "./dataStores";
@@ -729,7 +729,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.pendingStateManager = new PendingStateManager(
             this,
             (content, localOpMetadata) => this.dataStores.rebaseOp(content, localOpMetadata),
-            context.pendingOps);
+            context.pendingOps as IPendingLocalState);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);
@@ -987,11 +987,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._connected = connected;
 
         if (changeOfState) {
-            const pendingOps = this.pendingStateManager.getPendingMessages();
-            if (pendingOps.length > 0) {
-                await Promise.all(pendingOps.map(async (op) => {
-                    return this.dataStores.loadChannelFromOp(op);
-                }));
+            if (this.context.pendingOps !== undefined) {
+                const pendingOps = this.pendingStateManager.getPendingMessages();
+                if (pendingOps.length > 0) {
+                    await Promise.all(pendingOps.map(async (op) => {
+                        return this.dataStores.loadChannelFromOp(op);
+                    }));
+                }
+                this.context.pendingOps = undefined;
             }
             this.replayPendingStates();
         }
@@ -1807,5 +1810,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const snapshot = await this.storage.getSnapshotTree(version);
         assert(!!snapshot, "Failed to get snapshot from storage");
         return snapshot;
+    }
+
+    public getPendingLocalState() {
+        return this.pendingStateManager.getLocalState();
     }
 }

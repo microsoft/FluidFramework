@@ -286,6 +286,10 @@ export class ContainerContext implements IContainerContext {
         return this.container.getAbsoluteUrl(relativeUrl);
     }
 
+    public getPendingLocalState() {
+        return this.runtime.getPendingLocalState();
+    }
+
     /**
      * Determines if the current code details of the context
      * satisfy the incoming constraint code details
