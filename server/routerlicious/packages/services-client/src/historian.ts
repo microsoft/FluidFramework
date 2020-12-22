@@ -5,9 +5,6 @@
 
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
-import { OutgoingHttpHeaders } from "http";
-import { getCorrelationId } from "@fluidframework/server-services-utils";
-import * as uuid from "uuid";
 import { RestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";
 
@@ -49,15 +46,11 @@ export class Historian implements IHistorian {
             queryString.token = fromUtf8ToBase64(`${credentials.user}`);
         }
 
-        const headers: OutgoingHttpHeaders = credentials ?
+        const headers = credentials ?
             {
                 Authorization: `Basic ${fromUtf8ToBase64(`${credentials.user}:${credentials.password}`)}`,
-                "x-corrlation-id": getCorrelationId() || uuid.v4(),
-            } 
-            :
-            {
-                "x-corrlation-id": getCorrelationId() || uuid.v4(),
-            };
+            } :
+            {};
 
         this.restWrapper = new RestWrapper(endpoint, headers, queryString, cacheBust);
     }
