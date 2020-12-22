@@ -20,7 +20,6 @@ import * as redis from "redis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { Constants } from "../utils";
 import { AlfredRunner } from "./runner";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
@@ -168,14 +167,14 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         const tenantManager = new services.TenantManager(authEndpoint);
 
-        const throttleMaxRequestsPerMs = config.get("alfred:throttling:maxRequestsPerMs") as number
-            || Constants.defaultThrottling.rateInOperationsPerMs;
-        const throttleMaxRequestBurst = config.get("alfred:throttling:maxRequestBurst") as number
-            || Constants.defaultThrottling.operationBurstLimit;
-        const throttleMinCooldownIntervalInMs = config.get("alfred:throttling:minCooldownIntervalInMs") as number
-            || Constants.defaultThrottling.minCooldownIntervalInMs;
-        const minThrottleIntervalInMs = config.get("alfred:throttling:minThrottleIntervalInMs") as number
-            || Constants.defaultThrottling.minThrottleIntervalInMs;
+        const throttleMaxRequestsPerMs =
+            config.get("alfred:throttling:maxRequestsPerMs") as number | undefined;
+        const throttleMaxRequestBurst =
+            config.get("alfred:throttling:maxRequestBurst") as number | undefined;
+        const throttleMinCooldownIntervalInMs =
+            config.get("alfred:throttling:minCooldownIntervalInMs") as number | undefined;
+        const minThrottleIntervalInMs =
+            config.get("alfred:throttling:minThrottleIntervalInMs") as number | undefined;
         const throttleStorageManager = new services.RedisThrottleStorageManager(redisClient);
         const restThrottlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,
