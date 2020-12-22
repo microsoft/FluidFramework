@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import Axios from "axios";
 import { OutgoingHttpHeaders } from "http";
+import Axios from "axios";
 import safeStringify from "json-stringify-safe";
 import * as nconf from "nconf";
 import { getCorrelationId } from "@fluidframework/server-services-utils";

@@ -12,9 +12,9 @@ import * as nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import split = require("split");
 import * as winston from "winston";
+import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import * as routes from "./routes";
 import { ICache, ITenantService } from "./services";
-import { bindCorrelationId } from "@fluidframework/server-services-utils";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
