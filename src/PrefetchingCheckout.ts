@@ -114,11 +114,6 @@ class LoadedView {
  */
 export class PrefetchingCheckout extends Checkout {
 	/**
-	 * The shared tree this checkout views/edits.
-	 */
-	public readonly tree: SharedTree;
-
-	/**
 	 * A revision newer than loadedView that is still loading.
 	 */
 	private loadingView?: Promise<LoadedView>;
@@ -127,6 +122,11 @@ export class PrefetchingCheckout extends Checkout {
 	 * A revision which has finished loading.
 	 */
 	private loadedView: LoadedView;
+
+	/**
+	 * A bound handler for 'committedEdit' SharedTreeEvent
+	 */
+	protected readonly editCommittedHandler = this.setLoadingView.bind(this);
 
 	/**
 	 * @param tree - the shared tree to view and edit.
@@ -150,10 +150,7 @@ export class PrefetchingCheckout extends Checkout {
 	 * @param loadedView - the view to start at
 	 */
 	private constructor(tree: SharedTree, loadedView: LoadedView) {
-		super(loadedView.view);
-		this.tree = tree;
-		// TODO:#49101: unsubscribe? Use addListener?
-		this.tree.on(SharedTreeEvent.EditCommitted, () => this.setLoadingView());
+		super(tree, loadedView.view);
 		this.loadedView = loadedView;
 	}
 
