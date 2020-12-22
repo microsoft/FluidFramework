@@ -23,6 +23,10 @@ export class ReadBuffer {
         return this.data.slice(start, end);
     }
 
+    public reset() {
+        this.index = 0;
+    }
+
     public read(lengthArg = 1): number {
         let res = 0;
         let multiplier = 1;
@@ -38,7 +42,7 @@ export class ReadBuffer {
     }
 
     public skip(length: number) {
-        assert(length >= 0);
+        assert(length >= 0, "skip");
         this.index += length;
     }
 }
@@ -173,11 +177,38 @@ class BlobShallowCopy extends BlobCore {
     }
 }
 
+export function iteratePairs<T>(it: IterableIterator<T>) {
+    const res: IterableIterator<[T, T]> = {
+        next: () => {
+            const a = it.next();
+            if (a.done) {
+                return { value: undefined, done: true };
+            }
+            const b = it.next();
+            assert(b.done !== true);
+            return { value: [a.value, b.value], done: b.done };
+        },
+        [Symbol.iterator]: () => { return res; },
+    };
+    return res;
+}
+
+export function iterate<T>(it: {[Symbol.iterator]: () => IterableIterator<T>}) {
+    return it[Symbol.iterator]();
+}
+
+export type NodeTypes = Node | BlobCore | number;
+
 export class Node {
-    protected children: (Node | BlobCore)[] = [];
+    protected children: NodeTypes[] = [];
 
     public [Symbol.iterator]() {
         return this.children[Symbol.iterator]();
+    }
+
+    public iteratePairs() {
+        assert((this.length % 2) === 0, "reading pairs");
+        return iteratePairs(iterate(this));
     }
 
     public get length() { return this.children.length; }
@@ -188,14 +219,14 @@ export class Node {
     public getString(index: number)
     {
         const node = this.children[index];
-        assert(!(node instanceof Node));
+        assert(node instanceof BlobCore);
         return node.toString(stringEncoding);
     }
 
     public getBlob(index: number)
     {
         const node = this.children[index];
-        assert(!(node instanceof Node));
+        assert(node instanceof BlobCore);
         return node;
     }
 
@@ -203,6 +234,13 @@ export class Node {
     {
         const node = this.children[index];
         assert(node instanceof Node);
+        return node;
+    }
+
+    public getNumber(index: number): number
+    {
+        const node = this.children[index];
+        assert(typeof node === "number");
         return node;
     }
 
@@ -220,15 +258,11 @@ export class Node {
         this.addBlob(IsoBuffer.from(payload, stringEncoding));
     }
 
-    public addNumber(payload: number) {
+    public addNumber(payload: number | undefined) {
         assert(payload !== undefined, "undefined");
-        assert(payload < 65536, "too big");
-        /*
-        const len = calcLength(payload);
-        this.write(Codes.Number0 + lengthLen);
-        buffer.write(data.length, lengthLen);
-        */
-       this.addString("x");
+        assert(Number.isInteger(payload), "not int");
+        assert(payload >= 0, "negative");
+        this.children.push(payload);
     }
 
     public serialize(buffer: WriteBuffer) {
@@ -236,8 +270,12 @@ export class Node {
         for (const child of this.children) {
             if (child instanceof Node) {
                 child.serialize(buffer);
-            } else {
+            } else if (child instanceof BlobCore) {
                 child.write(buffer);
+            } else {
+                const len = calcLength(child);
+                buffer.write(Codes.Number0 + len);
+                buffer.write(child, len);
             }
         }
         buffer.write(Codes.Up);
@@ -264,6 +302,16 @@ export class Node {
                     break;
                 }
 
+                case Codes.Number1:
+                case Codes.Number2:
+                case Codes.Number3:
+                case Codes.Number4:
+                {
+                    const num = buffer.read(code - Codes.Number0);
+                    this.children.push(num);
+                    break;
+                }
+
                 case Codes.Up:
                     return;
 
@@ -277,7 +325,7 @@ export class Node {
 export class TreeBuilder extends Node {
     static load(buffer: ReadBuffer): TreeBuilder {
         const builder = new TreeBuilder();
-        assert(buffer.read() === Codes.Array);
+        assert(buffer.read() === Codes.Array, "array");
         builder.load(buffer);
         assert(buffer.read() === Codes.EOF, "no eof marker");
         assert(buffer.eof, "unexpected data at the end of buffer");

@@ -7,18 +7,23 @@ import {
     TreeBuilder,
     BlobCore,
     Node,
+    NodeTypes,
 } from "../tree";
 
-function compareBuilfers(b1: Node | BlobCore, b2: Node | BlobCore) {
+function compareNodes(b1: NodeTypes, b2: NodeTypes) {
     if (b1 instanceof Node) {
-        assert(b2 instanceof Node, "Node vs. Buffer");
+        assert(b2 instanceof Node, "not Node");
         assert(b1.length === b2.length, "Node lengths are not same");
         for (let i = 0; i < b1.length; i++) {
-            compareBuilfers(b1.get(i), b2.get(i));
+            compareNodes(b1.get(i), b2.get(i));
         }
-    } else {
-        assert(!(b2 instanceof Node), "Buffer vs. Node");
+    } else if (b1 instanceof BlobCore) {
+        assert(b2 instanceof BlobCore, "not buffer");
         assert(b1.toString() === b2.toString(), "Buffer sizes not same");
+    } else {
+        assert(typeof b1 === "number", "not number");
+        assert(typeof b2 === "number", "not number");
+        assert(b1 === b2);
     }
 }
 
@@ -43,7 +48,7 @@ describe("Tree test", () => {
         assert(buffer.length === length, "buffer size");
 
         const builder2 = TreeBuilder.load(buffer);
-        compareBuilfers(builder, builder2);
+        compareNodes(builder, builder2);
     }
 
     it("empty", async () => {
