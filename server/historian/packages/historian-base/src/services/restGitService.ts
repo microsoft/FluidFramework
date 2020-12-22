@@ -5,10 +5,8 @@
 
 import * as querystring from "querystring";
 import * as git from "@fluidframework/gitresources";
-import {
-    ICreateRefParamsExternal,
-    IPatchRefParamsExternal,
-    ITenantStorage } from "@fluidframework/server-services-core";
+import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-client";
+import { ITenantStorage } from "@fluidframework/server-services-core";
 import request from "request";
 import * as winston from "winston";
 import { ICache } from "./definitions";

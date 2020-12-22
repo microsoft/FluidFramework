@@ -4,7 +4,7 @@
  */
 
 import { IRef } from "@fluidframework/gitresources";
-import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-core";
+import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-client";
 import { Response, Router } from "express";
 import * as nconf from "nconf";
 import git from "nodegit";

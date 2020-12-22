@@ -12,7 +12,11 @@ import winston from "winston";
 import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache, throttler: IThrottler): Router {
+export function create(
+    store: nconf.Provider,
+    tenantService: ITenantService,
+    cache: ICache,
+    throttler: IThrottler): Router {
     const router: Router = Router();
 
     const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -47,7 +51,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         response.sendStatus(200);
     });
 
-    router.post("/repos/:ignored?/:tenantId/git/blobs", 
+    router.post("/repos/:ignored?/:tenantId/git/blobs",
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const blobP = createBlob(request.params.tenantId, request.get("Authorization"), request.body);

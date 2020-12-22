@@ -12,7 +12,11 @@ import winston from "winston";
 import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache, throttler: IThrottler): Router {
+export function create(
+    store: nconf.Provider,
+    tenantService: ITenantService,
+    cache: ICache,
+    throttler: IThrottler): Router {
     const router: Router = Router();
 
     const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -42,7 +46,10 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const useCache = !("disableCache" in request.query);
-            const headerP = getHeader(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
+            const headerP = getHeader(
+                request.params.tenantId,
+                request.get("Authorization"),
+                request.params.sha, useCache);
             utils.handleResponse(headerP, response, useCache);
     });
 
@@ -50,7 +57,10 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const useCache = !("disableCache" in request.query);
-            const headerP = getTree(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
+            const headerP = getTree(
+                request.params.tenantId,
+                request.get("Authorization"),
+                request.params.sha, useCache);
             utils.handleResponse(headerP, response, useCache);
     });
 

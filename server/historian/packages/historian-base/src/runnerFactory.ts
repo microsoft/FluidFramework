@@ -7,10 +7,10 @@ import * as core from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as redis from "redis";
+import winston from "winston";
 import * as historianServices from "./services";
 import { normalizePort } from "./utils";
 import { HistorianRunner } from "./runner";
-import winston from "winston";
 
 export class HistorianResources implements utils.IResources {
     public webServerFactory: core.IWebServerFactory;
@@ -20,8 +20,7 @@ export class HistorianResources implements utils.IResources {
         public readonly port: string | number,
         public readonly riddler: historianServices.ITenantService,
         public readonly cache: historianServices.RedisCache,
-        public readonly throttler: core.IThrottler
-    ) {
+        public readonly throttler: core.IThrottler) {
         this.webServerFactory = new services.BasicWebServerFactory();
     }
 

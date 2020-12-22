@@ -34,7 +34,11 @@ export interface IRoutes {
 }
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache, throttler: IThrottler): IRoutes {
+export function create(
+    store: nconf.Provider,
+    tenantService: ITenantService,
+    cache: ICache,
+    throttler: IThrottler): IRoutes {
     return {
         git: {
             blobs: blobs.create(store, tenantService, cache, throttler),

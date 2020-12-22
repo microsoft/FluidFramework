@@ -12,9 +12,13 @@ import winston from "winston";
 import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache, throttler: IThrottler): Router {
+export function create(
+    store: nconf.Provider,
+    tenantService: ITenantService,
+    cache: ICache,
+    throttler: IThrottler): Router {
     const router: Router = Router();
-    
+
     const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
         throttleIdPrefix: (req) => utils.getParam(req.params, "tenantId"),
         throttleIdSuffix: utils.Constants.throttleIdSuffix,

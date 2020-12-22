@@ -4,7 +4,8 @@
  */
 
 import * as git from "@fluidframework/gitresources";
-import { ICreateRefParamsExternal, IPatchRefParamsExternal, IThrottler } from "@fluidframework/server-services-core";
+import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-client";
+import { IThrottler } from "@fluidframework/server-services-core";
 import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import * as nconf from "nconf";
@@ -12,7 +13,11 @@ import winston from "winston";
 import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache, throttler: IThrottler): Router {
+export function create(
+    store: nconf.Provider,
+    tenantService: ITenantService,
+    cache: ICache,
+    throttler: IThrottler): Router {
     const router: Router = Router();
 
     const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
