@@ -4,8 +4,13 @@
  */
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 
+/** Default encoding for strings */
 const stringEncoding = "utf-8";
 
+/**
+ * Buffer class, used to sequentially reading data.
+ * Used by tree code to reconstruct a tree from binary representation.
+ */
 export class ReadBuffer {
     protected index = 0;
 
@@ -13,7 +18,12 @@ export class ReadBuffer {
         return this.data;
     }
 
-    constructor(protected readonly data: Uint8Array) {}
+    constructor(protected readonly data: Uint8Array) {
+        // BlobShallowCopy will return to users parts of this array.
+        // We need to ensure that nobody can change it, as it will have
+        // catastrophic result and will be really hard to investigate
+        Object.freeze(data.buffer);
+    }
 
     public get eof() { return this.index === this.data.length; }
     public get pos() { return this.index; }
@@ -47,14 +57,13 @@ export class ReadBuffer {
     }
 }
 
+/**
+ * Buffer class, used to sequentially writing data.
+ * Used by tree code to serialize tree into binary representation.
+ */
 class WriteBuffer {
     protected data?: Uint8Array = new Uint8Array(4096);
     protected index = 0;
-
-    public get buffer() {
-        assert(this.data !== undefined);
-        return this.data.slice(0, this.index);
-    }
 
     protected push(code: number) {
         assert(this.data !== undefined);
@@ -85,12 +94,18 @@ class WriteBuffer {
     }
 
     public done(): ReadBuffer {
-        const buffer = new ReadBuffer(this.buffer);
+        assert(this.data !== undefined);
+        // We can slice it to have smaller memory representation.
+        // But it will be way more expensive in terms of CPU cycles!
+        const buffer = new ReadBuffer(this.data.subarray(0, this.index));
         this.data = undefined;
         return buffer;
     }
 }
 
+/**
+ * Control codes used by tree serialization / decentralization code.
+ */
 enum Codes {
     // IDs for blobs have to be sequential!
     Blob0 = 0, // Used only for math.
@@ -110,16 +125,25 @@ enum Codes {
     EOF = 12,
 }
 
-function calcLength(dataLength: number) {
+/**
+ * Calculate how many bytes are required to encode an integer.
+ * @param num - number to encode. 
+ */
+function calcLength(num: number) {
     let max = 256;
     let lengthLen = 1;
-    while (dataLength >= max) {
+    while (num >= max) {
         max *= 256;
         lengthLen++;
     }
     return lengthLen;
 }
 
+/**
+ * Base class to represent binary blob element.
+ * Binary blob is one of three types supported as a leaf node of a tree.
+ * Note: concrete implementations (derived classes) are not exposed from this module
+ */
 export abstract class BlobCore {
     public abstract get buffer(): Uint8Array;
 
@@ -138,6 +162,11 @@ export abstract class BlobCore {
     }
 }
 
+/**
+ * "deep copy" blob, holds to binary data passed in
+ * It is called deep copy as a counter-part to BlobShallowCopy, which
+ * is a reference to underlying binary stream (ReadBuffer).
+*/
 class BlobDeepCopy extends BlobCore {
     constructor(protected readonly data: Uint8Array) {
         super();
@@ -150,23 +179,25 @@ class BlobDeepCopy extends BlobCore {
     public static read(buffer: ReadBuffer, lengthLen: number): BlobCore {
         const length = buffer.read(lengthLen);
         const data = new Uint8Array(length);
-        const blob = new BlobDeepCopy(data);
-        let counter = 0;
-        while (counter !== length) {
+        for (let counter = 0; counter < length; counter ++) {
             data[counter] = buffer.read();
-            counter++;
         }
-        return blob;
+        return new BlobDeepCopy(data);
     }
 }
 
-class BlobShallowCopy extends BlobCore {
+/**
+ * Shallow copy blob, keeps a reference to portion of ReadBuffer
+ * it was constructed from. It takes much less memory compared to BlobDeepCopy
+ */
+export class BlobShallowCopy extends BlobCore {
     constructor(protected data: ReadBuffer, protected start: number, protected end: number) {
         super();
     }
 
     public get buffer() {
-        return this.data.slice(this.start, this.end);
+        return this.data.buffer.subarray(this.start, this.end);
+        // return this.data.slice(this.start, this.end);
     }
 
     public static read(buffer: ReadBuffer, lengthLen: number): BlobCore {
@@ -193,12 +224,25 @@ export function iteratePairs<T>(it: IterableIterator<T>) {
     return res;
 }
 
-export function iterate<T>(it: {[Symbol.iterator]: () => IterableIterator<T>}) {
-    return it[Symbol.iterator]();
+/**
+ * Helper function that returns iterator from an object
+ * @param obj - object that supports iteration
+ */
+export function iterate<T>(obj: {[Symbol.iterator]: () => IterableIterator<T>}) {
+    return obj[Symbol.iterator]();
 }
 
+/**
+ * Three leaf types supported by tree:
+ * 1. Node (sub-tree)
+ * 2. binary blob
+ * 3. integer
+ */
 export type NodeTypes = Node | BlobCore | number;
 
+/**
+ * Node - node in the tree (non-leaf element of the tree)
+ */
 export class Node {
     protected children: NodeTypes[] = [];
 
@@ -322,6 +366,10 @@ export class Node {
     }
 }
 
+/**
+ * TreeBuilder - root of the tree.
+ * Provides loading and serialization capabilities.
+ */
 export class TreeBuilder extends Node {
     static load(buffer: ReadBuffer): TreeBuilder {
         const builder = new TreeBuilder();

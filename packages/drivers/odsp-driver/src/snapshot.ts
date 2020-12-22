@@ -14,6 +14,10 @@ import {
 } from "./tree";
 import { OdspSnapshotCache } from "./odspDocumentStorageManager";
 
+/**
+ * Converts existing IOdspSnapshot to snapshot tree, blob array and ops
+ * @param odspSnapshot - snapshot
+ */
 export function convertOdspSnapshotToSnapsohtTreeAndBlobs(odspSnapshot: IOdspSnapshot) {
     const cache = new OdspSnapshotCache();
     cache.initTreesCache(odspSnapshot.trees);
@@ -23,10 +27,16 @@ export function convertOdspSnapshotToSnapsohtTreeAndBlobs(odspSnapshot: IOdspSna
     }
     const iTree = cache.treesCache.get(odspSnapshot.trees[0].id);
     assert(iTree !== undefined);
-    const snapshotTree = cache.snapshotTreeFromITree(iTree);
-    return { snapshotTree, blobs: cache.blobCache, ops: odspSnapshot.ops };
+    const tree = cache.snapshotTreeFromITree(iTree);
+    return { tree, blobs: cache.blobCache, ops: odspSnapshot.ops };
 }
 
+/**
+ * Helper function used to remap blob IDs
+ * Used to do various manipulations, like blob de-duping, compaction of ID space, etc.
+ * @param tree - snapshot tree
+ * @param mapping - map that provides mapping for blob IDs.
+ */
 function replaceBlobs(tree: ISnapshotTree, mapping: Map<string, string>) {
     for (const value of Object.values(tree.trees)) {
         replaceBlobs(value, mapping);
@@ -40,6 +50,12 @@ function replaceBlobs(tree: ISnapshotTree, mapping: Map<string, string>) {
     }
 }
 
+/**
+ * De-dup blobs. Calculates SHA checksum for all blobs, finds and collapses duplicates.
+ * @param snapshotTree - snapshot tree. Changed in place, and assumes usage in conjunction with returned blobs.
+ * @param blobs - array of blobs
+ * @returns - new array of blobs.
+ */
 export async function dedupBlobs(snapshotTree: ISnapshotTree, blobs: Map<string, IBlob | Uint8Array>) {
     const hashToId = new Map<string, string>();
     const idToId = new Map<string, string>();
@@ -61,6 +77,12 @@ export async function dedupBlobs(snapshotTree: ISnapshotTree, blobs: Map<string,
     return newBlobs;
 }
 
+/**
+ * Shortens IDs of blobs - replaces them with newly generated IDs that are shorter in size
+ * @param snapshotTree - snapshot tree. Changed in place, and assumes usage in conjunction with returned blobs.
+ * @param blobs - array of blobs
+ * @returns - new array of blobs.
+ */
 export function shortenBlobIds(snapshotTree: ISnapshotTree, blobs: Map<string, IBlob | Uint8Array>) {
     const idToId = new Map<string, string>();
     const newBlobs = new Map<string, IBlob | Uint8Array>();
@@ -79,6 +101,9 @@ export function shortenBlobIds(snapshotTree: ISnapshotTree, blobs: Map<string, I
     return newBlobs;
 }
 
+/**
+ * Decodes base64 or utf-8 blobs and returns back blobs in Uint8Array format.
+ */
 export function unpackBlobs(blobs: Map<string, IBlob | Uint8Array>) {
     const newBlobs = new Map<string, Uint8Array>();
     for (const [id, blob] of blobs) {
@@ -106,28 +131,39 @@ export function identityReplacement(snapshotTree: ISnapshotTree, blobs: Map<stri
 }
 */
 
-function writeTree(trees: Node, tree: ISnapshotTree, mapping: Map<string, number>) {
+/**
+ * Represents (serializes) snapshot tree as generalizes tree
+ * @param treeNode - tree node to serialize to
+ * @param tree - snapshot tree that is being serialized
+ * @param mapping - name mapping, used to map path and IDs to integer representation
+ */
+function writeTree(treeNode: Node, tree: ISnapshotTree, mapping: Map<string, number>) {
     for (const [path, value] of Object.entries(tree.trees)) {
-        trees.addNumber(mapping.get(path));
-        writeTree(trees.addNode(), value, mapping);
+        treeNode.addNumber(mapping.get(path));
+        writeTree(treeNode.addNode(), value, mapping);
     }
 
     if (tree.blobs) {
         for (const [path, id] of Object.entries(tree.blobs)) {
-            trees.addNumber(mapping.get(path));
-            trees.addNumber(mapping.get(id));
+            treeNode.addNumber(mapping.get(path));
+            treeNode.addNumber(mapping.get(id));
         }
     }
 }
 
-function readTree(node: Node, mapping: string[]) {
+/**
+ * Recreates snapshot tree out of tree representation.
+ * @param node - tree node to de-serialize from
+ * @param mapping - name map, used to decode path/IDs.
+ */
+function readTree(treeNode: Node, mapping: string[]) {
     const tree: ISnapshotTree = {
         id: "id",
         blobs: {},
         commits: {},
         trees: {},
     };
-    for (const [pathIndex, child] of node.iteratePairs()) {
+    for (const [pathIndex, child] of treeNode.iteratePairs()) {
         assert(typeof pathIndex == "number");
         const path = mapping[pathIndex];
         assert(path !== undefined);
@@ -145,6 +181,13 @@ function readTree(node: Node, mapping: string[]) {
     return tree;
 }
 
+/**
+ * Build dictionary to be able to represent paths and IDs more compactly
+ * Adds to a set all known names such that later on they can have integer representation
+ * This substantially reduced representation, as same path name or ID can be used many times.
+ * @param tree - snapshot tree.
+ * @param dict - dictionary, all path and IDs are added to it.
+ */
 function buildDictionary(tree: ISnapshotTree, dict: Set<string>) {
     for (const [path, value] of Object.entries(tree.trees)) {
         dict.add(path);
@@ -158,10 +201,17 @@ function buildDictionary(tree: ISnapshotTree, dict: Set<string>) {
     }
 }
 
+/**
+ * Converts ODSP snapshot format to binary compact representation.
+ * @param snapshotTree - snapshot tree to serialize
+ * @param blobs - blobs to serialize
+ * @param ops - ops to serialize
+ * @returns - ReadBuffer - binary representation of the data.
+ */
 export function convertOdspSnapshotToCompactSnapshot(
     snapshotTree: ISnapshotTree,
     blobs: Map<string, IBlob | Uint8Array>,
-    ops?: ISequencedDeltaOpMessage[])
+    ops?: ISequencedDeltaOpMessage[]): ReadBuffer
 {
     const dict: Set<string> = new Set();
 
@@ -202,6 +252,11 @@ export function convertOdspSnapshotToCompactSnapshot(
     return builder.serialize();
 }
 
+/**
+ * De-serializes compact representation of snapshot
+ * @param buffer - ReadBuffer, binary representation
+ * @returns - snapshot tree, blobs, ops
+ */
 export function convertCompactSnapshotToSnapshotTree(buffer: ReadBuffer) {
     const builder = TreeBuilder.load(buffer);
     let ops: ISequencedDeltaOpMessage[] | undefined;
