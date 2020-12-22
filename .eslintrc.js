@@ -33,6 +33,7 @@ module.exports = {
 		'no-null/no-null': 'off', // Payloads use null
 		'no-redeclare': 'off', // Persisted type factories need to be classes to pass the typescript version of this rule
 		'header/header': 'off', // Picking up config from @intentional/shared-configuration still
+		'@typescript-eslint/no-shadow': 'off', // Same as above, though this isn't enabled in fluid config
 	},
 	overrides: [
 		{

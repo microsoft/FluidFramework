@@ -16,7 +16,7 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+		"build": "concurrently npm:build:compile && npm run build:docs",
 		"build:compile": "concurrently npm:tsc npm:build:esnext",
 		"build:docs": "api-extractor run --local && copyfiles -u 2 ./_api-extractor-temp/doc-models/* ../../api-metadata/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -27,11 +27,6 @@
 		"eslint:fix": "eslint src --fix",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
-		"perf": "env-cmd -e production mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js --expose-gc --perfMode --grep @Benchmark --reporter ../../node_modules/@intentional/test-utilities/MochaBenchmarkReporter.js",
-		"perf:debug": "env-cmd -e production mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js --inspect-brk=45345 --expose-gc --perfMode --grep @Benchmark --reporter ../../node_modules/@intentional/test-utilities/MochaBenchmarkReporter.js",
-		"perf:measure": "env-cmd -e production mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js --expose-gc --perfMode --grep @Measurement --reporter ../../node_modules/@intentional/test-utilities/MochaBenchmarkReporter.js",
-		"perf:profile": "env-cmd -e production npm run perf -- --inspect-brk",
-		"perf:test": "env-cmd -e test mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js --expose-gc --perfMode --grep @Benchmark --reporter ../../node_modules/@intentional/test-utilities/MochaBenchmarkReporter.js",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js",
 		"tsc": "tsc --pretty"
