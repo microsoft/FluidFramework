@@ -30,6 +30,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
+import { IGCData } from "./garbageCollection";
 import { IInboundSignalMessage } from "./protocol";
 import {
     CreateChildSummarizerNodeParam,
@@ -194,6 +195,12 @@ export interface IFluidDataStoreChannel extends
     summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult>;
 
     /**
+     * Returns the GC data for this data store. It contains a list of GC nodes that contains references to
+     * other GC nodes.
+     */
+    getGCData(): Promise<IGCData>;
+
+    /**
      * Notifies this object about changes in the connection state.
      * @param value - New connection state.
      * @param clientId - ID of the client. It's old ID when in disconnected state and
@@ -210,42 +217,11 @@ export interface IFluidDataStoreChannel extends
     reSubmit(type: string, content: any, localOpMetadata: unknown);
 }
 
-/**
- * @deprecated 0.21 summarizerNode - use ISummarizerNode instead
- */
-export interface ISummaryTracker {
-    /**
-     * The reference sequence number of the most recent acked summary.
-     */
-    readonly referenceSequenceNumber: number;
-    /**
-     * The latest sequence number of change to this node or subtree.
-     */
-    readonly latestSequenceNumber: number;
-    /**
-     * Gets the id to use when summarizing, or undefined if it has changed.
-     */
-    getId(): Promise<string | undefined>;
-    /**
-     * Updates the latest sequence number representing change to this node or subtree.
-     * @param latestSequenceNumber - new latest sequence number
-     */
-    updateLatestSequenceNumber(latestSequenceNumber: number): void;
-    /**
-     * Creates a child ISummaryTracker node based off information from its parent.
-     * @param key - key of node for newly created child ISummaryTracker
-     * @param latestSequenceNumber - initial value for latest sequence number of change
-     */
-    createOrGetChild(key: string, latestSequenceNumber: number): ISummaryTracker;
-    /**
-     * Retrives a child ISummaryTracker node based off the key.
-     * @param key - key of the child ISummaryTracker node.
-     * @returns - The child ISummaryTracker node.
-     */
-    getChild(key: string): ISummaryTracker | undefined;
-}
-
-export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => ISummarizerNodeWithGC;
+export type CreateChildSummarizerNodeFn = (
+    summarizeInternal: SummarizeInternalFn,
+    getGCDataFn: () => Promise<IGCData>,
+    getInitialGCDataFn: () => Promise<IGCData | undefined>,
+) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
     (event: "leader" | "notleader" | "attaching" | "attached", listener: () => void);
@@ -307,7 +283,6 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
      * Ambient services provided with the context
      */
     readonly scope: IFluidObject;
-    readonly summaryTracker: ISummaryTracker;
 
     /**
      * Returns the current quorum.

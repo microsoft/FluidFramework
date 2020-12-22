@@ -13,7 +13,7 @@
     "build:genver": "gen-version",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "start": "node dist/www.js",
@@ -41,7 +41,7 @@
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5",
     "split": "^1.0.0",
-    "winston": "^2.4.4"
+    "winston": "^3.1.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",

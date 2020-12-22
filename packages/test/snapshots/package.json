@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/test-snapshots",
-  "version": "0.30.0",
+  "version": "0.32.0",
   "private": true,
   "description": "Comprehensive test of snapshot logic.",
   "homepage": "https://fluidframework.com",
@@ -12,12 +12,13 @@
   "types": "dist/generateSnapshotFiles.js",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "npm run tsc",
+    "build:compile": "npm run tsc && npm run build:test",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
@@ -50,17 +51,17 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-internal/replay-tool": "^0.30.0",
-    "@fluidframework/common-utils": "^0.25.0",
-    "@fluidframework/merge-tree": "^0.30.0",
-    "@fluidframework/protocol-definitions": "^0.1015.0",
+    "@fluid-internal/replay-tool": "^0.32.0",
+    "@fluidframework/common-utils": "^0.26.0",
+    "@fluidframework/merge-tree": "^0.32.0",
+    "@fluidframework/protocol-definitions": "^0.1016.1",
     "assert": "^2.0.0",
     "jsonschema": "^1.2.6"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
-    "@fluidframework/mocha-test-setup": "^0.30.0",
+    "@fluidframework/mocha-test-setup": "^0.32.0",
     "@types/assert": "^1.5.1",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",

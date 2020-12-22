@@ -4,19 +4,20 @@
 
 This implementation demonstrates plugging that Container into a standalone application, rather than using the webpack-fluid-loader environment that most of our packages use.  This implementation relies on [Tinylicious](/server/tinylicious), so there are a few extra steps to get started.  We bring our own view that we will bind to the data in the container.
 
+<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
+<!-- The getting started instructions are automatically generated.
+To update them, edit md-magic.config.js in the root of the repo, then run npm run readme:update -->
+
 ## Getting Started
 
-If you want to run this container follow the following steps:
+You can run this example using the following steps:
 
-### Start Tinylicious
-
-Go to [/server/tinylicious](/server/tinylicious) and follow the instructions there to start the Tinylicious server.
-
-### Start the app server
-
-1. Run `npm install` and `npm run build:fast` from the `FluidFramework` root directory
-2. Navigate to this directory
-3. Run `npm run start`
+1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
+   a. For an even faster build, you can add the package name to the build command, like this:
+      `npm run build:fast -- --nolint @fluid-example/app-integration-external-views`
+1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).
+1. Run `npm run start` from this directory (examples/hosts/app-integration/external-views) and open <http://localhost:8080> in a web browser to see the app running.
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Testing
 

@@ -27,7 +27,7 @@ export function findToken(tokenList: string, token: string) {
 }
 
 export namespace TokenList {
-    export function set(tokenList: string, token: string) {
+    export function set(tokenList: string | undefined, token: string | undefined) {
         return !tokenList                       // If the list is empty
             ? token                             // ...the token becomes the new list.
             : !token || findToken(tokenList, token)
@@ -48,7 +48,7 @@ export namespace TokenList {
             : tokenList.slice(0, start > 0 ? start - 1 : 0);
     }
 
-    export function computeToggle(tokenList: string, toAdd: string[], toRemove: Set<string>) {
+    export function computeToggle(tokenList: string | undefined, toAdd: string[], toRemove: Set<string>) {
         if (!tokenList) {       // If the token list is empty, the 'toAdd' and 'toRemove'
             return;             // lists remain unchanged.
         }

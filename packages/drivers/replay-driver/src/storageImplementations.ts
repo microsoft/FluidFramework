@@ -37,8 +37,8 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     private static readonly FileStorageVersionTreeId = "FileStorageTreeId";
 
     protected docId?: string;
-    protected docTreeP: Promise<ISnapshotTree>;
-    protected blobsP: Promise<Map<string, string>>;
+    protected docTree: ISnapshotTree;
+    protected blobs: Map<string, string>;
     protected readonly commits: { [key: string]: ITree } = {};
     protected readonly trees: { [key: string]: ISnapshotTree } = {};
 
@@ -46,9 +46,8 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
         super();
         this.commits = json.commits;
 
-        const blobs = new Map<string, string>();
-        this.docTreeP = buildSnapshotTree(json.tree.entries, blobs);
-        this.blobsP = this.docTreeP.then((docTree) => { return blobs; });
+        this.blobs = new Map<string, string>();
+        this.docTree = buildSnapshotTree(json.tree.entries, this.blobs);
     }
 
     public async getVersions(
@@ -67,7 +66,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
 
     public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
         if (!versionRequested || versionRequested.id === "latest") {
-            return this.docTreeP;
+            return this.docTree;
         }
         if (versionRequested.treeId !== FileSnapshotReader.FileStorageVersionTreeId) {
             throw new Error(`Unknown version id: ${versionRequested}`);
@@ -80,15 +79,13 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
                 throw new Error(`Can't find version ${versionRequested.id}`);
             }
 
-            const blobMap = await this.blobsP;
-            this.trees[versionRequested.id] = snapshotTree = await buildSnapshotTree(tree.entries, blobMap);
-            this.blobsP = Promise.resolve(blobMap);
+            this.trees[versionRequested.id] = snapshotTree = buildSnapshotTree(tree.entries, this.blobs);
         }
         return snapshotTree;
     }
 
     public async read(blobId: string): Promise<string> {
-        const blob = (await this.blobsP).get(blobId);
+        const blob = this.blobs.get(blobId);
         if (blob !== undefined) {
             return blob;
         }

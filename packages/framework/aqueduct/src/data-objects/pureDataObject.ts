@@ -19,9 +19,9 @@ import { FluidObjectHandle } from "@fluidframework/datastore";
 import { IDirectory } from "@fluidframework/map";
 import { assert, EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { serviceRoutePathRoot } from "../container-services";
+import { defaultFluidObjectRequestHandler } from "../request-handlers";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export interface IDataObjectProps<O = object, S = undefined> {
@@ -118,26 +118,12 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
 
     /**
      * Return this object if someone requests it directly
-     * We will return this object in three scenarios
+     * We will return this object in two scenarios:
      *  1. the request url is a "/"
-     *  2. the request url is our url
-     *  3. the request url is empty
+     *  2. the request url is empty
      */
     public async request(req: IRequest): Promise<IResponse> {
-        const pathParts = RequestParser.getPathParts(req.url);
-        const requestUrl = (pathParts.length > 0) ? pathParts[0] : req.url;
-        if (requestUrl === "/" || requestUrl === "") {
-            return {
-                mimeType: "fluid/object",
-                status: 200,
-                value: this,
-            };
-        }
-        return {
-            mimeType: "text/plain",
-            status: 404,
-            value: `unknown request url: ${req.url}`,
-        };
+        return defaultFluidObjectRequestHandler(this, req);
     }
 
     // #endregion IFluidRouter

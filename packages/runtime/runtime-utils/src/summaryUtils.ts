@@ -92,6 +92,11 @@ export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, co
     summary.stats.totalBlobSize += getBlobSize(content);
 }
 
+export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void {
+    summary.summary.tree[key] = summarizeResult.summary;
+    summary.stats = mergeStats(summary.stats, summarizeResult.stats);
+}
+
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     private attachmentCounter: number = 0;
 
@@ -250,6 +255,32 @@ export function convertSnapshotTreeToSummaryTree(
         builder.addWithStats(key, subtree);
     }
     return builder.getSummaryTree();
+}
+
+/**
+ * Utility to convert serialized snapshot taken in detached container to format where we can use it to
+ * attach the container.
+ * @param serializedSnapshotTree - serialized snapshot tree to be converted to summary tree for attach.
+ */
+export function convertContainerToDriverSerializedFormat(
+    serializedSnapshotTree: string,
+): ISummaryTree {
+    const snapshotTree: ISnapshotTree = JSON.parse(serializedSnapshotTree);
+    const summaryTree = convertSnapshotTreeToSummaryTree(snapshotTree).summary;
+    const appSummaryTree: ISummaryTree = {
+        type: SummaryType.Tree,
+        tree: {},
+    };
+    const entries = Object.entries(summaryTree.tree);
+    for (const [key, subTree] of entries) {
+        if (key !== ".protocol") {
+            appSummaryTree.tree[key] = subTree;
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+            delete summaryTree.tree[key];
+        }
+    }
+    summaryTree.tree[".app"] = appSummaryTree;
+    return summaryTree;
 }
 
 /**

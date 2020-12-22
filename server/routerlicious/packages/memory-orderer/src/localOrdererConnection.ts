@@ -9,7 +9,6 @@ import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
-    IServiceConfiguration,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -19,6 +18,7 @@ import {
     IOrdererConnection,
     IProducer,
     IRawOperationMessage,
+    IServiceConfiguration,
     RawOperationType,
 } from "@fluidframework/server-services-core";
 import { ISubscriber } from "./pubsub";

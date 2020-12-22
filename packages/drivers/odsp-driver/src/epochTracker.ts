@@ -5,10 +5,11 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { fluidEpochMismatchError, OdspErrorType, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { fluidEpochMismatchError, OdspErrorType } from "@fluidframework/odsp-doclib-utils";
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, IFileEntry, LocalPersistentCacheAdapter } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
+import { throwOdspNetworkError } from "./odspError";
 
 /**
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
@@ -186,15 +187,14 @@ export class EpochTracker {
         fromCache: boolean = false,
     ) {
         if (error.errorType === OdspErrorType.epochVersionMismatch) {
-            this.logger.sendErrorEvent(
-                {
-                    eventName: "EpochVersionMismatch",
-                    fromCache,
-                    clientEpoch: this.fluidEpoch,
-                    serverEpoch: epochFromResponse ?? undefined,
-                    fetchType,
-                },
-            error);
+            const err = {
+                ...error,
+                fromCache,
+                clientEpoch: this.fluidEpoch,
+                serverEpoch: epochFromResponse ?? undefined,
+                fetchType,
+            };
+            this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, err);
             assert(!!this.fileEntry, "File Entry should be set to clear the cached entries!!");
             // If the epoch mismatches, then clear all entries for such file entry from cache.
             await this.persistedCache.removeEntries(this.fileEntry);

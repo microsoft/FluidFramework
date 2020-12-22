@@ -37,7 +37,7 @@ implementation.
 The loader mimicks existing web protocols. Similar to how the browser requests state and app logic (a website) from a
 web server, a Fluid host uses the loader to request a [Fluid container](./containers-runtime.md) from the Fluid service.
 
-## host responsibilities
+## Fluid host responsibilities
 
 A Fluid host creates a Fluid loader with a URL resolver, Fluid service driver, and code loader. The host then requests a
 Fluid container from the loader. Finally, the host *does something* with the Fluid containers. A host can request

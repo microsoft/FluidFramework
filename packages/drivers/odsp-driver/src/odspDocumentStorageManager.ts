@@ -92,7 +92,7 @@ async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index
 }
 
 export class OdspSnapshotCache {
-    public readonly blobCache: Map<string, IBlob> = new Map();
+    public readonly blobCache: Map<string, IBlob | ArrayBuffer> = new Map();
     public readonly treesCache: Map<string, ITree> = new Map();
     public readonly attributesBlobHandles: Set<string> = new Set();
 
@@ -103,7 +103,10 @@ export class OdspSnapshotCache {
     }
 
     public initBlobsCache(blobs: IBlob[]) {
-        blobs.forEach((blob) => this.blobCache.set(blob.id, blob));
+        blobs.forEach((blob) => {
+            assert(blob.encoding === "base64" || blob.encoding === undefined);
+            this.blobCache.set(blob.id, blob);
+        });
     }
 
     public snapshotTreeFromITree(tree: ITree): api.ISnapshotTree {
@@ -316,99 +319,98 @@ export class OdspDocumentStorageService extends OdspSnapshotCache implements IDo
         return response.content;
     }
 
-    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        this.checkAttachmentGETUrl();
+    public async readBlobCore(blobId: string): Promise<IBlob | ArrayBuffer> {
+        let blob = this.blobCache.get(blobId);
+        // Reset the timer on attempted cache read
+        this.scheduleClearBlobsCache();
 
-        return getWithRetryForTokenRefresh(async (options) => {
-            const storageToken = await this.getStorageToken(options, "ReadDataBlob");
-            const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
-            const { url, headers } = getUrlAndHeadersWithAuth(unAuthedUrl, storageToken);
+        if (blob === undefined) {
+            this.checkAttachmentGETUrl();
 
-            return PerformanceEvent.timedExecAsync(
-                this.logger,
-                {
-                    eventName: "readDataBlob",
-                    headers: Object.keys(headers).length !== 0 ? true : undefined,
-                },
-                async (event) => {
-                    const res = await this.epochTracker.fetchResponse(url, { headers }, FetchType.blob);
-                    const content = await res.arrayBuffer();
-                    event.end({ size: content.byteLength });
-                    return content;
-                },
-            );
-        });
+            blob = await getWithRetryForTokenRefresh(async (options) => {
+                const storageToken = await this.getStorageToken(options, "GetBlob");
+                const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
+                const { url, headers } = getUrlAndHeadersWithAuth(unAuthedUrl, storageToken);
+
+                return PerformanceEvent.timedExecAsync(
+                    this.logger,
+                    {
+                        eventName: "readDataBlob",
+                        headers: Object.keys(headers).length !== 0 ? true : undefined,
+                        waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
+                    },
+                    async (event) => {
+                        const res = await this.epochTracker.fetchResponse(url, { headers }, FetchType.blob);
+                        const blobContent = await res.arrayBuffer();
+                        event.end({ size: blobContent.byteLength });
+                        return blobContent;
+                    },
+                );
+            });
+            this.blobCache.set(blobId, blob);
+        }
+
+        if (!this.attributesBlobHandles.has(blobId)) {
+            return blob;
+        }
+        // ODSP document ids are random guids (different per session)
+        // fix the branch name in attributes
+        // this prevents issues when generating summaries
+        let documentAttributes: api.IDocumentAttributes;
+        if (blob instanceof ArrayBuffer) {
+            documentAttributes = JSON.parse(IsoBuffer.from(blob).toString("utf8"));
+        } else {
+            documentAttributes = JSON.parse(blob.encoding === "base64" ? fromBase64ToUtf8(blob.content) : blob.content);
+        }
+
+        documentAttributes.branch = this.documentId;
+        const content = JSON.stringify(documentAttributes);
+
+        const blobPatched: IBlob = {
+            id: blobId,
+            content,
+            size: content.length,
+            encoding: undefined, // string
+        };
+        this.blobCache.set(blobId, blobPatched);
+
+        // No need to patch it again
+        this.attributesBlobHandles.delete(blobId);
+
+        return blobPatched;
     }
 
-    public async read(blobid: string): Promise<string> {
-        return this.readWithEncodingOutput(blobid, "base64");
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        const blob = await this.readBlobCore(blobId);
+        if (blob instanceof ArrayBuffer) {
+            return blob;
+        }
+        return IsoBuffer.from(blob.content, blob.encoding ?? "utf-8");
+    }
+
+    public async read(blobId: string): Promise<string> {
+        return this.readWithEncodingOutput(blobId, "base64");
     }
 
     /**
      * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
      */
-    public async readString(blobid: string): Promise<string> {
-        return this.readWithEncodingOutput(blobid, "string");
+    public async readString(blobId: string): Promise<string> {
+        return this.readWithEncodingOutput(blobId, "string");
     }
 
-    private async readWithEncodingOutput(blobid: string, outputFormat: string) {
-        let blob = this.blobCache.get(blobid);
-        // Reset the timer on attempted cache read
-        this.scheduleClearBlobsCache();
-        if (blob === undefined) {
-            this.checkSnapshotUrl();
+    private async readWithEncodingOutput(blobId: string, outputFormat: "base64" | "string"): Promise<string> {
+        const blob = await this.readBlobCore(blobId);
 
-            const response = await getWithRetryForTokenRefresh(async (options) => {
-                const storageToken = await this.getStorageToken(options, "GetBlob");
-
-                const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/blobs/${blobid}`, storageToken);
-
-                return PerformanceEvent.timedExecAsync(
-                    this.logger,
-                    {
-                        eventName: "readBlob",
-                        headers: Object.keys(headers).length !== 0 ? true : undefined,
-                        waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
-                    },
-                    async () => this.epochTracker.fetchAndParseAsJSON<IBlob>(url, { headers }, FetchType.blob),
-                );
-            });
-            blob = response.content;
+        if (blob instanceof ArrayBuffer) {
+            return IsoBuffer.from(blob).toString(outputFormat === "base64" ? "base64" : "utf8");
         }
-
-        assert(blob.encoding === "base64" || blob.encoding === undefined, "wrong blob encoding format");
-        const inputFormat = blob.encoding;
-        if (!this.attributesBlobHandles.has(blobid)) {
-            if (outputFormat === inputFormat || (outputFormat === "string" && inputFormat === undefined))  {
-                return blob.content;
-            }
-            else if (outputFormat === "base64") {
-                return fromUtf8ToBase64(blob.content);
-            }
-            else {
-                return fromBase64ToUtf8(blob.content);
-            }
-        }
-        else {
-            // ODSP document ids are random guids (different per session)
-            // fix the branch name in attributes
-            // this prevents issues when generating summaries
-            const docId = this.documentId;
-            let documentAttributes: api.IDocumentAttributes;
-            if (inputFormat === "base64") {
-                documentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
-                documentAttributes.branch = docId;
-            }
-            else {
-                documentAttributes = JSON.parse(blob.content);
-                documentAttributes.branch = docId;
-            }
-
-            if (outputFormat === "base64") {
-                return fromUtf8ToBase64(JSON.stringify(documentAttributes));
-            } else {
-                return JSON.stringify(documentAttributes);
-            }
+        if (outputFormat === blob.encoding || (outputFormat === "string" && blob.encoding === undefined))  {
+            return blob.content;
+        } else if (outputFormat === "base64") {
+            return fromUtf8ToBase64(blob.content);
+        } else {
+            return fromBase64ToUtf8(blob.content);
         }
     }
 
@@ -468,24 +470,12 @@ export class OdspDocumentStorageService extends OdspSnapshotCache implements IDo
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall", hasClaims: !!tokenFetchOptions.claims });
                 }
 
-                const snapshotOptions: ISnapshotOptions = {
-                    deltas: 1,
-                    channels: 1,
-                    blobs: 2,
-                    mds: this.maxSnapshotSizeLimit,
-                    ...this.hostPolicy.snapshotOptions,
-                    timeout: this.hostPolicy.snapshotOptions?.timeout ? Math.min(this.hostPolicy.snapshotOptions.timeout, this.maxSnapshotFetchTimeout) : this.maxSnapshotFetchTimeout,
-                };
-
-                // No limit on size of snapshot, as otherwise we fail all clients to summarize
-                if (this.hostPolicy.summarizerClient) {
-                    snapshotOptions.mds = undefined;
-                }
+                const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
                 let cachedSnapshot: IOdspSnapshot | undefined;
-
+                const usePost = !!this.hostPolicy.usePostForTreesLatest;
                 // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
                 if (tokenFetchOptions.refresh) {
-                    cachedSnapshot = await this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
+                    cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions, usePost);
                 } else {
                     cachedSnapshot = await PerformanceEvent.timedExecAsync(
                         this.logger,
@@ -503,7 +493,7 @@ export class OdspDocumentStorageService extends OdspSnapshotCache implements IDo
 
                             let method: string;
                             if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
-                                const snapshotP = this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
+                                const snapshotP = this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions, usePost);
 
                                 const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
                                 cachedSnapshot = promiseRaceWinner.value;
@@ -522,7 +512,7 @@ export class OdspDocumentStorageService extends OdspSnapshotCache implements IDo
                                 method = cachedSnapshot !== undefined ? "cache" : "network";
 
                                 if (cachedSnapshot === undefined) {
-                                    cachedSnapshot = await this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
+                                    cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions, usePost);
                                 }
                             }
                             event.end({ method });
@@ -576,21 +566,24 @@ export class OdspDocumentStorageService extends OdspSnapshotCache implements IDo
                     }
 
                     // Populate the cache with paths from id-to-path mapping.
-                    for (const blob of this.blobCache.values()) {
-                        const path = blobsIdToPathMap.get(blob.id);
+                    for (const [blobId, blob] of this.blobCache.entries()) {
+                        const path = blobsIdToPathMap.get(blobId);
                         // If this is the first container that was created for the service, it cannot be
                         // the summarizing container (because the summarizing container is always created
                         // after the main container). In this case, we do not need to do any hashing
                         if (path) {
                             // Schedule the hashes for later, but keep track of the tasks
                             // to ensure they finish before they might be used
-                            const hashP = hashFile(IsoBuffer.from(blob.content, blob.encoding)).then((hash: string) => {
+                            const hashP = hashFile(
+                                blob instanceof ArrayBuffer ?
+                                IsoBuffer.from(blob) :
+                                IsoBuffer.from(blob.content, blob.encoding ?? "utf-8"))
+                            .then((hash: string) => {
                                 this.blobsShaToPathCache.set(hash, path);
-                            });
-                            this.blobsCachePendingHashes.add(hashP);
-                            hashP.finally(() => {
+                            }).finally(() => {
                                 this.blobsCachePendingHashes.delete(hashP);
                             });
+                            this.blobsCachePendingHashes.add(hashP);
                         }
                     }
                 }
@@ -647,51 +640,59 @@ export class OdspDocumentStorageService extends OdspSnapshotCache implements IDo
         });
     }
 
-    private async fetchSnapshot(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions) {
-        const usePost = this.hostPolicy.usePostForTreesLatest;
+    private async fetchSnapshot(
+        hostSnapshotOptions: ISnapshotOptions | undefined,
+        driverSnapshotOptions: ISnapshotOptions | undefined,
+        tokenFetchOptions: TokenFetchOptions,
+        usePost: boolean,
+    ): Promise<IOdspSnapshot> {
+        const snapshotOptions: ISnapshotOptions = driverSnapshotOptions ?? {
+            deltas: 1,
+            channels: 1,
+            blobs: 2,
+            mds: this.maxSnapshotSizeLimit,
+            ...hostSnapshotOptions,
+            timeout: hostSnapshotOptions?.timeout ? Math.min(hostSnapshotOptions.timeout, this.maxSnapshotFetchTimeout) : this.maxSnapshotFetchTimeout,
+        };
+
+        // No limit on size of snapshot, as otherwise we fail all clients to summarize
+        if (this.hostPolicy.summarizerClient) {
+            snapshotOptions.mds = undefined;
+        }
+        let abortController: AbortController | undefined;
+        if (this.hostPolicy.summarizerClient !== true) {
+            abortController = new AbortController();
+            const timeout = setTimeout(
+                () => {
+                    clearTimeout(timeout);
+                    abortController?.abort();
+                },
+                snapshotOptions.timeout,
+            );
+        }
+
         // If usePost is false, then make get call for TreesLatest.
         // If usePost is true, make a post call. In case of failure other than the reason for which getWithRetryForTokenRefresh
         // will retry, fallback to get call. In case of error for which getWithRetryForTokenRefresh will retry, let it retry
         // only if it is first failure, otherwise fallback to get call.
-        if (usePost) {
-            try {
-                const odspSnapshot = await this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, true);
-                return odspSnapshot;
-            } catch (error) {
-                const errorType = error.errorType;
-                if ((errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.incorrectServerResponse) && tokenFetchOptions.refresh === false) {
-                    throw error;
-                }
-                this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
-                return this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, false);
-            }
-        } else {
-            return this.fetchSnapshotWithTimeout(snapshotOptions, tokenFetchOptions, false);
-        }
-    }
-
-    private async fetchSnapshotWithTimeout(snapshotOptions: ISnapshotOptions, tokenFetchOptions: TokenFetchOptions, usePost: boolean) {
-        assert(snapshotOptions.timeout !== undefined, "Timeout should be provided for setting a limit");
-        const abortController = new AbortController();
-        const timeout = setTimeout(
-            () => {
-                clearTimeout(timeout);
-                abortController.abort();
-            },
-            snapshotOptions.timeout,
-        );
         try {
             const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost, abortController);
             return odspSnapshot;
         } catch (error) {
-            // If the snapshot size is too big and the host specified the size limitation, then don't try to fetch the snapshot again.
-            if (error.errorType === OdspErrorType.snapshotTooBig && this.hostPolicy.snapshotOptions?.mds !== undefined) {
+            const errorType = error.errorType;
+            // If the snapshot size is too big and the host specified the size limitation(specified in hostSnapshotOptions), then don't try to fetch the snapshot again.
+            if ((errorType === OdspErrorType.snapshotTooBig && hostSnapshotOptions?.mds !== undefined) && (this.hostPolicy.summarizerClient !== true)) {
                 throw error;
             }
             // If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
-            if ((error.errorType === OdspErrorType.snapshotTooBig || error.errorType === OdspErrorType.fetchTimeout) && snapshotOptions.blobs) {
+            if ((errorType === OdspErrorType.snapshotTooBig || errorType === OdspErrorType.fetchTimeout) && snapshotOptions.blobs) {
                 const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined };
                 return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions, usePost);
+            }
+            // If we used the post request first time and got a 400 error from server, then try with a GET request.
+            if (usePost && error.statusCode === 400) {
+                this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
+                return this.fetchSnapshot(hostSnapshotOptions, snapshotOptions, tokenFetchOptions, false);
             }
             throw error;
         }
@@ -702,7 +703,7 @@ export class OdspDocumentStorageService extends OdspSnapshotCache implements IDo
         tokenFetchOptions: TokenFetchOptions,
         usePost: boolean,
         controller?: AbortController,
-    ) {
+    ): Promise<IOdspSnapshot> {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
         let url: string;
         let headers: {[index: string]: any};
@@ -1060,28 +1061,34 @@ export class OdspDocumentStorageService extends OdspSnapshotCache implements IDo
                     break;
                 }
                 case api.SummaryType.Blob: {
-                    const [content, encoding] = typeof summaryObject.content === "string"
-                        ? [summaryObject.content, "utf-8"]
-                        : [Uint8ArrayToString(summaryObject.content, "base64"), "base64"];
+                    if (typeof summaryObject.content === "string") {
+                        value = {
+                            type: "blob",
+                            content: summaryObject.content,
+                            encoding: "utf-8",
+                        };
+                    } else {
+                        value = {
+                            type: "blob",
+                            content: Uint8ArrayToString(summaryObject.content, "base64"),
+                            encoding: "base64",
+                        };
+                    }
 
                     // Promises for pending hashes in blobsCachePendingHashes should all have resolved and removed themselves
                     assert(this.blobsCachePendingHashes.size === 0);
-                    const hash = await hashFile(IsoBuffer.from(content, encoding));
+                    const hash = await hashFile(IsoBuffer.from(value.content, value.encoding));
                     let completePath = this.blobsShaToPathCache.get(hash);
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // to generate complete path for the given blob.
                     if (!completePath || !this.lastSummaryHandle) {
                         blobs++;
-                        value = {
-                            type: "blob",
-                            content,
-                            encoding,
-                        };
                         completePath = `/.app${path}/${key}`;
                         blobsShaToPathCacheLatest.set(hash, completePath);
                     } else {
                         reusedBlobs++;
                         id = `${this.lastSummaryHandle}${completePath}`;
+                        value = undefined;
                     }
                     break;
                 }

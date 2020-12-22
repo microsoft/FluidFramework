@@ -5,7 +5,7 @@
 
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { IChannelSummarizeResult, IGCData } from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
@@ -23,7 +23,7 @@ export interface IChannel extends IFluidLoadable {
      * Generates summary of the channel.
      * @returns A tree representing the summary of the channel.
      */
-    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult;
 
     /**
      * True if the data structure is attached to storage.
@@ -34,6 +34,12 @@ export interface IChannel extends IFluidLoadable {
      * Enables the channel to send and receive ops
      */
     connect(services: IChannelServices): void;
+
+    /**
+     * Returns the GC data for this channel. It contains a list of GC nodes that contains references to
+     * other GC nodes.
+     */
+    getGCData(): IGCData;
 }
 
 /**
