@@ -382,5 +382,19 @@ export function checkoutTests(
 			expect(rebaseResult).equals(EditValidationResult.Invalid);
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.true;
 		});
+
+		it('can dispose and remove listeners', async () => {
+			// Arrange
+			const { checkout } = await setUpTestCheckout();
+
+			// Assert
+			expect(checkout.listenerCount).to.equal(1);
+
+			// Act
+			checkout.dispose();
+
+			// Assert
+			expect(checkout.listenerCount).to.equal(0);
+		});
 	});
 }
