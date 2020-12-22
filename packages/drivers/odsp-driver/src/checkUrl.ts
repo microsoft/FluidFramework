@@ -6,8 +6,9 @@
 import { getLocatorFromOdspUrl } from "./odspFluidFileLink";
 import { DriverPreCheckInfo } from "@fluidframework/driver-definitions";
 
-// A lightweight, seperately defined function used to preanalyze a URL for driver compatibility and preload information before
-// the full driver call. Returns precheckinfo if the url is likely supported and undefined if not. 
+/**
+ * A check that returns DriverPreCheckInfo if the URL is likely supported by this driver. 
+ */
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined {
   const locator = getLocatorFromOdspUrl(documentUrl);
 
