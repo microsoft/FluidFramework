@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import { blobToString } from "@fluidframework/driver-utils";
+import { bufferToString } from "@fluidframework/driver-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -215,7 +215,7 @@ export class ConsensusRegisterCollection<T>
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const blob = await storage.readBlob(snapshotFileName);
-        const header = blobToString(blob);
+        const header = bufferToString(blob);
         const dataObj = this.parse(header, this.serializer);
 
         for (const key of Object.keys(dataObj)) {

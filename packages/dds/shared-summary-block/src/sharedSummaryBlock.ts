@@ -4,7 +4,7 @@
  */
 
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import { blobToString } from "@fluidframework/driver-utils";
+import { bufferToString } from "@fluidframework/driver-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -129,7 +129,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const blob = await storage.readBlob(snapshotFileName);
-        const rawContent = blobToString(blob);
+        const rawContent = bufferToString(blob);
         const contents = JSON.parse(rawContent) as ISharedSummaryBlockDataSerializable;
 
         for (const [key, value] of Object.entries(contents)) {

@@ -5,7 +5,7 @@
 
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import { blobToString } from "@fluidframework/driver-utils";
+import { bufferToString } from "@fluidframework/driver-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
@@ -658,7 +658,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      */
     protected async loadCore(storage: IChannelStorageService) {
         const blob = await storage.readBlob(snapshotFileName);
-        const header = blobToString(blob);
+        const header = bufferToString(blob);
         const data = JSON.parse(header);
         const newFormat = data as IDirectoryNewStorageFormat;
         if (Array.isArray(newFormat.blobs)) {
@@ -666,7 +666,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             this.populate(newFormat.content);
             await Promise.all(newFormat.blobs.map(async (value) => {
                 const newBlob = await storage.readBlob(value);
-                const dataExtra = JSON.parse(blobToString(newBlob));
+                const dataExtra = JSON.parse(bufferToString(newBlob));
                 this.populate(dataExtra as IDirectoryDataObject);
             }));
         } else {

@@ -104,7 +104,6 @@ export class DocumentStorageService implements IDocumentStorageService {
         const value = await this.manager.getBlob(blobId);
         this.blobsShaCache.set(value.sha, "");
         return toBuffer(value.content, value.encoding);
-        // const iso = IsoBuffer.from(blobToString(blob), "base64");
 
         // // In a Node environment, IsoBuffer may be a Node.js Buffer.  Node.js will
         // // pool multiple small Buffer instances into a single ArrayBuffer, in which

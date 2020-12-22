@@ -4,7 +4,7 @@
  */
 
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import { blobToString } from "@fluidframework/driver-utils";
+import { bufferToString } from "@fluidframework/driver-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -160,7 +160,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const blob = await storage.readBlob(snapshotFileName);
-        const rawContent = blobToString(blob);
+        const rawContent = bufferToString(blob);
         const content = rawContent !== undefined
             ? JSON.parse(rawContent) as ICounterSnapshotFormat
             : { value: 0 };

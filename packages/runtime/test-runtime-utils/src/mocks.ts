@@ -20,7 +20,7 @@ import {
     ILoader,
     AttachState,
 } from "@fluidframework/container-definitions";
-
+import { toBuffer } from "@fluidframework/driver-utils";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     ICommittedProposal,
@@ -578,7 +578,7 @@ export class MockObjectStorageService implements IChannelStorageService {
     public constructor(private readonly contents: { [key: string]: string }) {
     }
     public async readBlob(path: string): Promise<ArrayBufferLike> {
-        return this.readBlob(path);
+        return toBuffer(this.contents[path], "base64");
     }
 
     public async contains(path: string): Promise<boolean> {

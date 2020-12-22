@@ -10,7 +10,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
 } from "@fluidframework/driver-definitions";
-import { blobToString } from "@fluidframework/driver-utils";
+import { bufferToString } from "@fluidframework/driver-utils";
 import {
     ISnapshotTree,
     IVersion,
@@ -77,7 +77,7 @@ async function fetchBlobs(prefix: string,
                 reused = false;
                 blob = blobCache.get(blobId);
                 if (blob === undefined) {
-                    blob = blobToString(await storage.readBlob(blobId));
+                    blob = bufferToString(await storage.readBlob(blobId));
                     blobCache.set(blobId, blob);
                 }
             }

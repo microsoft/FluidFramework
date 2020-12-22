@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import { blobToString } from "@fluidframework/driver-utils";
+import { bufferToString } from "@fluidframework/driver-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
@@ -41,7 +41,7 @@ export class SnapshotLoader {
         const headerLoadedP =
             services.readBlob(SnapshotLegacy.header).then((header) => {
                 assert(!!header);
-                return this.loadHeader(blobToString(header));
+                return this.loadHeader(bufferToString(header));
             });
 
         const catchupOpsP =
@@ -74,7 +74,7 @@ export class SnapshotLoader {
             const blob = await services.readBlob(blobs[0]);
             // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
-            return this.loadCatchupOps(blobToString(blob));
+            return this.loadCatchupOps(bufferToString(blob));
         } else if (blobs.length !== headerChunk.headerMetadata.orderedChunkMetadata.length) {
             throw new Error("Unexpected blobs in snapshot");
         }

@@ -4,7 +4,7 @@
  */
 
 import { Serializable, IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { blobToString } from "@fluidframework/driver-utils";
+import { bufferToString } from "@fluidframework/driver-utils";
 import { FileMode, TreeEntry } from "@fluidframework/protocol-definitions";
 import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 
@@ -25,7 +25,7 @@ export const serializeBlob = (
 
 export async function deserializeBlob(storage: IChannelStorageService, path: string, serializer: IFluidSerializer) {
     const blob = await storage.readBlob(path);
-    const handleTableChunk = blobToString(blob);
+    const handleTableChunk = bufferToString(blob);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return serializer.parse(handleTableChunk);
 }

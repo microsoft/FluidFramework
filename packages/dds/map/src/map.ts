@@ -4,7 +4,7 @@
  */
 
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import { blobToString } from "@fluidframework/driver-utils";
+import { bufferToString } from "@fluidframework/driver-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
@@ -331,7 +331,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     */
     protected async loadCore(storage: IChannelStorageService) {
         const blob = await storage.readBlob(snapshotFileName);
-        const header = blobToString(blob);
+        const header = bufferToString(blob);
         // eslint-disable-next-line @typescript-eslint/ban-types
         const json = JSON.parse(header) as object;
         const newFormat = json as IMapSerializationFormat;
@@ -339,7 +339,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             this.kernel.populateFromSerializable(newFormat.content);
             await Promise.all(newFormat.blobs.map(async (value) => {
                 const newBlob = await storage.readBlob(value);
-                const rawContent = blobToString(newBlob);
+                const rawContent = bufferToString(newBlob);
                 this.kernel.populateFromSerializable(JSON.parse(rawContent) as IMapDataObjectSerializable);
             }));
         } else {

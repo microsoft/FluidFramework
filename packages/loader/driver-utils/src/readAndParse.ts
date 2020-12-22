@@ -5,7 +5,7 @@
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { blobToString } from "./blobToString";
+import { bufferToString } from "./bufferToString";
 
 /**
  * Read a blob from IDocumentStorageService, decode it (from "base64") and JSON.parse it into object of type T
@@ -16,7 +16,7 @@ import { blobToString } from "./blobToString";
  */
 export async function readAndParse<T>(storage: Pick<IDocumentStorageService, "readBlob">, id: string): Promise<T> {
     const blob = await storage.readBlob(id);
-    const decoded = blobToString(blob);
+    const decoded = bufferToString(blob);
     return JSON.parse(decoded) as T;
 }
 

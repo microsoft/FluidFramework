@@ -4,7 +4,7 @@
  */
 
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import { blobToString } from "@fluidframework/driver-utils";
+import { bufferToString } from "@fluidframework/driver-utils";
 import {
     MapKernel,
 } from "@fluidframework/map";
@@ -181,7 +181,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
      */
     protected async loadCore(storage: IChannelStorageService) {
         const blob = await storage.readBlob(snapshotFileName);
-        const header = blobToString(blob);
+        const header = bufferToString(blob);
         this.intervalMapKernel.populate(header);
     }
 

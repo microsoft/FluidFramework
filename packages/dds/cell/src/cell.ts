@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IFluidSerializer, ISerializedHandle } from "@fluidframework/core-interfaces";
-import { blobToString } from "@fluidframework/driver-utils";
+import { bufferToString } from "@fluidframework/driver-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -243,7 +243,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const blob = await storage.readBlob(snapshotFileName);
-        const rawContent = blobToString(blob);
+        const rawContent = bufferToString(blob);
 
         const content = rawContent !== undefined
             ? JSON.parse(rawContent) as ICellValue

@@ -9,7 +9,7 @@ import {
     IFluidSerializer,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
-import { blobToString } from "@fluidframework/driver-utils";
+import { bufferToString } from "@fluidframework/driver-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     FileMode,
@@ -255,7 +255,7 @@ export class SnapshotV1 {
         serializer?: IFluidSerializer,
     ): Promise<MergeTreeChunkV1> {
         const blob = await storage.readBlob(path);
-        const chunkAsString = blobToString(blob);
+        const chunkAsString = bufferToString(blob);
         return SnapshotV1.processChunk(path, chunkAsString, logger, options, serializer);
     }
 

@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import { blobToString } from "@fluidframework/driver-utils";
+import { bufferToString } from "@fluidframework/driver-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -280,13 +280,13 @@ export class ConsensusOrderedCollection<T = any>
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         assert(this.jobTracking.size === 0);
         const blob = await storage.readBlob(snapshotFileNameTracking);
-        const rawContentTracking = blobToString(blob);
+        const rawContentTracking = bufferToString(blob);
         const content = this.deserializeValue(rawContentTracking, this.serializer);
         this.jobTracking = new Map(content) as JobTrackingInfo<T>;
 
         assert(this.data.size() === 0);
         const blob2 = await storage.readBlob(snapshotFileNameData);
-        const rawContentData = blobToString(blob2);
+        const rawContentData = bufferToString(blob2);
         const content2 = this.deserializeValue(rawContentData, this.serializer) as T[];
         this.data.loadFrom(content2);
     }

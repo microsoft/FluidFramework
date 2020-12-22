@@ -22,7 +22,7 @@ import {
     IDocumentStorageService,
     LoaderCachingPolicy,
  } from "@fluidframework/driver-definitions";
-import { blobToString, NetworkErrorBasic } from "@fluidframework/driver-utils";
+import { bufferToString, NetworkErrorBasic } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 describe("SharedString", () => {
@@ -93,7 +93,7 @@ describe("SharedString", () => {
                         const mockstorage = Object.create(realStorage) as IDocumentStorageService;
                         mockstorage.readBlob = async (id)=>{
                             const blob = await realStorage.readBlob(id);
-                            const blobObj = JSON.parse(blobToString(blob));
+                            const blobObj = JSON.parse(bufferToString(blob));
                             // throw when trying to load the header blob
                             if (blobObj.headerMetadata !== undefined) {
                                 throw new NetworkErrorBasic(
