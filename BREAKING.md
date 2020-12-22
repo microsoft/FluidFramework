@@ -1,3 +1,10 @@
+## 0.32 Breaking changes
+
+- [resolveDataStore replaced](#resolveDataStore-replaced)
+
+### resolveDataStore replaced
+The resolveDataStore method manually exported by the ODSP resolver has been replaced with checkUrl() from the same package.
+
 ## 0.30 Breaking Changes
 
 - [Branching removed](#Branching-removed)

@@ -38,6 +38,16 @@ export interface IUrlResolver {
     ): Promise<string>;
 }
 
+// Information that can be returned by a lightweight, seperately exported driver function. Used to preanalyze a URL for driver
+// compatibility and preload information. Returns PreCheckInfo if the url is likely supported and undefined if not. 
+export interface DriverPreCheckInfo {
+    // Only needed as long as long as Loader.request() does not work as intended. When Loader.request() caches and resolves pathing properly
+    // this can be removed. #4489, #4491
+    componentPath: string;
+    containerCodeHint?: string;
+    preconnectDomains?: string[];
+  }
+
 /**
  * Additional key in the loader request header
  */
