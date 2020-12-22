@@ -187,6 +187,38 @@ export function create(
     }
 
     /**
+     * New api that fetches ops from summary and storage.
+     * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
+     */
+    router.get(
+        ["/v1/:tenantId?/:id", "/:tenantId?/:id/v1"],
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const from = stringToSequenceNumber(request.query.from);
+            const to = stringToSequenceNumber(request.query.to);
+            const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+
+            // Query for the deltas and return a filtered version of just the operations field
+            const deltasP = getDeltasFromSummaryAndStorage(
+                tenantManager,
+                mongoManager,
+                deltasCollectionName,
+                tenantId,
+                getParam(request.params, "id"),
+                from,
+                to);
+
+            deltasP.then(
+                (deltas) => {
+                    response.status(200).json(deltas);
+                },
+                (error) => {
+                    response.status(500).json(error);
+                });
+        },
+    );
+
+    /**
      * Retrieves raw (unsequenced) deltas for the given document.
      */
     router.get(
@@ -225,38 +257,6 @@ export function create(
 
             // Query for the deltas and return a filtered version of just the operations field
             const deltasP = getDeltas(
-                mongoManager,
-                deltasCollectionName,
-                tenantId,
-                getParam(request.params, "id"),
-                from,
-                to);
-
-            deltasP.then(
-                (deltas) => {
-                    response.status(200).json(deltas);
-                },
-                (error) => {
-                    response.status(500).json(error);
-                });
-        },
-    );
-
-    /**
-     * New api that fetches ops from summary and storage.
-     * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
-     */
-    router.get(
-        ["/v1/:tenantId?/:id", "/:tenantId?/:id/v1"],
-        throttle(throttler, winston, commonThrottleOptions),
-        (request, response, next) => {
-            const from = stringToSequenceNumber(request.query.from);
-            const to = stringToSequenceNumber(request.query.to);
-            const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
-
-            // Query for the deltas and return a filtered version of just the operations field
-            const deltasP = getDeltasFromSummaryAndStorage(
-                tenantManager,
                 mongoManager,
                 deltasCollectionName,
                 tenantId,
