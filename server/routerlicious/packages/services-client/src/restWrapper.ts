@@ -83,6 +83,13 @@ export class RestWrapper {
                     debug(`request to ${options.url} failed ${error ? error.message : ""}`);
                 }
 
+                if (error.response && error.response.status && error.response.data
+                    && error.response.status === 429 && error.response.data.retryAfter > 0) {
+                    setTimeout(async () => {
+                        return this.request<T>(options, statusCode);
+                    }, error.response.data.retryAfter * 1000);
+                }
+
                 return error.response && error.response.status !== statusCode
                     ? Promise.reject(error.response.status)
                     : Promise.reject(error);
