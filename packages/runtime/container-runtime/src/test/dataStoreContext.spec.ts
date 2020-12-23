@@ -252,31 +252,31 @@ describe("Data Store Context Tests", () => {
                 const contents = JSON.parse((gcEntry.value as IBlob).contents) as IGCDetails;
                 assert.deepStrictEqual(contents.gcData, emptyGCData, "GC data from summary should be empty.");
             });
-        });
 
-        it("can successfully update used state", () => {
-            localDataStoreContext = new LocalFluidDataStoreContext(
-                dataStoreId,
-                ["TestComp", "SubComp"],
-                containerRuntime,
-                storage,
-                scope,
-                createSummarizerNodeFn,
-                attachCb,
-                undefined,
-                false /* isRootDataStore */);
+            it("can successfully update used state", () => {
+                localDataStoreContext = new LocalFluidDataStoreContext(
+                    dataStoreId,
+                    ["TestComp", "SubComp"],
+                    containerRuntime,
+                    storage,
+                    scope,
+                    createSummarizerNodeFn,
+                    attachCb,
+                    undefined,
+                    false /* isRootDataStore */);
 
-            // Get the summarizer node for this data store which tracks its used state.
-            const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
-            assert.strictEqual(dataStoreSummarizerNode?.used, true, "Data store is used by default");
+                // Get the summarizer node for this data store which tracks its used state.
+                const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
+                assert.strictEqual(dataStoreSummarizerNode?.used, false, "Data store is unused by default");
 
-            // Update the data store to not have any used routes.
-            localDataStoreContext.updateUsedRoutes([]);
-            assert.strictEqual(dataStoreSummarizerNode?.used, false, "Data store should be unused without used routes");
+                // Update the data store to be used.
+                localDataStoreContext.updateUsedRoutes([""]);
+                assert.strictEqual(dataStoreSummarizerNode?.used, true, "Data store should now be used");
 
-            // Update the data store to be used.
-            localDataStoreContext.updateUsedRoutes([""]);
-            assert.strictEqual(dataStoreSummarizerNode?.used, true, "Data store should now be used");
+                // Update the data store to not have any used routes.
+                localDataStoreContext.updateUsedRoutes([]);
+                assert.strictEqual(dataStoreSummarizerNode?.used, false, "Data store should now be unused");
+            });
         });
     });
 
@@ -537,41 +537,41 @@ describe("Data Store Context Tests", () => {
                 const gcData = await remotedDataStoreContext.getGCData();
                 assert.deepStrictEqual(gcData, gcDetails.gcData, "GC data from getGCData is incorrect.");
             });
-        });
 
-        it("can successfully update used state", () => {
-            dataStoreAttributes = {
-                pkg: "TestDataStore1",
-            };
-            const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
-            const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
-            const snapshotTree: ISnapshotTree = {
-                id: "dummy",
-                blobs: { [".component"]: "fluidDataStoreAttributes" },
-                commits: {},
-                trees: {},
-            };
+            it("can successfully update used state", () => {
+                dataStoreAttributes = {
+                    pkg: "TestDataStore1",
+                };
+                const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
+                const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
+                const snapshotTree: ISnapshotTree = {
+                    id: "dummy",
+                    blobs: { [".component"]: "fluidDataStoreAttributes" },
+                    commits: {},
+                    trees: {},
+                };
 
-            remotedDataStoreContext = new RemotedFluidDataStoreContext(
-                dataStoreId,
-                snapshotTree,
-                containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
-                scope,
-                createSummarizerNodeFn,
-            );
+                remotedDataStoreContext = new RemotedFluidDataStoreContext(
+                    dataStoreId,
+                    snapshotTree,
+                    containerRuntime,
+                    new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                    scope,
+                    createSummarizerNodeFn,
+                );
 
-            // Get the summarizer node for this data store which tracks its used state.
-            const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
-            assert.strictEqual(dataStoreSummarizerNode?.used, true, "Data store is used by default");
+                // Get the summarizer node for this data store which tracks its used state.
+                const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
+                assert.strictEqual(dataStoreSummarizerNode?.used, false, "Data store is unused by default");
 
-            // Update the data store to not have any used routes.
-            remotedDataStoreContext.updateUsedRoutes([]);
-            assert.strictEqual(dataStoreSummarizerNode?.used, false, "Data store should be unused without used routes");
+                // Update the data store to be used.
+                remotedDataStoreContext.updateUsedRoutes([""]);
+                assert.strictEqual(dataStoreSummarizerNode?.used, true, "Data store should now be used");
 
-            // Update the data store to be used.
-            remotedDataStoreContext.updateUsedRoutes([""]);
-            assert.strictEqual(dataStoreSummarizerNode?.used, true, "Data store should now be used");
+                // Update the data store to not have any used routes.
+                remotedDataStoreContext.updateUsedRoutes([]);
+                assert.strictEqual(dataStoreSummarizerNode?.used, false, "Data store should now be unused");
+            });
         });
     });
 });

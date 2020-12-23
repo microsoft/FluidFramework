@@ -27,11 +27,11 @@ export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISumma
  * - Adds GC data to the result of summarize.
  * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  *   directly into summarizeInternal method.
- * - Adds used property that tracks whether this node is in use or not.
+ * - Tracks the used state of this node.
  */
 export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
     private gcData: IGCData | undefined;
-    public used: boolean = true;
+    public used: boolean = false;
 
     /**
      * Do not call constructor directly.

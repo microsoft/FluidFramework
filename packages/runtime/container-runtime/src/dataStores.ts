@@ -464,8 +464,9 @@ export class DataStores implements IDisposable {
         for (const route of usedRoutes) {
             const dataStoreId = route.split("/")[1];
             const dataStoreRoute = route.slice(dataStoreId.length + 1);
-            if (usedRoutesMap.has(dataStoreId)) {
-                usedRoutesMap.get(dataStoreId)?.push(dataStoreRoute);
+            const routes = usedRoutesMap.get(dataStoreId);
+            if (routes !== undefined) {
+                routes.push(dataStoreRoute);
             } else {
                 usedRoutesMap.set(dataStoreId, [dataStoreRoute]);
             }

@@ -447,7 +447,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         // also be notified of their used routes. See - https://github.com/microsoft/FluidFramework/issues/4611
 
         // Update the used state of this data store in the summarizer node.
-        this.summarizerNode.used = usedRoutes.includes("/") || usedRoutes.includes("") ? true : false;
+        this.summarizerNode.used = usedRoutes.includes("/") || usedRoutes.includes("");
     }
 
     /**
