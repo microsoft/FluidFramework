@@ -1028,10 +1028,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         blobsShaToPathCacheLatest: Map<string, string>,
         depth: number = 0,
         path: string = "",
-    ) {
+    ): Promise<{ snapshotTree: ISnapshotTree, blobs: number, reusedBlobs: number }> {
         const snapshotTree: ISnapshotTree = {
-            entries: [],
-        }!;
+            type: "tree",
+            entries: [] as SnapshotTreeEntry[],
+        };
 
         let reusedBlobs = 0;
         let blobs = 0;
@@ -1057,9 +1058,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     break;
                 }
                 case api.SummaryType.Blob: {
-                    value = typeof summaryObject.content === "string"
-                        ? { content: summaryObject.content, encoding: "utf-8" }
-                        : { content: Uint8ArrayToString(summaryObject.content, "base64"), encoding: "base64" };
+                    if (typeof summaryObject.content === "string") {
+                        value = {
+                            type: "blob",
+                            content: summaryObject.content,
+                            encoding: "utf-8",
+                        };
+                    } else {
+                        value = {
+                            type: "blob",
+                            content: Uint8ArrayToString(summaryObject.content, "base64"),
+                            encoding: "base64",
+                        };
+                    }
 
                     // Promises for pending hashes in blobsCachePendingHashes should all have resolved and removed themselves
                     assert(this.blobsCachePendingHashes.size === 0);
@@ -1088,13 +1099,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     }
                     id = `${parentHandle}/.app${handlePath}`;
 
-                    // TODO: SPO will deprecate this soon
-                    if (summaryObject.handleType === api.SummaryType.Commit) {
-                        value = {
-                            content: id,
-                        };
-                    }
-
                     break;
                 }
                 case api.SummaryType.Attachment: {
@@ -1106,18 +1110,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 }
             }
 
+            const type = getGitType(summaryObject) as "blob" | "commit" | "tree" | "attachment";
             const baseEntry: ISnapshotTreeBaseEntry = {
                 path: encodeURIComponent(key),
-                type: getGitType(summaryObject) === "attachment" ? "blob" : getGitType(summaryObject),
+                type: type === "attachment" ? "blob" : type,
             };
 
             let entry: SnapshotTreeEntry;
 
             if (value) {
+                assert(id === undefined);
                 entry = {
-                    ...baseEntry,
-                    id,
                     value,
+                    ...baseEntry,
                 };
             } else if (id) {
                 entry = {

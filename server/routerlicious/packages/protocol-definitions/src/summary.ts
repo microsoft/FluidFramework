@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export type SummaryObject = ISummaryCommit | ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
+export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
@@ -53,20 +53,4 @@ export interface ISummaryTree {
 
     // TODO type I can infer from SummaryObject. File mode I may want to directly specify so have symlink+exec access
     tree: { [path: string]: SummaryObject };
-}
-
-export interface ISummaryCommit {
-    type: SummaryType.Commit;
-
-    author: ISummaryAuthor;
-
-    committer: ISummaryAuthor;
-
-    message: string;
-
-    // Tree referenced by the commit
-    tree: SummaryTree;
-
-    // Previous parents to the commit.
-    parents: string[];
 }

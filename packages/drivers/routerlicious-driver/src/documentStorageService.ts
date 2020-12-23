@@ -6,9 +6,8 @@
 import { assert, fromBase64ToUtf8, gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
-import { buildHierarchy } from "@fluidframework/protocol-base";
+import { buildHierarchy, getGitType, getGitMode } from "@fluidframework/protocol-base";
 import {
-    FileMode,
     ICreateBlobResponse,
     ISnapshotTree,
     ISummaryHandle,
@@ -123,10 +122,10 @@ export class DocumentStorageService implements IDocumentStorageService {
             const entry = summaryTree.tree[key];
             const pathHandle = await this.writeSummaryTreeObject(key, entry, previousFullSnapshot);
             const treeEntry: resources.ICreateTreeEntry = {
-                mode: this.getGitMode(entry),
+                mode: getGitMode(entry),
                 path: encodeURIComponent(key),
                 sha: pathHandle,
-                type: this.getGitType(entry),
+                type: getGitType(entry),
             };
             return treeEntry;
         }));
@@ -222,36 +221,5 @@ export class DocumentStorageService implements IDocumentStorageService {
             assert(hash === blob.sha, "Blob.sha and hash do not match!!");
         }
         return hash;
-    }
-
-    private getGitMode(value: SummaryObject): string {
-        const type = value.type === SummaryType.Handle ? value.handleType : value.type;
-        switch (type) {
-            case SummaryType.Blob:
-            case SummaryType.Attachment:
-                return FileMode.File;
-            case SummaryType.Commit:
-                return FileMode.Commit;
-            case SummaryType.Tree:
-                return FileMode.Directory;
-            default:
-                throw new Error();
-        }
-    }
-
-    private getGitType(value: SummaryObject): string {
-        const type = value.type === SummaryType.Handle ? value.handleType : value.type;
-
-        switch (type) {
-            case SummaryType.Blob:
-            case SummaryType.Attachment:
-                return "blob";
-            case SummaryType.Commit:
-                return "commit";
-            case SummaryType.Tree:
-                return "tree";
-            default:
-                throw new Error();
-        }
     }
 }

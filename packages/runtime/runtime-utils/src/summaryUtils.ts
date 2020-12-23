@@ -314,14 +314,12 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
                 break;
             }
 
-            case SummaryType.Commit: {
-                throw new Error("Should not have Commit type in summary tree");
-            }
-
             case SummaryType.Handle: {
                 throw new Error("Should not have Handle type in summary tree");
             }
 
+            case SummaryType.Commit: // to be removed in future
+                unreachableCase(value as never, "Unexpected summary tree type");
             default:
                 unreachableCase(value, "Unexpected summary tree type");
         }
