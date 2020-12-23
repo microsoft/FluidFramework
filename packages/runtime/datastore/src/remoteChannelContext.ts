@@ -19,6 +19,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeFn,
+    gcBlobKey,
     IContextSummarizeResult,
     IFluidDataStoreContext,
     IGCData,
@@ -29,7 +30,6 @@ import {
 import {
     attributesBlobKey,
     createServiceEndpoints,
-    gcBlobKey,
     IChannelContext,
     summarizeChannel,
 } from "./channelContext";
@@ -52,12 +52,12 @@ export class RemoteChannelContext implements IChannelContext {
     /**
      * This loads the GC details from the base snapshot of this context.
      */
-    private readonly initialGCDetailsP = new LazyPromise<IGCDetails>(async () => {
+    private readonly initialGCDetailsP = new LazyPromise<IGCDetails | undefined>(async () => {
         if (await this.services.objectStorage.contains(gcBlobKey)) {
             return readAndParse<IGCDetails>(this.services.objectStorage, gcBlobKey);
         } else {
-            // Default value of initial GC details in case the initial snapshot does not have GC details blob.
-            return {};
+            // For old snapshots that do not have GC blob return undefined.
+            return undefined;
         }
     });
 
@@ -88,8 +88,12 @@ export class RemoteChannelContext implements IChannelContext {
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async () => this.getGCDataInternal(),
-            async () => this.getInitialGCData(),
+            async () => this.initialGCDetailsP,
         );
+
+        // Currently, a channel context is always considered used. This will change when we start GC at layers below
+        // data stores. See - https://github.com/microsoft/FluidFramework/issues/4611
+        this.summarizerNode.used = true;
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -241,12 +245,5 @@ export class RemoteChannelContext implements IChannelContext {
     private async getGCDataInternal(): Promise<IGCData> {
         const channel = await this.getChannel();
         return channel.getGCData();
-    }
-
-    /**
-     * This returns the GC data in the initial GC details of this context.
-     */
-    private async getInitialGCData(): Promise<IGCData | undefined> {
-        return (await this.initialGCDetailsP).gcData;
     }
 }

@@ -28,6 +28,7 @@ import {
     ICreateChildDetails,
     IInitialSummary,
     ISummarizerNodeRootContract,
+    ISummaryNode,
     ReadAndParseBlob,
     seqFromTree,
     SummaryNode,
@@ -58,7 +59,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     }
 
     protected readonly children = new Map<string, SummarizerNode>();
-    private readonly pendingSummaries = new Map<string, SummaryNode>();
+    protected readonly pendingSummaries = new Map<string, ISummaryNode>();
     private readonly outstandingOps: ISequencedDocumentMessage[] = [];
     private wipReferenceSequenceNumber: number | undefined;
     private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
@@ -161,7 +162,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     /**
      * Recursive implementation for completeSummary, with additional internal-only parameters
      */
-    private completeSummaryCore(
+    protected completeSummaryCore(
         proposalHandle: string,
         parentPath: EscapedPath | undefined,
         parentSkipRecursion: boolean,
@@ -250,16 +251,17 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         const snapshotTree = await getSnapshot();
         const referenceSequenceNumber = await seqFromTree(snapshotTree, readAndParseBlob);
-        this.refreshLatestSummaryFromSnapshot(
+        return this.refreshLatestSummaryFromSnapshot(
             referenceSequenceNumber,
             snapshotTree,
             undefined,
             EscapedPath.create(""),
             correlatedSummaryLogger,
+            readAndParseBlob,
         );
     }
 
-    private refreshLatestSummaryFromPending(
+    protected refreshLatestSummaryFromPending(
         proposalHandle: string,
         referenceSequenceNumber: number,
     ): void {
@@ -292,13 +294,14 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
     }
 
-    private refreshLatestSummaryFromSnapshot(
+    protected async refreshLatestSummaryFromSnapshot(
         referenceSequenceNumber: number,
         snapshotTree: ISnapshotTree,
         basePath: EscapedPath | undefined,
         localPath: EscapedPath,
         correlatedSummaryLogger: ITelemetryLogger,
-    ): void {
+        readAndParseBlob: ReadAndParseBlob,
+    ): Promise<void> {
         this.refreshLatestSummaryCore(referenceSequenceNumber);
 
         const { baseSummary, pathParts } = decodeSummary(snapshotTree, correlatedSummaryLogger);
@@ -319,12 +322,13 @@ export class SummarizerNode implements IRootSummarizerNode {
             // Assuming subtrees missing from snapshot are newer than the snapshot,
             // but might be nice to assert this using earliest seq for node.
             if (subtree !== undefined) {
-                child.refreshLatestSummaryFromSnapshot(
+                await child.refreshLatestSummaryFromSnapshot(
                     referenceSequenceNumber,
                     subtree,
                     pathForChildren,
                     EscapedPath.create(id),
                     correlatedSummaryLogger,
+                    readAndParseBlob,
                 );
             }
         }
@@ -391,7 +395,12 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
     }
 
-    public hasChanged(): boolean {
+    /**
+     * True if a change has been recorded with sequence number exceeding
+     * the latest successfully acked summary reference sequence number.
+     * False implies that the previous summary can be reused.
+     */
+    protected hasChanged(): boolean {
         return this._changeSequenceNumber > this.referenceSequenceNumber;
     }
 
@@ -409,7 +418,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         config: ISummarizerNodeConfig,
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
-        private latestSummary?: SummaryNode,
+        private latestSummary?: ISummaryNode,
         private readonly initialSummary?: IInitialSummary,
         protected wipSummaryLogger?: ITelemetryLogger,
     ) {
@@ -464,7 +473,7 @@ export class SummarizerNode implements IRootSummarizerNode {
      */
     protected getCreateDetailsForChild(id: string, createParam: CreateChildSummarizerNodeParam): ICreateChildDetails {
         let initialSummary: IInitialSummary | undefined;
-        let latestSummary: SummaryNode | undefined;
+        let latestSummary: ISummaryNode | undefined;
         let changeSequenceNumber: number;
 
         const parentLatestSummary = this.latestSummary;

@@ -34,6 +34,7 @@ import {
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     FluidDataStoreRegistryEntry,
+    gcBlobKey,
     IAttachMessage,
     IContextSummarizeResult,
     IFluidDataStoreChannel,
@@ -56,7 +57,6 @@ import { ContainerRuntime } from "./containerRuntime";
 export const currentSnapshotFormatVersion = "0.1";
 
 export const attributesBlobKey = ".component";
-export const gcBlobKey = "gc";
 
 function createAttributes(pkg: readonly string[], isRootDataStore: boolean): IFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
@@ -241,7 +241,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async () => this.getGCDataInternal(),
-            async () => this.getInitialGCData(),
+            async () => this.getInitialGCDetails(),
         );
     }
 
@@ -406,6 +406,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // Add GC details to the summary.
         const gcDetails: IGCDetails = {
+            used: this.summarizerNode.used,
             gcData: summarizeResult.gcData,
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
@@ -428,14 +429,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             };
         }
         return this.channel.getGCData();
-    }
-
-    /**
-     * This returns the initial GC data of this context.
-     */
-    protected async getInitialGCData(): Promise<IGCData | undefined> {
-        const initialGCDetails = await this.getInitialGCDetails();
-        return initialGCDetails.gcData;
     }
 
     /**
@@ -561,7 +554,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
-    protected abstract getInitialGCDetails(): Promise<IGCDetails>;
+    protected abstract getInitialGCDetails(): Promise<IGCDetails | undefined>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
         assert(!!this.channel, "Channel must exist when resubmitting ops");
@@ -579,7 +572,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return (
             summarizeInternal: SummarizeInternalFn,
             getGCDataFn: () => Promise<IGCData>,
-            getInitialGCDataFn: () => Promise<IGCData | undefined>,
+            getInitialGCDetailsFn: () => Promise<IGCDetails | undefined>,
         ) => this.summarizerNode.createChild(
             summarizeInternal,
             id,
@@ -587,7 +580,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             // DDS will not create failure summaries
             { throwOnFailure: true },
             getGCDataFn,
-            getInitialGCDataFn,
+            getInitialGCDetailsFn,
         );
     }
 
@@ -678,14 +671,13 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         };
     });
 
-    private readonly initialGCDetailsP = new LazyPromise<IGCDetails>(async () => {
+    private readonly initialGCDetailsP = new LazyPromise<IGCDetails | undefined>(async () => {
         // If the initial snapshot is null or string, the snapshot is in old format and won't have GC details.
         if (!(this.initSnapshotValue === null || typeof this.initSnapshotValue === "string")
             && this.initSnapshotValue.blobs[gcBlobKey] !== undefined) {
             return readAndParse<IGCDetails>(this.storage, this.initSnapshotValue.blobs[gcBlobKey]);
         } else {
-            // Default value of initial GC details in case the initial snapshot does not have GC details.
-            return {};
+            return undefined;
         }
     });
 
@@ -693,7 +685,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         return this.initialSnapshotDetailsP;
     }
 
-    protected async getInitialGCDetails(): Promise<IGCDetails> {
+    protected async getInitialGCDetails(): Promise<IGCDetails | undefined> {
         return this.initialGCDetailsP;
     }
 
@@ -759,6 +751,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
         // Add GC details to the summary.
         const gcDetails: IGCDetails = {
+            used: this.summarizerNode.used,
             gcData: summarizeResult.gcData,
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
@@ -785,9 +778,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         };
     }
 
-    protected async getInitialGCDetails(): Promise<IGCDetails> {
-        // There is no initial GC details for local data stores.
-        return {};
+    protected async getInitialGCDetails(): Promise<IGCDetails | undefined> {
+        // Local data store does not have initial GC details.
+        return undefined;
     }
 }
 

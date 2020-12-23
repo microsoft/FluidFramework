@@ -29,7 +29,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
-import { IGCData } from "./garbageCollection";
+import { IGCData, IGCDetails } from "./garbageCollection";
 import { IInboundSignalMessage } from "./protocol";
 import {
     CreateChildSummarizerNodeParam,
@@ -213,7 +213,7 @@ export interface IFluidDataStoreChannel extends
 export type CreateChildSummarizerNodeFn = (
     summarizeInternal: SummarizeInternalFn,
     getGCDataFn: () => Promise<IGCData>,
-    getInitialGCDataFn: () => Promise<IGCData | undefined>,
+    getInitialGCDetailsFn: () => Promise<IGCDetails | undefined>,
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {

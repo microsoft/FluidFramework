@@ -14,6 +14,7 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+    gcBlobKey,
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
@@ -25,11 +26,10 @@ import {
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { createRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
+import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     attributesBlobKey,
-    gcBlobKey,
     IFluidDataStoreAttributes,
     LocalFluidDataStoreContext,
     RemotedFluidDataStoreContext,
@@ -59,7 +59,7 @@ describe("Data Store Context Tests", () => {
             createSummarizerNodeFn = (
                 summarizeInternal: SummarizeInternalFn,
                 getGCDataFn: () => Promise<IGCData>,
-                getInitialGCDataFn: () => Promise<IGCData | undefined>,
+                getInitialGCDetailsFn: () => Promise<IGCDetails | undefined>,
             ) => summarizerNode.createChild(
                 summarizeInternal,
                 dataStoreId,
@@ -67,7 +67,7 @@ describe("Data Store Context Tests", () => {
                 // DDS will not create failure summaries
                 { throwOnFailure: true },
                 getGCDataFn,
-                getInitialGCDataFn,
+                getInitialGCDetailsFn,
             );
 
             const factory: IFluidDataStoreFactory = {
@@ -260,9 +260,10 @@ describe("Data Store Context Tests", () => {
         const storage: Partial<IDocumentStorageService> = {};
         let scope: IFluidObject;
         let containerRuntime: ContainerRuntime;
+        let summarizerNode: IRootSummarizerNodeWithGC;
 
         beforeEach(async () => {
-            const summarizerNode = createRootSummarizerNodeWithGC(
+            summarizerNode = createRootSummarizerNodeWithGC(
                 new TelemetryNullLogger(),
                 (() => undefined) as unknown as SummarizeInternalFn,
                 0,
@@ -272,14 +273,14 @@ describe("Data Store Context Tests", () => {
             createSummarizerNodeFn = (
                 summarizeInternal: SummarizeInternalFn,
                 getGCDataFn: () => Promise<IGCData>,
-                getInitialGCDataFn: () => Promise<IGCData | undefined>,
+                getInitialGCDetailsFn: () => Promise<IGCDetails | undefined>,
             ) => summarizerNode.createChild(
                 summarizeInternal,
                 dataStoreId,
                 { type: CreateSummarizerNodeSource.FromSummary },
                 undefined,
                 getGCDataFn,
-                getInitialGCDataFn,
+                getInitialGCDetailsFn,
             );
 
             const factory: { [key: string]: any } = {};
@@ -431,6 +432,7 @@ describe("Data Store Context Tests", () => {
                     pkg: "TestDataStore1",
                 };
                 const gcDetails: IGCDetails = {
+                    used: false,
                     gcData: emptyGCData,
                 };
                 const attributesBuffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
@@ -475,6 +477,7 @@ describe("Data Store Context Tests", () => {
                     pkg: "TestDataStore1",
                 };
                 const gcDetails: IGCDetails = {
+                    used: false,
                     gcData: {
                         gcNodes: {
                             "/": [ "dds1", "dds2"],
@@ -509,6 +512,58 @@ describe("Data Store Context Tests", () => {
 
                 const gcData = await remotedDataStoreContext.getGCData();
                 assert.deepStrictEqual(gcData, gcDetails.gcData, "GC data from getGCData is incorrect.");
+            });
+
+            it("should not reuse summary data when used state changed since last summary", async () => {
+                dataStoreAttributes = {
+                    pkg: "TestDataStore1",
+                };
+                const gcDetails: IGCDetails = {
+                    used: false,
+                };
+                const attributesBuffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
+                const gcDetailsBuffer = IsoBuffer.from(JSON.stringify(gcDetails), "utf-8");
+                const blobCache = new Map<string, string>([
+                    ["fluidDataStoreAttributes", attributesBuffer.toString("base64")],
+                    ["gcDetails", gcDetailsBuffer.toString("base64")],
+                ]);
+                const snapshotTree: ISnapshotTree = {
+                    id: "dummy",
+                    blobs: {
+                        [attributesBlobKey]: "fluidDataStoreAttributes",
+                        [gcBlobKey]: "gcDetails",
+                    },
+                    commits: {},
+                    trees: {},
+                };
+
+                remotedDataStoreContext = new RemotedFluidDataStoreContext(
+                    dataStoreId,
+                    snapshotTree,
+                    containerRuntime,
+                    new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                    scope,
+                    createSummarizerNodeFn,
+                );
+
+                // The data in the store has not changed since last summary and the reference used state and current
+                // used (default) are both false. So, summarize should return a handle.
+                let summarizeResult = await remotedDataStoreContext.summarize(false /* fullTree */);
+                assert(summarizeResult.summary.type === SummaryType.Handle,
+                    "summarize should return a handle since nothing changed");
+
+                // Update the used state of the data store.
+                const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
+                assert(dataStoreSummarizerNode !== undefined, "Data store's summarizer node is missing");
+                // To be update once this PR is checked in - https://github.com/microsoft/FluidFramework/pull/4672.
+                // remotedDataStoreContext.updateUsedRoutes([""]);
+                dataStoreSummarizerNode.used = true;
+                assert.strictEqual(dataStoreSummarizerNode?.used, true, "Data store should now be used");
+
+                // Since the used state has changed, it should generate a full summary tree.
+                summarizeResult = await remotedDataStoreContext.summarize(false /* fullTree */);
+                assert(summarizeResult.summary.type === SummaryType.Tree,
+                    "summarize should return a tree since used state changed");
             });
         });
     });

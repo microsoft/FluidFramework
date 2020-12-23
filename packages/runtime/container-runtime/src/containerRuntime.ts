@@ -91,6 +91,7 @@ import {
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
+    IGCDetails,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -700,14 +701,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
                     summarizeInternal: SummarizeInternalFn,
                     getGCDataFn: () => Promise<IGCData>,
-                    getInitialGCDataFn: () => Promise<IGCData | undefined>,
+                    getInitialGCDetailsFn: () => Promise<IGCDetails | undefined>,
                 ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,
                     createParam,
                     undefined,
                     getGCDataFn,
-                    getInitialGCDataFn,
+                    getInitialGCDetailsFn,
                 ),
             this._logger);
 

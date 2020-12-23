@@ -10,7 +10,7 @@ import {
     ISnapshotTree,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IGCData } from "./garbageCollection";
+import { IGCData, IGCDetails } from "./garbageCollection";
 
 export interface ISummaryStats {
     treeNodeCount: number;
@@ -82,12 +82,6 @@ export interface ISummarizerNode {
     /** Latest successfully acked summary reference sequence number */
     readonly referenceSequenceNumber: number;
     /**
-     * True if a change has been recorded with sequence number exceeding
-     * the latest successfully acked summary reference sequence number.
-     * False implies that the previous summary can be reused.
-     */
-    hasChanged(): boolean;
-    /**
      * Marks the node as having a change with the given sequence number.
      * @param sequenceNumber - sequence number of change
      */
@@ -144,9 +138,12 @@ export interface ISummarizerNode {
  *   summary or not.
  * - createChild - Added the following params:
  *   - getGCDataFn - This gets the GC data from the caller. This must be provided in order for getGCData to work.
- *   - getInitialGCDataFn - This gets the initial GC data for this node from the caller.
+ *   - getInitialGCDetailsFn - This gets the initial GC details from the caller.
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
+    // This tells whether this node is in use or not. Unused node can be garbage collected and reclaimed.
+    used: boolean;
+
     summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
     createChild(
         /** Summarize function */
@@ -163,7 +160,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
         /** Optional configuration affecting summarize behavior */
         config?: ISummarizerNodeConfig,
         getGCDataFn?: () => Promise<IGCData>,
-        getInitialGCDataFn?: () => Promise<IGCData | undefined>,
+        getInitialGCDetailsFn?: () => Promise<IGCDetails | undefined>,
     ): ISummarizerNodeWithGC;
 
     getChild(id: string): ISummarizerNodeWithGC | undefined;
