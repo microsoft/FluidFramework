@@ -31,7 +31,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
         return {
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "x-corrlation-id": getCorrelationId() || uuid.v4(),
+            "x-correlation-id": getCorrelationId() || uuid.v4(),
         };
     }
 
@@ -42,6 +42,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
         }
         await Axios.post<void>(
             `${this.endpoint}/file/${tenantId}/${documentId}`,
+            undefined,
             {
                 headers: {
                     ...this.getCommonHeaders(),

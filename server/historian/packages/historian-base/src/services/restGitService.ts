@@ -9,10 +9,10 @@ import {
     ICreateRefParamsExternal,
     IPatchRefParamsExternal,
     ITenantStorage } from "@fluidframework/server-services-core";
-import { getCorrelationId } from "@fluidframework/server-services-utils";
 import * as uuid from "uuid";
 import request from "request";
 import * as winston from "winston";
+import { getCorrelationId } from "@fluidframework/server-services-utils";
 import { ICache } from "./definitions";
 
 // We include the historian version in the user-agent string
