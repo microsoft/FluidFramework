@@ -49,14 +49,14 @@ export class HistorianResourcesFactory implements utils.IResourcesFactory<Histor
         const riddlerEndpoint = config.get("riddler");
         const riddler = new historianServices.RiddlerService(riddlerEndpoint, tenantCache);
 
-        const throttleRequestsPerMs = config.get("throttling:requestsPerMs") as number || 1000000;
-        const throttleMaxRequestBurst = config.get("throttling:maxRequestBurst") as number || 1000000;
-        const throttleMinCooldownIntervalInMs = config.get("throttling:minCooldownIntervalInMs") as number || 1000000;
-        const minThrottleIntervalInMs = config.get("throttling:minThrottleIntervalInMs") as number || 1000000;
+        const throttleMaxRequestsPerMs = config.get("throttling:maxRequestsPerMs") as number || undefined;
+        const throttleMaxRequestBurst = config.get("throttling:maxRequestBurst") as number || undefined;
+        const throttleMinCooldownIntervalInMs = config.get("throttling:minCooldownIntervalInMs") as number || undefined;
+        const minThrottleIntervalInMs = config.get("throttling:minThrottleIntervalInMs") as number || undefined;
         const throttleStorageManager = new services.RedisThrottleStorageManager(redisClient);
         const throttlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,
-            throttleRequestsPerMs,
+            throttleMaxRequestsPerMs,
             throttleMaxRequestBurst,
             throttleMinCooldownIntervalInMs);
         const throttler = new services.Throttler(throttlerHelper, minThrottleIntervalInMs, winston);
