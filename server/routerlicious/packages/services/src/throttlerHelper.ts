@@ -16,9 +16,9 @@ import {
 export class ThrottlerHelper implements IThrottlerHelper {
     constructor(
         private readonly throttleStorageManager: IThrottleStorageManager,
-        private readonly rateInOperationsPerMs: number,
-        private readonly operationBurstLimit: number,
-        private readonly minCooldownIntervalInMs: number,
+        private readonly rateInOperationsPerMs: number = 1000000,
+        private readonly operationBurstLimit: number = 1000000,
+        private readonly minCooldownIntervalInMs: number = 1000000,
     ) {
     }
 

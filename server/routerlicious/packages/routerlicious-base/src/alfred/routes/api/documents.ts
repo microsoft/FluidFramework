@@ -3,15 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorage } from "@fluidframework/server-services-core";
+import { IDocumentStorage, IThrottler } from "@fluidframework/server-services-core";
+import { throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
 import { Router } from "express";
+import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { getParam } from "../../../utils";
+import { getParam, Constants } from "../../../utils";
 
-export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): Router {
+export function create(
+    storage: IDocumentStorage,
+    appTenants: IAlfredTenant[],
+    throttler: IThrottler): Router {
     const router: Router = Router();
 
-    router.get("/:tenantId?/:id", (request, response, next) => {
+    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
+        throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
+    };
+
+    router.get("/:tenantId?/:id", throttle(throttler, winston, commonThrottleOptions), (request, response, next) => {
         const documentP = storage.getDocument(
             getParam(request.params, "tenantId") || appTenants[0].id,
             getParam(request.params, "id"));
@@ -27,7 +37,7 @@ export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): 
     /**
      * Creates a new document with initial summary.
      */
-    router.post("/:tenantId", (request, response, next) => {
+    router.post("/:tenantId", throttle(throttler, winston, commonThrottleOptions), (request, response, next) => {
         // Tenant and document
         const tenantId = getParam(request.params, "tenantId");
         const id = request.body.id;

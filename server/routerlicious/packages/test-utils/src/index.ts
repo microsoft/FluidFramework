@@ -15,3 +15,4 @@ export * from "./testPublisher";
 export * from "./testTenantManager";
 export * from "./testThrottleStorageManager";
 export * from "./testThrottlerHelper";
+export * from "./testThrottler";

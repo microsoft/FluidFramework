@@ -41,6 +41,7 @@ import { GCDataBuilder } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime, nonDataStorePaths } from "./containerRuntime";
 import {
+    attributesBlobKey,
     FluidDataStoreContext,
     RemotedFluidDataStoreContext,
     IFluidDataStoreAttributes,
@@ -105,25 +106,19 @@ export class DataStores implements IDisposable {
                 }
                 const snapshotTree = value;
                 // Need to rip through snapshot.
-                const { pkg, snapshotFormatVersion, isRootDataStore }
-                    = readAndParseFromBlobs<IFluidDataStoreAttributes>(
+                const attributes = readAndParseFromBlobs<IFluidDataStoreAttributes>(
                         snapshotTree.blobs,
-                        snapshotTree.blobs[".component"]);
+                        snapshotTree.blobs[attributesBlobKey]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
                 // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
                 // However the feature of loading a detached container from snapshot, is added when the
                 // snapshotFormatVersion is "0.1", so we don't expect it to be anything else.
-                if (snapshotFormatVersion === currentSnapshotFormatVersion) {
-                    pkgFromSnapshot = JSON.parse(pkg) as string[];
+                if (attributes.snapshotFormatVersion === currentSnapshotFormatVersion) {
+                    pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
                 } else {
-                    throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
+                    throw new Error(`Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
                 }
 
-                /**
-                 * If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that data
-                 * stores in older documents are not garbage collected incorrectly. This may lead to additional roots
-                 * in the document but they won't break.
-                 */
                 dataStoreContext = new LocalFluidDataStoreContext(
                     key,
                     pkgFromSnapshot,
@@ -133,7 +128,10 @@ export class DataStores implements IDisposable {
                     this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
                     (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
                     snapshotTree,
-                    isRootDataStore ?? true);
+                    // If there is no isRootDataStore in the attributes blob, set it to true. This ensures that data
+                    // stores in older documents are not garbage collected incorrectly. This may lead to additional
+                    // roots in the document but they won't break.
+                    attributes.isRootDataStore ?? true);
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }

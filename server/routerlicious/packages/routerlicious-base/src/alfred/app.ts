@@ -9,6 +9,7 @@ import {
     IProducer,
     ITenantManager,
     MongoManager,
+    IThrottler,
 } from "@fluidframework/server-services-core";
 import * as bodyParser from "body-parser";
 import compression from "compression";
@@ -39,6 +40,7 @@ const stream = split().on("data", (message) => {
 export function create(
     config: Provider,
     tenantManager: ITenantManager,
+    throttler: IThrottler,
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
     mongoManager: MongoManager,
@@ -83,6 +85,7 @@ export function create(
     const routes = alfredRoutes.create(
         config,
         tenantManager,
+        throttler,
         mongoManager,
         storage,
         producer,

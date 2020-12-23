@@ -11,3 +11,11 @@ export interface IGCData {
     /** The GC nodes of a Fluid object in the Container. Each node has an id and a set of routes to other GC nodes. */
     gcNodes: { [ id: string ]: string[] };
 }
+
+/**
+ * Represents the format of the GC details that is stored in the summary for each node.
+ */
+export interface IGCDetails {
+    /** The GC data of this node. */
+    gcData?: IGCData;
+}
