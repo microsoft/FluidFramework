@@ -31,7 +31,7 @@ data:
             "endpoint": "{{ .Values.historian.error.endpoint }}"
         },
         "throttling": {
-            "requestsPerMs": {{ .Values.historian.throttling.maxRequestsPerMs }},
+            "maxRequestsPerMs": {{ .Values.historian.throttling.maxRequestsPerMs }},
             "maxRequestBurst": {{ .Values.historian.throttling.maxRequestBurst }},
             "minCooldownIntervalInMs": {{ .Values.historian.throttling.minCooldownIntervalInMs }},
             "minThrottleIntervalInMs": {{ .Values.historian.throttling.minThrottleIntervalInMs }}

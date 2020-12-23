@@ -15,6 +15,7 @@ describe("RestWrapper", () => {
     let axiosErrorMock: Partial<AxiosInstance>;
     let axiosTooManyRequestsErrorZeroRetryAfterMock: Partial<AxiosInstance>;
     let axiosTooManyRequestsErrorNegativeRetryAfterMock: Partial<AxiosInstance>;
+    let axiosTooManyRequestsErrorPositiveRetryAfterMock: Partial<AxiosInstance>;
     let requestOptions: AxiosRequestConfig;
 
     before(() => {
@@ -119,6 +120,34 @@ describe("RestWrapper", () => {
                 },
             ),
         };
+
+        axiosTooManyRequestsErrorPositiveRetryAfterMock = {
+            request: async (options?) => new Promise<AxiosResponse>(
+                (resolve, reject) => {
+                    requestOptions = options;
+
+                    const response: AxiosResponse = {
+                        config: options,
+                        data: {retryAfter: 1, message: "throttled"},
+                        headers: {},
+                        request: options.responseType,
+                        status: 429,
+                        statusText: "TooManyRequests",
+                    };
+
+                    const err: AxiosError = {
+                        code: "429",
+                        config: options,
+                        message: "throttled",
+                        name: "TooManyRequests",
+                        request: {},
+                        response,
+                    };
+
+                    throw err;
+                },
+            ),
+        };
     });
 
     describe(".get", () => {
@@ -159,6 +188,26 @@ describe("RestWrapper", () => {
                 () => assert.fail("Promise was not rejected"),
                 // tslint:disable-next-line:no-void-expression
                 (err) => assert.ok(err, "Invalid response code rejected Promise"),
+            );
+        });
+
+
+        it("429 Response Code should not reject Promise with positive retryAfter", async () => {
+            // arrange
+            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
+
+            // Since in unit test 429 will always be returned, retry will be executed each time,
+            // using setTimeout to exit out of the retries.
+            setTimeout(() => {
+                process.exit();
+            }, 2000);
+
+            // act/assert
+            await rw.get(requestUrl).then(
+                // tslint:disable-next-line:no-void-expression
+                () => assert.ok("Promise was not rejected"),
+                // tslint:disable-next-line:no-void-expression
+                (err) => assert.fail("Invalid response code rejected Promise"),
             );
         });
         
@@ -264,6 +313,25 @@ describe("RestWrapper", () => {
                 () => assert.fail("Promise was not rejected"),
                 // tslint:disable-next-line:no-void-expression
                 (err) => assert.ok(err, "Invalid response code rejected Promise"),
+            );
+        });
+
+        it("429 Response Code should not reject Promise with positive retryAfter", async () => {
+            // arrange
+            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
+
+            // Since in unit test 429 will always be returned, retry will be executed each time,
+            // using setTimeout to exit out of the retries.
+            setTimeout(() => {
+                process.exit();
+            }, 2000);
+
+            // act/assert
+            await rw.post(requestUrl, {}).then(
+                // tslint:disable-next-line:no-void-expression
+                () => assert.ok("Promise was not rejected"),
+                // tslint:disable-next-line:no-void-expression
+                (err) => assert.fail("Invalid response code rejected Promise"),
             );
         });
 
@@ -373,6 +441,25 @@ describe("RestWrapper", () => {
             );
         });
 
+        it("429 Response Code should not reject Promise with positive retryAfter", async () => {
+            // arrange
+            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
+
+            // Since in unit test 429 will always be returned, retry will be executed each time,
+            // using setTimeout to exit out of the retries.
+            setTimeout(() => {
+                process.exit();
+            }, 2000);
+
+            // act/assert
+            await rw.delete(requestUrl, {}).then(
+                // tslint:disable-next-line:no-void-expression
+                () => assert.ok("Promise was not rejected"),
+                // tslint:disable-next-line:no-void-expression
+                (err) => assert.fail("Invalid response code rejected Promise"),
+            );
+        });
+
         it("Standard properties should not change", async () => {
             // arrange
             const rw = new RestWrapper(baseurl, undefined, {}, false, maxContentLength, axiosMock as AxiosInstance);
@@ -476,6 +563,25 @@ describe("RestWrapper", () => {
                 () => assert.fail("Promise was not rejected"),
                 // tslint:disable-next-line:no-void-expression
                 (err) => assert.ok(err, "Invalid response code rejected Promise"),
+            );
+        });
+
+        it("429 Response Code should not reject Promise with positive retryAfter", async () => {
+            // arrange
+            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
+
+            // Since in unit test 429 will always be returned, retry will be executed each time,
+            // using setTimeout to exit out of the retries.
+            setTimeout(() => {
+                process.exit();
+            }, 2000);
+
+            // act/assert
+            await rw.patch(requestUrl, {}).then(
+                // tslint:disable-next-line:no-void-expression
+                () => assert.ok("Promise was not rejected"),
+                // tslint:disable-next-line:no-void-expression
+                (err) => assert.fail("Invalid response code rejected Promise"),
             );
         });
 
