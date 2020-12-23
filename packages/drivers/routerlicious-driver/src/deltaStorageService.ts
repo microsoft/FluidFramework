@@ -17,10 +17,19 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
     constructor(
         private readonly tenantId: string,
         private readonly id: string,
-        private readonly storageService: IDeltaStorageService) {
+        private readonly storageService: IDeltaStorageService,
+        private logTail: api.ISequencedDocumentMessage[]) {
     }
 
     public async get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
+        const opsFromLogTail = this.logTail;
+        this.logTail = [];
+        if (opsFromLogTail.length > 0 && from !== undefined) {
+            return opsFromLogTail.filter((op) =>
+                op.sequenceNumber > from,
+            );
+        }
+
         return this.storageService.get(this.tenantId, this.id, from, to);
     }
 }
@@ -52,7 +61,6 @@ export class DeltaStorageService implements IDeltaStorageService {
         const ops = await Axios.get<api.ISequencedDocumentMessage[]>(
             `${this.url}?${query}`, { headers });
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return ops.data;
     }
 }

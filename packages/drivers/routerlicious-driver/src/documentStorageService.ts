@@ -5,11 +5,13 @@
 
 import { assert, fromBase64ToUtf8, gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy } from "@fluidframework/protocol-base";
 import {
     FileMode,
     ICreateBlobResponse,
+    ISequencedDocumentMessage,
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
@@ -27,8 +29,14 @@ export class DocumentStorageService implements IDocumentStorageService {
     // The values of this cache is useless. We only need the keys. So we are always putting
     // empty strings as values.
     private readonly blobsShaCache = new Map<string, string>();
+    private _logTail: ISequencedDocumentMessage[] = [];
+
     public get repositoryUrl(): string {
         return "";
+    }
+
+    public get logTail(): ISequencedDocumentMessage[] {
+        return this._logTail;
     }
 
     constructor(public readonly id: string, public manager: gitStorage.GitManager) {
@@ -45,8 +53,12 @@ export class DocumentStorageService implements IDocumentStorageService {
             requestVersion = versions[0];
         }
 
-        const tree = await this.manager.getTree(requestVersion.treeId);
-        return buildHierarchy(tree, this.blobsShaCache);
+        const rawTree = await this.manager.getTree(requestVersion.treeId);
+        const tree = buildHierarchy(rawTree, this.blobsShaCache);
+
+        const logTailHash = ".logTail" in tree.trees ? tree.trees[".logTail"].blobs.logTail : undefined;
+        this._logTail = logTailHash ? await readAndParse<ISequencedDocumentMessage[]>(this, logTailHash) : [];
+        return tree;
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
