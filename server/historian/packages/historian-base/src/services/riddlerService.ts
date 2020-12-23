@@ -26,7 +26,7 @@ export class RiddlerService implements ITenantService {
         return {
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "x-corrlation-id": getCorrelationId() || uuid.v4(),
+            "x-correlation-id": getCorrelationId() || uuid.v4(),
         };
     }
 
