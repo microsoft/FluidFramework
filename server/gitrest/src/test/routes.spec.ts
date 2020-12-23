@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/gitresources";
 import {
     ICreateRefParamsExternal,
-} from "@fluidframework/server-services-core";
+} from "@fluidframework/server-services-client";
 import * as async from "async";
 import lorem from "lorem-ipsum";
 import * as moniker from "moniker";

@@ -9,6 +9,7 @@ import {
     ICreateRefParamsExternal,
     IPatchRefParamsExternal,
     ITenantStorage } from "@fluidframework/server-services-core";
+import { IGetRefParamsExternal } from "@fluidframework/server-services-client";
 import request from "request";
 import * as winston from "winston";
 import { ICache } from "./definitions";
@@ -112,6 +113,14 @@ export class RestGitService {
     }
 
     public async getRef(ref: string): Promise<git.IRef> {
+        if (this.writeToExternalStorage)
+        {
+            const getRefParams: IGetRefParamsExternal = {
+                config: { enabled: true },
+            };
+            const params = encodeURIComponent(JSON.stringify(getRefParams));
+            return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}/${params}`);
+        }
         return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}`);
     }
 

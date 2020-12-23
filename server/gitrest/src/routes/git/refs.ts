@@ -4,7 +4,10 @@
  */
 
 import { IRef } from "@fluidframework/gitresources";
-import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-core";
+import {
+    IGetRefParamsExternal,
+    ICreateRefParamsExternal,
+    IPatchRefParamsExternal } from "@fluidframework/server-services-client";
 import { Response, Router } from "express";
 import * as nconf from "nconf";
 import git from "nodegit";
@@ -36,6 +39,7 @@ async function getRef(
     owner: string,
     repo: string,
     refId: string,
+    getRefParams: IGetRefParamsExternal,
     externalStorageManager: IExternalStorageManager): Promise<IRef> {
     const repository = await repoManager.open(owner, repo);
     try {
@@ -45,16 +49,19 @@ async function getRef(
         // Lookup external storage if commit does not exist.
         const fileName = refId.substring(refId.lastIndexOf("/") + 1);
         // If file does not exist or error trying to look up commit, return the original error.
-        try {
-            const result = await externalStorageManager.read(repo, fileName);
-            if (!result) {
-                winston.error(`getRef error: ${err} repo: ${repo} ref: ${refId}`);
+        if (getRefParams !== undefined && getRefParams.config?.enabled === true)
+        {
+            try {
+                const result = await externalStorageManager.read(repo, fileName);
+                if (!result) {
+                    winston.error(`getRef error: ${err} repo: ${repo} ref: ${refId}`);
+                    return Promise.reject(err);
+                }
+                return getRef(repoManager, owner, repo, refId, getRefParams, externalStorageManager);
+            } catch (bridgeError) {
+                winston.error(`Giving up on creating ref. BridgeError: ${bridgeError}`);
                 return Promise.reject(err);
             }
-            return getRef(repoManager, owner, repo, refId, externalStorageManager);
-        } catch (bridgeError) {
-            winston.error(`Giving up on creating ref. BridgeError: ${bridgeError}`);
-            return Promise.reject(err);
         }
     }
 }
@@ -136,7 +143,16 @@ function handleResponse(resultP: Promise<any>, response: Response, successCode: 
  * Simple method to convert from a path id to the git reference ID
  */
 function getRefId(id): string {
-    return `refs/${id}`;
+    return `refs/heads/${id}`;
+}
+
+function getReadParams(params): IGetRefParamsExternal {
+    if (params !== undefined)
+    {
+        const getRefParams: IGetRefParamsExternal = JSON.parse(decodeURIComponent(params));
+        return getRefParams;
+    }
+    return undefined;
 }
 
 export function create(
@@ -153,12 +169,24 @@ export function create(
         handleResponse(resultP, response);
     });
 
-    router.get("/repos/:owner/:repo/git/refs/*", (request, response, next) => {
+    router.get("/repos/:owner/:repo/git/refs/heads/:refId", (request, response, next) => {
         const resultP = getRef(
             repoManager,
             request.params.owner,
             request.params.repo,
-            getRefId(request.params[0]),
+            getRefId(request.params.refId),
+            undefined,
+            externalStorageManager);
+        handleResponse(resultP, response);
+    });
+
+    router.get("/repos/:owner/:repo/git/refs/heads/:refId/:config", (request, response, next) => {
+        const resultP = getRef(
+            repoManager,
+            request.params.owner,
+            request.params.repo,
+            getRefId(request.params.refId),
+            getReadParams(request.params.config),
             externalStorageManager);
         handleResponse(resultP, response);
     });
