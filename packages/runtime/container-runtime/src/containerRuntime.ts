@@ -78,7 +78,7 @@ import {
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
-    IGCData,
+    IGarbageCollectionData,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelope,
@@ -91,7 +91,7 @@ import {
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
-    IGCDetails,
+    IGarbageCollectionDetails,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -700,8 +700,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
                     summarizeInternal: SummarizeInternalFn,
-                    getGCDataFn: () => Promise<IGCData>,
-                    getInitialGCDetailsFn: () => Promise<IGCDetails | undefined>,
+                    getGCDataFn: () => Promise<IGarbageCollectionData>,
+                    getInitialGCDetailsFn: () => Promise<IGarbageCollectionDetails>,
                 ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,

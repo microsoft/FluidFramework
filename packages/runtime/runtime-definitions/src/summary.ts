@@ -10,7 +10,7 @@ import {
     ISnapshotTree,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IGCData, IGCDetails } from "./garbageCollection";
+import { IGarbageCollectionData, IGarbageCollectionDetails } from "./garbageCollection";
 
 export interface ISummaryStats {
     treeNodeCount: number;
@@ -26,7 +26,7 @@ export interface ISummaryTreeWithStats {
 
 export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
     /** The channel's garbage collection data */
-    gcData: IGCData;
+    gcData: IGarbageCollectionData;
 }
 
 export interface ISummarizeResult {
@@ -36,7 +36,7 @@ export interface ISummarizeResult {
 
 export interface IContextSummarizeResult extends ISummarizeResult {
     /** The context's garbage collection data */
-    gcData: IGCData;
+    gcData: IGarbageCollectionData;
 }
 
 export interface ISummarizeInternalResult extends IContextSummarizeResult {
@@ -142,7 +142,7 @@ export interface ISummarizerNode {
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
     // This tells whether this node is in use or not. Unused node can be garbage collected and reclaimed.
-    used: boolean;
+    usedRoutes: string[];
 
     summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
     createChild(
@@ -159,10 +159,10 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
         createParam: CreateChildSummarizerNodeParam,
         /** Optional configuration affecting summarize behavior */
         config?: ISummarizerNodeConfig,
-        getGCDataFn?: () => Promise<IGCData>,
-        getInitialGCDetailsFn?: () => Promise<IGCDetails | undefined>,
+        getGCDataFn?: () => Promise<IGarbageCollectionData>,
+        getInitialGCDetailsFn?: () => Promise<IGarbageCollectionDetails>,
     ): ISummarizerNodeWithGC;
 
     getChild(id: string): ISummarizerNodeWithGC | undefined;
-    getGCData(): Promise<IGCData>;
+    getGCData(): Promise<IGarbageCollectionData>;
 }

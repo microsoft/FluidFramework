@@ -22,8 +22,8 @@ import {
     gcBlobKey,
     IContextSummarizeResult,
     IFluidDataStoreContext,
-    IGCData,
-    IGCDetails,
+    IGarbageCollectionData,
+    IGarbageCollectionDetails,
     ISummarizeInternalResult,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
@@ -52,12 +52,11 @@ export class RemoteChannelContext implements IChannelContext {
     /**
      * This loads the GC details from the base snapshot of this context.
      */
-    private readonly initialGCDetailsP = new LazyPromise<IGCDetails | undefined>(async () => {
+    private readonly initialGCDetailsP = new LazyPromise<IGarbageCollectionDetails>(async () => {
         if (await this.services.objectStorage.contains(gcBlobKey)) {
-            return readAndParse<IGCDetails>(this.services.objectStorage, gcBlobKey);
+            return readAndParse<IGarbageCollectionDetails>(this.services.objectStorage, gcBlobKey);
         } else {
-            // For old snapshots that do not have GC blob return undefined.
-            return undefined;
+            return {};
         }
     });
 
@@ -93,7 +92,7 @@ export class RemoteChannelContext implements IChannelContext {
 
         // Currently, a channel context is always considered used. This will change when we start GC at layers below
         // data stores. See - https://github.com/microsoft/FluidFramework/issues/4611
-        this.summarizerNode.used = true;
+        this.summarizerNode.usedRoutes = [""];
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -238,11 +237,11 @@ export class RemoteChannelContext implements IChannelContext {
         return this.channel;
     }
 
-    public async getGCData(): Promise<IGCData> {
+    public async getGCData(): Promise<IGarbageCollectionData> {
         return this.summarizerNode.getGCData();
     }
 
-    private async getGCDataInternal(): Promise<IGCData> {
+    private async getGCDataInternal(): Promise<IGarbageCollectionData> {
         const channel = await this.getChannel();
         return channel.getGCData();
     }

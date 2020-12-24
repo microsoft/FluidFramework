@@ -11,8 +11,8 @@ import {
     CreateChildSummarizerNodeParam,
     gcBlobKey,
     IContextSummarizeResult,
-    IGCData,
-    IGCDetails,
+    IGarbageCollectionData,
+    IGarbageCollectionDetails,
     ISummarizeInternalResult,
     ISummarizerNodeConfig,
     ISummarizerNodeWithGC,
@@ -31,13 +31,13 @@ import {
 export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISummarizerNodeRootContract {}
 
 interface ISummaryNodeWithGC extends ISummaryNode {
-    readonly used: boolean;
+    readonly serializedUsedRoutes: string;
 }
 
-// Extend SummaryNode to add used state tracking to it.
+// Extend SummaryNode to add used routes tracking to it.
 class SummaryNodeWithGC extends SummaryNode implements ISummaryNodeWithGC {
     constructor(
-        public readonly used: boolean,
+        public readonly serializedUsedRoutes: string,
         summary: {
             readonly referenceSequenceNumber: number,
             readonly basePath: EscapedPath | undefined,
@@ -58,17 +58,17 @@ class SummaryNodeWithGC extends SummaryNode implements ISummaryNodeWithGC {
  *   directly into summarizeInternal method.
  */
 export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
-    public used: boolean = false;
-    private gcData: IGCData | undefined;
+    public usedRoutes: string[] = [];
+    private gcData: IGarbageCollectionData | undefined;
 
     // Tracks the work-in-progress used state during summary.
-    private wipUsedState: boolean | undefined;
+    private wipSerializedUsedRoutes: string | undefined;
 
     // This is the last known used state of this node as seen by the server as part of a summary.
-    private referenceUsedState: boolean | undefined;
+    private referenceUsedRoutes: string[] | undefined;
 
     // The initial GC details of this node.
-    private readonly initialGCDetailsP: LazyPromise<IGCDetails | undefined>;
+    private readonly initialGCDetailsP: LazyPromise<IGarbageCollectionDetails>;
 
     /**
      * Do not call constructor directly.
@@ -83,8 +83,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         latestSummary?: ISummaryNode,
         initialSummary?: IInitialSummary,
         wipSummaryLogger?: ITelemetryLogger,
-        private readonly getGCDataFn?: () => Promise<IGCData>,
-        getInitialGCDetailsFn?: () => Promise<IGCDetails | undefined>,
+        private readonly getGCDataFn?: () => Promise<IGarbageCollectionData>,
+        getInitialGCDetailsFn?: () => Promise<IGarbageCollectionDetails>,
     ) {
         super(
             logger,
@@ -97,15 +97,15 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         );
 
         this.initialGCDetailsP = new LazyPromise(async () => {
-            return getInitialGCDetailsFn ? getInitialGCDetailsFn() : undefined;
+            return getInitialGCDetailsFn ? getInitialGCDetailsFn() : { usedRoutes: [] };
         });
     }
 
     public async summarize(fullTree: boolean, trackState: boolean = true): Promise<IContextSummarizeResult> {
         // Update the reference used state from the initial GC details. This is used to find out if the used state has
         // changed from the last state seen by the server. If so, we cannot reuse previous summary.
-        if (this.referenceUsedState === undefined) {
-            this.referenceUsedState = (await this.initialGCDetailsP)?.used;
+        if (this.referenceUsedRoutes === undefined) {
+            this.referenceUsedRoutes = (await this.initialGCDetailsP).usedRoutes;
         }
 
         // If trackState is true, get summary from base summarizer node which tracks summary state.
@@ -113,10 +113,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         if (trackState) {
             const summarizeResult = await super.summarize(fullTree);
 
-            if (!this.used && this.referenceUsedState !== this.used) {
+            if (!this.isUsed() && this.hasUsedRoutesChanged()) {
                 const summaryTree = summarizeResult.summary;
-                assert(summaryTree.type === SummaryType.Tree, "Reusing previous summary when used state changed");
-                // Mark the summary tree as unused here. This will happen in the following issue:
+                assert(summaryTree.type === SummaryType.Tree, "Reusing previous summary when reference state changed");
+                // Mark the summary tree as unreferenced here. This will happen in the following issue:
                 // https://github.com/microsoft/FluidFramework/issues/4687
             }
 
@@ -146,7 +146,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      * Returns the GC data of this node. If nothing has changed since the last time we summarized, it tries to reuse
      * existing data.
      */
-    public async getGCData(): Promise<IGCData> {
+    public async getGCData(): Promise<IGarbageCollectionData> {
         assert(this.getGCDataFn !== undefined, "GC data cannot be retrieved without getGCDataFn");
 
         if (!super.hasChanged()) {
@@ -174,8 +174,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      * Called during the start of a summary. Update the work-in-progress used state.
      */
     public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
-        assert(this.wipUsedState === undefined, "wipUsedState should not be set yet in startSummary");
-        this.wipUsedState = this.used;
+        assert(this.wipSerializedUsedRoutes === undefined, "wip routes should not be set yet in startSummary");
+        this.wipSerializedUsedRoutes = JSON.stringify(this.usedRoutes);
         super.startSummary(referenceSequenceNumber, summaryLogger);
     }
 
@@ -188,14 +188,14 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         parentPath: EscapedPath | undefined,
         parentSkipRecursion: boolean,
     ) {
-        assert(this.wipUsedState !== undefined, "wipUsedState should have been set in startSummary");
-        const wipUsedState = this.wipUsedState;
+        assert(this.wipSerializedUsedRoutes !== undefined, "wip routes should have been set in startSummary");
+        const wipSerializedUsedRoutes = this.wipSerializedUsedRoutes;
 
         super.completeSummaryCore(proposalHandle, parentPath, parentSkipRecursion);
 
         const summaryNode = this.pendingSummaries.get(proposalHandle);
         if (summaryNode !== undefined) {
-            const summaryNodeWithGC = new SummaryNodeWithGC(wipUsedState, summaryNode);
+            const summaryNodeWithGC = new SummaryNodeWithGC(wipSerializedUsedRoutes, summaryNode);
             this.pendingSummaries.set(proposalHandle, summaryNodeWithGC);
         }
     }
@@ -204,7 +204,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      * Clears the work-in-progress state.
      */
     public clearSummary() {
-        this.wipUsedState = undefined;
+        this.wipSerializedUsedRoutes = undefined;
         super.clearSummary();
     }
 
@@ -218,7 +218,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     ): void {
         const summaryNode = this.pendingSummaries.get(proposalHandle) as ISummaryNodeWithGC;
         if (summaryNode !== undefined) {
-            this.referenceUsedState = summaryNode.used;
+            this.referenceUsedRoutes = JSON.parse(summaryNode.serializedUsedRoutes);
         }
 
         return super.refreshLatestSummaryFromPending(proposalHandle, referenceSequenceNumber);
@@ -238,8 +238,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     ): Promise<void> {
         const gcDetailsHash = snapshotTree.blobs[gcBlobKey];
         if (gcDetailsHash !== undefined) {
-            const gcDetails = await readAndParseBlob<IGCDetails>(gcDetailsHash);
-            this.referenceUsedState = gcDetails.used;
+            const gcDetails = await readAndParseBlob<IGarbageCollectionDetails>(gcDetailsHash);
+            this.referenceUsedRoutes = gcDetails.usedRoutes;
         }
 
         return super.refreshLatestSummaryFromSnapshot(
@@ -267,8 +267,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
          */
         createParam: CreateChildSummarizerNodeParam,
         config: ISummarizerNodeConfig = {},
-        getGCDataFn?: () => Promise<IGCData>,
-        getInitialGCDetailsFn?: () => Promise<IGCDetails | undefined>,
+        getGCDataFn?: () => Promise<IGarbageCollectionData>,
+        getInitialGCDetailsFn?: () => Promise<IGarbageCollectionDetails>,
     ): ISummarizerNodeWithGC {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
 
@@ -298,10 +298,19 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     /**
-     * Override the hasChanged method and add a condition to check if this node's used state changed.
+     * Override the hasChanged method and add a condition to check if this node's used routes changed.
      */
     protected hasChanged(): boolean {
-        return this.referenceUsedState !== this.used || super.hasChanged();
+        return super.hasChanged() || this.hasUsedRoutesChanged();
+    }
+
+    private isUsed(): boolean {
+        return this.usedRoutes.includes("") || this.usedRoutes.includes("/");
+    }
+
+    private hasUsedRoutesChanged(): boolean {
+        return this.referenceUsedRoutes === undefined ||
+            JSON.stringify(this.usedRoutes) !== JSON.stringify(this.referenceUsedRoutes);
     }
 }
 
@@ -322,8 +331,8 @@ export const createRootSummarizerNodeWithGC = (
     changeSequenceNumber: number,
     referenceSequenceNumber: number | undefined,
     config: ISummarizerNodeConfig = {},
-    getGCDataFn?: () => Promise<IGCData>,
-    getInitialGCDetailsFn?: () => Promise<IGCDetails | undefined>,
+    getGCDataFn?: () => Promise<IGarbageCollectionData>,
+    getInitialGCDetailsFn?: () => Promise<IGarbageCollectionDetails>,
 ): IRootSummarizerNodeWithGC => new SummarizerNodeWithGC(
     logger,
     summarizeInternalFn,

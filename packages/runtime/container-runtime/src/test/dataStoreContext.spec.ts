@@ -19,8 +19,8 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
-    IGCData,
-    IGCDetails,
+    IGarbageCollectionData,
+    IGarbageCollectionDetails,
     SummarizeInternalFn,
     CreateChildSummarizerNodeFn,
     CreateSummarizerNodeSource,
@@ -38,7 +38,7 @@ import { ContainerRuntime } from "../containerRuntime";
 
 describe("Data Store Context Tests", () => {
     const dataStoreId = "Test1";
-    const emptyGCData: IGCData = { gcNodes: {} };
+    const emptyGCData: IGarbageCollectionData = { gcNodes: {} };
     let createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 
     describe("LocalFluidDataStoreContext", () => {
@@ -58,8 +58,8 @@ describe("Data Store Context Tests", () => {
 
             createSummarizerNodeFn = (
                 summarizeInternal: SummarizeInternalFn,
-                getGCDataFn: () => Promise<IGCData>,
-                getInitialGCDetailsFn: () => Promise<IGCDetails | undefined>,
+                getGCDataFn: () => Promise<IGarbageCollectionData>,
+                getInitialGCDetailsFn: () => Promise<IGarbageCollectionDetails>,
             ) => summarizerNode.createChild(
                 summarizeInternal,
                 dataStoreId,
@@ -248,7 +248,7 @@ describe("Data Store Context Tests", () => {
                 const gcEntry = attachMessage.snapshot.entries.find((e) => e.path === gcBlobKey);
                 assert(gcEntry !== undefined, "There is no GC blob in the summary tree");
 
-                const contents = JSON.parse((gcEntry.value as IBlob).contents) as IGCDetails;
+                const contents = JSON.parse((gcEntry.value as IBlob).contents) as IGarbageCollectionDetails;
                 assert.deepStrictEqual(contents.gcData, emptyGCData, "GC data from summary should be empty.");
             });
         });
@@ -272,8 +272,8 @@ describe("Data Store Context Tests", () => {
 
             createSummarizerNodeFn = (
                 summarizeInternal: SummarizeInternalFn,
-                getGCDataFn: () => Promise<IGCData>,
-                getInitialGCDetailsFn: () => Promise<IGCDetails | undefined>,
+                getGCDataFn: () => Promise<IGarbageCollectionData>,
+                getInitialGCDetailsFn: () => Promise<IGarbageCollectionDetails | undefined>,
             ) => summarizerNode.createChild(
                 summarizeInternal,
                 dataStoreId,
@@ -423,7 +423,7 @@ describe("Data Store Context Tests", () => {
                     "summarize should always return a tree when fullTree is true");
                 const blob = summarizeResult.summary.tree[gcBlobKey] as ISummaryBlob;
 
-                const contents = JSON.parse(blob.content as string) as IGCDetails;
+                const contents = JSON.parse(blob.content as string) as IGarbageCollectionDetails;
                 assert.deepStrictEqual(contents.gcData, emptyGCData, "GC data should be empty.");
             });
 
@@ -431,7 +431,7 @@ describe("Data Store Context Tests", () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
                 };
-                const gcDetails: IGCDetails = {
+                const gcDetails: IGarbageCollectionDetails = {
                     used: false,
                     gcData: emptyGCData,
                 };
@@ -468,7 +468,7 @@ describe("Data Store Context Tests", () => {
                     "summarize should always return a tree when fullTree is true");
                 const blob = summarizeResult.summary.tree[gcBlobKey] as ISummaryBlob;
 
-                const contents = JSON.parse(blob.content as string) as IGCDetails;
+                const contents = JSON.parse(blob.content as string) as IGarbageCollectionDetails;
                 assert.deepStrictEqual(contents.gcData, gcDetails.gcData, "GC data from summary is incorrect.");
             });
 
@@ -476,7 +476,7 @@ describe("Data Store Context Tests", () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
                 };
-                const gcDetails: IGCDetails = {
+                const gcDetails: IGarbageCollectionDetails = {
                     used: false,
                     gcData: {
                         gcNodes: {
@@ -518,7 +518,7 @@ describe("Data Store Context Tests", () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
                 };
-                const gcDetails: IGCDetails = {
+                const gcDetails: IGarbageCollectionDetails = {
                     used: false,
                 };
                 const attributesBuffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");

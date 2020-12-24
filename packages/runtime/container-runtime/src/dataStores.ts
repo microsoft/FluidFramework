@@ -19,7 +19,7 @@ import {
     IEnvelope,
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
-    IGCData,
+    IGarbageCollectionData,
     IInboundSignalMessage,
     InboundAttachMessage,
     ISummarizeResult,
@@ -434,7 +434,7 @@ export class DataStores implements IDisposable {
         return builder.getSummaryTree();
     }
 
-    public async getGCData(): Promise<IGCData> {
+    public async getGCData(): Promise<IGarbageCollectionData> {
         const builder = new GCDataBuilder();
         // Iterate over each store and get their GC data.
         await Promise.all(Array.from(this.contexts)

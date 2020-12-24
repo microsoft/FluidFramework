@@ -9,8 +9,8 @@ import { cloneGCData } from "@fluidframework/garbage-collector";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
     CreateSummarizerNodeSource,
-    IGCData,
-    IGCDetails,
+    IGarbageCollectionData,
+    IGarbageCollectionDetails,
     ISummarizeInternalResult,
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
@@ -26,9 +26,9 @@ describe("SummarizerNodeWithGC Tests", () => {
     const subNode1Id = "/gcNode1/subNode";
     const subNode2Id = "/gcNode2/subNode";
 
-    let internalGCData: IGCData;
-    let initialGCDetails: IGCDetails | undefined;
-    let summarizeGCData: IGCData;
+    let internalGCData: IGarbageCollectionData;
+    let initialGCDetails: IGarbageCollectionDetails | undefined;
+    let summarizeGCData: IGarbageCollectionData;
     let rootSummarizerNode: IRootSummarizerNodeWithGC;
     let summarizerNode: ISummarizerNodeWithGC;
 
@@ -82,8 +82,8 @@ describe("SummarizerNodeWithGC Tests", () => {
         };
     }
 
-    const getInternalGCData = async (): Promise<IGCData> => internalGCData;
-    const getInitialGCDetails = async (): Promise<IGCDetails | undefined> => initialGCDetails;
+    const getInternalGCData = async (): Promise<IGarbageCollectionData> => internalGCData;
+    const getInitialGCDetails = async (): Promise<IGarbageCollectionDetails | undefined> => initialGCDetails;
 
     describe("getGCData API", () => {
         it("fails when function to get GC data is not provided", async () => {

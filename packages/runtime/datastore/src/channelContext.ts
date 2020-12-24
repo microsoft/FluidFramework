@@ -10,8 +10,8 @@ import {
     gcBlobKey,
     IChannelSummarizeResult,
     IContextSummarizeResult,
-    IGCData,
-    IGCDetails,
+    IGarbageCollectionData,
+    IGarbageCollectionDetails,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -30,7 +30,7 @@ export interface IChannelContext {
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 
-    getGCData(): Promise<IGCData>;
+    getGCData(): Promise<IGarbageCollectionData>;
 }
 
 export function createServiceEndpoints(
@@ -66,8 +66,8 @@ export function summarizeChannel(
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
 
     // Add GC details to the summary.
-    const gcDetails: IGCDetails = {
-        used: true,
+    const gcDetails: IGarbageCollectionDetails = {
+        usedRoutes: [""],
         gcData: summarizeResult.gcData,
     };
     addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
