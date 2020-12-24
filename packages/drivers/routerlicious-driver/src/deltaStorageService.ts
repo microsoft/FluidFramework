@@ -41,14 +41,14 @@ export class DeltaStorageService implements IDeltaStorageService {
         to?: number): Promise<api.ISequencedDocumentMessage[]> {
         const query = querystring.stringify({ from, to });
 
-        let headers: OutgoingHttpHeaders = {
+        const headers: OutgoingHttpHeaders = {
             "x-correlation-id": uuid.v4(),
         };
 
         const storageToken = await this.tokenProvider.fetchStorageToken();
 
         if (storageToken) {
-            headers["Authorization"] = `Basic ${fromUtf8ToBase64(`${tenantId}:${storageToken.jwt}`)}`;
+            headers.Authorization = `Basic ${fromUtf8ToBase64(`${tenantId}:${storageToken.jwt}`)}`;
         }
 
         const ops = await Axios.get<api.ISequencedDocumentMessage[]>(
