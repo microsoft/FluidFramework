@@ -19,4 +19,4 @@ export const bindCorrelationId = (headerName: string = "x-correlation-id") =>
         const id: string = req.header(headerName) || uuid.v4();
         res.setHeader(headerName, id);
         asyncLocalStorage.run(id, () => next());
-    })
+    });
