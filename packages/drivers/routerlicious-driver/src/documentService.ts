@@ -6,6 +6,7 @@
 import * as api from "@fluidframework/driver-definitions";
 import { IClient, IErrorTrackingService } from "@fluidframework/protocol-definitions";
 import { GitManager, Historian, ICredentials, IGitCache } from "@fluidframework/server-services-client";
+import { getCorrelationId } from "@fluidframework/server-services-utils";
 import io from "socket.io-client";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
@@ -61,7 +62,8 @@ export class DocumentService implements api.IDocumentService {
             this.gitUrl,
             this.historianApi,
             this.disableCache,
-            credentials);
+            credentials,
+            getCorrelationId);
         const gitManager = new GitManager(historian);
 
         // Insert cached seed data

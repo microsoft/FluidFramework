@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { OutgoingHttpHeaders } from "http";
 import querystring from "querystring";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { IDeltaStorageService, IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import Axios from "axios";
+import * as uuid from "uuid";
 import { ITokenProvider } from "./tokens";
 
 /**
@@ -39,14 +41,14 @@ export class DeltaStorageService implements IDeltaStorageService {
         to?: number): Promise<api.ISequencedDocumentMessage[]> {
         const query = querystring.stringify({ from, to });
 
-        let headers: { Authorization: string } | null = null;
+        let headers: OutgoingHttpHeaders = {
+            "x-correlation-id": uuid.v4(),
+        };
 
         const storageToken = await this.tokenProvider.fetchStorageToken();
 
         if (storageToken) {
-            headers = {
-                Authorization: `Basic ${fromUtf8ToBase64(`${tenantId}:${storageToken.jwt}`)}`,
-            };
+            headers["Authorization"] = `Basic ${fromUtf8ToBase64(`${tenantId}:${storageToken.jwt}`)}`;
         }
 
         const ops = await Axios.get<api.ISequencedDocumentMessage[]>(
