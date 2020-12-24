@@ -17,7 +17,7 @@ describe("RestWrapper", () => {
 
     before(() => {
         axiosMock = {
-            request: async (options?) => new Promise<AxiosResponse>(
+            request: async (options?) => new Promise<any>(
                 (resolve, reject) => {
                     requestOptions = options;
                     const response: AxiosResponse = {
@@ -35,7 +35,7 @@ describe("RestWrapper", () => {
         };
 
         axiosErrorMock = {
-            request: async (options?) => new Promise<AxiosResponse>(
+            request: async (options?) => new Promise<any>(
                 (resolve, reject) => {
                     requestOptions = options;
 
@@ -55,6 +55,8 @@ describe("RestWrapper", () => {
                         name: "ServerError",
                         request: {},
                         response,
+                        isAxiosError: true,
+                        toJSON: () => ({}),
                     };
 
                     throw err;
