@@ -6,9 +6,11 @@
 import querystring from "querystring";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { IDeltaStorageService, IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
-import * as api from "@fluidframework/protocol-definitions";
 import Axios from "axios";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
 import { ITokenProvider } from "./tokens";
+import { DocumentStorageService } from "./documentStorageService";
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document
@@ -18,12 +20,16 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
         private readonly tenantId: string,
         private readonly id: string,
         private readonly storageService: IDeltaStorageService,
-        private logTail: api.ISequencedDocumentMessage[]) {
+        private readonly documentStorageService: DocumentStorageService) {
     }
 
-    public async get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
-        const opsFromLogTail = this.logTail;
-        this.logTail = [];
+    private logtailHash: string = this.documentStorageService.logTailHash;
+
+    public async get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]> {
+        const opsFromLogTail = this.logtailHash ? await readAndParse<ISequencedDocumentMessage[]>
+            (this.documentStorageService, this.logtailHash) : [];
+
+        this.logtailHash = "";
         if (opsFromLogTail.length > 0 && from !== undefined) {
             return opsFromLogTail.filter((op) =>
                 op.sequenceNumber > from,
@@ -45,7 +51,7 @@ export class DeltaStorageService implements IDeltaStorageService {
         tenantId: string,
         id: string,
         from?: number,
-        to?: number): Promise<api.ISequencedDocumentMessage[]> {
+        to?: number): Promise<ISequencedDocumentMessage[]> {
         const query = querystring.stringify({ from, to });
 
         let headers: { Authorization: string } | null = null;
@@ -58,7 +64,7 @@ export class DeltaStorageService implements IDeltaStorageService {
             };
         }
 
-        const ops = await Axios.get<api.ISequencedDocumentMessage[]>(
+        const ops = await Axios.get<ISequencedDocumentMessage[]>(
             `${this.url}?${query}`, { headers });
 
         return ops.data;

@@ -100,7 +100,7 @@ export class DocumentService implements api.IDocumentService {
 
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, this.tokenProvider);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId,
-            deltaStorage, this.documentStorageService.logTail);
+            deltaStorage, this.documentStorageService);
     }
 
     /**
