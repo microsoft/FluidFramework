@@ -17,25 +17,25 @@ describe("RestWrapper", () => {
 
     before(() => {
         axiosMock = {
-            request: async (options?) => new Promise<AxiosResponse>(
+            request: async <T = any, R = AxiosResponse<T>>(options?) => new Promise<R>(
                 (resolve, reject) => {
                     requestOptions = options;
-                    const response: AxiosResponse = {
+                    const response: AxiosResponse<T> = {
                         config: {},
-                        data: {},
+                        data: {} as T,
                         headers: {},
                         request: options.responseType,
                         status: 200,
                         statusText: "OK",
                     };
 
-                    resolve(response);
+                    resolve(response as any);
                 },
             ),
         };
 
         axiosErrorMock = {
-            request: async (options?) => new Promise<AxiosResponse>(
+            request: async <T = any, R = AxiosResponse<T>>(options?) => new Promise<R>(
                 (resolve, reject) => {
                     requestOptions = options;
 
@@ -55,6 +55,8 @@ describe("RestWrapper", () => {
                         name: "ServerError",
                         request: {},
                         response,
+                        isAxiosError: true,
+                        toJSON: () => ({}),
                     };
 
                     throw err;
