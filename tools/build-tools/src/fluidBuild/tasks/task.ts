@@ -60,7 +60,7 @@ export abstract class Task {
 
     public abstract initializeDependentTask(): void;
     public abstract get isLeaf(): boolean;
-    public abstract matchTask(command: string): Task | undefined;
+    public abstract matchTask(command: string, options?: any): Task | undefined;
     public abstract collectLeafTasks(leafTasks: LeafTask[]): void;
     protected abstract async checkIsUpToDate(): Promise<boolean>;
     protected abstract async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult>;

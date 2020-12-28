@@ -25,5 +25,9 @@ data:
             "port": "{{ .Values.historian.redis.port }}",
             "tls": {{ .Values.historian.redis.tls }},
             "pass": "{{ .Values.historian.redis.password }}"
+        },
+        "error": {
+            "track": {{ .Values.historian.error.track }},
+            "endpoint": "{{ .Values.historian.error.endpoint }}"
         }
     }

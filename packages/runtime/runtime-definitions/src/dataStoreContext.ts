@@ -26,10 +26,10 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
-    ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
+import { IGCData } from "./garbageCollection";
 import { IInboundSignalMessage } from "./protocol";
 import {
     CreateChildSummarizerNodeParam,
@@ -165,12 +165,6 @@ export interface IFluidDataStoreChannel extends
     bindToContext(): void;
 
     /**
-     * @deprecated - Replaced by getAttachSummary()
-     * Retrieves the snapshot used as part of the initial snapshot message
-     */
-    getAttachSnapshot(): ITreeEntry[];
-
-    /**
      * Retrieves the summary used as part of the initial summary message
      */
     getAttachSummary(): IChannelSummarizeResult;
@@ -194,6 +188,12 @@ export interface IFluidDataStoreChannel extends
     summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult>;
 
     /**
+     * Returns the GC data for this data store. It contains a list of GC nodes that contains references to
+     * other GC nodes.
+     */
+    getGCData(): Promise<IGCData>;
+
+    /**
      * Notifies this object about changes in the connection state.
      * @param value - New connection state.
      * @param clientId - ID of the client. It's old ID when in disconnected state and
@@ -209,7 +209,12 @@ export interface IFluidDataStoreChannel extends
      */
     reSubmit(type: string, content: any, localOpMetadata: unknown);
 }
-export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => ISummarizerNodeWithGC;
+
+export type CreateChildSummarizerNodeFn = (
+    summarizeInternal: SummarizeInternalFn,
+    getGCDataFn: () => Promise<IGCData>,
+    getInitialGCDataFn: () => Promise<IGCData | undefined>,
+) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
     (event: "leader" | "notleader" | "attaching" | "attached", listener: () => void);

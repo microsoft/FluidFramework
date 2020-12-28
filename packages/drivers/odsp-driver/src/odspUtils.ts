@@ -75,7 +75,7 @@ export async function fetchHelper(
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
-                `Error ${response.status} from the server`, response.status, response);
+                `Error ${response.status}`, response.status, response);
         }
         return response;
     }, (error) => {

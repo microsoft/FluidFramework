@@ -8,7 +8,6 @@ import {
     IConnect,
     IConnected,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
@@ -20,6 +19,7 @@ import {
     IDatabaseManager,
     IDocumentStorage,
     ILogger,
+    IServiceConfiguration,
     IWebSocket,
     IWebSocketServer,
     MongoDatabaseManager,

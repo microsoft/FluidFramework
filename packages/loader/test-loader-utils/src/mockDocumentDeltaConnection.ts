@@ -6,10 +6,10 @@
 import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
+    IClientConfiguration,
     IDocumentMessage,
     INack,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
@@ -17,7 +17,7 @@ import {
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 // This is coppied from alfred.  Probably should clean this up.
-const DefaultServiceConfiguration: IServiceConfiguration = {
+const DefaultServiceConfiguration: IClientConfiguration = {
     blockSize: 64436,
     maxMessageSize: 16 * 1024,
     summary: {

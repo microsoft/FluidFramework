@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
     IChannel,
@@ -21,10 +21,18 @@ import {
     CreateChildSummarizerNodeFn,
     IContextSummarizeResult,
     IFluidDataStoreContext,
+    IGCData,
+    IGCDetails,
     ISummarizeInternalResult,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
-import { createServiceEndpoints, IChannelContext, summarizeChannel } from "./channelContext";
+import {
+    attributesBlobKey,
+    createServiceEndpoints,
+    gcBlobKey,
+    IChannelContext,
+    summarizeChannel,
+} from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
@@ -40,6 +48,19 @@ export class RemoteChannelContext implements IChannelContext {
         readonly objectStorage: ChannelStorageService,
     };
     private readonly summarizerNode: ISummarizerNodeWithGC;
+
+    /**
+     * This loads the GC details from the base snapshot of this context.
+     */
+    private readonly initialGCDetailsP = new LazyPromise<IGCDetails>(async () => {
+        if (await this.services.objectStorage.contains(gcBlobKey)) {
+            return readAndParse<IGCDetails>(this.services.objectStorage, gcBlobKey);
+        } else {
+            // Default value of initial GC details in case the initial snapshot does not have GC details blob.
+            return {};
+        }
+    });
+
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -47,9 +68,9 @@ export class RemoteChannelContext implements IChannelContext {
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
         private readonly id: string,
-        baseSnapshot: Promise<ISnapshotTree> | ISnapshotTree,
+        baseSnapshot:  ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
-        extraBlobs: Promise<Map<string, string>> | undefined,
+        extraBlobs: Map<string, string> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private readonly attachMessageType?: string,
     ) {
@@ -59,12 +80,16 @@ export class RemoteChannelContext implements IChannelContext {
             submitFn,
             () => dirtyFn(this.id),
             storageService,
-            Promise.resolve(baseSnapshot),
+            baseSnapshot,
             extraBlobs);
 
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
-        this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
+        this.summarizerNode = createSummarizerNode(
+            thisSummarizeInternal,
+            async () => this.getGCDataInternal(),
+            async () => this.getInitialGCData(),
+        );
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -122,10 +147,10 @@ export class RemoteChannelContext implements IChannelContext {
         assert(!this.isLoaded, "Remote channel must not already be loaded when loading");
 
         let attributes: IChannelAttributes | undefined;
-        if (await this.services.objectStorage.contains(".attributes")) {
+        if (await this.services.objectStorage.contains(attributesBlobKey)) {
             attributes = await readAndParse<IChannelAttributes | undefined>(
                 this.services.objectStorage,
-                ".attributes");
+                attributesBlobKey);
         }
 
         let factory: IChannelFactory | undefined;
@@ -207,5 +232,21 @@ export class RemoteChannelContext implements IChannelContext {
         // and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
         this.services.deltaConnection.setConnectionState(this.dataStoreContext.connected);
         return this.channel;
+    }
+
+    public async getGCData(): Promise<IGCData> {
+        return this.summarizerNode.getGCData();
+    }
+
+    private async getGCDataInternal(): Promise<IGCData> {
+        const channel = await this.getChannel();
+        return channel.getGCData();
+    }
+
+    /**
+     * This returns the GC data in the initial GC details of this context.
+     */
+    private async getInitialGCData(): Promise<IGCData | undefined> {
+        return (await this.initialGCDetailsP).gcData;
     }
 }

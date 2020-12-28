@@ -58,8 +58,7 @@ describe("Odsp Error", () => {
                 "message should contain original message");
             assert.notEqual(-1, networkError.message.indexOf("testStatusText"),
                 "message should contain Response.statusText");
-            assert.notEqual(-1, networkError.message.indexOf("default"),
-                "message should contain Response.type");
+            assert((networkError as any).type === "default", "message should contain Response.type");
             assert.equal(false, networkError.canRetry, "canRetry should be false");
         }
     });

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/synthesize",
-  "version": "0.31.0",
+  "version": "0.32.0",
   "description": "A library for synthesizing scope objects.",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -16,14 +16,16 @@
   ],
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:commonjs": "npm run tsc && npm run build:test",
+    "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
@@ -55,13 +57,13 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.31.0"
+    "@fluidframework/core-interfaces": "^0.32.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
-    "@fluidframework/datastore": "^0.31.0",
+    "@fluidframework/datastore": "^0.32.0",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
-    "@fluidframework/mocha-test-setup": "^0.31.0",
+    "@fluidframework/mocha-test-setup": "^0.32.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",

@@ -18,7 +18,13 @@ import {
     BindState,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { Deferred, assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
+import {
+    assert,
+    Deferred,
+    LazyPromise,
+    TypedEventEmitter,
+    unreachableCase,
+} from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
@@ -27,7 +33,6 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
-    ITree,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -47,6 +52,8 @@ import {
     IFluidDataStoreContextDetached,
     IFluidDataStoreContextEvents,
     IFluidDataStoreRegistry,
+    IGCData,
+    IGCDetails,
     IInboundSignalMessage,
     IProvideFluidDataStoreFactory,
     ISummarizeInternalResult,
@@ -55,6 +62,8 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
+
+export const gcBlobKey = "gc";
 
 function createAttributes(pkg: readonly string[], isRootDataStore: boolean): IFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
@@ -180,8 +189,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public async isRoot(): Promise<boolean> {
-        const initialDetails = await this.getInitialSnapshotDetails();
-        return initialDetails.isRootDataStore;
+        return (await this.getInitialSnapshotDetails()).isRootDataStore;
     }
 
     protected registry: IFluidDataStoreRegistry | undefined;
@@ -237,7 +245,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
-        this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
+        this.summarizerNode = createSummarizerNode(
+            thisSummarizeInternal,
+            async () => this.getGCDataInternal(),
+            async () => this.getInitialGCData(),
+        );
     }
 
     public dispose(): void {
@@ -391,12 +403,46 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         await this.realize();
 
-        const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const summarizeResult = await this.channel!.summarize(fullTree, trackState);
+
+        // Add data store's attributes to the summary.
+        const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
         const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
+
+        // Add GC details to the summary.
+        const gcDetails: IGCDetails = {
+            gcData: summarizeResult.gcData,
+        };
+        addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
+
         return { ...summarizeResult, id: this.id };
+    }
+
+    public async getGCData(): Promise<IGCData> {
+        return this.summarizerNode.getGCData();
+    }
+
+    private async getGCDataInternal(): Promise<IGCData> {
+        await this.realize();
+        assert(this.channel !== undefined, "Channel should not be undefined when running GC");
+
+        // back-compat - 0.31. Older data store runtimes will not have getGCData API.
+        if (this.channel.getGCData === undefined) {
+            return {
+                gcNodes: {},
+            };
+        }
+        return this.channel.getGCData();
+    }
+
+    /**
+     * This returns the initial GC data of this context.
+     */
+    protected async getInitialGCData(): Promise<IGCData | undefined> {
+        const initialGCDetails = await this.getInitialGCDetails();
+        return initialGCDetails.gcData;
     }
 
     /**
@@ -522,6 +568,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
+    protected abstract getInitialGCDetails(): Promise<IGCDetails>;
+
     public reSubmit(contents: any, localOpMetadata: unknown) {
         assert(!!this.channel, "Channel must exist when resubmitting ops");
         const innerContents = contents as FluidDataStoreMessage;
@@ -535,12 +583,18 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
-        return (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
+        return (
+            summarizeInternal: SummarizeInternalFn,
+            getGCDataFn: () => Promise<IGCData>,
+            getInitialGCDataFn: () => Promise<IGCData | undefined>,
+        ) => this.summarizerNode.createChild(
             summarizeInternal,
             id,
             createParam,
             // DDS will not create failure summaries
             { throwOnFailure: true },
+            getGCDataFn,
+            getInitialGCDataFn,
         );
     }
 
@@ -550,11 +604,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 }
 
 export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
-    private details: ISnapshotDetails | undefined;
-
     constructor(
         id: string,
-        private readonly initSnapshotValue: Promise<ISnapshotTree> | string | undefined,
+        private readonly initSnapshotValue: ISnapshotTree | string | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject,
@@ -577,83 +629,96 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         );
     }
 
-    public generateAttachMessage(): IAttachMessage {
-        throw new Error("Cannot attach remote store");
-    }
+    private readonly initialSnapshotDetailsP =  new LazyPromise<ISnapshotDetails>(async () => {
+        let tree: ISnapshotTree | undefined;
+        let isRootDataStore = true;
 
-    // This should only be called during realize to get the baseSnapshot,
-    // or it can be called at any time to get the pkg, but that assumes the
-    // pkg can never change for a store.
-    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
-        if (!this.details) {
-            let tree: ISnapshotTree | undefined;
-            let isRootStore: boolean | undefined;
+        if (typeof this.initSnapshotValue === "string") {
+            const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
+            tree = await this.storage.getSnapshotTree(commit) ?? undefined;
+        } else {
+            tree = this.initSnapshotValue;
+        }
 
-            if (typeof this.initSnapshotValue === "string") {
-                const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
-                tree = await this.storage.getSnapshotTree(commit) ?? undefined;
-            } else {
-                tree = await this.initSnapshotValue;
-            }
+        const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
+        if (tree) {
+            const loadedSummary = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
+            tree = loadedSummary.baseSummary;
+            // Prepend outstanding ops to pending queue of ops to process.
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.pending = loadedSummary.outstandingOps.concat(this.pending!);
+        }
 
-            const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
-            if (tree) {
-                const loadedSummary = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
-                tree = loadedSummary.baseSummary;
-                // Prepend outstanding ops to pending queue of ops to process.
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.pending = loadedSummary.outstandingOps.concat(this.pending!);
-            }
+        if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
+            // Need to rip through snapshot and use that to populate extraBlobs
+            const attributes =
+                await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
 
-            if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
-                // Need to rip through snapshot and use that to populate extraBlobs
-                const { pkg, snapshotFormatVersion, isRootDataStore } =
-                    await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
-
-                let pkgFromSnapshot: string[];
-                // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
-                // For snapshotFormatVersion = "0.1" or "0.2", pkg is jsonified, otherwise it is just a string.
-                switch (snapshotFormatVersion) {
-                    case undefined: {
-                        if (pkg.startsWith("[\"") && pkg.endsWith("\"]")) {
-                            pkgFromSnapshot = JSON.parse(pkg) as string[];
-                        } else {
-                            pkgFromSnapshot = [pkg];
-                        }
-                        break;
+            let pkgFromSnapshot: string[];
+            // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
+            // For snapshotFormatVersion = "0.1" or "0.2", pkg is jsonified, otherwise it is just a string.
+            switch (attributes.snapshotFormatVersion) {
+                case undefined: {
+                    if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
+                        pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
+                    } else {
+                        pkgFromSnapshot = [attributes.pkg];
                     }
-                    case "0.2": {
-                        tree = tree.trees[channelsTreeName];
-                        // Intentional fallthrough, since package is still JSON
-                    }
-                    case "0.1": {
-                        pkgFromSnapshot = JSON.parse(pkg) as string[];
-                        break;
-                    }
-                    default: {
-                        unreachableCase(
-                            snapshotFormatVersion,
-                            `Invalid snapshot format version ${snapshotFormatVersion}`);
-                    }
+                    break;
                 }
-                this.pkg = pkgFromSnapshot;
-                isRootStore = isRootDataStore;
+                case "0.2": {
+                    tree = tree.trees[channelsTreeName];
+                    // Intentional fallthrough, since package is still JSON
+                }
+                case "0.1": {
+                    pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
+                    break;
+                }
+                default: {
+                    unreachableCase(
+                        attributes.snapshotFormatVersion,
+                        `Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
+                }
             }
+            this.pkg = pkgFromSnapshot;
 
             /**
              * If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that
              * data stores in older documents are not garbage collected incorrectly. This may lead to additional
              * roots in the document but they won't break.
              */
-            this.details = {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                pkg: this.pkg!,
-                isRootDataStore: isRootStore ?? true,
-                snapshot: tree,
-            };
+            isRootDataStore = attributes.isRootDataStore ?? true;
         }
 
-        return this.details;
+        return {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            pkg: this.pkg!,
+            snapshot: tree,
+            isRootDataStore,
+        };
+    });
+
+    private readonly initialGCDetailsP = new LazyPromise<IGCDetails>(async () => {
+        // If the initial snapshot is undefined or string, the snapshot is in old format and won't have GC details.
+        if (!(!this.initSnapshotValue || typeof this.initSnapshotValue === "string")
+            && this.initSnapshotValue.blobs[gcBlobKey] !== undefined) {
+            return readAndParse<IGCDetails>(this.storage, this.initSnapshotValue.blobs[gcBlobKey]);
+        } else {
+            // Default value of initial GC details in case the initial snapshot does not have GC details.
+            return {};
+        }
+    });
+
+    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+        return this.initialSnapshotDetailsP;
+    }
+
+    protected async getInitialGCDetails(): Promise<IGCDetails> {
+        return this.initialGCDetailsP;
+    }
+
+    public generateAttachMessage(): IAttachMessage {
+        throw new Error("Cannot attach remote store");
     }
 }
 
@@ -703,25 +768,23 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
     public generateAttachMessage(): IAttachMessage {
         assert(this.channel !== undefined, "There should be a channel when generating attach message");
-
-        let snapshot: ITree;
-        /**
-         * back-compat 0.28 - snapshot is being removed and replaced with summary.
-         * So, getAttachSnapshot has been deprecated and getAttachSummary should be used instead.
-         */
-        if (this.channel.getAttachSummary !== undefined) {
-            const summaryTree = this.channel.getAttachSummary();
-            // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
-            snapshot = convertSummaryTreeToITree(summaryTree.summary);
-        } else {
-            const entries = this.channel.getAttachSnapshot();
-            snapshot = { entries, id: null };
-        }
-
         assert(this.pkg !== undefined, "pkg should be available in local data store context");
         assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store context");
-        const attributesBlob = createAttributesBlob(this.pkg, this.isRootDataStore);
-        snapshot.entries.push(attributesBlob);
+
+        const summarizeResult = this.channel.getAttachSummary();
+
+        // Add data store's attributes to the summary.
+        const attributes: IFluidDataStoreAttributes = createAttributes(this.pkg, this.isRootDataStore);
+        addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
+
+        // Add GC details to the summary.
+        const gcDetails: IGCDetails = {
+            gcData: summarizeResult.gcData,
+        };
+        addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
+
+        // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
+        const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
 
         const message: IAttachMessage = {
             id: this.id,
@@ -733,13 +796,18 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     }
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
-        assert(this.pkg !== undefined, "pkg should be available in local data store context");
-        assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store context");
+        assert(this.pkg !== undefined, "pkg should be available in local data store");
+        assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store");
         return {
             pkg: this.pkg,
-            isRootDataStore: this.isRootDataStore,
             snapshot: this.snapshotTree,
+            isRootDataStore: this.isRootDataStore,
         };
+    }
+
+    protected async getInitialGCDetails(): Promise<IGCDetails> {
+        // There is no initial GC details for local data stores.
+        return {};
     }
 }
 

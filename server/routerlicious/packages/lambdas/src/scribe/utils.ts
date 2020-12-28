@@ -7,11 +7,9 @@ import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IProtocolState } from "@fluidframework/protocol-definitions";
 
 export const initializeProtocol = (
-    documentId: string,
     protocolState: IProtocolState,
     term: number,
 ): ProtocolOpHandler => new ProtocolOpHandler(
-    documentId,
     protocolState.minimumSequenceNumber,
     protocolState.sequenceNumber,
     term,

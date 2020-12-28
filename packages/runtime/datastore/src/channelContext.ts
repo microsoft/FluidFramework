@@ -6,12 +6,18 @@
 import { IChannel } from "@fluidframework/datastore-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult, IContextSummarizeResult } from "@fluidframework/runtime-definitions";
+import {
+    IChannelSummarizeResult,
+    IContextSummarizeResult,
+    IGCData,
+    IGCDetails,
+} from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 
 export const attributesBlobKey = ".attributes";
+export const gcBlobKey = "gc";
 
 export interface IChannelContext {
     getChannel(): Promise<IChannel>;
@@ -23,6 +29,8 @@ export interface IChannelContext {
     summarize(fullTree?: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
+
+    getGCData(): Promise<IGCData>;
 }
 
 export function createServiceEndpoints(
@@ -31,8 +39,8 @@ export function createServiceEndpoints(
     submitFn: (content: any, localOpMetadata: unknown) => void,
     dirtyFn: () => void,
     storageService: IDocumentStorageService,
-    tree?: Promise<ISnapshotTree>,
-    extraBlobs?: Promise<Map<string, string>>,
+    tree?: ISnapshotTree,
+    extraBlobs?: Map<string, string>,
 ) {
     const deltaConnection = new ChannelDeltaConnection(
         id,
@@ -53,7 +61,15 @@ export function summarizeChannel(
     trackState: boolean = false,
 ): IChannelSummarizeResult {
     const summarizeResult = channel.summarize(fullTree, trackState);
+
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
+
+    // Add GC details to the summary.
+    const gcDetails: IGCDetails = {
+        gcData: summarizeResult.gcData,
+    };
+    addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
+
     return summarizeResult;
 }

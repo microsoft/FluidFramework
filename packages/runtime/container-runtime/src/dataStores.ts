@@ -19,7 +19,7 @@ import {
     IEnvelope,
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
-    IGraphNode,
+    IGCData,
     IInboundSignalMessage,
     InboundAttachMessage,
     ISummarizeResult,
@@ -38,9 +38,10 @@ import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
+    dataStoreAttributesBlobName,
     nonDataStorePaths,
 } from "@fluidframework/container-runtime-definitions";
-import { normalizeAndPrefixGCNodeIds } from "@fluidframework/garbage-collector";
+import { GCDataBuilder } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime } from "./containerRuntime";
 import {
@@ -99,7 +100,7 @@ export class DataStores implements IDisposable {
             if (this.runtime.attachState !== AttachState.Detached) {
                 dataStoreContext = new RemotedFluidDataStoreContext(
                     key,
-                    typeof value === "string" ? value : Promise.resolve(value),
+                    value,
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
@@ -111,26 +112,20 @@ export class DataStores implements IDisposable {
                 }
                 const snapshotTree = value;
                 // Need to rip through snapshot.
-                const { pkg, snapshotFormatVersion, isRootDataStore }
-                    = readAndParseFromBlobs<IFluidDataStoreAttributes>(
+                const attributes = readAndParseFromBlobs<IFluidDataStoreAttributes>(
                         snapshotTree.blobs,
-                        snapshotTree.blobs[".component"]);
+                        snapshotTree.blobs[dataStoreAttributesBlobName]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
                 // For snapshotFormatVersion = "0.1" or "0.2", pkg is jsonified, otherwise it is just a string.
                 // However the feature of loading a detached container from snapshot, is added when the
                 // snapshotFormatVersion is at least "0.1", so we don't expect it to be anything else.
-                if (snapshotFormatVersion === "0.1"
-                    || snapshotFormatVersion === "0.2") {
-                    pkgFromSnapshot = JSON.parse(pkg) as string[];
+                if (attributes.snapshotFormatVersion === "0.1"
+                    || attributes.snapshotFormatVersion === "0.2") {
+                    pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
                 } else {
-                    throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
+                    throw new Error(`Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
                 }
 
-                /**
-                 * If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that data
-                 * stores in older documents are not garbage collected incorrectly. This may lead to additional roots
-                 * in the document but they won't break.
-                 */
                 dataStoreContext = new LocalFluidDataStoreContext(
                     key,
                     pkgFromSnapshot,
@@ -140,7 +135,10 @@ export class DataStores implements IDisposable {
                     this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
                     (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
                     snapshotTree,
-                    isRootDataStore ?? true);
+                    // If there is no isRootDataStore in the attributes blob, set it to true. This ensures that data
+                    // stores in older documents are not garbage collected incorrectly. This may lead to additional
+                    // roots in the document but they won't break.
+                    attributes.isRootDataStore ?? true);
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
@@ -169,12 +167,9 @@ export class DataStores implements IDisposable {
         }
 
         const flatBlobs = new Map<string, string>();
-        let flatBlobsP = Promise.resolve(flatBlobs);
-        let snapshotTreeP: Promise<ISnapshotTree> | undefined;
+        let snapshotTree: ISnapshotTree | undefined;
         if (attachMessage.snapshot) {
-            snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
-            // flatBlobs' validity is contingent on snapshotTreeP's resolution
-            flatBlobsP = snapshotTreeP.then(() => { return flatBlobs; });
+            snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
         }
 
         // Include the type of attach message which is the pkg of the store to be
@@ -182,9 +177,9 @@ export class DataStores implements IDisposable {
         const pkg = [attachMessage.type];
         const remotedFluidDataStoreContext = new RemotedFluidDataStoreContext(
             attachMessage.id,
-            snapshotTreeP,
+            snapshotTree,
             this.runtime,
-            new BlobCacheStorageService(this.runtime.storage, flatBlobsP),
+            new BlobCacheStorageService(this.runtime.storage, flatBlobs),
             this.runtime.scope,
             this.getCreateChildSummarizerNodeFn(
                 attachMessage.id,
@@ -380,10 +375,8 @@ export class DataStores implements IDisposable {
     }
 
     public async summarize(fullTree: boolean, trackState: boolean): Promise<IChannelSummarizeResult> {
-        const builder = new SummaryTreeBuilder();
-        // A list of this channel's GC nodes. Starts with this channel's GC node and adds the GC nodes all its child
-        // channel contexts.
-        let gcNodes: IGraphNode[] = [ await this.getGCNode() ];
+        const gcDataBuilder = new GCDataBuilder();
+        const summaryBuilder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
@@ -393,21 +386,21 @@ export class DataStores implements IDisposable {
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
                 const contextSummary = await context.summarize(fullTree, trackState);
-                builder.addWithStats(contextId, contextSummary);
+                summaryBuilder.addWithStats(contextId, contextSummary);
 
-                // back-compat 0.30 - Older versions will not return GC nodes. Set it to empty array.
-                if (contextSummary.gcNodes === undefined) {
-                    contextSummary.gcNodes = [];
+                // back-compat 0.31 - Older versions will not have GC data in summary.
+                if (contextSummary.gcData !== undefined) {
+                    // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node to
+                    // be a path from the root.
+                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
                 }
-
-                // Normalize the context's GC nodes and prefix its id to the ids of GC nodes returned by it.
-                normalizeAndPrefixGCNodeIds(contextSummary.gcNodes, contextId);
-                gcNodes = gcNodes.concat(contextSummary.gcNodes);
             }));
 
+        // Get the outbound routes and add a GC node for this channel.
+        gcDataBuilder.addNode("/", await this.getOutboundRoutes());
         return {
-            ...builder.getSummaryTree(),
-            gcNodes,
+            ...summaryBuilder.getSummaryTree(),
+            gcData: gcDataBuilder.getGCData(),
         };
     }
 
@@ -448,11 +441,31 @@ export class DataStores implements IDisposable {
         return builder.getSummaryTree();
     }
 
+    public async getGCData(): Promise<IGCData> {
+        const builder = new GCDataBuilder();
+        // Iterate over each store and get their GC data.
+        await Promise.all(Array.from(this.contexts)
+            .filter(([_, context]) => {
+                // Get GC data only for attached contexts. Detached contexts are not connected in the GC reference
+                // graph so any references they might have won't be connected as well.
+                return context.attachState === AttachState.Attached;
+            }).map(async ([contextId, context]) => {
+                const contextGCData = await context.getGCData();
+                // Prefix the child's id to the ids of GC nodes returned by it. This gradually builds the id of
+                // each node to be a path from the root.
+                builder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
+            }));
+
+        // Get the outbound routes and add a GC node for this channel.
+        builder.addNode("/", await this.getOutboundRoutes());
+        return builder.getGCData();
+    }
+
     /**
-     * Get the outbound routes of this channel. Only root data stores are considered referenced.
-     * @returns this channel's garbage collection node.
+     * Returns the outbound routes of this channel. Only root data stores are considered referenced and their paths are
+     * part of outbound routes.
      */
-    private async getGCNode(): Promise<IGraphNode> {
+    private async getOutboundRoutes(): Promise<string[]> {
         const outboundRoutes: string[] = [];
         for (const [contextId, context] of this.contexts) {
             const isRootDataStore = await context.isRoot();
@@ -460,10 +473,6 @@ export class DataStores implements IDisposable {
                 outboundRoutes.push(`/${contextId}`);
             }
         }
-
-        return {
-            id: "/",
-            outboundRoutes,
-        };
+        return outboundRoutes;
     }
 }
