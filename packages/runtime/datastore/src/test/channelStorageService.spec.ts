@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { bufferToString } from "@fluidframework/driver-utils";
+import { bufferToString, toBuffer } from "@fluidframework/driver-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ChannelStorageService } from "../channelStorageService";
@@ -71,7 +71,7 @@ describe("ChannelStorageService", () => {
         };
         const storage: Pick<IDocumentStorageService, "readBlob"> = {
             readBlob: async (id: string) => {
-                assert.fail();
+                return toBuffer(id, "utf8");
             },
         };
         const ss = new ChannelStorageService(tree, storage);
