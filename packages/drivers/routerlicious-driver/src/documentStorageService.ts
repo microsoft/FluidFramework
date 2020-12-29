@@ -27,14 +27,14 @@ export class DocumentStorageService implements IDocumentStorageService {
     // The values of this cache is useless. We only need the keys. So we are always putting
     // empty strings as values.
     private readonly blobsShaCache = new Map<string, string>();
-    private _logTailHash: string = "";
+    private _logTailSha: string | undefined = undefined;
 
     public get repositoryUrl(): string {
         return "";
     }
 
-    public get logTailHash(): string {
-        return this._logTailHash;
+    public get logTailSha(): string | undefined {
+        return this._logTailSha;
     }
 
     constructor(public readonly id: string, public manager: gitStorage.GitManager) {
@@ -54,7 +54,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         const rawTree = await this.manager.getTree(requestVersion.treeId);
         const tree = buildHierarchy(rawTree, this.blobsShaCache);
 
-        this._logTailHash = ".logTail" in tree.trees ? tree.trees[".logTail"].blobs.logTail : "";
+        this._logTailSha = ".logTail" in tree.trees ? tree.trees[".logTail"].blobs.logTail : undefined;
         return tree;
     }
 

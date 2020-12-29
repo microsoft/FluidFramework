@@ -23,13 +23,13 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
         private readonly documentStorageService: DocumentStorageService) {
     }
 
-    private logtailHash: string = this.documentStorageService.logTailHash;
+    private logtailSha: string | undefined = this.documentStorageService.logTailSha;
 
     public async get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]> {
-        const opsFromLogTail = this.logtailHash ? await readAndParse<ISequencedDocumentMessage[]>
-            (this.documentStorageService, this.logtailHash) : [];
+        const opsFromLogTail = this.logtailSha ? await readAndParse<ISequencedDocumentMessage[]>
+            (this.documentStorageService, this.logtailSha) : [];
 
-        this.logtailHash = "";
+        this.logtailSha = undefined;
         if (opsFromLogTail.length > 0 && from !== undefined) {
             return opsFromLogTail.filter((op) =>
                 op.sequenceNumber > from,
