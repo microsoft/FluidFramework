@@ -11,8 +11,8 @@ import {
     IAttachment,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { gcBlobKey } from "@fluidframework/runtime-definitions";
 
+export const gcBlobKey = "gc";
 // A list of runtime blob paths whose contents should be normalized.
 const runtimeBlobsToNormalize = [ gcBlobKey ];
 
