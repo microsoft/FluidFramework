@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import * as api from "@fluidframework/driver-definitions";
 import { IClient, IErrorTrackingService } from "@fluidframework/protocol-definitions";
 import { GitManager, Historian, ICredentials, IGitCache } from "@fluidframework/server-services-client";
@@ -33,6 +34,8 @@ export class DocumentService implements api.IDocumentService {
         protected documentId: string,
     ) {
     }
+
+    private documentStorageService: DocumentStorageService | undefined;
 
     /**
      * Connects to a storage endpoint for snapshot service.
@@ -86,7 +89,8 @@ export class DocumentService implements api.IDocumentService {
             }
         }
 
-        return new DocumentStorageService(this.documentId, gitManager);
+        this.documentStorageService = new DocumentStorageService(this.documentId, gitManager);
+        return this.documentStorageService;
     }
 
     /**
@@ -95,8 +99,11 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta storage service for routerlicious driver.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
+        assert(this.documentStorageService, "Storage service not initialized");
+
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, this.tokenProvider);
-        return new DocumentDeltaStorageService(this.tenantId, this.documentId, deltaStorage);
+        return new DocumentDeltaStorageService(this.tenantId, this.documentId,
+            deltaStorage, this.documentStorageService);
     }
 
     /**
