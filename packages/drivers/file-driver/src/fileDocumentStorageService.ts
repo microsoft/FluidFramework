@@ -286,7 +286,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             for (const blobName of Object.keys(snapshotTree.blobs)) {
                 const contents = bufferToBase64(await this.readBlob(snapshotTree.blobs[blobName]));
                 const blob: api.IBlob = {
-                    contents, // Decode for readability
+                    contents,
                     encoding: "utf-8",
                 };
                 tree.entries.push({

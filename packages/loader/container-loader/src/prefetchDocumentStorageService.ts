@@ -7,6 +7,7 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
@@ -31,7 +32,11 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
      *
      * @deprecated - only here for back compat, will be removed after release
      */
-    public async read(blobId: string): Promise<ArrayBufferLike > {
+    public async read(blobId: string): Promise<string> {
+        return fromUtf8ToBase64("Deprecated");
+    }
+
+    public async readBlob(blobId: string): Promise<ArrayBufferLike > {
         return this.cachedRead(blobId);
     }
 
@@ -41,17 +46,17 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     }
 
     private async cachedRead(blobId: string): Promise<ArrayBufferLike> {
-        const blob = await this.internalStorageService.readBlob(blobId);
         if (this.prefetchEnabled) {
             const prefetchedBlobP: ArrayBufferLike | undefined = this.prefetchCache.get(blobId);
             if (prefetchedBlobP !== undefined) {
                 return prefetchedBlobP;
             }
+            const blob = await this.internalStorageService.readBlob(blobId);
             const prefetchedBlobPFromStorage = blob;
             this.prefetchCache.set(blobId, prefetchedBlobPFromStorage);
             return prefetchedBlobPFromStorage;
         }
-        return blob;
+        return this.internalStorageService.readBlob(blobId);
     }
 
     private prefetchTree(tree: ISnapshotTree) {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -131,8 +131,8 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
      *
      * @deprecated - only here for back compat, will be removed after release
      */
-    public async read(blobId: string): Promise<ArrayBufferLike> {
-        return this.storage.readBlob(blobId);
+    public async read(blobId: string): Promise<string> {
+        return fromUtf8ToBase64("Deprecated");
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {

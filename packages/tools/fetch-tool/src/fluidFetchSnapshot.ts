@@ -57,9 +57,9 @@ function isFetchedTree(fetchedData: IFetchedData): fetchedData is IFetchedTree {
     return "patched" in fetchedData;
 }
 
-const blobCache = new Map<string, string>();
-let blobCachePrevious = new Map<string, string>();
-let blobCacheCurrent = new Map<string, string>();
+const blobCache = new Map<string, Promise<ArrayBufferLike>>();
+let blobCachePrevious = new Map<string, Promise<ArrayBufferLike>>();
+let blobCacheCurrent = new Map<string, Promise<ArrayBufferLike>>();
 
 async function fetchBlobs(prefix: string,
     tree: ISnapshotTree,
@@ -77,7 +77,7 @@ async function fetchBlobs(prefix: string,
                 reused = false;
                 blob = blobCache.get(blobId);
                 if (blob === undefined) {
-                    blob = bufferToString(await storage.readBlob(blobId));
+                    blob = storage.readBlob(blobId);
                     blobCache.set(blobId, blob);
                 }
             }
@@ -91,7 +91,8 @@ async function fetchBlobs(prefix: string,
                 blobIdMap.set(blobId, index);
             }
             const filename = `${index}-${blobId}`;
-            result.push({ treePath, blobId, blob, reused, filename });
+            const content = bufferToString(await storage.readBlob(blobId));
+            result.push({ treePath, blobId, blob: content, reused, filename });
 
             // patch the tree so that we can write it out to reference the file
             tree.blobs[item] = filename;
@@ -121,7 +122,7 @@ async function fetchBlobsFromSnapshotTree(
 
     if (prefix === "/") {
         blobCachePrevious = blobCacheCurrent;
-        blobCacheCurrent = new Map<string, string>();
+        blobCacheCurrent = new Map<string, Promise<ArrayBufferLike>>();
     }
 
     // Create the tree info before fetching blobs (which will modify it)
