@@ -55,11 +55,12 @@ const tests = (args: ITestObjectProvider) => {
         assert(dataStore2.runtime.deltaManager.outbound.paused);
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
         map2.set(testKey, testValue);
-        const pendingOps = container2.closeAndGetPendingLocalState();
+        const pendingOps = container2.getPendingLocalState();
+        container2.close();
         assert.ok(pendingOps);
 
         // load container with pending ops, which should resend the op not sent by previous container
-        const container3 = await loader.resolveWithPendingLocalState(
+        const container3 = await loader.resolve(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
             pendingOps,
         );
@@ -91,7 +92,7 @@ const tests = (args: ITestObjectProvider) => {
         });
 
         // load with pending ops, which it should not resend because they were already sent successfully
-        const container3 = await loader.resolveWithPendingLocalState(
+        const container3 = await loader.resolve(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
             JSON.stringify({
                 pendingRuntimeState: pendingOps,
@@ -119,11 +120,12 @@ const tests = (args: ITestObjectProvider) => {
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
         [...Array(50).keys()].map((i) => map2.set(i.toString(), i));
-        const pendingOps = container2.closeAndGetPendingLocalState();
+        const pendingOps = container2.getPendingLocalState();
+        container2.close();
         assert.ok(pendingOps);
 
         // load container with pending ops, which should resend the ops not sent by previous container
-        const container3 = await loader.resolveWithPendingLocalState(
+        const container3 = await loader.resolve(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
             pendingOps,
         );
@@ -155,7 +157,7 @@ const tests = (args: ITestObjectProvider) => {
         [...Array(50).keys()].map((i) => map1.set(i.toString(), testValue));
 
         // load container with pending ops, which should not resend the ops sent by previous container
-        const container3 = await loader.resolveWithPendingLocalState(
+        const container3 = await loader.resolve(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
             JSON.stringify({
                 pendingRuntimeState: pendingOps,
@@ -182,11 +184,12 @@ const tests = (args: ITestObjectProvider) => {
         (container2 as any).context.runtime.orderSequentially(() => {
             [...Array(50).keys()].map((i) => map2.set(i.toString(), i));
         });
-        const pendingOps = container2.closeAndGetPendingLocalState();
+        const pendingOps = container2.getPendingLocalState();
+        container2.close();
         assert.ok(pendingOps);
 
         // load container with pending ops, which should resend the ops not sent by previous container
-        const container3 = await loader.resolveWithPendingLocalState(
+        const container3 = await loader.resolve(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
             pendingOps,
         );
@@ -217,7 +220,7 @@ const tests = (args: ITestObjectProvider) => {
         [...Array(50).keys()].map((i) => map1.set(i.toString(), testValue));
 
         // load container with pending ops, which should not resend the ops sent by previous container
-        const container3 = await loader.resolveWithPendingLocalState(
+        const container3 = await loader.resolve(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
             JSON.stringify({
                 pendingRuntimeState: pendingOps,
@@ -245,11 +248,12 @@ const tests = (args: ITestObjectProvider) => {
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
         map2.set(testKey, bigString);
-        const pendingOps = container2.closeAndGetPendingLocalState();
+        const pendingOps = container2.getPendingLocalState();
+        container2.close();
         assert.ok(pendingOps);
 
         // load container with pending ops, which should resend the ops not sent by previous container
-        const container3 = await loader.resolveWithPendingLocalState(
+        const container3 = await loader.resolve(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
             pendingOps,
         );
@@ -284,7 +288,7 @@ const tests = (args: ITestObjectProvider) => {
         map1.set(testKey2, testValue);
 
         // load container with pending ops, which should resend the ops not sent by previous container
-        const container3 = await loader.resolveWithPendingLocalState(
+        const container3 = await loader.resolve(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
             JSON.stringify({
                 pendingRuntimeState: pendingOps,

@@ -729,7 +729,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.pendingStateManager = new PendingStateManager(
             this,
             (content, localOpMetadata) => this.dataStores.rebaseOp(content, localOpMetadata),
-            context.pendingOps as IPendingLocalState);
+            context.pendingLocalState as IPendingLocalState);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);
@@ -986,14 +986,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._connected = connected;
 
         if (changeOfState) {
-            if (this.context.pendingOps !== undefined) {
+            if (this.context.pendingLocalState !== undefined) {
                 const pendingOps = this.pendingStateManager.getPendingMessages();
                 if (pendingOps.length > 0) {
                     await Promise.all(pendingOps.map(async (op) => {
                         return this.dataStores.loadChannelFromOp(op);
                     }));
                 }
-                this.context.pendingOps = undefined;
+                this.context.pendingLocalState = undefined;
             }
             this.replayPendingStates();
         }
@@ -1052,12 +1052,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.dataStores.processAttachMessage(message, local);
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
-                    if (localAck) {
-                        // treat this as a local op because it's one we sent on a previous container
-                        this.dataStores.processFluidDataStoreOp(message, true, localOpMetadata);
-                    } else {
-                        this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
-                    }
+                    // if localAck === true, treat this as a local op because it's one we sent on a previous container
+                    this.dataStores.processFluidDataStoreOp(message, local || localAck, localOpMetadata);
                     break;
                 case ContainerMessageType.BlobAttach:
                     assert(message?.metadata?.blobId);
@@ -1520,6 +1516,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         opMetadata: Record<string, unknown> | undefined = undefined,
     ): void {
         this.verifyNotClosed();
+
+        assert(this.context.pendingLocalState === undefined, "op submitted while processing pending initial state");
 
         let clientSequenceNumber: number = -1;
 

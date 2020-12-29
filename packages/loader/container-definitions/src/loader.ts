@@ -136,7 +136,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      */
     close(error?: ICriticalContainerError): void;
 
-    closeAndGetPendingLocalState(): string;
+    getPendingLocalState(): string;
 
     /**
      * Propose new code details that define the code to be loaded
@@ -185,9 +185,7 @@ export interface ILoader extends IFluidRouter {
      * An analogy for this is resolve is a DNS resolve of a Fluid container. Request then executes
      * a request against the server found from the resolve step.
      */
-    resolve(request: IRequest): Promise<IContainer>;
-
-    resolveWithPendingLocalState(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
+    resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 
     /**
      * Creates a new container using the specified chaincode but in an unattached state. While unattached all

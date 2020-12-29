@@ -103,10 +103,6 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         return this.loader.request(request);
     }
 
-    public async resolveWithPendingLocalState(request: IRequest): Promise<IContainer> {
-        throw new Error("Relative loader should not resolve with pending state");
-    }
-
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
         throw new Error("Relative loader should not create a detached container");
     }
@@ -297,14 +293,7 @@ export class Loader extends EventEmitter implements ILoader {
             JSON.parse(snapshot));
     }
 
-    public async resolve(request: IRequest): Promise<Container> {
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Resolve" }, async () => {
-            const resolved = await this.resolveCore(request);
-            return resolved.container;
-        });
-    }
-
-    public async resolveWithPendingLocalState(request: IRequest, pendingLocalState?: string): Promise<Container> {
+    public async resolve(request: IRequest, pendingLocalState?: string): Promise<Container> {
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Resolve" }, async () => {
             const resolved = await this.resolveCore(
                 request,
@@ -381,7 +370,7 @@ export class Loader extends EventEmitter implements ILoader {
 
         if (pendingLocalState !== undefined && resolvedAsFluid.url !== pendingLocalState.url) {
             const message = `URL ${resolvedAsFluid.url} does not match pending state URL ${pendingLocalState.url}`;
-            return Promise.reject(new Error(message));
+            throw new Error(message);
         }
 
         request.headers = request.headers ?? {};
@@ -470,13 +459,13 @@ export class Loader extends EventEmitter implements ILoader {
         id: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
-        pendingOps?,
+        pendingLocalState?,
     ): Promise<Container> {
         return Container.load(
             id,
             this,
             request,
             resolved,
-            pendingOps);
+            pendingLocalState);
     }
 }

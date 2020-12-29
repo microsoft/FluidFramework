@@ -268,7 +268,6 @@ export class PendingStateManager {
                     return { localAck: true, localOpMetadata: nextState.localOpMetadata };
                 }
             }
-            throw new Error("no pending initial message matching ack");
         }
 
         return { localAck: false, localOpMetadata: undefined };

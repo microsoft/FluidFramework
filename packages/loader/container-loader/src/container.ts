@@ -190,7 +190,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         loader: Loader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
-        pendingOps?,
+        pendingLocalState?,
     ): Promise<Container> {
         const [, docId] = id.split("/");
         const container = new Container(
@@ -206,7 +206,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return new Promise<Container>((res, rej) => {
                 const version = request.headers?.[LoaderHeader.version];
                 // always load unpaused with pending ops
-                const pause = pendingOps !== undefined ? false : request.headers?.[LoaderHeader.pause];
+                const pause = pendingLocalState !== undefined ? false : request.headers?.[LoaderHeader.pause];
 
                 const onClosed = (err?: ICriticalContainerError) => {
                     // Depending where error happens, we can be attempting to connect to web socket
@@ -218,7 +218,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 };
                 container.on("closed", onClosed);
 
-                container.load(version, pause === true, pendingOps)
+                container.load(version, pause === true, pendingLocalState)
                     .finally(() => {
                         container.removeListener("closed", onClosed);
                     })
@@ -531,16 +531,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.removeAllListeners();
     }
 
-    public closeAndGetPendingLocalState(): string {
-        this._deltaManager.close();
-
+    public getPendingLocalState(): string {
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid");
         const pendingState: IPendingLocalState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
         };
-
-        this.close();
 
         return JSON.stringify(pendingState);
     }
@@ -998,7 +994,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      *   - otherwise, version sha to load snapshot
      * @param pause - start the container in a paused state
      */
-    private async load(specifiedVersion: string | null | undefined, pause: boolean, pendingOps?) {
+    private async load(specifiedVersion: string | null | undefined, pause: boolean, pendingLocalState?) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
         }
@@ -1063,7 +1059,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         [this._protocolHandler] = await Promise.all([protocolHandlerP, loadDetailsP]);
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.loadContext(codeDetails, attributes, maybeSnapshotTree, undefined, pendingOps);
+        await this.loadContext(codeDetails, attributes, maybeSnapshotTree, undefined, pendingLocalState);
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -1668,7 +1664,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         attributes: IDocumentAttributes,
         snapshot?: ISnapshotTree,
         previousRuntimeState: IRuntimeState = {},
-        pendingOps?,
+        pendingLocalState?,
     ) {
         assert(this._context?.disposed !== false, "Existing context not disposed");
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
@@ -1692,7 +1688,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             previousRuntimeState,
-            pendingOps,
+            pendingLocalState,
         );
 
         loader.resolveContainer(this);

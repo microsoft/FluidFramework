@@ -65,7 +65,7 @@ export class ContainerContext implements IContainerContext {
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
         previousRuntimeState: IRuntimeState,
-        pendingOps?,
+        pendingLocalState?,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
@@ -84,7 +84,7 @@ export class ContainerContext implements IContainerContext {
             closeFn,
             version,
             previousRuntimeState,
-            pendingOps);
+            pendingLocalState);
         await context.load();
         return context;
     }
@@ -197,7 +197,7 @@ export class ContainerContext implements IContainerContext {
         public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
-        public readonly pendingOps?,
+        public readonly pendingLocalState?,
     ) {
         this.logger = container.subLogger;
         this.attachListener();

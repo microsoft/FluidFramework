@@ -93,7 +93,7 @@ export class NullRuntime extends EventEmitter implements IRuntime {
     }
 
     public getPendingLocalState() {
-        return;
+        throw new Error("Null runtime should not be asked for pending state");
     }
 }
 
