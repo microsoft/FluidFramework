@@ -41,7 +41,10 @@ export class DeltaStorageService implements IDeltaStorageService {
 
         let headers: { Authorization: string } | null = null;
 
-        const storageToken = await this.tokenProvider.fetchStorageToken();
+        const storageToken = await this.tokenProvider.fetchStorageToken(
+            tenantId,
+            id,
+        );
 
         if (storageToken) {
             headers = {
@@ -52,7 +55,6 @@ export class DeltaStorageService implements IDeltaStorageService {
         const ops = await Axios.get<api.ISequencedDocumentMessage[]>(
             `${this.url}?${query}`, { headers });
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return ops.data;
     }
 }

@@ -21,7 +21,7 @@ export async function getTinyliciousContainer(
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
 ): Promise<Container> {
-    const tokenProvider = new InsecureTinyliciousTokenProvider(documentId);
+    const tokenProvider = new InsecureTinyliciousTokenProvider();
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
 
     const urlResolver = new InsecureTinyliciousUrlResolver();
