@@ -238,10 +238,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+
+        // Add self route (empty string) to used routes in the summarizer node. If GC is enabled, the used routes will
+        // be updated as per the GC data.
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async () => this.getGCDataInternal(),
             async () => this.getInitialGCDetails(),
+            [""] /* usedRoutes */,
         );
     }
 
@@ -573,6 +577,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             summarizeInternal: SummarizeInternalFn,
             getGCDataFn: () => Promise<IGarbageCollectionData>,
             getInitialGCDetailsFn: () => Promise<IGarbageCollectionDetails>,
+            usedRoutes: string[],
         ) => this.summarizerNode.createChild(
             summarizeInternal,
             id,
@@ -581,6 +586,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             { throwOnFailure: true },
             getGCDataFn,
             getInitialGCDetailsFn,
+            usedRoutes,
         );
     }
 

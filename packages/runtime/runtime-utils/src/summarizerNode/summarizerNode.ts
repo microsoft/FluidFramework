@@ -459,7 +459,11 @@ export class SummarizerNode implements IRootSummarizerNode {
             createDetails.initialSummary,
             this.wipSummaryLogger,
         );
-        this.initializeChild(child);
+
+        // If a summary is in progress, update the child's work-in-progress state.
+        if (this.isSummaryInProgress()) {
+            this.updateChildWipState(child);
+        }
 
         this.children.set(id, child);
         return child;
@@ -551,14 +555,15 @@ export class SummarizerNode implements IRootSummarizerNode {
     }
 
     /**
-     * Initializes a child node with some of this node's data, such as the wipReferenceSequenceNumber.
-     * @param child - The child node to be initialized.
+     * Updates the work-in-progress state of the child if summary is in progress.
+     * @param child - The child node to be updated.
      */
-    protected initializeChild(child: SummarizerNode) {
-        // If created while summarizing, relay that information down
-        if (this.wipReferenceSequenceNumber !== undefined) {
-            child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
-        }
+    protected updateChildWipState(child: SummarizerNode) {
+        child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
+    }
+
+    protected isSummaryInProgress(): boolean {
+        return this.wipReferenceSequenceNumber !== undefined;
     }
 }
 

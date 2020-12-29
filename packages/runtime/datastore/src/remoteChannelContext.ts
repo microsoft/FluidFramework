@@ -72,6 +72,7 @@ export class RemoteChannelContext implements IChannelContext {
         extraBlobs: Map<string, string> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private readonly attachMessageType?: string,
+        usedRoutes?: string[],
     ) {
         this.services = createServiceEndpoints(
             this.id,
@@ -84,15 +85,15 @@ export class RemoteChannelContext implements IChannelContext {
 
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+
+        // If we are created before GC is run, used routes will not be available. Set self route (empty string) to
+        // used routes in the summarizer node. If GC is enabled, the used routes will be updated as per the GC data.
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async () => this.getGCDataInternal(),
             async () => this.initialGCDetailsP,
+            usedRoutes ?? [""],
         );
-
-        // Currently, a channel context is always considered used. This will change when we start GC at layers below
-        // data stores. See - https://github.com/microsoft/FluidFramework/issues/4611
-        this.summarizerNode.usedRoutes = [""];
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

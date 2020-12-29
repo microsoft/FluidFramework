@@ -6,7 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { cloneGCData } from "@fluidframework/garbage-collector";
-import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeParam,
     gcBlobKey,
@@ -53,13 +53,12 @@ class SummaryNodeWithGC extends SummaryNode {
  *   directly into summarizeInternal method.
  */
 export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
-    public usedRoutes: string[] = [];
     private gcData: IGarbageCollectionData | undefined;
 
-    // Tracks the work-in-progress used state during summary.
+    // Tracks the work-in-progress used routes during summary.
     private wipSerializedUsedRoutes: string | undefined;
 
-    // This is the last known used state of this node as seen by the server as part of a summary.
+    // This is the last known used routes of this node as seen by the server as part of a summary.
     private referenceUsedRoutes: string[] | undefined;
 
     // The initial GC details of this node.
@@ -80,6 +79,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         wipSummaryLogger?: ITelemetryLogger,
         private readonly getGCDataFn?: () => Promise<IGarbageCollectionData>,
         getInitialGCDetailsFn?: () => Promise<IGarbageCollectionDetails>,
+        public usedRoutes: string[] = [],
     ) {
         super(
             logger,
@@ -97,7 +97,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     public async summarize(fullTree: boolean, trackState: boolean = true): Promise<IContextSummarizeResult> {
-        // Update the reference used state from the initial GC details. This is used to find out if the used state has
+        // Update the reference used routes from the initial GC details. This is used to find out if the used routes has
         // changed from the last state seen by the server. If so, we cannot reuse previous summary.
         if (this.referenceUsedRoutes === undefined) {
             this.referenceUsedRoutes = (await this.initialGCDetailsP).usedRoutes;
@@ -107,16 +107,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // If trackState is false, get summary from summarizeInternal.
         if (trackState) {
             const summarizeResult = await super.summarize(fullTree);
-
-            // If this node's used routes changed, we may need to update its referenced / unreferenced state.
-            if (this.hasUsedRoutesChanged()) {
-                assert(
-                    summarizeResult.summary.type === SummaryType.Tree,
-                    "Reusing previous summary when used routes changed",
-                );
-                // Mark the summary tree as referenced / unreferenced. This will happen in the following issue:
-                // https://github.com/microsoft/FluidFramework/issues/4687
-            }
 
             // If there is no cached GC data, return empty data in summarize result. It is the caller's responsiblity
             // to ensure that GC data is available by calling getGCData before calling summarize.
@@ -169,7 +159,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     /**
-     * Called during the start of a summary. Update the work-in-progress used state.
+     * Called during the start of a summary. Updates the work-in-progress used routes.
      */
     public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
         assert(this.wipSerializedUsedRoutes === undefined, "wip routes should not be set yet in startSummary");
@@ -273,6 +263,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         config: ISummarizerNodeConfig = {},
         getGCDataFn?: () => Promise<IGarbageCollectionData>,
         getInitialGCDetailsFn?: () => Promise<IGarbageCollectionDetails>,
+        usedRoutes?: string[],
     ): ISummarizerNodeWithGC {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
 
@@ -287,11 +278,26 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             this.wipSummaryLogger,
             getGCDataFn,
             getInitialGCDetailsFn,
+            usedRoutes,
         );
-        this.initializeChild(child);
+
+        // If a summary is in progress, update the child's work-in-progress state.
+        if (this.isSummaryInProgress()) {
+            this.updateChildWipState(child);
+        }
 
         this.children.set(id, child);
         return child;
+    }
+
+    /**
+     * Updates the work-in-progress state of the child if summary is in progress.
+     * @param child - The child node to be updated.
+     */
+    protected updateChildWipState(child: SummarizerNodeWithGC) {
+        // Update the child's work-in-progress used routes.
+        child.wipSerializedUsedRoutes = JSON.stringify(child.usedRoutes);
+        super.updateChildWipState(child);
     }
 
     /**
@@ -343,4 +349,5 @@ export const createRootSummarizerNodeWithGC = (
     undefined /* wipSummaryLogger */,
     getGCDataFn,
     getInitialGCDetailsFn,
+    [""] /* usedRoutes */, // Add self route (empty string) because root node is always considered used.
 );

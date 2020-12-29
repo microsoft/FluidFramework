@@ -702,6 +702,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     summarizeInternal: SummarizeInternalFn,
                     getGCDataFn: () => Promise<IGarbageCollectionData>,
                     getInitialGCDetailsFn: () => Promise<IGarbageCollectionDetails>,
+                    usedRoutes: string[],
                 ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,
@@ -709,6 +710,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     undefined,
                     getGCDataFn,
                     getInitialGCDetailsFn,
+                    usedRoutes,
                 ),
             this._logger);
 

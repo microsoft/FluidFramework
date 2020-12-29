@@ -214,6 +214,7 @@ export type CreateChildSummarizerNodeFn = (
     summarizeInternal: SummarizeInternalFn,
     getGCDataFn: () => Promise<IGarbageCollectionData>,
     getInitialGCDetailsFn: () => Promise<IGarbageCollectionDetails>,
+    usedRoutes: string[],
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
