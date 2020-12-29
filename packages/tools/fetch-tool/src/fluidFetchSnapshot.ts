@@ -73,11 +73,14 @@ async function fetchBlobs(prefix: string,
         if (blobId !== null) {
             let reused = true;
             let blob = blobCachePrevious.get(blobId);
+            let content = blob ? bufferToString(await blob) : undefined;
             if (!blob) {
                 reused = false;
                 blob = blobCache.get(blobId);
+                content = blob ? bufferToString(await blob) : undefined;
                 if (blob === undefined) {
                     blob = storage.readBlob(blobId);
+                    content = bufferToString(await blob);
                     blobCache.set(blobId, blob);
                 }
             }
@@ -91,7 +94,6 @@ async function fetchBlobs(prefix: string,
                 blobIdMap.set(blobId, index);
             }
             const filename = `${index}-${blobId}`;
-            const content = bufferToString(await storage.readBlob(blobId));
             result.push({ treePath, blobId, blob: content, reused, filename });
 
             // patch the tree so that we can write it out to reference the file
