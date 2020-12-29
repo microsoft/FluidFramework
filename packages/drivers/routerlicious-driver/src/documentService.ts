@@ -44,7 +44,10 @@ export class DocumentService implements api.IDocumentService {
             return new NullBlobStorageService();
         }
 
-        const storageToken = await this.tokenProvider.fetchStorageToken();
+        const storageToken = await this.tokenProvider.fetchStorageToken(
+            this.tenantId,
+            this.documentId,
+        );
         // Craft credentials - either use the direct credentials (i.e. a GitHub user + PAT) - or make use of our
         // tenant token
         let credentials: ICredentials | undefined;
@@ -102,7 +105,10 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta stream service for routerlicious driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
-        const ordererToken = await this.tokenProvider.fetchOrdererToken();
+        const ordererToken = await this.tokenProvider.fetchOrdererToken(
+            this.tenantId,
+            this.documentId,
+        );
         return R11sDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
