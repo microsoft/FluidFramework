@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./constants";
-export * from "./params";
+export * from "./insecureTinyliciousUrlResolver";
+export * from "./insecureTinyliciousTokenProvider";

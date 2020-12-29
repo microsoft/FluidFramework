@@ -55,7 +55,7 @@
     "@fluidframework/server-services-shared": "^0.1016.1",
     "@fluidframework/server-services-utils": "^0.1016.1",
     "amqplib": "^0.5.5",
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "debug": "^4.1.1",
     "kafka-node": "^5.0.0",
     "lru-cache": "^6.0.0",
