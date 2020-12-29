@@ -28,7 +28,6 @@ import {
     ICreateChildDetails,
     IInitialSummary,
     ISummarizerNodeRootContract,
-    ISummaryNode,
     ReadAndParseBlob,
     seqFromTree,
     SummaryNode,
@@ -59,7 +58,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     }
 
     protected readonly children = new Map<string, SummarizerNode>();
-    protected readonly pendingSummaries = new Map<string, ISummaryNode>();
+    protected readonly pendingSummaries = new Map<string, SummaryNode>();
     private readonly outstandingOps: ISequencedDocumentMessage[] = [];
     private wipReferenceSequenceNumber: number | undefined;
     private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
@@ -302,6 +301,11 @@ export class SummarizerNode implements IRootSummarizerNode {
         correlatedSummaryLogger: ITelemetryLogger,
         readAndParseBlob: ReadAndParseBlob,
     ): Promise<void> {
+        // Possible re-entrancy. If we have already seen a summary later than this one, ignore it.
+        if (this.referenceSequenceNumber >= referenceSequenceNumber) {
+            return;
+        }
+
         this.refreshLatestSummaryCore(referenceSequenceNumber);
 
         const { baseSummary, pathParts } = decodeSummary(snapshotTree, correlatedSummaryLogger);
@@ -317,21 +321,21 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         // Propagate update to all child nodes
         const pathForChildren = this.latestSummary.fullPathForChildren;
-        for (const [id, child] of this.children.entries()) {
-            const subtree = baseSummary.trees[id];
-            // Assuming subtrees missing from snapshot are newer than the snapshot,
-            // but might be nice to assert this using earliest seq for node.
-            if (subtree !== undefined) {
-                await child.refreshLatestSummaryFromSnapshot(
+        await Promise.all(Array.from(this.children)
+            .filter(([id]) => {
+                // Assuming subtrees missing from snapshot are newer than the snapshot,
+                // but might be nice to assert this using earliest seq for node.
+                return baseSummary.trees[id] !== undefined;
+            }).map(async ([id, child]) => {
+                return child.refreshLatestSummaryFromSnapshot(
                     referenceSequenceNumber,
-                    subtree,
+                    baseSummary.trees[id],
                     pathForChildren,
                     EscapedPath.create(id),
                     correlatedSummaryLogger,
                     readAndParseBlob,
                 );
-            }
-        }
+            }));
     }
 
     private refreshLatestSummaryCore(referenceSequenceNumber: number): void {
@@ -418,7 +422,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         config: ISummarizerNodeConfig,
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
-        private latestSummary?: ISummaryNode,
+        private latestSummary?: SummaryNode,
         private readonly initialSummary?: IInitialSummary,
         protected wipSummaryLogger?: ITelemetryLogger,
     ) {
@@ -473,7 +477,7 @@ export class SummarizerNode implements IRootSummarizerNode {
      */
     protected getCreateDetailsForChild(id: string, createParam: CreateChildSummarizerNodeParam): ICreateChildDetails {
         let initialSummary: IInitialSummary | undefined;
-        let latestSummary: ISummaryNode | undefined;
+        let latestSummary: SummaryNode | undefined;
         let changeSequenceNumber: number;
 
         const parentLatestSummary = this.latestSummary;

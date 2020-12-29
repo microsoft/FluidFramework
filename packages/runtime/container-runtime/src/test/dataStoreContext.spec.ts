@@ -273,7 +273,7 @@ describe("Data Store Context Tests", () => {
             createSummarizerNodeFn = (
                 summarizeInternal: SummarizeInternalFn,
                 getGCDataFn: () => Promise<IGarbageCollectionData>,
-                getInitialGCDetailsFn: () => Promise<IGarbageCollectionDetails | undefined>,
+                getInitialGCDetailsFn: () => Promise<IGarbageCollectionDetails>,
             ) => summarizerNode.createChild(
                 summarizeInternal,
                 dataStoreId,
@@ -432,7 +432,7 @@ describe("Data Store Context Tests", () => {
                     pkg: "TestDataStore1",
                 };
                 const gcDetails: IGarbageCollectionDetails = {
-                    used: false,
+                    usedRoutes: [],
                     gcData: emptyGCData,
                 };
                 const attributesBuffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
@@ -469,7 +469,7 @@ describe("Data Store Context Tests", () => {
                 const blob = summarizeResult.summary.tree[gcBlobKey] as ISummaryBlob;
 
                 const contents = JSON.parse(blob.content as string) as IGarbageCollectionDetails;
-                assert.deepStrictEqual(contents.gcData, gcDetails.gcData, "GC data from summary is incorrect.");
+                assert.deepStrictEqual(contents, gcDetails, "GC data from summary is incorrect.");
             });
 
             it("can generate GC data with GC details in initial summary", async () => {
@@ -477,7 +477,7 @@ describe("Data Store Context Tests", () => {
                     pkg: "TestDataStore1",
                 };
                 const gcDetails: IGarbageCollectionDetails = {
-                    used: false,
+                    usedRoutes: [],
                     gcData: {
                         gcNodes: {
                             "/": [ "dds1", "dds2"],
@@ -519,7 +519,7 @@ describe("Data Store Context Tests", () => {
                     pkg: "TestDataStore1",
                 };
                 const gcDetails: IGarbageCollectionDetails = {
-                    used: false,
+                    usedRoutes: [],
                 };
                 const attributesBuffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
                 const gcDetailsBuffer = IsoBuffer.from(JSON.stringify(gcDetails), "utf-8");
@@ -546,19 +546,16 @@ describe("Data Store Context Tests", () => {
                     createSummarizerNodeFn,
                 );
 
-                // The data in the store has not changed since last summary and the reference used state and current
-                // used (default) are both false. So, summarize should return a handle.
+                // The data in the store has not changed since last summary and the reference used routes and current
+                // used routes (default) are both empty. So, summarize should return a handle.
                 let summarizeResult = await remotedDataStoreContext.summarize(false /* fullTree */);
                 assert(summarizeResult.summary.type === SummaryType.Handle,
                     "summarize should return a handle since nothing changed");
 
-                // Update the used state of the data store.
+                // Update the used routes of the data store.
                 const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
                 assert(dataStoreSummarizerNode !== undefined, "Data store's summarizer node is missing");
-                // To be update once this PR is checked in - https://github.com/microsoft/FluidFramework/pull/4672.
-                // remotedDataStoreContext.updateUsedRoutes([""]);
-                dataStoreSummarizerNode.used = true;
-                assert.strictEqual(dataStoreSummarizerNode?.used, true, "Data store should now be used");
+                dataStoreSummarizerNode.usedRoutes = [""];
 
                 // Since the used state has changed, it should generate a full summary tree.
                 summarizeResult = await remotedDataStoreContext.summarize(false /* fullTree */);

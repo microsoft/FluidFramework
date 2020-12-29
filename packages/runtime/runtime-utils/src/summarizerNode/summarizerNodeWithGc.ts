@@ -23,19 +23,14 @@ import {
     ICreateChildDetails,
     IInitialSummary,
     ISummarizerNodeRootContract,
-    ISummaryNode,
     ReadAndParseBlob,
     SummaryNode,
 } from "./summarizerNodeUtils";
 
 export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISummarizerNodeRootContract {}
 
-interface ISummaryNodeWithGC extends ISummaryNode {
-    readonly serializedUsedRoutes: string;
-}
-
 // Extend SummaryNode to add used routes tracking to it.
-class SummaryNodeWithGC extends SummaryNode implements ISummaryNodeWithGC {
+class SummaryNodeWithGC extends SummaryNode {
     constructor(
         public readonly serializedUsedRoutes: string,
         summary: {
@@ -80,7 +75,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         config: ISummarizerNodeConfig,
         changeSequenceNumber: number,
         /** Undefined means created without summary */
-        latestSummary?: ISummaryNode,
+        latestSummary?: SummaryNode,
         initialSummary?: IInitialSummary,
         wipSummaryLogger?: ITelemetryLogger,
         private readonly getGCDataFn?: () => Promise<IGarbageCollectionData>,
@@ -113,10 +108,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         if (trackState) {
             const summarizeResult = await super.summarize(fullTree);
 
-            if (!this.isUsed() && this.hasUsedRoutesChanged()) {
-                const summaryTree = summarizeResult.summary;
-                assert(summaryTree.type === SummaryType.Tree, "Reusing previous summary when reference state changed");
-                // Mark the summary tree as unreferenced here. This will happen in the following issue:
+            // If this node's used routes changed, we may need to update its referenced / unreferenced state.
+            if (this.hasUsedRoutesChanged()) {
+                assert(
+                    summarizeResult.summary.type === SummaryType.Tree,
+                    "Reusing previous summary when used routes changed",
+                );
+                // Mark the summary tree as referenced / unreferenced. This will happen in the following issue:
                 // https://github.com/microsoft/FluidFramework/issues/4687
             }
 
@@ -188,8 +186,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         parentPath: EscapedPath | undefined,
         parentSkipRecursion: boolean,
     ) {
-        assert(this.wipSerializedUsedRoutes !== undefined, "wip routes should have been set in startSummary");
         const wipSerializedUsedRoutes = this.wipSerializedUsedRoutes;
+        assert(wipSerializedUsedRoutes !== undefined, "wip routes should have been set in startSummary");
 
         super.completeSummaryCore(proposalHandle, parentPath, parentSkipRecursion);
 
@@ -216,7 +214,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         proposalHandle: string,
         referenceSequenceNumber: number,
     ): void {
-        const summaryNode = this.pendingSummaries.get(proposalHandle) as ISummaryNodeWithGC;
+        const summaryNode = this.pendingSummaries.get(proposalHandle) as SummaryNodeWithGC;
         if (summaryNode !== undefined) {
             this.referenceUsedRoutes = JSON.parse(summaryNode.serializedUsedRoutes);
         }
@@ -239,6 +237,12 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         const gcDetailsHash = snapshotTree.blobs[gcBlobKey];
         if (gcDetailsHash !== undefined) {
             const gcDetails = await readAndParseBlob<IGarbageCollectionDetails>(gcDetailsHash);
+
+            // Possible re-entrancy. If we have already seen a summary later than this one, ignore it.
+            if (this.referenceSequenceNumber >= referenceSequenceNumber) {
+                return;
+            }
+
             this.referenceUsedRoutes = gcDetails.usedRoutes;
         }
 
@@ -302,10 +306,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      */
     protected hasChanged(): boolean {
         return super.hasChanged() || this.hasUsedRoutesChanged();
-    }
-
-    private isUsed(): boolean {
-        return this.usedRoutes.includes("") || this.usedRoutes.includes("/");
     }
 
     private hasUsedRoutesChanged(): boolean {

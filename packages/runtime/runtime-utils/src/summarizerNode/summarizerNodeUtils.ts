@@ -69,20 +69,10 @@ export class EscapedPath {
     }
 }
 
-export interface ISummaryNode {
-    readonly referenceSequenceNumber: number;
-    readonly basePath: EscapedPath | undefined;
-    readonly localPath: EscapedPath;
-    readonly fullPath: EscapedPath;
-    readonly fullPathForChildren: EscapedPath;
-    additionalPath: EscapedPath | undefined;
-    createForChild(id: string): ISummaryNode;
-}
-
 /** Information about a summary relevant to a specific node in the tree */
-export class SummaryNode implements ISummaryNode {
+export class SummaryNode {
     /** Creates an instance that is valid for the root with specific basePath and localPath */
-    public static createForRoot(referenceSequenceNumber: number): ISummaryNode {
+    public static createForRoot(referenceSequenceNumber: number): SummaryNode {
         return new SummaryNode({
             referenceSequenceNumber,
             basePath: undefined,
@@ -135,7 +125,7 @@ export class SummaryNode implements ISummaryNode {
      * Creates a new node within the same summary for a child of this node.
      * @param id - id of the child node
      */
-    public createForChild(id: string): ISummaryNode {
+    public createForChild(id: string): SummaryNode {
         return new SummaryNode({
             referenceSequenceNumber: this.referenceSequenceNumber,
             basePath: this.fullPathForChildren,
@@ -236,7 +226,7 @@ interface IEncodedSummary extends ISummaryTreeWithStats {
  */
 export type EncodeSummaryParam = {
     fromSummary: true;
-    summaryNode: ISummaryNode;
+    summaryNode: SummaryNode;
 } | {
     fromSummary: false;
     initialSummary: ISummaryTreeWithStats;
@@ -294,7 +284,7 @@ export interface ICreateChildDetails {
     /** Summary from attach op if known */
     initialSummary: IInitialSummary | undefined;
     /** Latest summary from server node data */
-    latestSummary: ISummaryNode | undefined;
+    latestSummary: SummaryNode | undefined;
     /** Sequence number of latest known change to the node */
     changeSequenceNumber: number;
 }
