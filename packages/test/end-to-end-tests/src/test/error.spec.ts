@@ -82,18 +82,18 @@ describe("Errors Types", () => {
             message: "Some message",
         };
         const iError = (CreateContainerError(err) as any) as LoggingError;
-        const props = iError.getProperties();
+        const props = iError.getTelemetryProperties();
         assert.equal(props.userData, undefined, "We shouldn't expose the properties of the inner/original error");
         assert.equal(props.message, err.message, "But name is copied over!");
     });
 
     function assertCustomPropertySupport(err: any) {
         err.asdf = "asdf";
-        if (err.getProperties !== undefined) {
-            assert.equal(err.getProperties().asdf, "asdf", "Error should have property asdf");
+        if (err.getTelemetryProperties !== undefined) {
+            assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");
         }
         else {
-            assert.fail("Error should support getProperties()");
+            assert.fail("Error should support getTelemetryProperties()");
         }
     }
 

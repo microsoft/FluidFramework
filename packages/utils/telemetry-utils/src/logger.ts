@@ -70,11 +70,11 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // If we know for sure it does, we have to not log it.
             if (error.containsPII) {
                 event.error = "Error message was removed as it contained PII";
-            } else if (error.getProperties) {
-                const customProps: ITelemetryProperties = error.getProperties();
-                for (const key of Object.keys(customProps)) {
+            } else if (error.getTelemetryProperties) {
+                const telemetryProps: ITelemetryProperties = error.getTelemetryProperties();
+                for (const key of Object.keys(telemetryProps)) {
                     if (event[key] === undefined) {
-                        event[key] = customProps[key];
+                        event[key] = telemetryProps[key];
                     }
                 }
             }
@@ -479,7 +479,7 @@ export class LoggingError extends Error {
     }
 
     // Return all properties
-    public getProperties(): ITelemetryProperties {
+    public getTelemetryProperties(): ITelemetryProperties {
         const props: ITelemetryProperties = {};
         // Could not use {...this} because it does not return properties of base class.
         for (const key of Object.getOwnPropertyNames(this)) {

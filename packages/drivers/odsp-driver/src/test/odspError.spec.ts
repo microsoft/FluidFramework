@@ -65,13 +65,13 @@ describe("Odsp Error", () => {
 
     it("throwOdspNetworkError sprequestguid exists", async () => {
         const error1: any = createOdspNetworkErrorWithResponse("Error", 400);
-        const errorBag = { ...error1.getProperties() };
+        const errorBag = { ...error1.getTelemetryProperties() };
         assert.equal("xxx-xxx", errorBag.sprequestguid, "sprequestguid should be 'xxx-xxx'");
     });
 
     it("throwOdspNetworkError sprequestguid undefined", async () => {
         const error1: any = createOdspNetworkError("Error", 400);
-        const errorBag = { ...error1.getProperties() };
+        const errorBag = { ...error1.getTelemetryProperties() };
         assert.equal(undefined, errorBag.sprequestguid, "sprequestguid should not be defined");
     });
 
@@ -220,7 +220,7 @@ describe("Odsp Error", () => {
     it("Check Epoch Mismatch error props", async () => {
         const error: any = createOdspNetworkErrorWithResponse("Epoch Mismatch", 409);
         assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error type should be epoch mismatch");
-        const errorBag = { ...error.getProperties() };
+        const errorBag = { ...error.getTelemetryProperties() };
         assert.strictEqual(errorBag.errorType, OdspErrorType.epochVersionMismatch, "Error type should exist in prop bag");
     });
 });
