@@ -8,8 +8,9 @@ import { IContainer, IFluidModule } from "@fluidframework/container-definitions"
 import { IFluidRouter } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalTestObjectProvider, ChannelFactoryRegistry } from "@fluidframework/test-utils";
+import { LocalTestObjectProvider } from "@fluidframework/test-utils";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
     generateLocalCompatTest,
     createOldPrimedDataStoreFactory,
@@ -22,12 +23,16 @@ import {
 } from "./compatUtils";
 import * as old from "./oldVersion";
 
+const runtimeOptions: IContainerRuntimeOptions = {
+    summaryConfigOverrides:{ maxOps: 1 },
+};
+
 async function loadContainer(
     fluidModule: IFluidModule | old.IFluidModule,
     deltaConnectionServer: ILocalDeltaConnectionServer,
 ): Promise<IContainer> {
     const localTestObjectProvider = new LocalTestObjectProvider(
-        (reg?: ChannelFactoryRegistry) => fluidModule as IFluidModule, undefined, deltaConnectionServer);
+        () => fluidModule as IFluidModule, undefined, deltaConnectionServer);
     return localTestObjectProvider.loadTestContainer();
 }
 
@@ -36,7 +41,7 @@ async function loadContainerWithOldLoader(
     deltaConnectionServer: ILocalDeltaConnectionServer,
 ): Promise<old.IContainer> {
     const localTestObjectProvider = new old.LocalTestObjectProvider(
-        (reg?: ChannelFactoryRegistry) => fluidModule as old.IFluidModule, undefined, deltaConnectionServer);
+        () => fluidModule as old.IFluidModule, undefined, deltaConnectionServer);
     return localTestObjectProvider.loadTestContainer();
 }
 
@@ -91,22 +96,28 @@ describe("loader/runtime compatibility", () => {
 
             const containersP: Promise<IContainer | old.IContainer>[] = [
                 loadContainer( // new everything
-                    { fluidExport: createRuntimeFactory(TestDataObject.type, createPrimedDataStoreFactory()) },
+                    { fluidExport: createRuntimeFactory(
+                        TestDataObject.type, createPrimedDataStoreFactory(), runtimeOptions) },
                     args.deltaConnectionServer),
                 loadContainerWithOldLoader( // old loader, new container/data store runtimes
-                    { fluidExport: createRuntimeFactory(TestDataObject.type, createPrimedDataStoreFactory()) },
+                    { fluidExport: createRuntimeFactory(
+                        TestDataObject.type, createPrimedDataStoreFactory(), runtimeOptions) },
                     args.deltaConnectionServer),
                 loadContainerWithOldLoader( // old everything
-                    { fluidExport: createOldRuntimeFactory(TestDataObject.type, createOldPrimedDataStoreFactory()) },
+                    { fluidExport: createOldRuntimeFactory(
+                        TestDataObject.type, createOldPrimedDataStoreFactory(), runtimeOptions) },
                     args.deltaConnectionServer),
                 loadContainer( // new loader, old container/data store runtimes
-                    { fluidExport: createOldRuntimeFactory(TestDataObject.type, createOldPrimedDataStoreFactory()) },
+                    { fluidExport: createOldRuntimeFactory(
+                        TestDataObject.type, createOldPrimedDataStoreFactory(), runtimeOptions) },
                     args.deltaConnectionServer),
                 loadContainer( // new loader/container runtime, old data store runtime
-                    { fluidExport: createRuntimeFactory(TestDataObject.type, createOldPrimedDataStoreFactory()) },
+                    { fluidExport: createRuntimeFactory(
+                        TestDataObject.type, createOldPrimedDataStoreFactory(), runtimeOptions) },
                     args.deltaConnectionServer),
                 loadContainerWithOldLoader( // old loader/container runtime, new data store runtime
-                    { fluidExport: createOldRuntimeFactory(TestDataObject.type, createPrimedDataStoreFactory()) },
+                    { fluidExport: createOldRuntimeFactory(
+                        TestDataObject.type, createPrimedDataStoreFactory(), runtimeOptions) },
                     args.deltaConnectionServer),
             ];
 

@@ -15,7 +15,7 @@ import { ReferenceType } from "@fluidframework/merge-tree";
 import { generateLocalNonCompatTest, ITestObjectProvider, ITestContainerConfig, TestDataObject } from "./compatUtils";
 
 const testContainerConfig: ITestContainerConfig = {
-    runtimeOptions: { initialSummarizerDelayMs: 20 },
+    runtimeOptions: { initialSummarizerDelayMs: 20, summaryConfigOverrides:{ maxOps: 1 } },
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
