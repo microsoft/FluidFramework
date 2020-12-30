@@ -19,7 +19,7 @@ export class MockStorage implements IChannelStorageService {
     }
 
     public async readBlob(path: string): Promise<ArrayBufferLike> {
-        const blob = await this.readBlobInternal(this.tree, path.split("/"));
+        const blob = MockStorage.readBlobCore(this.tree, path.split("/"));
         assert(blob !== undefined, "Blob Not Found");
         return toBuffer(blob.contents, blob.encoding);
     }
@@ -28,14 +28,14 @@ export class MockStorage implements IChannelStorageService {
     }
 
     public async contains(path: string): Promise<boolean> {
-        return await this.readBlobInternal(this.tree, path.split("/")) !== undefined;
+        return MockStorage.readBlobCore(this.tree, path.split("/")) !== undefined;
     }
 
     public async list(path: string): Promise<string[]> {
         return listBlobsAtTreePath(this.tree, path);
     }
 
-    private async readBlobInternal(tree: ITree, paths: string[]): Promise<IBlob> {
+    private static readBlobCore(tree: ITree, paths: string[]): IBlob {
         if (tree) {
             for (const entry of tree.entries) {
                 if (entry.path === paths[0]) {
@@ -46,7 +46,7 @@ export class MockStorage implements IChannelStorageService {
                         return blob;
                     }
                     if (entry.type === "Tree") {
-                        return this.readBlobInternal(entry.value as ITree, paths.slice(1));
+                        return MockStorage.readBlobCore(entry.value as ITree, paths.slice(1));
                     }
                     return undefined;
                 }

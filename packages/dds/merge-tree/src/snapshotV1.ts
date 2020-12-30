@@ -266,7 +266,6 @@ export class SnapshotV1 {
         options: Properties.PropertySet,
         serializer?: IFluidSerializer,
     ): MergeTreeChunkV1 {
-        const chunkObj = serializer ? serializer.parse(chunk) : JSON.parse(chunk);
-        return toLatestVersion(path, chunkObj, logger, options);
+        return toLatestVersion(path, serializer.parse(chunk), logger, options);
     }
 }
