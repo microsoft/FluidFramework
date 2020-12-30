@@ -44,7 +44,7 @@ export async function loadFrame(
 
     const urlResolver = new InsecureTinyliciousUrlResolver();
 
-    const tokenProvider = new InsecureTokenProvider("tinylicious", documentId, "12345", { id: "userid0" });
+    const tokenProvider = new InsecureTokenProvider("12345", { id: "userid0" });
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
 
     const host = new IFrameOuterHost({
