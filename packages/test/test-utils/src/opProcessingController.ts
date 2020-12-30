@@ -371,17 +371,19 @@ export class OpProcessingController {
                 working = false;
                 let latestSequenceNumber = -1;
                 for (const monitor of monitors) {
-                    if (monitor.hasPendingWork() || hasWork(monitor.deltaManager)) {
-                        working = true;
-                        break;
-                    }
-
-                    if (!monitor.inboundPaused) {
-                        if (latestSequenceNumber === -1) {
-                            latestSequenceNumber = monitor.latestSequenceNumber;
-                        } else if (latestSequenceNumber !== monitor.latestSequenceNumber) {
+                    if (!monitor.deltaManager.disposed) {
+                        if (monitor.hasPendingWork() || hasWork(monitor.deltaManager)) {
                             working = true;
                             break;
+                        }
+
+                        if (!monitor.inboundPaused) {
+                            if (latestSequenceNumber === -1) {
+                                latestSequenceNumber = monitor.latestSequenceNumber;
+                            } else if (latestSequenceNumber !== monitor.latestSequenceNumber) {
+                                working = true;
+                                break;
+                            }
                         }
                     }
                 }
