@@ -47,9 +47,10 @@ describe("Data Store Context Tests", () => {
         let scope: IFluidObject;
         const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
+        let summarizerNode: IRootSummarizerNodeWithGC;
 
         beforeEach(async () => {
-            const summarizerNode = createRootSummarizerNodeWithGC(
+            summarizerNode = createRootSummarizerNodeWithGC(
                 new TelemetryNullLogger(),
                 (() => undefined) as unknown as SummarizeInternalFn,
                 0,
@@ -68,6 +69,7 @@ describe("Data Store Context Tests", () => {
                 { throwOnFailure: true },
                 getGCDataFn,
                 getInitialGCDetailsFn,
+                [] /* usedRoutes */, // Data store will be unreferenced by default
             );
 
             const factory: IFluidDataStoreFactory = {
@@ -251,6 +253,34 @@ describe("Data Store Context Tests", () => {
                 const contents = JSON.parse((gcEntry.value as IBlob).contents) as IGarbageCollectionDetails;
                 assert.deepStrictEqual(contents.gcData, emptyGCData, "GC data from summary should be empty.");
             });
+
+            it("can successfully update referenced state", () => {
+                localDataStoreContext = new LocalFluidDataStoreContext(
+                    dataStoreId,
+                    ["TestComp", "SubComp"],
+                    containerRuntime,
+                    storage,
+                    scope,
+                    createSummarizerNodeFn,
+                    attachCb,
+                    undefined,
+                    false /* isRootDataStore */);
+
+                // Get the summarizer node for this data store which tracks its referenced state.
+                const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
+                assert.strictEqual(
+                    dataStoreSummarizerNode?.isReferenced(), false, "Data store should be unreferenced by default");
+
+                // Add the data store's route (empty string) to its used routes.
+                localDataStoreContext.updateUsedRoutes([""]);
+                assert.strictEqual(
+                    dataStoreSummarizerNode?.isReferenced(), true, "Data store should now be referenced");
+
+                // Update the data store to not have any used routes.
+                localDataStoreContext.updateUsedRoutes([]);
+                assert.strictEqual(
+                    dataStoreSummarizerNode?.isReferenced(), false, "Data store should now be unreferenced");
+            });
         });
     });
 
@@ -281,6 +311,7 @@ describe("Data Store Context Tests", () => {
                 undefined,
                 getGCDataFn,
                 getInitialGCDetailsFn,
+                [] /* usedRoutes */, // Data store will be unreferenced by default
             );
 
             const factory: { [key: string]: any } = {};
@@ -561,6 +592,44 @@ describe("Data Store Context Tests", () => {
                 summarizeResult = await remotedDataStoreContext.summarize(false /* fullTree */);
                 assert(summarizeResult.summary.type === SummaryType.Tree,
                     "summarize should return a tree since used state changed");
+            });
+
+            it("can successfully update referenced state", () => {
+                dataStoreAttributes = {
+                    pkg: "TestDataStore1",
+                };
+                const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
+                const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
+                const snapshotTree: ISnapshotTree = {
+                    id: "dummy",
+                    blobs: { [".component"]: "fluidDataStoreAttributes" },
+                    commits: {},
+                    trees: {},
+                };
+
+                remotedDataStoreContext = new RemotedFluidDataStoreContext(
+                    dataStoreId,
+                    snapshotTree,
+                    containerRuntime,
+                    new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                    scope,
+                    createSummarizerNodeFn,
+                );
+
+                // Get the summarizer node for this data store which tracks its used state.
+                const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
+                assert.strictEqual(
+                    dataStoreSummarizerNode?.isReferenced(), false, "Data store should be unreferenced by default");
+
+                // Add the data store's route (empty string) to its used routes.
+                remotedDataStoreContext.updateUsedRoutes([""]);
+                assert.strictEqual(
+                    dataStoreSummarizerNode?.isReferenced(), true, "Data store should now be referenced");
+
+                // Update the data store to not have any used routes.
+                remotedDataStoreContext.updateUsedRoutes([]);
+                assert.strictEqual(
+                    dataStoreSummarizerNode?.isReferenced(), false, "Data store should now be unreferenced");
             });
         });
     });

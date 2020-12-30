@@ -291,6 +291,17 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     /**
+     * Override the getChild method to return an instance of SummarizerNodeWithGC.
+     */
+    public getChild(id: string): ISummarizerNodeWithGC | undefined {
+        return this.children.get(id) as SummarizerNodeWithGC;
+    }
+
+    public isReferenced(): boolean {
+        return this.usedRoutes.includes("") || this.usedRoutes.includes("/");
+    }
+
+    /**
      * Updates the work-in-progress state of the child if summary is in progress.
      * @param child - The child node to be updated.
      */
@@ -298,13 +309,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // Update the child's work-in-progress used routes.
         child.wipSerializedUsedRoutes = JSON.stringify(child.usedRoutes);
         super.updateChildWipState(child);
-    }
-
-    /**
-     * Override the getChild method to return an instance of SummarizerNodeWithGC.
-     */
-    public getChild(id: string): ISummarizerNodeWithGC | undefined {
-        return this.children.get(id) as SummarizerNodeWithGC;
     }
 
     /**

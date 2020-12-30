@@ -455,6 +455,30 @@ export class DataStores implements IDisposable {
     }
 
     /**
+     * After GC has run, called to notify this Container's data stores of routes that are used in it.
+     * @param usedRoutes - The routes that are used in all data stores in this Container.
+     */
+    public updateUsedRoutes(usedRoutes: string[]) {
+        // Build a map of data store ids to routes used in it.
+        const usedRoutesMap: Map<string, string[]> = new Map();
+        for (const route of usedRoutes) {
+            const dataStoreId = route.split("/")[1];
+            const dataStoreRoute = route.slice(dataStoreId.length + 1);
+            const routes = usedRoutesMap.get(dataStoreId);
+            if (routes !== undefined) {
+                routes.push(dataStoreRoute);
+            } else {
+                usedRoutesMap.set(dataStoreId, [dataStoreRoute]);
+            }
+        }
+
+        // Update the used routes in each data store. Used routes is empty for unused data stores.
+        for (const [contextId, context] of this.contexts) {
+            context.updateUsedRoutes(usedRoutesMap.get(contextId) ?? []);
+        }
+    }
+
+    /**
      * Returns the outbound routes of this channel. Only root data stores are considered referenced and their paths are
      * part of outbound routes.
      */

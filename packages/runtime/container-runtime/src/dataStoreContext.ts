@@ -436,6 +436,18 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     /**
+     * After GC has run, called to notify this data store of routes that are used in it.
+     * @param usedRoutes - The routes that are used in this data store.
+     */
+    public updateUsedRoutes(usedRoutes: string[]) {
+        // Currently, only data stores can be collected. Once we have GC at DDS layer, the DDS' in the data store will
+        // also be notified of their used routes. See - https://github.com/microsoft/FluidFramework/issues/4611
+
+        // Update the used routes in this data store's summarizer node.
+        this.summarizerNode.usedRoutes = usedRoutes;
+    }
+
+    /**
      * @deprecated 0.18.Should call request on the runtime directly
      */
     public async request(request: IRequest): Promise<IResponse> {

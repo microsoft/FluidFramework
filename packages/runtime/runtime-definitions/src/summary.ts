@@ -168,4 +168,5 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
 
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(): Promise<IGarbageCollectionData>;
+    isReferenced(): boolean;
 }

@@ -1358,9 +1358,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             if (this.runtimeOptions.runGC) {
-                // Get the container's GC data and run GC on the reference graph in the GC data.
+                // Get the container's GC data and run GC on the reference graph in it.
                 const gcData = await this.dataStores.getGCData();
-                runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+                const { referencedNodeIds } = runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+
+                // Remove this node's route ("/") and notify data stores of routes that are used in it.
+                const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
+                this.dataStores.updateUsedRoutes(usedRoutes);
             }
 
             const trace = Trace.start();
