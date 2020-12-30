@@ -38,11 +38,16 @@
         "throttling": {
             "maxRequestsPerMs": 1000000,
             "maxRequestBurst": 1000000,
-            "minCooldownIntervalInMs": 1000000,
-            "minThrottleIntervalInMs": 1000000,
-            "maxOpenSocketConnections": 1000000,
+            "minRequestCooldownIntervalInMs": 1000000,
+            "minRequestThrottleIntervalInMs": 1000000,
+            "maxSocketConnectionsPerMs": 1000000,
+            "maxSocketConnectionBurst": 1000000,
+            "minSocketConnectionCooldownIntervalInMs": 1000000,
+            "minSocketConnectionThrottleIntervalInMs": 1000000,
             "maxSubmitOpsPerMs": 1000000,
-            "maxSubmitOpsBurst": 1000000
+            "maxSubmitOpBurst": 1000000,
+            "minSubmitOpCooldownIntervalInMs": 1000000,
+            "minSubmitOpThrottleIntervalInMs": 1000000
         },
         "topic": "rawdeltas",
         "bucket": "snapshots",
