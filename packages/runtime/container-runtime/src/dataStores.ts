@@ -20,7 +20,7 @@ import {
     IEnvelope,
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
-    IGCData,
+    IGarbageCollectionData,
     IInboundSignalMessage,
     InboundAttachMessage,
     ISummarizeResult,
@@ -437,7 +437,7 @@ export class DataStores implements IDisposable {
         return builder.getSummaryTree();
     }
 
-    public async getGCData(): Promise<IGCData> {
+    public async getGCData(): Promise<IGarbageCollectionData> {
         const builder = new GCDataBuilder();
         // Iterate over each store and get their GC data.
         await Promise.all(Array.from(this.contexts)
@@ -455,6 +455,34 @@ export class DataStores implements IDisposable {
         // Get the outbound routes and add a GC node for this channel.
         builder.addNode("/", await this.getOutboundRoutes());
         return builder.getGCData();
+    }
+
+    /**
+     * After GC has run, called to notify this Container's data stores of routes that are used in it.
+     * @param usedRoutes - The routes that are used in all data stores in this Container.
+     */
+    public updateUsedRoutes(usedRoutes: string[]) {
+        // Build a map of data store ids to routes used in it.
+        const usedRoutesMap: Map<string, string[]> = new Map();
+        for (const route of usedRoutes) {
+            assert(route.startsWith("/"), "Used route should always be an absolute route");
+
+            const dataStoreId = route.split("/")[1];
+            assert(this.contexts.has(dataStoreId), "Used route does not belong to any known data store");
+
+            const dataStoreRoute = route.slice(dataStoreId.length + 1);
+            const routes = usedRoutesMap.get(dataStoreId);
+            if (routes !== undefined) {
+                routes.push(dataStoreRoute);
+            } else {
+                usedRoutesMap.set(dataStoreId, [dataStoreRoute]);
+            }
+        }
+
+        // Update the used routes in each data store. Used routes is empty for unused data stores.
+        for (const [contextId, context] of this.contexts) {
+            context.updateUsedRoutes(usedRoutesMap.get(contextId) ?? []);
+        }
     }
 
     /**

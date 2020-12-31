@@ -10,7 +10,7 @@ import {
     ISnapshotTree,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IGCData } from "./garbageCollection";
+import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "./garbageCollection";
 
 export interface ISummaryStats {
     treeNodeCount: number;
@@ -26,7 +26,7 @@ export interface ISummaryTreeWithStats {
 
 export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
     /** The channel's garbage collection data */
-    gcData: IGCData;
+    gcData: IGarbageCollectionData;
 }
 
 export interface ISummarizeResult {
@@ -36,7 +36,7 @@ export interface ISummarizeResult {
 
 export interface IContextSummarizeResult extends ISummarizeResult {
     /** The context's garbage collection data */
-    gcData: IGCData;
+    gcData: IGarbageCollectionData;
 }
 
 export interface ISummarizeInternalResult extends IContextSummarizeResult {
@@ -81,12 +81,6 @@ export type CreateChildSummarizerNodeParam = {
 export interface ISummarizerNode {
     /** Latest successfully acked summary reference sequence number */
     readonly referenceSequenceNumber: number;
-    /**
-     * True if a change has been recorded with sequence number exceeding
-     * the latest successfully acked summary reference sequence number.
-     * False implies that the previous summary can be reused.
-     */
-    hasChanged(): boolean;
     /**
      * Marks the node as having a change with the given sequence number.
      * @param sequenceNumber - sequence number of change
@@ -144,9 +138,12 @@ export interface ISummarizerNode {
  *   summary or not.
  * - createChild - Added the following params:
  *   - getGCDataFn - This gets the GC data from the caller. This must be provided in order for getGCData to work.
- *   - getInitialGCDataFn - This gets the initial GC data for this node from the caller.
+ *   - getInitialGCDetailsFn - This gets the initial GC details from the caller.
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
+    // This tells whether this node is in use or not. Unused node can be garbage collected and reclaimed.
+    usedRoutes: string[];
+
     summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
     createChild(
         /** Summarize function */
@@ -162,10 +159,14 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
         createParam: CreateChildSummarizerNodeParam,
         /** Optional configuration affecting summarize behavior */
         config?: ISummarizerNodeConfig,
-        getGCDataFn?: () => Promise<IGCData>,
-        getInitialGCDataFn?: () => Promise<IGCData | undefined>,
+        getGCDataFn?: () => Promise<IGarbageCollectionData>,
+        getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
+        // The initial used routes of this node. This is needed for children that are created while a summary is in
+        // progress so that their work-in-progress state can be updated.
+        usedRoutes?: string[],
     ): ISummarizerNodeWithGC;
 
     getChild(id: string): ISummarizerNodeWithGC | undefined;
-    getGCData(): Promise<IGCData>;
+    getGCData(): Promise<IGarbageCollectionData>;
+    isReferenced(): boolean;
 }
