@@ -462,7 +462,11 @@ export class DataStores implements IDisposable {
         // Build a map of data store ids to routes used in it.
         const usedRoutesMap: Map<string, string[]> = new Map();
         for (const route of usedRoutes) {
+            assert(route.startsWith("/"), "Used route should always be an absolute route");
+
             const dataStoreId = route.split("/")[1];
+            assert(this.contexts.has(dataStoreId), "Used route does not belong to any known data store");
+
             const dataStoreRoute = route.slice(dataStoreId.length + 1);
             const routes = usedRoutesMap.get(dataStoreId);
             if (routes !== undefined) {

@@ -11,7 +11,7 @@ import {
     IChannelSummarizeResult,
     IContextSummarizeResult,
     IGarbageCollectionData,
-    IGarbageCollectionDetails,
+    IGarbageCollectionSummaryDetails,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -66,7 +66,7 @@ export function summarizeChannel(
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
 
     // Add GC details to the summary.
-    const gcDetails: IGarbageCollectionDetails = {
+    const gcDetails: IGarbageCollectionSummaryDetails = {
         usedRoutes: [""],
         gcData: summarizeResult.gcData,
     };

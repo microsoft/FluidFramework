@@ -12,7 +12,7 @@ import {
     gcBlobKey,
     IContextSummarizeResult,
     IGarbageCollectionData,
-    IGarbageCollectionDetails,
+    IGarbageCollectionSummaryDetails,
     ISummarizeInternalResult,
     ISummarizerNodeConfig,
     ISummarizerNodeWithGC,
@@ -61,8 +61,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     // This is the last known used routes of this node as seen by the server as part of a summary.
     private referenceUsedRoutes: string[] | undefined;
 
-    // The initial GC details of this node.
-    private readonly initialGCDetailsP: LazyPromise<IGarbageCollectionDetails>;
+    // The GC details of this node in the initial summary.
+    private readonly gcDetailsInInitialSummaryP: LazyPromise<IGarbageCollectionSummaryDetails>;
 
     /**
      * Do not call constructor directly.
@@ -78,7 +78,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         initialSummary?: IInitialSummary,
         wipSummaryLogger?: ITelemetryLogger,
         private readonly getGCDataFn?: () => Promise<IGarbageCollectionData>,
-        getInitialGCDetailsFn?: () => Promise<IGarbageCollectionDetails>,
+        getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
         public usedRoutes: string[] = [],
     ) {
         super(
@@ -91,8 +91,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             wipSummaryLogger,
         );
 
-        this.initialGCDetailsP = new LazyPromise(async () => {
-            return getInitialGCDetailsFn ? getInitialGCDetailsFn() : { usedRoutes: [] };
+        this.gcDetailsInInitialSummaryP = new LazyPromise(async () => {
+            return getInitialGCSummaryDetailsFn ? getInitialGCSummaryDetailsFn() : { usedRoutes: [] };
         });
     }
 
@@ -100,7 +100,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // Update the reference used routes from the initial GC details. This is used to find out if the used routes has
         // changed from the last state seen by the server. If so, we cannot reuse previous summary.
         if (this.referenceUsedRoutes === undefined) {
-            this.referenceUsedRoutes = (await this.initialGCDetailsP).usedRoutes;
+            this.referenceUsedRoutes = (await this.gcDetailsInInitialSummaryP).usedRoutes;
         }
 
         // If trackState is true, get summary from base summarizer node which tracks summary state.
@@ -137,19 +137,19 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     public async getGCData(): Promise<IGarbageCollectionData> {
         assert(this.getGCDataFn !== undefined, "GC data cannot be retrieved without getGCDataFn");
 
-        if (!super.hasChanged()) {
+        if (!this.hasDataChanged()) {
             // There is no new data since last summary. If we have the GC data from previous run, return it.
             if (this.gcData !== undefined) {
                 return cloneGCData(this.gcData);
             }
 
-            // This is the first time GC data is requested in this client, so we need to get initial GC data.
-            // Note: Initial GC data may not be available for clients with old summary. In such cases, we fall back
+            // This is the first time GC data is requested in this client, so we need to get GC data from the initial
+            // summary. Note: This info may not be available for clients with old summary. In such cases, we fall back
             // to getting GC data by calling getGCDataFn.
-            const initialGCData = (await this.initialGCDetailsP)?.gcData;
-            if (initialGCData !== undefined) {
-                this.gcData = cloneGCData(initialGCData);
-                return initialGCData;
+            const gcDataInInitialSummary = (await this.gcDetailsInInitialSummaryP).gcData;
+            if (gcDataInInitialSummary !== undefined) {
+                this.gcData = cloneGCData(gcDataInInitialSummary);
+                return gcDataInInitialSummary;
             }
         }
 
@@ -224,9 +224,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         correlatedSummaryLogger: ITelemetryLogger,
         readAndParseBlob: ReadAndParseBlob,
     ): Promise<void> {
-        const gcDetailsHash = snapshotTree.blobs[gcBlobKey];
-        if (gcDetailsHash !== undefined) {
-            const gcDetails = await readAndParseBlob<IGarbageCollectionDetails>(gcDetailsHash);
+        const gcDetailsBlob = snapshotTree.blobs[gcBlobKey];
+        if (gcDetailsBlob !== undefined) {
+            const gcDetails = await readAndParseBlob<IGarbageCollectionSummaryDetails>(gcDetailsBlob);
 
             // Possible re-entrancy. If we have already seen a summary later than this one, ignore it.
             if (this.referenceSequenceNumber >= referenceSequenceNumber) {
@@ -262,7 +262,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         createParam: CreateChildSummarizerNodeParam,
         config: ISummarizerNodeConfig = {},
         getGCDataFn?: () => Promise<IGarbageCollectionData>,
-        getInitialGCDetailsFn?: () => Promise<IGarbageCollectionDetails>,
+        getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
         usedRoutes?: string[],
     ): ISummarizerNodeWithGC {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
@@ -277,7 +277,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             createDetails.initialSummary,
             this.wipSummaryLogger,
             getGCDataFn,
-            getInitialGCDetailsFn,
+            getInitialGCSummaryDetailsFn,
             usedRoutes,
         );
 
@@ -312,13 +312,25 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     /**
-     * Override the hasChanged method and add a condition to check if this node's used routes changed.
+     * Override the hasChanged method. If this node data or its used state changed, the node is considered changed.
      */
     protected hasChanged(): boolean {
-        return super.hasChanged() || this.hasUsedRoutesChanged();
+        return this.hasDataChanged() || this.hasUsedStateChanged();
     }
 
-    private hasUsedRoutesChanged(): boolean {
+    /**
+     * This tells whether the data in this node has changed or not.
+     */
+    private hasDataChanged(): boolean {
+        return super.hasChanged();
+    }
+
+    /**
+     * This tells whether the used state of this node has changed since last successful summary. If the used routes
+     * of this node changed, its used state is considered changed. Basically, if this node or any of its child nodes
+     * was previously used and became unused (or vice versa), its used state has changed.
+     */
+    private hasUsedStateChanged(): boolean {
         return this.referenceUsedRoutes === undefined ||
             JSON.stringify(this.usedRoutes) !== JSON.stringify(this.referenceUsedRoutes);
     }
@@ -333,7 +345,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
  * or undefined if not loaded from summary
  * @param config - Configure behavior of summarizer node
  * @param getGCDataFn - Function to get the GC data of this node
- * @param initialGCDetailsP - Function to get the initial GC details of this node
+ * @param gcDetailsInInitialSummaryP - Function to get the initial GC details of this node
  */
 export const createRootSummarizerNodeWithGC = (
     logger: ITelemetryLogger,
@@ -342,7 +354,7 @@ export const createRootSummarizerNodeWithGC = (
     referenceSequenceNumber: number | undefined,
     config: ISummarizerNodeConfig = {},
     getGCDataFn?: () => Promise<IGarbageCollectionData>,
-    getInitialGCDetailsFn?: () => Promise<IGarbageCollectionDetails>,
+    getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
 ): IRootSummarizerNodeWithGC => new SummarizerNodeWithGC(
     logger,
     summarizeInternalFn,
@@ -352,6 +364,6 @@ export const createRootSummarizerNodeWithGC = (
     undefined /* initialSummary */,
     undefined /* wipSummaryLogger */,
     getGCDataFn,
-    getInitialGCDetailsFn,
+    getInitialGCSummaryDetailsFn,
     [""] /* usedRoutes */, // Add self route (empty string) because root node is always considered used.
 );

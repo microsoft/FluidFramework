@@ -29,7 +29,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
-import { IGarbageCollectionData, IGarbageCollectionDetails } from "./garbageCollection";
+import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "./garbageCollection";
 import { IInboundSignalMessage } from "./protocol";
 import {
     CreateChildSummarizerNodeParam,
@@ -213,7 +213,7 @@ export interface IFluidDataStoreChannel extends
 export type CreateChildSummarizerNodeFn = (
     summarizeInternal: SummarizeInternalFn,
     getGCDataFn: () => Promise<IGarbageCollectionData>,
-    getInitialGCDetailsFn: () => Promise<IGarbageCollectionDetails>,
+    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
     usedRoutes: string[],
 ) => ISummarizerNodeWithGC;
 

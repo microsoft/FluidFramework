@@ -23,7 +23,7 @@ import {
     IContextSummarizeResult,
     IFluidDataStoreContext,
     IGarbageCollectionData,
-    IGarbageCollectionDetails,
+    IGarbageCollectionSummaryDetails,
     ISummarizeInternalResult,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
@@ -52,9 +52,9 @@ export class RemoteChannelContext implements IChannelContext {
     /**
      * This loads the GC details from the base snapshot of this context.
      */
-    private readonly initialGCDetailsP = new LazyPromise<IGarbageCollectionDetails>(async () => {
+    private readonly gcDetailsInInitialSummaryP = new LazyPromise<IGarbageCollectionSummaryDetails>(async () => {
         if (await this.services.objectStorage.contains(gcBlobKey)) {
-            return readAndParse<IGarbageCollectionDetails>(this.services.objectStorage, gcBlobKey);
+            return readAndParse<IGarbageCollectionSummaryDetails>(this.services.objectStorage, gcBlobKey);
         } else {
             return {};
         }
@@ -91,7 +91,7 @@ export class RemoteChannelContext implements IChannelContext {
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async () => this.getGCDataInternal(),
-            async () => this.initialGCDetailsP,
+            async () => this.gcDetailsInInitialSummaryP,
             usedRoutes ?? [""],
         );
     }

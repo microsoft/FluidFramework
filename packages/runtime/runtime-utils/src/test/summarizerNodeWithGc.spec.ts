@@ -10,7 +10,7 @@ import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
     CreateSummarizerNodeSource,
     IGarbageCollectionData,
-    IGarbageCollectionDetails,
+    IGarbageCollectionSummaryDetails,
     ISummarizeInternalResult,
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
@@ -27,7 +27,7 @@ describe("SummarizerNodeWithGC Tests", () => {
     const subNode2Id = "/gcNode2/subNode";
 
     let internalGCData: IGarbageCollectionData;
-    let initialGCDetails: IGarbageCollectionDetails;
+    let initialGCSummaryDetails: IGarbageCollectionSummaryDetails;
     let summarizeGCData: IGarbageCollectionData;
     let rootSummarizerNode: IRootSummarizerNodeWithGC;
     let summarizerNode: ISummarizerNodeWithGC;
@@ -46,7 +46,7 @@ describe("SummarizerNodeWithGC Tests", () => {
             { type: CreateSummarizerNodeSource.FromSummary },
             undefined,
             getInternalGCData,
-            getInitialGCDetails,
+            getinitialGCSummaryDetails,
         );
 
         // Initialize the values to be returned by getInternalGCData.
@@ -57,8 +57,8 @@ describe("SummarizerNodeWithGC Tests", () => {
             },
         };
 
-        // Initialize the values to be returned by getInitialGCDetails.
-        initialGCDetails = {
+        // Initialize the values to be returned by getinitialGCSummaryDetails.
+        initialGCSummaryDetails = {
             usedRoutes: [],
         };
 
@@ -83,7 +83,7 @@ describe("SummarizerNodeWithGC Tests", () => {
     }
 
     const getInternalGCData = async (): Promise<IGarbageCollectionData> => internalGCData;
-    const getInitialGCDetails = async (): Promise<IGarbageCollectionDetails> => initialGCDetails;
+    const getinitialGCSummaryDetails = async (): Promise<IGarbageCollectionSummaryDetails> => initialGCSummaryDetails;
 
     describe("getGCData API", () => {
         it("fails when function to get GC data is not provided", async () => {
@@ -107,8 +107,8 @@ describe("SummarizerNodeWithGC Tests", () => {
         });
 
         it("can return initial GC data when nothing has changed since last summary", async () => {
-            // Set the data to be returned by getInitialGCDetails.
-            initialGCDetails = {
+            // Set the data to be returned by getinitialGCSummaryDetails.
+            initialGCSummaryDetails = {
                 usedRoutes: [],
                 gcData: {
                     gcNodes: {
@@ -122,13 +122,13 @@ describe("SummarizerNodeWithGC Tests", () => {
             // We did not invalidate the summarizer node, so it will get the initial GC data because nothing changed
             // since last summary.
             const gcData = await summarizerNode.getGCData();
-            assert.deepStrictEqual(gcData, initialGCDetails.gcData, "Initial GC data should have been returned");
+            assert.deepStrictEqual(gcData, initialGCSummaryDetails.gcData, "Initial GC data should have been returned");
         });
 
         it("can return GC data when initial GC data is not available", async () => {
             // Set initial GC data to undefined. This will force the summarizer node to generate GC data even though
             // nothing changed since last summary.
-            initialGCDetails = {
+            initialGCSummaryDetails = {
                 usedRoutes: [],
                 gcData: undefined,
             };
@@ -140,7 +140,7 @@ describe("SummarizerNodeWithGC Tests", () => {
         it("can return cached GC data", async () => {
             // Set initial GC data to undefined. This will force the summarizer node to generate GC data even though
             // nothing changed since last summary.
-            initialGCDetails = {
+            initialGCSummaryDetails = {
                 usedRoutes: [],
                 gcData: undefined,
             };
@@ -186,7 +186,7 @@ describe("SummarizerNodeWithGC Tests", () => {
         it("can return GC data when nothing changed since last summary", async () => {
             // Set initial GC data to undefined. This will force the summarizer node to generate GC data even though
             // nothing changed since last summary.
-            initialGCDetails = {
+            initialGCSummaryDetails = {
                 usedRoutes: [],
                 gcData: undefined,
             };
@@ -219,7 +219,7 @@ describe("SummarizerNodeWithGC Tests", () => {
         it("can return empty GC data when summarizing without generating GC data", async () => {
             // Set initial used routes to empty. Since the summarizer node's default used routes is also empty, this
             // ensures that used routes is unchanged.
-            initialGCDetails = {
+            initialGCSummaryDetails = {
                 usedRoutes: [],
             };
 
@@ -231,7 +231,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 
         it("can return GC data when initial used routes is not available", async () => {
             // Let initial used routes be undefined. This will force the summarizer to generate summary.
-            initialGCDetails = {};
+            initialGCSummaryDetails = {};
 
             // Call getGCData to generate GC data. This will generate GC data even though nothing changes since initial
             // GC data is not available.
@@ -249,7 +249,7 @@ describe("SummarizerNodeWithGC Tests", () => {
         it("can return GC data when used routes changed since last summary", async () => {
             // Set initial used routes to have some value. This will force the summarizer to generate summary again
             // because reference used route will be different from summarizer node's default used routes (empty).
-            initialGCDetails = {
+            initialGCSummaryDetails = {
                 usedRoutes: [""],
             };
 

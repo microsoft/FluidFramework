@@ -43,7 +43,7 @@ import {
     IFluidDataStoreContextEvents,
     IFluidDataStoreRegistry,
     IGarbageCollectionData,
-    IGarbageCollectionDetails,
+    IGarbageCollectionSummaryDetails,
     IInboundSignalMessage,
     IProvideFluidDataStoreFactory,
     ISummarizeInternalResult,
@@ -244,7 +244,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async () => this.getGCDataInternal(),
-            async () => this.getInitialGCDetails(),
+            async () => this.getInitialGCSummaryDetails(),
             [""] /* usedRoutes */,
         );
     }
@@ -409,7 +409,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(attributes));
 
         // Add GC details to the summary.
-        const gcDetails: IGarbageCollectionDetails = {
+        const gcDetails: IGarbageCollectionSummaryDetails = {
             usedRoutes: this.summarizerNode.usedRoutes,
             gcData: summarizeResult.gcData,
         };
@@ -570,7 +570,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
-    protected abstract getInitialGCDetails(): Promise<IGarbageCollectionDetails>;
+    protected abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
         assert(!!this.channel, "Channel must exist when resubmitting ops");
@@ -588,7 +588,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return (
             summarizeInternal: SummarizeInternalFn,
             getGCDataFn: () => Promise<IGarbageCollectionData>,
-            getInitialGCDetailsFn: () => Promise<IGarbageCollectionDetails>,
+            getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
             usedRoutes: string[],
         ) => this.summarizerNode.createChild(
             summarizeInternal,
@@ -597,7 +597,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             // DDS will not create failure summaries
             { throwOnFailure: true },
             getGCDataFn,
-            getInitialGCDetailsFn,
+            getInitialGCSummaryDetailsFn,
             usedRoutes,
         );
     }
@@ -689,11 +689,14 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         };
     });
 
-    private readonly initialGCDetailsP = new LazyPromise<IGarbageCollectionDetails>(async () => {
+    private readonly gcDetailsInInitialSummaryP = new LazyPromise<IGarbageCollectionSummaryDetails>(async () => {
         // If the initial snapshot is null or string, the snapshot is in old format and won't have GC details.
         if (!(this.initSnapshotValue === null || typeof this.initSnapshotValue === "string")
             && this.initSnapshotValue.blobs[gcBlobKey] !== undefined) {
-            return readAndParse<IGarbageCollectionDetails>(this.storage, this.initSnapshotValue.blobs[gcBlobKey]);
+            return readAndParse<IGarbageCollectionSummaryDetails>(
+                this.storage,
+                this.initSnapshotValue.blobs[gcBlobKey],
+            );
         } else {
             return {};
         }
@@ -703,8 +706,8 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         return this.initialSnapshotDetailsP;
     }
 
-    protected async getInitialGCDetails(): Promise<IGarbageCollectionDetails> {
-        return this.initialGCDetailsP;
+    protected async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
+        return this.gcDetailsInInitialSummaryP;
     }
 
     public generateAttachMessage(): IAttachMessage {
@@ -768,7 +771,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(attributes));
 
         // Add GC details to the summary.
-        const gcDetails: IGarbageCollectionDetails = {
+        const gcDetails: IGarbageCollectionSummaryDetails = {
             usedRoutes: this.summarizerNode.usedRoutes,
             gcData: summarizeResult.gcData,
         };
@@ -796,8 +799,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         };
     }
 
-    protected async getInitialGCDetails(): Promise<IGarbageCollectionDetails> {
-        // Local data store does not have initial GC details.
+    protected async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
+        // Local data store does not have initial summary.
         return {};
     }
 }

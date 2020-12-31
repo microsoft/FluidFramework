@@ -18,7 +18,7 @@ export interface IGarbageCollectionData {
 /**
  * Represents the format of the GC details that is stored in the summary for each node.
  */
-export interface IGarbageCollectionDetails {
+export interface IGarbageCollectionSummaryDetails {
     /** A list of routes to Fluid objects that are used in this node. */
     usedRoutes?: string[];
     /** The GC data of this node. */
