@@ -29,13 +29,9 @@ import {
     AttachState,
 } from "@fluidframework/container-definitions";
 import {
-    blobsTreeName,
-    chunksBlobName,
     IContainerRuntime,
     IContainerRuntimeDirtyable,
     IContainerRuntimeEvents,
-    IContainerRuntimeMetadata,
-    metadataBlobName,
 } from "@fluidframework/container-runtime-definitions";
 import {
     assert,
@@ -121,6 +117,12 @@ import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager } from "./blobManager";
 import { BaseSnapshotType, DataStores } from "./dataStores";
+import {
+    blobsTreeName,
+    chunksBlobName,
+    IContainerRuntimeMetadata,
+    metadataBlobName,
+} from "./snapshot";
 
 export enum ContainerMessageType {
     // An op to be delivered to store

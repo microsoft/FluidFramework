@@ -27,7 +27,6 @@ import {
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { createRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { dataStoreAttributesBlobName } from "@fluidframework/container-runtime-definitions";
 import {
     gcBlobKey,
     IFluidDataStoreAttributes,
@@ -35,6 +34,7 @@ import {
     RemotedFluidDataStoreContext,
 } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
+import { dataStoreAttributesBlobName } from "../snapshot";
 
 describe("Data Store Context Tests", () => {
     const dataStoreId = "Test1";

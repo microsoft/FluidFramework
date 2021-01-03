@@ -36,8 +36,6 @@ import {
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-    dataStoreAttributesBlobName,
-    DataStoreSnapshotFormatVersion,
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";
 import {
@@ -62,6 +60,10 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
+import {
+    dataStoreAttributesBlobName,
+    DataStoreSnapshotFormatVersion,
+} from "./snapshot";
 
 export const gcBlobKey = "gc";
 
