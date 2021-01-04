@@ -29,12 +29,12 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
-    attributesBlobKey,
     IFluidDataStoreAttributes,
     LocalFluidDataStoreContext,
     RemotedFluidDataStoreContext,
 } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
+import { dataStoreAttributesBlobName } from "../snapshot";
 
 describe("Data Store Context Tests", () => {
     const dataStoreId = "Test1";
@@ -105,7 +105,8 @@ describe("Data Store Context Tests", () => {
                 await localDataStoreContext.realize();
                 const attachMessage = localDataStoreContext.generateAttachMessage();
 
-                const attributesEntry = attachMessage.snapshot.entries.find((e) => e.path === attributesBlobKey);
+                const attributesEntry = attachMessage.snapshot.entries.find(
+                    (e) => e.path === dataStoreAttributesBlobName);
                 assert(attributesEntry !== undefined, "There is no attributes blob in the summary tree");
                 const contents = JSON.parse((attributesEntry.value as IBlob).contents) as IFluidDataStoreAttributes;
                 const dataStoreAttributes: IFluidDataStoreAttributes = {
@@ -174,7 +175,8 @@ describe("Data Store Context Tests", () => {
                 await localDataStoreContext.realize();
 
                 const attachMessage = localDataStoreContext.generateAttachMessage();
-                const attributesEntry = attachMessage.snapshot.entries.find((e) => e.path === attributesBlobKey);
+                const attributesEntry = attachMessage.snapshot.entries.find(
+                    (e) => e.path === dataStoreAttributesBlobName);
                 assert(attributesEntry !== undefined, "There is no attributes blob in the summary tree");
                 const contents = JSON.parse((attributesEntry.value as IBlob).contents) as IFluidDataStoreAttributes;
                 const dataStoreAttributes: IFluidDataStoreAttributes = {
@@ -341,7 +343,7 @@ describe("Data Store Context Tests", () => {
                 const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
                 const snapshotTree: ISnapshotTree = {
                     id: "dummy",
-                    blobs: { [attributesBlobKey]: "fluidDataStoreAttributes" },
+                    blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
                     commits: {},
                     trees: {},
                 };
@@ -361,7 +363,7 @@ describe("Data Store Context Tests", () => {
                 const summarizeResult = await remotedDataStoreContext.summarize(true /* fullTree */);
                 assert(summarizeResult.summary.type === SummaryType.Tree,
                     "summarize should always return a tree when fullTree is true");
-                const blob = summarizeResult.summary.tree[attributesBlobKey] as ISummaryBlob;
+                const blob = summarizeResult.summary.tree[dataStoreAttributesBlobName] as ISummaryBlob;
 
                 const contents = JSON.parse(blob.content as string) as IFluidDataStoreAttributes;
                 assert.strictEqual(contents.pkg, dataStoreAttributes.pkg, "Remote DataStore package does not match.");
@@ -378,12 +380,13 @@ describe("Data Store Context Tests", () => {
             it("can correctly initialize and generate attributes without version and isRootDataStore", async () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
+                    snapshotFormatVersion: undefined,
                 };
                 const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
                 const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
                 const snapshotTree: ISnapshotTree = {
                     id: "dummy",
-                    blobs: { [attributesBlobKey]: "fluidDataStoreAttributes" },
+                    blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
                     commits: {},
                     trees: {},
                 };
@@ -403,7 +406,7 @@ describe("Data Store Context Tests", () => {
                 const summarizeResult = await remotedDataStoreContext.summarize(true /* fullTree */);
                 assert(summarizeResult.summary.type === SummaryType.Tree,
                     "summarize should always return a tree when fullTree is true");
-                const blob = summarizeResult.summary.tree[attributesBlobKey] as ISummaryBlob;
+                const blob = summarizeResult.summary.tree[dataStoreAttributesBlobName] as ISummaryBlob;
 
                 const contents = JSON.parse(blob.content as string) as IFluidDataStoreAttributes;
                 assert.strictEqual(
@@ -423,6 +426,7 @@ describe("Data Store Context Tests", () => {
             it("can generate GC data without GC details in initial summary", async () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
+                    snapshotFormatVersion: undefined,
                 };
                 const attributesBuffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
                 const blobCache = new Map<string, string>([
@@ -431,7 +435,7 @@ describe("Data Store Context Tests", () => {
                 const snapshotTree: ISnapshotTree = {
                     id: "dummy",
                     blobs: {
-                        [attributesBlobKey]: "fluidDataStoreAttributes",
+                        [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                     },
                     commits: {},
                     trees: {},
@@ -461,6 +465,7 @@ describe("Data Store Context Tests", () => {
             it("can generate GC data with emtpy GC details in initial summary", async () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
+                    snapshotFormatVersion: undefined,
                 };
                 const gcDetails: IGarbageCollectionSummaryDetails = {
                     usedRoutes: [],
@@ -475,7 +480,7 @@ describe("Data Store Context Tests", () => {
                 const snapshotTree: ISnapshotTree = {
                     id: "dummy",
                     blobs: {
-                        [attributesBlobKey]: "fluidDataStoreAttributes",
+                        [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                         [gcBlobKey]: "gcDetails",
                     },
                     commits: {},
@@ -506,6 +511,7 @@ describe("Data Store Context Tests", () => {
             it("can generate GC data with GC details in initial summary", async () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
+                    snapshotFormatVersion: undefined,
                 };
                 const gcDetails: IGarbageCollectionSummaryDetails = {
                     usedRoutes: [],
@@ -525,7 +531,7 @@ describe("Data Store Context Tests", () => {
                 const snapshotTree: ISnapshotTree = {
                     id: "dummy",
                     blobs: {
-                        [attributesBlobKey]: "fluidDataStoreAttributes",
+                        [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                         [gcBlobKey]: "gcDetails",
                     },
                     commits: {},
@@ -548,6 +554,7 @@ describe("Data Store Context Tests", () => {
             it("should not reuse summary data when used state changed since last summary", async () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
+                    snapshotFormatVersion: undefined,
                 };
                 const gcDetails: IGarbageCollectionSummaryDetails = {
                     usedRoutes: [],
@@ -561,7 +568,7 @@ describe("Data Store Context Tests", () => {
                 const snapshotTree: ISnapshotTree = {
                     id: "dummy",
                     blobs: {
-                        [attributesBlobKey]: "fluidDataStoreAttributes",
+                        [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                         [gcBlobKey]: "gcDetails",
                     },
                     commits: {},
@@ -597,6 +604,7 @@ describe("Data Store Context Tests", () => {
             it("can successfully update referenced state", () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
+                    snapshotFormatVersion: undefined,
                 };
                 const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
                 const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);

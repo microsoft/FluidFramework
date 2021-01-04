@@ -28,6 +28,7 @@ import {
     ICreateChildDetails,
     IInitialSummary,
     ISummarizerNodeRootContract,
+    parseSummaryForSubtrees,
     ReadAndParseBlob,
     seqFromTree,
     SummaryNode,
@@ -315,6 +316,12 @@ export class SummarizerNode implements IRootSummarizerNode {
             basePath,
             localPath,
         });
+
+        const { childrenTree, childrenPathPart } = parseSummaryForSubtrees(baseSummary);
+        if (childrenPathPart !== undefined) {
+            pathParts.push(childrenPathPart);
+        }
+
         if (pathParts.length > 0) {
             this.latestSummary.additionalPath = EscapedPath.createAndConcat(pathParts);
         }
@@ -325,11 +332,11 @@ export class SummarizerNode implements IRootSummarizerNode {
             .filter(([id]) => {
                 // Assuming subtrees missing from snapshot are newer than the snapshot,
                 // but might be nice to assert this using earliest seq for node.
-                return baseSummary.trees[id] !== undefined;
+                return childrenTree.trees[id] !== undefined;
             }).map(async ([id, child]) => {
                 return child.refreshLatestSummaryFromSnapshot(
                     referenceSequenceNumber,
-                    baseSummary.trees[id],
+                    childrenTree.trees[id],
                     pathForChildren,
                     EscapedPath.create(id),
                     correlatedSummaryLogger,
@@ -361,12 +368,19 @@ export class SummarizerNode implements IRootSummarizerNode {
         const decodedSummary = decodeSummary(snapshot, this.defaultLogger);
         const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 
-        if (outstandingOps.length > 0) {
-            assert(!!this.latestSummary, "Should have latest summary defined if any outstanding ops found");
-            this.latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
+        const { childrenPathPart } = parseSummaryForSubtrees(decodedSummary.baseSummary);
+        if (childrenPathPart !== undefined) {
+            decodedSummary.pathParts.push(childrenPathPart);
+        }
 
-            // Defensive: tracking number should already exceed this number.
-            // This is probably a little excessive; can remove when stable.
+        if (decodedSummary.pathParts.length > 0) {
+            assert(!!this.latestSummary, "Should have latest summary defined during loadBaseSummary");
+            this.latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
+        }
+
+        // Defensive assertion: tracking number should already exceed this number.
+        // This is probably a little excessive; can remove when stable.
+        if (outstandingOps.length > 0) {
             const newOpsLatestSeq = outstandingOps[outstandingOps.length - 1].sequenceNumber;
             assert(
                 newOpsLatestSeq <= this.trackingSequenceNumber,

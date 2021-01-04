@@ -170,3 +170,5 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     getGCData(): Promise<IGarbageCollectionData>;
     isReferenced(): boolean;
 }
+
+export const channelsTreeName = ".channels";

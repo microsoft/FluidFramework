@@ -18,7 +18,13 @@ import {
     BindState,
     AttachState,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
+import {
+    assert,
+    Deferred,
+    LazyPromise,
+    TypedEventEmitter,
+    unreachableCase,
+} from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
@@ -29,8 +35,11 @@ import {
     ISnapshotTree,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
+    IContainerRuntime,
+} from "@fluidframework/container-runtime-definitions";
+import {
+    channelsTreeName,
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     FluidDataStoreRegistryEntry,
@@ -52,23 +61,22 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
-
-// Snapshot Format Version to be used in store attributes.
-export const currentSnapshotFormatVersion = "0.1";
-
-export const attributesBlobKey = ".component";
+import {
+    dataStoreAttributesBlobName,
+    DataStoreSnapshotFormatVersion,
+} from "./snapshot";
 
 function createAttributes(pkg: readonly string[], isRootDataStore: boolean): IFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
     return {
         pkg: stringifiedPkg,
-        snapshotFormatVersion: currentSnapshotFormatVersion,
+        snapshotFormatVersion: "0.1",
         isRootDataStore,
     };
 }
 export function createAttributesBlob(pkg: readonly string[], isRootDataStore: boolean): ITreeEntry {
     const attributes = createAttributes(pkg, isRootDataStore);
-    return new BlobTreeEntry(attributesBlobKey, JSON.stringify(attributes));
+    return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
 }
 
 /**
@@ -78,7 +86,7 @@ export function createAttributesBlob(pkg: readonly string[], isRootDataStore: bo
  */
 export interface IFluidDataStoreAttributes {
     pkg: string;
-    readonly snapshotFormatVersion?: string;
+    readonly snapshotFormatVersion: DataStoreSnapshotFormatVersion;
     /**
      * This tells whether a data store is root. Root data stores are never collected.
      * Non-root data stores may be collected if they are not used. If this is not present, default it to
@@ -406,7 +414,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         // Add data store's attributes to the summary.
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
         const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
-        addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(attributes));
+        addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
         const gcDetails: IGarbageCollectionSummaryDetails = {
@@ -610,7 +618,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     constructor(
         id: string,
-        private readonly initSnapshotValue: ISnapshotTree | string | null,
+        private readonly initSnapshotValue: ISnapshotTree | string | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject,
@@ -634,12 +642,12 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     }
 
     private readonly initialSnapshotDetailsP =  new LazyPromise<ISnapshotDetails>(async () => {
-        let tree: ISnapshotTree | null;
+        let tree: ISnapshotTree | undefined;
         let isRootDataStore = true;
 
         if (typeof this.initSnapshotValue === "string") {
             const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
-            tree = await this.storage.getSnapshotTree(commit);
+            tree = await this.storage.getSnapshotTree(commit) ?? undefined;
         } else {
             tree = this.initSnapshotValue;
         }
@@ -653,23 +661,36 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             this.pending = loadedSummary.outstandingOps.concat(this.pending!);
         }
 
-        if (tree !== null && tree.blobs[attributesBlobKey] !== undefined) {
+        if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
             // Need to rip through snapshot and use that to populate extraBlobs
-            const attributes = await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[attributesBlobKey]);
+            const attributes =
+                await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
 
             let pkgFromSnapshot: string[];
             // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
-            // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
-            if (attributes.snapshotFormatVersion === undefined) {
-                if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
-                    pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
-                } else {
-                    pkgFromSnapshot = [attributes.pkg];
+            // For snapshotFormatVersion = "0.1" or above, pkg is jsonified, otherwise it is just a string.
+            switch (attributes.snapshotFormatVersion) {
+                case undefined: {
+                    if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
+                        pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
+                    } else {
+                        pkgFromSnapshot = [attributes.pkg];
+                    }
+                    break;
                 }
-            } else if (attributes.snapshotFormatVersion === currentSnapshotFormatVersion) {
-                pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
-            } else {
-                throw new Error(`Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
+                case 2: {
+                    tree = tree.trees[channelsTreeName];
+                    // Intentional fallthrough, since package is still JSON
+                }
+                case "0.1": {
+                    pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
+                    break;
+                }
+                default: {
+                    unreachableCase(
+                        attributes.snapshotFormatVersion,
+                        `Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
+                }
             }
             this.pkg = pkgFromSnapshot;
 
@@ -684,14 +705,14 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         return {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             pkg: this.pkg!,
-            snapshot: tree ?? undefined,
+            snapshot: tree,
             isRootDataStore,
         };
     });
 
     private readonly gcDetailsInInitialSummaryP = new LazyPromise<IGarbageCollectionSummaryDetails>(async () => {
-        // If the initial snapshot is null or string, the snapshot is in old format and won't have GC details.
-        if (!(this.initSnapshotValue === null || typeof this.initSnapshotValue === "string")
+        // If the initial snapshot is undefined or string, the snapshot is in old format and won't have GC details.
+        if (!(!this.initSnapshotValue || typeof this.initSnapshotValue === "string")
             && this.initSnapshotValue.blobs[gcBlobKey] !== undefined) {
             return readAndParse<IGarbageCollectionSummaryDetails>(
                 this.storage,
@@ -768,7 +789,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
         // Add data store's attributes to the summary.
         const attributes: IFluidDataStoreAttributes = createAttributes(this.pkg, this.isRootDataStore);
-        addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(attributes));
+        addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
         const gcDetails: IGarbageCollectionSummaryDetails = {
