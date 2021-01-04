@@ -38,17 +38,23 @@ export interface IUrlResolver {
     ): Promise<string>;
 }
 
-// Information that can be returned by a lightweight, seperately exported driver function. Used to preanalyze a URL for
-// driver compatibility and preload information.
+/**
+* Information that can be returned by a lightweight, seperately exported driver function. Used to preanalyze a URL
+* for driver compatibility and preload information.
+*/
 export interface DriverPreCheckInfo {
-    // Only needed as long as long as Loader.request() does not work as intended. When Loader.request() caches and
-    // resolves pathing properly, this can be removed. #4489, #4491
+    /**
+     * Only needed as long as long as Loader.request() does not work as intended. When Loader.request() caches and
+     * resolves pathing properly, this can be removed. #4489, #4491
+     */
     componentPath: string;
-
-    // Container name, if known. This could be used to eagerly prefetch container code prior to having a snapshot.
+    /**
+     * Container name, if known. This could be used to eagerly prefetch container code prior to having a snapshot.
+     */
     containerCodeHint?: string;
-
-    // Domains that will be connected to on the critical boot path. Can be preconnected to in certain flows.
+    /**
+     * Domains that will be connected to on the critical boot path. Can be preconnected to in certain flows.
+     */
     preconnectDomains?: string[];
   }
 

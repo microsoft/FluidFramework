@@ -7,7 +7,10 @@ import { DriverPreCheckInfo } from "@fluidframework/driver-definitions";
 import { getLocatorFromOdspUrl } from "./odspFluidFileLink";
 
 /**
- * A check that returns DriverPreCheckInfo if the URL is likely supported by this driver.
+ * A check that returns DriverPreCheckInfo if the URL format is likely supported by this driver.
+ * Note that returning information here is NOT a full guarentee that resolve will ultimately be successsful.
+ * Instead, this should be used as a lightweight check that can filter out easily detectable unsupported URLs
+ * before the entire Fluid loading process needs to be kicked off.
  */
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined {
   const locator = getLocatorFromOdspUrl(documentUrl);
