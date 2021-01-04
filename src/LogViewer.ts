@@ -4,21 +4,12 @@
  */
 
 import BTree from 'sorted-btree';
-import { assert, fail, noop } from './Common';
+import { assert, fail } from './Common';
 import { EditLog } from './EditLog';
 import { Snapshot } from './Snapshot';
 import { EditResult } from './PersistedTypes';
-import { EditId } from './Identifiers';
 import { Transaction } from './Transaction';
 import { initialTree } from './InitialTree';
-
-/**
- * Callback for when an edit is applied.
- * Note that edits may be applied multiple times (and with different results due to concurrent edits),
- * and might not be applied when added.
- * This callback cannot be used to simply log each edit as it comes it to see its status.
- */
-export type EditResultCallback = (editResult: EditResult, editId: EditId) => void;
 
 /**
  * Creates `Snapshot`s for the revisions in an `EditLog`
@@ -74,13 +65,6 @@ export class CachingLogViewer implements LogViewer {
 	private lastHeadSnapshot: Snapshot;
 
 	/**
-	 * Called whenever an edit is processed.
-	 * This will have been called at least once for any edit if a revision after than edit has been requested.
-	 * It may be called multiple times: the number of calls and when they occur depends on caching and is an implementation detail.
-	 */
-	private readonly processEditResult: EditResultCallback;
-
-	/**
 	 * Iff true, the snapshots passed to setKnownRevision will be asserted to be correct.
 	 */
 	private readonly expensiveValidation: boolean;
@@ -88,15 +72,13 @@ export class CachingLogViewer implements LogViewer {
 	/**
 	 * Create a new LogViewer
 	 * @param log - the edit log which snapshots will be based on.
-	 * @param processEditResult - will be called when an edit is actually computed.
 	 * @param expensiveValidation - Iff true, the snapshots passed to setKnownRevision will be asserted to be correct.
 	 */
-	public constructor(log: EditLog, processEditResult?: EditResultCallback, expensiveValidation = false) {
+	public constructor(log: EditLog, expensiveValidation = false) {
 		this.log = log;
 		const initialSnapshot = Snapshot.fromTree(initialTree);
 		this.lastHeadSnapshot = initialSnapshot;
 		this.sequencedSnapshotCache.set(0, initialSnapshot);
-		this.processEditResult = processEditResult ?? noop;
 		this.expensiveValidation = expensiveValidation;
 	}
 
@@ -125,8 +107,6 @@ export class CachingLogViewer implements LogViewer {
 				const revision = i + 1; // Revision is the result of the edit being applied.
 				this.sequencedSnapshotCache.set(revision, currentSnapshot);
 			}
-
-			this.processEditResult(editingResult.result, edit.id);
 		}
 
 		if (revision === Number.POSITIVE_INFINITY) {
