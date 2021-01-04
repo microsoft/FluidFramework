@@ -450,13 +450,7 @@ export class Snapshot {
 }
 
 // @public
-export interface SnapshotNode {
-    // (undocumented)
-    readonly definition: Definition;
-    // (undocumented)
-    readonly identifier: NodeId;
-    // (undocumented)
-    readonly payload?: Payload;
+export interface SnapshotNode extends NodeData {
     // (undocumented)
     readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
 }
