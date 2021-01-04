@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert , Deferred, fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { assert , Deferred } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
     IDocumentDeltaStorageService,
 } from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse, bufferToBase64 } from "@fluidframework/driver-utils";
 import {
     IDocumentAttributes,
     ISequencedDocumentMessage,
@@ -249,7 +249,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
      * @deprecated - only here for back compat, will be removed after release
      */
     public async read(blobId: string): Promise<string> {
-        return fromUtf8ToBase64("Deprecated");
+        if (this.storage !== undefined) {
+            return bufferToBase64(await this.storage.readBlob(blobId));
+        }
+        throw new Error("Reading blob before storage is setup properly");
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {

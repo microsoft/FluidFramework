@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import {
     IDocumentStorageService,
     ISummaryContext,
@@ -16,6 +15,7 @@ import {
     ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
+import { bufferToBase64 } from "./bufferToString";
 
 export class DocumentStorageServiceProxy implements IDocumentStorageService {
     public get repositoryUrl(): string {
@@ -37,7 +37,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
      * @deprecated - only here for back compat, will be removed after release
      */
     public async read(blobId: string): Promise<string> {
-        return fromUtf8ToBase64("Deprecated");
+        return bufferToBase64(await this.readBlob(blobId));
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {

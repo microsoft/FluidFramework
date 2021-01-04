@@ -6,9 +6,8 @@
 import { v4 as uuid } from "uuid";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { canRetryOnError, DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
+import { bufferToBase64, canRetryOnError, DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { DeltaManager, getRetryDelayFromError } from "./deltaManager";
 
 export class RetriableDocumentStorageService extends DocumentStorageServiceProxy {
@@ -33,7 +32,7 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
      * @deprecated - only here for back compat, will be removed after release
      */
     public async read(blobId: string): Promise<string> {
-        return fromUtf8ToBase64("Deprecated");
+        return bufferToBase64(await this.readBlob(blobId));
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {

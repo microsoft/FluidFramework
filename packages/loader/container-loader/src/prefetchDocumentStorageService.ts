@@ -6,8 +6,7 @@ import {
     ISnapshotTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { DocumentStorageServiceProxy, bufferToBase64 } from "@fluidframework/driver-utils";
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
@@ -33,7 +32,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
      * @deprecated - only here for back compat, will be removed after release
      */
     public async read(blobId: string): Promise<string> {
-        return fromUtf8ToBase64("Deprecated");
+        return bufferToBase64(await this.cachedRead(blobId));
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike > {
