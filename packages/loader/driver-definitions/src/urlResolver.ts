@@ -47,13 +47,15 @@ export interface DriverPreCheckInfo {
      * Only needed as long as long as Loader.request() does not work as intended. When Loader.request() caches and
      * resolves pathing properly, this can be removed. #4489, #4491
      */
-    componentPath: string;
+    containerPath: string;
+
     /**
-     * Container name, if known. This could be used to eagerly prefetch container code prior to having a snapshot.
+     * A code details hint that can potentially be used to prefetch container code prior to having a snapshot.
      */
-    containerCodeHint?: string;
+    codeDetailsHint?: string;
+
     /**
-     * Domains that will be connected to on the critical boot path. Can be preconnected to in certain flows.
+     * Domains that will be connected to on the critical boot path. Hosts can choose to preconnect to these for improved performance.
      */
     preconnectDomains?: string[];
   }

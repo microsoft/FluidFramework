@@ -27,8 +27,8 @@ export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined {
   } catch {}
 
   return {
-    componentPath: locator.dataStorePath,
-    containerCodeHint: locator?.containerPackageName,
+    containerPath: locator.dataStorePath,
+    codeDetailsHint: locator?.containerPackageName,
     // We want to preconnect to the snapshot endpoint, which has the same domain as the site URL
     preconnectDomains: siteOrigin ? [siteOrigin] : undefined,
   };
