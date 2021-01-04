@@ -12,6 +12,7 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+    channelsTreeName,
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     CreateSummarizerNodeSource,
@@ -50,7 +51,9 @@ import {
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import {
+    ContainerRuntimeSnapshotFormatVersion,
     dataStoreAttributesBlobName,
+    nonDataStorePaths,
 } from "./snapshot";
 
  /**
@@ -497,5 +500,32 @@ export class DataStores implements IDisposable {
             }
         }
         return outboundRoutes;
+    }
+}
+
+export function getSnapshotForDataStores(
+    snapshot: ISnapshotTree | undefined,
+    snapshotFormatVersion: ContainerRuntimeSnapshotFormatVersion,
+): ISnapshotTree | undefined {
+    if (!snapshot) {
+        return undefined;
+    }
+
+    if (snapshotFormatVersion !== undefined) {
+        const dataStoresSnapshot = snapshot.trees[channelsTreeName];
+        assert(!!dataStoresSnapshot, `expected ${channelsTreeName} tree in snapshot`);
+        return dataStoresSnapshot;
+    } else {
+        // back-compat: strip out all non-datastore paths before giving to DataStores object.
+        const dataStoresTrees: ISnapshotTree["trees"] = {};
+        for (const [key, value] of Object.entries(snapshot.trees)) {
+            if (!nonDataStorePaths.includes(key)) {
+                dataStoresTrees[key] = value;
+            }
+        }
+        return {
+            ...snapshot,
+            trees: dataStoresTrees,
+        };
     }
 }

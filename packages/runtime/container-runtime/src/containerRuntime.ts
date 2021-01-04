@@ -92,7 +92,6 @@ import {
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
-    channelsTreeName,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -117,14 +116,12 @@ import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager } from "./blobManager";
-import { DataStores } from "./dataStores";
+import { DataStores, getSnapshotForDataStores } from "./dataStores";
 import {
     blobsTreeName,
     chunksBlobName,
-    ContainerRuntimeSnapshotFormatVersion,
     IContainerRuntimeMetadata,
     metadataBlobName,
-    nonDataStorePaths,
 } from "./snapshot";
 
 export enum ContainerMessageType {
@@ -1811,32 +1808,5 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const snapshot = await this.storage.getSnapshotTree(version);
         assert(!!snapshot, "Failed to get snapshot from storage");
         return snapshot;
-    }
-}
-
-export function getSnapshotForDataStores(
-    snapshot: ISnapshotTree | undefined,
-    snapshotFormatVersion: ContainerRuntimeSnapshotFormatVersion,
-): ISnapshotTree | undefined {
-    if (!snapshot) {
-        return undefined;
-    }
-
-    if (snapshotFormatVersion !== undefined) {
-        const dataStoresSnapshot = snapshot.trees[channelsTreeName];
-        assert(!!dataStoresSnapshot, `expected ${channelsTreeName} tree in snapshot`);
-        return dataStoresSnapshot;
-    } else {
-        // back-compat: strip out all non-datastore paths before giving to DataStores object.
-        const dataStoresTrees: ISnapshotTree["trees"] = {};
-        for (const [key, value] of Object.entries(snapshot.trees)) {
-            if (!nonDataStorePaths.includes(key)) {
-                dataStoresTrees[key] = value;
-            }
-        }
-        return {
-            ...snapshot,
-            trees: dataStoresTrees,
-        };
     }
 }
