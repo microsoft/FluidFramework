@@ -9,8 +9,10 @@ import {
     ICreateRefParamsExternal,
     IPatchRefParamsExternal,
     ITenantStorage } from "@fluidframework/server-services-core";
+import * as uuid from "uuid";
 import request from "request";
 import * as winston from "winston";
+import { getCorrelationId } from "@fluidframework/server-services-utils";
 import { ICache } from "./definitions";
 
 // We include the historian version in the user-agent string
@@ -266,6 +268,7 @@ export class RestGitService {
         const options: request.OptionsWithUrl = {
             headers: {
                 "User-Agent": userAgent,
+                "x-correlation-id": getCorrelationId() || uuid.v4(),
             },
             json: true,
             method: "GET",
@@ -282,6 +285,7 @@ export class RestGitService {
             headers: {
                 "Content-Type": "application/json",
                 "User-Agent": userAgent,
+                "x-correlation-id": getCorrelationId() || uuid.v4(),
             },
             json: true,
             method: "POST",
@@ -296,6 +300,7 @@ export class RestGitService {
         const options: request.OptionsWithUrl = {
             headers: {
                 "User-Agent": userAgent,
+                "x-correlation-id": getCorrelationId() || uuid.v4(),
             },
             method: "DELETE",
             url: `${this.storage.url}${url}`,
@@ -311,6 +316,7 @@ export class RestGitService {
             headers: {
                 "Content-Type": "application/json",
                 "User-Agent": userAgent,
+                "x-correlation-id": getCorrelationId() || uuid.v4(),
             },
             json: true,
             method: "PATCH",
