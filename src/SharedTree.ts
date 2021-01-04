@@ -8,6 +8,7 @@ import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidfra
 import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
+import type { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { assert, fail } from './Common';
 import { EditLog, OrderedEditSet } from './EditLog';
 import {
@@ -300,9 +301,9 @@ export class SharedTree extends SharedObject {
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
 	 */
-	public snapshot(): ITree {
+	public snapshotCore(_serializer: IFluidSerializer): ITree {
 		const tree: ITree = {
 			entries: [
 				{
@@ -382,7 +383,7 @@ export class SharedTree extends SharedObject {
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
-	protected async loadCore(branchId: string, storage: IChannelStorageService): Promise<void> {
+	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const header = await storage.read(snapshotFileName);
 		const summary = deserialize(fromBase64ToUtf8(header));
 		if (typeof summary === 'string') {

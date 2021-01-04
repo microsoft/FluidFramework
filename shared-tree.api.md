@@ -10,6 +10,7 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import type { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITree } from '@fluidframework/protocol-definitions';
@@ -324,7 +325,7 @@ export class SharedTree extends SharedObject {
     equals(sharedTree: SharedTree): boolean;
     static getFactory(): SharedTreeFactory;
     // (undocumented)
-    protected loadCore(branchId: string, storage: IChannelStorageService): Promise<void>;
+    protected loadCore(storage: IChannelStorageService): Promise<void>;
     // @internal
     loadSummary(summary: SharedTreeSummary): void;
     // @internal
@@ -344,7 +345,7 @@ export class SharedTree extends SharedObject {
     // @internal
     saveSummary(): SharedTreeSummary;
     // (undocumented)
-    snapshot(): ITree;
+    snapshotCore(_serializer: IFluidSerializer): ITree;
     summarizer: SharedTreeSummarizer;
 }
 
@@ -379,7 +380,7 @@ export class SharedTreeFactory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedObject;
     // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, branchId: string): Promise<ISharedObject>;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, _channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedObject>;
     // (undocumented)
     static Type: string;
     // (undocumented)
