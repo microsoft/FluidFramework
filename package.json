@@ -32,12 +32,12 @@
 		"tsc": "tsc --pretty"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^0.25.0",
-		"@fluidframework/container-definitions": "^0.28.7",
-		"@fluidframework/datastore-definitions": "^0.28.7",
-		"@fluidframework/protocol-definitions": "^0.1014.1",
-		"@fluidframework/shared-object-base": "^0.28.7",
-		"@fluidframework/telemetry-utils": "^0.28.7",
+		"@fluidframework/common-utils": "^0.26.0",
+		"@fluidframework/container-definitions": "^0.31.1",
+		"@fluidframework/datastore-definitions": "^0.31.1",
+		"@fluidframework/protocol-definitions": "^0.1016.0",
+		"@fluidframework/shared-object-base": "^0.31.1",
+		"@fluidframework/telemetry-utils": "^0.31.1",
 		"buffer": "^6.0.2",
 		"immutable": "^4.0.0-rc.12",
 		"sorted-btree": "^1.4.0",
@@ -46,7 +46,7 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^0.19.2",
 		"@fluidframework/eslint-config-fluid": "^0.21.0",
-		"@fluidframework/test-runtime-utils": "^0.28.7",
+		"@fluidframework/test-runtime-utils": "^0.31.1",
 		"@typescript-eslint/parser": "^4.7.0",
 		"chai": "^4.2.0",
 		"concurrently": "^5.2.0",

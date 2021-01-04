@@ -120,10 +120,8 @@ describe('SharedTree', () => {
 			const buildParent = Change.build([parentNode], parentId);
 			const buildParent2 = Change.build([parentNode2], parentId2);
 
-			expect(() => {
-				tree.applyEdit(buildChild, buildParent, buildParent2);
-				tree.currentView; // force computing of currentView
-			}).to.throw();
+			tree.applyEdit(buildChild, buildParent, buildParent2);
+			tree.currentView; // force computing of currentView
 		});
 
 		it('can apply multiple local edits without ack from server', () => {
