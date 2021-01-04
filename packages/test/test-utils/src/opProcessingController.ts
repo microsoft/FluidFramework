@@ -79,44 +79,40 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
     private pendingCount: number = 0;
     private clientId: string | undefined;
     private firstClientSequenceNumber: number = -1;
-    private _latestSequenceNumber: number;
     private lastOutbound: IDocumentMessage | undefined;
-    private lastInbound: ISequencedDocumentMessage | undefined;
-    private readonly lastClientInbound = new Map<string, ISequencedDocumentMessage>();
+    private readonly lastInboundPerClient = new Map<string, ISequencedDocumentMessage>();
 
-    public expectingInboundFrom(monitor: DeltaManagerMonitor): boolean {
-        if (this.deltaManager.disposed || monitor.deltaManager.disposed) {
+    public expectingInboundFrom(outbound: DeltaManagerMonitor): boolean {
+        // there should be no outstanding work for disposed delta managers
+        if (this.deltaManager.disposed || outbound.deltaManager.disposed) {
+            return false;
+        }
+        // if there is no last outbound, we are not waiting for anything
+        if (outbound.lastOutbound === undefined
+            || outbound.clientId === undefined) {
+            return false;
+        }
+        // if out inbound is paused we are not expecting to receive anything more
+        if (this.inboundPaused) {
             return false;
         }
 
-        if (monitor.lastOutbound === undefined
-            || monitor.clientId === undefined) {
-            return false;
-        }
-        if (this.lastInbound === undefined) {
-            return true;
+        if (this === outbound) {
+            return this.hasPendingWork();
         }
 
-        const lastClientInbound = this.lastClientInbound.get(monitor.clientId);
-        if (lastClientInbound !== undefined) {
-            if (monitor.lastOutbound.clientSequenceNumber > lastClientInbound.clientSequenceNumber) {
-                return true;
-            } else {
-                return false;
-            }
+        // check if we are waiting to see a message from outbound
+        const lastInboundForOutbound = this.lastInboundPerClient.get(outbound.clientId);
+        if (lastInboundForOutbound !== undefined) {
+            return outbound.lastOutbound.clientSequenceNumber > lastInboundForOutbound.clientSequenceNumber;
         }
 
-        if (this.lastInbound.minimumSequenceNumber >= monitor.lastOutbound.referenceSequenceNumber) {
-            return false;
-        }
-
-        return true;
+        // lastly, see outbounds refseq is above our minseq
+        return outbound.lastOutbound.referenceSequenceNumber > this.deltaManager.minimumSequenceNumber;
     }
 
     constructor(deltaManager: DeltaManager) {
         super(deltaManager);
-
-        this._latestSequenceNumber = deltaManager.lastSequenceNumber;
 
         // The deltaManager may be connected already, need to get the clientId.
         // TODO: hackery to get the clientId from the delta manager, find a better way
@@ -138,15 +134,14 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
             this.pendingCount = 0;
             this.firstClientSequenceNumber = -1;
             this.lastOutbound = undefined;
-            this.lastInbound = undefined;
-            this.lastClientInbound.clear();
+            this.lastInboundPerClient.clear();
         });
         deltaManager.outbound.on("op", this.outbound.bind(this));
         deltaManager.inbound.on("push", this.inbound.bind(this));
     }
 
     public get latestSequenceNumber() {
-        return this._latestSequenceNumber;
+        return this.deltaManager.lastSequenceNumber;
     }
 
     public hasPendingWork() {
@@ -159,12 +154,14 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
         this.trace("CON");
     }
     private inbound(message: ISequencedDocumentMessage) {
-        this._latestSequenceNumber = message.sequenceNumber;
-
-        this.lastInbound = message;
         if (message.clientId) {
-            this.lastClientInbound.set(message.clientId, message);
+            this.lastInboundPerClient.set(message.clientId, message);
         }
+        /* if (message.type === MessageType.ClientLeave) {
+            const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
+            const clientId = JSON.parse(systemLeaveMessage.data) as string;
+            this.lastInboundPerClient.delete(clientId);
+        } */
 
         if (this.clientId === undefined) {
             // Ignore message when we are not connected.
