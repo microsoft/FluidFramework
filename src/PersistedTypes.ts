@@ -274,7 +274,7 @@ export interface NodeData {
 }
 
 /**
- * Satisfies `NodeData` and may contain more `Node`s as children in traits
+ * Satisfies `NodeData` and may contain children under traits (which may or may not be `Node`s)
  * @public
  */
 export interface Node<TChild> extends NodeData {
