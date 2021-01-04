@@ -157,8 +157,6 @@ export class DebugReplayController extends ReplayController implements IDebugger
         const documentDeltaStorageService = await this.documentService.connectToDeltaStorage();
         const messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
 
-        // const messages = JSON.parse(input) as ISequencedDocumentMessage[];
-
         const sanitizer = new Sanitizer(messages, false /* fullScrub */, true /* noBail */);
         const cleanMessages = sanitizer.sanitize();
 
