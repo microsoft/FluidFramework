@@ -257,8 +257,7 @@ export interface Payload {
  * The fields required by a node in a tree
  * @public
  */
-export interface NodeData<TChild> {
-	readonly traits: TraitMap<TChild>;
+export interface NodeData {
 	readonly payload?: Payload;
 
 	/**
@@ -275,10 +274,18 @@ export interface NodeData<TChild> {
 }
 
 /**
+ * Satisfies `NodeData` and may contain more `Node`s as children in traits
+ * @public
+ */
+export interface Node<TChild> extends NodeData {
+	readonly traits: TraitMap<TChild>;
+}
+
+/**
  * JSON-compatible Node type. Objects of type `ChangeNode` will be persisted in `Change`s (under Edits) in the SharedTree history.
  * @public
  */
-export type ChangeNode = NodeData<ChangeNode>;
+export type ChangeNode = Node<ChangeNode>;
 
 /**
  * Node or sequence of Nodes for use in a Build change.
@@ -289,7 +296,7 @@ export type ChangeNode = NodeData<ChangeNode>;
  * These optimized formats should also be used within snapshots.
  * @public
  */
-export type EditNode = NodeData<EditNode> | DetachedSequenceId;
+export type EditNode = Node<EditNode> | DetachedSequenceId;
 
 /**
  * The result of an attempt to apply the changes in an Edit.

@@ -51,7 +51,7 @@ export const Change: {
 };
 
 // @public
-export type ChangeNode = NodeData<ChangeNode>;
+export type ChangeNode = Node_2<ChangeNode>;
 
 // @public
 export type ChangeNodeSequence<TChild = ChangeNode> = readonly TChild[];
@@ -179,7 +179,7 @@ export class EditLog implements OrderedEditSet {
 }
 
 // @public
-export type EditNode = NodeData<EditNode> | DetachedSequenceId;
+export type EditNode = Node_2<EditNode> | DetachedSequenceId;
 
 // @public
 export enum EditResult {
@@ -233,13 +233,19 @@ export const Move: {
 };
 
 // @public
-export interface NodeData<TChild> {
+interface Node_2<TChild> extends NodeData {
+    // (undocumented)
+    readonly traits: TraitMap<TChild>;
+}
+
+export { Node_2 as Node }
+
+// @public
+export interface NodeData {
     readonly definition: Definition;
     readonly identifier: NodeId;
     // (undocumented)
     readonly payload?: Payload;
-    // (undocumented)
-    readonly traits: TraitMap<TChild>;
 }
 
 // @public

@@ -11,7 +11,7 @@ import {
 	Detach,
 	EditNode,
 	Insert,
-	NodeData,
+	Node,
 	Edit,
 	SetValue,
 	StableRange,
@@ -42,7 +42,7 @@ export function revert(edit: Edit, view: Snapshot): Change[] {
 				const { destination, source } = change;
 				builtNodes.set(
 					destination,
-					source.map((node) => (node as NodeData<EditNode>).identifier)
+					source.map((node) => (node as Node<EditNode>).identifier)
 				);
 				break;
 			}
