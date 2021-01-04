@@ -78,7 +78,8 @@ import {
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
-    IGCData,
+    IGarbageCollectionData,
+    IGarbageCollectionSummaryDetails,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelope,
@@ -712,15 +713,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
                     summarizeInternal: SummarizeInternalFn,
-                    getGCDataFn: () => Promise<IGCData>,
-                    getInitialGCDataFn: () => Promise<IGCData | undefined>,
+                    getGCDataFn: () => Promise<IGarbageCollectionData>,
+                    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+                    usedRoutes: string[],
                 ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,
                     createParam,
                     undefined,
                     getGCDataFn,
-                    getInitialGCDataFn,
+                    getInitialGCSummaryDetailsFn,
+                    usedRoutes,
                 ),
             this._logger);
 
@@ -1368,9 +1371,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             if (this.runtimeOptions.runGC) {
-                // Get the container's GC data and run GC on the reference graph in the GC data.
+                // Get the container's GC data and run GC on the reference graph in it.
                 const gcData = await this.dataStores.getGCData();
-                runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+                const { referencedNodeIds } = runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+
+                // Remove this node's route ("/") and notify data stores of routes that are used in it.
+                const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
+                this.dataStores.updateUsedRoutes(usedRoutes);
             }
 
             const trace = Trace.start();

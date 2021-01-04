@@ -45,7 +45,7 @@ import {
     createWriteError,
     createGenericNetworkError,
 } from "@fluidframework/driver-utils";
-import { CreateContainerError } from "@fluidframework/container-utils";
+import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import { debug } from "./debug";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
@@ -1265,14 +1265,15 @@ export class DeltaManager
                     const message1 = this.comparableMessagePayload(this.previouslyProcessedMessage);
                     const message2 = this.comparableMessagePayload(message);
                     if (message1 !== message2) {
-                        const error = {
-                            errorType: ContainerErrorType.dataCorruption,
-                            message: "Two messages with same seq# and different payload!",
-                            clientId: this.connection?.clientId,
-                            sequenceNumber: message.sequenceNumber,
-                            message1,
-                            message2,
-                        };
+                        const error = new DataCorruptionError(
+                            "Two messages with same seq# and different payload!",
+                            {
+                                clientId: this.connection?.clientId,
+                                sequenceNumber: message.sequenceNumber,
+                                message1,
+                                message2,
+                            },
+                        );
                         this.close(error);
                     }
                 }

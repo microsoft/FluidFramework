@@ -49,7 +49,10 @@ export class DocumentService2 extends DocumentService {
      */
     public async connectToDeltaStream(
         client: api.IClient): Promise<IDocumentDeltaConnection> {
-        const ordererToken = await this.tokenProvider.fetchOrdererToken();
+        const ordererToken = await this.tokenProvider.fetchOrdererToken(
+            this.tenantId,
+            this.documentId,
+        );
         return WSDeltaConnection.create(
             this.tenantId,
             this.documentId,

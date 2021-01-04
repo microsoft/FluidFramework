@@ -59,7 +59,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     }
 
     protected readonly children = new Map<string, SummarizerNode>();
-    private readonly pendingSummaries = new Map<string, SummaryNode>();
+    protected readonly pendingSummaries = new Map<string, SummaryNode>();
     private readonly outstandingOps: ISequencedDocumentMessage[] = [];
     private wipReferenceSequenceNumber: number | undefined;
     private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
@@ -162,7 +162,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     /**
      * Recursive implementation for completeSummary, with additional internal-only parameters
      */
-    private completeSummaryCore(
+    protected completeSummaryCore(
         proposalHandle: string,
         parentPath: EscapedPath | undefined,
         parentSkipRecursion: boolean,
@@ -251,16 +251,17 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         const snapshotTree = await getSnapshot();
         const referenceSequenceNumber = await seqFromTree(snapshotTree, readAndParseBlob);
-        this.refreshLatestSummaryFromSnapshot(
+        return this.refreshLatestSummaryFromSnapshot(
             referenceSequenceNumber,
             snapshotTree,
             undefined,
             EscapedPath.create(""),
             correlatedSummaryLogger,
+            readAndParseBlob,
         );
     }
 
-    private refreshLatestSummaryFromPending(
+    protected refreshLatestSummaryFromPending(
         proposalHandle: string,
         referenceSequenceNumber: number,
     ): void {
@@ -293,13 +294,19 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
     }
 
-    private refreshLatestSummaryFromSnapshot(
+    protected async refreshLatestSummaryFromSnapshot(
         referenceSequenceNumber: number,
         snapshotTree: ISnapshotTree,
         basePath: EscapedPath | undefined,
         localPath: EscapedPath,
         correlatedSummaryLogger: ITelemetryLogger,
-    ): void {
+        readAndParseBlob: ReadAndParseBlob,
+    ): Promise<void> {
+        // Possible re-entrancy. If we have already seen a summary later than this one, ignore it.
+        if (this.referenceSequenceNumber >= referenceSequenceNumber) {
+            return;
+        }
+
         this.refreshLatestSummaryCore(referenceSequenceNumber);
 
         const { baseSummary, pathParts } = decodeSummary(snapshotTree, correlatedSummaryLogger);
@@ -321,20 +328,21 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         // Propagate update to all child nodes
         const pathForChildren = this.latestSummary.fullPathForChildren;
-        for (const [id, child] of this.children.entries()) {
-            const subtree = childrenTree.trees[id];
-            // Assuming subtrees missing from snapshot are newer than the snapshot,
-            // but might be nice to assert this using earliest seq for node.
-            if (subtree !== undefined) {
-                child.refreshLatestSummaryFromSnapshot(
+        await Promise.all(Array.from(this.children)
+            .filter(([id]) => {
+                // Assuming subtrees missing from snapshot are newer than the snapshot,
+                // but might be nice to assert this using earliest seq for node.
+                return childrenTree.trees[id] !== undefined;
+            }).map(async ([id, child]) => {
+                return child.refreshLatestSummaryFromSnapshot(
                     referenceSequenceNumber,
-                    subtree,
+                    childrenTree.trees[id],
                     pathForChildren,
                     EscapedPath.create(id),
                     correlatedSummaryLogger,
+                    readAndParseBlob,
                 );
-            }
-        }
+            }));
     }
 
     private refreshLatestSummaryCore(referenceSequenceNumber: number): void {
@@ -405,7 +413,12 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
     }
 
-    public hasChanged(): boolean {
+    /**
+     * True if a change has been recorded with sequence number exceeding
+     * the latest successfully acked summary reference sequence number.
+     * False implies that the previous summary can be reused.
+     */
+    protected hasChanged(): boolean {
         return this._changeSequenceNumber > this.referenceSequenceNumber;
     }
 
@@ -460,7 +473,11 @@ export class SummarizerNode implements IRootSummarizerNode {
             createDetails.initialSummary,
             this.wipSummaryLogger,
         );
-        this.initializeChild(child);
+
+        // If a summary is in progress, update the child's work-in-progress state.
+        if (this.isSummaryInProgress()) {
+            this.updateChildWipState(child);
+        }
 
         this.children.set(id, child);
         return child;
@@ -552,14 +569,15 @@ export class SummarizerNode implements IRootSummarizerNode {
     }
 
     /**
-     * Initializes a child node with some of this node's data, such as the wipReferenceSequenceNumber.
-     * @param child - The child node to be initialized.
+     * Updates the work-in-progress state of the child if summary is in progress.
+     * @param child - The child node to be updated.
      */
-    protected initializeChild(child: SummarizerNode) {
-        // If created while summarizing, relay that information down
-        if (this.wipReferenceSequenceNumber !== undefined) {
-            child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
-        }
+    protected updateChildWipState(child: SummarizerNode) {
+        child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
+    }
+
+    protected isSummaryInProgress(): boolean {
+        return this.wipReferenceSequenceNumber !== undefined;
     }
 }
 

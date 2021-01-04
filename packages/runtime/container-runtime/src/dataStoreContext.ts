@@ -43,6 +43,7 @@ import {
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     FluidDataStoreRegistryEntry,
+    gcBlobKey,
     IAttachMessage,
     IContextSummarizeResult,
     IFluidDataStoreChannel,
@@ -50,8 +51,8 @@ import {
     IFluidDataStoreContextDetached,
     IFluidDataStoreContextEvents,
     IFluidDataStoreRegistry,
-    IGCData,
-    IGCDetails,
+    IGarbageCollectionData,
+    IGarbageCollectionSummaryDetails,
     IInboundSignalMessage,
     IProvideFluidDataStoreFactory,
     ISummarizeInternalResult,
@@ -64,8 +65,6 @@ import {
     dataStoreAttributesBlobName,
     DataStoreSnapshotFormatVersion,
 } from "./snapshot";
-
-export const gcBlobKey = "gc";
 
 function createAttributes(pkg: readonly string[], isRootDataStore: boolean): IFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
@@ -247,10 +246,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+
+        // Add self route (empty string) to used routes in the summarizer node. If GC is enabled, the used routes will
+        // be updated as per the GC data.
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async () => this.getGCDataInternal(),
-            async () => this.getInitialGCData(),
+            async () => this.getInitialGCSummaryDetails(),
+            [""] /* usedRoutes */,
         );
     }
 
@@ -414,7 +417,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
-        const gcDetails: IGCDetails = {
+        const gcDetails: IGarbageCollectionSummaryDetails = {
+            usedRoutes: this.summarizerNode.usedRoutes,
             gcData: summarizeResult.gcData,
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
@@ -422,11 +426,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return { ...summarizeResult, id: this.id };
     }
 
-    public async getGCData(): Promise<IGCData> {
+    public async getGCData(): Promise<IGarbageCollectionData> {
         return this.summarizerNode.getGCData();
     }
 
-    private async getGCDataInternal(): Promise<IGCData> {
+    private async getGCDataInternal(): Promise<IGarbageCollectionData> {
         await this.realize();
         assert(this.channel !== undefined, "Channel should not be undefined when running GC");
 
@@ -440,11 +444,15 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     /**
-     * This returns the initial GC data of this context.
+     * After GC has run, called to notify this data store of routes that are used in it.
+     * @param usedRoutes - The routes that are used in this data store.
      */
-    protected async getInitialGCData(): Promise<IGCData | undefined> {
-        const initialGCDetails = await this.getInitialGCDetails();
-        return initialGCDetails.gcData;
+    public updateUsedRoutes(usedRoutes: string[]) {
+        // Currently, only data stores can be collected. Once we have GC at DDS layer, the DDS' in the data store will
+        // also be notified of their used routes. See - https://github.com/microsoft/FluidFramework/issues/4611
+
+        // Update the used routes in this data store's summarizer node.
+        this.summarizerNode.usedRoutes = usedRoutes;
     }
 
     /**
@@ -570,7 +578,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
-    protected abstract getInitialGCDetails(): Promise<IGCDetails>;
+    protected abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
         assert(!!this.channel, "Channel must exist when resubmitting ops");
@@ -587,8 +595,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
         return (
             summarizeInternal: SummarizeInternalFn,
-            getGCDataFn: () => Promise<IGCData>,
-            getInitialGCDataFn: () => Promise<IGCData | undefined>,
+            getGCDataFn: () => Promise<IGarbageCollectionData>,
+            getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+            usedRoutes: string[],
         ) => this.summarizerNode.createChild(
             summarizeInternal,
             id,
@@ -596,7 +605,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             // DDS will not create failure summaries
             { throwOnFailure: true },
             getGCDataFn,
-            getInitialGCDataFn,
+            getInitialGCSummaryDetailsFn,
+            usedRoutes,
         );
     }
 
@@ -700,13 +710,15 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         };
     });
 
-    private readonly initialGCDetailsP = new LazyPromise<IGCDetails>(async () => {
+    private readonly gcDetailsInInitialSummaryP = new LazyPromise<IGarbageCollectionSummaryDetails>(async () => {
         // If the initial snapshot is undefined or string, the snapshot is in old format and won't have GC details.
         if (!(!this.initSnapshotValue || typeof this.initSnapshotValue === "string")
             && this.initSnapshotValue.blobs[gcBlobKey] !== undefined) {
-            return readAndParse<IGCDetails>(this.storage, this.initSnapshotValue.blobs[gcBlobKey]);
+            return readAndParse<IGarbageCollectionSummaryDetails>(
+                this.storage,
+                this.initSnapshotValue.blobs[gcBlobKey],
+            );
         } else {
-            // Default value of initial GC details in case the initial snapshot does not have GC details.
             return {};
         }
     });
@@ -715,8 +727,8 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         return this.initialSnapshotDetailsP;
     }
 
-    protected async getInitialGCDetails(): Promise<IGCDetails> {
-        return this.initialGCDetailsP;
+    protected async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
+        return this.gcDetailsInInitialSummaryP;
     }
 
     public generateAttachMessage(): IAttachMessage {
@@ -780,7 +792,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
-        const gcDetails: IGCDetails = {
+        const gcDetails: IGarbageCollectionSummaryDetails = {
+            usedRoutes: this.summarizerNode.usedRoutes,
             gcData: summarizeResult.gcData,
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
@@ -807,8 +820,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         };
     }
 
-    protected async getInitialGCDetails(): Promise<IGCDetails> {
-        // There is no initial GC details for local data stores.
+    protected async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
+        // Local data store does not have initial summary.
         return {};
     }
 }
