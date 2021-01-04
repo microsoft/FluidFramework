@@ -120,6 +120,7 @@ import { DataStores } from "./dataStores";
 import {
     blobsTreeName,
     chunksBlobName,
+    ContainerRuntimeSnapshotFormatVersion,
     IContainerRuntimeMetadata,
     metadataBlobName,
     nonDataStorePaths,
@@ -705,28 +706,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
-        let dataStoresSnapshot = context.baseSnapshot;
-        if (dataStoresSnapshot) {
-            if (metadata.snapshotFormatVersion !== undefined) {
-                dataStoresSnapshot = dataStoresSnapshot.trees[channelsTreeName];
-                assert(!!dataStoresSnapshot, `expected ${channelsTreeName} tree in snapshot`);
-            } else {
-                // back-compat: strip out all non-datastore paths before giving to DataStores object.
-                const dataStoresTrees: ISnapshotTree["trees"] = {};
-                for (const [key, value] of Object.entries(dataStoresSnapshot.trees)) {
-                    if (!nonDataStorePaths.includes(key)) {
-                        dataStoresTrees[key] = value;
-                    }
-                }
-                dataStoresSnapshot = {
-                    ...dataStoresSnapshot,
-                    trees: dataStoresTrees,
-                };
-            }
-        }
-
         this.dataStores = new DataStores(
-            dataStoresSnapshot,
+            getSnapshotForDataStores(context.baseSnapshot, metadata.snapshotFormatVersion),
             this,
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
@@ -1823,5 +1804,32 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const snapshot = await this.storage.getSnapshotTree(version);
         assert(!!snapshot, "Failed to get snapshot from storage");
         return snapshot;
+    }
+}
+
+export function getSnapshotForDataStores(
+    snapshot: ISnapshotTree | undefined,
+    snapshotFormatVersion: ContainerRuntimeSnapshotFormatVersion,
+): ISnapshotTree | undefined {
+    if (!snapshot) {
+        return undefined;
+    }
+
+    if (snapshotFormatVersion !== undefined) {
+        const dataStoresSnapshot = snapshot.trees[channelsTreeName];
+        assert(!!dataStoresSnapshot, `expected ${channelsTreeName} tree in snapshot`);
+        return dataStoresSnapshot;
+    } else {
+        // back-compat: strip out all non-datastore paths before giving to DataStores object.
+        const dataStoresTrees: ISnapshotTree["trees"] = {};
+        for (const [key, value] of Object.entries(snapshot.trees)) {
+            if (!nonDataStorePaths.includes(key)) {
+                dataStoresTrees[key] = value;
+            }
+        }
+        return {
+            ...snapshot,
+            trees: dataStoresTrees,
+        };
     }
 }
