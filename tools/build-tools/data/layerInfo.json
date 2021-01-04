@@ -257,7 +257,8 @@
             "Routerlicious-Driver": {
                 "packages": [
                     "@fluidframework/routerlicious-driver",
-                    "@fluidframework/routerlicious-urlresolver"
+                    "@fluidframework/routerlicious-urlresolver",
+                    "@fluidframework/tinylicious-driver"
                 ],
                 "deps": [
                     "Driver",

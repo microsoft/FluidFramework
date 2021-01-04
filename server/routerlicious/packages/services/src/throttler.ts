@@ -24,7 +24,7 @@ export class Throttler implements IThrottler {
 
     constructor(
         private readonly throttlerHelper: IThrottlerHelper,
-        private readonly minThrottleIntervalInMs: number,
+        private readonly minThrottleIntervalInMs: number = 1000000,
         private readonly logger?: ILogger,
         maxCacheSize: number = 1000,
         maxCacheAge: number = 1000 * 60,

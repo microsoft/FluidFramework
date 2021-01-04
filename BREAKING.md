@@ -1,9 +1,12 @@
 ## 0.32 Breaking changes
-
+- [getAttachSnapshot removed IFluidDataStoreChannel](#getAttachSnapshot-removed-from-IFluidDataStoreChannel)
 - [resolveDataStore replaced](#resolveDataStore-replaced)
 
 ### resolveDataStore replaced
 The resolveDataStore method manually exported by the ODSP resolver has been replaced with checkUrl() from the same package.
+
+### getAttachSnapshot removed from IFluidDataStoreChannel
+`getAttachSnapshot()` has been removed from `IFluidDataStoreChannel`. It is replaced by `getAttachSummary()`.
 
 ## 0.30 Breaking Changes
 

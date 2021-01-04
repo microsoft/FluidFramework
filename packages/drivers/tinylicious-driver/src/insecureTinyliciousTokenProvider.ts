@@ -13,32 +13,32 @@ import { v4 as uuid } from "uuid";
  * to get up and running.
  */
 export class InsecureTinyliciousTokenProvider implements ITokenProvider {
-    constructor(private readonly documentId: string) {
-
-    }
-
-    public async fetchOrdererToken(): Promise<ITokenResponse> {
+    public async fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
         return {
             fromCache: true,
-            jwt: this.getSignedToken(),
+            jwt: this.getSignedToken(tenantId, documentId),
         };
     }
 
-    public async fetchStorageToken(): Promise<ITokenResponse> {
+    public async fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
         return {
             fromCache: true,
-            jwt: this.getSignedToken(),
+            jwt: this.getSignedToken(tenantId, documentId),
         };
     }
 
-    private getSignedToken(lifetime: number = 60 * 60, ver: string = "1.0"): string {
+    private getSignedToken(
+        tenantId: string,
+        documentId: string,
+        lifetime: number = 60 * 60,
+        ver: string = "1.0"): string {
         // Current time in seconds
         const now = Math.round((new Date()).getTime() / 1000);
 
         const claims: ITokenClaims = {
-            documentId: this.documentId,
+            documentId,
             scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-            tenantId: "tinylicious",
+            tenantId,
             user: { id: uuid() },
             iat: now,
             exp: now + lifetime,

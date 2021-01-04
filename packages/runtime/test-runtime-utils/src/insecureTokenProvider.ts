@@ -13,36 +13,38 @@ import { KJUR as jsrsasign } from "jsrsasign";
  */
 export class InsecureTokenProvider implements ITokenProvider {
     constructor(
-        private readonly tenantId: string,
-        private readonly documentId: string,
         private readonly tenantKey: string,
         private readonly user: IUser,
     ) {
 
     }
 
-    public async fetchOrdererToken(): Promise<ITokenResponse> {
+    public async fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
         return {
             fromCache: true,
-            jwt: this.getSignedToken(),
+            jwt: this.getSignedToken(tenantId, documentId),
         };
     }
 
-    public async fetchStorageToken(): Promise<ITokenResponse> {
+    public async fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
         return {
             fromCache: true,
-            jwt: this.getSignedToken(),
+            jwt: this.getSignedToken(tenantId, documentId),
         };
     }
 
-    private getSignedToken(lifetime: number = 60 * 60, ver: string = "1.0"): string {
+    private getSignedToken(
+        tenantId: string,
+        documentId: string,
+        lifetime: number = 60 * 60,
+        ver: string = "1.0"): string {
         // Current time in seconds
         const now = Math.round((new Date()).getTime() / 1000);
 
         const claims: ITokenClaims = {
-            documentId: this.documentId,
+            documentId,
             scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-            tenantId: this.tenantId,
+            tenantId,
             user: this.user,
             iat: now,
             exp: now + lifetime,

@@ -68,3 +68,13 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
         return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
     }
 }
+
+export const createTinyliciousCreateNewRequest =
+    (documentId: string): IRequest=> (
+        {
+            url: documentId,
+            headers:{
+                createNew: true,
+            },
+        }
+    );

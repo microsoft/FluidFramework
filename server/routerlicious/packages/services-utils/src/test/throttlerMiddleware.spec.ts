@@ -6,35 +6,9 @@
 import assert from "assert";
 import express from "express";
 import request from "supertest";
-import { IThrottler, ThrottlingError } from "@fluidframework/server-services-core";
+import { IThrottler } from "@fluidframework/server-services-core";
+import { TestThrottler } from "@fluidframework/server-test-utils";
 import { throttle, IThrottleMiddlewareOptions } from "../throttlerMiddleware";
-
-/**
- * Throttles if an id's count exceeds limit. Exposes tracked `throttleCounts` for easy assertions.
- */
-class MockThrottler implements IThrottler {
-    public readonly throttleCounts: { [key: string]: number } = {};
-
-    constructor(private readonly limit?: number) {}
-
-    public incrementCount(id: string, weight: number = 1): void {
-        if (!this.throttleCounts[id]) {
-            this.throttleCounts[id] = 0;
-        }
-        this.throttleCounts[id] += weight;
-
-        if (this.limit && this.throttleCounts[id] > this.limit) {
-            throw new ThrottlingError("throttled", this.throttleCounts[id] - this.limit);
-        }
-    }
-
-    public decrementCount(id: string, weight: number = 1): void {
-        if (!this.throttleCounts[id]) {
-            this.throttleCounts[id] = 0;
-        }
-        this.throttleCounts[id] -= weight;
-    }
-}
 
 describe("Throttler Middleware", () => {
     const limit = 10;
@@ -55,7 +29,7 @@ describe("Throttler Middleware", () => {
     }
     beforeEach(() => {
         app = express();
-        mockThrottler = new MockThrottler(limit);
+        mockThrottler = new TestThrottler(limit);
     });
 
     describe("throttle", () => {
