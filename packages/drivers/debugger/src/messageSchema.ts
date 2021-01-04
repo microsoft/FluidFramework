@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Schema } from "jsonschema";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 
 export const joinContentsSchema = {
@@ -383,7 +384,9 @@ const mergeTreeDeltaOpSchema = {
             required: [ "props" ],
             additionalProperties: false,
         },
-    ],
+    // There's something weird with the typings/settings here where this doesn't get
+    // recognized as a valid Schema array if more than 1 item has "properties" defined
+    ] as Schema[],
 };
 
 const mergeTreeGroupOpSchema = {

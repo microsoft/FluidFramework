@@ -19,8 +19,9 @@
  */
 
 import fs from "fs";
-import { strict as assert } from "assert";
+import process from "process";
 import * as Validator from "jsonschema";
+import { assert } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
@@ -152,6 +153,7 @@ class ChunkedOpProcessor {
             assert(stringified.length <= this.concatenatedLength);
         } catch (e) {
             console.error(e);
+            throw e;
         }
 
         for (let i = 0; i < this.messages.length; i++) {
@@ -197,7 +199,7 @@ class ChunkedOpProcessor {
     }
 }
 
-class Sanitizer {
+export class Sanitizer {
     readonly validator = new Validator.Validator();
     // Represents the keys used to store Fluid object identifiers, snapshot info,
     // and other string fields that should not be replaced in contents blobs to
@@ -261,7 +263,7 @@ class Sanitizer {
 
     readonly replaceRandomTextFn = (match: string): string => {
         if (this.replacementMap.has(match)) {
-            return this.replacementMap.get(match);
+            return this.replacementMap.get(match)!;
         }
 
         const replacement = this.getRandomText(match.length);
@@ -273,14 +275,14 @@ class Sanitizer {
      * Replace text with garbage.  FluidObject types are not replaced when not under
      * full scrub mode.  All other text is replaced consistently.
      */
-    replaceText(input?: string, type: TextType = TextType.Generic): string {
+    replaceText(input?: string, type: TextType = TextType.Generic): string | undefined {
         if (input === undefined) {
             return undefined;
         }
 
         if (type === TextType.FluidObject) {
             if (this.replacementMap.has(input)) {
-                return this.replacementMap.get(input);
+                return this.replacementMap.get(input)!;
             }
 
             let replacement: string;
@@ -321,7 +323,6 @@ class Sanitizer {
     // eslint-disable-next-line @typescript-eslint/ban-types
     replaceObject(input: object | null, excludedKeys: Set<string> = this.defaultExcludedKeys): object | null {
         // File might contain actual nulls
-        // eslint-disable-next-line no-null/no-null
         if (input === null || input === undefined) {
             return input;
         }
@@ -352,7 +353,6 @@ class Sanitizer {
      * @param excludedKeys - object keys for which to skip replacement when not in fullScrub
      */
     replaceAny(input: any, excludedKeys: Set<string> = this.defaultExcludedKeys): any {
-        // eslint-disable-next-line no-null/no-null
         if (input === null || input === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return input;
