@@ -5,7 +5,11 @@
 
 import { strict as assert } from "assert";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import {
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    MessageType,
+} from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 
 // An IDeltaManager alias to be used within this class.
@@ -76,6 +80,38 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
     private clientId: string | undefined;
     private firstClientSequenceNumber: number = -1;
     private _latestSequenceNumber: number;
+    private lastOutbound: IDocumentMessage | undefined;
+    private lastInbound: ISequencedDocumentMessage | undefined;
+    private readonly lastClientInbound = new Map<string, ISequencedDocumentMessage>();
+
+    public expectingInboundFrom(monitor: DeltaManagerMonitor): boolean {
+        if (this.deltaManager.disposed || monitor.deltaManager.disposed) {
+            return false;
+        }
+
+        if (monitor.lastOutbound === undefined
+            || monitor.clientId === undefined) {
+            return false;
+        }
+        if (this.lastInbound === undefined) {
+            return true;
+        }
+
+        const lastClientInbound = this.lastClientInbound.get(monitor.clientId);
+        if (lastClientInbound !== undefined) {
+            if (monitor.lastOutbound.clientSequenceNumber > lastClientInbound.clientSequenceNumber) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        if (this.lastInbound.minimumSequenceNumber >= monitor.lastOutbound.referenceSequenceNumber) {
+            return false;
+        }
+
+        return true;
+    }
 
     constructor(deltaManager: DeltaManager) {
         super(deltaManager);
@@ -101,6 +137,9 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
             // Clear the pending count and start anew
             this.pendingCount = 0;
             this.firstClientSequenceNumber = -1;
+            this.lastOutbound = undefined;
+            this.lastInbound = undefined;
+            this.lastClientInbound.clear();
         });
         deltaManager.outbound.on("op", this.outbound.bind(this));
         deltaManager.inbound.on("push", this.inbound.bind(this));
@@ -121,6 +160,11 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
     }
     private inbound(message: ISequencedDocumentMessage) {
         this._latestSequenceNumber = message.sequenceNumber;
+
+        this.lastInbound = message;
+        if (message.clientId) {
+            this.lastClientInbound.set(message.clientId, message);
+        }
 
         if (this.clientId === undefined) {
             // Ignore message when we are not connected.
@@ -164,17 +208,18 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
             this.firstClientSequenceNumber = messages[0].clientSequenceNumber;
         }
         for (const message of messages) {
-            switch (message.type) {
-                case MessageType.NoOp:
-                    // TODO: server have some heuristic to delay or coalesce no-ops
-                    // Can't really track it for now
-                    break;
-                case MessageType.Summarize:
-                    this.pendingCount += 2; // expect SummaryAck too.
-                    break;
-                default:
-                    this.pendingCount++;
-                    break;
+            // TODO: server have some heuristic to delay or coalesce no-ops
+            // Can't really track it for now
+            if (message.type !== MessageType.NoOp) {
+                switch (message.type) {
+                    case MessageType.Summarize:
+                        this.pendingCount += 2; // expect SummaryAck too.
+                        break;
+                    default:
+                        this.pendingCount++;
+                        break;
+                }
+                this.lastOutbound =  message;
             }
             this.trace("OUT", message.type);
         }
@@ -234,11 +279,11 @@ export class OpProcessingController {
       * It validates the delta managers and resumes its inbound and outbound queues. It then keeps yielding
       * the JS event loop until all the ops have been processed by the server and by the delta managers.
       *
-      * @param deltaMgrs - Array of delta managers whose ops to process. If no delta manager is provided, it
+      * @param deltaMangers - Array of delta managers whose ops to process. If no delta manager is provided, it
       * processes the ops for all the delta managers in our collection.
       */
-    public async process(...deltaMgrs: DeltaManager[]): Promise<void> {
-        const monitors = this.mapDeltaManagerMonitor(deltaMgrs);
+    public async process(...deltaMangers: DeltaManager[]): Promise<void> {
+        const monitors = this.mapDeltaManagerMonitor(deltaMangers);
 
         // Pause the queues of all the delta managers in our collection to make sure that we only process the ops of
         // the requested delta managers.
@@ -258,11 +303,11 @@ export class OpProcessingController {
      * It validates the delta managers and resumes its inbound queue. It then keeps yielding the JS event loop until
      * all the ops have been processed by the server and by the delta managers.
      *
-     * @param deltaMgrs - Array of delta managers whose incoming ops to process. If no delta manager is provided, it
+     * @param deltaMangers - Array of delta managers whose incoming ops to process. If no delta manager is provided, it
      * processes the ops for all the delta managers in our collection.
      */
-    public async processIncoming(...deltaMgrs: DeltaManager[]): Promise<void> {
-        const monitors = this.mapDeltaManagerMonitor(deltaMgrs);
+    public async processIncoming(...deltaMangers: DeltaManager[]): Promise<void> {
+        const monitors = this.mapDeltaManagerMonitor(deltaMangers);
 
         // Pause the queues of all the delta managers in our collection to make sure that we only process the incoming
         // ops of the requested delta managers.
@@ -284,11 +329,11 @@ export class OpProcessingController {
      * It validates the delta managers and resumes its outbound queue. It then keeps yielding the JS event loop until
      * all the ops have been processed by the server and by the delta managers.
      *
-     * @param deltaMgrs - Array of delta managers whose outgoing ops to process. If no delta manager is provided, it
+     * @param deltaMangers - Array of delta managers whose outgoing ops to process. If no delta manager is provided, it
      * processes the ops for all the delta managers in our collection.
      */
-    public async processOutgoing(...deltaMgrs: DeltaManager[]): Promise<void> {
-        const monitors = this.mapDeltaManagerMonitor(deltaMgrs);
+    public async processOutgoing(...deltaMangers: DeltaManager[]): Promise<void> {
+        const monitors = this.mapDeltaManagerMonitor(deltaMangers);
 
         // Pause the queues of all the delta managers in our collection to make sure that we only process the outgoing
         // ops of the requested delta managers.
@@ -309,11 +354,11 @@ export class OpProcessingController {
      * Pauses the delta processing for controlled testing by pausing the inbound and outbound queues of the delta
      * managers.
      *
-     * @param deltaMgrs - Array of delta managers whose processing to pause. If no delta manager is provided, it
+     * @param deltaMangers - Array of delta managers whose processing to pause. If no delta manager is provided, it
      * pauses the processing of all the delta managers in our collection.
      */
-    public async pauseProcessing(...deltaMgrs: DeltaManager[]) {
-        const monitors = this.mapDeltaManagerMonitor(deltaMgrs);
+    public async pauseProcessing(...deltaMangers: DeltaManager[]) {
+        const monitors = this.mapDeltaManagerMonitor(deltaMangers);
 
         // Pause the inbound and outbound delta queues.
         await this.pauseDeltaManagerQueues(monitors);
@@ -325,11 +370,11 @@ export class OpProcessingController {
      * Resumes the delta processing after a pauseProcessing calls by resuming the inbound and outbound queues of
      * the delta managers.
      *
-     * @param deltaMgrs - Array of delta managers whose processing to resume. If no delta manager is provided, it
+     * @param deltaMangers - Array of delta managers whose processing to resume. If no delta manager is provided, it
      * resumes the processing of all the delta managers in our collection.
      */
-    public resumeProcessing(...deltaMgrs: DeltaManager[]) {
-        const monitors = this.mapDeltaManagerMonitor(deltaMgrs);
+    public resumeProcessing(...deltaMangers: DeltaManager[]) {
+        const monitors = this.mapDeltaManagerMonitor(deltaMangers);
 
         // Resume the inbound and outbound delta queues.
         monitors.forEach((monitor) => monitor.toggleResumeAll());
@@ -339,15 +384,15 @@ export class OpProcessingController {
 
     /**
      * Map a list of DeltaManager to its monitor.  Throw an error if the delta manager is not in our collection
-     * @param deltaMgrs - The delta managers to get the monitors for
+     * @param deltaMangers - The delta managers to get the monitors for
      */
-    private mapDeltaManagerMonitor(deltaMgrs: DeltaManager[]) {
-        if (deltaMgrs.length === 0) {
+    private mapDeltaManagerMonitor(deltaMangers: DeltaManager[]) {
+        if (deltaMangers.length === 0) {
             // If no delta managers are provided, process all delta managers in our collection.
             return Array.from(this.deltaManagerMonitors.values());
         }
 
-        return deltaMgrs.map((deltaManager) => {
+        return deltaMangers.map((deltaManager) => {
             const monitor = this.deltaManagerMonitors.get(deltaManager);
             assert(monitor, "All delta managers must be added to deterministically control processing");
             return monitor;
@@ -367,8 +412,10 @@ export class OpProcessingController {
         let working: boolean;
         do {
             await OpProcessingController.yield();
-            if (!this.deltaConnectionServerMonitor) {
-                working = false;
+            working = false;
+            if (await this.deltaConnectionServerMonitor?.hasPendingWork() === true) {
+                working = true;
+            } else {
                 let latestSequenceNumber = -1;
                 for (const monitor of monitors) {
                     if (monitor.hasPendingWork() || hasWork(monitor.deltaManager)) {
@@ -383,15 +430,26 @@ export class OpProcessingController {
                             working = true;
                             break;
                         }
-                    }
-                }
-            } else {
-                working = await this.deltaConnectionServerMonitor.hasPendingWork();
-                if (!working) {
-                    for (const toggle of monitors) {
-                        if (hasWork(toggle.deltaManager)) {
-                            working = true;
-                            break;
+
+                        if (!monitor.inboundPaused) {
+                            if (latestSequenceNumber === -1) {
+                                latestSequenceNumber = monitor.latestSequenceNumber;
+                            } else if (latestSequenceNumber !== monitor.latestSequenceNumber) {
+                                working = true;
+                                break;
+                            }
+
+                            for (const outBoundMonitor of monitors) {
+                                if (monitor !== outBoundMonitor) {
+                                    if (monitor.expectingInboundFrom(outBoundMonitor)) {
+                                        working = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (working === true) {
+                                break;
+                            }
                         }
                     }
                 }
