@@ -7,6 +7,10 @@ export type SummaryObject = ISummaryCommit | ISummaryTree | ISummaryBlob | ISumm
 
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
+export enum ReferenceFlag {
+    Unreferenced = 0,
+}
+
 export interface ISummaryAuthor {
     name: string;
     email: string;
@@ -53,6 +57,9 @@ export interface ISummaryTree {
 
     // TODO type I can infer from SummaryObject. File mode I may want to directly specify so have symlink+exec access
     tree: { [path: string]: SummaryObject };
+
+    // Tells the reference state of this tree. If this flag is not present, the tree is considered referenced.
+    referenceFlag?: ReferenceFlag;
 }
 
 export interface ISummaryCommit {
