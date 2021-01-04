@@ -116,12 +116,13 @@ import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager } from "./blobManager";
-import { BaseSnapshotType, DataStores } from "./dataStores";
+import { DataStores } from "./dataStores";
 import {
     blobsTreeName,
     chunksBlobName,
     IContainerRuntimeMetadata,
     metadataBlobName,
+    nonDataStorePaths,
 } from "./snapshot";
 
 export enum ContainerMessageType {
@@ -704,19 +705,28 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
-        // back-compat before namespaces were improved
         let dataStoresSnapshot = context.baseSnapshot;
-        let dataStoresSnapshotType: BaseSnapshotType = "legacy";
-
-        if (!!dataStoresSnapshot && metadata.snapshotFormatVersion !== undefined) {
-            dataStoresSnapshot = dataStoresSnapshot.trees[channelsTreeName];
-            dataStoresSnapshotType = "next";
-            assert(!!dataStoresSnapshot, "expected .channels tree in snapshot");
+        if (dataStoresSnapshot) {
+            if (metadata.snapshotFormatVersion !== undefined) {
+                dataStoresSnapshot = dataStoresSnapshot.trees[channelsTreeName];
+                assert(!!dataStoresSnapshot, `expected ${channelsTreeName} tree in snapshot`);
+            } else {
+                // back-compat: strip out all non-datastore paths before giving to DataStores object.
+                const dataStoresTrees: ISnapshotTree["trees"] = {};
+                for (const [key, value] of Object.entries(dataStoresSnapshot.trees)) {
+                    if (!nonDataStorePaths.includes(key)) {
+                        dataStoresTrees[key] = value;
+                    }
+                }
+                dataStoresSnapshot = {
+                    ...dataStoresSnapshot,
+                    trees: dataStoresTrees,
+                };
+            }
         }
 
         this.dataStores = new DataStores(
             dataStoresSnapshot,
-            dataStoresSnapshotType,
             this,
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             (id: string, createParam: CreateChildSummarizerNodeParam) => (

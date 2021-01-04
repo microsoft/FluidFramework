@@ -50,10 +50,7 @@ import {
 } from "./dataStoreContext";
 import {
     dataStoreAttributesBlobName,
-    nonDataStorePaths,
 } from "./snapshot";
-
-export type BaseSnapshotType = "legacy" | "next";
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
@@ -71,7 +68,6 @@ export class DataStores implements IDisposable {
 
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
-        baseSnapshotType: BaseSnapshotType,
         private readonly runtime: ContainerRuntime,
         private readonly submitAttachFn: (attachContent: any) => void,
         private readonly getCreateChildSummarizerNodeFn:
@@ -83,14 +79,10 @@ export class DataStores implements IDisposable {
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree>();
 
-        const nonDataStorePathsToUse = baseSnapshotType === "legacy" ? nonDataStorePaths : [];
         if (baseSnapshot) {
-            Object.keys(baseSnapshot.trees).forEach((value) => {
-                if (!nonDataStorePathsToUse.includes(value)) {
-                    const tree = baseSnapshot.trees[value];
-                    fluidDataStores.set(value, tree);
-                }
-            });
+            for (const [key, value] of Object.entries(baseSnapshot.trees)) {
+                fluidDataStores.set(key, value);
+            }
         }
 
         // Create a context for each of them
@@ -116,7 +108,7 @@ export class DataStores implements IDisposable {
                         snapshotTree.blobs,
                         snapshotTree.blobs[dataStoreAttributesBlobName]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
-                // For snapshotFormatVersion = "0.1" or "0.2", pkg is jsonified, otherwise it is just a string.
+                // For snapshotFormatVersion = "0.1" or above, pkg is jsonified, otherwise it is just a string.
                 // However the feature of loading a detached container from snapshot, is added when the
                 // snapshotFormatVersion is at least "0.1", so we don't expect it to be anything else.
                 if (attributes.snapshotFormatVersion === "0.1"
