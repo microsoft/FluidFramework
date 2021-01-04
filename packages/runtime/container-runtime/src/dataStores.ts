@@ -120,7 +120,7 @@ export class DataStores implements IDisposable {
                 // However the feature of loading a detached container from snapshot, is added when the
                 // snapshotFormatVersion is at least "0.1", so we don't expect it to be anything else.
                 if (attributes.snapshotFormatVersion === "0.1"
-                    || attributes.snapshotFormatVersion === "0.2") {
+                    || attributes.snapshotFormatVersion === 2) {
                     pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
                 } else {
                     throw new Error(`Invalid snapshot format version ${attributes.snapshotFormatVersion}`);

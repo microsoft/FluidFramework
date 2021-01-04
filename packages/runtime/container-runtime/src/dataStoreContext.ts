@@ -658,7 +658,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 
             let pkgFromSnapshot: string[];
             // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
-            // For snapshotFormatVersion = "0.1" or "0.2", pkg is jsonified, otherwise it is just a string.
+            // For snapshotFormatVersion = "0.1" or 2, pkg is jsonified, otherwise it is just a string.
             switch (attributes.snapshotFormatVersion) {
                 case undefined: {
                     if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
@@ -668,7 +668,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                     }
                     break;
                 }
-                case "0.2": {
+                case 2: {
                     tree = tree.trees[channelsTreeName];
                     // Intentional fallthrough, since package is still JSON
                 }

@@ -8,7 +8,7 @@ import { channelsTreeName } from "@fluidframework/runtime-definitions";
 
 export type ContainerRuntimeSnapshotFormatVersion =
     /**
-     * Format version is missing from snapshot.
+     * Version 0: format version is missing from snapshot.
      * This indicates it is an older version.
      */
     | undefined
@@ -16,16 +16,16 @@ export type ContainerRuntimeSnapshotFormatVersion =
      * Introduces .metadata blob and .channels trees for isolation of
      * data store trees from container-level objects.
      */
-    | "0.1";
+    | 1;
 
 export type DataStoreSnapshotFormatVersion =
     /**
-     * Format version is missing from snapshot.
+     * Version 0: format version is missing from snapshot.
      * This indicates it is an older version.
      */
     | undefined
     /**
-     * From this version the pkg within the data store
+     * Version 1: from this version the pkg within the data store
      * attributes blob is a JSON array rather than a string.
      */
     | "0.1"
@@ -33,7 +33,19 @@ export type DataStoreSnapshotFormatVersion =
      * Introduces .channels trees for isolation of
      * channel trees from data store objects.
      */
-    | "0.2";
+    | 2;
+
+export function snapshotFormatVersionToNumber(
+    version: ContainerRuntimeSnapshotFormatVersion | DataStoreSnapshotFormatVersion,
+): number {
+    if (version === undefined) {
+        return 0;
+    }
+    if (version === "0.1") {
+        return 1;
+    }
+    return version;
+}
 
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
