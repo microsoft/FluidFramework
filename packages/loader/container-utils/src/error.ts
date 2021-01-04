@@ -10,7 +10,7 @@ import {
     ICriticalContainerError,
     IErrorBase,
 } from "@fluidframework/container-definitions";
-import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 
 function messageFromError(error: any) {
@@ -24,7 +24,7 @@ function messageFromError(error: any) {
 /**
  * Generic error
  */
-export class GenericError extends CustomErrorWithProps implements IGenericError {
+export class GenericError extends LoggingError implements IGenericError {
     readonly errorType = ContainerErrorType.genericError;
 
     constructor(
@@ -35,7 +35,7 @@ export class GenericError extends CustomErrorWithProps implements IGenericError 
     }
 }
 
-export class DataCorruptionError extends CustomErrorWithProps implements IErrorBase {
+export class DataCorruptionError extends LoggingError implements IErrorBase {
     readonly errorType = "dataCorruptionError";
     readonly canRetry = false;
 
@@ -56,14 +56,14 @@ export function CreateContainerError(error: any): ICriticalContainerError {
 
     if (typeof error === "object" && error !== null) {
         const err = error;
-        if (error.errorType !== undefined && error instanceof CustomErrorWithProps) {
+        if (error.errorType !== undefined && error instanceof LoggingError) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return err;
         }
 
         // Only get properties we know about.
         // Grabbing all properties will expose PII in telemetry!
-        return new CustomErrorWithProps(
+        return new LoggingError(
             messageFromError(error),
             {
                 errorType: error.errorType ?? ContainerErrorType.genericError,

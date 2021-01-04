@@ -31,7 +31,7 @@ export interface ITokenProvider {
      * @returns TokenResponse object representing token value along with flag indicating
      * whether token came from cache.
      */
-    fetchOrdererToken(refresh?: boolean): Promise<ITokenResponse>;
+    fetchOrdererToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
 
     /**
      * Fetches the storage token from host
@@ -39,5 +39,5 @@ export interface ITokenProvider {
      * @returns TokenResponse object representing token value along with flag indicating
      * whether token came from cache.
      */
-    fetchStorageToken(refresh?: boolean): Promise<ITokenResponse>;
+    fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
 }

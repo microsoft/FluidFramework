@@ -46,7 +46,7 @@ import {
     IEnvelope,
     IFluidDataStoreContext,
     IFluidDataStoreChannel,
-    IGCData,
+    IGarbageCollectionData,
     IInboundSignalMessage,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
@@ -202,6 +202,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         // Must always receive the data store type inside of the attributes
         if (tree?.trees !== undefined) {
             Object.keys(tree.trees).forEach((path) => {
+                // Issue #4414
+                if (path === "_search") { return; }
+
                 let channelContext: IChannelContext;
                 // If already exists on storage, then create a remote channel. However, if it is case of rehydrating a
                 // container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
@@ -585,7 +588,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         builder.addNode("/", this.getOutboundRoutes());
     }
 
-    public async getGCData(): Promise<IGCData> {
+    public async getGCData(): Promise<IGarbageCollectionData> {
         const builder = new GCDataBuilder();
         // Iterate over each channel context and get their GC data.
         await Promise.all(Array.from(this.contexts)
@@ -639,16 +642,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             ...summaryBuilder.getSummaryTree(),
             gcData: gcDataBuilder.getGCData(),
         };
-    }
-
-    /**
-     * back-compat 0.28 - snapshot is being removed and replaced with summary.
-     * So, getAttachSnapshot has been deprecated and getAttachSummary should be used instead.
-     */
-    public getAttachSnapshot(): ITreeEntry[] {
-        const summaryTree = this.getAttachSummary();
-        const tree = convertSummaryTreeToITree(summaryTree.summary);
-        return tree.entries;
     }
 
     public getAttachSummary(): IChannelSummarizeResult {

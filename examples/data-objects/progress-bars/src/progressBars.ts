@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import {
     IFluidObject,
     IFluidHandleContext,
@@ -111,11 +112,7 @@ export class ProgressBar extends EventEmitter implements
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return {
-            mimeType: "fluid/object",
-            status: 200,
-            value: this,
-        };
+        return defaultFluidObjectRequestHandler(this, request);
     }
 }
 

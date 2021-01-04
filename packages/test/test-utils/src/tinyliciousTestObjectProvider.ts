@@ -42,8 +42,6 @@ export class TinyliciousTestObjectProvider<TestContainerConfigType>
     get documentServiceFactory() {
         if (!this._documentServiceFactory) {
             const tinyliciousTokenProvider = new InsecureTokenProvider(
-                "tinylicious",
-                this.documentId,
                 "12345",
                 { id: "test" });
             this._documentServiceFactory = new RouterliciousDocumentServiceFactory(tinyliciousTokenProvider);

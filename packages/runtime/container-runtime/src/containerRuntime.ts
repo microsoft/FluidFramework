@@ -78,7 +78,8 @@ import {
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
-    IGCData,
+    IGarbageCollectionData,
+    IGarbageCollectionSummaryDetails,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelope,
@@ -115,11 +116,13 @@ import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager } from "./blobManager";
-import { DataStores } from "./dataStores";
-
-const chunksBlobName = ".chunks";
-const blobsTreeName = ".blobs";
-export const nonDataStorePaths = [".protocol", ".logTail", ".serviceProtocol", blobsTreeName];
+import { DataStores, getSnapshotForDataStores } from "./dataStores";
+import {
+    blobsTreeName,
+    chunksBlobName,
+    IContainerRuntimeMetadata,
+    metadataBlobName,
+} from "./snapshot";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -476,14 +479,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
 
-        const chunkId = context.baseSnapshot?.blobs[chunksBlobName];
-        const chunks = context.baseSnapshot && chunkId ? context.storage ?
-            await readAndParse<[string, string[]][]>(context.storage, chunkId) :
-            readAndParseFromBlobs<[string, string[]][]>(context.baseSnapshot.blobs, chunkId) : [];
+        const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
+            const blobId = context.baseSnapshot?.blobs[blobName];
+            if (context.baseSnapshot && blobId) {
+                return context.storage ?
+                    readAndParse<T>(context.storage, blobId) :
+                    readAndParseFromBlobs<T>(context.baseSnapshot.blobs, blobId);
+            }
+        };
+        const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
+        const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
 
         const runtime = new ContainerRuntime(
             context,
             registry,
+            metadata,
             chunks,
             runtimeOptions,
             containerScope,
@@ -646,6 +656,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
+        metadata: IContainerRuntimeMetadata = { snapshotFormatVersion: undefined },
         chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
@@ -694,20 +705,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         this.dataStores = new DataStores(
-            context.baseSnapshot,
+            getSnapshotForDataStores(context.baseSnapshot, metadata.snapshotFormatVersion),
             this,
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
                     summarizeInternal: SummarizeInternalFn,
-                    getGCDataFn: () => Promise<IGCData>,
-                    getInitialGCDataFn: () => Promise<IGCData | undefined>,
+                    getGCDataFn: () => Promise<IGarbageCollectionData>,
+                    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+                    usedRoutes: string[],
                 ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,
                     createParam,
                     undefined,
                     getGCDataFn,
-                    getInitialGCDataFn,
+                    getInitialGCSummaryDetailsFn,
+                    usedRoutes,
                 ),
             this._logger);
 
@@ -897,7 +910,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // We always expect createSubRequest to include a leading slash, but asserting here to protect against
             // unintentionally modifying the url if that changes.
             assert(subRequest.url.startsWith("/"), "Expected createSubRequest url to include a leading slash");
-            subRequest.url = subRequest.url.slice(1);
             return dataStore.IFluidRouter.request(subRequest);
         }
 
@@ -1356,9 +1368,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             if (this.runtimeOptions.runGC) {
-                // Get the container's GC data and run GC on the reference graph in the GC data.
+                // Get the container's GC data and run GC on the reference graph in it.
                 const gcData = await this.dataStores.getGCData();
-                runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+                const { referencedNodeIds } = runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+
+                // Remove this node's route ("/") and notify data stores of routes that are used in it.
+                const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
+                this.dataStores.updateUsedRoutes(usedRoutes);
             }
 
             const trace = Trace.start();

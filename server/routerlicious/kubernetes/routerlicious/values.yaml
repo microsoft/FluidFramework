@@ -16,6 +16,11 @@ alfred:
   tenants: []
   key: jwt_key
   maxNumberOfClientsPerDocument: 1000000
+  throttling:
+    maxRequestsPerMs: 1000000
+    maxRequestBurst: 1000000
+    minCooldownIntervalInMs: 1000000
+    minThrottleIntervalInMs: 1000000
 
 deli:
   name: deli
