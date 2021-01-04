@@ -150,6 +150,7 @@ export function compareArrays<T>(
 /**
  * Function which does nothing (no-ops).
  */
+// eslint-disable-next-line import/no-unused-modules
 export function noop(): void {
 	// noop
 }

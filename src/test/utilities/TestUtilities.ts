@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import {
 	MockContainerRuntimeFactory,
@@ -11,9 +10,8 @@ import {
 	MockStorage,
 } from '@fluidframework/test-runtime-utils';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { fail } from '../../Common';
 import { ChangeNode, TraitLocation } from '../../PersistedTypes';
-import { SharedTree, SharedTreeEvent } from '../../SharedTree';
+import { SharedTree } from '../../SharedTree';
 import { newEdit, setTrait } from '../../EditUtilities';
 import { fullHistorySummarizer, SharedTreeSummarizer } from '../../Summary';
 import { initialTree } from '../../InitialTree';
@@ -50,14 +48,6 @@ export interface SharedTreeTestingOptions {
 	 * */
 	containerRuntimeFactory?: MockContainerRuntimeFactory;
 	/**
-	 * Iff true, do not `fail` on invalid edits
-	 */
-	allowInvalid?: boolean;
-	/**
-	 * Iff true, do not `fail` on malformed edits
-	 */
-	allowMalformed?: boolean;
-	/**
 	 * If not set, full history will be preserved.
 	 */
 	summarizer?: SharedTreeSummarizer;
@@ -78,14 +68,6 @@ export function setUpTestSharedTree(
 	// Enable expensiveValidation
 	const tree = new SharedTree(componentRuntime, id || 'testSharedTree', true);
 	tree.summarizer = options.summarizer ?? fullHistorySummarizer;
-
-	if (!options.allowInvalid) {
-		tree.on(SharedTreeEvent.DroppedInvalidEdit, () => fail('unexpected invalid edit'));
-	}
-
-	if (!options.allowMalformed) {
-		tree.on(SharedTreeEvent.DroppedMalformedEdit, () => fail('unexpected malformed edit'));
-	}
 
 	const newContainerRuntimeFactory = containerRuntimeFactory || new MockContainerRuntimeFactory();
 
@@ -136,30 +118,6 @@ export function makeTestNode(identifier: NodeId = uuidv4() as NodeId): ChangeNod
 		identifier,
 		traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
 	};
-}
-
-/**
- * Expect that all edits made to tree will have the results specified by expectedEventStack.
- * Edits are only considered the first time they are applied (when their result is computed for the first time).
- *
- * `expectedEventStack` has items removed as they are seen. tests should assert `expectedEventStack` after editing.
- */
-export function setUpEventOrderTesting(tree: SharedTree, expectedEventStack: SharedTreeEvent[]): void {
-	const editsAlreadySeen = new Set<EditId>(Array.from(tree.edits).map((edit) => edit.id));
-
-	function setupEvent(event: SharedTreeEvent): void {
-		tree.on(event, (editId) => {
-			if (editsAlreadySeen.has(editId)) {
-				return;
-			}
-			editsAlreadySeen.add(editId);
-			expect(event).to.equal(expectedEventStack.pop());
-		});
-	}
-
-	setupEvent(SharedTreeEvent.AppliedEdit);
-	setupEvent(SharedTreeEvent.DroppedInvalidEdit);
-	setupEvent(SharedTreeEvent.DroppedMalformedEdit);
 }
 
 /** Left node of 'simpleTestTree' */

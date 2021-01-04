@@ -15,7 +15,6 @@ import {
 	Delete,
 	Change,
 	EditNode,
-	EditResult,
 	Insert,
 	Move,
 	ChangeNode,
@@ -38,7 +37,7 @@ import {
 } from './Summary';
 import * as HistoryEditFactory from './HistoryEditFactory';
 import { initialTree } from './InitialTree';
-import { CachingLogViewer, EditResultCallback, LogViewer } from './LogViewer';
+import { CachingLogViewer, LogViewer } from './LogViewer';
 
 /**
  * Filename where the snapshot is stored.
@@ -59,27 +58,6 @@ const initialSummary: SharedTreeSummary = { version: formatVersion, currentTree:
  * @public
  */
 export enum SharedTreeEvent {
-	/**
-	 * A valid edit (local or remote) has been applied.
-	 * Passed the EditId of the applied edit.
-	 * Note that this may be called multiple times, due to concurrent edits causing reordering,
-	 * and/or due to not caching the output of every edit.
-	 */
-	AppliedEdit = 'appliedEdit',
-	/**
-	 * An invalid edit (local or remote) has been dropped.
-	 * Passed the EditId of the dropped edit.
-	 * Note that this may be called multiple times, due to concurrent edits causing reordering,
-	 * and/or due to not caching the output of every edit.
-	 */
-	DroppedInvalidEdit = 'droppedInvalidEdit',
-	/**
-	 * A malformed edit (local or remote) has been dropped.
-	 * Passed the EditId of the dropped edit.
-	 * Note that this may be called multiple times, due to concurrent edits causing reordering,
-	 * and/or due to not caching the output of every edit.
-	 */
-	DroppedMalformedEdit = 'droppedMalformedEdit',
 	/**
 	 * An edit has been committed to the log.
 	 * This happens when either:
@@ -230,11 +208,6 @@ export class SharedTree extends SharedObject {
 	 */
 	private readonly expensiveValidation: boolean;
 
-	private readonly processEditResult = (editResult: EditResult, editId: EditId): void => {
-		// TODO:#44859: Invalid results should be handled by the app
-		this.emit(SharedTree.eventFromEditResult(editResult), editId);
-	};
-
 	/**
 	 * Create a new SharedTreeFactory.
 	 * @param runtime - The runtime the SharedTree will be associated with
@@ -244,7 +217,7 @@ export class SharedTree extends SharedObject {
 	public constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation = false) {
 		super(id, runtime, SharedTreeFactory.Attributes);
 		this.expensiveValidation = expensiveValidation;
-		const { editLog, logViewer } = loadSummary(initialSummary, this.processEditResult, this.expensiveValidation);
+		const { editLog, logViewer } = loadSummary(initialSummary, this.expensiveValidation);
 		this.editLog = editLog;
 		this.logViewer = logViewer;
 	}
@@ -354,7 +327,7 @@ export class SharedTree extends SharedObject {
 	 * @internal
 	 */
 	public loadSummary(summary: SharedTreeSummary): void {
-		const { editLog, logViewer } = loadSummary(summary, this.processEditResult, this.expensiveValidation);
+		const { editLog, logViewer } = loadSummary(summary, this.expensiveValidation);
 		this.editLog = editLog;
 		this.logViewer = logViewer;
 	}
@@ -432,29 +405,17 @@ export class SharedTree extends SharedObject {
 		this.editLog.addLocalEdit(edit);
 		this.emit(SharedTreeEvent.EditCommitted, edit.id);
 	}
-
-	private static eventFromEditResult(editResult: EditResult): SharedTreeEvent {
-		switch (editResult) {
-			case EditResult.Applied:
-				return SharedTreeEvent.AppliedEdit;
-			case EditResult.Invalid:
-				return SharedTreeEvent.DroppedInvalidEdit;
-			default:
-				return SharedTreeEvent.DroppedMalformedEdit;
-		}
-	}
 }
 
 function loadSummary(
 	summary: SharedTreeSummary,
-	callback: EditResultCallback,
 	expensiveValidation: boolean
 ): { editLog: EditLog; logViewer: LogViewer } {
 	const { version, sequencedEdits, currentTree } = summary;
 	assert(version === formatVersion);
 	const currentView = Snapshot.fromTree(currentTree);
 	const editLog = new EditLog(sequencedEdits);
-	const logViewer = new CachingLogViewer(editLog, callback, expensiveValidation);
+	const logViewer = new CachingLogViewer(editLog, expensiveValidation);
 
 	// TODO:#47830: Store the associated revision on the snapshot.
 	// The current view should only be stored in the cache if the revision it's associated with is known.
