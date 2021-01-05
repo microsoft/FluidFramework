@@ -438,8 +438,9 @@ export class DeltaManager
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._inboundSignal.pause();
     }
-    public dispose(error?: ICriticalContainerError | Error): void {
-        this.close(CreateContainerError(error));
+
+    public dispose() {
+        throw new Error("Not implemented.");
     }
 
     /**
