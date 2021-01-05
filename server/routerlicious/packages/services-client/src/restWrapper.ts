@@ -74,8 +74,8 @@ export class RestWrapper {
         if (this.defaultHeaders) {
             options.headers = { ...this.defaultHeaders, ...options.headers };
         }
-        if (options.headers["x-correlation-id"] === undefined) {
-            options.headers["x-correlation-id"] = uuid.v4();
+        if (options.headers === undefined || options.headers["x-correlation-id"] === undefined) {
+            options.headers = { ...{ "x-correlation-id": uuid.v4() }, ...options.headers };
         }
 
         const response = await this.axios.request<T>(options)
