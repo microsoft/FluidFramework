@@ -28,7 +28,7 @@
   "dependencies": {
     "@fluidframework/driver-definitions": "^0.32.0",
     "@fluidframework/driver-utils": "^0.32.0",
-    "node-fetch": "^2.2.1"
+    "node-fetch": "^2.6.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",

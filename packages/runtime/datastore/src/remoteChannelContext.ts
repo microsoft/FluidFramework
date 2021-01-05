@@ -19,17 +19,17 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeFn,
+    gcBlobKey,
     IContextSummarizeResult,
     IFluidDataStoreContext,
-    IGCData,
-    IGCDetails,
+    IGarbageCollectionData,
+    IGarbageCollectionSummaryDetails,
     ISummarizeInternalResult,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
 import {
     attributesBlobKey,
     createServiceEndpoints,
-    gcBlobKey,
     IChannelContext,
     summarizeChannel,
 } from "./channelContext";
@@ -52,11 +52,10 @@ export class RemoteChannelContext implements IChannelContext {
     /**
      * This loads the GC details from the base snapshot of this context.
      */
-    private readonly initialGCDetailsP = new LazyPromise<IGCDetails>(async () => {
+    private readonly gcDetailsInInitialSummaryP = new LazyPromise<IGarbageCollectionSummaryDetails>(async () => {
         if (await this.services.objectStorage.contains(gcBlobKey)) {
-            return readAndParse<IGCDetails>(this.services.objectStorage, gcBlobKey);
+            return readAndParse<IGarbageCollectionSummaryDetails>(this.services.objectStorage, gcBlobKey);
         } else {
-            // Default value of initial GC details in case the initial snapshot does not have GC details blob.
             return {};
         }
     });
@@ -73,6 +72,7 @@ export class RemoteChannelContext implements IChannelContext {
         extraBlobs: Map<string, string> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private readonly attachMessageType?: string,
+        usedRoutes?: string[],
     ) {
         this.services = createServiceEndpoints(
             this.id,
@@ -85,10 +85,14 @@ export class RemoteChannelContext implements IChannelContext {
 
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+
+        // If we are created before GC is run, used routes will not be available. Set self route (empty string) to
+        // used routes in the summarizer node. If GC is enabled, the used routes will be updated as per the GC data.
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async () => this.getGCDataInternal(),
-            async () => this.getInitialGCData(),
+            async () => this.gcDetailsInInitialSummaryP,
+            usedRoutes ?? [""],
         );
     }
 
@@ -234,19 +238,12 @@ export class RemoteChannelContext implements IChannelContext {
         return this.channel;
     }
 
-    public async getGCData(): Promise<IGCData> {
+    public async getGCData(): Promise<IGarbageCollectionData> {
         return this.summarizerNode.getGCData();
     }
 
-    private async getGCDataInternal(): Promise<IGCData> {
+    private async getGCDataInternal(): Promise<IGarbageCollectionData> {
         const channel = await this.getChannel();
         return channel.getGCData();
-    }
-
-    /**
-     * This returns the GC data in the initial GC details of this context.
-     */
-    private async getInitialGCData(): Promise<IGCData | undefined> {
-        return (await this.initialGCDetailsP).gcData;
     }
 }

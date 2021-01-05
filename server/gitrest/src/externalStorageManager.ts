@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { OutgoingHttpHeaders } from "http";
 import Axios from "axios";
 import safeStringify from "json-stringify-safe";
 import * as nconf from "nconf";
+import { getCorrelationId } from "@fluidframework/server-services-utils";
+import * as uuid from "uuid";
 import * as winston from "winston";
 
 export interface IExternalStorageManager {
@@ -24,6 +27,14 @@ export class ExternalStorageManager implements IExternalStorageManager {
         this.endpoint = config.get("externalStorage:endpoint");
     }
 
+    private getCommonHeaders(): OutgoingHttpHeaders {
+        return {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "x-correlation-id": getCorrelationId() || uuid.v4(),
+        };
+    }
+
     public async read(tenantId: string, documentId: string): Promise<boolean> {
         if (!this.config.get("externalStorage:enabled")) {
             winston.info("External storage is not enabled");
@@ -31,10 +42,10 @@ export class ExternalStorageManager implements IExternalStorageManager {
         }
         await Axios.post<void>(
             `${this.endpoint}/file/${tenantId}/${documentId}`,
+            undefined,
             {
                 headers: {
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
+                    ...this.getCommonHeaders(),
                 },
             }).catch((error) => {
                 const messageMetaData = { tenantId, documentId };
@@ -59,8 +70,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
             },
             {
                 headers: {
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
+                    ...this.getCommonHeaders(),
                 },
             }).catch((error) => {
                 const messageMetaData = { tenantId, ref };
