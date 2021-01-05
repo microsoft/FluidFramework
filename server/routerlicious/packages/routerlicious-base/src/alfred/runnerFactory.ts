@@ -171,13 +171,13 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         // Rest API Throttler
         const throttleMaxRequestsPerMs =
-            config.get("alfred:throttling:maxRequestsPerMs") as number | undefined;
+            config.get("alfred:throttling:requests:maxPerMs") as number | undefined;
         const throttleMaxRequestBurst =
-            config.get("alfred:throttling:maxRequestBurst") as number | undefined;
+            config.get("alfred:throttling:requests:maxBurst") as number | undefined;
         const throttleMinRequestCooldownIntervalInMs =
-            config.get("alfred:throttling:minRequestCooldownIntervalInMs") as number | undefined;
+            config.get("alfred:throttling:requests:minCooldownIntervalInMs") as number | undefined;
         const throttleMinRequestThrottleIntervalInMs =
-            config.get("alfred:throttling:minRequestThrottleIntervalInMs") as number | undefined;
+            config.get("alfred:throttling:requests:minThrottleIntervalInMs") as number | undefined;
         const throttleStorageManager = new services.RedisThrottleStorageManager(redisClient);
         const restThrottlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,
@@ -191,13 +191,13 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         // Socket Connection Throttler
         const throttleMaxSocketConnectionsPerMs =
-            config.get("alfred:throttling:maxSocketConnectionsPerMs") as number | undefined;
+            config.get("alfred:throttling:socketConnections:maxPerMs") as number | undefined;
         const throttleMaxSocketConnectionBurst =
-            config.get("alfred:throttling:maxSocketConnectionBurst") as number | undefined;
+            config.get("alfred:throttling:socketConnections:maxBurst") as number | undefined;
         const throttleMinSocketConnectionCooldownIntervalInMs =
-            config.get("alfred:throttling:minSocketConnectionCooldownIntervalInMs") as number | undefined;
+            config.get("alfred:throttling:socketConnections:minCooldownIntervalInMs") as number | undefined;
         const throttleMinSocketConnectionThrottleIntervalInMs =
-            config.get("alfred:throttling:minSocketConnectionThrottleIntervalInMs") as number | undefined;
+            config.get("alfred:throttling:socketConnections:minThrottleIntervalInMs") as number | undefined;
         const socketConnectThrottlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,
             throttleMaxSocketConnectionsPerMs,
@@ -211,13 +211,13 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         // Socket SubmitOp Throttler
         const throttleMaxSubmitOpsPerMs =
-            config.get("alfred:throttling:maxSubmitOpsPerMs") as number | undefined;
+            config.get("alfred:throttling:submitOps:maxPerMs") as number | undefined;
         const throttleMaxSubmitOpBurst =
-            config.get("alfred:throttling:maxSubmitOpBurst") as number | undefined;
+            config.get("alfred:throttling:submitOps:maxBurst") as number | undefined;
         const throttleMinSubmitOpCooldownIntervalInMs =
-            config.get("alfred:throttling:minSubmitOpCooldownIntervalInMs") as number | undefined;
+            config.get("alfred:throttling:submitOps:minCooldownIntervalInMs") as number | undefined;
         const throttleMinSubmitOpThrottleIntervalInMs =
-            config.get("alfred:throttling:minSubmitOpThrottleIntervalInMs") as number | undefined;
+            config.get("alfred:throttling:submitOps:minThrottleIntervalInMs") as number | undefined;
         const socketSubmitOpThrottlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,
             throttleMaxSubmitOpsPerMs,

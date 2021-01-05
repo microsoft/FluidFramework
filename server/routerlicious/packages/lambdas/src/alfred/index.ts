@@ -99,7 +99,9 @@ function selectProtocolVersion(connectVersions: string[]): string {
 }
 
 /**
- * @returns true if throttled and sent nack; false if not throttled or no throttler provided.
+ * When throttled, sends nack before returning.
+ *
+ * @returns true if throttled; false if not throttled or no throttler provided.
  */
 function checkThrottle(
     throttler: core.IThrottler | undefined,

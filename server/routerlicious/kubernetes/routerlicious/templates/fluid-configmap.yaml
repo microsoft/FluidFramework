@@ -53,18 +53,24 @@ data:
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
             "throttling": {
-                "maxRequestsPerMs": {{ .Values.alfred.throttling.maxRequestsPerMs }},
-                "maxRequestBurst": {{ .Values.alfred.throttling.maxRequestBurst }},
-                "minRequestCooldownIntervalInMs": {{ .Values.alfred.throttling.minRequestCooldownIntervalInMs }},
-                "minRequestThrottleIntervalInMs": {{ .Values.alfred.throttling.minRequestThrottleIntervalInMs }},
-                "maxSocketConnectionsPerMs": {{ .Values.alfred.throttling.maxSocketConnectionsPerMs }},
-                "maxSocketConnectionBurst": {{ .Values.alfred.throttling.maxSocketConnectionBurst }},
-                "minSocketConnectionCooldownIntervalInMs": {{ .Values.alfred.throttling.minSocketConnectionCooldownIntervalInMs }},
-                "minSocketConnectionThrottleIntervalInMs": {{ .Values.alfred.throttling.minSocketConnectionThrottleIntervalInMs }},
-                "maxSubmitOpsPerMs": {{ .Values.alfred.throttling.maxSubmitOpsPerMs }},
-                "maxSubmitOpBurst": {{ .Values.alfred.throttling.maxSubmitOpBurst }},
-                "minSubmitOpCooldownIntervalInMs": {{ .Values.alfred.throttling.minSubmitOpCooldownIntervalInMs }},
-                "minSubmitOpThrottleIntervalInMs": {{ .Values.alfred.throttling.minSubmitOpThrottleIntervalInMs }}
+                "requests": {
+                    "maxPerMs": {{ .Values.alfred.throttling.requests.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.requests.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.requests.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.requests.minThrottleIntervalInMs }}
+                },
+                "socketConnections": {
+                    "maxPerMs": {{ .Values.alfred.throttling.socketConnections.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.socketConnections.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.socketConnections.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.socketConnections.minThrottleIntervalInMs }}
+                },
+                "submitOps": {
+                    "maxPerMs": {{ .Values.alfred.throttling.submitOps.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.submitOps.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.submitOps.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.submitOps.minThrottleIntervalInMs }}
+                }
             },
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
