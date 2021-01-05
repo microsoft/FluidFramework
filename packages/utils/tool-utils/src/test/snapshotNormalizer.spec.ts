@@ -6,9 +6,7 @@
 import { strict as assert } from "assert";
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import { IBlob, ITree } from "@fluidframework/protocol-definitions";
-import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "../snapshotNormalizer";
-
-const gcBlobKey = "gc";
+import { gcBlobKey, getNormalizedSnapshot, ISnapshotNormalizerConfig } from "../snapshotNormalizer";
 
 describe("Snapshot Normalizer", () => {
     it ("can normalize tree entries", () => {

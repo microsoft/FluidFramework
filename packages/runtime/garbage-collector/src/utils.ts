@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IGCData } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
 /**
  * Helper function that clones the GC data.
  * @param gcData - The GC data to clone.
  * @returns a clone of the given GC data.
  */
-export function cloneGCData(gcData: IGCData): IGCData {
+export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
     const clonedGCNodes: { [ id: string ]: string[] } = {};
     for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
         clonedGCNodes[id] = Array.from(outboundRoutes);
@@ -20,7 +20,7 @@ export function cloneGCData(gcData: IGCData): IGCData {
     };
 }
 
-export class GCDataBuilder implements IGCData {
+export class GCDataBuilder implements IGarbageCollectionData {
     public readonly gcNodes: { [ id: string ]: string[] } = {};
 
     public addNode(id: string, outboundRoutes: string[]) {
@@ -63,7 +63,7 @@ export class GCDataBuilder implements IGCData {
         }
     }
 
-    public getGCData(): IGCData {
+    public getGCData(): IGarbageCollectionData {
         return {
             gcNodes: this.gcNodes,
         };

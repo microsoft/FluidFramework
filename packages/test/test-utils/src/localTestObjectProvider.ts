@@ -70,7 +70,7 @@ export class LocalTestObjectProvider<TestContainerConfigType>
 
     get opProcessingController() {
         if (!this._opProcessingController) {
-            this._opProcessingController = new OpProcessingController(this.deltaConnectionServer);
+            this._opProcessingController = new OpProcessingController();
         }
         return this._opProcessingController;
     }

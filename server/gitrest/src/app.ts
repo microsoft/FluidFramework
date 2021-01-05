@@ -13,6 +13,7 @@ import * as nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import split = require("split");
 import * as winston from "winston";
+import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import { IExternalStorageManager } from "./externalStorageManager";
 import * as routes from "./routes";
 import * as utils from "./utils";
@@ -36,6 +37,8 @@ export function create(
     const requestSize = store.get("requestSizeLimit");
     app.use(bodyParser.json({ limit: requestSize }));
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
+
+    app.use(bindCorrelationId());
 
     app.use(cors());
     const repoManager = new utils.RepositoryManager(store.get("storageDir"));
