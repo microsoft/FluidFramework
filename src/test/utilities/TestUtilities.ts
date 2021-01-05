@@ -16,6 +16,7 @@ import { newEdit, setTrait } from '../../EditUtilities';
 import { fullHistorySummarizer, SharedTreeSummarizer } from '../../Summary';
 import { initialTree } from '../../InitialTree';
 import { Snapshot } from '../../Snapshot';
+import { expect } from 'chai';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {
@@ -118,6 +119,14 @@ export function makeTestNode(identifier: NodeId = uuidv4() as NodeId): ChangeNod
 		identifier,
 		traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
 	};
+}
+
+export function assertNoDelta(tree: SharedTree, editor: () => void) {
+	const snapshotA = tree.currentView;
+	editor();
+	const snapshotB = tree.currentView;
+	const delta = snapshotA.delta(snapshotB);
+	expect(delta).deep.equals([]);
 }
 
 /** Left node of 'simpleTestTree' */
