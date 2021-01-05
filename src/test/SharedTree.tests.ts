@@ -17,6 +17,7 @@ import {
 	leftTraitLocation,
 	rightTraitLocation,
 	simpleTestTree,
+	assertNoDelta,
 } from './utilities/TestUtilities';
 import { SharedTreeEvent } from '../SharedTree';
 import { Change, ChangeType, EditNode, Delete, Insert, ChangeNode, StablePlace, StableRange } from '../PersistedTypes';
@@ -170,11 +171,9 @@ describe('SharedTree', () => {
 
 			// Trying to insert next to the deleted node should drop, confirm that it doesn't
 			// change the snapshot
-			const snapshotBeforeInvalidInsert = tree.currentView;
-			tree.processLocalEdit(newEdit(Insert.create([secondNode], StablePlace.after(firstNode))));
-			const snapshotAfterInvalidInsert = tree.currentView;
-			const delta = snapshotBeforeInvalidInsert.delta(snapshotAfterInvalidInsert);
-			expect(delta).deep.equals([]);
+			assertNoDelta(tree, () => {
+				tree.processLocalEdit(newEdit(Insert.create([secondNode], StablePlace.after(firstNode))));
+			});
 
 			const leftTrait = tree.currentView.getTrait(leftTraitLocation);
 			expect(leftTrait.length).to.equal(1);
@@ -190,25 +189,21 @@ describe('SharedTree', () => {
 			tree.editor.insert([firstNode, secondNode, thirdNode], StablePlace.after(left));
 			tree.editor.delete(secondNode);
 
-			const snapshotBeforeInvalidDeletes = tree.currentView;
+			assertNoDelta(tree, () => {
+				// Trying to delete from before firstNode to after secondNode should drop
+				tree.processLocalEdit(
+					newEdit([
+						Delete.create(StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode))),
+					])
+				);
 
-			// Trying to delete from before firstNode to after secondNode should drop
-			tree.processLocalEdit(
-				newEdit([
-					Delete.create(StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode))),
-				])
-			);
-
-			// Trying to delete from after thirdNode to before firstNode should drop
-			tree.processLocalEdit(
-				newEdit([
-					Delete.create(StableRange.from(StablePlace.after(thirdNode)).to(StablePlace.before(firstNode))),
-				])
-			);
-
-			const snapshotAfterInvalidDeletes = tree.currentView;
-			const delta = snapshotBeforeInvalidDeletes.delta(snapshotAfterInvalidDeletes);
-			expect(delta).deep.equals([]);
+				// Trying to delete from after thirdNode to before firstNode should drop
+				tree.processLocalEdit(
+					newEdit([
+						Delete.create(StableRange.from(StablePlace.after(thirdNode)).to(StablePlace.before(firstNode))),
+					])
+				);
+			});
 
 			// Expect that firstNode did not get deleted
 			const leftTrait = tree.currentView.getTrait(leftTraitLocation);
@@ -218,13 +213,9 @@ describe('SharedTree', () => {
 		it('tolerates malformed inserts', () => {
 			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
 
-			const snapshotBeforeMalformedInsert = tree.currentView;
-
-			tree.processLocalEdit(newEdit([Change.build([], 0 as DetachedSequenceId)]));
-
-			const snapshotAfterMalformedInsert = tree.currentView;
-			const delta = snapshotBeforeMalformedInsert.delta(snapshotAfterMalformedInsert);
-			expect(delta).deep.equals([]);
+			assertNoDelta(tree, () => {
+				tree.processLocalEdit(newEdit([Change.build([], 0 as DetachedSequenceId)]));
+			});
 		});
 
 		runSharedTreeUndoRedoTestSuite({ localMode: true });
@@ -337,16 +328,13 @@ describe('SharedTree', () => {
 			// Create delete. This will apply.
 			const secondEditId = tree.editor.delete(firstNode);
 
-			const snapshotBeforeInvalidInsert = tree.currentView;
-
-			// concurrently insert next to the deleted node: this will become invalid.
-			const secondNode = makeEmptyNode();
-			const thirdEditId = secondTree.editor.insert(secondNode, StablePlace.after(firstNode));
-			containerRuntimeFactory.processAllMessages();
-
-			const snapshotAfterInvalidInsert = tree.currentView;
-			const delta = snapshotBeforeInvalidInsert.delta(snapshotAfterInvalidInsert);
-			expect(delta).deep.equals([]);
+			let thirdEditId;
+			assertNoDelta(tree, () => {
+				// concurrently insert next to the deleted node: this will become invalid.
+				const secondNode = makeEmptyNode();
+				thirdEditId = secondTree.editor.insert(secondNode, StablePlace.after(firstNode));
+				containerRuntimeFactory.processAllMessages();
+			});
 
 			const leftTrait = secondTree.currentView.getTrait(leftTraitLocation);
 			expect(leftTrait.length).to.equal(1);
@@ -378,16 +366,13 @@ describe('SharedTree', () => {
 			// Create delete. This will apply.
 			const secondEditId = tree.editor.delete(secondNode);
 
-			const snapshotBeforeInvalidDetach = tree.currentView;
-
-			// concurrently delete from before firstNode to after secondNode: this should become invalid
-			const thirdEditId = secondTree.editor.delete(
-				StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode))
-			);
-
-			const snapshotAfterInvalidDetach = tree.currentView;
-			const delta = snapshotBeforeInvalidDetach.delta(snapshotAfterInvalidDetach);
-			expect(delta).deep.equals([]);
+			let thirdEditId;
+			assertNoDelta(tree, () => {
+				// concurrently delete from before firstNode to after secondNode: this should become invalid
+				thirdEditId = secondTree.editor.delete(
+					StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode))
+				);
+			});
 
 			containerRuntimeFactory.processAllMessages();
 
@@ -411,15 +396,13 @@ describe('SharedTree', () => {
 
 			containerRuntimeFactory.processAllMessages();
 
-			const snapshotBeforeMalformedInsert = tree.currentView;
-			const build = Change.build([], 0 as DetachedSequenceId);
-			const edit = newEdit([build]);
-			secondTree.processLocalEdit(edit);
-			containerRuntimeFactory.processAllMessages();
-
-			const snapshotAfterMalformedInsert = tree.currentView;
-			const delta = snapshotBeforeMalformedInsert.delta(snapshotAfterMalformedInsert);
-			expect(delta).deep.equals([]);
+			let edit;
+			assertNoDelta(tree, () => {
+				const build = Change.build([], 0 as DetachedSequenceId);
+				edit = newEdit([build]);
+				secondTree.processLocalEdit(edit);
+				containerRuntimeFactory.processAllMessages();
+			});
 
 			const edits = Array.from(tree.edits);
 			// Edit 0 creates initial tree
