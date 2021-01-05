@@ -3956,18 +3956,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fluidframework/build-common@npm:^0.19.2":
-  version: 0.19.2
-  resolution: "@fluidframework/build-common@npm:0.19.2"
-  peerDependencies:
-    api-extractor: ">=7.7.2"
-    typescript: ">=3.7.4"
-  bin:
-    gen-version: bin/gen-version
-  checksum: 50a87dd04e20574b4ed49956e3bf8a107e6390521a715f84e6824b6b984ee0bf63dc2824fcc8d175c93c5fbcca7b5228dcb08e7770f6339a4bd9ddf0d481a006
-  languageName: node
-  linkType: hard
-
 "@fluidframework/build-tools@npm:0.2.5638":
   version: 0.2.5638
   resolution: "@fluidframework/build-tools@npm:0.2.5638"
@@ -5014,34 +5002,6 @@ __metadata:
     eslint-plugin-react: ">=7.18.0"
     eslint-plugin-unicorn: ">=15.0.1"
   checksum: ddef719974fe952bc858bf93de3a876b3f8467ba909edb5396afdcbaff6b66fbcc54b256267ec2a38fd4eecb4d95f12357f107b8c44d119b18bf96097a9e8faa
-  languageName: node
-  linkType: hard
-
-"@fluidframework/eslint-config-fluid@npm:^0.21.0":
-  version: 0.21.0
-  resolution: "@fluidframework/eslint-config-fluid@npm:0.21.0"
-  dependencies:
-    "@typescript-eslint/eslint-plugin": ~2.17.0
-    "@typescript-eslint/parser": ~2.17.0
-    eslint: ~6.8.0
-    eslint-plugin-eslint-comments: ~3.1.2
-    eslint-plugin-import: 2.20.0
-    eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-optimize-regex: ~1.1.7
-    eslint-plugin-prefer-arrow: ~1.1.7
-    eslint-plugin-react: ~7.18.0
-    eslint-plugin-unicorn: ~15.0.1
-  peerDependencies:
-    "@typescript-eslint/eslint-plugin": ">=2.17.0"
-    "@typescript-eslint/parser": ">=2.17.0"
-    eslint: ">=6.8.0"
-    eslint-plugin-eslint-comments: ">=3.1.2"
-    eslint-plugin-import: 2.20.0
-    eslint-plugin-no-null: ">=1.0.2"
-    eslint-plugin-prefer-arrow: ">=1.1.7"
-    eslint-plugin-react: ">=7.18.0"
-    eslint-plugin-unicorn: ">=15.0.1"
-  checksum: 023f7c9af0042427601991602e464d0d78eca8a6337bd24dd174ededa8ba553fb1ed6fd620139f4662c7aab9aab1f053dae2f377e7df2ffcddb77ca966165fd0
   languageName: node
   linkType: hard
 
@@ -7848,11 +7808,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluidframework/tinylicious-driver@workspace:packages/drivers/tinylicious-driver"
   dependencies:
-    "@fluidframework/build-common": ^0.19.2
+    "@fluidframework/build-common": ^0.20.0
     "@fluidframework/core-interfaces": ^0.32.0
     "@fluidframework/driver-definitions": ^0.32.0
     "@fluidframework/driver-utils": ^0.32.0
-    "@fluidframework/eslint-config-fluid": ^0.21.0
+    "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1017.0-0
     "@fluidframework/routerlicious-driver": ^0.32.0
     "@fluidframework/test-tools": ^0.2.3074
@@ -7862,13 +7822,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
-    eslint: ~7.9.0
-    eslint-plugin-eslint-comments: ~3.2.0
-    eslint-plugin-import: ~2.22.0
-    eslint-plugin-no-null: ~1.0.2
-    eslint-plugin-prefer-arrow: ~1.2.2
-    eslint-plugin-react: ~7.21.2
-    eslint-plugin-unicorn: ~22.0.0
+    eslint: ~7.11.0
     jsrsasign: ^10.0.2
     mocha: ^8.1.1
     rimraf: ^2.6.2
@@ -17497,7 +17451,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-scope@npm:^5.0.0, eslint-scope@npm:^5.1.0, eslint-scope@npm:^5.1.1":
+"eslint-scope@npm:^5.0.0, eslint-scope@npm:^5.1.1":
   version: 5.1.1
   resolution: "eslint-scope@npm:5.1.1"
   dependencies:
@@ -17704,53 +17658,6 @@ __metadata:
   bin:
     eslint: bin/eslint.js
   checksum: 6ea6c763f1b1e484ec5da67e10125cc9b6ccef5c355470cb71a2e29c70b24c0ef325dd45e775800dd78dbcfba2a9c85b9096f438cdb468b32b6680c2ddebb459
-  languageName: node
-  linkType: hard
-
-"eslint@npm:~7.9.0":
-  version: 7.9.0
-  resolution: "eslint@npm:7.9.0"
-  dependencies:
-    "@babel/code-frame": ^7.0.0
-    "@eslint/eslintrc": ^0.1.3
-    ajv: ^6.10.0
-    chalk: ^4.0.0
-    cross-spawn: ^7.0.2
-    debug: ^4.0.1
-    doctrine: ^3.0.0
-    enquirer: ^2.3.5
-    eslint-scope: ^5.1.0
-    eslint-utils: ^2.1.0
-    eslint-visitor-keys: ^1.3.0
-    espree: ^7.3.0
-    esquery: ^1.2.0
-    esutils: ^2.0.2
-    file-entry-cache: ^5.0.1
-    functional-red-black-tree: ^1.0.1
-    glob-parent: ^5.0.0
-    globals: ^12.1.0
-    ignore: ^4.0.6
-    import-fresh: ^3.0.0
-    imurmurhash: ^0.1.4
-    is-glob: ^4.0.0
-    js-yaml: ^3.13.1
-    json-stable-stringify-without-jsonify: ^1.0.1
-    levn: ^0.4.1
-    lodash: ^4.17.19
-    minimatch: ^3.0.4
-    natural-compare: ^1.4.0
-    optionator: ^0.9.1
-    progress: ^2.0.0
-    regexpp: ^3.1.0
-    semver: ^7.2.1
-    strip-ansi: ^6.0.0
-    strip-json-comments: ^3.1.0
-    table: ^5.2.3
-    text-table: ^0.2.0
-    v8-compile-cache: ^2.0.3
-  bin:
-    eslint: bin/eslint.js
-  checksum: 295fe8c442b9e9cc677fa03c88a873ad74c1d06620f4600745de83e5d4d10d53898cd1e15276e3420c976f00469d1ea8bbc5a4157c1f198753cece98f8903f5c
   languageName: node
   linkType: hard
 
