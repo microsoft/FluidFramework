@@ -37,7 +37,6 @@
     "@fluidframework/protocol-base": "^0.1016.1",
     "@fluidframework/protocol-definitions": "^0.1016.1",
     "@fluidframework/server-services-client": "^0.1016.1",
-    "@fluidframework/server-services-utils": "^0.1016.1",
     "assert": "^2.0.0",
     "axios": "^0.18.0",
     "debug": "^4.1.1",
