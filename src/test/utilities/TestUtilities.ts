@@ -121,6 +121,7 @@ export function makeTestNode(identifier: NodeId = uuidv4() as NodeId): ChangeNod
 	};
 }
 
+/** Asserts that changes to SharedTree in editor() function do not cause any observable state change */
 export function assertNoDelta(tree: SharedTree, editor: () => void) {
 	const snapshotA = tree.currentView;
 	editor();
