@@ -29,7 +29,7 @@
   "dependencies": {
     "@fluidframework/container-definitions": "^0.32.0",
     "@fluidframework/core-interfaces": "^0.32.0",
-    "isomorphic-fetch": "^2.2.1"
+    "isomorphic-fetch": "^3.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
