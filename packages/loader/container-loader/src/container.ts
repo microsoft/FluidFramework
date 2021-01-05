@@ -821,8 +821,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // to reload the context without closing the container.
         type ReloadState = { hotSwap: true; prevState: IRuntimeState } | { hotSwap: false };
         let state: ReloadState = { hotSwap: false };
-        const loaderOptionsHotSwap = this.options.hotSwapContext as boolean ?? false;
-        if (loaderOptionsHotSwap) {
+        if (this.options.hotSwapContext === true) {
             const prevState = await this.context.snapshotRuntimeState();
             state = { hotSwap: true, prevState };
         }

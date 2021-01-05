@@ -58,7 +58,7 @@ describe("CodeProposal.EndToEnd", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
-    let hotSwap = false;
+    let hotSwapContext = false;
 
     function createLoader(urlResolver: LocalResolver) {
         const codeDetailsComparer: IFluidCodeDetailsComparer = {
@@ -86,7 +86,7 @@ describe("CodeProposal.EndToEnd", () => {
                 [{ package: packageV1dot5 }, fluidExport],
             ],
             deltaConnectionServer, urlResolver,
-            hotSwap ? { hotSwapContext: true } : undefined);
+            { hotSwapContext });
     }
 
     async function createContainer(code: IFluidCodeDetails): Promise<IContainer> {
@@ -228,8 +228,8 @@ describe("CodeProposal.EndToEnd", () => {
     });
 
     describe("(hot-swap)", () => {
-        before(() => hotSwap = true);
-        after(() => hotSwap = false);
+        before(() => hotSwapContext = true);
+        after(() => hotSwapContext = false);
 
         it("Code Proposal", async () => {
             const proposal: IFluidCodeDetails = { package: packageV2 };
