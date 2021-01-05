@@ -45,7 +45,7 @@ import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from
 import {
     IChannelSummarizeResult,
     IFluidDataStoreChannel,
-    IGCData,
+    IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
@@ -511,7 +511,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         };
     }
 
-    public async getGCData(): Promise<IGCData> {
+    public async getGCData(): Promise<IGarbageCollectionData> {
         return {
             gcNodes: {},
         };

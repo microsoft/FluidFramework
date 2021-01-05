@@ -75,7 +75,7 @@ export function throttle(
             const messageMetaData = {
                 key: throttleId,
                 weight: throttleOptions.weight,
-                event_type: "throttling",
+                eventName: "throttling",
             };
 
             logger?.info(`Incrementing throttle count: ${throttleId}`, { messageMetaData });

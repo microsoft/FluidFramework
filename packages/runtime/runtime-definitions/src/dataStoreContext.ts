@@ -29,7 +29,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
-import { IGCData } from "./garbageCollection";
+import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "./garbageCollection";
 import { IInboundSignalMessage } from "./protocol";
 import {
     CreateChildSummarizerNodeParam,
@@ -191,7 +191,7 @@ export interface IFluidDataStoreChannel extends
      * Returns the GC data for this data store. It contains a list of GC nodes that contains references to
      * other GC nodes.
      */
-    getGCData(): Promise<IGCData>;
+    getGCData(): Promise<IGarbageCollectionData>;
 
     /**
      * Notifies this object about changes in the connection state.
@@ -216,8 +216,9 @@ export interface IFluidDataStoreChannel extends
 
 export type CreateChildSummarizerNodeFn = (
     summarizeInternal: SummarizeInternalFn,
-    getGCDataFn: () => Promise<IGCData>,
-    getInitialGCDataFn: () => Promise<IGCData | undefined>,
+    getGCDataFn: () => Promise<IGarbageCollectionData>,
+    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+    usedRoutes: string[],
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {

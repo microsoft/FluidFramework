@@ -16,7 +16,7 @@ import {
 import {
     IContextSummarizeResult,
     IFluidDataStoreContext,
-    IGCData,
+    IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
@@ -202,7 +202,7 @@ export class LocalChannelContext implements IChannelContext {
         }
     }
 
-    public async getGCData(): Promise<IGCData> {
+    public async getGCData(): Promise<IGarbageCollectionData> {
         assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to run GC");
         return this.channel.getGCData();
     }
