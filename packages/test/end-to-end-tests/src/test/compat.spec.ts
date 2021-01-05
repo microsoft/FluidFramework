@@ -24,7 +24,7 @@ import {
 import * as old from "./oldVersion";
 
 const runtimeOptions: IContainerRuntimeOptions = {
-    summaryConfigOverrides:{ maxOps: 1 },
+     summaryConfigOverrides: { maxOps: 1 },
 };
 
 async function loadContainer(
@@ -97,27 +97,39 @@ describe("loader/runtime compatibility", () => {
             const containersP: Promise<IContainer | old.IContainer>[] = [
                 loadContainer( // new everything
                     { fluidExport: createRuntimeFactory(
-                        TestDataObject.type, createPrimedDataStoreFactory(), runtimeOptions) },
+                        TestDataObject.type,
+                        createPrimedDataStoreFactory(),
+                        runtimeOptions) },
                     args.deltaConnectionServer),
                 loadContainerWithOldLoader( // old loader, new container/data store runtimes
                     { fluidExport: createRuntimeFactory(
-                        TestDataObject.type, createPrimedDataStoreFactory(), runtimeOptions) },
+                        TestDataObject.type,
+                        createPrimedDataStoreFactory(),
+                        runtimeOptions) },
                     args.deltaConnectionServer),
                 loadContainerWithOldLoader( // old everything
                     { fluidExport: createOldRuntimeFactory(
-                        TestDataObject.type, createOldPrimedDataStoreFactory(), runtimeOptions) },
+                        TestDataObject.type,
+                        createOldPrimedDataStoreFactory(),
+                        runtimeOptions) },
                     args.deltaConnectionServer),
                 loadContainer( // new loader, old container/data store runtimes
                     { fluidExport: createOldRuntimeFactory(
-                        TestDataObject.type, createOldPrimedDataStoreFactory(), runtimeOptions) },
+                        TestDataObject.type,
+                        createOldPrimedDataStoreFactory(),
+                        runtimeOptions) },
                     args.deltaConnectionServer),
                 loadContainer( // new loader/container runtime, old data store runtime
                     { fluidExport: createRuntimeFactory(
-                        TestDataObject.type, createOldPrimedDataStoreFactory(), runtimeOptions) },
+                        TestDataObject.type,
+                        createOldPrimedDataStoreFactory(),
+                        runtimeOptions) },
                     args.deltaConnectionServer),
                 loadContainerWithOldLoader( // old loader/container runtime, new data store runtime
                     { fluidExport: createOldRuntimeFactory(
-                        TestDataObject.type, createPrimedDataStoreFactory(), runtimeOptions) },
+                        TestDataObject.type,
+                        createPrimedDataStoreFactory(),
+                        runtimeOptions) },
                     args.deltaConnectionServer),
             ];
 
@@ -142,6 +154,7 @@ describe("loader/runtime compatibility", () => {
     };
 
     generateLocalCompatTest(tests, {
+        // remove after the old version supports summaryConfigOverrides (>0.32.0)
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         serviceConfiguration: { summary: { maxOps: 1 } as ISummaryConfiguration },
     });
