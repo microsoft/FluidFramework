@@ -17,7 +17,7 @@ import {
 	leftTraitLocation,
 	rightTraitLocation,
 	simpleTestTree,
-	setUpEventOrderTesting,
+	assertNoDelta,
 } from './utilities/TestUtilities';
 import { SharedTreeEvent } from '../SharedTree';
 import { Change, ChangeType, EditNode, Delete, Insert, ChangeNode, StablePlace, StableRange } from '../PersistedTypes';
@@ -120,8 +120,10 @@ describe('SharedTree', () => {
 			const buildParent = Change.build([parentNode], parentId);
 			const buildParent2 = Change.build([parentNode2], parentId2);
 
-			tree.applyEdit(buildChild, buildParent, buildParent2);
-			tree.currentView; // force computing of currentView
+			assertNoDelta(tree, () => {
+				// we don't expect this edit application to change anything
+				tree.applyEdit(buildChild, buildParent, buildParent2);
+			});
 		});
 
 		it('can apply multiple local edits without ack from server', () => {
@@ -157,67 +159,51 @@ describe('SharedTree', () => {
 		});
 
 		it('tolerates invalid inserts', () => {
-			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowInvalid: true });
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
 
 			const firstNode = makeEmptyNode();
 			const secondNode = makeEmptyNode();
 
-			const expectedEventStack: SharedTreeEvent[] = [
-				SharedTreeEvent.DroppedInvalidEdit,
-				SharedTreeEvent.AppliedEdit,
-				SharedTreeEvent.AppliedEdit,
-			];
-
-			setUpEventOrderTesting(tree, expectedEventStack);
-
 			tree.editor.insert(firstNode, StablePlace.after(left));
 			tree.editor.delete(firstNode);
 
-			// Trying to insert next to the deleted node should drop
-			tree.processLocalEdit(newEdit(Insert.create([secondNode], StablePlace.after(firstNode))));
-
-			tree.currentView; // force computing of currentView
-			expect(expectedEventStack).deep.equals([]);
+			// Trying to insert next to the deleted node should drop, confirm that it doesn't
+			// change the snapshot
+			assertNoDelta(tree, () => {
+				tree.processLocalEdit(newEdit(Insert.create([secondNode], StablePlace.after(firstNode))));
+			});
 
 			const leftTrait = tree.currentView.getTrait(leftTraitLocation);
 			expect(leftTrait.length).to.equal(1);
 		});
 
 		it('tolerates invalid detaches', () => {
-			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowInvalid: true });
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
 
 			const firstNode = makeEmptyNode();
 			const secondNode = makeEmptyNode();
 			const thirdNode = makeEmptyNode();
 
-			const expectedEventStack: SharedTreeEvent[] = [
-				SharedTreeEvent.DroppedInvalidEdit,
-				SharedTreeEvent.DroppedInvalidEdit,
-				SharedTreeEvent.AppliedEdit,
-				SharedTreeEvent.AppliedEdit,
-			];
-
-			setUpEventOrderTesting(tree, expectedEventStack);
-
 			tree.editor.insert([firstNode, secondNode, thirdNode], StablePlace.after(left));
 			tree.editor.delete(secondNode);
 
-			// Trying to delete from before firstNode to after secondNode should drop
-			tree.processLocalEdit(
-				newEdit([
-					Delete.create(StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode))),
-				])
-			);
+			assertNoDelta(tree, () => {
+				// Trying to delete from before firstNode to after secondNode should drop
+				tree.processLocalEdit(
+					newEdit([
+						Delete.create(
+							StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode))
+						),
+					])
+				);
 
-			// Trying to delete from after thirdNode to before firstNode should drop
-			tree.processLocalEdit(
-				newEdit([
-					Delete.create(StableRange.from(StablePlace.after(thirdNode)).to(StablePlace.before(firstNode))),
-				])
-			);
-
-			tree.currentView; // force computing of currentView
-			expect(expectedEventStack).deep.equals([]);
+				// Trying to delete from after thirdNode to before firstNode should drop
+				tree.processLocalEdit(
+					newEdit([
+						Delete.create(StableRange.from(StablePlace.after(thirdNode)).to(StablePlace.before(firstNode))),
+					])
+				);
+			});
 
 			// Expect that firstNode did not get deleted
 			const leftTrait = tree.currentView.getTrait(leftTraitLocation);
@@ -225,16 +211,11 @@ describe('SharedTree', () => {
 		});
 
 		it('tolerates malformed inserts', () => {
-			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowMalformed: true });
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
 
-			const expectedEventStack: SharedTreeEvent[] = [SharedTreeEvent.DroppedMalformedEdit];
-
-			setUpEventOrderTesting(tree, expectedEventStack);
-
-			tree.processLocalEdit(newEdit([Change.build([], 0 as DetachedSequenceId)]));
-
-			tree.currentView; // force computing of currentView
-			expect(expectedEventStack).deep.equals([]);
+			assertNoDelta(tree, () => {
+				tree.processLocalEdit(newEdit([Change.build([], 0 as DetachedSequenceId)]));
+			});
 		});
 
 		runSharedTreeUndoRedoTestSuite({ localMode: true });
@@ -331,22 +312,13 @@ describe('SharedTree', () => {
 		});
 
 		it('tolerates invalid inserts', () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, allowInvalid: true });
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions });
 			const { tree: secondTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
 				...secondTreeOptions,
-				allowInvalid: true,
 			});
 
 			containerRuntimeFactory.processAllMessages();
-
-			const expectedEventStack: SharedTreeEvent[] = [
-				SharedTreeEvent.DroppedInvalidEdit,
-				SharedTreeEvent.AppliedEdit,
-				SharedTreeEvent.AppliedEdit,
-			];
-
-			setUpEventOrderTesting(tree, expectedEventStack);
 
 			const firstNode = makeEmptyNode();
 			const firstEditId = secondTree.editor.insert(firstNode, StablePlace.after(left));
@@ -356,12 +328,13 @@ describe('SharedTree', () => {
 			// Create delete. This will apply.
 			const secondEditId = tree.editor.delete(firstNode);
 
-			// concurrently insert next to the deleted node: this will become invalid.
-			const secondNode = makeEmptyNode();
-			const thirdEditId = secondTree.editor.insert(secondNode, StablePlace.after(firstNode));
-			containerRuntimeFactory.processAllMessages();
-			tree.currentView; // force computing of currentView
-			expect(expectedEventStack).deep.equals([]);
+			let thirdEditId;
+			assertNoDelta(tree, () => {
+				// concurrently insert next to the deleted node: this will become invalid.
+				const secondNode = makeEmptyNode();
+				thirdEditId = secondTree.editor.insert(secondNode, StablePlace.after(firstNode));
+				containerRuntimeFactory.processAllMessages();
+			});
 
 			const leftTrait = secondTree.currentView.getTrait(leftTraitLocation);
 			expect(leftTrait.length).to.equal(1);
@@ -375,22 +348,13 @@ describe('SharedTree', () => {
 		});
 
 		it('tolerates invalid detaches', () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, allowInvalid: true });
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions });
 			const { tree: secondTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
 				...secondTreeOptions,
-				allowInvalid: true,
 			});
 
 			containerRuntimeFactory.processAllMessages();
-
-			const expectedEventStack: SharedTreeEvent[] = [
-				SharedTreeEvent.DroppedInvalidEdit,
-				SharedTreeEvent.AppliedEdit,
-				SharedTreeEvent.AppliedEdit,
-			];
-
-			setUpEventOrderTesting(tree, expectedEventStack);
 
 			const firstNode = makeEmptyNode();
 			const secondNode = makeEmptyNode();
@@ -402,14 +366,15 @@ describe('SharedTree', () => {
 			// Create delete. This will apply.
 			const secondEditId = tree.editor.delete(secondNode);
 
-			// concurrently delete from before firstNode to after secondNode: this should become invalid
-			const thirdEditId = secondTree.editor.delete(
-				StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode))
-			);
+			let thirdEditId;
+			assertNoDelta(tree, () => {
+				// concurrently delete from before firstNode to after secondNode: this should become invalid
+				thirdEditId = secondTree.editor.delete(
+					StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode))
+				);
+			});
 
 			containerRuntimeFactory.processAllMessages();
-			tree.currentView; // force computing of currentView
-			expect(expectedEventStack).deep.equals([]);
 
 			// Expect that firstNode did not get deleted
 			const leftTrait = tree.currentView.getTrait(leftTraitLocation);
@@ -423,25 +388,21 @@ describe('SharedTree', () => {
 		});
 
 		it('tolerates malformed inserts', () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, allowMalformed: true });
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions });
 			const { tree: secondTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
 				...secondTreeOptions,
-				allowMalformed: true,
 			});
 
 			containerRuntimeFactory.processAllMessages();
 
-			const expectedEventStack: SharedTreeEvent[] = [SharedTreeEvent.DroppedMalformedEdit];
-
-			setUpEventOrderTesting(tree, expectedEventStack);
-
-			const build = Change.build([], 0 as DetachedSequenceId);
-			const edit = newEdit([build]);
-			secondTree.processLocalEdit(edit);
-			containerRuntimeFactory.processAllMessages();
-			tree.currentView; // force computing of currentView
-			expect(expectedEventStack).deep.equals([]);
+			let edit;
+			assertNoDelta(tree, () => {
+				const build = Change.build([], 0 as DetachedSequenceId);
+				edit = newEdit([build]);
+				secondTree.processLocalEdit(edit);
+				containerRuntimeFactory.processAllMessages();
+			});
 
 			const edits = Array.from(tree.edits);
 			// Edit 0 creates initial tree

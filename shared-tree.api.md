@@ -366,9 +366,6 @@ export class SharedTreeEditor {
 
 // @public
 export enum SharedTreeEvent {
-    AppliedEdit = "appliedEdit",
-    DroppedInvalidEdit = "droppedInvalidEdit",
-    DroppedMalformedEdit = "droppedMalformedEdit",
     EditCommitted = "committedEdit"
 }
 
