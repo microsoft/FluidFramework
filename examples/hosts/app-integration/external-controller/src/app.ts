@@ -5,6 +5,7 @@
 
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 
+import { DiceRollerController } from "./controller";
 import { IKeyValueDataObject, KeyValueContainerRuntimeFactory } from "./kvpair-dataobject";
 import { renderDiceRoller } from "./view";
 // import { renderDiceRoller } from "./reactView";
@@ -34,10 +35,12 @@ async function start(): Promise<void> {
 
     // In this app, we know our container code provides a default data object that is an IDiceRoller.
     const keyValueDataObject: IKeyValueDataObject = response.value;
+    const diceRollerController = new DiceRollerController(keyValueDataObject);
+    await diceRollerController.initialize(createNew);
 
     // Given an IDiceRoller, we can render the value and provide controls for users to roll it.
     const div = document.getElementById("content") as HTMLDivElement;
-    renderDiceRoller(keyValueDataObject, div);
+    renderDiceRoller(diceRollerController, div);
 }
 
 start().catch((error) => console.error(error));
