@@ -191,7 +191,9 @@ describe('SharedTree', () => {
 				// Trying to delete from before firstNode to after secondNode should drop
 				tree.processLocalEdit(
 					newEdit([
-						Delete.create(StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode))),
+						Delete.create(
+							StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode))
+						),
 					])
 				);
 

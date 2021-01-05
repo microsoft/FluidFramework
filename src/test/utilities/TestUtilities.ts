@@ -9,6 +9,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from '@fluidframework/test-runtime-utils';
+import { expect } from 'chai';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { ChangeNode, TraitLocation } from '../../PersistedTypes';
 import { SharedTree } from '../../SharedTree';
@@ -16,7 +17,6 @@ import { newEdit, setTrait } from '../../EditUtilities';
 import { fullHistorySummarizer, SharedTreeSummarizer } from '../../Summary';
 import { initialTree } from '../../InitialTree';
 import { Snapshot } from '../../Snapshot';
-import { expect } from 'chai';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {
