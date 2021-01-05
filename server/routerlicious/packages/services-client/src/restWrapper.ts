@@ -74,7 +74,7 @@ export class RestWrapper {
         if (this.defaultHeaders) {
             options.headers = { ...this.defaultHeaders, ...options.headers };
         }
-        if (options.headers === undefined || options.headers["x-correlation-id"] === undefined) {
+        if (!options.headers?.["x-correlation-id"]) {
             options.headers = { ...{ "x-correlation-id": uuid.v4() }, ...options.headers };
         }
 
