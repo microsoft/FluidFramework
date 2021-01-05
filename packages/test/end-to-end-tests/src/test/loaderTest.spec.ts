@@ -102,7 +102,7 @@ describe("Loader.request", () => {
         // this binds dataStore2 to dataStore1
         dataStore1._root.set("key", dataStore2.handle);
 
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController();
         opProcessingController.addDeltaManagers(container.deltaManager);
     });
 
@@ -145,9 +145,6 @@ describe("Loader.request", () => {
         const newDataStore = await testSharedDataObjectFactory2.createInstance(dataStore1._context.containerRuntime);
         // this binds newDataStore to dataStore1
         dataStore1._root.set("key", newDataStore.handle);
-
-        // Flush all the ops
-        await opProcessingController.process();
 
         // the dataStore3 shouldn't exist in container2 yet.
         try {

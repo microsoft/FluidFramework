@@ -80,7 +80,7 @@ describe("UpgradeManager (hot-swap)", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
         urlResolver = new LocalResolver();
         documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController();
     });
 
     afterEach(async () => {
