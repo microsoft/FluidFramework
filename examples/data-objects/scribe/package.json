@@ -50,7 +50,7 @@
     "@fluidframework/view-interfaces": "^0.32.0",
     "@types/node": "^10.17.24",
     "async": "^2.6.1",
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "bootstrap": "^3.3.7",
     "lodash": "^4.17.19"
   },

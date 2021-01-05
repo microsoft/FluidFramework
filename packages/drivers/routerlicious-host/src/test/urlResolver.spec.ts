@@ -15,13 +15,13 @@ describe("Routerlicious Host", () => {
 
         it("resolve should be retryable", async () => {
             axiosMock = {
-                post: async () => {
+                post: async <T = any, R = AxiosResponse<T>>() => {
                     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (axiosMock.failPost) {
                         throw new Error("Injecting failure to Axios.post");
                     }
                     const r: Partial<AxiosResponse<IResolvedUrl>> = { data: { type: "web", data: "http://resolved" } };
-                    return r as AxiosResponse;
+                    return r as R;
                 },
             };
             const resolver = new ContainerUrlResolver("fakeBaseUrl", "fakeJwt", new Map(), axiosMock as AxiosInstance);

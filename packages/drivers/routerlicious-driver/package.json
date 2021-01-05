@@ -38,7 +38,7 @@
     "@fluidframework/protocol-definitions": "^0.1016.1",
     "@fluidframework/server-services-client": "^0.1016.1",
     "assert": "^2.0.0",
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "debug": "^4.1.1",
     "isomorphic-ws": "^4.0.1",
     "jwt-decode": "^2.2.0",
