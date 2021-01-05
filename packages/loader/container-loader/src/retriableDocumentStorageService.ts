@@ -69,7 +69,10 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
                 if (id === undefined) {
                     id = uuid();
                 }
-                this.deltaManager.emitDelayInfo(id, retryAfter, CreateContainerError(err));
+                // TODO: this check is needed to satisfy the compiler for reasons unknown
+                if (id !== undefined) {
+                    this.deltaManager.emitDelayInfo(id, retryAfter, CreateContainerError(err));
+                }
                 await this.delay(retryAfter);
             }
         } while (!success);
