@@ -365,7 +365,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const dataStore3 = responseAfter.value as TestFluidObject;
         const sharedMap3 = await dataStore3.getSharedObject<SharedMap>(sharedMapId);
 
-        const opProcessingController = new OpProcessingController(testDeltaConnectionServer);
+        const opProcessingController = new OpProcessingController();
         opProcessingController.addDeltaManagers(container2.deltaManager, rehydratedContainer.deltaManager);
 
         await opProcessingController.process();
@@ -412,7 +412,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const dataStore2FromRC = responseAfter.value as TestFluidObject;
         const sharedMapFromRC = await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
 
-        const opProcessingController = new OpProcessingController(testDeltaConnectionServer);
+        const opProcessingController = new OpProcessingController();
         opProcessingController.addDeltaManagers(container2.deltaManager, rehydratedContainer.deltaManager);
 
         await opProcessingController.process();
