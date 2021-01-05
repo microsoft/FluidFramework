@@ -24,6 +24,7 @@ export function createLocalLoader(
     packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
     deltaConnectionServer: ILocalDeltaConnectionServer,
     urlResolver: IUrlResolver,
+    options?: any,
 ): ILoader {
     const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
     const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
@@ -32,6 +33,7 @@ export function createLocalLoader(
         urlResolver,
         documentServiceFactory,
         codeLoader,
+        options,
     });
 }
 
