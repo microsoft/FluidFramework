@@ -89,7 +89,7 @@ export type Change = Insert | Detach | Build | SetValue | Constraint;
  */
 export interface Build {
 	readonly destination: DetachedSequenceId;
-	readonly source: ChangeNodeSequence<EditNode>;
+	readonly source: TreeNodeSequence<EditNode>;
 	readonly type: typeof ChangeType.Build;
 }
 
@@ -225,14 +225,14 @@ export enum ConstraintEffect {
  * @public
  */
 export interface TraitMap<TChild = ChangeNode> {
-	readonly [key: string]: ChangeNodeSequence<TChild>;
+	readonly [key: string]: TreeNodeSequence<TChild>;
 }
 
 /**
  * A sequence of Nodes that make up a trait under a Node
  * @public
  */
-export type ChangeNodeSequence<TChild = ChangeNode> = readonly TChild[];
+export type TreeNodeSequence<TChild = ChangeNode> = readonly TChild[];
 
 /**
  * Valid if (transitively) all DetachedSequenceId are used according to their rules (use here counts as a destination),
@@ -466,7 +466,7 @@ export const StableRange = {
  * @public
  */
 export const Change = {
-	build: (source: ChangeNodeSequence<EditNode>, destination: DetachedSequenceId): Build => ({
+	build: (source: TreeNodeSequence<EditNode>, destination: DetachedSequenceId): Build => ({
 		destination,
 		source,
 		type: ChangeType.Build,
