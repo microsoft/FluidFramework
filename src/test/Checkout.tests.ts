@@ -270,11 +270,10 @@ export function checkoutTests(
 		it('connected state with a remote SharedTree equates correctly during edits', async () => {
 			// Invalid edits are allowed here because this test creates edits concurrently in two trees,
 			// which after syncing, end up with one being invalid.
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, allowInvalid: true });
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions });
 			const { tree: secondTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
 				...secondTreeOptions,
-				allowInvalid: true,
 			});
 
 			containerRuntimeFactory.processAllMessages();
