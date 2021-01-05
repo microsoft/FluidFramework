@@ -146,9 +146,6 @@ describe("Loader.request", () => {
         // this binds newDataStore to dataStore1
         dataStore1._root.set("key", newDataStore.handle);
 
-        // Flush all the ops
-        await opProcessingController.process();
-
         // the dataStore3 shouldn't exist in container2 yet.
         try {
             await requestFluidObject(container2, {

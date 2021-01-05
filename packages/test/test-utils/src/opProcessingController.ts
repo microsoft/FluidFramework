@@ -98,6 +98,7 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
             return false;
         }
 
+        // if this is ourself, return if we having pending work
         if (this === outbound) {
             return this.hasPendingWork();
         }
@@ -108,8 +109,9 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
             return outbound.lastOutbound.clientSequenceNumber > lastInboundForOutbound.clientSequenceNumber;
         }
 
-        // lastly, see outbounds refseq is above our minseq
-        return outbound.latestSequenceNumber > this.deltaManager.lastSequenceNumber;
+        // has pending work will be true for outbound until it receives it's own seq
+        // this check ensures the other client has seen the same ops as the outbound
+        return outbound.latestSequenceNumber > this.latestSequenceNumber;
     }
 
     constructor(deltaManager: DeltaManager) {
