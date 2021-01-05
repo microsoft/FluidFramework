@@ -109,7 +109,7 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
         }
 
         // lastly, see outbounds refseq is above our minseq
-        return outbound.lastOutbound.referenceSequenceNumber > this.deltaManager.minimumSequenceNumber;
+        return outbound.latestSequenceNumber > this.deltaManager.lastSequenceNumber;
     }
 
     constructor(deltaManager: DeltaManager) {
@@ -135,7 +135,6 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
             this.pendingCount = 0;
             this.firstClientSequenceNumber = -1;
             this.lastOutbound = undefined;
-            this.lastInboundPerClient.clear();
         });
         deltaManager.outbound.on("op", this.outbound.bind(this));
         deltaManager.inbound.on("push", this.inbound.bind(this));
