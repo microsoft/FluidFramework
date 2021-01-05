@@ -4,13 +4,17 @@
 
 ```ts
 
+import { BloomFilter } from 'bloomfilter';
+import BTree from 'sorted-btree';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISerializedHandle } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
@@ -158,13 +162,23 @@ export type EditId = UuidString & {
 export class EditLog implements OrderedEditSet {
     // (undocumented)
     [Symbol.iterator](): IterableIterator<Edit>;
-    constructor(sequencedEdits?: readonly Edit[]);
+    constructor(sequencedEdits?: readonly Edit[], idFilter?: BloomFilter);
     addLocalEdit(edit: Edit): void;
     addSequencedEdit(edit: Edit): void;
+    // Warning: (ae-forgotten-export) The symbol "EditHandleState" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    editBlobHandles: BTree<number, EditHandleState>;
+    // (undocumented)
+    get editIdFilter(): BloomFilter;
     // (undocumented)
     equals(other: EditLog): boolean;
     // (undocumented)
     getAtIndex(index: number): Edit;
+    // Warning: (ae-forgotten-export) The symbol "EditHandle" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    getEditHandles(): EditHandle[];
     // (undocumented)
     indexOf(editId: EditId): number;
     // (undocumented)
@@ -260,7 +274,11 @@ export interface OrderedEditSet {
     // (undocumented)
     [Symbol.iterator](): IterableIterator<Edit>;
     // (undocumented)
+    editIdFilter: BloomFilter;
+    // (undocumented)
     getAtIndex(index: number): Edit;
+    // (undocumented)
+    getEditHandles(): EditHandle[];
     // (undocumented)
     indexOf(editId: EditId): number;
     // (undocumented)
@@ -318,13 +336,15 @@ export class SharedTree extends SharedObject {
     createRevert(editId: EditId): Change[];
     // (undocumented)
     get currentView(): Snapshot;
+    // (undocumented)
+    deserializeHandle(serializedHandle: ISerializedHandle): IFluidHandle<ArrayBufferLike>;
     get editor(): SharedTreeEditor;
     // (undocumented)
     get edits(): OrderedEditSet;
     equals(sharedTree: SharedTree): boolean;
     static getFactory(): SharedTreeFactory;
     // (undocumented)
-    protected loadCore(branchId: string, storage: IChannelStorageService): Promise<void>;
+    protected loadCore(storage: IChannelStorageService): Promise<void>;
     // @internal
     loadSummary(summary: SharedTreeSummary): void;
     // @internal
@@ -344,9 +364,11 @@ export class SharedTree extends SharedObject {
     // @internal
     saveSummary(): SharedTreeSummary;
     // (undocumented)
-    snapshot(): ITree;
+    serializeHandleWithEdit(edits: Edit[]): Promise<ISerializedHandle>;
+    // (undocumented)
+    snapshotCore(): ITree;
     summarizer: SharedTreeSummarizer;
-}
+    }
 
 // @public
 export const sharedTreeAssertionErrorType = "SharedTreeAssertion";
@@ -376,22 +398,26 @@ export class SharedTreeFactory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedObject;
     // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, branchId: string): Promise<ISharedObject>;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices): Promise<ISharedObject>;
     // (undocumented)
     static Type: string;
     // (undocumented)
     get type(): string;
 }
 
+// Warning: (ae-forgotten-export) The symbol "SerializedEditHandle" needs to be exported by the entry point index.d.ts
+//
 // @public
-export type SharedTreeSummarizer = (sequencedEdits: OrderedEditSet, currentView: Snapshot) => SharedTreeSummary;
+export type SharedTreeSummarizer = (editBlobs: SerializedEditHandle[], sequencedEdits: OrderedEditSet, currentView: Snapshot) => SharedTreeSummary;
 
 // @public
 export interface SharedTreeSummary {
     // (undocumented)
     readonly currentTree: ChangeNode;
     // (undocumented)
-    readonly sequencedEdits: readonly Edit[];
+    readonly editBlobs: readonly SerializedEditHandle[];
+    readonly editIdFilter?: BloomFilter;
+    readonly sequencedEdits?: readonly Edit[];
     readonly version: string;
 }
 

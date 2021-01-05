@@ -5,7 +5,7 @@
 
 import { assert, expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
-import { assertArrayOfOne } from '../Common';
+import { assertArrayOfOne, assertNotUndefined } from '../Common';
 import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
 import {
 	makeEmptyNode,
@@ -456,12 +456,15 @@ describe('SharedTree', () => {
 				expect(testRoot.traits.right).to.not.be.undefined;
 				expect(testRoot.traits.left.length).to.equal(2);
 
+				expect(parsedTree.sequencedEdits).to.not.be.undefined;
+				const sequencedEdits = assertNotUndefined(parsedTree.sequencedEdits);
+
 				// Expect there to be a change in the edit history in addition to the one from setUpTestSharedTree
-				expect(parsedTree.sequencedEdits.length).to.equal(2);
+				expect(sequencedEdits.length).to.equal(2);
 				// The first operation to be sequenced is the tree init
-				expect(parsedTree.sequencedEdits[1].changes.length).to.equal(2);
-				expect(parsedTree.sequencedEdits[1].changes[0].type).to.equal(ChangeType.Build);
-				expect(parsedTree.sequencedEdits[1].changes[1].type).to.equal(ChangeType.Insert);
+				expect(sequencedEdits[1].changes.length).to.equal(2);
+				expect(sequencedEdits[1].changes[0].type).to.equal(ChangeType.Build);
+				expect(sequencedEdits[1].changes[1].type).to.equal(ChangeType.Insert);
 			});
 		});
 

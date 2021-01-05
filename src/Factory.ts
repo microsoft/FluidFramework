@@ -50,14 +50,9 @@ export class SharedTreeFactory implements IChannelFactory {
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.load}
 	 */
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		branchId: string
-	): Promise<ISharedObject> {
+	public async load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices): Promise<ISharedObject> {
 		const sharedTree = new SharedTree(runtime, id);
-		await sharedTree.load(branchId, services);
+		await sharedTree.load(services);
 		return sharedTree;
 	}
 

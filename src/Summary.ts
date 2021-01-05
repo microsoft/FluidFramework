@@ -10,12 +10,19 @@ import { newEdit, setTrait } from './EditUtilities';
 import { ChangeNode, Edit, Change } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
 import { initialTree } from './InitialTree';
+import { BloomFilter } from 'bloomfilter';
+import { ISerializedHandle } from '@fluidframework/core-interfaces';
 
 /**
  * Format version for summaries which is supported.
  * Currently no effort is made to support older/newer documents, and any mismatch is an error.
  */
 export const formatVersion = '0.0.2';
+
+export interface SerializedEditHandle {
+	readonly highestIndex: number;
+	readonly handle: ISerializedHandle;
+}
 
 /**
  * Handler for summarizing the tree state.
@@ -24,7 +31,11 @@ export const formatVersion = '0.0.2';
  * @returns a summary of the supplied state.
  * @public
  */
-export type SharedTreeSummarizer = (sequencedEdits: OrderedEditSet, currentView: Snapshot) => SharedTreeSummary;
+export type SharedTreeSummarizer = (
+	editBlobs: SerializedEditHandle[],
+	sequencedEdits: OrderedEditSet,
+	currentView: Snapshot
+) => SharedTreeSummary;
 
 /**
  * A developer facing (non-localized) error message.
@@ -39,7 +50,17 @@ export type ErrorString = string;
  */
 export interface SharedTreeSummary {
 	readonly currentTree: ChangeNode;
-	readonly sequencedEdits: readonly Edit[];
+	readonly editBlobs: readonly SerializedEditHandle[];
+
+	/**
+	 * A serialized bloom filter used to check edit ID uniqueness.
+	 */
+	readonly editIdFilter?: BloomFilter;
+
+	/**
+	 * A list of edits that have not been blobbed.
+	 */
+	readonly sequencedEdits?: readonly Edit[];
 
 	/**
 	 * Field on summary under which version is stored.
@@ -70,15 +91,15 @@ export function deserialize(jsonSummary: string): SharedTreeSummary | ErrorStrin
 		return 'Summary is not an object';
 	}
 
-	const { currentTree, sequencedEdits, version } = summary;
+	const { currentTree, editBlobs, editIdFilter, sequencedEdits, version } = summary;
 
 	if (version !== formatVersion) {
 		return 'Summary format version not supported';
 	}
 
-	if (currentTree !== undefined && sequencedEdits !== undefined) {
+	if (currentTree !== undefined && editBlobs !== undefined && editIdFilter !== undefined) {
 		// TODO:#45414: Add more robust validation of the summary's fields. Even if they are present, they may be malformed.
-		return { currentTree, sequencedEdits, version };
+		return { currentTree, editBlobs, editIdFilter, sequencedEdits, version };
 	}
 
 	return 'Missing fields on summary';
@@ -88,10 +109,17 @@ export function deserialize(jsonSummary: string): SharedTreeSummary | ErrorStrin
  * Preserves the full history in the generated summary.
  * @public
  */
-export function fullHistorySummarizer(sequencedEdits: OrderedEditSet, currentView: Snapshot): SharedTreeSummary {
+export function fullHistorySummarizer(
+	editBlobs: SerializedEditHandle[],
+	sequencedEdits: OrderedEditSet,
+	currentView: Snapshot
+): SharedTreeSummary {
 	const edits = Array.from(sequencedEdits);
+	const serializableEditIdFilter = [].slice.call(sequencedEdits.editIdFilter.buckets);
 	return {
 		currentTree: currentView.getChangeNodeTree(),
+		editBlobs,
+		editIdFilter: serializableEditIdFilter,
 		sequencedEdits: edits,
 		version: formatVersion,
 	};
@@ -102,7 +130,11 @@ export function fullHistorySummarizer(sequencedEdits: OrderedEditSet, currentVie
  * Instead, the history returned in the summary will contain a single change that creates a revision identical to the supplied view.
  * @public
  */
-export function noHistorySummarizer(_: OrderedEditSet, currentView: Snapshot): SharedTreeSummary {
+export function noHistorySummarizer(
+	_editBlobs: SerializedEditHandle[],
+	_sequencedEdits: OrderedEditSet,
+	currentView: Snapshot
+): SharedTreeSummary {
 	const currentTree = currentView.getChangeNodeTree();
 	const rootId = currentTree.identifier;
 	const changes: Change[] = [];
@@ -117,6 +149,7 @@ export function noHistorySummarizer(_: OrderedEditSet, currentView: Snapshot): S
 	);
 	return {
 		version: formatVersion,
+		editBlobs: [],
 		sequencedEdits: [newEdit(changes)],
 		currentTree,
 	};

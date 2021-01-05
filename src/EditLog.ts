@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import BTree from 'sorted-btree';
+import { BloomFilter } from 'bloomfilter';
 import { assert, assertArrayOfOne, assertNotUndefined, compareIterables, fail } from './Common';
 import { compareEdits } from './EditUtilities';
 import { Edit } from './PersistedTypes';
 import { EditId } from './Identifiers';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 
 /**
  * An ordered set of Edits associated with a SharedTree.
@@ -35,6 +38,16 @@ export interface OrderedEditSet {
 	 */
 	tryGetEdit(editId: EditId): Edit | undefined;
 
+	/**
+	 * @returns the list of serialized IFluidHandles for blobs generated from edits within the log and their largest associated edit index.
+	 */
+	getEditHandles(): EditHandle[];
+
+	/**
+	 * @returns a bloom filter used to determine if an edit has been used.
+	 */
+	editIdFilter: BloomFilter;
+
 	[Symbol.iterator](): IterableIterator<Edit>;
 }
 
@@ -50,7 +63,21 @@ interface LocalOrderedEdit {
 	readonly localSequence: number;
 }
 
+interface EditHandle {
+	/** The highest index number of all edits included in the associated blob. */
+	readonly highestIndex: number;
+	readonly handle: IFluidHandle<ArrayBufferLike>;
+}
+
+interface EditHandleState {
+	readonly handle: IFluidHandle<ArrayBufferLike>;
+	isLoaded: boolean;
+}
+
 type OrderedEdit = SequencedOrderedEdit | LocalOrderedEdit;
+
+const bloomFilterSize = 1000;
+const bloomFilterHashCount = 5;
 
 /**
  * The edit history log for SharedTree.
@@ -66,13 +93,20 @@ export class EditLog implements OrderedEditSet {
 	private readonly localEdits: Edit[] = [];
 	private readonly allEdits: Map<EditId, OrderedEdit> = new Map();
 
+	public editBlobHandles = new BTree<number, EditHandleState>();
+	private idFilter: BloomFilter;
+
 	/**
 	 * Construct an `EditLog` with the given sequenced `Edits`
 	 */
-	public constructor(sequencedEdits?: readonly Edit[]) {
+	public constructor(sequencedEdits?: readonly Edit[], idFilter?: BloomFilter) {
 		this.sequencedEdits = sequencedEdits === undefined ? [] : sequencedEdits.slice();
+		this.idFilter = idFilter === undefined ? new BloomFilter(bloomFilterSize, bloomFilterHashCount) : idFilter;
+
 		for (const [index, edit] of this.sequencedEdits.entries()) {
-			this.allEdits.set(edit.id, { edit, isLocal: false, index });
+			if (edit !== undefined) {
+				this.allEdits.set(edit.id, { edit, isLocal: false, index });
+			}
 		}
 	}
 
@@ -141,6 +175,16 @@ export class EditLog implements OrderedEditSet {
 	 */
 	public tryGetEdit(editId: EditId): Edit | undefined {
 		return this.allEdits.get(editId)?.edit;
+	}
+
+	public getEditHandles(): EditHandle[] {
+		return this.editBlobHandles.toArray().map(([index, state]) => {
+			return { highestIndex: index, handle: state.handle };
+		});
+	}
+
+	public get editIdFilter(): BloomFilter {
+		return this.idFilter;
 	}
 
 	public *[Symbol.iterator](): IterableIterator<Edit> {

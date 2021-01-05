@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from '@fluidframework/common-utils';
+import { fromBase64ToUtf8, IsoBuffer } from '@fluidframework/common-utils';
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
 import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
@@ -34,10 +34,12 @@ import {
 	serialize,
 	SharedTreeSummary,
 	fullHistorySummarizer,
+	SerializedEditHandle,
 } from './Summary';
 import * as HistoryEditFactory from './HistoryEditFactory';
 import { initialTree } from './InitialTree';
 import { CachingLogViewer, LogViewer } from './LogViewer';
+import { IFluidHandle, ISerializedHandle } from '@fluidframework/core-interfaces';
 
 /**
  * Filename where the snapshot is stored.
@@ -51,7 +53,12 @@ const snapshotFileName = 'header';
 // eslint-disable-next-line import/no-unused-modules
 export type ErrorString = string;
 
-const initialSummary: SharedTreeSummary = { version: formatVersion, currentTree: initialTree, sequencedEdits: [] };
+const initialSummary: SharedTreeSummary = {
+	version: formatVersion,
+	currentTree: initialTree,
+	editBlobs: [],
+	sequencedEdits: [],
+};
 
 /**
  * An event emitted by a `SharedTree` to indicate a state change
@@ -272,10 +279,25 @@ export class SharedTree extends SharedObject {
 		return HistoryEditFactory.revert(edit, revision);
 	}
 
+	public async serializeHandleWithEdit(edits: Edit[]): Promise<ISerializedHandle> {
+		const handle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
+		return this.toSerializable(handle);
+	}
+
+	public deserializeHandle(serializedHandle: ISerializedHandle): IFluidHandle<ArrayBufferLike> {
+		return this.serializer.parse(JSON.stringify(serializedHandle));
+	}
+
+	private toSerializable(value: IFluidHandle<ArrayBufferLike>): ISerializedHandle {
+		// Stringify to convert to the serialized handle values - and then parse
+		const stringified = this.serializer.stringify(value, this.handle);
+		return JSON.parse(stringified);
+	}
+
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
 	 */
-	public snapshot(): ITree {
+	public snapshotCore(): ITree {
 		const tree: ITree = {
 			entries: [
 				{
@@ -319,7 +341,13 @@ export class SharedTree extends SharedObject {
 			}
 		}
 
-		return this.summarizer(this.edits, this.currentView);
+		const serializedEditHandles: SerializedEditHandle[] = this.edits
+			.getEditHandles()
+			.map(({ highestIndex, handle }) => {
+				return { highestIndex, handle: this.toSerializable(handle) };
+			});
+
+		return this.summarizer(serializedEditHandles, this.edits, this.currentView);
 	}
 
 	/**
@@ -355,7 +383,7 @@ export class SharedTree extends SharedObject {
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
-	protected async loadCore(branchId: string, storage: IChannelStorageService): Promise<void> {
+	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const header = await storage.read(snapshotFileName);
 		const summary = deserialize(fromBase64ToUtf8(header));
 		if (typeof summary === 'string') {
