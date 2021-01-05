@@ -3,12 +3,29 @@
  * Licensed under the MIT License.
  */
 
+import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 
 import { DiceRollerController } from "./controller";
-import { IKeyValueDataObject, KeyValueContainerRuntimeFactory } from "./kvpair-dataobject";
+import {
+    DropletContainerRuntimeFactory,
+    IKeyValueDataObject,
+    KeyValueDataObject,
+    KeyValueInstantiationFactory,
+} from "./kvpair-dataobject";
 import { renderDiceRoller } from "./view";
 // import { renderDiceRoller } from "./reactView";
+
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+class Fluid {
+    public static async createContainer(docId) {
+        return getTinyliciousContainer(docId, DropletContainerRuntimeFactory, true /* createNew */);
+    }
+
+    public static async getContainer(docId) {
+        return getTinyliciousContainer(docId, DropletContainerRuntimeFactory, false /* createNew */);
+    }
+}
 
 let createNew = false;
 if (location.hash.length === 0) {
@@ -20,21 +37,18 @@ document.title = documentId;
 
 async function start(): Promise<void> {
     // Get Fluid Container (creates if new url)
-    const container = await getTinyliciousContainer(documentId, KeyValueContainerRuntimeFactory, createNew);
+    const container = createNew
+        ? await Fluid.createContainer(documentId)
+        : await Fluid.getContainer(documentId);
 
-    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our dice roller is available at the URL "/".
-    const url = "/";
-    const response = await container.request({ url });
-
-    // Verify the response to make sure we got what we expected.
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Unable to retrieve data object at URL: "${url}"`);
-    } else if (response.value === undefined) {
-        throw new Error(`Empty response from URL: "${url}"`);
+    // Using the create handler, we can create our data object using a specific request shape.
+    const dataObjectId = "dice";
+    if (createNew) {
+        await container.request({ url: `/create/${KeyValueInstantiationFactory.type}/${dataObjectId}` });
     }
 
-    // In this app, we know our container code provides a default data object that is an IDiceRoller.
-    const keyValueDataObject: IKeyValueDataObject = response.value;
+    const keyValueDataObject: IKeyValueDataObject =
+        await getObjectWithIdFromContainer<KeyValueDataObject>(dataObjectId, container);
     const diceRollerController = new DiceRollerController(keyValueDataObject);
     await diceRollerController.initialize(createNew);
 
