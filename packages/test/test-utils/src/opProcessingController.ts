@@ -8,6 +8,7 @@ import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISequencedDocumentSystemMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
@@ -98,7 +99,7 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
             return false;
         }
 
-        // if this is ourself, return if we having pending work
+        // if outbound is ourself, return if we having pending work
         if (this === outbound) {
             return this.hasPendingWork();
         }
@@ -147,7 +148,8 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
     }
 
     public hasPendingWork() {
-        return this.pendingWriteConnection || this.pendingCount !== 0;
+        return !this.deltaManager.disposed
+            && (this.pendingWriteConnection || this.pendingCount !== 0);
     }
 
     private connect(clientId: string) {
@@ -158,11 +160,11 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
         if (message.clientId) {
             this.lastInboundPerClient.set(message.clientId, message);
         }
-        /* if (message.type === MessageType.ClientLeave) {
+        if (message.type === MessageType.ClientLeave) {
             const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
             const clientId = JSON.parse(systemLeaveMessage.data) as string;
             this.lastInboundPerClient.delete(clientId);
-        } */
+        }
 
         if (this.clientId === undefined) {
             // Ignore message when we are not connected.
@@ -205,6 +207,9 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
             // to exclude any message that was sent before we start monitoring the delta manager
             this.firstClientSequenceNumber = messages[0].clientSequenceNumber;
         }
+        // if we are not active, the outbound with nack, and we will reconnect write
+        // this flag tracks the process. after reconnection, the op will be resubmitted
+        // on the write connection and reset this flag
         this.pendingWriteConnection = !this.deltaManager.active;
         for (const message of messages) {
             // TODO: server have some heuristic to delay or coalesce no-ops
@@ -229,7 +234,10 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
             + `pending:${this.pendingCount} seq:${this.latestSequenceNumber} ${op ?? ""}`);
     }
 }
-
+/**
+ * @deprecated OpProcessingController has been improved to not need server information and work against other servers.
+ *      So this is no longer necessary, and allows this and test to be run against different endpoints.
+ */
 export interface IDeltaConnectionServerMonitor {
     hasPendingWork(): Promise<boolean>;
 }
@@ -259,7 +267,8 @@ export class OpProcessingController {
     }
 
     /**
-     * @param deltaConnectionServerMonitor - delta connection server monitor to tell whether we have pending work
+     * @param deltaConnectionServerMonitor - delta connection server monitor to tell whether we have
+     *  pending work
      */
     public constructor(private readonly deltaConnectionServerMonitor?: IDeltaConnectionServerMonitor) { }
 
