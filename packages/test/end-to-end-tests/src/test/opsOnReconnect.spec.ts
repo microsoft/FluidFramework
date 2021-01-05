@@ -150,7 +150,7 @@ describe("Ops on Reconnect", () => {
         container1Object1Directory = await container1Object1.getSharedObject<SharedDirectory>(directoryId);
         container1Object1String = await container1Object1.getSharedObject<SharedString>(stringId);
 
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController();
         opProcessingController.addDeltaManagers(container1.deltaManager);
 
         // Wait for the attach ops to get processed.

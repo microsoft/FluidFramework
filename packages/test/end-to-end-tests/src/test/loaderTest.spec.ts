@@ -102,7 +102,7 @@ describe("Loader.request", () => {
         // this binds dataStore2 to dataStore1
         dataStore1._root.set("key", dataStore2.handle);
 
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController();
         opProcessingController.addDeltaManagers(container.deltaManager);
     });
 
