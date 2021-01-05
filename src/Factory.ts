@@ -10,7 +10,6 @@ import {
 	IChannelFactory,
 } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-// eslint-disable-next-line import/no-cycle
 import { SharedTree } from './SharedTree';
 
 /**

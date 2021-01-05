@@ -4,6 +4,11 @@
  */
 
 import { expect } from 'chai';
+import { SharedTree, SharedTreeEvent } from '../SharedTree';
+import { Delete, EditResult, Insert, Move, StableRange, StablePlace, Side } from '../PersistedTypes';
+import { Checkout, CheckoutEvent } from '../Checkout';
+import { setTrait } from '../EditUtilities';
+import { EditValidationResult } from '../Snapshot';
 import {
 	left,
 	leftTraitLocation,
@@ -14,11 +19,6 @@ import {
 	SharedTreeTestingOptions,
 	simpleTestTree,
 } from './utilities/TestUtilities';
-import { SharedTree, SharedTreeEvent } from '../SharedTree';
-import { Delete, EditResult, Insert, Move, StableRange, StablePlace, Side } from '../PersistedTypes';
-import { Checkout, CheckoutEvent } from '../Checkout';
-import { setTrait } from '../EditUtilities';
-import { EditValidationResult } from '../Snapshot';
 
 /**
  * Checkout test suite

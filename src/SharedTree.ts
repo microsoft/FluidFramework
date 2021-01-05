@@ -25,7 +25,6 @@ import {
 } from './PersistedTypes';
 import { newEdit } from './EditUtilities';
 import { EditId } from './Identifiers';
-// eslint-disable-next-line import/no-cycle
 import { SharedTreeFactory } from './Factory';
 import { Snapshot } from './Snapshot';
 import {
@@ -49,7 +48,6 @@ const snapshotFileName = 'header';
  * A developer facing (non-localized) error message.
  * TODO: better error system.
  */
-// eslint-disable-next-line import/no-unused-modules
 export type ErrorString = string;
 
 const initialSummary: SharedTreeSummary = { version: formatVersion, currentTree: initialTree, sequencedEdits: [] };
