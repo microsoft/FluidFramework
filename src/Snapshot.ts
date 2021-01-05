@@ -4,8 +4,8 @@
  */
 
 import { assert, assertNotUndefined, compareIterables, fail } from './Common';
-import { NodeId, Definition, TraitLabel } from './Identifiers';
-import { ChangeNode, TraitMap, Payload, TraitLocation, StableRange, Side, StablePlace } from './PersistedTypes';
+import { NodeId, TraitLabel } from './Identifiers';
+import { ChangeNode, TraitMap, TraitLocation, StableRange, Side, StablePlace, NodeData } from './PersistedTypes';
 import { compareTraits } from './EditUtilities';
 import { createForest, Forest as GenericForest } from './Forest';
 
@@ -13,11 +13,8 @@ import { createForest, Forest as GenericForest } from './Forest';
  * An immutable view of a distributed tree node.
  * @public
  */
-export interface SnapshotNode {
-	readonly identifier: NodeId;
+export interface SnapshotNode extends NodeData {
 	readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
-	readonly payload?: Payload;
-	readonly definition: Definition;
 }
 
 /**

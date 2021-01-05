@@ -33,7 +33,7 @@ export interface Build {
     // (undocumented)
     readonly destination: DetachedSequenceId;
     // (undocumented)
-    readonly source: ChangeNodeSequence<EditNode>;
+    readonly source: TreeNodeSequence<EditNode>;
     // (undocumented)
     readonly type: typeof ChangeType.Build;
 }
@@ -43,7 +43,7 @@ export type Change = Insert | Detach | Build | SetValue | Constraint;
 
 // @public (undocumented)
 export const Change: {
-    build: (source: ChangeNodeSequence<EditNode>, destination: DetachedSequenceId) => Build;
+    build: (source: TreeNodeSequence<EditNode>, destination: DetachedSequenceId) => Build;
     insert: (source: DetachedSequenceId, destination: StablePlace) => Insert;
     detach: (source: StableRange, destination?: DetachedSequenceId | undefined) => Detach;
     setPayload: (nodeToModify: NodeId, payload: Payload) => SetValue;
@@ -52,10 +52,7 @@ export const Change: {
 };
 
 // @public
-export type ChangeNode = NodeData<ChangeNode>;
-
-// @public
-export type ChangeNodeSequence<TChild = ChangeNode> = readonly TChild[];
+export type ChangeNode = TreeNode<ChangeNode>;
 
 // @public
 export enum ChangeType {
@@ -180,7 +177,7 @@ export class EditLog implements OrderedEditSet {
 }
 
 // @public
-export type EditNode = NodeData<EditNode> | DetachedSequenceId;
+export type EditNode = TreeNode<EditNode> | DetachedSequenceId;
 
 // @public
 export enum EditResult {
@@ -234,13 +231,11 @@ export const Move: {
 };
 
 // @public
-export interface NodeData<TChild> {
+export interface NodeData {
     readonly definition: Definition;
     readonly identifier: NodeId;
     // (undocumented)
     readonly payload?: Payload;
-    // (undocumented)
-    readonly traits: TraitMap<TChild>;
 }
 
 // @public
@@ -298,7 +293,7 @@ export class PrefetchingCheckout extends Checkout {
 export function revert(edit: Edit, view: Snapshot): Change[];
 
 // @public
-export function setTrait(trait: TraitLocation, nodes: ChangeNodeSequence<EditNode>): readonly Change[];
+export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[];
 
 // @public
 export interface SetValue {
@@ -442,13 +437,7 @@ export class Snapshot {
 }
 
 // @public
-export interface SnapshotNode {
-    // (undocumented)
-    readonly definition: Definition;
-    // (undocumented)
-    readonly identifier: NodeId;
-    // (undocumented)
-    readonly payload?: Payload;
+export interface SnapshotNode extends NodeData {
     // (undocumented)
     readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
 }
@@ -519,13 +508,22 @@ export interface TraitLocation {
 // @public
 export interface TraitMap<TChild = ChangeNode> {
     // (undocumented)
-    readonly [key: string]: ChangeNodeSequence<TChild>;
+    readonly [key: string]: TreeNodeSequence<TChild>;
 }
 
 // @public
 export type TraitNodeIndex = number & {
     readonly TraitNodeIndex: unique symbol;
 };
+
+// @public
+export interface TreeNode<TChild> extends NodeData {
+    // (undocumented)
+    readonly traits: TraitMap<TChild>;
+}
+
+// @public
+export type TreeNodeSequence<TChild = ChangeNode> = readonly TChild[];
 
 // @public
 export type UuidString = string & {

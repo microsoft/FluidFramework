@@ -13,7 +13,7 @@ import {
 	Detach,
 	EditNode,
 	Insert,
-	NodeData,
+	TreeNode,
 	Constraint,
 	ConstraintEffect,
 	SetValue,
@@ -269,7 +269,7 @@ export class Transaction {
 	}
 
 	private createSnapshotNodeForTree(
-		node: NodeData<EditNode>,
+		node: TreeNode<EditNode>,
 		map: Map<NodeId, SnapshotNode>,
 		onInvalidDetachedId: () => void
 	): NodeId {
