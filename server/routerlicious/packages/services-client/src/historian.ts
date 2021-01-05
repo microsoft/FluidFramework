@@ -55,6 +55,8 @@ export class Historian implements IHistorian {
             {};
         if (getCorrelationId) {
             headers["x-correlation-id"] = getCorrelationId() || uuid.v4();
+        } else {
+            headers["x-correlation-id"] = uuid.v4();
         }
 
         this.restWrapper = new RestWrapper(endpoint, headers, queryString, cacheBust);
