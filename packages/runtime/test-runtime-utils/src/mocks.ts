@@ -20,6 +20,7 @@ import {
     ContainerWarning,
     ILoader,
     AttachState,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 
 import { DebugLogger } from "@fluidframework/telemetry-utils";
@@ -377,7 +378,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly documentId: string;
     public readonly id: string = uuid();
     public readonly existing: boolean;
-    public options: any = {};
+    public options: ILoaderOptions = {};
     public clientId: string | undefined = uuid();
     public readonly path = "";
     public readonly connected = true;

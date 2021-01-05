@@ -17,6 +17,7 @@ import {
     ILoader,
     BindState,
     AttachState,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
     assert,
@@ -125,8 +126,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.pkg;
     }
 
-    public get options(): any {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    public get options(): ILoaderOptions {
         return this._containerRuntime.options;
     }
 

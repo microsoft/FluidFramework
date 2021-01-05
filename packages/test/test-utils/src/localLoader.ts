@@ -7,6 +7,7 @@ import {
     ICodeLoader,
     IContainer,
     ILoader,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
@@ -24,7 +25,7 @@ export function createLocalLoader(
     packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
     deltaConnectionServer: ILocalDeltaConnectionServer,
     urlResolver: IUrlResolver,
-    options?: any,
+    options?: ILoaderOptions,
 ): ILoader {
     const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
     const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
