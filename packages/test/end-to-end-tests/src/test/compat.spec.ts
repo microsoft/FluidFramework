@@ -154,6 +154,7 @@ describe("loader/runtime compatibility", () => {
     };
 
     generateLocalCompatTest(tests, {
+        // remove after the old version supports summaryConfigOverrides (>0.32.0)
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         serviceConfiguration: { summary: { maxOps: 1 } as ISummaryConfiguration },
     });
