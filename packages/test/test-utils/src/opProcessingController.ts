@@ -84,6 +84,10 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
     private readonly lastInboundPerClient = new Map<string, ISequencedDocumentMessage>();
     private pendingWriteConnection = false;
 
+    /**
+     * Determines if this monitor should expect work/ops from the outbound monitor.
+     * @param outbound - the monitor who's outbound to consider
+     */
     public expectingInboundFrom(outbound: DeltaManagerMonitor): boolean {
         // there should be no outstanding work for disposed delta managers
         if (this.deltaManager.disposed || outbound.deltaManager.disposed) {
@@ -212,17 +216,12 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
         // on the write connection and reset this flag
         this.pendingWriteConnection = !this.deltaManager.active;
         for (const message of messages) {
-            // TODO: server have some heuristic to delay or coalesce no-ops
-            // Can't really track it for now
+            // No-op's are not directly broadcast
+            // the server coaleses and send it's own
+            // no-op if no user messages arrive
+            // to bump min seq
             if (message.type !== MessageType.NoOp) {
-                switch (message.type) {
-                    case MessageType.Summarize:
-                        this.pendingCount += 2; // expect SummaryAck too.
-                        break;
-                    default:
-                        this.pendingCount++;
-                        break;
-                }
+                this.pendingCount++;
                 this.lastOutbound =  message;
             }
             this.trace("OUT", message.type);
