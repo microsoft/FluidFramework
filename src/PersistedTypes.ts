@@ -274,18 +274,18 @@ export interface NodeData {
 }
 
 /**
- * Satisfies `NodeData` and may contain children under traits (which may or may not be `Node`s)
+ * Satisfies `NodeData` and may contain children under traits (which may or may not be `TreeNodes`)
  * @public
  */
-export interface Node<TChild> extends NodeData {
+export interface TreeNode<TChild> extends NodeData {
 	readonly traits: TraitMap<TChild>;
 }
 
 /**
- * JSON-compatible Node type. Objects of type `ChangeNode` will be persisted in `Change`s (under Edits) in the SharedTree history.
+ * JSON-compatible Node type. Objects of type `ChangeNode` will be persisted in `Changes` (under Edits) in the SharedTree history.
  * @public
  */
-export type ChangeNode = Node<ChangeNode>;
+export type ChangeNode = TreeNode<ChangeNode>;
 
 /**
  * Node or sequence of Nodes for use in a Build change.
@@ -296,7 +296,7 @@ export type ChangeNode = Node<ChangeNode>;
  * These optimized formats should also be used within snapshots.
  * @public
  */
-export type EditNode = Node<EditNode> | DetachedSequenceId;
+export type EditNode = TreeNode<EditNode> | DetachedSequenceId;
 
 /**
  * The result of an attempt to apply the changes in an Edit.
