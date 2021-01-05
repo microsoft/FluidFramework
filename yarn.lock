@@ -4918,6 +4918,7 @@ __metadata:
     "@microsoft/api-extractor": ^7.7.2
     "@types/assert": ^1.5.1
     "@types/mocha": ^5.2.5
+    "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     assert: ^2.0.0
@@ -5346,6 +5347,7 @@ __metadata:
     "@types/debug": ^4.1.5
     "@types/mocha": ^5.2.5
     "@types/nock": ^9.3.0
+    "@types/node": ^10.17.24
     "@types/socket.io-client": ^1.4.32
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
@@ -7014,13 +7016,15 @@ __metadata:
     "@fluidframework/gitresources": ^0.1017.0
     "@fluidframework/protocol-base": ^0.1017.0
     "@fluidframework/protocol-definitions": ^0.1017.0
+    "@types/assert": ^1.5.1
     "@types/debug": ^4.1.5
     "@types/jsrsasign": ^8.0.8
     "@types/jwt-decode": ^2.2.1
     "@types/mocha": ^5.2.5
-    "@types/node": ^12.19.0
+    "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
+    assert: ^2.0.0
     axios: ^0.21.1
     concurrently: ^5.2.0
     debug: ^4.1.1
