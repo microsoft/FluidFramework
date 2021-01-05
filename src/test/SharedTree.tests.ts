@@ -7,6 +7,12 @@ import { assert, expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { assertArrayOfOne } from '../Common';
 import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
+import { SharedTreeEvent } from '../SharedTree';
+import { Change, ChangeType, EditNode, Delete, Insert, ChangeNode, StablePlace, StableRange } from '../PersistedTypes';
+import { deepCompareNodes, newEdit } from '../EditUtilities';
+import { deserialize, noHistorySummarizer, serialize, SharedTreeSummary } from '../Summary';
+import { Snapshot } from '../Snapshot';
+import { initialTree } from '../InitialTree';
 import {
 	makeEmptyNode,
 	setUpTestSharedTree,
@@ -19,13 +25,7 @@ import {
 	simpleTestTree,
 	assertNoDelta,
 } from './utilities/TestUtilities';
-import { SharedTreeEvent } from '../SharedTree';
-import { Change, ChangeType, EditNode, Delete, Insert, ChangeNode, StablePlace, StableRange } from '../PersistedTypes';
-import { deepCompareNodes, newEdit } from '../EditUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
-import { deserialize, noHistorySummarizer, serialize, SharedTreeSummary } from '../Summary';
-import { Snapshot } from '../Snapshot';
-import { initialTree } from '../InitialTree';
 
 describe('SharedTree', () => {
 	describe('SharedTree before initialization', () => {
