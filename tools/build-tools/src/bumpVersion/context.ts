@@ -115,7 +115,7 @@ export class Context {
             for (const { name: dep, version, dev } of pkg.combinedDependencies) {
                 // Find the package in the repo
                 const depBuildPackage = this.fullPackageMap.get(dep);
-                // TODO: special casing tool to not be considered for release
+                // TODO: special casing tools to not be considered for release
                 if (depBuildPackage && depBuildPackage.group !== "tools") {
                     if (ReferenceVersionBag.checkPrivate(pkg, depBuildPackage, dev)) {
                         continue;
