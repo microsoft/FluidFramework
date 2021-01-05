@@ -111,7 +111,7 @@ export class DeltaManager
     IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
     IEventProvider<IDeltaManagerInternalEvents>
 {
-    public get disposed() { return this.isDisposed; }
+    public get disposed() { return this.closed; }
 
     public readonly clientDetails: IClientDetails;
     public get IDeltaSender() { return this; }
@@ -130,7 +130,6 @@ export class DeltaManager
     // Connection mode used when reconnecting on error or disconnect.
     private readonly defaultReconnectionMode: ConnectionMode;
 
-    private isDisposed: boolean = false;
     private pending: ISequencedDocumentMessage[] = [];
     private fetching = false;
 
@@ -439,10 +438,8 @@ export class DeltaManager
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._inboundSignal.pause();
     }
-
-    public dispose() {
-        throw new Error("Not implemented.");
-        this.isDisposed = true;
+    public dispose(error?: ICriticalContainerError | Error): void {
+        this.close(CreateContainerError(error));
     }
 
     /**

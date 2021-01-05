@@ -81,6 +81,7 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
     private firstClientSequenceNumber: number = -1;
     private lastOutbound: IDocumentMessage | undefined;
     private readonly lastInboundPerClient = new Map<string, ISequencedDocumentMessage>();
+    private pendingWriteConnection = false;
 
     public expectingInboundFrom(outbound: DeltaManagerMonitor): boolean {
         // there should be no outstanding work for disposed delta managers
@@ -145,8 +146,7 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
     }
 
     public hasPendingWork() {
-        // If we are not connected, we assume that we are trying to, and classify as pending work
-        return this.clientId === undefined || this.pendingCount !== 0;
+        return this.pendingWriteConnection || this.pendingCount !== 0;
     }
 
     private connect(clientId: string) {
@@ -204,6 +204,7 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
             // to exclude any message that was sent before we start monitoring the delta manager
             this.firstClientSequenceNumber = messages[0].clientSequenceNumber;
         }
+        this.pendingWriteConnection = !this.deltaManager.active;
         for (const message of messages) {
             // TODO: server have some heuristic to delay or coalesce no-ops
             // Can't really track it for now
@@ -413,40 +414,23 @@ export class OpProcessingController {
             if (await this.deltaConnectionServerMonitor?.hasPendingWork() === true) {
                 working = true;
             } else {
-                let latestSequenceNumber = -1;
                 for (const monitor of monitors) {
-                    if (monitor.hasPendingWork() || hasWork(monitor.deltaManager)) {
-                        working = true;
-                        break;
-                    }
-
-                    if (!monitor.inboundPaused) {
-                        if (latestSequenceNumber === -1) {
-                            latestSequenceNumber = monitor.latestSequenceNumber;
-                        } else if (latestSequenceNumber !== monitor.latestSequenceNumber) {
+                    if (!monitor.deltaManager.disposed) {
+                        if (monitor.hasPendingWork() || hasWork(monitor.deltaManager)) {
                             working = true;
                             break;
                         }
 
-                        if (!monitor.inboundPaused) {
-                            if (latestSequenceNumber === -1) {
-                                latestSequenceNumber = monitor.latestSequenceNumber;
-                            } else if (latestSequenceNumber !== monitor.latestSequenceNumber) {
-                                working = true;
-                                break;
-                            }
-
-                            for (const outBoundMonitor of monitors) {
-                                if (monitor !== outBoundMonitor) {
-                                    if (monitor.expectingInboundFrom(outBoundMonitor)) {
-                                        working = true;
-                                        break;
-                                    }
+                        for (const outBoundMonitor of monitors) {
+                            if (monitor !== outBoundMonitor) {
+                                if (monitor.expectingInboundFrom(outBoundMonitor)) {
+                                    working = true;
+                                    break;
                                 }
                             }
-                            if (working === true) {
-                                break;
-                            }
+                        }
+                        if (working === true) {
+                            break;
                         }
                     }
                 }
