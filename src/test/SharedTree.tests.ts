@@ -120,12 +120,10 @@ describe('SharedTree', () => {
 			const buildParent = Change.build([parentNode], parentId);
 			const buildParent2 = Change.build([parentNode2], parentId2);
 
-			const snapshotBefore = tree.currentView;
-			// we don't expect this edit application to change anything
-			tree.applyEdit(buildChild, buildParent, buildParent2);
-			const snapshotAfter = tree.currentView;
-			const delta = snapshotBefore.delta(snapshotAfter);
-			expect(delta).deep.equals([]);
+			assertNoDelta(tree, () => {
+				// we don't expect this edit application to change anything
+				tree.applyEdit(buildChild, buildParent, buildParent2);
+			});
 		});
 
 		it('can apply multiple local edits without ack from server', () => {
