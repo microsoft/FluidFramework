@@ -1,3 +1,9 @@
+## 0.31 Breaking changes
+- [getAttachSnapshot removed IFluidDataStoreChannel](#getAttachSnapshot-removed-from-IFluidDataStoreChannel)
+
+### getAttachSnapshot removed from IFluidDataStoreChannel
+`getAttachSnapshot()` has been removed from `IFluidDataStoreChannel`. It is replaced by `getAttachSummary()`.
+
 ## 0.30 Breaking Changes
 
 - [Branching removed](#Branching-removed)

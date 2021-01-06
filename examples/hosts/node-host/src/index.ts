@@ -88,7 +88,7 @@ export async function start(): Promise<void> {
     // Once installed, the loader returns an entry point to Fluid Container to invoke the code.
     const codeLoader = new NodeCodeLoader(installPath, timeoutMS);
 
-    const tokenProvider = new InsecureTokenProvider(tenantId, documentId, tenantKey, user);
+    const tokenProvider = new InsecureTokenProvider(tenantKey, user);
 
     // Construct the loader
     const loader = new Loader({

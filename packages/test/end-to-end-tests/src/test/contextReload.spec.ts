@@ -216,7 +216,7 @@ describe("context reload", function() {
             this.dataStoreV1 = await requestFluidObject<TestDataStore>(this.container, "default");
             assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 
-            this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
+            this.opProcessingController = new OpProcessingController();
             this.opProcessingController.addDeltaManagers(this.container.deltaManager);
         });
 
@@ -231,7 +231,7 @@ describe("context reload", function() {
         it("loads version 2", async () => {
             const deltaConnectionServer = LocalDeltaConnectionServer.create();
             const urlResolver = new LocalResolver();
-            const opProcessingController = new OpProcessingController(deltaConnectionServer);
+            const opProcessingController = new OpProcessingController();
 
             const packageEntries = [
                 [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
@@ -314,7 +314,7 @@ describe("context reload", function() {
                 this.dataStoreV1 = await requestFluidObject<TestDataStore>(this.container, "default");
                 assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 
-                this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
+                this.opProcessingController = new OpProcessingController();
                 this.opProcessingController.addDeltaManagers(this.container.deltaManager);
             });
 

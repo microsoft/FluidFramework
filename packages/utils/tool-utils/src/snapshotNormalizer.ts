@@ -12,8 +12,9 @@ import {
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 
+export const gcBlobKey = "gc";
 // A list of runtime blob paths whose contents should be normalized.
-const runtimeBlobsToNormalize = [ ".gc" ];
+const runtimeBlobsToNormalize = [ gcBlobKey ];
 
 export interface ISnapshotNormalizerConfig {
     // The paths of blobs whose contents should be normalized.

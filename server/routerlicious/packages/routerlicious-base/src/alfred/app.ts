@@ -9,6 +9,7 @@ import {
     IProducer,
     ITenantManager,
     MongoManager,
+    IThrottler,
 } from "@fluidframework/server-services-core";
 import * as bodyParser from "body-parser";
 import compression from "compression";
@@ -20,6 +21,7 @@ import morgan from "morgan";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import { getTenantIdFromRequest } from "../utils";
 import * as alfredRoutes from "./routes";
 
@@ -38,6 +40,7 @@ const stream = split().on("data", (message) => {
 export function create(
     config: Provider,
     tenantManager: ITenantManager,
+    throttler: IThrottler,
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
     mongoManager: MongoManager,
@@ -76,10 +79,13 @@ export function create(
     app.use(bodyParser.json({ limit: requestSize }));
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
 
+    app.use(bindCorrelationId());
+
     // Bind routes
     const routes = alfredRoutes.create(
         config,
         tenantManager,
+        throttler,
         mongoManager,
         storage,
         producer,

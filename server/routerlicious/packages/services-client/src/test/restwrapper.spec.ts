@@ -10,6 +10,8 @@ import { RestWrapper } from "../restWrapper";
 describe("RestWrapper", () => {
     const baseurl = "https://fake.microsoft.com";
     const requestUrl = "/fakerequesturl/";
+    const correlationIdHeader = "x-correlation-id";
+    const headerCount = 1;
     const maxContentLength = 1000 * 1024 * 1024;
     let axiosMock: Partial<AxiosInstance>;
     let axiosErrorMock: Partial<AxiosInstance>;
@@ -17,25 +19,25 @@ describe("RestWrapper", () => {
 
     before(() => {
         axiosMock = {
-            request: async (options?) => new Promise<AxiosResponse>(
+            request: async <T = any, R = AxiosResponse<T>>(options?) => new Promise<R>(
                 (resolve, reject) => {
                     requestOptions = options;
-                    const response: AxiosResponse = {
+                    const response: AxiosResponse<T> = {
                         config: {},
-                        data: {},
+                        data: {} as T,
                         headers: {},
                         request: options.responseType,
                         status: 200,
                         statusText: "OK",
                     };
 
-                    resolve(response);
+                    resolve(response as any);
                 },
             ),
         };
 
         axiosErrorMock = {
-            request: async (options?) => new Promise<AxiosResponse>(
+            request: async <T = any, R = AxiosResponse<T>>(options?) => new Promise<R>(
                 (resolve, reject) => {
                     requestOptions = options;
 
@@ -55,6 +57,8 @@ describe("RestWrapper", () => {
                         name: "ServerError",
                         request: {},
                         response,
+                        isAxiosError: true,
+                        toJSON: () => ({}),
                     };
 
                     throw err;
@@ -88,7 +92,8 @@ describe("RestWrapper", () => {
             // assert
             assert.equal(baseurl, requestOptions.baseURL, "baseURL should be the same");
             assert.equal(requestUrl, requestOptions.url, "requestUrl should be the same");
-            assert.equal(undefined, requestOptions.headers as {}, "Headers should be empty");
+            assert.equal(headerCount, Object.keys(requestOptions.headers).length, "Headers should only have 1 header");
+            assert.equal(correlationIdHeader, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
         });
 
         it("Default QueryString and Default Headers", async () => {
@@ -167,7 +172,8 @@ describe("RestWrapper", () => {
             // assert
             assert.equal(baseurl, requestOptions.baseURL, "baseURL should be the same");
             assert.equal(requestUrl, requestOptions.url, "requestUrl should be the same");
-            assert.equal(undefined, requestOptions.headers as {}, "Headers should be empty");
+            assert.equal(headerCount, Object.keys(requestOptions.headers).length, "Headers should only have 1 header");
+            assert.equal(correlationIdHeader, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
         });
 
         it("Default QueryString and Default Headers", async () => {
@@ -247,7 +253,8 @@ describe("RestWrapper", () => {
             // assert
             assert.equal(baseurl, requestOptions.baseURL, "baseURL should be the same");
             assert.equal(requestUrl, requestOptions.url, "requestUrl should be the same");
-            assert.equal(undefined, requestOptions.headers as {}, "Headers should be empty");
+            assert.equal(headerCount, Object.keys(requestOptions.headers).length, "Headers should only have 1 header");
+            assert.equal(correlationIdHeader, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
         });
 
         it("Default QueryString and Default Headers", async () => {
@@ -327,7 +334,8 @@ describe("RestWrapper", () => {
             // assert
             assert.equal(baseurl, requestOptions.baseURL, "baseURL should be the same");
             assert.equal(requestUrl, requestOptions.url, "requestUrl should be the same");
-            assert.equal(undefined, requestOptions.headers as {}, "Headers should be empty");
+            assert.equal(headerCount, Object.keys(requestOptions.headers).length, "Headers should only have 1 header");
+            assert.equal(correlationIdHeader, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
         });
 
         it("Default QueryString and Default Headers", async () => {
