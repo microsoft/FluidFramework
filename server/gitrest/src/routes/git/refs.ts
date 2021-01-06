@@ -40,7 +40,7 @@ async function getRef(
     owner: string,
     repo: string,
     refId: string,
-    getRefParams: IGetRefParamsExternal,
+    getRefParams: IGetRefParamsExternal | undefined,
     externalStorageManager: IExternalStorageManager): Promise<IRef> {
     const repository = await repoManager.open(owner, repo);
     try {
@@ -148,7 +148,7 @@ function getRefId(id): string {
     return `refs/heads/${id}`;
 }
 
-function getReadParams(params): IGetRefParamsExternal {
+function getReadParams(params): IGetRefParamsExternal | undefined {
     if (params)
     {
         const getRefParams: IGetRefParamsExternal = JSON.parse(decodeURIComponent(params));
