@@ -474,7 +474,7 @@ export class DeltaManager
         // If so, it's time to process any accumulated ops
         // Or request OPs from snapshot / or point zero (if we have no ops at all)
         if (this.pending.length > 0) {
-            this.catchUp([], "DocumentOpen");
+            this.processPendingOps("DocumentOpen");
         } else if (this.connection !== undefined || this.connectionP !== undefined) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.fetchMissingDeltas("DocumentOpen", this.lastQueuedSequenceNumber);
@@ -833,6 +833,14 @@ export class DeltaManager
                 if (retryAfter !== undefined && retryAfter >= 0) {
                     this.emitDelayInfo(this.deltaStorageDelayId, retryAfter, error);
                 }
+            }
+
+            if (to !== undefined && this.lastQueuedSequenceNumber >= to) {
+                // the client caught up while we were trying to fetch ops from storage
+                // bail out since we no longer need to request these ops
+                callback([]);
+                telemetryEvent.end({ deltasRetrievedTotal, requests });
+                return;
             }
 
             let delay: number;
@@ -1283,6 +1291,12 @@ export class DeltaManager
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
                 this.previouslyProcessedMessage = message;
                 this._inbound.push(message);
+
+                if (this.pending.length > 0) {
+                    // we processed a correctly sequenced inbound op while some are pending
+                    // pending might include ops after the current sequence number, so process them now
+                    this.processPendingOps(`EnqueueMessages_${telemetryEventSuffix}`);
+                }
             }
         }
 
@@ -1391,7 +1405,7 @@ export class DeltaManager
 
         await this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
             this.refreshDelayInfo(this.deltaStorageDelayId);
-            this.catchUpCore(messages, telemetryEventSuffix);
+            this.enqueueMessages(messages, telemetryEventSuffix);
         });
 
         this.fetching = false;
@@ -1417,17 +1431,13 @@ export class DeltaManager
         }
         this.logger.sendPerformanceEvent(props);
 
-        this.catchUpCore(messages, telemetryEventSuffix);
+        this.enqueueMessages(messages, telemetryEventSuffix);
     }
 
-    private catchUpCore(messages: ISequencedDocumentMessage[], telemetryEventSuffix?: string): void {
-        // Apply current operations
-        this.enqueueMessages(messages, telemetryEventSuffix);
-
-        // Then sort pending operations and attempt to apply them again.
-        // This could be optimized to stop handling messages once we realize we need to fetch missing values.
-        // But for simplicity, and because catching up should be rare, we just process all of them.
-        // Optimize for case of no handler - we put ops back into this.pending in such case
+    /**
+     * Sorts pending ops and attempts to apply them
+     */
+    private processPendingOps(telemetryEventSuffix?: string): void {
         if (this.handler !== undefined) {
             const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
             this.pending = [];
