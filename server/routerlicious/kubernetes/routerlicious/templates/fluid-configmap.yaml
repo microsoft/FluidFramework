@@ -21,6 +21,7 @@ data:
         },
         "mongo": {
             "endpoint": "{{ .Values.mongodb.url }}",
+            "expireAfterSeconds": "{{ .Values.mongodb.expireAfterSeconds }}",
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",
