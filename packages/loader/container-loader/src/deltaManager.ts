@@ -1407,6 +1407,7 @@ export class DeltaManager
         this.fetching = true;
 
         await this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
+            this.refreshDelayInfo(this.deltaStorageDelayId);
             this.enqueueMessages(messages, telemetryEventSuffix);
         });
 
