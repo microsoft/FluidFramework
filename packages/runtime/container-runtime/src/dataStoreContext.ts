@@ -423,6 +423,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
 
+        // If we are not referenced, update the summary tree to indicate that.
+        if (!this.summarizerNode.isReferenced()) {
+            summarizeResult.summary.unreferenced = true;
+        }
+
         return { ...summarizeResult, id: this.id };
     }
 
@@ -452,7 +457,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         // also be notified of their used routes. See - https://github.com/microsoft/FluidFramework/issues/4611
 
         // Update the used routes in this data store's summarizer node.
-        this.summarizerNode.usedRoutes = usedRoutes;
+        this.summarizerNode.updateUsedRoutes(usedRoutes);
     }
 
     /**
