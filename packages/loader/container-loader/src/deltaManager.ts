@@ -731,7 +731,7 @@ export class DeltaManager
         telemetryEventSuffix: string,
         fromInitial: number,
         to: number | undefined,
-        callback: (messages?: ISequencedDocumentMessage[]) => void) {
+        callback: (messages: ISequencedDocumentMessage[]) => void) {
         let retry: number = 0;
         let from: number = fromInitial;
         let deltas: ISequencedDocumentMessage[] = [];
@@ -838,7 +838,6 @@ export class DeltaManager
             if (to !== undefined && this.lastQueuedSequenceNumber >= to) {
                 // the client caught up while we were trying to fetch ops from storage
                 // bail out since we no longer need to request these ops
-                callback();
                 telemetryEvent.end({
                     deltasRetrievedTotal,
                     requests,
@@ -1408,11 +1407,10 @@ export class DeltaManager
         this.fetching = true;
 
         await this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
-            this.refreshDelayInfo(this.deltaStorageDelayId);
-            if (messages) {
-                this.enqueueMessages(messages, telemetryEventSuffix);
-            }
+            this.enqueueMessages(messages, telemetryEventSuffix);
         });
+
+        this.refreshDelayInfo(this.deltaStorageDelayId);
 
         this.fetching = false;
     }
