@@ -1,5 +1,24 @@
 # Change Log
 
+## 0.16.0
+
+* Merged PR 26944: Factor out NodeData
+* fix: Correct shared-tree lint configuration to not pick up Whiteboard settings
+  * Associated pull request: !26987
+* run API extractor
+* Merge branch 'master' of https://intentional.visualstudio.com/intent/_git/typescript-pipe into user/coclauso/update-fluid-packages
+* ChangeNodeSequence -> TreeNodeSequence
+* Fix lint/formatting
+* Node -> TreeNode
+* Add doc comment
+* One more location
+* Utility function for asserting no delta
+* clarify Node doc
+* SnapshotNode extends NodeData
+* Update Fluid packages
+* Factor out NodeData
+* Remove unwanted SharedTree events
+
 ## 0.14.0
 
 * refactor: Rename core tree types
