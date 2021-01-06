@@ -119,7 +119,7 @@ export class RestGitService {
                 config: { enabled: true },
             };
             const params = encodeURIComponent(JSON.stringify(getRefParams));
-            return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}/${params}`);
+            return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}?config=${params}`);
         }
         return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}`);
     }
