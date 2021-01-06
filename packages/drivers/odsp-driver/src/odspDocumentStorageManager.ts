@@ -95,6 +95,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private blobsShaToPathCache: Map<string, string> = new Map();
     private treesPathToSummaryTreeCache: Map<string, api.ISummaryTree> = new Map();
+
     // A set of pending blob hashes that will be inserted into blobsShaToPathCache
     private readonly blobsCachePendingHashes: Set<Promise<void>> = new Set();
     private readonly blobCache: Map<string, IBlob | ArrayBuffer> = new Map();
@@ -348,6 +349,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         const appTree = hierarchicalTree.trees[".app"];
         const protocolTree = hierarchicalTree.trees[".protocol"];
         if (appTree && protocolTree) {
+            this.buildPathToSummaryTreesCache(appTree);
             return this.combineProtocolAndAppSnapshotTree(tree.id, appTree, protocolTree);
         }
 
@@ -479,10 +481,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                             }
                         }
                     }
-                    assert(id !== undefined, "App tree should have a id!");
-                    const appTree = this.treesCache.get(id);
-                    assert(appTree !== undefined, "App tree should be there");
-                    this.buildHierarchyToSummaryTree(appTree);
+
                     // Populate the cache with paths from id-to-path mapping.
                     for (const [blobId, blob] of this.blobCache.entries()) {
                         const path = blobsIdToPathMap.get(blobId);
@@ -948,6 +947,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             }
         }
 
+        this.buildPathToSummaryTreesCache(hierarchicalAppTree);
         return this.combineProtocolAndAppSnapshotTree(snapshotTreeId, hierarchicalAppTree, hierarchicalProtocolTree);
     }
 
@@ -1155,34 +1155,30 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return { snapshotTree, blobs, reusedBlobs };
     }
 
-    private buildHierarchyToSummaryTree(flatTree: ITree): api.ISummaryTree {
-        const root: api.ISummaryTree = { type: api.SummaryType.Tree, tree: {} };
-        this.treesPathToSummaryTreeCache.set("", root);
+    private buildPathToSummaryTreesCache(appTree: api.ISnapshotTree, path: string = ".app"): api.ISummaryTree {
+        assert(Object.keys(appTree.commits).length === 0, "There should not be commit tree entries in snapshot");
 
-        for (const entry of flatTree.entries) {
-            const lastIndex = entry.path.lastIndexOf("/");
-            const entryPathDir = entry.path.slice(0, Math.max(0, lastIndex));
-            const entryPathBase = entry.path.slice(lastIndex + 1);
-
-            // The flat output is breadth-first so we can assume we see tree nodes prior to their contents
-            const node = this.treesPathToSummaryTreeCache.get(entryPathDir);
-            assert(node !== undefined, "Tree should be set");
-            // Add in either the blob or tree
-            if (entry.type === "tree") {
-                const newTree: api.ISummaryTree = { type: api.SummaryType.Tree, tree: {} };
-                node.tree[decodeURIComponent(entryPathBase)] = newTree;
-                this.treesPathToSummaryTreeCache.set(entry.path, newTree);
-            } else if (entry.type === "blob") {
-                const blobValue = this.blobCache.get(entry.id);
-                if (blobValue !== undefined) {
-                    node.tree[decodeURIComponent(entryPathBase)] = {
-                        type: api.SummaryType.Blob,
-                        content: blobValue instanceof ArrayBuffer ? IsoBuffer.from(blobValue).toString("utf8") : fromBase64ToUtf8(blobValue.content),
-                    };
-                }
+        const appSummaryTree: api.ISummaryTree = {
+            type: api.SummaryType.Tree,
+            tree: {},
+        };
+        for (const [key, value] of Object.entries(appTree.blobs)) {
+            const blobValue = this.blobCache.get(value);
+            if (blobValue !== undefined) {
+                const decoded = blobValue instanceof ArrayBuffer ? IsoBuffer.from(blobValue).toString("utf8") : fromBase64ToUtf8(blobValue.content);
+                appSummaryTree.tree[key] = {
+                    type: api.SummaryType.Blob,
+                    content: decoded,
+                };
             }
         }
-        return root;
+
+        for (const [key, tree] of Object.entries(appTree.trees)) {
+            const subtree = this.buildPathToSummaryTreesCache(tree, `${path}/${key}`);
+            this.treesPathToSummaryTreeCache.set(`${path}/${key}`, subtree);
+            appSummaryTree.tree[key] = subtree;
+        }
+        return appSummaryTree;
     }
 }
 
