@@ -30,7 +30,7 @@
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "test": "npm run test:jest",
     "test:jest": "npm run build-v2 && jest",
-    "tsc": "pnpify tsc",
+    "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
     "webpack": "webpack --env.production && npm run tsc",
