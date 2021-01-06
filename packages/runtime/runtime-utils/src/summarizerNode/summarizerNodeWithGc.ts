@@ -94,10 +94,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         this.gcDetailsInInitialSummaryP = new LazyPromise(async () => {
             // back-compat: 0.32. getInitialGCSummaryDetailsFn() returns undefined in 0.31. Remove undefined check
             // when N > 34.
-            let gcSummaryDetails: IGarbageCollectionSummaryDetails | undefined;
-            if (getInitialGCSummaryDetailsFn) {
-                gcSummaryDetails = await getInitialGCSummaryDetailsFn();
-            }
+            const gcSummaryDetails = await getInitialGCSummaryDetailsFn?.();
             return gcSummaryDetails ?? { usedRoutes: [] };
         });
     }
