@@ -8,7 +8,7 @@ import { IContainer, IFluidModule } from "@fluidframework/container-definitions"
 import { IFluidRouter } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalTestObjectProvider, ChannelFactoryRegistry } from "@fluidframework/test-utils";
+import { LocalTestObjectProvider } from "@fluidframework/test-utils";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
@@ -32,7 +32,7 @@ async function loadContainer(
     deltaConnectionServer: ILocalDeltaConnectionServer,
 ): Promise<IContainer> {
     const localTestObjectProvider = new LocalTestObjectProvider(
-        (reg?: ChannelFactoryRegistry) => fluidModule as IFluidModule, undefined, deltaConnectionServer);
+        () => fluidModule as IFluidModule, undefined, deltaConnectionServer);
     return localTestObjectProvider.loadTestContainer();
 }
 
@@ -41,7 +41,7 @@ async function loadContainerWithOldLoader(
     deltaConnectionServer: ILocalDeltaConnectionServer,
 ): Promise<old.IContainer> {
     const localTestObjectProvider = new old.LocalTestObjectProvider(
-        (reg?: ChannelFactoryRegistry) => fluidModule as old.IFluidModule, undefined, deltaConnectionServer);
+        () => fluidModule as old.IFluidModule, undefined, deltaConnectionServer);
     return localTestObjectProvider.loadTestContainer();
 }
 
