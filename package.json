@@ -7,7 +7,7 @@
   "license": "MIT",
   "author": "Microsoft",
   "workspaces": [
-    "packages/**",
+    "packages/*/*",
     "examples/**",
     "server/historian/",
     "server/routerlicious/",

@@ -30,7 +30,7 @@
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "test": "npm run test:jest",
     "test:jest": "npm run build-v2 && jest",
-    "tsc": "tsc",
+    "tsc": "pnpify tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
     "webpack": "webpack --env.production && npm run tsc",
@@ -42,6 +42,7 @@
     "@fluidframework/common-utils": "^0.26.0",
     "@fluidframework/runtime-utils": "^0.32.0",
     "@fluidframework/view-interfaces": "^0.32.0",
+    "@yarnpkg/pnpify": "^2.4.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },

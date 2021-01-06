@@ -82,6 +82,7 @@
     "@types/double-ended-queue": "^2.1.0",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",
+    "@types/node": "^10.17.24",
     "@types/sinon": "^7.0.13",
     "@typescript-eslint/eslint-plugin": "~4.2.0",
     "@typescript-eslint/parser": "~4.2.0",

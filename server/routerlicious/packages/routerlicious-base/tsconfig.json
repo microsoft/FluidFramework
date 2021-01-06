@@ -9,7 +9,8 @@
         "rootDir": "./src",
         "outDir": "./dist",
         "types": [
-            "mocha"
+            "mocha",
+            "node"
         ]
     },
     "include": [

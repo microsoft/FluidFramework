@@ -32,7 +32,8 @@ export class TinyliciousTestObjectProvider<TestContainerConfigType>
         if (this._documentId === undefined) {
             this._documentId = uuid();
         }
-        return this._documentId;
+        // TODO: code change to satisfy the compiler for unknwon reasons
+        return this._documentId || "";
     }
 
     get documentLoadUrl() {

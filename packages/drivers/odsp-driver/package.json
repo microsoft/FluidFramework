@@ -84,6 +84,7 @@
     "@types/debug": "^4.1.5",
     "@types/mocha": "^5.2.5",
     "@types/sha.js": "^2.4.0",
+    "@types/socket.io-client": "^1.4.32",
     "@typescript-eslint/eslint-plugin": "~4.2.0",
     "@typescript-eslint/parser": "~4.2.0",
     "concurrently": "^5.2.0",
