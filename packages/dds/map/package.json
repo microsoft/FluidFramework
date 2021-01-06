@@ -58,10 +58,7 @@
     "@fluidframework/common-utils": "^0.26.0",
     "@fluidframework/core-interfaces": "^0.32.0",
     "@fluidframework/datastore-definitions": "^0.32.0",
-<<<<<<< HEAD
     "@fluidframework/driver-utils": "^0.32.0",
-=======
->>>>>>> main
     "@fluidframework/protocol-base": "^0.1017.0-0",
     "@fluidframework/protocol-definitions": "^0.1017.0-0",
     "@fluidframework/shared-object-base": "^0.32.0",
