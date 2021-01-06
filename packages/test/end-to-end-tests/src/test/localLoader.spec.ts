@@ -132,7 +132,7 @@ describe("LocalLoader", () => {
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
             urlResolver = new LocalResolver();
-            opProcessingController = new OpProcessingController(deltaConnectionServer);
+            opProcessingController = new OpProcessingController();
         });
 
         afterEach(async () => {
@@ -229,7 +229,7 @@ describe("LocalLoader", () => {
             beforeEach(async () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
                 urlResolver = new LocalResolver();
-                opProcessingController = new OpProcessingController(deltaConnectionServer);
+                opProcessingController = new OpProcessingController();
 
                 const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 
@@ -281,7 +281,7 @@ describe("LocalLoader", () => {
             });
 
             it("Controlled inbounds and outbounds", async () => {
-                opProcessingController = new OpProcessingController(deltaConnectionServer);
+                opProcessingController = new OpProcessingController();
                 opProcessingController.addDeltaManagers(
                     container1.deltaManager,
                     container2.deltaManager);

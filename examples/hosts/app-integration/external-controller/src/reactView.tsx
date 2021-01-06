@@ -5,41 +5,46 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { IKeyValueDataObject } from "./kvpair-dataobject";
+import { IDiceRollerController } from "./controller";
 
 /**
- * Render an IDiceRoller into a given div as a text character, with a button to roll it.
+ * Render Dice into a given HTMLElement as a text character, with a button to roll it.
  * @param dataObject - The Data Object to be rendered
- * @param div - The div to render into
+ * @param div - The HTMLElement to render into
  */
-export function renderDiceRoller(DO: IKeyValueDataObject, div: HTMLDivElement) {
-    ReactDOM.render(<ReactView dataObject={DO} />, div);
+export function renderDiceRoller(diceRoller: IDiceRollerController, div: HTMLDivElement) {
+    ReactDOM.render(<ReactView diceRoller={diceRoller} />, div);
 }
 
 interface IReactViewProps {
-    dataObject: IKeyValueDataObject
+    diceRoller: IDiceRollerController;
 }
 
 const ReactView = (props: IReactViewProps) => {
-    const { dataObject } = props;
-    const [diceValue, setDiceValue] = React.useState(1);
+    const { diceRoller } = props;
+    const [diceValue, setDiceValue] = React.useState(diceRoller.value);
 
     const diceCharacter = String.fromCodePoint(0x267F + diceValue);
-    const rollDice = () => dataObject.set("dice", Math.floor(Math.random() * 6) + 1);
-    const syncLocalAndFluidState = () => setDiceValue(dataObject.get("dice"));
 
     React.useEffect(() => {
-        dataObject.on("changed", syncLocalAndFluidState);
-        return () => {
-            dataObject.off("changed", syncLocalAndFluidState);
+        // useEffect runs async after render, so it's possible for the dice value to update after render but
+        // before we get our event listener registered.  We refresh our dice value in case that happened.
+        setDiceValue(diceRoller.value);
+        const onDiceRolled = () => {
+            setDiceValue(diceRoller.value);
         };
-    });
+        diceRoller.on("diceRolled", onDiceRolled);
+        return () => {
+            diceRoller.off("diceRolled", onDiceRolled);
+        };
+    }, [diceRoller]);
+
     return (
         <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 200, color: `hsl(${diceValue * 60}, 70%, 50%)` }}>
                 {diceCharacter}
             </div>
-            <button style={{ fontSize: 50 }} onClick={rollDice}>
+            <button style={{ fontSize: 50 }} onClick={diceRoller.roll}>
                 Roll
             </button>
         </div>

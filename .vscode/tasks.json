@@ -21,6 +21,26 @@
                 },
                 "$tslint5"
             ]
+        },
+        {
+            "label": "fluid-build $cwd",
+            "type": "process",
+            "command": "node",
+            "args": [
+                "${workspaceRoot}/node_modules/@fluidframework/build-tools/dist/fluidBuild/fluidBuild.js",
+                "--root",
+                "${workspaceRoot}",
+                "--vscode",
+                "${fileDirname}"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                {
+                    "base": "$tsc",
+                    "fileLocation": "absolute",
+                },
+                "$tslint5"
+            ]
         }
     ]
 }

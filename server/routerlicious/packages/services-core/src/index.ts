@@ -25,5 +25,6 @@ export * from "./queue";
 export * from "./secretManager";
 export * from "./taskMessages";
 export * from "./tenant";
+export * from "./throttler";
 export * from "./token";
 export * from "./zookeeper";

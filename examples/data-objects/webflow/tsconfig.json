@@ -8,7 +8,7 @@
         "strictNullChecks": false,
         "rootDir": "./src",
         "outDir": "./dist",
-        "types": [ "mocha" ]
+        "types": [ "node", "mocha" ]
     },
     "include": [
         "src/**/*"
