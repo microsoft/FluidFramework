@@ -4,28 +4,16 @@
  */
 
 import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
-import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 
 import { DiceRollerController } from "./controller";
 import {
-    DropletContainerRuntimeFactory,
+    Fluid,
     IKeyValueDataObject,
     KeyValueDataObject,
     KeyValueInstantiationFactory,
 } from "./kvpair-dataobject";
 import { renderDiceRoller } from "./view";
 // import { renderDiceRoller } from "./reactView";
-
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-class Fluid {
-    public static async createContainer(docId) {
-        return getTinyliciousContainer(docId, DropletContainerRuntimeFactory, true /* createNew */);
-    }
-
-    public static async getContainer(docId) {
-        return getTinyliciousContainer(docId, DropletContainerRuntimeFactory, false /* createNew */);
-    }
-}
 
 let createNew = false;
 if (location.hash.length === 0) {
