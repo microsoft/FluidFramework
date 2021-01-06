@@ -238,7 +238,10 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 	 * e.g. unregister event listeners
 	 */
 	public dispose(error?: Error): void {
-		assert(!this.disposed, 'Checkout must not be disposed twice');
+		if (this.disposed) {
+			return;
+		}
+
 		this.disposed = true;
 
 		// remove registered listener
