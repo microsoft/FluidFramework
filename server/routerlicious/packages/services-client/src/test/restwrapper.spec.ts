@@ -70,7 +70,7 @@ describe("RestWrapper", () => {
         };
 
         axiosTooManyRequestsErrorZeroRetryAfterMock = {
-            request: async (options?) => new Promise<AxiosResponse>(
+            request: async <T = any, R = AxiosResponse<T>>(options?) => new Promise<R>(
                 (resolve, reject) => {
                     requestOptions = options;
 
@@ -90,6 +90,8 @@ describe("RestWrapper", () => {
                         name: "TooManyRequests",
                         request: {},
                         response,
+                        isAxiosError: true,
+                        toJSON: () => ({}),
                     };
 
                     throw err;
@@ -98,7 +100,7 @@ describe("RestWrapper", () => {
         };
 
         axiosTooManyRequestsErrorNegativeRetryAfterMock = {
-            request: async (options?) => new Promise<AxiosResponse>(
+            request: async <T = any, R = AxiosResponse<T>>(options?) => new Promise<R>(
                 (resolve, reject) => {
                     requestOptions = options;
 
@@ -118,6 +120,8 @@ describe("RestWrapper", () => {
                         name: "TooManyRequests",
                         request: {},
                         response,
+                        isAxiosError: true,
+                        toJSON: () => ({}),
                     };
 
                     throw err;
@@ -126,7 +130,7 @@ describe("RestWrapper", () => {
         };
 
         axiosTooManyRequestsErrorPositiveRetryAfterMock = {
-            request: async (options?) => new Promise<AxiosResponse>(
+            request: async <T = any, R = AxiosResponse<T>>(options?) => new Promise<R>(
                 (resolve, reject) => {
                     requestOptions = options;
 
@@ -146,6 +150,8 @@ describe("RestWrapper", () => {
                         name: "TooManyRequests",
                         request: {},
                         response,
+                        isAxiosError: true,
+                        toJSON: () => ({}),
                     };
 
                     throw err;
