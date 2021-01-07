@@ -120,7 +120,7 @@ enum Codes {
     Number3 = 8,
     Number4 = 9,
 
-    Array = 10,
+    TreeNode = 10,
     Up = 11,
     EOF = 12,
 }
@@ -310,7 +310,7 @@ export class Node {
     }
 
     public serialize(buffer: WriteBuffer) {
-        buffer.write(Codes.Array);
+        buffer.write(Codes.TreeNode);
         for (const child of this.children) {
             if (child instanceof Node) {
                 child.serialize(buffer);
@@ -329,7 +329,7 @@ export class Node {
         for (;;) {
             const code = buffer.read();
             switch (code) {
-                case Codes.Array: {
+                case Codes.TreeNode: {
                     const node = new Node();
                     this.children.push(node);
                     node.load(buffer);
@@ -373,7 +373,7 @@ export class Node {
 export class TreeBuilder extends Node {
     static load(buffer: ReadBuffer): TreeBuilder {
         const builder = new TreeBuilder();
-        assert(buffer.read() === Codes.Array, "array");
+        assert(buffer.read() === Codes.TreeNode, "array");
         builder.load(buffer);
         assert(buffer.read() === Codes.EOF, "no eof marker");
         assert(buffer.eof, "unexpected data at the end of buffer");
