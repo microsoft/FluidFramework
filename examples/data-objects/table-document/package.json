@@ -54,7 +54,7 @@
     "@fluidframework/core-interfaces": "^0.33.0",
     "@fluidframework/datastore-definitions": "^0.33.0",
     "@fluidframework/merge-tree": "^0.33.0",
-    "@fluidframework/protocol-definitions": "^0.1017.0-0",
+    "@fluidframework/protocol-definitions": "^0.1017.1",
     "@fluidframework/runtime-definitions": "^0.33.0",
     "@fluidframework/sequence": "^0.33.0",
     "debug": "^4.1.1"
@@ -65,7 +65,7 @@
     "@fluidframework/local-driver": "^0.33.0",
     "@fluidframework/mocha-test-setup": "^0.33.0",
     "@fluidframework/runtime-utils": "^0.33.0",
-    "@fluidframework/server-local-server": "^0.1017.0-0",
+    "@fluidframework/server-local-server": "^0.1017.1",
     "@fluidframework/test-runtime-utils": "^0.33.0",
     "@fluidframework/test-utils": "^0.33.0",
     "@types/debug": "^4.1.5",
