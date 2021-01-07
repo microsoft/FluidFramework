@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
+import { DataCorruptionError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -11,6 +12,7 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+    channelsTreeName,
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     CreateSummarizerNodeSource,
@@ -19,7 +21,7 @@ import {
     IEnvelope,
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
-    IGCData,
+    IGarbageCollectionData,
     IInboundSignalMessage,
     InboundAttachMessage,
     ISummarizeResult,
@@ -39,16 +41,20 @@ import { v4 as uuid } from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import { GCDataBuilder } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
-import { ContainerRuntime, nonDataStorePaths } from "./containerRuntime";
+import { ContainerRuntime } from "./containerRuntime";
 import {
     FluidDataStoreContext,
     RemotedFluidDataStoreContext,
     IFluidDataStoreAttributes,
-    currentSnapshotFormatVersion,
     LocalFluidDataStoreContext,
     createAttributesBlob,
     LocalDetachedFluidDataStoreContext,
- } from "./dataStoreContext";
+} from "./dataStoreContext";
+import {
+    ContainerRuntimeSnapshotFormatVersion,
+    dataStoreAttributesBlobName,
+    nonDataStorePaths,
+} from "./snapshot";
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
@@ -75,15 +81,12 @@ export class DataStores implements IDisposable {
     ) {
         this.logger = ChildLogger.create(baseLogger);
         // Extract stores stored inside the snapshot
-        const fluidDataStores = new Map<string, ISnapshotTree | string>();
+        const fluidDataStores = new Map<string, ISnapshotTree>();
 
-        if (typeof baseSnapshot === "object") {
-            Object.keys(baseSnapshot.trees).forEach((value) => {
-                if (!nonDataStorePaths.includes(value)) {
-                    const tree = baseSnapshot.trees[value];
-                    fluidDataStores.set(value, tree);
-                }
-            });
+        if (baseSnapshot) {
+            for (const [key, value] of Object.entries(baseSnapshot.trees)) {
+                fluidDataStores.set(key, value);
+            }
         }
 
         // Create a context for each of them
@@ -105,25 +108,20 @@ export class DataStores implements IDisposable {
                 }
                 const snapshotTree = value;
                 // Need to rip through snapshot.
-                const { pkg, snapshotFormatVersion, isRootDataStore }
-                    = readAndParseFromBlobs<IFluidDataStoreAttributes>(
+                const attributes = readAndParseFromBlobs<IFluidDataStoreAttributes>(
                         snapshotTree.blobs,
-                        snapshotTree.blobs[".component"]);
+                        snapshotTree.blobs[dataStoreAttributesBlobName]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
-                // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
+                // For snapshotFormatVersion = "0.1" or above, pkg is jsonified, otherwise it is just a string.
                 // However the feature of loading a detached container from snapshot, is added when the
-                // snapshotFormatVersion is "0.1", so we don't expect it to be anything else.
-                if (snapshotFormatVersion === currentSnapshotFormatVersion) {
-                    pkgFromSnapshot = JSON.parse(pkg) as string[];
+                // snapshotFormatVersion is at least "0.1", so we don't expect it to be anything else.
+                if (attributes.snapshotFormatVersion === "0.1"
+                    || attributes.snapshotFormatVersion === 2) {
+                    pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
                 } else {
-                    throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
+                    throw new Error(`Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
                 }
 
-                /**
-                 * If there is no isRootDataStore in the attributes blob, set it to true. This will ensure that data
-                 * stores in older documents are not garbage collected incorrectly. This may lead to additional roots
-                 * in the document but they won't break.
-                 */
                 dataStoreContext = new LocalFluidDataStoreContext(
                     key,
                     pkgFromSnapshot,
@@ -133,7 +131,10 @@ export class DataStores implements IDisposable {
                     this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
                     (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
                     snapshotTree,
-                    isRootDataStore ?? true);
+                    // If there is no isRootDataStore in the attributes blob, set it to true. This ensures that data
+                    // stores in older documents are not garbage collected incorrectly. This may lead to additional
+                    // roots in the document but they won't break.
+                    attributes.isRootDataStore ?? true);
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
@@ -151,18 +152,20 @@ export class DataStores implements IDisposable {
 
          // If a non-local operation then go and create the object, otherwise mark it as officially attached.
         if (this.contexts.has(attachMessage.id)) {
-            const error = new Error("DataCorruption: Duplicate data store created with existing ID");
-            this.logger.sendErrorEvent({
-                eventName: "DuplicateDataStoreId",
-                sequenceNumber: message.sequenceNumber,
-                clientId: message.clientId,
-                referenceSequenceNumber: message.referenceSequenceNumber,
-            }, error);
+            const error = new DataCorruptionError(
+                "Duplicate data store created with existing ID",
+                {
+                    sequenceNumber: message.sequenceNumber,
+                    clientId: message.clientId,
+                    referenceSequenceNumber: message.referenceSequenceNumber,
+                },
+            );
+            this.logger.sendErrorEvent({ eventName: "DuplicateDataStoreId" }, error);
             throw error;
         }
 
         const flatBlobs = new Map<string, string>();
-        let snapshotTree: ISnapshotTree | null = null;
+        let snapshotTree: ISnapshotTree | undefined;
         if (attachMessage.snapshot) {
             snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
         }
@@ -436,7 +439,7 @@ export class DataStores implements IDisposable {
         return builder.getSummaryTree();
     }
 
-    public async getGCData(): Promise<IGCData> {
+    public async getGCData(): Promise<IGarbageCollectionData> {
         const builder = new GCDataBuilder();
         // Iterate over each store and get their GC data.
         await Promise.all(Array.from(this.contexts)
@@ -457,6 +460,34 @@ export class DataStores implements IDisposable {
     }
 
     /**
+     * After GC has run, called to notify this Container's data stores of routes that are used in it.
+     * @param usedRoutes - The routes that are used in all data stores in this Container.
+     */
+    public updateUsedRoutes(usedRoutes: string[]) {
+        // Build a map of data store ids to routes used in it.
+        const usedRoutesMap: Map<string, string[]> = new Map();
+        for (const route of usedRoutes) {
+            assert(route.startsWith("/"), "Used route should always be an absolute route");
+
+            const dataStoreId = route.split("/")[1];
+            assert(this.contexts.has(dataStoreId), "Used route does not belong to any known data store");
+
+            const dataStoreRoute = route.slice(dataStoreId.length + 1);
+            const routes = usedRoutesMap.get(dataStoreId);
+            if (routes !== undefined) {
+                routes.push(dataStoreRoute);
+            } else {
+                usedRoutesMap.set(dataStoreId, [dataStoreRoute]);
+            }
+        }
+
+        // Update the used routes in each data store. Used routes is empty for unused data stores.
+        for (const [contextId, context] of this.contexts) {
+            context.updateUsedRoutes(usedRoutesMap.get(contextId) ?? []);
+        }
+    }
+
+    /**
      * Returns the outbound routes of this channel. Only root data stores are considered referenced and their paths are
      * part of outbound routes.
      */
@@ -469,5 +500,32 @@ export class DataStores implements IDisposable {
             }
         }
         return outboundRoutes;
+    }
+}
+
+export function getSnapshotForDataStores(
+    snapshot: ISnapshotTree | undefined,
+    snapshotFormatVersion: ContainerRuntimeSnapshotFormatVersion,
+): ISnapshotTree | undefined {
+    if (!snapshot) {
+        return undefined;
+    }
+
+    if (snapshotFormatVersion !== undefined) {
+        const dataStoresSnapshot = snapshot.trees[channelsTreeName];
+        assert(!!dataStoresSnapshot, `expected ${channelsTreeName} tree in snapshot`);
+        return dataStoresSnapshot;
+    } else {
+        // back-compat: strip out all non-datastore paths before giving to DataStores object.
+        const dataStoresTrees: ISnapshotTree["trees"] = {};
+        for (const [key, value] of Object.entries(snapshot.trees)) {
+            if (!nonDataStorePaths.includes(key)) {
+                dataStoresTrees[key] = value;
+            }
+        }
+        return {
+            ...snapshot,
+            trees: dataStoresTrees,
+        };
     }
 }

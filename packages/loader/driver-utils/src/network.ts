@@ -9,7 +9,7 @@ import {
     IAuthorizationError,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 
 export enum OnlineStatus {
     Offline,
@@ -31,7 +31,7 @@ export function isOnline(): OnlineStatus {
 /**
  * Generic network error class.
  */
-export class GenericNetworkError extends CustomErrorWithProps implements IDriverErrorBase {
+export class GenericNetworkError extends LoggingError implements IDriverErrorBase {
     readonly errorType = DriverErrorType.genericNetworkError;
 
     constructor(
@@ -43,7 +43,7 @@ export class GenericNetworkError extends CustomErrorWithProps implements IDriver
     }
 }
 
-export class AuthorizationError extends CustomErrorWithProps implements IAuthorizationError {
+export class AuthorizationError extends LoggingError implements IAuthorizationError {
     readonly errorType = DriverErrorType.authorizationError;
     readonly canRetry = false;
 
@@ -56,7 +56,7 @@ export class AuthorizationError extends CustomErrorWithProps implements IAuthori
     }
 }
 
-export class NetworkErrorBasic<T> extends CustomErrorWithProps {
+export class NetworkErrorBasic<T> extends LoggingError {
     constructor(
         errorMessage: string,
         readonly errorType: T,
@@ -80,7 +80,7 @@ export class NonRetryableError<T> extends NetworkErrorBasic<T> {
 /**
  * Throttling error class - used to communicate all throttling errors
  */
-export class ThrottlingError extends CustomErrorWithProps implements IThrottlingWarning {
+export class ThrottlingError extends LoggingError implements IThrottlingWarning {
     readonly errorType = DriverErrorType.throttlingError;
     readonly canRetry = true;
 

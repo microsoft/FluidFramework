@@ -114,7 +114,7 @@ describe("Document Dirty", () => {
         dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
         containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
         sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController();
         opProcessingController.addDeltaManagers(container.deltaManager);
 
         // Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is

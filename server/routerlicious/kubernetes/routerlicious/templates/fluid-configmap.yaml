@@ -21,6 +21,7 @@ data:
         },
         "mongo": {
             "endpoint": "{{ .Values.mongodb.url }}",
+            "expireAfterSeconds": "{{ .Values.mongodb.expireAfterSeconds }}",
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",
@@ -52,6 +53,12 @@ data:
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
+            "throttling": {
+                "maxRequestsPerMs": {{ .Values.alfred.throttling.maxRequestsPerMs }},
+                "maxRequestBurst": {{ .Values.alfred.throttling.maxRequestBurst }},
+                "minCooldownIntervalInMs": {{ .Values.alfred.throttling.minCooldownIntervalInMs }},
+                "minThrottleIntervalInMs": {{ .Values.alfred.throttling.minThrottleIntervalInMs }}
+            },
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
             "restJsonSize": "50mb",

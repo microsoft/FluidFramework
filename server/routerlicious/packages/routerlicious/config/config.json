@@ -9,6 +9,7 @@
     },
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",
+        "expireAfterSeconds": -1,
         "collectionNames": {
             "deltas": "deltas",
             "rawdeltas": "rawdeltas",
@@ -35,6 +36,12 @@
         "kafkaClientId": "alfred",
         "maxMessageSize": "16KB",
         "maxNumberOfClientsPerDocument": 1000000,
+        "throttling": {
+            "maxRequestsPerMs": 1000000,
+            "maxRequestBurst": 1000000,
+            "minCooldownIntervalInMs": 1000000,
+            "minThrottleIntervalInMs": 1000000
+        },
         "topic": "rawdeltas",
         "bucket": "snapshots",
         "restJsonSize": "50mb",

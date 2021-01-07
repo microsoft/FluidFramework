@@ -58,6 +58,7 @@ describe("CodeProposal.EndToEnd", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
+    let hotSwapContext = false;
 
     function createLoader(urlResolver: LocalResolver) {
         const codeDetailsComparer: IFluidCodeDetailsComparer = {
@@ -84,7 +85,8 @@ describe("CodeProposal.EndToEnd", () => {
                 [{ package: packageV2 },fluidExport],
                 [{ package: packageV1dot5 }, fluidExport],
             ],
-            deltaConnectionServer, urlResolver);
+            deltaConnectionServer, urlResolver,
+            { hotSwapContext });
     }
 
     async function createContainer(code: IFluidCodeDetails): Promise<IContainer> {
@@ -139,13 +141,14 @@ describe("CodeProposal.EndToEnd", () => {
                     c,
                     proposal,
                     `containers[${i}] context should dispose`);
+                assert.strictEqual(
+                    containers[i].closed,
+                    false,
+                    `containers[${i}] should not be closed yet`);
             });
 
-            containers[i].once("contextChanged",(c)=>{
-                assert.deepStrictEqual(
-                    c,
-                    proposal,
-                    `containers[${i}] context should be change`);
+            containers[i].once("contextChanged",()=>{
+                throw Error(`context should not change for containers[${i}]`);
             });
         }
 
@@ -154,25 +157,21 @@ describe("CodeProposal.EndToEnd", () => {
             opProcessingController.process(),
         ]);
 
-        assert.strictEqual(res[0], true, "Code propsal should be accepted");
+        assert.strictEqual(res[0], true, "Code proposal should be accepted");
 
         for (let i = 0; i < containers.length; i++) {
-            assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
-            assert.deepStrictEqual(
-                containers[i].codeDetails,
-                proposal,
-                `containers[${i}] code details should update`);
+            assert.strictEqual(containers[i].closed, true, `containers[${i}] should be closed`);
         }
     });
 
     it("Code Proposal Rejection", async () => {
         for (let i = 0; i < containers.length; i++) {
-            containers[i].once("contextDisposed",(c)=>{
-                assert.fail(`Context Shouldn't dispose for containers[${i}]`);
+            containers[i].once("contextDisposed",()=>{
+                throw Error(`context should not dispose for containers[${i}]`);
             });
 
-            containers[i].once("contextChanged",(c)=>{
-                assert.fail(`Context Shouldn't Change for containers[${i}]`);
+            containers[i].once("contextChanged",()=>{
+                throw Error(`context should not change for containers[${i}]`);
             });
         }
 
@@ -190,7 +189,7 @@ describe("CodeProposal.EndToEnd", () => {
             opProcessingController.process(),
         ]);
 
-        assert.strictEqual(res[0], false, "Code propsal should be rejected");
+        assert.strictEqual(res[0], false, "Code proposal should be rejected");
 
         for (let i = 0; i < containers.length; i++) {
             assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
@@ -201,47 +200,14 @@ describe("CodeProposal.EndToEnd", () => {
         }
     });
 
-    it("Close Container on Context Dispose", async () => {
-        const proposal: IFluidCodeDetails = { package: packageV2 };
-        for (let i = 0; i < containers.length; i++) {
-            containers[i].once("contextDisposed",(c)=>{
-                assert.deepStrictEqual(
-                    c,
-                    proposal,
-                    `containers[${i}] context should dispose`);
-            });
-        }
-
-        containers[1].once("contextDisposed",()=>{
-            containers[1].close();
-            containers[1].once("contextChanged",()=>{
-                assert.fail("containers[1]: contextChanged should not fire");
-            });
-        });
-
-        const res = await Promise.all([
-            containers[0].proposeCodeDetails(proposal),
-            opProcessingController.process(),
-        ]);
-
-        assert.strictEqual(res[0], true, "Code propsal should be accepted");
-        assert.strictEqual(containers[0].closed, false, "containers[0] should not be closed");
-        assert.deepStrictEqual(
-            containers[0].codeDetails,
-            proposal,
-            `containers[0] code details should update`);
-
-        assert.strictEqual(containers[1].closed, true, "containers[1] should be closed");
-    });
-
     it("Code Proposal With Compatible Existing", async () => {
         for (let i = 0; i < containers.length; i++) {
-            containers[i].once("contextDisposed",(c)=>{
-                assert.fail(`Context Shouldn't dispose for containers[${i}]`);
+            containers[i].once("contextDisposed",()=>{
+                throw Error(`context should not dispose for containers[${i}]`);
             });
 
-            containers[i].once("contextChanged",(c)=>{
-                assert.fail(`Context Shouldn't Change for containers[${i}]`);
+            containers[i].once("contextChanged",()=>{
+                throw Error(`context should not change for containers[${i}]`);
             });
         }
         const proposal: IFluidCodeDetails = { package: packageV1dot5 };
@@ -250,7 +216,7 @@ describe("CodeProposal.EndToEnd", () => {
             opProcessingController.process(),
         ]);
 
-        assert.strictEqual(res[0], true, "Code propsal should be accepted");
+        assert.strictEqual(res[0], true, "Code proposal should be accepted");
 
         for (let i = 0; i < containers.length; i++) {
             assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
@@ -259,6 +225,141 @@ describe("CodeProposal.EndToEnd", () => {
                 { package: packageV1 },
                 `containers[${i}] code details should update`);
         }
+    });
+
+    describe("(hot-swap)", () => {
+        before(() => hotSwapContext = true);
+        after(() => hotSwapContext = false);
+
+        it("Code Proposal", async () => {
+            const proposal: IFluidCodeDetails = { package: packageV2 };
+            for (let i = 0; i < containers.length; i++) {
+                containers[i].once("contextDisposed",(c)=>{
+                    assert.deepStrictEqual(
+                        c,
+                        proposal,
+                        `containers[${i}] context should dispose`);
+                });
+
+                containers[i].once("contextChanged",(c)=>{
+                    assert.deepStrictEqual(
+                        c,
+                        proposal,
+                        `containers[${i}] context should be change`);
+                });
+            }
+
+            const res = await Promise.all([
+                containers[0].proposeCodeDetails(proposal),
+                opProcessingController.process(),
+            ]);
+
+            assert.strictEqual(res[0], true, "Code proposal should be accepted");
+
+            for (let i = 0; i < containers.length; i++) {
+                assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
+                assert.deepStrictEqual(
+                    containers[i].codeDetails,
+                    proposal,
+                    `containers[${i}] code details should update`);
+            }
+        });
+
+        it("Code Proposal Rejection", async () => {
+            for (let i = 0; i < containers.length; i++) {
+                containers[i].once("contextDisposed",(c)=>{
+                    assert.fail(`context should not dispose for containers[${i}]`);
+                });
+
+                containers[i].once("contextChanged",(c)=>{
+                    assert.fail(`context should not change for containers[${i}]`);
+                });
+            }
+
+            const proposal: IFluidCodeDetails = { package: packageV2 };
+            containers[1].on("codeDetailsProposed",(c, p)=>{
+                    assert.deepStrictEqual(
+                        c,
+                        proposal,
+                        "codeDetails2 should have been proposed");
+                    p.reject();
+                });
+
+            const res = await Promise.all([
+                containers[0].proposeCodeDetails(proposal),
+                opProcessingController.process(),
+            ]);
+
+            assert.strictEqual(res[0], false, "Code proposal should be rejected");
+
+            for (let i = 0; i < containers.length; i++) {
+                assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
+                assert.deepStrictEqual(
+                    containers[i].codeDetails,
+                    { package: packageV1 },
+                    `containers[${i}] code details should not update`);
+            }
+        });
+
+        it("Close Container on Context Dispose", async () => {
+            const proposal: IFluidCodeDetails = { package: packageV2 };
+            for (let i = 0; i < containers.length; i++) {
+                containers[i].once("contextDisposed",(c)=>{
+                    assert.deepStrictEqual(
+                        c,
+                        proposal,
+                        `containers[${i}] context should dispose`);
+                });
+            }
+
+            containers[1].once("contextDisposed",()=>{
+                containers[1].close();
+                containers[1].once("contextChanged",()=>{
+                    assert.fail("containers[1]: contextChanged should not fire");
+                });
+            });
+
+            const res = await Promise.all([
+                containers[0].proposeCodeDetails(proposal),
+                opProcessingController.process(),
+            ]);
+
+            assert.strictEqual(res[0], true, "Code proposal should be accepted");
+            assert.strictEqual(containers[0].closed, false, "containers[0] should not be closed");
+            assert.deepStrictEqual(
+                containers[0].codeDetails,
+                proposal,
+                `containers[0] code details should update`);
+
+            assert.strictEqual(containers[1].closed, true, "containers[1] should be closed");
+        });
+
+        it("Code Proposal With Compatible Existing", async () => {
+            for (let i = 0; i < containers.length; i++) {
+                containers[i].once("contextDisposed",(c)=>{
+                    assert.fail(`context should not dispose for containers[${i}]`);
+                });
+
+                containers[i].once("contextChanged",(c)=>{
+                    assert.fail(`context should not change for containers[${i}]`);
+                });
+            }
+            const proposal: IFluidCodeDetails = { package: packageV1dot5 };
+            const res = await Promise.all([
+                containers[0].proposeCodeDetails(proposal),
+                opProcessingController.process(),
+            ]);
+
+            assert.strictEqual(res[0], true, "Code proposal should be accepted");
+
+            for (let i = 0; i < containers.length; i++) {
+                assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
+                assert.deepStrictEqual(
+                    containers[i].codeDetails,
+                    { package: packageV1 },
+                    `containers[${i}] code details should update`);
+            }
+        });
     });
 
     async function testRoundTrip() {

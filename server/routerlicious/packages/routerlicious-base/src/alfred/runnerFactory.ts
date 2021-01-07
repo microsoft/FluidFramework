@@ -80,6 +80,7 @@ export class AlfredResources implements utils.IResources {
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
+        public restThrottler: core.IThrottler,
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
         public mongoManager: core.MongoManager,
@@ -166,6 +167,22 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         const tenantManager = new services.TenantManager(authEndpoint);
 
+        const throttleMaxRequestsPerMs =
+            config.get("alfred:throttling:maxRequestsPerMs") as number | undefined;
+        const throttleMaxRequestBurst =
+            config.get("alfred:throttling:maxRequestBurst") as number | undefined;
+        const throttleMinCooldownIntervalInMs =
+            config.get("alfred:throttling:minCooldownIntervalInMs") as number | undefined;
+        const minThrottleIntervalInMs =
+            config.get("alfred:throttling:minThrottleIntervalInMs") as number | undefined;
+        const throttleStorageManager = new services.RedisThrottleStorageManager(redisClient);
+        const restThrottlerHelper = new services.ThrottlerHelper(
+            throttleStorageManager,
+            throttleMaxRequestsPerMs,
+            throttleMaxRequestBurst,
+            throttleMinCooldownIntervalInMs);
+        const restThrottler = new services.Throttler(restThrottlerHelper, minThrottleIntervalInMs, winston);
+
         const databaseManager = new core.MongoDatabaseManager(
             mongoManager,
             nodeCollectionName,
@@ -228,6 +245,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             webSocketLibrary,
             orderManager,
             tenantManager,
+            restThrottler,
             storage,
             appTenants,
             mongoManager,
@@ -245,6 +263,7 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.port,
             resources.orderManager,
             resources.tenantManager,
+            resources.restThrottler,
             resources.storage,
             resources.clientManager,
             resources.appTenants,

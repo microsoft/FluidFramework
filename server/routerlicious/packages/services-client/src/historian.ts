@@ -5,6 +5,7 @@
 
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
+import * as uuid from "uuid";
 import { RestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";
 
@@ -33,7 +34,8 @@ export class Historian implements IHistorian {
         public endpoint: string,
         private readonly historianApi: boolean,
         private readonly disableCache: boolean,
-        credentials?: ICredentials) {
+        credentials?: ICredentials,
+        getCorrelationId?: () => string | undefined) {
         const queryString: { token?; disableCache?} = {};
         let cacheBust = false;
         if (this.disableCache && this.historianApi) {
@@ -51,6 +53,9 @@ export class Historian implements IHistorian {
                 Authorization: `Basic ${fromUtf8ToBase64(`${credentials.user}:${credentials.password}`)}`,
             } :
             {};
+        if (getCorrelationId) {
+            headers["x-correlation-id"] = getCorrelationId() || uuid.v4();
+        }
 
         this.restWrapper = new RestWrapper(endpoint, headers, queryString, cacheBust);
     }

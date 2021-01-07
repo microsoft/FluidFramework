@@ -18,7 +18,7 @@ export interface IAsyncCache<TKey, TValue> {
     lock<T>(callback: () => Promise<T>): Promise<T>;
 }
 
-interface IResources {
+export interface IResources {
     tokens?: { [key: string]: IOdspTokens };
     pushTokens?: IOdspTokens;
 }
