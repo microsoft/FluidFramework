@@ -38,7 +38,7 @@ export function create(config: nconf.Provider, tenantService: ITenantService, ca
     app.use(compression());
     app.use(cors());
     app.use(bindCorrelationId());
-  
+
     const apiRoutes = routes.create(config, tenantService, cache, throttler);
     app.use(apiRoutes.git.blobs);
     app.use(apiRoutes.git.refs);

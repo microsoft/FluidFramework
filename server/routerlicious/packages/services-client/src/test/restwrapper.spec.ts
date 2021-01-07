@@ -231,7 +231,6 @@ describe("RestWrapper", () => {
             // assert
             assert.strictEqual(baseurl, requestOptions.baseURL, "baseURL should be the same");
             assert.strictEqual(requestUrl, requestOptions.url, "requestUrl should be the same");
-            assert.strictEqual(undefined, requestOptions.headers as {}, "Headers should be empty");
             assert.strictEqual(headerCount, Object.keys(requestOptions.headers).length, "Headers should only have 1 header");
             assert.strictEqual(correlationIdHeader, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
         });
