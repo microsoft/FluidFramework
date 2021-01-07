@@ -44,8 +44,8 @@ export interface IUrlResolver {
 */
 export interface DriverPreCheckInfo {
     /**
-     * Only needed as long as long as Loader.request() does not work as intended. When Loader.request() caches and
-     * resolves pathing properly, this can be removed. #4489, #4491
+     * @deprecated - only needed as long as long as Loader.request() does not work as intended. When
+     * Loader.request() caches and resolves pathing properly, this can be removed. #4489, #4491
      */
     containerPath: string;
 
@@ -55,7 +55,8 @@ export interface DriverPreCheckInfo {
     codeDetailsHint?: string;
 
     /**
-     * Domains that will be connected to on the critical boot path. Hosts can choose to preconnect to these for improved performance.
+     * Domains that will be connected to on the critical boot path. Hosts can choose to preconnect to these for
+     * improved performance.
      */
     preconnectDomains?: string[];
   }
