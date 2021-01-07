@@ -17,7 +17,7 @@ alfred:
   key: jwt_key
   maxNumberOfClientsPerDocument: 1000000
   throttling:
-    requests:
+    restCalls:
         maxPerMs: 1000000
         maxBurst: 1000000
         minCooldownIntervalInMs: 1000000

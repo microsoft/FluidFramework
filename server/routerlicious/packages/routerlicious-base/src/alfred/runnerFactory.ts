@@ -171,13 +171,13 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         // Rest API Throttler
         const throttleMaxRequestsPerMs =
-            config.get("alfred:throttling:requests:maxPerMs") as number | undefined;
+            config.get("alfred:throttling:restCalls:maxPerMs") as number | undefined;
         const throttleMaxRequestBurst =
-            config.get("alfred:throttling:requests:maxBurst") as number | undefined;
+            config.get("alfred:throttling:restCalls:maxBurst") as number | undefined;
         const throttleMinRequestCooldownIntervalInMs =
-            config.get("alfred:throttling:requests:minCooldownIntervalInMs") as number | undefined;
+            config.get("alfred:throttling:restCalls:minCooldownIntervalInMs") as number | undefined;
         const throttleMinRequestThrottleIntervalInMs =
-            config.get("alfred:throttling:requests:minThrottleIntervalInMs") as number | undefined;
+            config.get("alfred:throttling:restCalls:minThrottleIntervalInMs") as number | undefined;
         const throttleStorageManager = new services.RedisThrottleStorageManager(redisClient);
         const restThrottlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,

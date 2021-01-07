@@ -53,11 +53,11 @@ data:
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
             "throttling": {
-                "requests": {
-                    "maxPerMs": {{ .Values.alfred.throttling.requests.maxPerMs }},
-                    "maxBurst": {{ .Values.alfred.throttling.requests.maxBurst }},
-                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.requests.minCooldownIntervalInMs }},
-                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.requests.minThrottleIntervalInMs }}
+                "restCalls": {
+                    "maxPerMs": {{ .Values.alfred.throttling.restCalls.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.restCalls.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.restCalls.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.restCalls.minThrottleIntervalInMs }}
                 },
                 "socketConnections": {
                     "maxPerMs": {{ .Values.alfred.throttling.socketConnections.maxPerMs }},
