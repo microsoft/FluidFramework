@@ -142,7 +142,7 @@ export interface ISummarizerNode {
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
     // This tells whether this node is in use or not. Unused node can be garbage collected and reclaimed.
-    usedRoutes: string[];
+    readonly usedRoutes: string[];
 
     summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
     createChild(
@@ -169,6 +169,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(): Promise<IGarbageCollectionData>;
     isReferenced(): boolean;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 export const channelsTreeName = ".channels";

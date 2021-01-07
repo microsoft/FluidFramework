@@ -9,6 +9,7 @@ import {
     ContainerWarning,
     IDeltaManager,
     ILoader,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
     IRequest,
@@ -71,7 +72,7 @@ export interface IContainerRuntime extends
     IContainerRuntimeBaseWithCombinedEvents {
     readonly id: string;
     readonly existing: boolean;
-    readonly options: any;
+    readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly connected: boolean;

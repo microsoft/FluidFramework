@@ -27,7 +27,7 @@ import {
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
-import { ILoader } from "./loader";
+import { ILoader, ILoaderOptions } from "./loader";
 
 // Represents the attachment state of the entity.
 export enum AttachState {
@@ -114,7 +114,7 @@ export interface IRuntime extends IDisposable {
 export interface IContainerContext extends IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
-    readonly options: any;
+    readonly options: ILoaderOptions;
     readonly configuration: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
