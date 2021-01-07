@@ -74,6 +74,11 @@ export interface IDocumentStorageService {
      */
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
 
+    /**
+     * @deprecated - here for maintaining perf, will be removed after storage returns binary data
+     */
+    read(id: string): Promise<string>;
+
     readBlob(id: string): Promise<ArrayBufferLike>;
 
     /**

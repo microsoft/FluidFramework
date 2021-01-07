@@ -103,6 +103,20 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
         }
         throw new Error(`Can't find blob ${sha}`);
     }
+
+    /**
+     * @deprecated - here for maintaining perf, will be removed after storage returns binary data
+     */
+    public async read(sha: string): Promise<string> {
+        if (this.versionName !== undefined) {
+            const fileName = `${this.path}/${this.versionName}/${sha}`;
+            if (fs.existsSync(fileName)) {
+                const data = fs.readFileSync(fileName).toString();
+                return data;
+            }
+        }
+        throw new Error(`Can't find blob ${sha}`);
+    }
 }
 
 export interface ISnapshotWriterStorage extends IDocumentStorageService {

@@ -6,7 +6,7 @@
 import { v4 as uuid } from "uuid";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { bufferToBase64, canRetryOnError, DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
+import { canRetryOnError, DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
 import { DeltaManager, getRetryDelayFromError } from "./deltaManager";
 
@@ -28,11 +28,10 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
     }
 
     /**
-     *
-     * @deprecated - only here for back compat, will be removed after release
+     * @deprecated - here for maintaining perf, will be removed after storage returns binary data
      */
     public async read(blobId: string): Promise<string> {
-        return bufferToBase64(await this.readBlob(blobId));
+        return this.readWithRetry(async () => this.internalStorageService.read(blobId));
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {

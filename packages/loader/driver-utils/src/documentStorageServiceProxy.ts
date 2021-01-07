@@ -15,7 +15,7 @@ import {
     ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { bufferToBase64 } from "./bufferToString";
+// import { bufferToBase64 } from "./bufferToString";
 
 export class DocumentStorageServiceProxy implements IDocumentStorageService {
     public get repositoryUrl(): string {
@@ -33,11 +33,10 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     }
 
     /**
-     *
-     * @deprecated - only here for back compat, will be removed after release
+     * @deprecated - here for maintaining perf, will be removed after storage returns binary data
      */
     public async read(blobId: string): Promise<string> {
-        return bufferToBase64(await this.readBlob(blobId));
+        return this.internalStorageService.read(blobId);
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {

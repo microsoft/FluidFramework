@@ -16,6 +16,11 @@ import * as api from "@fluidframework/protocol-definitions";
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
     public abstract getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
     public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
+
+    /**
+     * @deprecated - here for maintaining perf, will be removed after storage returns binary data
+     */
+    public abstract read(blobId: string): Promise<string>;
     public abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
 
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
