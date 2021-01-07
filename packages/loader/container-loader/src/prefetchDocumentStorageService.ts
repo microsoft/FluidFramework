@@ -51,8 +51,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
             if (prefetchedBlobP !== undefined) {
                 return prefetchedBlobP;
             }
-            const blob = this.internalStorageService.readBlob(blobId);
-            const prefetchedBlobPFromStorage = blob;
+            const prefetchedBlobPFromStorage = this.internalStorageService.readBlob(blobId);
             this.prefetchCache.set(blobId, prefetchedBlobPFromStorage);
             return prefetchedBlobPFromStorage;
         }
