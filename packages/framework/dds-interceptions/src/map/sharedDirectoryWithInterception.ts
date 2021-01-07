@@ -96,8 +96,9 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
 
     subDirectoryWithInterception.getWorkingDirectory = (relativePath: string): IDirectory | undefined => {
         const subSubDirectory = subDirectory.getWorkingDirectory(relativePath);
-        if (!subSubDirectory) { return undefined; }
-        return createSubDirectoryWithInterception(baseDirectory, subSubDirectory, context, setInterceptionCallback);
+        return subSubDirectory === undefined ?
+            subSubDirectory :
+            createSubDirectoryWithInterception(baseDirectory, subSubDirectory, context, setInterceptionCallback);
     };
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return

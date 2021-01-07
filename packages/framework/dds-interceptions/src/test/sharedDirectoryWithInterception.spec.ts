@@ -225,7 +225,7 @@ describe("Shared Directory with Interception", () => {
             verifySubDirectoryArrtibution(bar, key, value, userAttributes);
         });
 
-        it("should be able to get a wrapped subDirectory via getSubDirectory and getWorkingDirectory", async () => {
+        it("should be able to get a wrapped subDirectory via getSubDirectory/getWorkingDirectory", async () => {
             const root = createDirectoryWithInterception(sharedDirectory, dataStoreContext, subDirectoryinterceptionCb);
 
             // Create a sub directory and get it via getSubDirectory.
@@ -249,6 +249,16 @@ describe("Shared Directory with Interception", () => {
             value = "read";
             bar.set(key, value);
             verifySubDirectoryArrtibution(bar, key, value, userAttributes);
+        });
+
+        it("should get undefined for non-existent subDirectory via getSubDirectory/getWorkingDirectory", async () => {
+            const root = createDirectoryWithInterception(sharedDirectory, dataStoreContext, subDirectoryinterceptionCb);
+
+            const foo = root.getSubDirectory("foo");
+            assert.strictEqual(foo, undefined);
+
+            const bar = root.getWorkingDirectory("bar");
+            assert.strictEqual(bar, undefined);
         });
 
         /**
