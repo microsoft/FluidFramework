@@ -98,7 +98,7 @@ describe("Shared Directory with Interception", () => {
 
         // Verifies that the props are stored correctly in the attribution sub directory - a sub directory
         // of the given directory with name `attributionDirectoryName`.
-        function verifySubDirectoryArrtibution(directory: IDirectory, key: string, value: string, props?: any) {
+        function verifySubDirectoryAttribution(directory: IDirectory, key: string, value: string, props?: any) {
             assert.equal(directory.get(key), value, "The retrieved value should match the value that was set");
 
             const attributionDir = directory.getSubDirectory(attributionDirectoryName);
@@ -210,19 +210,19 @@ describe("Shared Directory with Interception", () => {
             const key: string = "level";
             let value: string = "root";
             root.set(key, value);
-            verifySubDirectoryArrtibution(root, key, value, userAttributes);
+            verifySubDirectoryAttribution(root, key, value, userAttributes);
 
             // Create the level 1 directory `/foo`.
             const foo = root.createSubDirectory("foo");
             value = "level1";
             foo.set(key, value);
-            verifySubDirectoryArrtibution(foo, key, value, userAttributes);
+            verifySubDirectoryAttribution(foo, key, value, userAttributes);
 
             // Create the level 2 directory `/foo/bar`.
             const bar = foo.createSubDirectory("bar");
             value = "level2";
             bar.set(key, value);
-            verifySubDirectoryArrtibution(bar, key, value, userAttributes);
+            verifySubDirectoryAttribution(bar, key, value, userAttributes);
         });
 
         it("should be able to get a wrapped subDirectory via getSubDirectory/getWorkingDirectory", async () => {
@@ -237,7 +237,7 @@ describe("Shared Directory with Interception", () => {
             let key: string = "color";
             let value: string = "green";
             foo.set(key, value);
-            verifySubDirectoryArrtibution(foo, key, value, userAttributes);
+            verifySubDirectoryAttribution(foo, key, value, userAttributes);
 
             // Create a sub directory via the unwrapped object and get its working directory via the wrapper.
             sharedDirectory.createSubDirectory("bar");
@@ -248,7 +248,7 @@ describe("Shared Directory with Interception", () => {
             key = "permission";
             value = "read";
             bar.set(key, value);
-            verifySubDirectoryArrtibution(bar, key, value, userAttributes);
+            verifySubDirectoryAttribution(bar, key, value, userAttributes);
         });
 
         it("should get undefined for non-existent subDirectory via getSubDirectory/getWorkingDirectory", async () => {

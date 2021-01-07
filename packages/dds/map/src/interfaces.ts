@@ -312,7 +312,7 @@ export interface ISerializedValue {
     /**
      * String representation of the value.
      */
-    value: string | undefined;
+    value: string;
 }
 
 /**
