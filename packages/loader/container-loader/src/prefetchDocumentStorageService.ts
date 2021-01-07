@@ -11,7 +11,7 @@ import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
     // BlobId -> blob prefetchCache cache
-    private readonly prefetchCache = new Map<string, ArrayBufferLike>();
+    private readonly prefetchCache = new Map<string, Promise<ArrayBufferLike>>();
     private prefetchEnabled = true;
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
@@ -44,13 +44,14 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         this.prefetchCache.clear();
     }
 
-    private async cachedRead(blobId: string): Promise<ArrayBufferLike> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    private cachedRead(blobId: string): Promise<ArrayBufferLike> {
         if (this.prefetchEnabled) {
-            const prefetchedBlobP: ArrayBufferLike | undefined = this.prefetchCache.get(blobId);
+            const prefetchedBlobP: Promise<ArrayBufferLike> | undefined = this.prefetchCache.get(blobId);
             if (prefetchedBlobP !== undefined) {
                 return prefetchedBlobP;
             }
-            const blob = await this.internalStorageService.readBlob(blobId);
+            const blob = this.internalStorageService.readBlob(blobId);
             const prefetchedBlobPFromStorage = blob;
             this.prefetchCache.set(blobId, prefetchedBlobPFromStorage);
             return prefetchedBlobPFromStorage;
