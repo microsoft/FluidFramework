@@ -33,7 +33,7 @@
     "@fluidframework/container-runtime": "^0.32.1",
     "@fluidframework/file-driver": "^0.32.1",
     "@fluidframework/merge-tree": "^0.32.1",
-    "@fluidframework/protocol-definitions": "^0.1017.0",
+    "@fluidframework/protocol-definitions": "^0.1017.1",
     "@fluidframework/runtime-definitions": "^0.32.1",
     "@fluidframework/sequence": "^0.32.1",
     "assert": "^2.0.0"

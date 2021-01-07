@@ -60,8 +60,8 @@
     "@fluidframework/core-interfaces": "^0.32.1",
     "@fluidframework/datastore-definitions": "^0.32.1",
     "@fluidframework/garbage-collector": "^0.32.1",
-    "@fluidframework/protocol-base": "^0.1017.0",
-    "@fluidframework/protocol-definitions": "^0.1017.0",
+    "@fluidframework/protocol-base": "^0.1017.1",
+    "@fluidframework/protocol-definitions": "^0.1017.1",
     "@fluidframework/runtime-definitions": "^0.32.1",
     "assert": "^2.0.0"
   },

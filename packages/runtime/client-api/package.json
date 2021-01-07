@@ -58,7 +58,7 @@
     "@fluidframework/ink": "^0.32.1",
     "@fluidframework/map": "^0.32.1",
     "@fluidframework/ordered-collection": "^0.32.1",
-    "@fluidframework/protocol-definitions": "^0.1017.0",
+    "@fluidframework/protocol-definitions": "^0.1017.1",
     "@fluidframework/request-handler": "^0.32.1",
     "@fluidframework/runtime-definitions": "^0.32.1",
     "@fluidframework/sequence": "^0.32.1",

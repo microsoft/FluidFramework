@@ -41,7 +41,7 @@
     "@fluidframework/core-interfaces": "^0.32.1",
     "@fluidframework/counter": "^0.32.1",
     "@fluidframework/map": "^0.32.1",
-    "@fluidframework/protocol-definitions": "^0.1017.0",
+    "@fluidframework/protocol-definitions": "^0.1017.1",
     "@fluidframework/runtime-definitions": "^0.32.1",
     "@fluidframework/synthesize": "^0.32.1",
     "@fluidframework/view-adapters": "^0.32.1",
