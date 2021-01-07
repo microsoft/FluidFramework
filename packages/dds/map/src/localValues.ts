@@ -179,9 +179,8 @@ export class LocalValueMaker {
     /**
      * Create a new local value from an incoming serialized value.
      * @param serializable - The serializable value to make local
-     * @param emitter - The value op emitter, if the serializable is a value type
      */
-    public fromSerializablePlainOrShared(serializable: ISerializableValue, emitter?: IValueOpEmitter): ILocalValue {
+    public fromSerializable(serializable: ISerializableValue): ILocalValue {
         // Migrate from old shared value to handles
         if (serializable.type === ValueType[ValueType.Shared]) {
             serializable.type = ValueType[ValueType.Plain];
@@ -197,7 +196,12 @@ export class LocalValueMaker {
         return new PlainLocalValue(translatedValue);
     }
 
-    public fromSerializableValueEmitter(serializable: ISerializableValue, emitter: IValueOpEmitter): ILocalValue {
+    /**
+     * Create a new local value from an incoming serialized value for value type
+     * @param serializable - The serializable value to make local
+     * @param emitter - The value op emitter, if the serializable is a value type
+     */
+    public fromSerializableValueType(serializable: ISerializableValue, emitter: IValueOpEmitter): ILocalValue {
         if (this.valueTypes.has(serializable.type)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const valueType = this.valueTypes.get(serializable.type)!;

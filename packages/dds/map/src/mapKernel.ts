@@ -586,9 +586,9 @@ export class MapKernel implements IValueTypeCreator {
      */
     private makeLocal(key: string, serializable: ISerializableValue): ILocalValue {
         if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
-            return this.localValueMaker.fromSerializablePlainOrShared(serializable);
+            return this.localValueMaker.fromSerializable(serializable);
         } else {
-            return this.localValueMaker.fromSerializableValueEmitter(
+            return this.localValueMaker.fromSerializableValueType(
                 serializable,
                 this.makeMapValueOpEmitter(key),
             );
