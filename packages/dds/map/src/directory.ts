@@ -1283,7 +1283,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             return;
         }
         this.clearExceptPendingKeys();
-        this.directory.emit("clear", local, op, this);
+        this.directory.emit("clear", local, op, this.directory);
     }
 
     /**
@@ -1564,7 +1564,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      */
     private clearCore(local: boolean, op: ISequencedDocumentMessage | null) {
         this._storage.clear();
-        this.directory.emit("clear", local, op, this);
+        this.directory.emit("clear", local, op, this.directory);
     }
 
     /**
@@ -1579,7 +1579,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         const successfullyRemoved = this._storage.delete(key);
         if (successfullyRemoved) {
             const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
-            this.directory.emit("valueChanged", event, local, op, this);
+            this.directory.emit("valueChanged", event, local, op, this.directory);
             const containedEvent: IValueChanged = { key, previousValue };
             this.emit("containedValueChanged", containedEvent, local, this);
         }
@@ -1597,7 +1597,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         const previousValue = this.get(key);
         this._storage.set(key, value);
         const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
-        this.directory.emit("valueChanged", event, local, op, this);
+        this.directory.emit("valueChanged", event, local, op, this.directory);
         const containedEvent: IValueChanged = { key, previousValue };
         this.emit("containedValueChanged", containedEvent, local, this);
     }

@@ -527,7 +527,7 @@ export class MapKernel implements IValueTypeCreator {
         const previousValue = this.get(key);
         this.data.set(key, value);
         const event: IValueChanged = { key, previousValue };
-        this.eventEmitter.emit("valueChanged", event, local, op, this);
+        this.eventEmitter.emit("valueChanged", event, local, op, this.eventEmitter);
     }
 
     /**
@@ -537,7 +537,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     private clearCore(local: boolean, op: ISequencedDocumentMessage | null): void {
         this.data.clear();
-        this.eventEmitter.emit("clear", local, op, this);
+        this.eventEmitter.emit("clear", local, op, this.eventEmitter);
     }
 
     /**
@@ -552,7 +552,7 @@ export class MapKernel implements IValueTypeCreator {
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
             const event: IValueChanged = { key, previousValue };
-            this.eventEmitter.emit("valueChanged", event, local, op, this);
+            this.eventEmitter.emit("valueChanged", event, local, op, this.eventEmitter);
         }
         return successfullyRemoved;
     }
@@ -722,7 +722,7 @@ export class MapKernel implements IValueTypeCreator {
                         this.serializer);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IValueChanged = { key: op.key, previousValue };
-                    this.eventEmitter.emit("valueChanged", event, local, message, this);
+                    this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
                 },
                 submit: (op: IMapValueTypeOperation, localOpMetadata: unknown) => {
                     this.submitMessage(op, localOpMetadata);
@@ -777,7 +777,7 @@ export class MapKernel implements IValueTypeCreator {
             this.submitMessage(op, undefined /* localOpMetadata */);
 
             const event: IValueChanged = { key, previousValue };
-            this.eventEmitter.emit("valueChanged", event, true, null, this);
+            this.eventEmitter.emit("valueChanged", event, true, null, this.eventEmitter);
         };
 
         return { emit };

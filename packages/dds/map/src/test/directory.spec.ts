@@ -80,16 +80,68 @@ describe("Directory", () => {
             });
 
             it("should fire correct directory events", async () => {
-                let called1: boolean = false;
-                let called2: boolean = false;
-                let called3: boolean = false;
-                directory.on("op", (arg1, arg2, arg3) => called1 = true);
-                directory.on("valueChanged", (arg1, arg2, arg3, arg4) => called2 = true);
-                directory.on("containedValueChanged", (arg1, arg2, arg3) => called3 = true);
+                let valueChangedExpected: boolean = true;
+                let containedValueChangedExpected: boolean = true;
+                let clearExpected: boolean = false;
+                let previousValue: any;
+
+                directory.on("op", (arg1, arg2, arg3) => {
+                    assert.fail("shouldn't receive an op event");
+                });
+                directory.on("valueChanged", (changed, local, op, target) => {
+                    assert.equal(valueChangedExpected, true, "valueChange event not expected");
+                    valueChangedExpected = false;
+
+                    assert.equal(changed.key, "dwyane");
+                    assert.equal(changed.previousValue, previousValue);
+                    assert.equal(changed.path, directory.absolutePath);
+
+                    assert.equal(local, true, "local should be true for local action for valueChanged event");
+                    assert.equal(op, null, "op should be null for local actions for valueChanged event");
+                    assert.equal(target, directory, "target should be the directory for valueChanged event");
+                });
+                directory.on("containedValueChanged", (changed, local, target) => {
+                    assert.equal(containedValueChangedExpected, true,
+                        "containedValueChanged event not expected for containedValueChanged event");
+                    containedValueChangedExpected = false;
+
+                    assert.equal(changed.key, "dwyane");
+                    assert.equal(changed.previousValue, previousValue);
+
+                    assert.equal(local, true, "local should be true for local action for containedValueChanged event");
+                    assert.equal(target, directory, "target should be the directory for containedValueChanged event");
+                });
+                directory.on("clear", (local, op, target) => {
+                    assert.equal(clearExpected, true, "clear event not expected");
+                    clearExpected = false;
+
+                    assert.equal(local, true, "local should be true for local action for clear event");
+                    assert.equal(op, null, "op should be null for local actions for clear event");
+                    assert.equal(target, directory, "target should be the directory for clear event");
+                });
+                directory.on("error", (error) => {
+                    // propagate error in the event handlers
+                    throw error;
+                });
+
+                // Test set
+                previousValue = undefined;
                 directory.set("dwyane", "johnson");
-                assert.equal(called1, false, "did not receive op event");
-                assert.equal(called2, true, "did not receive valueChanged event");
-                assert.equal(called3, true, "did not receive containedValueChanged event");
+                assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
+                assert.equal(containedValueChangedExpected, false, "missing containedValueChanged event");
+
+                // Test delete
+                previousValue = "johnson";
+                valueChangedExpected = true;
+                containedValueChangedExpected = true;
+                directory.delete("dwyane");
+                assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
+                assert.equal(containedValueChangedExpected, false, "missing containedValueChanged event");
+
+                // Test clear
+                clearExpected = true;
+                directory.clear();
+                assert.equal(clearExpected, false, "missing clearExpected event");
             });
 
             it("Rejects a undefined and null key set", () => {
