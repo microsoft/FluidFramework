@@ -1,3 +1,9 @@
+## 0.33 Breaking changes
+- [Map and Directory typing changes from enabling strictNullCheck](#map-and-directory-typing-changes-from-enabling-strictNullCheck)
+
+## Map and Directory typing changes from enabling strictNullCheck
+Typescript compile options `strictNullCheck` is enabled for the `@fluidframework/map` package. Some of the API signature is updated to include possibility of `undefined` and `null`, which can cause new typescript compile error when upgrading.  Existing code may need to update to handle the possiblity of `undefined` or `null.
+
 ## 0.32 Breaking changes
 - [Node version 12.17 required](#Node-version-update)
 
@@ -20,7 +26,7 @@ Due to changes in server packages and introduction of AsyncLocalStorage module w
 The branching feature has been removed. This includes all related members, methods, etc. such as `parentBranch`, `branchId`, `branch()`, etc.
 
 ### removeAllEntriesForDocId api name and signature change
-`removeAllEntriesForDocId` api renamed to `removeEntries`. Now it takes `IFileEntry` as argument instead of just docId. 
+`removeAllEntriesForDocId` api renamed to `removeEntries`. Now it takes `IFileEntry` as argument instead of just docId.
 
 ### snapshot removed from IChannel and ISharedObject
 `snapshot` has been removed from `IChannel` and `ISharedObject`. It is replaced by `summarize` which should be used to get a summary of the channel / shared object.
