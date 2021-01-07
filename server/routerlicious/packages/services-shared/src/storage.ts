@@ -23,7 +23,6 @@ import {
     IScribe,
     ITenantManager,
     SequencedOperationType,
-    ISequencedOperationMessage,
     IDocument,
 } from "@fluidframework/server-services-core";
 import {
@@ -287,12 +286,13 @@ export class DocumentStorage implements IDocumentStorage {
                                 Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : undefined,
                             ).toString(),
                         ) as ISequencedDocumentMessage[];
-            const dbOps: ISequencedOperationMessage[] = ops.map((op: ISequencedDocumentMessage) => {
+            const dbOps = ops.map((op: ISequencedDocumentMessage) => {
                 return {
                     documentId,
                     operation: op,
                     tenantId,
                     type: SequencedOperationType,
+                    mongoTimestamp: new Date(op.timestamp),
                 };
             });
             const opsCollection = await this.databaseManager.getDeltaCollection(tenantId, documentId);

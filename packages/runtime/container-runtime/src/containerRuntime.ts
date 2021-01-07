@@ -27,6 +27,7 @@ import {
     ContainerWarning,
     ICriticalContainerError,
     AttachState,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
     IContainerRuntime,
@@ -218,6 +219,9 @@ export interface IContainerRuntimeOptions {
 
     // Flag that enables running garbage collection to delete unused Fluid objects.
     runGC?: boolean;
+
+    // Override summary configurations
+    summaryConfigOverrides?: Partial<ISummaryConfiguration>;
 }
 
 interface IRuntimeMessageMetadata {
@@ -519,8 +523,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.existing!;
     }
 
-    public get options(): any {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    public get options(): ILoaderOptions {
         return this.context.options;
     }
 
@@ -632,9 +635,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private get summaryConfiguration() {
-        return this.context.serviceConfiguration
-            ? { ...DefaultSummaryConfiguration, ...this.context.serviceConfiguration.summary }
-            : DefaultSummaryConfiguration;
+        return  {
+            ... DefaultSummaryConfiguration,
+            ... this.context?.serviceConfiguration?.summary,
+            ... this.runtimeOptions.summaryConfigOverrides,
+         };
     }
 
     private _disposed = false;

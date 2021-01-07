@@ -132,7 +132,7 @@ describe("LocalLoader", () => {
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
             urlResolver = new LocalResolver();
-            opProcessingController = new OpProcessingController(deltaConnectionServer);
+            opProcessingController = new OpProcessingController();
         });
 
         afterEach(async () => {
@@ -172,6 +172,8 @@ describe("LocalLoader", () => {
             const container1 = await createContainer(testDataObjectFactory);
             const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
+            opProcessingController.addDeltaManagers(container1.deltaManager);
+
             dataObject1.increment();
             assert.equal(dataObject1.value, 1, "Local update by 'dataObject1' must be promptly observable");
 
@@ -180,9 +182,7 @@ describe("LocalLoader", () => {
             const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
             assert(dataObject1 !== dataObject2, "Each container must return a separate TestDataObject instance.");
 
-            opProcessingController.addDeltaManagers(
-                container1.deltaManager,
-                container2.deltaManager);
+            opProcessingController.addDeltaManagers(container2.deltaManager);
 
             await opProcessingController.process();
             assert.equal(
@@ -229,7 +229,7 @@ describe("LocalLoader", () => {
             beforeEach(async () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
                 urlResolver = new LocalResolver();
-                opProcessingController = new OpProcessingController(deltaConnectionServer);
+                opProcessingController = new OpProcessingController();
 
                 const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 
@@ -281,7 +281,7 @@ describe("LocalLoader", () => {
             });
 
             it("Controlled inbounds and outbounds", async () => {
-                opProcessingController = new OpProcessingController(deltaConnectionServer);
+                opProcessingController = new OpProcessingController();
                 opProcessingController.addDeltaManagers(
                     container1.deltaManager,
                     container2.deltaManager);
