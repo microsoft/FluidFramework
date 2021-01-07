@@ -59,7 +59,8 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         if (!root.hasSubDirectory(tabs)) {
             root.createSubDirectory(tabs);
         }
-        this.tabs = root.getSubDirectory(tabs);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.tabs = root.getSubDirectory(tabs)!;
 
         root.on(
             "valueChanged",

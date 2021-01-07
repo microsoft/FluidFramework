@@ -51,7 +51,8 @@ describe("SharedString", () => {
 
             const container = await loader.createDetachedContainer(codeDetails);
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-            const sharedString  = await dataObject.root.get<IFluidHandle<SharedString>>(stringId).get();
+            const sharedString  = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
+            assert(sharedString);
             sharedString.insertText(0, text);
 
             await container.attach(urlResolver.createCreateNewRequest(documentId));
@@ -72,7 +73,8 @@ describe("SharedString", () => {
 
             const container = await loader.resolve(urlResolver.createCreateNewRequest(documentId));
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-            const sharedString  = await dataObject.root.get<IFluidHandle<SharedString>>(stringId).get();
+            const sharedString  = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
+            assert(sharedString);
             assert.strictEqual(sharedString.getText(0), text);
         }
         { // failure load client
@@ -124,7 +126,7 @@ describe("SharedString", () => {
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 
             try {
-                await dataObject.root.get<IFluidHandle<SharedString>>(stringId).get();
+                await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
                 assert.fail("expected failure");
             } catch {}
         }

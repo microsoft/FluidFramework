@@ -363,11 +363,13 @@ describe("Map", () => {
 
                     // Verify the local SharedMap
                     const localSubMap = map1.get<IFluidHandle>("test");
+                    assert(localSubMap);
                     assert.equal(
                         localSubMap.absolutePath, subMap.handle.absolutePath, "could not get the handle's path");
 
                     // Verify the remote SharedMap
                     const remoteSubMap = map2.get<IFluidHandle>("test");
+                    assert(remoteSubMap);
                     assert.equal(
                         remoteSubMap.absolutePath,
                         subMap.handle.absolutePath,

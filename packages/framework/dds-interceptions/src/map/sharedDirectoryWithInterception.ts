@@ -62,7 +62,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
         return createSubDirectoryWithInterception(baseDirectory, subSubDirectory, context, setInterceptionCallback);
     };
 
-    subDirectoryWithInterception.getSubDirectory = (subdirName: string): IDirectory => {
+    subDirectoryWithInterception.getSubDirectory = (subdirName: string): IDirectory | undefined => {
         const subSubDirectory = subDirectory.getSubDirectory(subdirName);
         return subSubDirectory === undefined ?
             subSubDirectory :
@@ -94,8 +94,9 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
         return iterator;
     };
 
-    subDirectoryWithInterception.getWorkingDirectory = (relativePath: string): IDirectory => {
+    subDirectoryWithInterception.getWorkingDirectory = (relativePath: string): IDirectory | undefined => {
         const subSubDirectory = subDirectory.getWorkingDirectory(relativePath);
+        if (!subSubDirectory) { return undefined; }
         return createSubDirectoryWithInterception(baseDirectory, subSubDirectory, context, setInterceptionCallback);
     };
 

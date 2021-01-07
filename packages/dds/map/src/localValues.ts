@@ -181,23 +181,26 @@ export class LocalValueMaker {
      * @param serializable - The serializable value to make local
      * @param emitter - The value op emitter, if the serializable is a value type
      */
-    public fromSerializable(serializable: ISerializableValue, emitter?: IValueOpEmitter): ILocalValue {
-        if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
-            // Migrate from old shared value to handles
-            if (serializable.type === ValueType[ValueType.Shared]) {
-                serializable.type = ValueType[ValueType.Plain];
-                const handle: ISerializedHandle = {
-                    type: "__fluid_handle__",
-                    url: serializable.value as string,
-                };
-                serializable.value = handle;
-            }
+    public fromSerializablePlainOrShared(serializable: ISerializableValue, emitter?: IValueOpEmitter): ILocalValue {
+        // Migrate from old shared value to handles
+        if (serializable.type === ValueType[ValueType.Shared]) {
+            serializable.type = ValueType[ValueType.Plain];
+            const handle: ISerializedHandle = {
+                type: "__fluid_handle__",
+                url: serializable.value as string,
+            };
+            serializable.value = handle;
+        }
 
-            const translatedValue = parseHandles(serializable.value, this.serializer);
+        const translatedValue = parseHandles(serializable.value, this.serializer);
 
-            return new PlainLocalValue(translatedValue);
-        } else if (this.valueTypes.has(serializable.type)) {
-            const valueType = this.valueTypes.get(serializable.type);
+        return new PlainLocalValue(translatedValue);
+    }
+
+    public fromSerializableValueEmitter(serializable: ISerializableValue, emitter: IValueOpEmitter): ILocalValue {
+        if (this.valueTypes.has(serializable.type)) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const valueType = this.valueTypes.get(serializable.type)!;
 
             serializable.value = parseHandles(serializable.value, this.serializer);
 
@@ -231,7 +234,8 @@ export class LocalValueMaker {
      */
     public makeValueType(type: string, emitter: IValueOpEmitter, params: any): ILocalValue {
         const valueType = this.loadValueType(params, type, emitter);
-        return new ValueTypeLocalValue(valueType, this.valueTypes.get(type));
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return new ValueTypeLocalValue(valueType, this.valueTypes.get(type)!);
     }
 
     /**

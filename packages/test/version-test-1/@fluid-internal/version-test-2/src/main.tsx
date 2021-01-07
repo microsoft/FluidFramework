@@ -33,7 +33,8 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
         const rerender = () => {
             const title = this.root.get("title");
             const title2 = this.root.get("title2");
-            const diceValue = this.root.get<number>("diceValue");
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const diceValue = this.root.get<number>("diceValue")!;
 
             ReactDOM.render(
                 <div>
@@ -71,7 +72,8 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
         return div;
     }
     private rollDice() {
-        const dice: number = this.root.get("diceValue");
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const dice: number = this.root.get("diceValue")!;
         this.root.set("diceValue", dice + 1);
     }
 

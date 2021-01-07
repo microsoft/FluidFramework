@@ -206,14 +206,14 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
     * {@inheritDoc ISharedMap.get}
     */
-    public get<T = any>(key: string): T {
+    public get<T = any>(key: string): T | undefined {
         return this.kernel.get<T>(key);
     }
 
     /**
     * {@inheritDoc ISharedMap.wait}
     */
-    public async wait<T = any>(key: string): Promise<T> {
+    public async wait<T = any>(key: string): Promise<T | undefined> {
         return this.kernel.wait<T>(key);
     }
 

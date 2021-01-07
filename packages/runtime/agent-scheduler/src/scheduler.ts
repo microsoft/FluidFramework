@@ -44,6 +44,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
             const handle = await root.wait<IFluidHandle<ConsensusRegisterCollection<string | null>>>("scheduler");
+            assert(handle !== undefined);
             scheduler = await handle.get();
         }
         const agentScheduler = new AgentScheduler(runtime, context, scheduler);
