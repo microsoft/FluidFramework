@@ -42,14 +42,4 @@ export class BasicCheckout extends Checkout {
 	public async waitForPendingUpdates(): Promise<void> {
 		return Promise.resolve();
 	}
-		
-	/**
-	 * release all resources
-	 */
-	public dispose(): void {
-		super.dispose();
-		
-		// remove registered listener
-		this.tree.off(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
-	}
 }
