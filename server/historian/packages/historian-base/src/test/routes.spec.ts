@@ -39,7 +39,7 @@ const defaultProvider = new nconf.Provider({}).defaults({
 const defaultTenantService = new TestTenantService();
 
 describe("throttling", () => {
-    describe("verify blobs endpoints", () => {
+    describe("verify blobs endpoints are throttled once thorttling limit is exceeded", () => {
         let app: express.Application;
         let supertest: request.SuperTest<request.Test>;
         let getBlobStub: any;
@@ -99,7 +99,7 @@ describe("throttling", () => {
         });
     });
 
-    describe("verify commits endpoints", () => {
+    describe("verify commits endpoints are throttled once thorttling limit is exceeded", () => {
         let app: express.Application;
         let supertest: request.SuperTest<request.Test>;
         let getCommitStub: any;
@@ -180,7 +180,7 @@ describe("throttling", () => {
         });
     });
 
-    describe("verify refs endpoints", () => {
+    describe("verify refs endpoints are throttled once thorttling limit is exceeded", () => {
         let app: express.Application;
         let supertest: request.SuperTest<request.Test>;
         let getRefStub: any;
@@ -275,7 +275,7 @@ describe("throttling", () => {
         });
     });
 
-    describe("verify tags endpoints", () => {
+    describe("verify tags endpoints are throttled once thorttling limit is exceeded", () => {
         let app: express.Application;
         let supertest: request.SuperTest<request.Test>;
         let getTagStub: any;
@@ -342,7 +342,7 @@ describe("throttling", () => {
         });
     });
 
-    describe("verify trees endpoints", () => {
+    describe("verify trees endpoints are throttled once thorttling limit is exceeded", () => {
         let app: express.Application;
         let supertest: request.SuperTest<request.Test>;
         let getTreeStub: any;
@@ -395,7 +395,7 @@ describe("throttling", () => {
         });
     });
 
-    describe("verify contents endpoints", () => {
+    describe("verify contents endpoints are throttled once thorttling limit is exceeded", () => {
         let app: express.Application;
         let supertest: request.SuperTest<request.Test>;
         let getContentStub: any;
@@ -438,7 +438,7 @@ describe("throttling", () => {
         });
     });
 
-    describe("verify trees endpoints", () => {
+    describe("verify trees endpoints are throttled once thorttling limit is exceeded", () => {
         let app: express.Application;
         let supertest: request.SuperTest<request.Test>;
         let getHeaderStub: any;
