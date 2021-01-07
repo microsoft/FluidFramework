@@ -37,7 +37,7 @@
     "@fluidframework/core-interfaces": "^0.32.0",
     "@fluidframework/driver-definitions": "^0.32.0",
     "@fluidframework/file-driver": "^0.32.0",
-    "@fluidframework/protocol-definitions": "^0.1017.0-0",
+    "@fluidframework/protocol-definitions": "^0.1017.0",
     "@fluidframework/replay-driver": "^0.32.0",
     "@fluidframework/telemetry-utils": "^0.32.0",
     "@fluidframework/tool-utils": "^0.32.0",

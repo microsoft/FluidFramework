@@ -59,7 +59,7 @@
     "@fluidframework/container-runtime": "^0.32.0",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
     "@fluidframework/mocha-test-setup": "^0.32.0",
-    "@fluidframework/protocol-definitions": "^0.1017.0-0",
+    "@fluidframework/protocol-definitions": "^0.1017.0",
     "@fluidframework/sequence": "^0.32.0",
     "@fluidframework/telemetry-utils": "^0.32.0",
     "@types/assert": "^1.5.1",
