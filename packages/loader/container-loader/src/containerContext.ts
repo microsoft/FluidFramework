@@ -24,6 +24,7 @@ import {
     ContainerWarning,
     AttachState,
     IFluidModule,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -131,8 +132,7 @@ export class ContainerContext implements IContainerContext {
         return this.container.audience;
     }
 
-    public get options(): any {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    public get options(): ILoaderOptions {
         return this.container.options;
     }
 

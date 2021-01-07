@@ -10,7 +10,7 @@ import {
     IResponse,
     IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
-import { IContainer, ILoader } from "@fluidframework/container-definitions";
+import { IContainer, ILoader, ILoaderOptions } from "@fluidframework/container-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import * as Comlink from "comlink";
 
@@ -18,7 +18,7 @@ import * as Comlink from "comlink";
 interface IProxyLoader extends ILoader, IFluidRunnable {
     // eslint-disable-next-line @typescript-eslint/no-misused-new
     new(id: string,
-        options: any,
+        options: ILoaderOptions,
         resolved: IFluidResolvedUrl,
         fromSequenceNumber: number): IProxyLoader;
 
@@ -31,7 +31,7 @@ interface IProxyLoader extends ILoader, IFluidRunnable {
 export class WebWorkerLoader implements ILoader, IFluidRunnable, IFluidRouter {
     public static async load(
         id: string,
-        options: any,
+        options: ILoaderOptions,
         resolved: IFluidResolvedUrl,
         fromSequenceNumber: number,
     ) {

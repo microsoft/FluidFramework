@@ -18,6 +18,7 @@ import {
     IContainer,
     ILoader,
     IPendingLocalState,
+    ILoaderOptions,
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
@@ -162,7 +163,7 @@ export interface ILoaderProps {
      * A property bag of options used by various layers
      * to control features
      */
-    readonly options?: any;
+    readonly options?: ILoaderOptions;
 
     /**
      * Scope is provided to all container and is a set of shared
@@ -208,7 +209,7 @@ export interface ILoaderServices {
      * A property bag of options used by various layers
      * to control features
      */
-    readonly options: any;
+    readonly options: ILoaderOptions;
 
     /**
      * Scope is provided to all container and is a set of shared
@@ -243,7 +244,7 @@ export class Loader extends EventEmitter implements ILoader {
         resolver: IUrlResolver | IUrlResolver[],
         documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
         codeLoader: ICodeLoader,
-        options: any,
+        options: ILoaderOptions,
         scope: IFluidObject,
         proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
         logger?: ITelemetryBaseLogger,
@@ -404,7 +405,7 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 function opHandler(message: ISequencedDocumentMessage) {
                     if (message.sequenceNumber > fromSequenceNumber) {
                         resolve();

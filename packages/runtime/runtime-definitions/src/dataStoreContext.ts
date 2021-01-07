@@ -18,6 +18,7 @@ import {
     ContainerWarning,
     ILoader,
     AttachState,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -250,7 +251,7 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
      * TODO: should remove after detachedNew is in place
      */
     readonly existing: boolean;
-    readonly options: any;
+    readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly connected: boolean;
     readonly leader: boolean;

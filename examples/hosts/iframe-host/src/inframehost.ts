@@ -12,6 +12,7 @@ import {
     IRuntimeFactory,
     IRuntimeState,
     IProxyLoaderFactory,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { Loader, Container } from "@fluidframework/container-loader";
 import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
@@ -55,7 +56,7 @@ export interface IFrameOuterHostConfig {
     urlResolver: IUrlResolver;
 
     // Any config to be provided to loader.
-    options?: any;
+    options?: ILoaderOptions;
 
     // A Fluid object that gives host provided capabilities/configurations
     // to the Fluid object in the container(such as auth).

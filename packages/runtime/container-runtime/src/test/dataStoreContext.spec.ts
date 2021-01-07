@@ -591,9 +591,7 @@ describe("Data Store Context Tests", () => {
                     "summarize should return a handle since nothing changed");
 
                 // Update the used routes of the data store.
-                const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
-                assert(dataStoreSummarizerNode !== undefined, "Data store's summarizer node is missing");
-                dataStoreSummarizerNode.usedRoutes = [""];
+                remotedDataStoreContext.updateUsedRoutes([""]);
 
                 // Since the used state has changed, it should generate a full summary tree.
                 summarizeResult = await remotedDataStoreContext.summarize(false /* fullTree */);
