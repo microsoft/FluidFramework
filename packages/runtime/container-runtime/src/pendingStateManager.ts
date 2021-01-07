@@ -249,6 +249,10 @@ export class PendingStateManager {
             }
 
             if (nextState.type === "message") {
+                if (nextState.clientSequenceNumber === this.initialClientSeqNum &&
+                    message.sequenceNumber > nextState.referenceSequenceNumber) {
+                    throw new Error("loaded from snapshot too recent to rebase pending initial ops");
+                }
                 // rebaseOp will cause the DDS to behave as if it has sent the op but not actually send it
                 this.rebaseOp(nextState.content, nextState.localOpMetadata);
             }
