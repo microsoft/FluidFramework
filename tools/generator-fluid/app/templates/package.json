@@ -7,8 +7,8 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run webpack && npm run tsc",
-    "start": "npm run start:local -- --open",
+    "build": "yarn run webpack && yarn run tsc",
+    "start": "yarn run start:local -- --open",
     "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
     "start:tiny": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious",
     "test": "jest",
