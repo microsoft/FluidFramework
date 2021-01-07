@@ -58,7 +58,7 @@ export interface DriverPreCheckInfo {
      * Domains that will be connected to on the critical boot path. Hosts can choose to preconnect to these for
      * improved performance.
      */
-    preconnectDomains?: string[];
+    criticalBootDomains?: string[];
   }
 
 /**

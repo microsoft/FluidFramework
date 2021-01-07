@@ -29,7 +29,7 @@ export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined {
   return {
     containerPath: locator.dataStorePath,
     codeDetailsHint: locator?.containerPackageName,
-    // We want to preconnect to the snapshot endpoint, which has the same domain as the site URL
-    preconnectDomains: siteOrigin ? [siteOrigin] : undefined,
+    // Add the snapshot endpoint, which has the same domain as the site URL
+    criticalBootDomains: siteOrigin ? [siteOrigin] : undefined,
   };
 }
