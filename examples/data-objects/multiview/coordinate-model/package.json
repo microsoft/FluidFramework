@@ -10,10 +10,10 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:lint",
+    "build": "concurrently \"yarn run build:compile\" \"yarn run lint\"",
     "build:compile": "yarn run tsc",
-    "build:full": "concurrently npm:build npm:webpack",
-    "build:full:compile": "concurrently npm:build:compile npm:webpack",
+    "build:full": "concurrently \"yarn run build\" \"yarn run webpack\"",
+    "build:full:compile": "concurrently \"yarn run build:compile\" \"yarn run webpack\"",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",

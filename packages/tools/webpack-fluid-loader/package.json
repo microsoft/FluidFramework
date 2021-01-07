@@ -13,9 +13,9 @@
   },
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:lint",
+    "build": "concurrently \"yarn run build:compile\" \"yarn run lint\"",
     "build:commonjs": "yarn run tsc && yarn run build:test",
-    "build:compile": "concurrently npm:build:commonjs npm:build:esnext npm:build:webpack",
+    "build:compile": "concurrently \"yarn run build:commonjs\" \"yarn run build:esnext\" \"yarn run build:webpack\"",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "yarn run build",
     "build:full:compile": "yarn run build:compile",

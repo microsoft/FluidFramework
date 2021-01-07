@@ -12,7 +12,7 @@
     "fluid-fetch": "bin/fluid-fetch"
   },
   "scripts": {
-    "build": "concurrently npm:build:compile npm:lint",
+    "build": "concurrently \"yarn run build:compile\" \"yarn run lint\"",
     "build:compile": "yarn run tsc",
     "build:full": "yarn run build",
     "build:full:compile": "yarn run build:compile",

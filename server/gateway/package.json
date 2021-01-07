@@ -14,9 +14,9 @@
   },
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "yarn run build:genver && concurrently npm:build:compile npm:lint",
-    "build:compile": "concurrently npm:tsc npm:less npm:build:webpack",
-    "build:compile:min": "concurrently npm:build:compile npm:build:webpack:min",
+    "build": "concurrently \"yarn run build:compile\" \"yarn run lint\"",
+    "build:compile": "concurrently \"yarn run tsc\" \"yarn run less\" \"yarn run build:webpack\"",
+    "build:compile:min": "concurrently \"yarn run build:compile\" \"yarn run build:webpack:min\"",
     "build:docker": "docker build . --tag prague.azurecr.io/gateway:test",
     "build:full": "yarn run build",
     "build:full:compile": "yarn run build:compile",

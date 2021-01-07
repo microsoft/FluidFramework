@@ -10,9 +10,9 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:lint",
+    "build": "concurrently \"yarn run build:compile\" \"yarn run lint\"",
     "build:commonjs": "yarn run tsc",
-    "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
+    "build:compile": "concurrently \"yarn run build:commonjs\" \"yarn run build:esnext\"",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "yarn run build",
     "build:full:compile": "yarn run build:compile",

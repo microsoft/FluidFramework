@@ -10,9 +10,8 @@
     "packages/**"
   ],
   "scripts": {
-    "build": "yarn run build:genver && yarn run build:compile && yarn run lint",
+    "build": "yarn run build:compile && yarn run lint",
     "build:compile": "lerna run build:compile --stream",
-    "build:genver": "lerna run build:genver --stream --parallel",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "postinstall-old": "yarn run postinstall:lerna",
     "lint": "lerna run lint --no-sort --stream",

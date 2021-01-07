@@ -16,7 +16,7 @@
     "alfred": "node dist/alfred/www.js",
     "alfred:debug": "node --inspect=0.0.0.0:5858 dist/alfred/www.js",
     "beast": "npm test -- --beast --grep beastTest",
-    "build": "concurrently npm:build:compile npm:lint",
+    "build": "concurrently \"yarn run build:compile\" \"yarn run lint\"",
     "build:compile": "yarn run tsc && yarn run build:test",
     "build:full": "yarn run build",
     "build:full:compile": "yarn run build:compile",

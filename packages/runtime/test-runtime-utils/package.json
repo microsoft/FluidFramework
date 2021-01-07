@@ -11,7 +11,7 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:lint",
+    "build": "concurrently \"yarn run build:compile\" \"yarn run lint\"",
     "build:compile": "yarn run tsc && yarn run build:test",
     "build:full": "yarn run build",
     "build:full:compile": "yarn run build:compile",
