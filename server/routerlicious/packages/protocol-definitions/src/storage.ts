@@ -61,7 +61,7 @@ export interface ITreeEntry {
     path: string;
 
     // One of the below enum string values
-    type: string;
+    type: TreeEntry.Blob | TreeEntry.Commit | TreeEntry.Tree | TreeEntry.Attachment;
 
     // The value of the entry - either a tree or a blob
     value: IBlob | IAttachment | ITree | string;
@@ -86,14 +86,19 @@ export interface ITree {
 
     // Unique ID representing all entries in the tree. Can be used to optimize snapshotting in the case
     // it is known that the ITree has already been created and stored
-    id: string | null;
+    id?: string;
 }
 
 export interface ISnapshotTree {
-    id: string | null;
     blobs: { [path: string]: string };
+    // TODO: Commits should be removed from here to ISnapshotTreeEx once ODSP snapshots move away from commits
     commits: { [path: string]: string };
     trees: { [path: string]: ISnapshotTree };
+}
+
+export interface ISnapshotTreeEx extends ISnapshotTree {
+    id: string;
+    trees: { [path: string]: ISnapshotTreeEx };
 }
 
 /**

@@ -10,7 +10,7 @@ import { buildHierarchy } from "@fluidframework/protocol-base";
 import {
     FileMode,
     ICreateBlobResponse,
-    ISnapshotTree,
+    ISnapshotTreeEx,
     ISummaryHandle,
     ISummaryTree,
     ITree,
@@ -34,7 +34,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     constructor(public readonly id: string, public manager: gitStorage.GitManager) {
     }
 
-    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
+    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null> {
         let requestVersion = version;
         if (!requestVersion) {
             const versions = await this.getVersions(this.id, 1);
@@ -117,7 +117,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     private async writeSummaryTree(
         summaryTree: ISummaryTree,
         /** Entire previous snapshot, not subtree */
-        previousFullSnapshot: ISnapshotTree | undefined,
+        previousFullSnapshot: ISnapshotTreeEx | undefined,
     ): Promise<string> {
         const entries = await Promise.all(Object.keys(summaryTree.tree).map(async (key) => {
             const entry = summaryTree.tree[key];
@@ -138,7 +138,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     private async writeSummaryTreeObject(
         key: string,
         object: SummaryObject,
-        previousFullSnapshot: ISnapshotTree | undefined,
+        previousFullSnapshot: ISnapshotTreeEx | undefined,
         currentPath = "",
     ): Promise<string> {
         switch (object.type) {
@@ -166,7 +166,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     private getIdFromPath(
         handleType: SummaryType,
         handlePath: string,
-        previousFullSnapshot: ISnapshotTree,
+        previousFullSnapshot: ISnapshotTreeEx,
     ): string {
         const path = handlePath.split("/").map((part) => decodeURIComponent(part));
         if (path[0] === "") {
@@ -174,9 +174,7 @@ export class DocumentStorageService implements IDocumentStorageService {
             path.shift();
         }
         if (path.length === 0) {
-            const tryId = previousFullSnapshot.id;
-            assert(!!tryId, "Parent summary does not have handle for specified path.");
-            return tryId;
+            return previousFullSnapshot.id;
         }
 
         return this.getIdFromPathCore(handleType, path, previousFullSnapshot);
@@ -186,21 +184,17 @@ export class DocumentStorageService implements IDocumentStorageService {
         handleType: SummaryType,
         path: string[],
         /** Previous snapshot, subtree relative to this path part */
-        previousSnapshot: ISnapshotTree,
+        previousSnapshot: ISnapshotTreeEx,
     ): string {
         assert(path.length > 0, "Expected at least 1 path part");
         const key = path[0];
         if (path.length === 1) {
             switch (handleType) {
                 case SummaryType.Blob: {
-                    const tryId = previousSnapshot.blobs[key];
-                    assert(!!tryId, "Parent summary does not have blob handle for specified path.");
-                    return tryId;
+                    return previousSnapshot.blobs[key];
                 }
                 case SummaryType.Tree: {
-                    const tryId = previousSnapshot.trees[key]?.id;
-                    assert(!!tryId, "Parent summary does not have tree handle for specified path.");
-                    return tryId;
+                    return previousSnapshot.trees[key]?.id;
                 }
                 default:
                     throw Error(`Unexpected handle summary object type: "${handleType}".`);

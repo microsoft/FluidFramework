@@ -944,7 +944,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Output the tree
         const root: ITree = {
             entries,
-            id: null,
         };
 
         return root;
@@ -1011,8 +1010,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._attachState = AttachState.Attached;
 
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
-        const maybeSnapshotTree = specifiedVersion === null ? undefined
-            : await this.fetchSnapshotTree(specifiedVersion);
+        const [maybeSnapshotTree, versionId] = await this.fetchSnapshotTree(specifiedVersion);
 
         const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
 
@@ -1061,7 +1059,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return {
             existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
-            version: maybeSnapshotTree?.id ?? undefined,
+            version: versionId,
         };
     }
 
@@ -1630,20 +1628,27 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * Get the most recent snapshot, or a specific version.
      * @param specifiedVersion - The specific version of the snapshot to retrieve
-     * @returns The snapshot requested, or the latest snapshot if no version was specified
+     * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
      */
-    private async fetchSnapshotTree(specifiedVersion?: string): Promise<ISnapshotTree | undefined> {
+    private async fetchSnapshotTree(specifiedVersion: string | undefined | null):
+        Promise<[ISnapshotTree | undefined, string | undefined]>
+    {
+        if (specifiedVersion === null) {
+            return [undefined, undefined];
+        }
         const version = await this.getVersion(specifiedVersion ?? this.id);
 
-        if (version !== undefined) {
-            this._loadedFromVersion = version;
-            return await this.storageService.getSnapshotTree(version) ?? undefined;
-        } else if (specifiedVersion !== undefined) {
+        if (version === undefined && specifiedVersion !== undefined) {
             // We should have a defined version to load from if specified version requested
-            this.logger.sendErrorEvent({ eventName: "NoVersionFoundWhenSpecified", specifiedVersion });
+            this.logger.sendErrorEvent({ eventName: "NoVersionFoundWhenSpecified", id: specifiedVersion });
         }
+        this._loadedFromVersion = version;
+        const tree = await this.storageService.getSnapshotTree(version) ?? undefined;
 
-        return undefined;
+        if (tree === undefined && version !== undefined) {
+            this.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
+        }
+        return [tree, version?.id];
     }
 
     private async loadContext(

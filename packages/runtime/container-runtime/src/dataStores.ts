@@ -180,7 +180,6 @@ export class DataStores implements IDisposable {
                     type: CreateSummarizerNodeSource.FromAttach,
                     sequenceNumber: message.sequenceNumber,
                     snapshot: attachMessage.snapshot ?? {
-                        id: null,
                         entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
                     },
                 }),

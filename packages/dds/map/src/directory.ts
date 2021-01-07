@@ -237,7 +237,7 @@ export interface IDirectoryNewStorageFormat {
 function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): ITree {
     const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
-    const tree: ITree = { entries: [], id: null };
+    const tree: ITree = { entries: [] };
     let counter = 0;
     const blobs: string[] = [];
 

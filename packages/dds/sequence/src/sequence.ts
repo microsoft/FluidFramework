@@ -434,8 +434,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 },
 
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         return tree;

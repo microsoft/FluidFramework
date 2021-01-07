@@ -279,7 +279,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
         }
 
         public async buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree> {
-            const tree: api.ITree = { id: snapshotTree.id, entries: [] };
+            const tree: api.ITree = { entries: [] };
 
             for (const subTreeId of Object.keys(snapshotTree.trees)) {
                 const subTree = await this.buildTree(snapshotTree.trees[subTreeId]);

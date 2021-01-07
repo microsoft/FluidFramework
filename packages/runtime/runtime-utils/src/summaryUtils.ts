@@ -328,7 +328,5 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
     }
     return {
         entries,
-        // eslint-disable-next-line no-null/no-null
-        id: null,
     };
 }

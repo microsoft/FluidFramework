@@ -137,8 +137,6 @@ describe("ConsensusRegisterCollection", () => {
                         },
                     },
                 ],
-                // eslint-disable-next-line no-null/no-null
-                id: null,
             });
 
             it("summarize", async () => {

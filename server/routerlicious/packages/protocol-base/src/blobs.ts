@@ -8,7 +8,7 @@ import {
     FileMode,
     IBlob,
     IAttachment,
-    ISnapshotTree,
+    ISnapshotTreeEx,
     ITree,
     ITreeEntry,
     TreeEntry,
@@ -68,9 +68,9 @@ export function getGitType(value: SummaryObject): string {
  */
 export function buildHierarchy(
     flatTree: git.ITree,
-    blobsShaToPathCache: Map<string, string> = new Map<string, string>()): ISnapshotTree {
-    const lookup: { [path: string]: ISnapshotTree } = {};
-    const root: ISnapshotTree = { id: flatTree.sha, blobs: {}, commits: {}, trees: {} };
+    blobsShaToPathCache: Map<string, string> = new Map<string, string>()): ISnapshotTreeEx {
+    const lookup: { [path: string]: ISnapshotTreeEx } = {};
+    const root: ISnapshotTreeEx = { id: flatTree.sha, blobs: {}, commits: {}, trees: {} };
     lookup[""] = root;
 
     for (const entry of flatTree.tree) {

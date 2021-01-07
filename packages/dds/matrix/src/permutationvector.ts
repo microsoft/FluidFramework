@@ -277,7 +277,6 @@ export class PermutationVector extends Client {
                 },
                 serializeBlob(handle, SnapshotPath.handleTable, this.handleTable.snapshot(), serializer),
             ],
-            id: null,   // eslint-disable-line no-null/no-null
         };
     }
 
