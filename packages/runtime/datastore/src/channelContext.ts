@@ -31,6 +31,8 @@ export interface IChannelContext {
     reSubmit(content: any, localOpMetadata: unknown): void;
 
     getGCData(): Promise<IGarbageCollectionData>;
+
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 export function createServiceEndpoints(

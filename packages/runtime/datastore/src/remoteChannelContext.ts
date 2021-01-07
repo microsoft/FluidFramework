@@ -72,7 +72,6 @@ export class RemoteChannelContext implements IChannelContext {
         extraBlobs: Map<string, string> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private readonly attachMessageType?: string,
-        usedRoutes?: string[],
     ) {
         this.services = createServiceEndpoints(
             this.id,
@@ -86,14 +85,18 @@ export class RemoteChannelContext implements IChannelContext {
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
 
-        // If we are created before GC is run, used routes will not be available. Set self route (empty string) to
-        // used routes in the summarizer node. If GC is enabled, the used routes will be updated as per the GC data.
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async () => this.getGCDataInternal(),
             async () => this.gcDetailsInInitialSummaryP,
-            usedRoutes ?? [""],
         );
+
+        // Add self route (empty string) to used routes in the summarizer node. If GC is enabled, the used routes will
+        // be updated as per the GC data.
+        // back-compat: 0.33 - updateUsedRoutes is added in 0.33. Remove the check here when N >= 0.36.
+        if (this.summarizerNode.updateUsedRoutes !== undefined) {
+            this.summarizerNode.updateUsedRoutes([""]);
+        }
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -240,6 +243,19 @@ export class RemoteChannelContext implements IChannelContext {
 
     public async getGCData(): Promise<IGarbageCollectionData> {
         return this.summarizerNode.getGCData();
+    }
+
+    public updateUsedRoutes(usedRoutes: string[]) {
+        /**
+         * Currently, DDSs are always considered referenced and are not garbage collected. Update the summarizer node's
+         * used routes to contain a route to this channel context.
+         * Once we have GC at DDS level, this will be updated to use the passed usedRoutes. See -
+         * https://github.com/microsoft/FluidFramework/issues/4611
+         */
+        // back-compat: 0.33 - updateUsedRoutes is added in 0.33. Remove the check here when N >= 0.36.
+        if (this.summarizerNode.updateUsedRoutes !== undefined) {
+            this.summarizerNode.updateUsedRoutes([""]);
+        }
     }
 
     private async getGCDataInternal(): Promise<IGarbageCollectionData> {

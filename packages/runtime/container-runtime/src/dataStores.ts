@@ -39,7 +39,7 @@ import { BlobCacheStorageService, buildSnapshotTree, readAndParseFromBlobs } fro
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
-import { GCDataBuilder } from "@fluidframework/garbage-collector";
+import { GCDataBuilder, getChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime } from "./containerRuntime";
 import {
@@ -464,26 +464,17 @@ export class DataStores implements IDisposable {
      * @param usedRoutes - The routes that are used in all data stores in this Container.
      */
     public updateUsedRoutes(usedRoutes: string[]) {
-        // Build a map of data store ids to routes used in it.
-        const usedRoutesMap: Map<string, string[]> = new Map();
-        for (const route of usedRoutes) {
-            assert(route.startsWith("/"), "Used route should always be an absolute route");
+        // Get a map of data store ids to routes used in it.
+        const usedDataStoreRoutes = getChildNodesUsedRoutes(usedRoutes);
 
-            const dataStoreId = route.split("/")[1];
-            assert(this.contexts.has(dataStoreId), "Used route does not belong to any known data store");
-
-            const dataStoreRoute = route.slice(dataStoreId.length + 1);
-            const routes = usedRoutesMap.get(dataStoreId);
-            if (routes !== undefined) {
-                routes.push(dataStoreRoute);
-            } else {
-                usedRoutesMap.set(dataStoreId, [dataStoreRoute]);
-            }
+        // Verify that the used routes are correct.
+        for (const [id] of usedDataStoreRoutes) {
+            assert(this.contexts.has(id), "Used route does not belong to any known data store");
         }
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.
         for (const [contextId, context] of this.contexts) {
-            context.updateUsedRoutes(usedRoutesMap.get(contextId) ?? []);
+            context.updateUsedRoutes(usedDataStoreRoutes.get(contextId) ?? []);
         }
     }
 

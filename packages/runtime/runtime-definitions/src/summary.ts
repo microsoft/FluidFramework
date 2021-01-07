@@ -161,9 +161,6 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
         config?: ISummarizerNodeConfig,
         getGCDataFn?: () => Promise<IGarbageCollectionData>,
         getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
-        // The initial used routes of this node. This is needed for children that are created while a summary is in
-        // progress so that their work-in-progress state can be updated.
-        usedRoutes?: string[],
     ): ISummarizerNodeWithGC;
 
     getChild(id: string): ISummarizerNodeWithGC | undefined;

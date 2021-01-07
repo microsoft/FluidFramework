@@ -202,4 +202,12 @@ export class LocalChannelContext implements IChannelContext {
         assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to run GC");
         return this.channel.getGCData();
     }
+
+    public updateUsedRoutes(usedRoutes: string[]) {
+        /**
+         * Currently, DDSs are always considered referenced and are not garbage collected.
+         * Once we have GC at DDS level, this channel context's used routes will be updated as per the passed
+         * value. See - https://github.com/microsoft/FluidFramework/issues/4611
+         */
+    }
 }

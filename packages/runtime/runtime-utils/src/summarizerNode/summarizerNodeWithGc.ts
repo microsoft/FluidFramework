@@ -64,6 +64,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     // The GC details of this node in the initial summary.
     private readonly gcDetailsInInitialSummaryP: LazyPromise<IGarbageCollectionSummaryDetails>;
 
+    private _usedRoutes: string[] = [];
     public get usedRoutes(): string[] {
         return this._usedRoutes;
     }
@@ -83,7 +84,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         wipSummaryLogger?: ITelemetryLogger,
         private readonly getGCDataFn?: () => Promise<IGarbageCollectionData>,
         getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
-        private _usedRoutes: string[] = [],
     ) {
         super(
             logger,
@@ -270,7 +270,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         config: ISummarizerNodeConfig = {},
         getGCDataFn?: () => Promise<IGarbageCollectionData>,
         getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
-        usedRoutes?: string[],
     ): ISummarizerNodeWithGC {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
 
@@ -285,7 +284,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             this.wipSummaryLogger,
             getGCDataFn,
             getInitialGCSummaryDetailsFn,
-            usedRoutes,
         );
 
         // If a summary is in progress, update the child's work-in-progress state.
@@ -378,5 +376,4 @@ export const createRootSummarizerNodeWithGC = (
     undefined /* wipSummaryLogger */,
     getGCDataFn,
     getInitialGCSummaryDetailsFn,
-    [""] /* usedRoutes */, // Add self route (empty string) because root node is always considered used.
 );

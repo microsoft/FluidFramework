@@ -195,6 +195,11 @@ export interface IFluidDataStoreChannel extends
     getGCData(): Promise<IGarbageCollectionData>;
 
     /**
+     * After GC has run, called to notify this channel of routes that are used in it.
+     */
+    updateUsedRoutes(usedRoutes: string[]): void;
+
+    /**
      * Notifies this object about changes in the connection state.
      * @param value - New connection state.
      * @param clientId - ID of the client. It's old ID when in disconnected state and
@@ -215,7 +220,6 @@ export type CreateChildSummarizerNodeFn = (
     summarizeInternal: SummarizeInternalFn,
     getGCDataFn: () => Promise<IGarbageCollectionData>,
     getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
-    usedRoutes: string[],
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {

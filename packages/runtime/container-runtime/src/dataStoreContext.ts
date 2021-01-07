@@ -247,14 +247,15 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
 
-        // Add self route (empty string) to used routes in the summarizer node. If GC is enabled, the used routes will
-        // be updated as per the GC data.
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async () => this.getGCDataInternal(),
             async () => this.getInitialGCSummaryDetails(),
-            [""] /* usedRoutes */,
         );
+
+        // Add self route (empty string) to used routes in the summarizer node. If GC is enabled, the used routes will
+        // be updated as per the GC data.
+        this.summarizerNode.updateUsedRoutes([""]);
     }
 
     public dispose(): void {
@@ -458,6 +459,28 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // Update the used routes in this data store's summarizer node.
         this.summarizerNode.updateUsedRoutes(usedRoutes);
+
+        // If we are loaded, call the channel so it can update the used routes of the child contexts.
+        // If we are not loaded, we will update this when we are realized.
+        if (this.loaded) {
+            this.updateChannelUsedRoutes();
+        }
+    }
+
+    /**
+     * Calls the channel to update used routes of its child contexts.
+     */
+    private updateChannelUsedRoutes() {
+        assert(this.channel !== undefined, "Channel should not be undefined when updating used routes");
+        // Remove the route to this data store, if it exists.
+        const usedChannelRoutes = this.summarizerNode.usedRoutes.filter(
+            (id: string) => { return id !== "/" && id !== ""; },
+        );
+
+        // back-compat: 0.33 - updateUsedRoutes is added in 0.33. Remove the check here when N >= 0.36.
+        if (this.channel.updateUsedRoutes !== undefined) {
+            this.channel.updateUsedRoutes(usedChannelRoutes);
+        }
     }
 
     /**
@@ -562,6 +585,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             // returned in packagePath().
             Object.freeze(this.pkg);
 
+            // Update the used routes of the channel in case GC was run before we were realized.
+            this.updateChannelUsedRoutes();
+
             // And notify the pending promise it is now available
             this.channelDeferred.resolve(this.channel);
         } catch (error) {
@@ -602,7 +628,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             summarizeInternal: SummarizeInternalFn,
             getGCDataFn: () => Promise<IGarbageCollectionData>,
             getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
-            usedRoutes: string[],
         ) => this.summarizerNode.createChild(
             summarizeInternal,
             id,
@@ -611,7 +636,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             { throwOnFailure: true },
             getGCDataFn,
             getInitialGCSummaryDetailsFn,
-            usedRoutes,
         );
     }
 

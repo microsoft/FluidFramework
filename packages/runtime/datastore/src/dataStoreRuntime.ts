@@ -66,7 +66,7 @@ import {
     IChannelFactory,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import {  GCDataBuilder } from "@fluidframework/garbage-collector";
+import {  GCDataBuilder, getChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
@@ -606,6 +606,26 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         this.updateGCNodes(builder);
         return builder.getGCData();
+    }
+
+    /**
+     * After GC has run, called to notify this channel of routes that are used in it. It call the child contexts to
+     * update their used routes.
+     * @param usedRoutes - The routes that are used in all contexts in this channel.
+     */
+    public updateUsedRoutes(usedRoutes: string[]) {
+        // Get a map of channel ids to routes used in it.
+        const usedContextRoutes = getChildNodesUsedRoutes(usedRoutes);
+
+        // Verify that the used routes are correct.
+        for (const [id] of usedContextRoutes) {
+            assert(this.contexts.has(id), "Used route does not belong to any known context");
+        }
+
+        // Update the used routes in each context. Used routes is empty for unused context.
+        for (const [contextId, context] of this.contexts) {
+            context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? []);
+        }
     }
 
     /**
