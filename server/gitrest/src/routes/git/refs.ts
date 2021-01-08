@@ -50,8 +50,7 @@ async function getRef(
         // Lookup external storage if commit does not exist.
         const fileName = refId.substring(refId.lastIndexOf("/") + 1);
         // If file does not exist or error trying to look up commit, return the original error.
-        if (getRefParams?.config?.enabled)
-        {
+        if (getRefParams?.config?.enabled) {
             try {
                 const result = await externalStorageManager.read(repo, fileName);
                 if (!result) {
@@ -151,8 +150,7 @@ function getRefId(id): string {
 }
 
 function getReadParams(params): IGetRefParamsExternal | undefined {
-    if (params)
-    {
+    if (params) {
         const getRefParams: IGetRefParamsExternal = JSON.parse(decodeURIComponent(params));
         return getRefParams;
     }

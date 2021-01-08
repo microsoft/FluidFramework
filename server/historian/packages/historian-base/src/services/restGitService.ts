@@ -115,8 +115,7 @@ export class RestGitService {
     }
 
     public async getRef(ref: string): Promise<git.IRef> {
-        if (this.writeToExternalStorage)
-        {
+        if (this.writeToExternalStorage) {
             const getRefParams: IGetRefParamsExternal = {
                 config: { enabled: true },
             };
