@@ -64,6 +64,8 @@ async function getRef(
                 return Promise.reject(err);
             }
         }
+        winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${repo} ref: ${refId}`);
+        return Promise.reject(err);
     }
 }
 
@@ -145,7 +147,7 @@ function handleResponse(resultP: Promise<any>, response: Response, successCode: 
  * Simple method to convert from a path id to the git reference ID
  */
 function getRefId(id): string {
-    return `refs/heads/${id}`;
+    return `refs/${id}`;
 }
 
 function getReadParams(params): IGetRefParamsExternal | undefined {
@@ -171,12 +173,12 @@ export function create(
         handleResponse(resultP, response);
     });
 
-    router.get("/repos/:owner/:repo/git/refs/heads/:refId", (request, response, next) => {
+    router.get("/repos/:owner/:repo/git/refs/*", (request, response, next) => {
         const resultP = getRef(
             repoManager,
             request.params.owner,
             request.params.repo,
-            getRefId(request.params.refId),
+            getRefId(request.params[0]),
             getReadParams(request.query?.config),
             externalStorageManager);
         handleResponse(resultP, response);

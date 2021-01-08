@@ -22,8 +22,8 @@
   },
   "dependencies": {
     "@fluidframework/gitresources": "^0.1016.1",
-    "@fluidframework/server-services-core": "^0.1016.1",
     "@fluidframework/server-services-client": "^0.1016.1",
+    "@fluidframework/server-services-core": "^0.1016.1",
     "@fluidframework/server-services-utils": "^0.1016.1",
     "axios": "^0.21.1",
     "body-parser": "^1.17.2",
