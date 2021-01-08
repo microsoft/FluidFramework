@@ -61,8 +61,8 @@ describe("Summary Blobs Cache Tests", () => {
         };
         const rootBlobHash = await hashFile(IsoBuffer.from(rootBlob.content, "utf-8"));
         const componentBlobHash = await hashFile(IsoBuffer.from(componentBlob.content, "utf-8"));
-        const rootBlobPath = "/.app/default/root";
-        const componentBlobPath = "/.app/default/component";
+        const rootBlobPath = ".app/default/root";
+        const componentBlobPath = ".app/default/component";
 
         const appSummary: ISummaryTree = {
             type: SummaryType.Tree,
@@ -99,7 +99,7 @@ describe("Summary Blobs Cache Tests", () => {
                 component2: componentBlob,
             },
         };
-        const componentBlobNewPath = "/.app/default2/component2";
+        const componentBlobNewPath = ".app/default2/component2";
         await mockFetch({ id: summaryContext.proposalHandle }, async () => {
             return storageService.uploadSummaryWithContext(
                 appSummary,
