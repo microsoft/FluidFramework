@@ -55,24 +55,24 @@ This generalizes to making arbitrary history edits by considering A, B, C, and X
 
 We start with these changes:
 
-:::mermaid
+```mermaid
 graph LR
 A(A) --> B(B) --> C(C)
-:::
+```
 
 And want to end with changes:
 
-:::mermaid
+```mermaid
 graph LR
 A(A) --> X(X) --> C(C)
-:::
+```
 
 Since history is append only, we actually end with:
 
-:::mermaid
+```mermaid
 graph LR
 A(A) --> B(B) --> C(C) --> Merge(Merge)
-:::
+```
 
 ### Low Level Commuting Merge
 
@@ -87,16 +87,17 @@ Then B is applied, constructing inverse(B) in the process to use as part of the 
 This amounts to moving B past C (allowed because they commute), then adding inverse(B), followed by X.
 Placing X at the end is the same as placing it between A and C since it commutes with C (at revision output by A).
 
-:::mermaid
+```mermaid
 graph LR
 A(A) --> C(C) --> B(B) --> B2("B⁻¹") --> X(X)
-:::
+```
 
 This can then be transformed into its final form, which meets the requirement of only adding to the original:
-:::mermaid
+
+```mermaid
 graph LR
 A(A) --> B(B) --> C(C) --> B2("Merge: B⁻¹ + X")
-:::
+```
 
 Note that if B deletes any nodes, B⁻¹ must restore them with the same identity.
 
@@ -112,22 +113,25 @@ This can continue until there no longer is a conflict due to lack of commuting.
 This is guaranteed to eventually fix the conflict since it can continue until C is empty, and thus commutes with anything.
 
 For initial state:
-:::mermaid
+
+```mermaid
 graph LR
 A(A) --> B(B) --> C("C1 + C2")
-:::
+```
 
 it can be regrouped like:
-:::mermaid
+
+```mermaid
 graph LR
 A(A) --> B("B + C1") --> C(C2)
-:::
+```
 
 Making the desired final state:
-:::mermaid
+
+```mermaid
 graph LR
 A(A) --> X("X + C1") --> C(C2)
-:::
+```
 
 This process can be though of as expanding the portion of the history being replaced to include a segment long enough to contain all the conflicts.
 This modified replacement can then be applied using the Low Level Commuting Merge.
