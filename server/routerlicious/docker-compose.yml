@@ -1,5 +1,14 @@
 version: '3.4'
 services:
+    gateway:
+        image: prague.azurecr.io/gateway:latest
+        ports:
+            - "3000:3000"
+        command: node dist/www.js
+        environment:
+            - DEBUG=fluid:*
+            - NODE_ENV=development
+        restart: always
     alfred:
         build:
             context: .
@@ -112,6 +121,19 @@ services:
         image: "mongo:3.4.3"
     rabbitmq:
         image: "rabbitmq:alpine"
+    auspkn:
+        image: prague.azurecr.io/auspkn:4149
+        command: node dist/www.js
+        ports:
+            - "3002:3000"
+        environment:
+            - npm__url=http://verdaccio:4873
+    verdaccio:
+        image: verdaccio/verdaccio:3.8.1
+        ports:
+            - "4873:4873"
+        volumes:
+            - ./verdaccio/conf:/verdaccio/conf
 volumes:
   git:
     driver: local
