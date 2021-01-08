@@ -1299,6 +1299,7 @@ __metadata:
   dependencies:
     "@fluidframework/aqueduct": ^0.32.0
     "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/common-definitions": ^0.20.0
     "@fluidframework/core-interfaces": ^0.32.0
     "@fluidframework/counter": ^0.32.0
     "@fluidframework/eslint-config-fluid": ^0.22.0
@@ -1367,7 +1368,7 @@ __metadata:
     "@fluidframework/undo-redo": ^0.32.0
     "@fluidframework/view-adapters": ^0.32.0
     "@fluidframework/view-interfaces": ^0.32.0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/jsdom": ^12.0.0
     "@types/mocha": ^5.2.5
@@ -1448,6 +1449,7 @@ __metadata:
   dependencies:
     "@fluidframework/aqueduct": ^0.32.0
     "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/common-definitions": ^0.20.0
     "@fluidframework/core-interfaces": ^0.32.0
     "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/get-session-storage-container": ^0.32.0
@@ -1547,11 +1549,13 @@ __metadata:
     "@fluidframework/build-common": ^0.20.0
     "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.32.0
+    "@types/assert": ^1.5.2
     "@types/benchmark": ^1.0.31
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
+    assert: ^2.0.0
     benchmark: ^2.1.4
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
@@ -1891,6 +1895,7 @@ __metadata:
     "@fluidframework/runtime-definitions": ^0.32.0
     "@fluidframework/sequence": ^0.32.0
     "@fluidframework/view-interfaces": ^0.32.0
+    "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
@@ -2027,6 +2032,7 @@ __metadata:
     "@types/node": ^10.17.24
     "@types/puppeteer": 1.3.0
     "@types/react": ^16.9.15
+    "@types/react-dom": ^16.9.4
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
@@ -2085,6 +2091,7 @@ __metadata:
     "@types/node": ^10.17.24
     "@types/puppeteer": 1.3.0
     "@types/react": ^16.9.15
+    "@types/react-dom": ^16.9.4
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
@@ -2126,6 +2133,7 @@ __metadata:
     "@types/node": ^10.17.24
     "@types/puppeteer": 1.3.0
     "@types/react": ^16.9.15
+    "@types/react-dom": ^16.9.4
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     "@yarnpkg/pnpify": ^2.4.0
@@ -2156,6 +2164,7 @@ __metadata:
     "@fluid-example/multiview-coordinate-interface": ^0.32.0
     "@fluidframework/aqueduct": ^0.32.0
     "@fluidframework/build-common": ^0.20.0
+    "@fluidframework/common-definitions": ^0.20.0
     "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.32.0
     "@fluidframework/test-tools": ^0.2.3074
@@ -2207,6 +2216,7 @@ __metadata:
     "@types/node": ^10.17.24
     "@types/puppeteer": 1.3.0
     "@types/react": ^16.9.15
+    "@types/react-dom": ^16.9.4
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
@@ -2253,6 +2263,7 @@ __metadata:
     "@types/node": ^10.17.24
     "@types/puppeteer": 1.3.0
     "@types/react": ^16.9.15
+    "@types/react-dom": ^16.9.4
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
@@ -2299,6 +2310,7 @@ __metadata:
     "@types/node": ^10.17.24
     "@types/puppeteer": 1.3.0
     "@types/react": ^16.9.15
+    "@types/react-dom": ^16.9.4
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
     concurrently: ^5.2.0
@@ -2529,6 +2541,7 @@ __metadata:
     "@fluidframework/view-interfaces": ^0.32.0
     "@fluidframework/webpack-fluid-loader": ^0.32.0
     "@types/node": ^10.17.24
+    "@types/orderedmap": ^1
     "@types/prosemirror-model": ^1.7.2
     "@types/prosemirror-schema-list": ^1.0.1
     "@types/prosemirror-state": ^1.2.3
@@ -2545,6 +2558,7 @@ __metadata:
     eslint-plugin-prefer-arrow: ~1.2.2
     eslint-plugin-react: ~7.21.2
     eslint-plugin-unicorn: ~22.0.0
+    orderedmap: ^1.1.1
     prosemirror-example-setup: ^1.0.1
     prosemirror-history: ^1.1.3
     prosemirror-keymap: ^1.1.3
@@ -2816,8 +2830,12 @@ __metadata:
     "@fluidframework/test-tools": ^0.2.3074
     "@fluidframework/view-adapters": ^0.32.0
     "@fluidframework/view-interfaces": ^0.32.0
+    "@types/expect-puppeteer": 2.2.1
+    "@types/jest": 22.2.3
+    "@types/jest-environment-puppeteer": 2.2.0
     "@types/node": ^10.17.24
     "@types/prop-types": ^15
+    "@types/puppeteer": 1.3.0
     "@types/react": ^16.9.15
     "@types/react-dom": ^16.9.4
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -2952,6 +2970,7 @@ __metadata:
     "@fluidframework/aqueduct": ^0.32.0
     "@fluidframework/build-common": ^0.20.0
     "@fluidframework/cell": ^0.32.0
+    "@fluidframework/common-definitions": ^0.20.0
     "@fluidframework/core-interfaces": ^0.32.0
     "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/map": ^0.32.0
@@ -2962,7 +2981,11 @@ __metadata:
     "@fluidframework/view-adapters": ^0.32.0
     "@fluidframework/view-interfaces": ^0.32.0
     "@fluidframework/webpack-fluid-loader": ^0.32.0
+    "@types/expect-puppeteer": 2.2.1
+    "@types/jest": 22.2.3
+    "@types/jest-environment-puppeteer": 2.2.0
     "@types/node": ^10.17.24
+    "@types/puppeteer": 1.3.0
     "@types/react": ^16.9.15
     "@types/react-dom": ^16.9.4
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -3254,7 +3277,7 @@ __metadata:
     "@fluidframework/telemetry-utils": ^0.32.0
     "@fluidframework/test-runtime-utils": ^0.32.0
     "@fluidframework/test-utils": ^0.32.0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/mocha": ^5.2.5
     "@types/nock": ^9.3.0
     "@types/node": ^10.17.24
@@ -3325,7 +3348,7 @@ __metadata:
     "@fluidframework/routerlicious-urlresolver": ^0.32.0
     "@fluidframework/runtime-definitions": ^0.32.0
     "@fluidframework/tool-utils": ^0.32.0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
@@ -3357,7 +3380,7 @@ __metadata:
     "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.32.0
     "@fluidframework/odsp-driver": ^0.32.0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/mocha": ^5.2.5
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
@@ -3392,7 +3415,7 @@ __metadata:
     "@fluidframework/protocol-definitions": ^0.1017.0-0
     "@fluidframework/sequence": ^0.32.0
     "@fluidframework/telemetry-utils": ^0.32.0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/mocha": ^5.2.5
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
@@ -3467,7 +3490,7 @@ __metadata:
     "@fluidframework/runtime-definitions": ^0.32.0
     "@fluidframework/sequence": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
@@ -3542,7 +3565,7 @@ __metadata:
     "@fluidframework/telemetry-utils": ^0.32.0
     "@fluidframework/tool-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
@@ -3606,7 +3629,7 @@ __metadata:
     "@fluidframework/build-common": ^0.20.0
     "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/shared-object-base": ^0.32.0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -3662,7 +3685,7 @@ __metadata:
     "@fluidframework/merge-tree": ^0.32.0
     "@fluidframework/mocha-test-setup": ^0.32.0
     "@fluidframework/protocol-definitions": ^0.1017.0-0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -3747,7 +3770,7 @@ __metadata:
     "@fluidframework/map": ^0.32.0
     "@fluidframework/register-collection": ^0.32.0
     "@fluidframework/runtime-definitions": ^0.32.0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -3815,7 +3838,7 @@ __metadata:
     "@fluidframework/synthesize": ^0.32.0
     "@fluidframework/view-interfaces": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -3885,7 +3908,7 @@ __metadata:
     "@fluidframework/web-code-loader": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
     "@mixer/webpack-bundle-compare": ^0.1.0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -4018,7 +4041,7 @@ __metadata:
     "@fluidframework/shared-object-base": ^0.32.0
     "@fluidframework/test-runtime-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -4045,14 +4068,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fluidframework/common-definitions@npm:^0.19.1":
-  version: 0.19.1
-  resolution: "@fluidframework/common-definitions@npm:0.19.1"
-  checksum: 2903a590011ff3202893f804be1f07f6106ac627119c7d20397342bbcf69fde7c01c495401a3134c94abb00b148d40e2d4bb5a333e4504a490100fb9614bdd56
-  languageName: node
-  linkType: hard
-
-"@fluidframework/common-definitions@workspace:common/lib/common-definitions":
+"@fluidframework/common-definitions@^0.20.0, @fluidframework/common-definitions@workspace:common/lib/common-definitions":
   version: 0.0.0-use.local
   resolution: "@fluidframework/common-definitions@workspace:common/lib/common-definitions"
   dependencies:
@@ -4075,6 +4091,13 @@ __metadata:
     typescript-formatter: 7.1.0
   languageName: unknown
   linkType: soft
+
+"@fluidframework/common-definitions@npm:^0.19.1":
+  version: 0.19.1
+  resolution: "@fluidframework/common-definitions@npm:0.19.1"
+  checksum: 2903a590011ff3202893f804be1f07f6106ac627119c7d20397342bbcf69fde7c01c495401a3134c94abb00b148d40e2d4bb5a333e4504a490100fb9614bdd56
+  languageName: node
+  linkType: hard
 
 "@fluidframework/common-utils@npm:^0.24.0, @fluidframework/common-utils@npm:^0.24.0-0":
   version: 0.24.0
@@ -4129,7 +4152,7 @@ __metadata:
     "@fluidframework/common-definitions": ^0.19.1
     "@fluidframework/eslint-config-fluid": ^0.22.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/base64-js": ^1.3.0
     "@types/benchmark": ^1.0.31
     "@types/events": ^3.0.0
@@ -4231,7 +4254,7 @@ __metadata:
     "@fluidframework/protocol-definitions": ^0.1017.0-0
     "@fluidframework/telemetry-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/double-ended-queue": ^2.1.0
     "@types/lodash": ^4.14.118
@@ -4360,7 +4383,7 @@ __metadata:
     "@fluidframework/telemetry-utils": ^0.32.0
     "@fluidframework/test-runtime-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/double-ended-queue": ^2.1.0
     "@types/mocha": ^5.2.5
@@ -4432,7 +4455,7 @@ __metadata:
     "@fluidframework/mocha-test-setup": ^0.32.0
     "@fluidframework/telemetry-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -4515,7 +4538,7 @@ __metadata:
     "@fluidframework/shared-object-base": ^0.32.0
     "@fluidframework/test-runtime-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -4651,7 +4674,7 @@ __metadata:
     "@fluidframework/runtime-utils": ^0.32.0
     "@fluidframework/telemetry-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -4720,7 +4743,7 @@ __metadata:
     "@fluidframework/sequence": ^0.32.0
     "@fluidframework/test-runtime-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/diff": ^3.5.1
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -4763,7 +4786,7 @@ __metadata:
     "@fluidframework/protocol-definitions": ^0.1017.0-0
     "@fluidframework/replay-driver": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -4797,7 +4820,7 @@ __metadata:
     "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/protocol-definitions": ^0.1017.0-0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/node": ^10.17.24
     "@types/socket.io-client": ^1.4.32
@@ -4888,7 +4911,7 @@ __metadata:
     "@fluidframework/protocol-definitions": ^0.1017.0-0
     "@fluidframework/telemetry-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -5022,7 +5045,7 @@ __metadata:
     "@fluidframework/protocol-definitions": ^0.1017.0-0
     "@fluidframework/replay-driver": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -5054,12 +5077,14 @@ __metadata:
     "@fluidframework/mocha-test-setup": ^0.32.0
     "@fluidframework/runtime-definitions": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/events": ^3.0.0
     "@types/mocha": ^5.2.5
     "@types/sinon": ^7.0.13
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
+    assert: ^2.0.0
     concurrently: ^5.2.0
     copyfiles: ^2.1.0
     cross-env: ^7.0.2
@@ -5356,7 +5381,7 @@ __metadata:
     "@fluidframework/shared-object-base": ^0.32.0
     "@fluidframework/test-runtime-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/mocha": ^5.2.5
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -5438,7 +5463,7 @@ __metadata:
     "@fluidframework/server-services-client": ^0.1017.0-0
     "@fluidframework/server-services-core": ^0.1017.0-0
     "@fluidframework/server-test-utils": ^0.1017.0-0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/jsrsasign": ^8.0.8
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -5506,7 +5531,7 @@ __metadata:
     "@fluidframework/shared-object-base": ^0.32.0
     "@fluidframework/test-runtime-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -5573,7 +5598,7 @@ __metadata:
     "@microsoft/api-extractor": ^7.7.2
     "@tiny-calc/micro": 0.0.0-alpha.5
     "@tiny-calc/nano": 0.0.0-alpha.5
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/mocha": ^5.2.5
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -5620,7 +5645,7 @@ __metadata:
     "@fluidframework/protocol-definitions": ^0.1017.0-0
     "@fluidframework/telemetry-utils": ^0.32.0
     "@fluidframework/test-runtime-utils": ^0.32.0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/diff": ^3.5.1
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -5739,7 +5764,7 @@ __metadata:
     "@fluidframework/protocol-definitions": ^0.1017.0-0
     "@fluidframework/telemetry-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/mocha": ^5.2.5
     "@types/sha.js": ^2.4.0
@@ -5784,7 +5809,7 @@ __metadata:
     "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.32.0
     "@fluidframework/odsp-driver": ^0.32.0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/mocha": ^5.2.5
     "@typescript-eslint/eslint-plugin": ~4.2.0
     "@typescript-eslint/parser": ~4.2.0
@@ -5820,7 +5845,7 @@ __metadata:
     "@fluidframework/shared-object-base": ^0.32.0
     "@fluidframework/test-runtime-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -5856,7 +5881,7 @@ __metadata:
     "@fluidframework/gitresources": ^0.1017.0
     "@fluidframework/protocol-definitions": ^0.1017.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/lodash": ^4.14.118
     "@types/mocha": ^5.2.5
     "@types/node": ^12.19.0
@@ -6053,7 +6078,7 @@ __metadata:
     "@fluidframework/shared-object-base": ^0.32.0
     "@fluidframework/test-runtime-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -6108,7 +6133,7 @@ __metadata:
     "@fluidframework/protocol-definitions": ^0.1017.0-0
     "@fluidframework/telemetry-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/mocha": ^5.2.5
     "@types/nock": ^9.3.0
@@ -6148,7 +6173,7 @@ __metadata:
     "@fluidframework/runtime-utils": ^0.32.0
     "@fluidframework/test-runtime-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/diff": ^3.5.1
     "@types/mocha": ^5.2.5
     "@types/random-js": ^1.0.31
@@ -6208,7 +6233,7 @@ __metadata:
     "@fluidframework/protocol-definitions": ^0.1017.0-0
     "@fluidframework/server-services-client": ^0.1017.0-0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/jwt-decode": ^2.2.1
     "@types/mocha": ^5.2.5
@@ -6274,7 +6299,7 @@ __metadata:
     "@fluidframework/core-interfaces": ^0.32.0
     "@fluidframework/driver-definitions": ^0.32.0
     "@fluidframework/eslint-config-fluid": ^0.22.0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -6308,7 +6333,7 @@ __metadata:
     "@fluidframework/eslint-config-fluid": ^0.22.0
     "@fluidframework/mocha-test-setup": ^0.32.0
     "@fluidframework/protocol-definitions": ^0.1017.0-0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/mocha": ^5.2.5
     "@types/nconf": ^0.0.37
     "@types/node": ^10.17.24
@@ -6395,7 +6420,7 @@ __metadata:
     "@fluidframework/protocol-definitions": ^0.1017.0-0
     "@fluidframework/runtime-definitions": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/benchmark": ^1.0.31
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -6462,10 +6487,11 @@ __metadata:
     "@fluidframework/telemetry-utils": ^0.32.0
     "@fluidframework/test-runtime-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/diff": ^3.5.1
     "@types/mocha": ^5.2.5
+    "@types/node": ^10.17.24
     "@types/random-js": ^1.0.31
     "@types/xmldoc": ^1.1.3
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -6990,7 +7016,7 @@ __metadata:
     "@fluidframework/gitresources": ^0.1017.0
     "@fluidframework/protocol-base": ^0.1017.0
     "@fluidframework/protocol-definitions": ^0.1017.0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/jsrsasign": ^8.0.8
     "@types/jwt-decode": ^2.2.1
@@ -7467,7 +7493,7 @@ __metadata:
     "@fluidframework/runtime-utils": ^0.32.0
     "@fluidframework/telemetry-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/debug": ^4.1.5
     "@types/node": ^10.17.24
     "@typescript-eslint/eslint-plugin": ~4.2.0
@@ -7525,7 +7551,7 @@ __metadata:
     "@fluidframework/shared-object-base": ^0.32.0
     "@fluidframework/test-runtime-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/benchmark": ^1.0.31
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -7665,7 +7691,7 @@ __metadata:
     "@fluidframework/runtime-definitions": ^0.32.0
     "@fluidframework/runtime-utils": ^0.32.0
     "@fluidframework/telemetry-utils": ^0.32.0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/jsrsasign": ^8.0.8
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -7752,7 +7778,7 @@ __metadata:
     "@fluidframework/server-local-server": ^0.1017.0-0
     "@fluidframework/test-runtime-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/diff": ^3.5.1
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -7862,7 +7888,7 @@ __metadata:
     "@fluidframework/sequence": ^0.32.0
     "@fluidframework/test-runtime-utils": ^0.32.0
     "@microsoft/api-extractor": ^7.7.2
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/diff": ^3.5.1
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -8013,7 +8039,7 @@ __metadata:
     "@fluidframework/view-adapters": ^0.32.0
     "@fluidframework/view-interfaces": ^0.32.0
     "@fluidframework/web-code-loader": ^0.32.0
-    "@types/assert": ^1.5.1
+    "@types/assert": ^1.5.2
     "@types/express": ^4.11.0
     "@types/mocha": ^5.2.5
     "@types/node": ^10.17.24
@@ -10371,7 +10397,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/assert@npm:^1.5.1":
+"@types/assert@npm:^1.5.2":
   version: 1.5.2
   resolution: "@types/assert@npm:1.5.2"
   checksum: 4dfffad5ff62b30b744ff8cf3bf314eeef23cd388062c6cc25764a2e2035edab0464f3bf46ad8cbf725c469ae537e4d5597f3e219dec333a24ea640345b7083e
@@ -10973,7 +10999,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/orderedmap@npm:*":
+"@types/orderedmap@npm:*, @types/orderedmap@npm:^1":
   version: 1.0.0
   resolution: "@types/orderedmap@npm:1.0.0"
   checksum: 54e0da27647be2bc73aacd4a4af1334c4e2ef6369bb500263342c423c34abf855724b233a3f9b5926c259443132035600ffd8dfb9ac366f9ee1e6459b57b80fb
@@ -25822,7 +25848,7 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
-"orderedmap@npm:^1.1.0":
+"orderedmap@npm:^1.1.0, orderedmap@npm:^1.1.1":
   version: 1.1.1
   resolution: "orderedmap@npm:1.1.1"
   checksum: d4e485755304ded3ac35edaa485cf8b1f90a02232ef32ab47bb62ea64a5716da2312672ef697113fa3b51a7911215a836fe31a7518702f6c45685b58910e313f
