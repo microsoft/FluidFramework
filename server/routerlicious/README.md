@@ -39,7 +39,7 @@ below steps if you'd like to run a local version of the service or need to make 
 
 #### For Development
 
-* [Node v12.x](https://nodejs.org/en/)
+* [Node v12.x](https://nodejs.org/en/) (v12.17 or above is required)
 * [Node-gyp](https://github.com/nodejs/node-gyp) dependencies
     * If building on Windows, the easiest way to install the dependencies is with windows-build-tools: `npm install --global --production windows-build-tools`
 

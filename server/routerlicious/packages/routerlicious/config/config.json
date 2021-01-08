@@ -37,10 +37,24 @@
         "maxMessageSize": "16KB",
         "maxNumberOfClientsPerDocument": 1000000,
         "throttling": {
-            "maxRequestsPerMs": 1000000,
-            "maxRequestBurst": 1000000,
-            "minCooldownIntervalInMs": 1000000,
-            "minThrottleIntervalInMs": 1000000
+            "restCalls": {
+                "maxPerMs": 1000000,
+                "maxBurst": 1000000,
+                "minCooldownIntervalInMs": 1000000,
+                "minThrottleIntervalInMs": 1000000
+            },
+            "socketConnections": {
+                "maxPerMs": 1000000,
+                "maxBurst": 1000000,
+                "minCooldownIntervalInMs": 1000000,
+                "minThrottleIntervalInMs": 1000000
+            },
+            "submitOps": {
+                "maxPerMs": 1000000,
+                "maxBurst": 1000000,
+                "minCooldownIntervalInMs": 1000000,
+                "minThrottleIntervalInMs": 1000000
+            }
         },
         "topic": "rawdeltas",
         "bucket": "snapshots",

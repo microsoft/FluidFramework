@@ -64,6 +64,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     // The GC details of this node in the initial summary.
     private readonly gcDetailsInInitialSummaryP: LazyPromise<IGarbageCollectionSummaryDetails>;
 
+    public get usedRoutes(): string[] {
+        return this._usedRoutes;
+    }
+
     /**
      * Do not call constructor directly.
      * Use createRootSummarizerNodeWithGC to create root node, or createChild to create child nodes.
@@ -79,7 +83,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         wipSummaryLogger?: ITelemetryLogger,
         private readonly getGCDataFn?: () => Promise<IGarbageCollectionData>,
         getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
-        public usedRoutes: string[] = [],
+        private _usedRoutes: string[] = [],
     ) {
         super(
             logger,
@@ -302,6 +306,12 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
     public isReferenced(): boolean {
         return this.usedRoutes.includes("") || this.usedRoutes.includes("/");
+    }
+
+    public updateUsedRoutes(usedRoutes: string[]) {
+        // Sort the given routes before updating. This will ensure that the routes compared in hasUsedStateChanged()
+        // are in the same order.
+        this._usedRoutes = usedRoutes.sort();
     }
 
     /**
