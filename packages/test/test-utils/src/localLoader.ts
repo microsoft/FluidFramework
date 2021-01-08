@@ -10,9 +10,9 @@ import {
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 
@@ -47,14 +47,12 @@ export function createLocalLoader(
  */
 
 export async function createAndAttachContainer(
-    documentId: string,
     source: IFluidCodeDetails,
     loader: ILoader,
-    urlResolver: IUrlResolver,
+    request: IRequest,
 ): Promise<IContainer> {
     const container = await loader.createDetachedContainer(source);
-    const attachUrl = (urlResolver as LocalResolver).createCreateNewRequest(documentId);
-    await container.attach(attachUrl);
+    await container.attach(request);
 
     return container;
 }

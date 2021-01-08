@@ -16,7 +16,11 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidCodeDetails, IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import {
+    createLocalResolverCreateNewRequest,
+    LocalDocumentServiceFactory,
+    LocalResolver,
+ } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IEnvelope, FlushMode } from "@fluidframework/runtime-definitions";
@@ -94,7 +98,7 @@ describe("Ops on Reconnect", () => {
 
     async function createContainer(): Promise<IContainer> {
         const loader = await createLoader();
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+        return createAndAttachContainer(codeDetails, loader, createLocalResolverCreateNewRequest(documentId));
     }
 
     async function setupSecondContainersDataObject(): Promise<ITestFluidObject> {

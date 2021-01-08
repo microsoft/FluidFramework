@@ -94,6 +94,7 @@
     "@fluidframework/server-local-server": "^0.1017.1",
     "@fluidframework/shared-object-base": "^0.33.0",
     "@fluidframework/telemetry-utils": "^0.33.0",
+    "@fluidframework/test-drivers": "^0.33.0",
     "@fluidframework/test-runtime-utils": "^0.33.0",
     "@fluidframework/test-utils": "^0.33.0",
     "@types/assert": "^1.5.1",

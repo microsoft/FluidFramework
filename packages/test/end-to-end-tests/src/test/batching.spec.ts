@@ -13,6 +13,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestFluidObject,
     ChannelFactoryRegistry,
+    timeoutPromise,
 } from "@fluidframework/test-utils";
 import {
     generateTest,
@@ -66,6 +67,16 @@ const tests = (args: ITestObjectProvider) => {
         assert.equal(batchEndMetadata, false, "Batch end metadata not found");
     }
 
+    // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+    async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
+        return Promise.all(dataStores.map(async (dataStore)=>{
+            const runtime = dataStore.context.containerRuntime as IContainerRuntime;
+            while (runtime.isDocumentDirty()) {
+                await timeoutPromise((resolve)=>runtime.once("batchEnd", resolve));
+            }
+        }));
+    }
+
     beforeEach(async () => {
         // Create a Container for the first client.
         const container1 = await args.makeTestContainer(testContainerConfig);
@@ -79,6 +90,7 @@ const tests = (args: ITestObjectProvider) => {
         dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
         dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
 
+        await waitForCleanContainers(dataObject1, dataObject2);
         await args.opProcessingController.process();
     });
 
@@ -102,6 +114,7 @@ const tests = (args: ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 assert.equal(
@@ -119,6 +132,7 @@ const tests = (args: ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 assert.equal(
@@ -146,6 +160,7 @@ const tests = (args: ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 assert.equal(
@@ -171,6 +186,7 @@ const tests = (args: ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 assert.equal(
@@ -196,6 +212,7 @@ const tests = (args: ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 assert.equal(
@@ -223,6 +240,7 @@ const tests = (args: ITestObjectProvider) => {
                 (dataObject1.context.containerRuntime as IContainerRuntime).flush();
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 assert.equal(
@@ -244,6 +262,7 @@ const tests = (args: ITestObjectProvider) => {
                 dataObject2.context.containerRuntime.setFlushMode(FlushMode.Automatic);
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 assert.equal(
@@ -289,6 +308,7 @@ const tests = (args: ITestObjectProvider) => {
                 dataObject2.context.containerRuntime.setFlushMode(FlushMode.Automatic);
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 assert.equal(
@@ -332,6 +352,7 @@ const tests = (args: ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
@@ -350,6 +371,7 @@ const tests = (args: ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
@@ -372,6 +394,7 @@ const tests = (args: ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 // Check that the document dirty state is cleaned after the ops are processed.
@@ -401,6 +424,7 @@ const tests = (args: ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
@@ -419,6 +443,7 @@ const tests = (args: ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
@@ -438,6 +463,7 @@ const tests = (args: ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
@@ -459,6 +485,7 @@ const tests = (args: ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 // Check that the document dirty state is cleaned after the ops are processed.
@@ -490,6 +517,7 @@ const tests = (args: ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
+                await waitForCleanContainers(dataObject1, dataObject2);
                 await args.opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.

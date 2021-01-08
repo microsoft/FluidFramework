@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { IContainer, ILoader } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalResolver } from "@fluidframework/local-driver";
+import { createLocalResolverCreateNewRequest, LocalResolver } from "@fluidframework/local-driver";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -42,7 +42,7 @@ describe("LocalTestServer", () => {
 
     async function createContainer(): Promise<IContainer> {
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+        return createAndAttachContainer(codeDetails, loader, createLocalResolverCreateNewRequest(documentId));
     }
 
     async function loadContainer(): Promise<IContainer> {

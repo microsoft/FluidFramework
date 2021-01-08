@@ -9,7 +9,11 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import {
+    createLocalResolverCreateNewRequest,
+    LocalDocumentServiceFactory,
+    LocalResolver,
+} from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -102,7 +106,7 @@ describe("Document Dirty", () => {
             codeLoader,
         });
 
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+        return createAndAttachContainer(codeDetails, loader, createLocalResolverCreateNewRequest(documentId));
     }
 
     beforeEach(async () => {

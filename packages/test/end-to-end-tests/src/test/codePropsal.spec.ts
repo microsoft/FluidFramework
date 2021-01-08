@@ -21,7 +21,7 @@ import {
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { LocalResolver } from "@fluidframework/local-driver";
+import { createLocalResolverCreateNewRequest, LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage{
@@ -92,7 +92,7 @@ describe("CodeProposal.EndToEnd", () => {
     async function createContainer(code: IFluidCodeDetails): Promise<IContainer> {
         const urlResolver = new LocalResolver();
         const loader = createLoader(urlResolver);
-        return createAndAttachContainer(documentId, code, loader, urlResolver);
+        return createAndAttachContainer(code, loader, createLocalResolverCreateNewRequest(documentId));
     }
 
     async function loadContainer(): Promise<IContainer> {

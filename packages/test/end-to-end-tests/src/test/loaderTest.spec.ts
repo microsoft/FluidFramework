@@ -13,7 +13,7 @@ import { IContainer, ILoader, LoaderHeader } from "@fluidframework/container-def
 import { Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalResolver } from "@fluidframework/local-driver";
+import { createLocalResolverCreateNewRequest, LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createAndAttachContainer, createLocalLoader, OpProcessingController } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -87,7 +87,7 @@ describe("Loader.request", () => {
                 ],
             );
         loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+        return createAndAttachContainer(codeDetails, loader, createLocalResolverCreateNewRequest(documentId));
     }
 
     beforeEach(async () => {

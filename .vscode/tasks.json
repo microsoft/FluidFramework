@@ -23,7 +23,7 @@
             ]
         },
         {
-            "label": "fluid-build $cwd",
+            "label": "fluid-build tsc $cwd",
             "type": "process",
             "command": "node",
             "args": [
@@ -31,7 +31,9 @@
                 "--root",
                 "${workspaceRoot}",
                 "--vscode",
-                "${fileDirname}"
+                "${fileDirname}",
+                "-s",
+                "tsc"
             ],
             "group": "build",
             "problemMatcher": [
