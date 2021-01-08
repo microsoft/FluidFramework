@@ -37,12 +37,11 @@ describe('Forest', () => {
 		expect([...deleteLeaf]).deep.equals([]); // Empty forest
 	});
 
-
 	it('deltas are correct', () => {
 		const add = emptyForest.delta(oneNode);
 		const remove = oneNode.delta(emptyForest);
 		const same = twoNode.delta(twoNode);
-		const modified = twoNode.replace(leaf, [])
+		const modified = twoNode.replace(leaf, []);
 		const modify = twoNode.delta(modified);
 		const sameDeep = twoNode.delta(modified, compareArrays);
 

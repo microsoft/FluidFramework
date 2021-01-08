@@ -177,14 +177,14 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 
 	public add(id: ID, node: T): ForestI<ID, T, TParentData> {
 		assert(!this.nodes.has(id), 'can not add node with already existing id');
-		const  mutableNodes = this.nodes.clone();
+		const mutableNodes = this.nodes.clone();
 		mutableNodes.set(id, node);
 		const mutableParents = this.parents.clone();
-		
+
 		for (const [childId, parentData] of this.getChildren(node)) {
 			mutableParents.set(childId, { parentNode: id, parentData });
 		}
-		
+
 		return new ForestI({ nodes: mutableNodes, parents: mutableParents, getChildren: this.getChildren });
 	}
 
@@ -201,12 +201,12 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		for (const [id, node] of nodes) {
 			const currentNode = forest.nodes.get(id);
 			if (currentNode !== undefined) {
-				forest = forest.replace(id,  merger(currentNode, node, id));
+				forest = forest.replace(id, merger(currentNode, node, id));
 			} else {
-				forest = forest.add(id, node) ;
+				forest = forest.add(id, node);
 			}
 		}
-	
+
 		return forest;
 	}
 
@@ -223,7 +223,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		for (const [childId, parentData] of this.getChildren(node)) {
 			mutableParents.set(childId, { parentNode: id, parentData });
 		}
-		
+
 		return new ForestI({ nodes: mutableNodes, parents: mutableParents, getChildren: this.getChildren });
 	}
 
@@ -306,9 +306,9 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		// TODO:#48808: Include generating changed, removed and added in optimized B+ tree diff.
 		const changed: ID[] = [];
 		for (const [id] of this) {
-			const f= forest.tryGet(id);
+			const f = forest.tryGet(id);
 			if (f !== undefined) {
-				if (!comparator(f, this.get(id))){
+				if (!comparator(f, this.get(id))) {
 					changed.push(id);
 				}
 			}
