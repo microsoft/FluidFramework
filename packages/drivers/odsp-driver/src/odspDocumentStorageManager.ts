@@ -942,10 +942,18 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             treesPathToSummaryTreeCacheLatest: Map<string, api.ISummaryTree>,
     }> {
         // This cache is associated with mapping sha to path for currently generated summary.
+        // We are building these caches from scratch as this will take care of the deleted blobs. The deleted blobs/trees will not come
+        // in these caches and then we will replace the old caches with these new caches, so that they have the correct values.
         const blobsShaToPathCacheLatest: Map<string, string> = new Map();
         const blobsPathToShaCacheLatest: Map<string, string> = new Map();
         const treesPathToSummaryTreeCacheLatest: Map<string, api.ISummaryTree> = new Map();
-        const { snapshotTree, reusedBlobs, blobs } = await this.convertSummaryToSnapshotTree(parentHandle, tree, blobsShaToPathCacheLatest, blobsPathToShaCacheLatest, treesPathToSummaryTreeCacheLatest);
+        const { snapshotTree, reusedBlobs, blobs } = await this.convertSummaryToSnapshotTree(
+            parentHandle,
+            tree,
+            blobsShaToPathCacheLatest,
+            blobsPathToShaCacheLatest,
+            treesPathToSummaryTreeCacheLatest,
+        );
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
             message: "app",
@@ -1033,6 +1041,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     let hash: string | undefined;
                     let completePath: string | undefined;
                     const blobPath = `.app${path}/${key}`;
+                    // If we are expanding the handle, then the blobPath should exist in the cache as we will get the blob
+                    // hash from the cache.
                     if (expanded) {
                         hash = this.blobsPathToShaCache.get(blobPath);
                         assert(hash !== undefined, "hash should be set here");
@@ -1072,6 +1082,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         handlePath = `/${handlePath}`;
                     }
                     const pathKey = `.app${handlePath}`;
+                    // We try to get the summary tree from the cache so that we can expand it in order to dedup the blobs.
+                    // We always send whole tree no matter what, even if some part of the tree did not change in order to dedup
+                    // the blobs. However it may happen that the tree is not found in cache and then we have to use the handle.
                     const summaryTreeToExpand = this.treesPathToSummaryTreeCache.get(pathKey);
                     if (summaryTreeToExpand !== undefined) {
                         treesPathToSummaryTreeCacheLatest.set(`.app${path}/${key}`, summaryTreeToExpand);
