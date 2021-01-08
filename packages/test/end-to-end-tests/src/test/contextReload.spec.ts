@@ -108,8 +108,7 @@ describe("context reload (hot-swap)", function() {
     }
 
     async function createContainerWithOldLoader(packageEntries, server, urlResolver): Promise<old.IContainer> {
-        // back-compat remove in 0.34: cast of function
-        const loader = (old.createLocalLoader as any)(packageEntries, server, urlResolver, { hotSwapContext: true });
+        const loader = old.createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
         return old.createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
     }
 
