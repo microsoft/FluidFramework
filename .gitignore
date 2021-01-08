@@ -1,3 +1,4 @@
+.cache
 .cache-loader
 node_modules
 dist

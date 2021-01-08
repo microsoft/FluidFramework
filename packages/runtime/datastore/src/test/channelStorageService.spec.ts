@@ -20,6 +20,7 @@ describe("ChannelStorageService", () => {
         const storage: Pick<IDocumentStorageService, "read"> = {
             read: async (id: string) => {
                 assert.fail();
+                return "";
             },
         };
         const ss = new ChannelStorageService(tree, storage);

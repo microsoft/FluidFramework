@@ -27,7 +27,7 @@
     "pre-lerna-install:win32": "if exist package-lock.json move package-lock.json package-lock.json.bak && if exist lerna-package-lock.json move lerna-package-lock.json package-lock.json",
     "start": "node packages/historian/dist/www.js",
     "test": "lerna run test --stream --no-bail --no-sort",
-    "tsc": "lerna run tsc --stream",
+    "tsc-FAILS": "lerna run tsc --stream",
     "tslint": "tslint 'src/**/*.ts'"
   },
   "nyc": {

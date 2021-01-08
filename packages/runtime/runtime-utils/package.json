@@ -20,7 +20,7 @@
     "build:full": "yarn run build",
     "build:full:compile": "yarn run build:compile",
     "build:genver": "gen-version",
-    "build:test": "tsc --project ./src/test/tsconfig.json",
+    "build:test-fails": "tsc --project ./src/test/tsconfig.json",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",

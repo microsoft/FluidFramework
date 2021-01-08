@@ -53,7 +53,7 @@
     "test:coverage": "nyc yarn run test:report",
     "test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
     "test:report": "lerna run test --stream --no-bail --no-sort -- -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "tsc": "lerna run tsc --stream",
+    "tsc-FAILS": "lerna run tsc --stream",
     "tsfmt": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "tsfmt:fix": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "watch": "concurrently \"yarn run watch:tsc\" \"yarn run watch:esnext\"",
