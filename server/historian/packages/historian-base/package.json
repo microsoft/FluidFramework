@@ -17,7 +17,8 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "start": "node dist/www.js",
-    "test": "mocha --recursive dist/test",
+    "test": "mocha --recursive dist/test --unhandled-rejections=strict",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'"
   },

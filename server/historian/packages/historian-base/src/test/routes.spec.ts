@@ -10,21 +10,13 @@ import request from "supertest";
 import * as nconf from "nconf";
 import { TestThrottler } from "@fluidframework/server-test-utils";
 import * as historianApp from "../app";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { TestTenantService } from "../test-utils/testTenantService";
 import { TestCache } from "../test-utils/testCache";
 import { RestGitService } from "../services";
 
-// const document1 = {
-//     _id: "doc-1",
-//     content: "Hello, World!",
-// }
-const appTenant: IAlfredTenant = {
-    id: "testTenant",
-    key: "tenant-key-1",
-};
 const limit = 10;
 const sha = "testSha";
+const tenantId = "testTenantId";
 const url = "http://test-historian.com";
 const defaultCache = new TestCache();
 const defaultProvider = new nconf.Provider({}).defaults({
@@ -39,7 +31,7 @@ const defaultProvider = new nconf.Provider({}).defaults({
 const defaultTenantService = new TestTenantService();
 
 describe("throttling", () => {
-    describe("verify blobs endpoints are throttled once thorttling limit is exceeded", () => {
+    describe("verify blobs endpoints are throttled once throttling limit is exceeded", () => {
         let app: express.Application;
         let supertest: request.SuperTest<request.Test>;
         let getBlobStub: any;
@@ -88,18 +80,18 @@ describe("throttling", () => {
                 await assertThrottle("/repos/ping");
             });
             it("/:ignored?/:tenantId/git/blobs", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/git/blobs`, "post");
+                await assertThrottle(`/repos/${tenantId}/git/blobs`, "post");
             });
             it("/:ignored?/:tenantId/git/blobs/:sha", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/git/blobs/${sha}`);
+                await assertThrottle(`/repos/${tenantId}/git/blobs/${sha}`);
             });
             it("/:ignored?/:tenantId/git/blobs/raw/:sha", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/git/blobs/raw/${sha}`);
+                await assertThrottle(`/repos/${tenantId}/git/blobs/raw/${sha}`);
             });
         });
     });
 
-    describe("verify commits endpoints are throttled once thorttling limit is exceeded", () => {
+    describe("verify commits endpoints are throttled once throttling limit is exceeded", () => {
         let app: express.Application;
         let supertest: request.SuperTest<request.Test>;
         let getCommitStub: any;
@@ -166,21 +158,21 @@ describe("throttling", () => {
 
         describe("/git/commits", () => {
             it("/:ignored?/:tenantId/git/commits", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/git/commits`, "post");
+                await assertThrottle(`/repos/${tenantId}/git/commits`, "post");
             });
             it("/:ignored?/:tenantId/git/commits/:sha", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/git/commits/${sha}`);
+                await assertThrottle(`/repos/${tenantId}/git/commits/${sha}`);
             });
         });
 
         describe("/repo/commits", () => {
             it("/:ignored?/:tenantId/commits", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/commits`);
+                await assertThrottle(`/repos/${tenantId}/commits`);
             });
         });
     });
 
-    describe("verify refs endpoints are throttled once thorttling limit is exceeded", () => {
+    describe("verify refs endpoints are throttled once throttling limit is exceeded", () => {
         let app: express.Application;
         let supertest: request.SuperTest<request.Test>;
         let getRefStub: any;
@@ -258,24 +250,24 @@ describe("throttling", () => {
 
         describe("/git/refs", () => {
             it("/:ignored?/:tenantId/git/refs", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/git/refs`);
+                await assertThrottle(`/repos/${tenantId}/git/refs`);
             });
             it("/:ignored?/:tenantId/git/refs/*", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/git/refs/*`);
+                await assertThrottle(`/repos/${tenantId}/git/refs/*`);
             });
             it("/:ignored?/:tenantId/git/refs post", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/git/refs`, "post");
+                await assertThrottle(`/repos/${tenantId}/git/refs`, "post");
             });
             it("/:ignored?/:tenantId/git/refs/* patch", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/git/refs/*`, "patch");
+                await assertThrottle(`/repos/${tenantId}/git/refs/*`, "patch");
             });
             it("/:ignored?/:tenantId/git/refs/* delete", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/git/refs/*`, "delete");
+                await assertThrottle(`/repos/${tenantId}/git/refs/*`, "delete");
             });
         });
     });
 
-    describe("verify tags endpoints are throttled once thorttling limit is exceeded", () => {
+    describe("verify tags endpoints are throttled once throttling limit is exceeded", () => {
         let app: express.Application;
         let supertest: request.SuperTest<request.Test>;
         let getTagStub: any;
@@ -334,15 +326,15 @@ describe("throttling", () => {
 
         describe("/git/tags", () => {
             it("/:ignored?/:tenantId/git/tags", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/git/tags`, "post");
+                await assertThrottle(`/repos/${tenantId}/git/tags`, "post");
             });
             it("/:ignored?/:tenantId/git/tags/*", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/git/tags/*`);
+                await assertThrottle(`/repos/${tenantId}/git/tags/*`);
             });
         });
     });
 
-    describe("verify trees endpoints are throttled once thorttling limit is exceeded", () => {
+    describe("verify trees endpoints are throttled once throttling limit is exceeded", () => {
         let app: express.Application;
         let supertest: request.SuperTest<request.Test>;
         let getTreeStub: any;
@@ -387,15 +379,15 @@ describe("throttling", () => {
 
         describe("/git/trees", () => {
             it("/:ignored?/:tenantId/git/trees", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/git/trees`, "post");
+                await assertThrottle(`/repos/${tenantId}/git/trees`, "post");
             });
             it("/:ignored?/:tenantId/git/tags/:sha", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/git/trees/${sha}`);
+                await assertThrottle(`/repos/${tenantId}/git/trees/${sha}`);
             });
         });
     });
 
-    describe("verify contents endpoints are throttled once thorttling limit is exceeded", () => {
+    describe("verify contents endpoints are throttled once throttling limit is exceeded", () => {
         let app: express.Application;
         let supertest: request.SuperTest<request.Test>;
         let getContentStub: any;
@@ -433,12 +425,12 @@ describe("throttling", () => {
 
         describe("/repo/contents", () => {
             it("/:ignored?/:tenantId/contents/*", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/contents/*`);
+                await assertThrottle(`/repos/${tenantId}/contents/*`);
             });
         });
     });
 
-    describe("verify trees endpoints are throttled once thorttling limit is exceeded", () => {
+    describe("verify trees endpoints are throttled once throttling limit is exceeded", () => {
         let app: express.Application;
         let supertest: request.SuperTest<request.Test>;
         let getHeaderStub: any;
@@ -482,10 +474,10 @@ describe("throttling", () => {
 
         describe("/repo/headers", () => {
             it("/:ignored?/:tenantId/headers/:sha", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/headers/${sha}`);
+                await assertThrottle(`/repos/${tenantId}/headers/${sha}`);
             });
             it("/:ignored?/:tenantId/tree/:sha", async () => {
-                await assertThrottle(`/repos/${appTenant.id}/tree/${sha}`);
+                await assertThrottle(`/repos/${tenantId}/tree/${sha}`);
             });
         });
     });

@@ -177,7 +177,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with 0 retryAfter", async () => {
             // arrange
-            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.get(requestUrl).then(
@@ -190,7 +190,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with negative retryAfter", async () => {
             // arrange
-            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.get(requestUrl).then(
@@ -204,7 +204,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
 
             // Since in unit test 429 will always be returned, retry will be executed each time,
             // using setTimeout to exit out of the retries.
@@ -303,7 +303,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with 0 retryAfter", async () => {
             // arrange
-            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.post(requestUrl, {}).then(
@@ -316,7 +316,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with negative retryAfter", async () => {
             // arrange
-            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.post(requestUrl, {}).then(
@@ -329,7 +329,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
 
             // Since in unit test 429 will always be returned, retry will be executed each time,
             // using setTimeout to exit out of the retries.
@@ -429,7 +429,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with 0 retryAfter", async () => {
             // arrange
-            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.delete(requestUrl, {}).then(
@@ -442,7 +442,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with negative retryAfter", async () => {
             // arrange
-            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.delete(requestUrl, {}).then(
@@ -455,7 +455,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
 
             // Since in unit test 429 will always be returned, retry will be executed each time,
             // using setTimeout to exit out of the retries.
@@ -555,7 +555,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with 0 retryAfter", async () => {
             // arrange
-            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.patch(requestUrl, {}).then(
@@ -568,7 +568,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with negative retryAfter", async () => {
             // arrange
-            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.patch(requestUrl, {}).then(
@@ -581,7 +581,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            var rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
 
             // Since in unit test 429 will always be returned, retry will be executed each time,
             // using setTimeout to exit out of the retries.
