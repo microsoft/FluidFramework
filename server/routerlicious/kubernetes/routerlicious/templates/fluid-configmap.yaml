@@ -21,6 +21,7 @@ data:
         },
         "mongo": {
             "endpoint": "{{ .Values.mongodb.url }}",
+            "expireAfterSeconds": "{{ .Values.mongodb.expireAfterSeconds }}",
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",
@@ -53,10 +54,24 @@ data:
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
             "throttling": {
-                "maxRequestsPerMs": {{ .Values.alfred.throttling.maxRequestsPerMs }},
-                "maxRequestBurst": {{ .Values.alfred.throttling.maxRequestBurst }},
-                "minCooldownIntervalInMs": {{ .Values.alfred.throttling.minCooldownIntervalInMs }},
-                "minThrottleIntervalInMs": {{ .Values.alfred.throttling.minThrottleIntervalInMs }}
+                "restCalls": {
+                    "maxPerMs": {{ .Values.alfred.throttling.restCalls.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.restCalls.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.restCalls.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.restCalls.minThrottleIntervalInMs }}
+                },
+                "socketConnections": {
+                    "maxPerMs": {{ .Values.alfred.throttling.socketConnections.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.socketConnections.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.socketConnections.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.socketConnections.minThrottleIntervalInMs }}
+                },
+                "submitOps": {
+                    "maxPerMs": {{ .Values.alfred.throttling.submitOps.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.submitOps.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.submitOps.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.submitOps.minThrottleIntervalInMs }}
+                }
             },
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
