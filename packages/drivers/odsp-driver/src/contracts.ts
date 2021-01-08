@@ -243,11 +243,6 @@ export interface HostStoragePolicy {
      * Passing true results in faster loads and keeping cache more current, but it increases bandwidth consumption.
      */
     concurrentSnapshotFetch?: boolean;
-
-    /**
-     * Use post call to fetch the latest snapshot
-     */
-    usePostForTreesLatest?: boolean;
 }
 
 /**
