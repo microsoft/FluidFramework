@@ -12,6 +12,7 @@ import * as nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import split = require("split");
 import * as winston from "winston";
+import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import * as routes from "./routes";
 import { ICache, ITenantService } from "./services";
 
@@ -35,6 +36,8 @@ export function create(config: nconf.Provider, tenantService: ITenantService, ca
 
     app.use(compression());
     app.use(cors());
+
+    app.use(bindCorrelationId());
 
     const apiRoutes = routes.create(config, tenantService, cache);
     app.use(apiRoutes.git.blobs);

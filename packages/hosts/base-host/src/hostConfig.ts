@@ -4,7 +4,12 @@
  */
 
 import { IFluidObject } from "@fluidframework/core-interfaces";
-import { ICodeAllowList, IProxyLoaderFactory, IFluidCodeResolver } from "@fluidframework/container-definitions";
+import {
+    ICodeAllowList,
+    IProxyLoaderFactory,
+    IFluidCodeResolver,
+    ILoaderOptions,
+} from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 
 /**
@@ -17,7 +22,7 @@ export interface IBaseHostConfig {
     urlResolver: IUrlResolver;
 
     // Any config to be provided to loader.
-    options?: any;
+    options?: ILoaderOptions;
 
     // A fluid object that gives host provided capabilities/configurations
     // to the Fluid object in the container(such as auth).

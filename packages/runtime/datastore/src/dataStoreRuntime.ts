@@ -17,6 +17,7 @@ import {
     ILoader,
     BindState,
     AttachState,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
     assert,
@@ -176,7 +177,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public readonly documentId: string;
     public readonly id: string;
     public existing: boolean;
-    public readonly options: any;
+    public readonly options: ILoaderOptions;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly quorum: IQuorum;
     private readonly audience: IAudience;
