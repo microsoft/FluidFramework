@@ -7,6 +7,24 @@ import { Map as ImmutableMap } from 'immutable';
 import { fail, assert } from './Common';
 
 /**
+ * Differences from one forest to another.
+ */
+export interface Delta<ID> {
+	/**
+	 * Nodes whose content changed.
+	 */
+	readonly changed: readonly ID[];
+	/**
+	 * Nodes that were added.
+	 */
+	readonly added: readonly ID[];
+	/**
+	 * Nodes that were removed.
+	 */
+	readonly removed: readonly ID[];
+}
+
+/**
  * An immutable forest of T.
  * Enforces single parenting, and allows querying the parent.
  *
@@ -93,9 +111,9 @@ export interface Forest<ID, T, TParentData> {
 	 * Calculate the difference between two forests
 	 * @param forest - the other forest to compare to this one
 	 * @param comparator - a function which returns true if two objects of type T are equivalent, false otherwise
-	 * @returns a list of ids, one for each id that is present in both forests but has a different value in each.
+	 * @returns A {@link Delta} listing which nodes were changed, added, or removed.
 	 */
-	delta(forest: Forest<ID, T, TParentData>, comparator?: (a: T, b: T) => boolean): ID[];
+	delta(forest: Forest<ID, T, TParentData>, comparator?: (a: T, b: T) => boolean): Delta<ID>;
 }
 
 /**
@@ -284,11 +302,11 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		return this.parents.get(id);
 	}
 
-	public delta(forest: Forest<ID, T, TParentData>, comparator: (a: T, b: T) => boolean = Object.is): ID[] {
-		const changedIds: ID[] = [];
+	public delta(forest: Forest<ID, T, TParentData>, comparator: (a: T, b: T) => boolean = Object.is): Delta<ID> {
+		const changed: ID[] = [];
 		const merger = (oldValue: T, newValue: T, id: ID): T => {
 			if (!comparator(oldValue, newValue)) {
-				changedIds.push(id);
+				changed.push(id);
 			}
 
 			return newValue;
@@ -305,6 +323,25 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 			this.nodes.mergeWith(merger, forest);
 		}
 
-		return changedIds;
+		// TODO:#48808: Include generating removed and added in optimized B+ tree diff.
+		const removed: ID[] = [];
+		for (const [id] of this) {
+			if (forest.tryGet(id) === undefined) {
+				removed.push(id);
+			}
+		}
+
+		const added: ID[] = [];
+		for (const [id] of forest) {
+			if (this.tryGet(id) === undefined) {
+				added.push(id);
+			}
+		}
+
+		return {
+			changed,
+			added,
+			removed,
+		};
 	}
 }

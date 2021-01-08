@@ -125,6 +125,13 @@ export const Delete: {
 };
 
 // @public
+export interface Delta<ID> {
+    readonly added: readonly ID[];
+    readonly changed: readonly ID[];
+    readonly removed: readonly ID[];
+}
+
+// @public
 export interface Detach {
     // (undocumented)
     readonly destination?: DetachedSequenceId;
@@ -405,7 +412,7 @@ export class Snapshot {
     [Symbol.iterator](): IterableIterator<SnapshotNode>;
     assertConsistent(): void;
     deleteNodes(nodes: Iterable<NodeId>): Snapshot;
-    delta(snapshot: Snapshot): NodeId[];
+    delta(snapshot: Snapshot): Delta<NodeId>;
     equals(snapshot: Snapshot): boolean;
     // (undocumented)
     findIndexWithinTrait(place: SnapshotPlace): PlaceIndex;

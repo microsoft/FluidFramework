@@ -531,14 +531,22 @@ describe('SharedTree', () => {
 		it('that are the same object', () => {
 			const id = uuidv4() as NodeId;
 			const snapshot = Snapshot.fromTree(makeEmptyNode(id));
-			expect(snapshot.delta(snapshot)).to.be.empty;
+			expect(snapshot.delta(snapshot)).deep.equals({
+				changed: [],
+				added: [],
+				removed: [],
+			});
 		});
 
 		it('that have the same tree', () => {
 			const node = makeEmptyNode();
 			const snapshotA = Snapshot.fromTree(node);
 			const snapshotB = Snapshot.fromTree(node);
-			expect(snapshotA.delta(snapshotB)).to.be.empty;
+			expect(snapshotA.delta(snapshotB)).deep.equals({
+				changed: [],
+				added: [],
+				removed: [],
+			});
 		});
 
 		it('with different root ids', () => {
@@ -551,24 +559,47 @@ describe('SharedTree', () => {
 
 		it('with different subtrees', () => {
 			const rootId = uuidv4() as NodeId;
-			const childA = makeEmptyNode();
-			const childB = makeEmptyNode();
+			const subtreeA = uuidv4() as NodeId;
+			const subtreeB = uuidv4() as NodeId;
+			const leafA = makeEmptyNode();
+			const leafB = makeEmptyNode();
 			const rootA: ChangeNode = {
 				identifier: rootId,
 				definition: 'node' as Definition,
-				traits: { children: [childA] },
+				traits: {
+					children: [
+						{
+							identifier: subtreeA,
+							definition: 'node' as Definition,
+							traits: { children: [leafA] },
+						},
+					],
+				},
 			};
 			const rootB: ChangeNode = {
 				identifier: rootId,
 				definition: 'node' as Definition,
-				traits: { children: [childB] },
+				traits: {
+					children: [
+						{
+							identifier: subtreeB,
+							definition: 'node' as Definition,
+							traits: { children: [leafB] },
+						},
+					],
+				},
 			};
 
 			const snapshotA = Snapshot.fromTree(rootA);
 			const snapshotB = Snapshot.fromTree(rootB);
 			const delta = snapshotA.delta(snapshotB);
-			expect(delta.length).to.equal(1);
-			expect(delta[0]).to.equal(rootId);
+			expect(delta.changed).deep.equals([rootId]);
+			expect(delta.removed.length).equals(2);
+			expect(delta.added.length).equals(2);
+			expect(delta.removed).contains(subtreeA);
+			expect(delta.removed).contains(leafA.identifier);
+			expect(delta.added).contains(subtreeB);
+			expect(delta.added).contains(leafB.identifier);
 		});
 
 		it('with different payloads', () => {
@@ -589,20 +620,23 @@ describe('SharedTree', () => {
 			const snapshotA = Snapshot.fromTree(nodeA);
 			const snapshotB = Snapshot.fromTree(nodeB);
 			const delta = snapshotA.delta(snapshotB);
-			expect(delta.length).to.equal(1);
-			expect(delta[0]).to.equal(rootId);
+			expect(delta.changed).deep.equals([rootId]);
+			expect(delta.removed).deep.equals([]);
+			expect(delta.added).deep.equals([]);
 		});
 
 		it('after an insert', () => {
 			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
 
 			const snapshotA = tree.currentView;
-			tree.editor.insert(makeEmptyNode(), StablePlace.before(left));
+			const insertedNode = makeEmptyNode();
+			tree.editor.insert(insertedNode, StablePlace.before(left));
 			const snapshotB = tree.currentView;
 			const delta = snapshotA.delta(snapshotB);
 			assert(delta);
-			expect(delta.length).to.equal(1);
-			expect(delta[0]).to.equal(simpleTestTree.identifier);
+			expect(delta.changed).deep.equals([simpleTestTree.identifier]);
+			expect(delta.removed).deep.equals([]);
+			expect(delta.added).deep.equals([insertedNode.identifier]);
 		});
 
 		it('after a delete', () => {
@@ -613,8 +647,22 @@ describe('SharedTree', () => {
 			const snapshotB = tree.currentView;
 			const delta = snapshotA.delta(snapshotB);
 			assert(delta);
-			expect(delta.length).to.equal(1);
-			expect(delta[0]).to.equal(simpleTestTree.identifier);
+			expect(delta.changed).deep.equals([simpleTestTree.identifier]);
+			expect(delta.removed).deep.equals([left.identifier]);
+			expect(delta.added).deep.equals([]);
+		});
+
+		it('after a move', () => {
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+
+			const snapshotA = tree.currentView;
+			tree.editor.move(left, StablePlace.after(right));
+			const snapshotB = tree.currentView;
+			const delta = snapshotA.delta(snapshotB);
+			assert(delta);
+			expect(delta.changed).deep.equals([simpleTestTree.identifier]);
+			expect(delta.removed).deep.equals([]);
+			expect(delta.added).deep.equals([]);
 		});
 	});
 });

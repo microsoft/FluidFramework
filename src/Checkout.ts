@@ -205,7 +205,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling {
 	protected emitChange(): void {
 		const delta = this.previousView.delta(this.currentView);
 		this.previousView = this.currentView;
-		if (delta.length !== 0) {
+		if (delta.changed.length !== 0 || delta.removed.length !== 0 || delta.added.length !== 0) {
 			this.emit(CheckoutEvent.ViewChange, delta);
 		}
 	}
