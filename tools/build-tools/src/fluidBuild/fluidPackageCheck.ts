@@ -238,22 +238,29 @@ export class FluidPackageCheck {
             let concurrentBuildCompile = true;
 
             const buildPrefix = pkg.getScript("build:genver") ? "npm run build:genver && " : "";
+            // tsc should be in build:commonjs if it exists, otherwise, it should be in build:compile
             if (pkg.getScript("tsc")) {
-                if (pkg.getScript("build:test")) {
-                    if (pkg.getScript("build:esnext")) {
-                        // If we have build:esnext, that means that we are building it two ways (commonjs and esm)
-                        buildCommonJs.push("tsc");
-                        buildCommonJs.push("build:test");
-                        buildCompile.push("build:commonjs");
-                    } else {
-                        // Only building it one way, so just we only need to to build with tsc and test
-                        buildCompile.push("tsc");
-                        buildCompile.push("build:test");
-                        concurrentBuildCompile = false;
-                    }
+                if (pkg.getScript("build:commonjs")) {
+                    buildCommonJs.push("tsc");
                 } else {
                     buildCompile.push("tsc");
                 }
+            }
+
+            // build:test should be in build:commonjs if it exists, otherwise, it should be in build:compile
+            if (pkg.getScript("build:test")) {
+                if (pkg.getScript("build:commonjs")) {
+                    buildCommonJs.push("build:test");
+                } else {
+                    buildCompile.push("build:test");
+                    // test is depended on tsc, so we can't do it concurrently for build:compile
+                    concurrentBuildCompile = false;
+                }
+            }
+
+            // build:commonjs build:es5 and build:esnext should be in build:compile if they exist
+            if (pkg.getScript("build:commonjs")) {
+                buildCompile.push("build:commonjs");
             }
 
             if (pkg.getScript("build:es5")) {
