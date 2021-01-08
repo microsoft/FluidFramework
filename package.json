@@ -39,7 +39,6 @@
 		"@fluidframework/shared-object-base": "^0.31.1",
 		"@fluidframework/telemetry-utils": "^0.31.1",
 		"buffer": "^6.0.2",
-		"immutable": "^4.0.0-rc.12",
 		"sorted-btree": "^1.4.0",
 		"uuid": "^8.3.1"
 	},
