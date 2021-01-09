@@ -11,6 +11,7 @@ import Axios from "axios";
 import * as uuid from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ITokenProvider } from "./tokens";
 import { DocumentStorageService } from "./documentStorageService";
 
@@ -46,7 +47,10 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
  * Provides access to the underlying delta storage on the server for routerlicious driver.
  */
 export class DeltaStorageService implements IDeltaStorageService {
-    constructor(private readonly url: string, private readonly tokenProvider: ITokenProvider) {
+    constructor(
+        private readonly url: string,
+        private readonly tokenProvider: ITokenProvider,
+        private readonly logger: ITelemetryLogger | undefined) {
     }
 
     public async get(
@@ -71,6 +75,13 @@ export class DeltaStorageService implements IDeltaStorageService {
 
         const ops = await Axios.get<ISequencedDocumentMessage[]>(
             `${this.url}?${query}`, { headers });
+
+        if (this.logger) {
+            this.logger.sendTelemetryEvent({
+                eventName: "R11sDriverToServer",
+                correlationId: headers["x-correlation-id"] as string,
+            });
+        }
 
         return ops.data;
     }
