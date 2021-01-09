@@ -30,10 +30,24 @@ const defaultProvider = new nconf.Provider({}).defaults({
 });
 const defaultTenantService = new TestTenantService();
 
+/**
+ * A helper method that will first send (limit) number of requests and assert they are not throttled,
+ * and then send another request which exceeds the throttling limit, assert the throttling response is received.
+ */
+const sendRequestsTilThrottledWithAssertion = async (superTest: request.SuperTest<request.Test>, url: string, method: "get" | "post" | "patch" | "delete" = "get"): Promise<void> => {
+    for (let i = 0; i < limit; i++) {
+        // we're not interested in making the requests succeed with 200s, so just assert that not 429
+        await superTest[method](url).expect((res) => {
+            assert.notStrictEqual(res.status, 429);
+        });
+    };
+    await superTest[method](url).expect(429);
+};
+
 describe("throttling", () => {
     describe("verify blobs endpoints are throttled once throttling limit is exceeded", () => {
         let app: express.Application;
-        let supertest: request.SuperTest<request.Test>;
+        let superTest: request.SuperTest<request.Test>;
         let getBlobStub: any;
         let createBlobStub: any;
 
@@ -57,7 +71,7 @@ describe("throttling", () => {
                 defaultCache,
                 throttler
             );
-            supertest = request(app);
+            superTest = request(app);
         });
 
         afterEach(() => {
@@ -65,35 +79,25 @@ describe("throttling", () => {
             createBlobStub.restore();
         });
 
-        const assertThrottle = async (url: string, method: "get" | "post" | "patch" | "delete" = "get"): Promise<void> => {
-            for (let i = 0; i < limit; i++) {
-                // we're not interested in making the requests succeed with 200s, so just assert that not 429
-                await supertest[method](url).expect((res) => {
-                    assert.notStrictEqual(res.status, 429);
-                });
-            };
-            await supertest[method](url).expect(429);
-        };
-
         describe("/git/blobs", () => {
             it("/ping", async () => {
-                await assertThrottle("/repos/ping");
+                await sendRequestsTilThrottledWithAssertion(superTest, "/repos/ping");
             });
             it("/:ignored?/:tenantId/git/blobs", async () => {
-                await assertThrottle(`/repos/${tenantId}/git/blobs`, "post");
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/blobs`, "post");
             });
             it("/:ignored?/:tenantId/git/blobs/:sha", async () => {
-                await assertThrottle(`/repos/${tenantId}/git/blobs/${sha}`);
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/blobs/${sha}`);
             });
             it("/:ignored?/:tenantId/git/blobs/raw/:sha", async () => {
-                await assertThrottle(`/repos/${tenantId}/git/blobs/raw/${sha}`);
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/blobs/raw/${sha}`);
             });
         });
     });
 
     describe("verify commits endpoints are throttled once throttling limit is exceeded", () => {
         let app: express.Application;
-        let supertest: request.SuperTest<request.Test>;
+        let superTest: request.SuperTest<request.Test>;
         let getCommitStub: any;
         let getCommitsStub: any;
         let createCommitStub: any;
@@ -137,7 +141,7 @@ describe("throttling", () => {
                 defaultCache,
                 throttler
             );
-            supertest = request(app);
+            superTest = request(app);
         });
 
         afterEach(() => {
@@ -146,35 +150,25 @@ describe("throttling", () => {
             createCommitStub.restore();
         });
 
-        const assertThrottle = async (url: string, method: "get" | "post" | "patch" | "delete" = "get"): Promise<void> => {
-            for (let i = 0; i < limit; i++) {
-                // we're not interested in making the requests succeed with 200s, so just assert that not 429
-                await supertest[method](url).expect((res) => {
-                    assert.notStrictEqual(res.status, 429);
-                });
-            };
-            await supertest[method](url).expect(429);
-        };
-
         describe("/git/commits", () => {
             it("/:ignored?/:tenantId/git/commits", async () => {
-                await assertThrottle(`/repos/${tenantId}/git/commits`, "post");
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/commits`, "post");
             });
             it("/:ignored?/:tenantId/git/commits/:sha", async () => {
-                await assertThrottle(`/repos/${tenantId}/git/commits/${sha}`);
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/commits/${sha}`);
             });
         });
 
         describe("/repo/commits", () => {
             it("/:ignored?/:tenantId/commits", async () => {
-                await assertThrottle(`/repos/${tenantId}/commits`);
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/commits`);
             });
         });
     });
 
     describe("verify refs endpoints are throttled once throttling limit is exceeded", () => {
         let app: express.Application;
-        let supertest: request.SuperTest<request.Test>;
+        let superTest: request.SuperTest<request.Test>;
         let getRefStub: any;
         let getRefsStub: any;
         let createRefStub: any;
@@ -227,7 +221,7 @@ describe("throttling", () => {
                 defaultCache,
                 throttler
             );
-            supertest = request(app);
+            superTest = request(app);
         });
 
         afterEach(() => {
@@ -238,38 +232,28 @@ describe("throttling", () => {
             deleteRefStub.restore();
         })
 
-        const assertThrottle = async (url: string, method: "get" | "post" | "patch" | "delete" = "get"): Promise<void> => {
-            for (let i = 0; i < limit; i++) {
-                // we're not interested in making the requests succeed with 200s, so just assert that not 429
-                await supertest[method](url).expect((res) => {
-                    assert.notStrictEqual(res.status, 429);
-                });
-            };
-            await supertest[method](url).expect(429);
-        };
-
         describe("/git/refs", () => {
             it("/:ignored?/:tenantId/git/refs", async () => {
-                await assertThrottle(`/repos/${tenantId}/git/refs`);
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs`);
             });
             it("/:ignored?/:tenantId/git/refs/*", async () => {
-                await assertThrottle(`/repos/${tenantId}/git/refs/*`);
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs/*`);
             });
             it("/:ignored?/:tenantId/git/refs post", async () => {
-                await assertThrottle(`/repos/${tenantId}/git/refs`, "post");
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs`, "post");
             });
             it("/:ignored?/:tenantId/git/refs/* patch", async () => {
-                await assertThrottle(`/repos/${tenantId}/git/refs/*`, "patch");
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs/*`, "patch");
             });
             it("/:ignored?/:tenantId/git/refs/* delete", async () => {
-                await assertThrottle(`/repos/${tenantId}/git/refs/*`, "delete");
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs/*`, "delete");
             });
         });
     });
 
     describe("verify tags endpoints are throttled once throttling limit is exceeded", () => {
         let app: express.Application;
-        let supertest: request.SuperTest<request.Test>;
+        let superTest: request.SuperTest<request.Test>;
         let getTagStub: any;
         let createTagStub: any;
 
@@ -306,7 +290,7 @@ describe("throttling", () => {
                 defaultCache,
                 throttler
             );
-            supertest = request(app);
+            superTest = request(app);
         });
 
         afterEach(() => {
@@ -314,29 +298,19 @@ describe("throttling", () => {
             createTagStub.restore();
         });
 
-        const assertThrottle = async (url: string, method: "get" | "post" | "patch" | "delete" = "get"): Promise<void> => {
-            for (let i = 0; i < limit; i++) {
-                // we're not interested in making the requests succeed with 200s, so just assert that not 429
-                await supertest[method](url).expect((res) => {
-                    assert.notStrictEqual(res.status, 429);
-                });
-            };
-            await supertest[method](url).expect(429);
-        };
-
         describe("/git/tags", () => {
             it("/:ignored?/:tenantId/git/tags", async () => {
-                await assertThrottle(`/repos/${tenantId}/git/tags`, "post");
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/tags`, "post");
             });
             it("/:ignored?/:tenantId/git/tags/*", async () => {
-                await assertThrottle(`/repos/${tenantId}/git/tags/*`);
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/tags/*`);
             });
         });
     });
 
     describe("verify trees endpoints are throttled once throttling limit is exceeded", () => {
         let app: express.Application;
-        let supertest: request.SuperTest<request.Test>;
+        let superTest: request.SuperTest<request.Test>;
         let getTreeStub: any;
         let createTreeStub: any;
 
@@ -359,7 +333,7 @@ describe("throttling", () => {
                 defaultCache,
                 throttler
             );
-            supertest = request(app);
+            superTest = request(app);
         });
 
         afterEach(() => {
@@ -367,29 +341,19 @@ describe("throttling", () => {
             createTreeStub.restore();
         });
 
-        const assertThrottle = async (url: string, method: "get" | "post" | "patch" | "delete" = "get"): Promise<void> => {
-            for (let i = 0; i < limit; i++) {
-                // we're not interested in making the requests succeed with 200s, so just assert that not 429
-                await supertest[method](url).expect((res) => {
-                    assert.notStrictEqual(res.status, 429);
-                });
-            };
-            await supertest[method](url).expect(429);
-        };
-
         describe("/git/trees", () => {
             it("/:ignored?/:tenantId/git/trees", async () => {
-                await assertThrottle(`/repos/${tenantId}/git/trees`, "post");
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/trees`, "post");
             });
             it("/:ignored?/:tenantId/git/tags/:sha", async () => {
-                await assertThrottle(`/repos/${tenantId}/git/trees/${sha}`);
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/trees/${sha}`);
             });
         });
     });
 
     describe("verify contents endpoints are throttled once throttling limit is exceeded", () => {
         let app: express.Application;
-        let supertest: request.SuperTest<request.Test>;
+        let superTest: request.SuperTest<request.Test>;
         let getContentStub: any;
 
         beforeEach(() => {
@@ -406,33 +370,23 @@ describe("throttling", () => {
                 defaultCache,
                 throttler
             );
-            supertest = request(app);
+            superTest = request(app);
         });
 
         afterEach(() => {
             getContentStub.restore();
         });
 
-        const assertThrottle = async (url: string, method: "get" | "post" | "patch" | "delete" = "get"): Promise<void> => {
-            for (let i = 0; i < limit; i++) {
-                // we're not interested in making the requests succeed with 200s, so just assert that not 429
-                await supertest[method](url).expect((res) => {
-                    assert.notStrictEqual(res.status, 429);
-                });
-            };
-            await supertest[method](url).expect(429);
-        };
-
         describe("/repo/contents", () => {
             it("/:ignored?/:tenantId/contents/*", async () => {
-                await assertThrottle(`/repos/${tenantId}/contents/*`);
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/contents/*`);
             });
         });
     });
 
     describe("verify trees endpoints are throttled once throttling limit is exceeded", () => {
         let app: express.Application;
-        let supertest: request.SuperTest<request.Test>;
+        let superTest: request.SuperTest<request.Test>;
         let getHeaderStub: any;
         let getTreeStub: any;
 
@@ -454,7 +408,7 @@ describe("throttling", () => {
                 defaultCache,
                 throttler
             );
-            supertest = request(app);
+            superTest = request(app);
         });
 
         afterEach(() => {
@@ -462,22 +416,12 @@ describe("throttling", () => {
             getTreeStub.restore();
         });
 
-        const assertThrottle = async (url: string, method: "get" | "post" | "patch" | "delete" = "get"): Promise<void> => {
-            for (let i = 0; i < limit; i++) {
-                // we're not interested in making the requests succeed with 200s, so just assert that not 429
-                await supertest[method](url).expect((res) => {
-                    assert.notStrictEqual(res.status, 429);
-                });
-            };
-            await supertest[method](url).expect(429);
-        };
-
         describe("/repo/headers", () => {
             it("/:ignored?/:tenantId/headers/:sha", async () => {
-                await assertThrottle(`/repos/${tenantId}/headers/${sha}`);
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/headers/${sha}`);
             });
             it("/:ignored?/:tenantId/tree/:sha", async () => {
-                await assertThrottle(`/repos/${tenantId}/tree/${sha}`);
+                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/tree/${sha}`);
             });
         });
     });

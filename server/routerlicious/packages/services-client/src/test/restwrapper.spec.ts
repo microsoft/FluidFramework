@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+import Axios from "axios";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import AxiosMockAdapter from "axios-mock-adapter";
 import { RestWrapper } from "../restWrapper";
 
 describe("RestWrapper", () => {
@@ -17,7 +19,7 @@ describe("RestWrapper", () => {
     let axiosErrorMock: Partial<AxiosInstance>;
     let axiosTooManyRequestsErrorZeroRetryAfterMock: Partial<AxiosInstance>;
     let axiosTooManyRequestsErrorNegativeRetryAfterMock: Partial<AxiosInstance>;
-    let axiosTooManyRequestsErrorPositiveRetryAfterMock: Partial<AxiosInstance>;
+    let axiosMockAdapterTooManyRequestsErrorPositiveRetryAfter: AxiosMockAdapter;
     let requestOptions: AxiosRequestConfig;
 
     before(() => {
@@ -129,35 +131,16 @@ describe("RestWrapper", () => {
             ),
         };
 
-        axiosTooManyRequestsErrorPositiveRetryAfterMock = {
-            request: async <T = any, R = AxiosResponse<T>>(options?) => new Promise<R>(
-                (resolve, reject) => {
-                    requestOptions = options;
+        axiosMockAdapterTooManyRequestsErrorPositiveRetryAfter  = new AxiosMockAdapter(Axios);
 
-                    const response: AxiosResponse = {
-                        config: options,
-                        data: {retryAfter: 1, message: "throttled"},
-                        headers: {},
-                        request: options.responseType,
-                        status: 429,
-                        statusText: "TooManyRequests",
-                    };
-
-                    const err: AxiosError = {
-                        code: "429",
-                        config: options,
-                        message: "throttled",
-                        name: "TooManyRequests",
-                        request: {},
-                        response,
-                        isAxiosError: true,
-                        toJSON: () => ({}),
-                    };
-
-                    throw err;
-                },
-            ),
-        };
+        // For axios mock for testing 429 throttled requests with a valid retryAfter value,
+        // first request should return 429 and then a 200 should be returned
+        // in order to validate the successful request.
+        axiosMockAdapterTooManyRequestsErrorPositiveRetryAfter
+                .onAny()
+                .replyOnce(429, {retryAfter: 1, message: "throttled"})
+                .onAny()
+                .reply(200, "A successful request after being throttled.");
     });
 
     describe(".get", () => {
@@ -204,18 +187,12 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
-
-            // Since in unit test 429 will always be returned, retry will be executed each time,
-            // using setTimeout to exit out of the retries.
-            setTimeout(() => {
-                process.exit();
-            }, 2000);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, Axios);
 
             // act/assert
             await rw.get(requestUrl).then(
                 // tslint:disable-next-line:no-void-expression
-                () => assert.ok("Promise was not rejected"),
+                (response) => assert.strictEqual(response, "A successful request after being throttled."),
                 // tslint:disable-next-line:no-void-expression
                 (err) => assert.fail("Invalid response code rejected Promise"),
             );
@@ -329,18 +306,12 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
-
-            // Since in unit test 429 will always be returned, retry will be executed each time,
-            // using setTimeout to exit out of the retries.
-            setTimeout(() => {
-                process.exit();
-            }, 2000);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, Axios);
 
             // act/assert
             await rw.post(requestUrl, {}).then(
                 // tslint:disable-next-line:no-void-expression
-                () => assert.ok("Promise was not rejected"),
+                (response) => assert.strictEqual(response, "A successful request after being throttled."),
                 // tslint:disable-next-line:no-void-expression
                 (err) => assert.fail("Invalid response code rejected Promise"),
             );
@@ -455,18 +426,12 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
-
-            // Since in unit test 429 will always be returned, retry will be executed each time,
-            // using setTimeout to exit out of the retries.
-            setTimeout(() => {
-                process.exit();
-            }, 2000);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, Axios);
 
             // act/assert
             await rw.delete(requestUrl, {}).then(
                 // tslint:disable-next-line:no-void-expression
-                () => assert.ok("Promise was not rejected"),
+                (response) => assert.strictEqual(response, "A successful request after being throttled."),
                 // tslint:disable-next-line:no-void-expression
                 (err) => assert.fail("Invalid response code rejected Promise"),
             );
@@ -581,18 +546,12 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorPositiveRetryAfterMock as AxiosInstance);
-
-            // Since in unit test 429 will always be returned, retry will be executed each time,
-            // using setTimeout to exit out of the retries.
-            setTimeout(() => {
-                process.exit();
-            }, 2000);
+            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, Axios);
 
             // act/assert
             await rw.patch(requestUrl, {}).then(
                 // tslint:disable-next-line:no-void-expression
-                () => assert.ok("Promise was not rejected"),
+                (response) => assert.strictEqual(response, "A successful request after being throttled."),
                 // tslint:disable-next-line:no-void-expression
                 (err) => assert.fail("Invalid response code rejected Promise"),
             );
