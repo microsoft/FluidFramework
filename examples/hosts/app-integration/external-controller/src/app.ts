@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
-
 import { DiceRollerController } from "./controller";
 import {
     Fluid,
@@ -25,18 +23,16 @@ document.title = documentId;
 
 async function start(): Promise<void> {
     // Get Fluid Container (creates if new url)
-    const container = createNew
-        ? await Fluid.createContainer(documentId)
-        : await Fluid.getContainer(documentId);
+    const fluidDocument = createNew
+        ? await Fluid.createDocument(documentId)
+        : await Fluid.getDocument(documentId);
 
     // Using the create handler, we can create our data object using a specific request shape.
     const dataObjectId = "dice";
-    if (createNew) {
-        await container.request({ url: `/create/${KeyValueInstantiationFactory.type}/${dataObjectId}` });
-    }
+    const keyValueDataObject: IKeyValueDataObject = createNew
+        ? await fluidDocument.createDroplet<KeyValueDataObject>(KeyValueInstantiationFactory.type, dataObjectId)
+        : await fluidDocument.getDroplet<KeyValueDataObject>(dataObjectId);
 
-    const keyValueDataObject: IKeyValueDataObject =
-        await getObjectWithIdFromContainer<KeyValueDataObject>(dataObjectId, container);
     const diceRollerController = new DiceRollerController(keyValueDataObject);
     await diceRollerController.initialize(createNew);
 
