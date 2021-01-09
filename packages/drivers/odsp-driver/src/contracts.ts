@@ -151,6 +151,8 @@ export interface ISnapshotTreeBaseEntry {
 export interface ISnapshotTreeValueEntry extends ISnapshotTreeBaseEntry {
     id?: string;
     value: SnapshotTreeValue;
+    // Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
+    unreferenced?: true;
 }
 
 export interface ISnapshotTreeHandleEntry extends ISnapshotTreeBaseEntry {

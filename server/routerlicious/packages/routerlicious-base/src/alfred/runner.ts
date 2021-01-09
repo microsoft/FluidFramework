@@ -34,6 +34,8 @@ export class AlfredRunner implements utils.IRunner {
         private readonly orderManager: IOrdererManager,
         private readonly tenantManager: ITenantManager,
         private readonly restThrottler: IThrottler,
+        private readonly socketConnectThrottler: IThrottler,
+        private readonly socketSubmitOpThrottler: IThrottler,
         private readonly storage: IDocumentStorage,
         private readonly clientManager: IClientManager,
         private readonly appTenants: IAlfredTenant[],
@@ -75,7 +77,9 @@ export class AlfredRunner implements utils.IRunner {
             winston,
             maxNumberOfClientsPerDocument,
             maxTokenLifetimeSec,
-            isTokenExpiryEnabled);
+            isTokenExpiryEnabled,
+            this.socketConnectThrottler,
+            this.socketSubmitOpThrottler);
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);
