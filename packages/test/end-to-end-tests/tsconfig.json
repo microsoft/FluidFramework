@@ -6,7 +6,8 @@
         "rootDir": "./src",
         "outDir": "./dist",
         "types": [
-            "mocha"
+            "mocha",
+            "@fluidframework/test-driver-definitions",
         ],
     },
     "include": [

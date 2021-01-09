@@ -1,4 +1,4 @@
-{
+{    
     "extends": "@fluidframework/build-common/ts-common-config.json",
     "exclude": [
         "dist",
@@ -7,7 +7,7 @@
     "compilerOptions": {
         "rootDir": "./src",
         "outDir": "./dist",
-        "types": [ "node", "mocha", "@fluidframework/test-driver-definitions"]
+        "types": [ "node", "mocha" ]
     },
     "include": [
         "src/**/*"

@@ -12,9 +12,12 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { generateTest, ITestObjectProvider, TestDataObject } from "./compatUtils";
 import * as old from "./oldVersion";
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
     const leader = "leader";
-
     describe("Single client", () => {
         let scheduler: IAgentScheduler;
 
