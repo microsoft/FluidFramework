@@ -37,7 +37,7 @@
     "@fluidframework/protocol-base": "^0.1017.1",
     "@fluidframework/protocol-definitions": "^0.1017.1",
     "@fluidframework/server-services-client": "^0.1017.1",
-    "@fluidframework/telemetry-utils": "^0.1017.1",
+    "@fluidframework/telemetry-utils": "^0.33.0",
     "assert": "^2.0.0",
     "axios": "^0.21.1",
     "debug": "^4.1.1",
