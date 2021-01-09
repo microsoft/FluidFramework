@@ -1,8 +1,16 @@
-## 0.31 Breaking changes
+## 0.32 Breaking changes
+- [Node version 12.17 required](#Node-version-update)
 - [getAttachSnapshot removed IFluidDataStoreChannel](#getAttachSnapshot-removed-from-IFluidDataStoreChannel)
+- [resolveDataStore replaced](#resolveDataStore-replaced)
+
+### Node version updated to 12.17
+Due to changes in server packages and introduction of AsyncLocalStorage module which requires Node version 12.17 or above, you will need to update Node version to 12.17 or above.
 
 ### getAttachSnapshot removed from IFluidDataStoreChannel
 `getAttachSnapshot()` has been removed from `IFluidDataStoreChannel`. It is replaced by `getAttachSummary()`.
+
+### resolveDataStore replaced
+The resolveDataStore method manually exported by the ODSP resolver has been replaced with checkUrl() from the same package.
 
 ## 0.30 Breaking Changes
 

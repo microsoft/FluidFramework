@@ -62,6 +62,10 @@ export class MongoCollection<T> implements core.ICollection<T> {
         await this.collection.createIndex(index, { unique });
     }
 
+    public async createTTLIndex(index: any, expireAfterSeconds?: number): Promise<void> {
+        await this.collection.createIndex(index, { expireAfterSeconds });
+    }
+
     public async findOrCreate(query: any, value: T): Promise<{ value: T, existing: boolean }> {
         const result = await this.collection.findOneAndUpdate(
             query,

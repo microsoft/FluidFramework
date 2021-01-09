@@ -198,6 +198,19 @@ export interface ILoader extends IFluidRouter {
     rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
 }
 
+export type ILoaderOptions = {
+    [key in string | number]: any;
+} & {
+    /**
+     * Affects the behavior of the Container when a new code proposal
+     * is accepted that the current loaded code does not satisfy.
+     * True to reload the context without closing the container, or
+     * false to only close the container.
+     * Defaults to false.
+     */
+    hotSwapContext?: boolean;
+};
+
 /**
  * Accepted header keys for requests coming to the Loader
  */

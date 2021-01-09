@@ -56,7 +56,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
     /**
      * Sends the client join op for this connection
      */
-    public async connect() {
+    public async connect(clientJoinMessageServerMetadata?: any) {
         const clientDetail: IClientJoin = {
             clientId: this.clientId,
             detail: this.client,
@@ -69,6 +69,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             referenceSequenceNumber: -1,
             traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientJoin,
+            serverMetadata: clientJoinMessageServerMetadata,
         };
 
         const message: core.IRawOperationMessage = {

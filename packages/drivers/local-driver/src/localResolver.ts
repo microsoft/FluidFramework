@@ -15,6 +15,16 @@ import {
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "./auth";
 
+export function createLocalResolverCreateNewRequest(documentId: string): IRequest {
+    const createNewRequest: IRequest = {
+        url: `http://localhost:3000/${documentId}`,
+        headers: {
+            [DriverHeader.createNew]: true,
+        },
+    };
+    return createNewRequest;
+}
+
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
  * related local classes.
@@ -68,12 +78,6 @@ export class LocalResolver implements IUrlResolver {
     }
 
     public createCreateNewRequest(documentId: string): IRequest {
-        const createNewRequest: IRequest = {
-            url: `http://localhost:3000/${documentId}`,
-            headers: {
-                [DriverHeader.createNew]: true,
-            },
-        };
-        return createNewRequest;
+        return createLocalResolverCreateNewRequest(documentId);
     }
 }

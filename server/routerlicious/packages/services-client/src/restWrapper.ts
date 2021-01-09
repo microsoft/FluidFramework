@@ -5,6 +5,7 @@
 
 import * as querystring from "querystring";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
+import * as uuid from "uuid";
 import { debug } from "./debug";
 
 export class RestWrapper {
@@ -72,6 +73,9 @@ export class RestWrapper {
     private async request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T> {
         if (this.defaultHeaders) {
             options.headers = { ...this.defaultHeaders, ...options.headers };
+        }
+        if (!options.headers?.["x-correlation-id"]) {
+            options.headers = { ...{ "x-correlation-id": uuid.v4() }, ...options.headers };
         }
 
         const response = await this.axios.request<T>(options)
