@@ -230,7 +230,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             if (this.isActive() && currentClient === this.clientId) {
                 this.onNewTaskAssigned(key);
             } else {
-                await this.onTaskReasigned(key, currentClient);
+                await this.onTaskReassigned(key, currentClient);
             }
         });
 
@@ -274,7 +274,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         }
     }
 
-    private async onTaskReasigned(key: string, currentClient: string | null) {
+    private async onTaskReassigned(key: string, currentClient: string | null) {
         if (this.runningTasks.has(key)) {
             this.runningTasks.delete(key);
             this.emit("released", key);
@@ -319,19 +319,30 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     private initializeCore() {
         // Nobody released the tasks held by last client in previous session.
         // Check to see if this client needs to do this.
+
         const clearCandidates: string[] = [];
         const tasks: Promise<any>[] = [];
+        const requestedTask = new Set<string>();
+        const quorum = this.runtime.getQuorum();
 
+        // try to request local runnable tasks if it is not assigned to any body
+        // or assigned to someone that has left.
         for (const [taskUrl] of this.locallyRunnableTasks) {
-            if (!this.getTaskClientId(taskUrl)) {
+            const currentClient = this.getTaskClientId(taskUrl);
+
+            if (!currentClient || quorum.getMember(currentClient) === undefined) {
                 debug(`Requesting ${taskUrl}`);
                 tasks.push(this.writeCore(taskUrl, this.clientId));
+                requestedTask.add(taskUrl);
             }
         }
 
+        // Clean up task assigned to disconnected clients.
         for (const taskUrl of this.scheduler.keys()) {
+            // don't clear task that we just requested.
+            if (requestedTask.has(taskUrl)) { continue; }
             const currentClient = this.getTaskClientId(taskUrl);
-            if (currentClient && this.runtime.getQuorum().getMember(currentClient) === undefined) {
+            if (currentClient && quorum.getMember(currentClient) === undefined) {
                 clearCandidates.push(taskUrl);
             }
         }
