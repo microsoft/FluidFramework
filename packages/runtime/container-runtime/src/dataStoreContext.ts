@@ -252,10 +252,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             async () => this.getGCDataInternal(),
             async () => this.getInitialGCSummaryDetails(),
         );
-
-        // Add self route (empty string) to used routes in the summarizer node. If GC is enabled, the used routes will
-        // be updated as per the GC data.
-        this.summarizerNode.updateUsedRoutes([""]);
     }
 
     public dispose(): void {
@@ -471,14 +467,15 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * Calls the channel to update used routes of its child contexts.
      */
     private updateChannelUsedRoutes() {
-        assert(this.channel !== undefined, "Channel should not be undefined when updating used routes");
-        // Remove the route to this data store, if it exists.
-        const usedChannelRoutes = this.summarizerNode.usedRoutes.filter(
-            (id: string) => { return id !== "/" && id !== ""; },
-        );
+        assert(this.loaded, "Channel should be loaded when updating used routes");
+        assert(this.channel !== undefined, "Channel should be present when data store is loaded");
 
         // back-compat: 0.33 - updateUsedRoutes is added in 0.33. Remove the check here when N >= 0.36.
         if (this.channel.updateUsedRoutes !== undefined) {
+            // Remove the route to this data store, if it exists.
+            const usedChannelRoutes = this.summarizerNode.usedRoutes.filter(
+                (id: string) => { return id !== "/" && id !== ""; },
+            );
             this.channel.updateUsedRoutes(usedChannelRoutes);
         }
     }

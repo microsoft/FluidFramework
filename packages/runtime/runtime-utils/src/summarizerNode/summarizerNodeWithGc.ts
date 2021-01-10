@@ -64,7 +64,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     // The GC details of this node in the initial summary.
     private readonly gcDetailsInInitialSummaryP: LazyPromise<IGarbageCollectionSummaryDetails>;
 
-    private _usedRoutes: string[] = [];
+    // Set used routes to have self route by default. This makes the node referenced by default. This is done to ensure
+    // that this node is not marked as collected when running GC has been disabled. Once, the option to disable GC is
+    // removed (from runGC flag in IContainerRuntimeOptions), this should be changed to be have no routes by default.
+    private _usedRoutes: string[] = [""];
     public get usedRoutes(): string[] {
         return this._usedRoutes;
     }

@@ -90,13 +90,6 @@ export class RemoteChannelContext implements IChannelContext {
             async () => this.getGCDataInternal(),
             async () => this.gcDetailsInInitialSummaryP,
         );
-
-        // Add self route (empty string) to used routes in the summarizer node. If GC is enabled, the used routes will
-        // be updated as per the GC data.
-        // back-compat: 0.33 - updateUsedRoutes is added in 0.33. Remove the check here when N >= 0.36.
-        if (this.summarizerNode.updateUsedRoutes !== undefined) {
-            this.summarizerNode.updateUsedRoutes([""]);
-        }
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
