@@ -91,11 +91,19 @@ async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index
     });
 }
 
+interface IDedupCaches {
+    blobShaToPath: Map<string, string>,
+    pathToBlobSha: Map<string, string>,
+    treesPathToTree: Map<string, api.ISummaryTree>,
+}
+
 export class OdspDocumentStorageService implements IDocumentStorageService {
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
-    private blobsShaToPathCache: Map<string, string> = new Map();
-    private blobsPathToShaCache: Map<string, string> = new Map();
-    private treesPathToSummaryTreeCache: Map<string, api.ISummaryTree> = new Map();
+    private blobTreeDedupCaches: IDedupCaches = {
+        blobShaToPath: new Map(),
+        pathToBlobSha: new Map(),
+        treesPathToTree: new Map(),
+    };
 
     private readonly blobCache: Map<string, IBlob | ArrayBuffer> = new Map();
     private readonly treesCache: Map<string, ITree> = new Map();
@@ -328,35 +336,35 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             commits[decodeURIComponent(key)] = hierarchicalTree.commits[key];
         }
 
+        let finalTree: api.ISnapshotTree | undefined;
         if (commits && commits[".app"]) {
             // The latest snapshot is a summary
             // attempt to read .protocol from commits for backwards compat
-            return this.readSummaryTree(tree.id, commits[".protocol"] || hierarchicalTree.trees[".protocol"], commits[".app"] as string);
+            finalTree = await this.readSummaryTree(tree.id, commits[".protocol"] || hierarchicalTree.trees[".protocol"], commits[".app"] as string);
         }
 
-        if (hierarchicalTree.blobs) {
-            const attributesBlob = hierarchicalTree.blobs.attributes;
-            if (attributesBlob) {
-                this.attributesBlobHandles.add(attributesBlob);
+        if (finalTree === undefined) {
+            if (hierarchicalTree.blobs) {
+                const attributesBlob = hierarchicalTree.blobs.attributes;
+                if (attributesBlob) {
+                    this.attributesBlobHandles.add(attributesBlob);
+                }
             }
+
+            hierarchicalTree.commits = commits;
+
+            // When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
+            // So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
+            const appTree = hierarchicalTree.trees[".app"];
+            const protocolTree = hierarchicalTree.trees[".protocol"];
+            finalTree = this.combineProtocolAndAppSnapshotTree(tree.id, appTree, protocolTree);
         }
 
-        hierarchicalTree.commits = commits;
-
-        // When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
-        // So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
-        const appTree = hierarchicalTree.trees[".app"];
-        const protocolTree = hierarchicalTree.trees[".protocol"];
-        if (appTree && protocolTree) {
-            if (this.hostPolicy.summarizerClient) {
-                // This returns a summary tree but we don't need it.
-                await this.buildPathToSummaryTreesCache(appTree, ".app");
-                await this.buildPathToSummaryTreesCache(protocolTree, ".protocol");
-            }
-            return this.combineProtocolAndAppSnapshotTree(tree.id, appTree, protocolTree);
+        if (this.hostPolicy.summarizerClient) {
+            // This returns a summary tree but we don't need it.
+            await this.buildCachesForDedup(finalTree);
         }
-
-        return hierarchicalTree;
+        return finalTree;
     }
 
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
@@ -740,22 +748,20 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // If the last proposed handle is not the proposed handle of the acked summary, clear the cache as the last summary
         // could have got nacked.
         if (context.proposalHandle !== this.blobsShaProposalHandle) {
-            this.blobsShaToPathCache.clear();
-            this.blobsPathToShaCache.clear();
-            this.treesPathToSummaryTreeCache.clear();
+            this.blobTreeDedupCaches.blobShaToPath.clear();
+            this.blobTreeDedupCaches.pathToBlobSha.clear();
+            this.blobTreeDedupCaches.treesPathToTree.clear();
         }
         this.lastSummaryHandle = context.ackHandle;
 
-        const { result, blobsShaToPathCacheLatest, blobsPathToShaCacheLatest, treesPathToSummaryTreeCacheLatest } = await PerformanceEvent.timedExecAsync(this.logger,
+        const { result, blobTreeDedupCachesLatest } = await PerformanceEvent.timedExecAsync(this.logger,
             { eventName: "uploadSummaryWithContext" },
             async () => this.writeSummaryTree(this.lastSummaryHandle, summary));
         const id = result ? result.id : undefined;
         if (!result || !id) {
             throw new Error(`Failed to write summary tree`);
         }
-        this.treesPathToSummaryTreeCache = treesPathToSummaryTreeCacheLatest;
-        this.blobsShaToPathCache = blobsShaToPathCacheLatest;
-        this.blobsPathToShaCache = blobsPathToShaCacheLatest;
+        this.blobTreeDedupCaches = { ...blobTreeDedupCachesLatest };
         this.blobsShaProposalHandle = id;
 
         return id;
@@ -901,12 +907,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.attributesBlobHandles.add(attributesBlob);
             }
         }
-
-        if (this.hostPolicy.summarizerClient) {
-            // This returns a summary tree but we don't need it.
-            await this.buildPathToSummaryTreesCache(hierarchicalAppTree, ".app");
-            await this.buildPathToSummaryTreesCache(hierarchicalProtocolTree, ".protocol");
-        }
         return this.combineProtocolAndAppSnapshotTree(snapshotTreeId, hierarchicalAppTree, hierarchicalProtocolTree);
     }
 
@@ -937,22 +937,20 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         tree: api.ISummaryTree,
         depth: number = 0): Promise<{
             result: ISnapshotResponse,
-            blobsShaToPathCacheLatest: Map<string, string>,
-            blobsPathToShaCacheLatest: Map<string, string>,
-            treesPathToSummaryTreeCacheLatest: Map<string, api.ISummaryTree>,
+            blobTreeDedupCachesLatest: IDedupCaches,
     }> {
         // This cache is associated with mapping sha to path for currently generated summary.
         // We are building these caches from scratch as this will take care of the deleted blobs. The deleted blobs/trees will not come
         // in these caches and then we will replace the old caches with these new caches, so that they have the correct values.
-        const blobsShaToPathCacheLatest: Map<string, string> = new Map();
-        const blobsPathToShaCacheLatest: Map<string, string> = new Map();
-        const treesPathToSummaryTreeCacheLatest: Map<string, api.ISummaryTree> = new Map();
+        const blobTreeDedupCachesLatest: IDedupCaches = {
+            blobShaToPath: new Map(),
+            pathToBlobSha: new Map(),
+            treesPathToTree: new Map(),
+        };
         const { snapshotTree, reusedBlobs, blobs } = await this.convertSummaryToSnapshotTree(
             parentHandle,
             tree,
-            blobsShaToPathCacheLatest,
-            blobsPathToShaCacheLatest,
-            treesPathToSummaryTreeCacheLatest,
+            blobTreeDedupCachesLatest,
         );
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
@@ -988,7 +986,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                             method: "POST",
                         },
                         FetchType.uploadSummary);
-                    return { result: response.content, blobsShaToPathCacheLatest, blobsPathToShaCacheLatest, treesPathToSummaryTreeCacheLatest };
+                    return { result: response.content, blobTreeDedupCachesLatest };
                 });
         });
     }
@@ -999,9 +997,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private async convertSummaryToSnapshotTree(
         parentHandle: string | undefined,
         tree: api.ISummaryTree,
-        blobsShaToPathCacheLatest: Map<string, string>,
-        blobsPathToShaCacheLatest: Map<string, string>,
-        treesPathToSummaryTreeCacheLatest: Map<string, api.ISummaryTree>,
+        blobTreeDedupCachesLatest: IDedupCaches,
         depth: number = 0,
         path: string = "",
         expanded: boolean = false,
@@ -1022,13 +1018,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             switch (summaryObject.type) {
                 case api.SummaryType.Tree: {
-                    treesPathToSummaryTreeCacheLatest.set(`.app${path}/${key}`, summaryObject);
+                    blobTreeDedupCachesLatest.treesPathToTree.set(`.app${path}/${key}`, summaryObject);
                     const result = await this.convertSummaryToSnapshotTree(
                         parentHandle,
                         summaryObject,
-                        blobsShaToPathCacheLatest,
-                        blobsPathToShaCacheLatest,
-                        treesPathToSummaryTreeCacheLatest,
+                        blobTreeDedupCachesLatest,
                         depth + 1,
                         `${path}/${key}`,
                         expanded);
@@ -1044,9 +1038,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     // If we are expanding the handle, then the blobPath should exist in the cache as we will get the blob
                     // hash from the cache.
                     if (expanded) {
-                        hash = this.blobsPathToShaCache.get(blobPath);
+                        hash = this.blobTreeDedupCaches.pathToBlobSha.get(blobPath);
                         assert(hash !== undefined, "hash should be set here");
-                        completePath = this.blobsShaToPathCache.get(hash);
+                        completePath = this.blobTreeDedupCaches.blobShaToPath.get(hash);
                         assert(completePath !== undefined, "path should be defined as path->sha mapping exists");
                     } else {
                         value = typeof summaryObject.content === "string"
@@ -1061,14 +1055,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     if (!completePath || !this.lastSummaryHandle) {
                         blobs++;
                         completePath = `.app${path}/${key}`;
-                        blobsShaToPathCacheLatest.set(hash, completePath);
-                        blobsPathToShaCacheLatest.set(completePath, hash);
+                        blobTreeDedupCachesLatest.blobShaToPath.set(hash, completePath);
+                        blobTreeDedupCachesLatest.pathToBlobSha.set(completePath, hash);
                     } else {
                         reusedBlobs++;
                         id = `${this.lastSummaryHandle}/${completePath}`;
                         const updatedPath = `.app${path}/${key}`;
-                        blobsShaToPathCacheLatest.set(hash, updatedPath);
-                        blobsPathToShaCacheLatest.set(updatedPath, hash);
+                        blobTreeDedupCachesLatest.blobShaToPath.set(hash, updatedPath);
+                        blobTreeDedupCachesLatest.pathToBlobSha.set(updatedPath, hash);
                         value = undefined;
                     }
                     break;
@@ -1085,15 +1079,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     // We try to get the summary tree from the cache so that we can expand it in order to dedup the blobs.
                     // We always send whole tree no matter what, even if some part of the tree did not change in order to dedup
                     // the blobs. However it may happen that the tree is not found in cache and then we have to use the handle.
-                    const summaryTreeToExpand = this.treesPathToSummaryTreeCache.get(pathKey);
+                    const summaryTreeToExpand = this.blobTreeDedupCaches.treesPathToTree.get(pathKey);
                     if (summaryTreeToExpand !== undefined) {
-                        treesPathToSummaryTreeCacheLatest.set(`.app${path}/${key}`, summaryTreeToExpand);
+                        blobTreeDedupCachesLatest.treesPathToTree.set(`.app${path}/${key}`, summaryTreeToExpand);
                         const result = await this.convertSummaryToSnapshotTree(
                             parentHandle,
                             summaryTreeToExpand,
-                            blobsShaToPathCacheLatest,
-                            blobsPathToShaCacheLatest,
-                            treesPathToSummaryTreeCacheLatest,
+                            blobTreeDedupCachesLatest,
                             depth + 1,
                             `${path}/${key}`,
                             true);
@@ -1148,14 +1140,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return { snapshotTree, blobs, reusedBlobs };
     }
 
-    private async buildPathToSummaryTreesCache(appTree: api.ISnapshotTree, path: string): Promise<api.ISummaryTree> {
-        assert(Object.keys(appTree.commits).length === 0, "There should not be commit tree entries in snapshot");
+    private async buildCachesForDedup(snapshotTree: api.ISnapshotTree, path: string = ""): Promise<api.ISummaryTree> {
+        assert(Object.keys(snapshotTree.commits).length === 0, "There should not be commit tree entries in snapshot");
 
-        const appSummaryTree: api.ISummaryTree = {
+        const summaryTree: api.ISummaryTree = {
             type: api.SummaryType.Tree,
             tree: {},
         };
-        for (const [key, value] of Object.entries(appTree.blobs)) {
+        for (const [key, value] of Object.entries(snapshotTree.blobs)) {
             const blobValue = this.blobCache.get(value);
             assert(blobValue !== undefined, "Blob should exists");
             const decodedBlobValue = {
@@ -1164,20 +1156,22 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             };
             const hash = await hashFile(IsoBuffer.from(decodedBlobValue.content, decodedBlobValue.encoding));
             // We are just setting the hash as content but we won't use it anywhere as it doesn't represent the actual content of blob.
-            appSummaryTree.tree[key] = {
+            summaryTree.tree[key] = {
                 type: api.SummaryType.Blob,
                 content: hash,
             };
-            this.blobsShaToPathCache.set(hash, `${path}/${key}`);
-            this.blobsPathToShaCache.set(`${path}/${key}`, hash);
+            const fullBlobPath = path === "" ? `.app/${key}` : `${path}/${key}`;
+            this.blobTreeDedupCaches.blobShaToPath.set(hash, fullBlobPath);
+            this.blobTreeDedupCaches.pathToBlobSha.set(fullBlobPath, hash);
         }
 
-        for (const [key, tree] of Object.entries(appTree.trees)) {
-            const subtree = await this.buildPathToSummaryTreesCache(tree, `${path}/${key}`);
-            this.treesPathToSummaryTreeCache.set(`${path}/${key}`, subtree);
-            appSummaryTree.tree[key] = subtree;
+        for (const [key, tree] of Object.entries(snapshotTree.trees)) {
+            const fullTreePath = path === "" ? key === ".protocol" ? `${key}` : ".app" : `${path}/${key}`;
+            const subtree = await this.buildCachesForDedup(tree, fullTreePath);
+            this.blobTreeDedupCaches.treesPathToTree.set(fullTreePath, subtree);
+            summaryTree.tree[key] = subtree;
         }
-        return appSummaryTree;
+        return summaryTree;
     }
 }
 
