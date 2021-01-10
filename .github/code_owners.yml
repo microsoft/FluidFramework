@@ -38,6 +38,7 @@ packages/drivers/**:
 - vladsud
 - jatgarg
 - tanviraumi
+- znewton
 
 packages/drivers/odsp-driver/**:
 - GaryWilber
