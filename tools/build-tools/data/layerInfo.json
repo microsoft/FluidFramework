@@ -164,14 +164,16 @@
             },
             "Framework": {
                 "packages": [
-                    "@fluid-internal/client-api"
+                    "@fluid-internal/client-api",
+                    "@fluid-experimental/fluid-main"
                 ],
                 "dirs": [
                     "packages/framework/"
                 ],
                 "deps": [
                     "Hosts",
-                    "Runtime"
+                    "Runtime",
+                    "Server-Tools"
                 ]
             },
             "Examples": {
