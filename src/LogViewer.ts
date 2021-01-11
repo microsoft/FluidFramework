@@ -4,12 +4,22 @@
  */
 
 import BTree from 'sorted-btree';
-import { assert, fail } from './Common';
+import { assert, fail, noop } from './Common';
 import { EditLog } from './EditLog';
 import { Snapshot } from './Snapshot';
 import { EditResult } from './PersistedTypes';
+import { EditId } from './Identifiers';
 import { Transaction } from './Transaction';
 import { initialTree } from './InitialTree';
+
+/**
+ * Callback for when an edit is applied.
+ * Note that edits may be applied multiple times (and with different results due to concurrent edits),
+ * and might not be applied when added.
+ * This callback cannot be used to simply log each edit as it comes it to see its status.
+ * @internal
+ */
+export type EditResultCallback = (editResult: EditResult, editId: EditId) => void;
 
 /**
  * Creates `Snapshot`s for the revisions in an `EditLog`
@@ -41,6 +51,7 @@ export interface LogViewer {
 
 /**
  * Creates Snapshots for revisions associated with an EditLog and caches the results.
+ * @internal
  */
 export class CachingLogViewer implements LogViewer {
 	public readonly log: EditLog;
@@ -65,6 +76,13 @@ export class CachingLogViewer implements LogViewer {
 	private lastHeadSnapshot: Snapshot;
 
 	/**
+	 * Called whenever an edit is processed.
+	 * This will have been called at least once for any edit if a revision after than edit has been requested.
+	 * It may be called multiple times: the number of calls and when they occur depends on caching and is an implementation detail.
+	 */
+	private readonly processEditResult: EditResultCallback;
+
+	/**
 	 * Iff true, the snapshots passed to setKnownRevision will be asserted to be correct.
 	 */
 	private readonly expensiveValidation: boolean;
@@ -72,18 +90,26 @@ export class CachingLogViewer implements LogViewer {
 	/**
 	 * Create a new LogViewer
 	 * @param log - the edit log which snapshots will be based on.
+	 * @param baseTree - the tree used in the snapshot corresponding to the 0th revision. Defaults to `initialTree`.
 	 * @param expensiveValidation - Iff true, the snapshots passed to setKnownRevision will be asserted to be correct.
 	 */
-	public constructor(log: EditLog, expensiveValidation = false) {
+	public constructor(
+		log: EditLog,
+		baseTree = initialTree,
+		expensiveValidation = false,
+		processEditResult: EditResultCallback = noop
+	) {
 		this.log = log;
-		const initialSnapshot = Snapshot.fromTree(initialTree);
+		const initialSnapshot = Snapshot.fromTree(baseTree);
 		this.lastHeadSnapshot = initialSnapshot;
 		this.sequencedSnapshotCache.set(0, initialSnapshot);
+		this.processEditResult = processEditResult ?? noop;
 		this.expensiveValidation = expensiveValidation;
 	}
 
 	public getSnapshot(revision: number): Snapshot {
-		if (revision === Number.POSITIVE_INFINITY) {
+		// Per the documentation for this method, the returned snapshot should be the output of the edit at the largest index <= `revision`.
+		if (revision >= this.log.length) {
 			if (this.lastVersionIdentifier === this.log.versionIdentifier()) {
 				return this.lastHeadSnapshot;
 			}
@@ -107,9 +133,11 @@ export class CachingLogViewer implements LogViewer {
 				const revision = i + 1; // Revision is the result of the edit being applied.
 				this.sequencedSnapshotCache.set(revision, currentSnapshot);
 			}
+
+			this.processEditResult(editingResult.result, edit.id);
 		}
 
-		if (revision === Number.POSITIVE_INFINITY) {
+		if (revision >= this.log.length) {
 			this.lastVersionIdentifier = this.log.versionIdentifier();
 			this.lastHeadSnapshot = currentSnapshot;
 		}

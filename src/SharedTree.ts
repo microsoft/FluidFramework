@@ -414,7 +414,7 @@ function loadSummary(
 	assert(version === formatVersion);
 	const currentView = Snapshot.fromTree(currentTree);
 	const editLog = new EditLog(sequencedEdits);
-	const logViewer = new CachingLogViewer(editLog, expensiveValidation);
+	const logViewer = new CachingLogViewer(editLog, initialTree, expensiveValidation);
 
 	// TODO:#47830: Store the associated revision on the snapshot.
 	// The current view should only be stored in the cache if the revision it's associated with is known.
