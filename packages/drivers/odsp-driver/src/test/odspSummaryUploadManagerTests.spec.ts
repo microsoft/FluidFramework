@@ -7,41 +7,27 @@
 import { strict as assert } from "assert";
 import { hashFile, IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl } from "../contracts";
+import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { EpochTracker } from "../epochTracker";
-import { createOdspCache, LocalPersistentCache, LocalPersistentCacheAdapter, NonPersistentCache } from "../odspCache";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
+import { LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
+import { OdspSummaryUploadManager } from "../odspSummaryUploadManager";
 import { TokenFetchOptions } from "../tokenFetch";
 import { mockFetch } from "./mockFetch";
 
-describe("Summary Blobs Cache Tests", () => {
-    const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
-    const driveId = "driveId";
-    const itemId = "fileId";
+describe("Odsp Summary Upload Manager Tests", () => {
     let epochTracker: EpochTracker;
     let cache: LocalPersistentCacheAdapter;
-    let storageService: IDocumentStorageService;
+    let odspSummaryUploadManager: OdspSummaryUploadManager;
     beforeEach(() => {
         const logger = new TelemetryNullLogger();
         cache = new LocalPersistentCacheAdapter(new LocalPersistentCache());
         epochTracker = new EpochTracker(cache, logger);
-        const resolvedUrl = ({
-            siteUrl,
-            driveId,
-            itemId,
-            endpoints: {
-                snapshotStorageUrl: "snapshotStorageUrl",
-            },
-        } as any) as IOdspResolvedUrl;
-        storageService = new OdspDocumentStorageService(
-            resolvedUrl,
+        odspSummaryUploadManager = new OdspSummaryUploadManager(
+            "snapshotStorageUrl",
             async (options: TokenFetchOptions, name?: string) => "token",
             logger,
-            true,
-            createOdspCache(new LocalPersistentCache(), new NonPersistentCache(), logger),
-            {},
             epochTracker,
+            new Map(),
         );
     });
 
@@ -50,7 +36,7 @@ describe("Summary Blobs Cache Tests", () => {
             proposalHandle: "proposedHandle",
             ackHandle: "ackHandle",
         };
-        storageService["blobsShaProposalHandle"] = summaryContext.proposalHandle;
+        odspSummaryUploadManager["lastSummaryProposalHandle"] = summaryContext.proposalHandle;
         const rootBlob: ISummaryBlob = {
             type: SummaryType.Blob,
             content: JSON.stringify("defaultDataStore"),
@@ -78,17 +64,18 @@ describe("Summary Blobs Cache Tests", () => {
         };
 
         await mockFetch({ id: summaryContext.proposalHandle }, async () => {
-            return storageService.uploadSummaryWithContext(
+            return odspSummaryUploadManager.writeSummaryTree(
                 appSummary,
                 summaryContext,
             );
         });
 
-        assert.strictEqual(storageService["blobTreeDedupCaches"].blobShaToPath.size, 2, "2 blobs should be in cache");
-        assert.strictEqual(storageService["blobTreeDedupCaches"].blobShaToPath.get(componentBlobHash),
+        assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.size, 2,
+            "2 blobs should be in cache");
+        assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.get(componentBlobHash),
             componentBlobPath, "Cache should contain hash of component blob");
-        assert.strictEqual(storageService["blobTreeDedupCaches"].blobShaToPath.get(rootBlobHash), rootBlobPath,
-            "Cache should contain hash of root blob");
+        assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.get(rootBlobHash),
+            rootBlobPath, "Cache should contain hash of root blob");
 
         // Now delete both blobs and insert a new blob with content same as component blob
         delete (appSummary.tree.default as ISummaryTree).tree.root;
@@ -101,13 +88,14 @@ describe("Summary Blobs Cache Tests", () => {
         };
         const componentBlobNewPath = ".app/default2/component2";
         await mockFetch({ id: summaryContext.proposalHandle }, async () => {
-            return storageService.uploadSummaryWithContext(
+            return odspSummaryUploadManager.writeSummaryTree(
                 appSummary,
                 summaryContext,
             );
         });
-        assert.strictEqual(storageService["blobTreeDedupCaches"].blobShaToPath.size, 1, "1 blobs should be in cache");
-        assert.strictEqual(storageService["blobTreeDedupCaches"].blobShaToPath.get(componentBlobHash),
+        assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.size, 1,
+            "1 blobs should be in cache");
+        assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.get(componentBlobHash),
             componentBlobNewPath, "Cache should contain hash of component blob 2");
     });
 });
