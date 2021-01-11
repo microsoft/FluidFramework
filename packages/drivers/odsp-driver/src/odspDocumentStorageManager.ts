@@ -951,6 +951,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             parentHandle,
             tree,
             blobTreeDedupCachesLatest,
+            0,
+            ".app",
         );
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
@@ -1015,16 +1017,16 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             let id: string | undefined;
             let value: SnapshotTreeValue | undefined;
-
+            const currentPath = `${path}/${key}`;
             switch (summaryObject.type) {
                 case api.SummaryType.Tree: {
-                    blobTreeDedupCachesLatest.treesPathToTree.set(`.app${path}/${key}`, summaryObject);
+                    blobTreeDedupCachesLatest.treesPathToTree.set(currentPath, summaryObject);
                     const result = await this.convertSummaryToSnapshotTree(
                         parentHandle,
                         summaryObject,
                         blobTreeDedupCachesLatest,
                         depth + 1,
-                        `${path}/${key}`,
+                        currentPath,
                         expanded);
                     value = result.snapshotTree;
                     reusedBlobs += result.reusedBlobs;
@@ -1033,15 +1035,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 }
                 case api.SummaryType.Blob: {
                     let hash: string | undefined;
-                    let completePath: string | undefined;
-                    const blobPath = `.app${path}/${key}`;
+                    let cachedPath: string | undefined;
                     // If we are expanding the handle, then the blobPath should exist in the cache as we will get the blob
                     // hash from the cache.
                     if (expanded) {
-                        hash = this.blobTreeDedupCaches.pathToBlobSha.get(blobPath);
+                        hash = this.blobTreeDedupCaches.pathToBlobSha.get(currentPath);
                         assert(hash !== undefined, "hash should be set here");
-                        completePath = this.blobTreeDedupCaches.blobShaToPath.get(hash);
-                        assert(completePath !== undefined, "path should be defined as path->sha mapping exists");
+                        cachedPath = this.blobTreeDedupCaches.blobShaToPath.get(hash);
+                        assert(cachedPath !== undefined, "path should be defined as path->sha mapping exists");
                     } else {
                         value = typeof summaryObject.content === "string"
                         ? { content: summaryObject.content, encoding: "utf-8" }
@@ -1051,18 +1052,16 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                     assert(hash !== undefined, "hash should be set!");
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
-                    // to generate complete path for the given blob.
-                    if (!completePath || !this.lastSummaryHandle) {
+                    // cached path for the given blob.
+                    if (cachedPath === undefined || this.lastSummaryHandle === undefined) {
                         blobs++;
-                        completePath = `.app${path}/${key}`;
-                        blobTreeDedupCachesLatest.blobShaToPath.set(hash, completePath);
-                        blobTreeDedupCachesLatest.pathToBlobSha.set(completePath, hash);
+                        blobTreeDedupCachesLatest.blobShaToPath.set(hash, currentPath);
+                        blobTreeDedupCachesLatest.pathToBlobSha.set(currentPath, hash);
                     } else {
                         reusedBlobs++;
-                        id = `${this.lastSummaryHandle}/${completePath}`;
-                        const updatedPath = `.app${path}/${key}`;
-                        blobTreeDedupCachesLatest.blobShaToPath.set(hash, updatedPath);
-                        blobTreeDedupCachesLatest.pathToBlobSha.set(updatedPath, hash);
+                        id = `${this.lastSummaryHandle}/${cachedPath}`;
+                        blobTreeDedupCachesLatest.blobShaToPath.set(hash, currentPath);
+                        blobTreeDedupCachesLatest.pathToBlobSha.set(currentPath, hash);
                         value = undefined;
                     }
                     break;
@@ -1075,25 +1074,25 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     if (handlePath.length > 0 && !handlePath.startsWith("/")) {
                         handlePath = `/${handlePath}`;
                     }
-                    const pathKey = `.app${handlePath}`;
+                    const pathKey = `${path}${handlePath}`;
                     // We try to get the summary tree from the cache so that we can expand it in order to dedup the blobs.
                     // We always send whole tree no matter what, even if some part of the tree did not change in order to dedup
                     // the blobs. However it may happen that the tree is not found in cache and then we have to use the handle.
                     const summaryTreeToExpand = this.blobTreeDedupCaches.treesPathToTree.get(pathKey);
                     if (summaryTreeToExpand !== undefined) {
-                        blobTreeDedupCachesLatest.treesPathToTree.set(`.app${path}/${key}`, summaryTreeToExpand);
+                        blobTreeDedupCachesLatest.treesPathToTree.set(currentPath, summaryTreeToExpand);
                         const result = await this.convertSummaryToSnapshotTree(
                             parentHandle,
                             summaryTreeToExpand,
                             blobTreeDedupCachesLatest,
                             depth + 1,
-                            `${path}/${key}`,
+                            currentPath,
                             true);
                         value = result.snapshotTree;
                         reusedBlobs += result.reusedBlobs;
                         blobs += result.blobs;
                     } else {
-                        id = `${parentHandle}/.app${handlePath}`;
+                        id = `${parentHandle}/${pathKey}`;
                         // TODO: SPO will deprecate this soon
                         if (summaryObject.handleType === api.SummaryType.Commit) {
                             value = {
