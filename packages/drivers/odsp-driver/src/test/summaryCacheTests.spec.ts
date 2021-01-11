@@ -84,10 +84,10 @@ describe("Summary Blobs Cache Tests", () => {
             );
         });
 
-        assert.strictEqual(storageService["blobsShaToPathCache"].size, 2, "2 blobs should be in cache");
-        assert.strictEqual(storageService["blobsShaToPathCache"].get(componentBlobHash), componentBlobPath,
-            "Cache should contain hash of component blob");
-        assert.strictEqual(storageService["blobsShaToPathCache"].get(rootBlobHash), rootBlobPath,
+        assert.strictEqual(storageService["blobTreeDedupCaches"].blobShaToPath.size, 2, "2 blobs should be in cache");
+        assert.strictEqual(storageService["blobTreeDedupCaches"].blobShaToPath.get(componentBlobHash),
+            componentBlobPath, "Cache should contain hash of component blob");
+        assert.strictEqual(storageService["blobTreeDedupCaches"].blobShaToPath.get(rootBlobHash), rootBlobPath,
             "Cache should contain hash of root blob");
 
         // Now delete both blobs and insert a new blob with content same as component blob
@@ -106,8 +106,8 @@ describe("Summary Blobs Cache Tests", () => {
                 summaryContext,
             );
         });
-        assert.strictEqual(storageService["blobsShaToPathCache"].size, 1, "1 blobs should be in cache");
-        assert.strictEqual(storageService["blobsShaToPathCache"].get(componentBlobHash), componentBlobNewPath,
-            "Cache should contain hash of component blob 2");
+        assert.strictEqual(storageService["blobTreeDedupCaches"].blobShaToPath.size, 1, "1 blobs should be in cache");
+        assert.strictEqual(storageService["blobTreeDedupCaches"].blobShaToPath.get(componentBlobHash),
+            componentBlobNewPath, "Cache should contain hash of component blob 2");
     });
 });
