@@ -46,6 +46,14 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
 
+schedules:
+- cron: "0 0 * * *"
+  displayName: Daily midnight build
+  always: true
+  branches:
+    include:
+    - main
+
 pr:
   branches:
     include:
