@@ -51,6 +51,10 @@ function getRoomId(room: IRoom) {
     return `${room.tenantId}/${room.documentId}`;
 }
 
+const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
+
+const getSubmitOpThrottleId = (clientId: string) => `${clientId}_SubmitOp`;
+
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
     // Trace sampling.
@@ -94,6 +98,49 @@ function selectProtocolVersion(connectVersions: string[]): string {
     }
 }
 
+/**
+ * When throttled, sends nack before returning.
+ *
+ * @returns true if throttled; false if not throttled or no throttler provided.
+ */
+function checkThrottle(
+    throttler: core.IThrottler | undefined,
+    throttleId: string,
+    socket: core.IWebSocket,
+    logger: core.ILogger): boolean {
+    if (!throttler) {
+        return false;
+    }
+    const messageMetaData = {
+        key: throttleId,
+        weight: 1,
+        event_type: "throttling",
+    };
+    try {
+        throttler.incrementCount(throttleId);
+    } catch (e) {
+        if (e instanceof core.ThrottlingError) {
+            logger.info(`Throttled: ${throttleId}`, { messageMetaData: {
+                ...messageMetaData,
+                reason: e.message,
+                retryAfterInSeconds: e.retryAfter,
+            } });
+            const nackMessage = createNackMessage(
+                e.code,
+                NackErrorType.ThrottlingError,
+                e.message,
+                e.retryAfter);
+            socket.emit("nack", "", [nackMessage]);
+            return true;
+        } else {
+            logger.error(
+                `Throttle increment failed: ${safeStringify(e, undefined, 2)}`,
+                { messageMetaData });
+        }
+    }
+    return false;
+}
+
 export function configureWebSocketServices(
     webSocketServer: core.IWebSocketServer,
     orderManager: core.IOrdererManager,
@@ -104,7 +151,9 @@ export function configureWebSocketServices(
     logger: core.ILogger,
     maxNumberOfClientsPerDocument: number = 1000000,
     maxTokenLifetimeSec: number = 60 * 60,
-    isTokenExpiryEnabled: boolean = false) {
+    isTokenExpiryEnabled: boolean = false,
+    connectThrottler?: core.IThrottler,
+    submitOpThrottler?: core.IThrottler) {
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, core.IOrdererConnection>();
@@ -305,6 +354,15 @@ export function configureWebSocketServices(
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (connectionMessage: IConnect) => {
+            const isThrottled = checkThrottle(
+                connectThrottler,
+                getSocketConnectThrottleId(connectionMessage.tenantId),
+                socket,
+                logger);
+            if (isThrottled) {
+                return;
+            }
+
             connectDocument(connectionMessage).then(
                 (message) => {
                     socket.emit("connect_document_success", message.connection);
@@ -327,6 +385,15 @@ export function configureWebSocketServices(
         socket.on(
             "submitOp",
             (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
+                const isThrottled = checkThrottle(
+                    submitOpThrottler,
+                    getSubmitOpThrottleId(clientId),
+                    socket,
+                    logger);
+                if (isThrottled) {
+                    return;
+                }
+
                 // Verify the user has an orderer connection.
                 if (!connectionsMap.has(clientId)) {
                     let nackMessage: INack;

@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/gitresources";
 import {
     ICreateRefParamsExternal,
-} from "@fluidframework/server-services-core";
+} from "@fluidframework/server-services-client";
 import * as async from "async";
 import lorem from "lorem-ipsum";
 import * as moniker from "moniker";
@@ -141,6 +141,11 @@ describe("GitRest", () => {
             ref: "refs/heads/main",
             sha: "cf0b592907d683143b28edd64d274ca70f68998e",
             config: { enabled: true },
+        };
+
+        const testRefWriteDisabled: ICreateRefParams = {
+            ref: "refs/heads/main",
+            sha: "cf0b592907d683143b28edd64d274ca70f68998e",
         };
 
         const externalStorageManager = new ExternalStorageManager(testUtils.defaultProvider);
@@ -356,13 +361,20 @@ describe("GitRest", () => {
                 });
 
                 it("Can delete a reference", async () => {
-                    await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
+                    await initBaseRepo(
+                        supertest,
+                        testOwnerName,
+                        testRepoName,
+                        testBlob,
+                        testTree,
+                        testCommit,
+                        testRefWriteDisabled);
                     await supertest
-                        .delete(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
+                        .delete(`/repos/${testOwnerName}/${testRepoName}/git/${testRefWriteDisabled.ref}`)
                         .expect(204);
 
                     return supertest
-                        .get(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
+                        .get(`/repos/${testOwnerName}/${testRepoName}/git/${testRefWriteDisabled.ref}`)
                         .expect(400);
                 });
             });
