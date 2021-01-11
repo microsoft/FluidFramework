@@ -470,7 +470,7 @@ export class Snapshot {
 	/**
 	 * Calculate the difference between two `Snapshot`s
 	 * @param snapshot - the other snapshot to compare to this one
-	 * @returns A {@link Delta} listing which nodes were changed, added, or removed.
+	 * @returns A {@link Delta} which nodes must be changed, added, and removed to get from `this` to `snapshot`.
 	 * The snapshots must share a root.
 	 */
 	public delta(snapshot: Snapshot): Delta<NodeId> {

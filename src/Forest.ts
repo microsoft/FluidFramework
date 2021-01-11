@@ -111,7 +111,7 @@ export interface Forest<ID, T, TParentData> {
 	 * Calculate the difference between two forests
 	 * @param forest - the other forest to compare to this one
 	 * @param comparator - a function which returns true if two objects of type T are equivalent, false otherwise
-	 * @returns A {@link Delta} listing which nodes were changed, added, or removed.
+	 * @returns A {@link Delta} which nodes must be changed, added, and removed to get from `this` to `forest`.
 	 */
 	delta(forest: Forest<ID, T, TParentData>, comparator?: (a: T, b: T) => boolean): Delta<ID>;
 }
@@ -175,7 +175,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		return this.nodes.size;
 	}
 
-	public add(id: ID, node: T): Forest<ID, T, TParentData> {
+	public add(id: ID, node: T): ForestI<ID, T, TParentData> {
 		assert(!this.nodes.has(id), 'can not add node with already existing id');
 		const nodes = this.nodes.set(id, node);
 		const parents = this.parents.withMutations((mutableParents) => {
@@ -193,7 +193,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 	public mergeWith(
 		nodes: Iterable<[ID, T]>,
 		merger: (oldVal: T, newVal: T, key: ID) => T
-	): Forest<ID, T, TParentData> {
+	): ForestI<ID, T, TParentData> {
 		const parents = new Map<ID, { parentNode: ID; parentData: TParentData }>();
 		const newNodes = this.nodes.withMutations((mutableNodes) => {
 			for (const [id, node] of nodes) {
@@ -212,7 +212,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		return new ForestI({ nodes: newNodes, parents: newParents, getChildren: this.getChildren });
 	}
 
-	public replace(id: ID, node: T): Forest<ID, T, TParentData> {
+	public replace(id: ID, node: T): ForestI<ID, T, TParentData> {
 		const old = this.nodes.get(id);
 		assert(old, 'can not replace node that does not exist');
 		const nodes = this.nodes.set(id, node);
@@ -235,7 +235,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		return this.nodes.get(id);
 	}
 
-	public delete(id: ID, deleteChildren: boolean): Forest<ID, T, TParentData> {
+	public delete(id: ID, deleteChildren: boolean): ForestI<ID, T, TParentData> {
 		const mutableNodes = this.nodes.asMutable();
 		const mutableParents = this.parents.asMutable();
 		this.deleteRecursive(mutableNodes, mutableParents, id, deleteChildren);
@@ -246,7 +246,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		});
 	}
 
-	public deleteAll(ids: Iterable<ID>, deleteChildren: boolean): Forest<ID, T, TParentData> {
+	public deleteAll(ids: Iterable<ID>, deleteChildren: boolean): ForestI<ID, T, TParentData> {
 		const mutableNodes = this.nodes.asMutable();
 		const mutableParents = this.parents.asMutable();
 		for (const id of ids) {
