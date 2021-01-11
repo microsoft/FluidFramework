@@ -42,8 +42,7 @@ export class MockStorage implements IChannelStorageService {
                     if (entry.type === "Blob") {
                         // eslint-disable-next-line prefer-rest-params
                         assert(paths.length === 1, JSON.stringify({ ...arguments }));
-                        const blob = entry.value as IBlob;
-                        return blob;
+                        return entry.value as IBlob;
                     }
                     if (entry.type === "Tree") {
                         return MockStorage.readBlobCore(entry.value as ITree, paths.slice(1));

@@ -111,8 +111,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
         if (this.versionName !== undefined) {
             const fileName = `${this.path}/${this.versionName}/${sha}`;
             if (fs.existsSync(fileName)) {
-                const data = fs.readFileSync(fileName).toString();
-                return data;
+                return fs.readFileSync(fileName).toString();
             }
         }
         throw new Error(`Can't find blob ${sha}`);

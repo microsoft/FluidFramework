@@ -15,7 +15,6 @@ import {
     ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-// import { bufferToBase64 } from "./bufferToString";
 
 export class DocumentStorageServiceProxy implements IDocumentStorageService {
     public get repositoryUrl(): string {

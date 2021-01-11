@@ -12,7 +12,7 @@ import {
     IDocumentStorageService,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import { buildSnapshotTree, toBuffer, bufferToBase64 } from "@fluidframework/driver-utils";
+import { buildSnapshotTree, toBuffer } from "@fluidframework/driver-utils";
 import {
     IClient,
     ISnapshotTree,
@@ -132,7 +132,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
      * @deprecated - only here for back compat, will be removed after release
      */
     public async read(blobId: string): Promise<string> {
-        return bufferToBase64(await this.storage.readBlob(blobId));
+        return this.storage.read(blobId);
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {

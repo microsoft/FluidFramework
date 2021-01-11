@@ -36,8 +36,7 @@ export class LocalChannelStorageService implements IChannelStorageService {
             switch (entry.type) {
                 case TreeEntry.Blob:
                     if (path === entry.path) {
-                        const blob = entry.value as IBlob;
-                        return blob;
+                        return entry.value as IBlob;
                     }
                     break;
 
