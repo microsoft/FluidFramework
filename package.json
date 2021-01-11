@@ -28,7 +28,7 @@
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js",
+		"test:mocha": "nyc --report-dir='./coverage' mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js",
 		"tsc": "tsc --pretty"
 	},
 	"dependencies": {
@@ -52,6 +52,8 @@
 		"concurrently": "^5.2.0",
 		"easy-table": "^1.1.1",
 		"env-cmd": "^10.1.0",
+		"mocha": "^8.2.1",
+		"nyc": "^15.1.0",
 		"rimraf": "^2.6.2"
 	},
 	"publishConfig": {
