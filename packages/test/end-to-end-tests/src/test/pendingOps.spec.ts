@@ -134,8 +134,10 @@ const tests = (args: ITestObjectProvider) => {
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
-        await Promise.all([...Array(lots).keys()].map(async (i) => assert.strictEqual(await map1.wait(i.toString()), i)));
-        await Promise.all([...Array(lots).keys()].map(async (i) => assert.strictEqual(await map3.wait(i.toString()), i)));
+        await Promise.all([...Array(lots).keys()].map(
+            async (i) => assert.strictEqual(await map1.wait(i.toString()), i)));
+        await Promise.all([...Array(lots).keys()].map(
+            async (i) => assert.strictEqual(await map3.wait(i.toString()), i)));
     });
 
     it("doesn't resend a lot of successful ops", async function() {
@@ -198,8 +200,10 @@ const tests = (args: ITestObjectProvider) => {
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
-        await Promise.all([...Array(lots).keys()].map(async (i) => assert.strictEqual(await map1.wait(i.toString()), i)));
-        await Promise.all([...Array(lots).keys()].map(async (i) => assert.strictEqual(await map3.wait(i.toString()), i)));
+        await Promise.all([...Array(lots).keys()].map(
+            async (i) => assert.strictEqual(await map1.wait(i.toString()), i)));
+        await Promise.all([...Array(lots).keys()].map(
+            async (i) => assert.strictEqual(await map3.wait(i.toString()), i)));
     });
 
     it("doesn't resend successful batched ops", async function() {

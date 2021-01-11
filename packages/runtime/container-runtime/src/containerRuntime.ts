@@ -368,7 +368,7 @@ export class ScheduleManager {
         }
     }
 
-    private setPaused(localPaused: boolean) {
+    public setPaused(localPaused: boolean) {
         // Return early if no change in value
         if (this.localPaused === localPaused) {
             return;
@@ -746,7 +746,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.pendingStateManager = new PendingStateManager(
             this,
-            (content, localOpMetadata) => this.dataStores.rebaseOp(content, localOpMetadata),
+            async (content, localOpMetadata) => this.dataStores.rebaseOp(content, localOpMetadata),
             context.pendingLocalState as IPendingLocalState);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
@@ -814,6 +814,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             this.replayPendingStates();
         });
+
+        this.deltaManager.on("op", this.onOp);
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
@@ -996,7 +998,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.updateDocumentDirtyState(newState);
     }
 
-    public async setConnectionState(connected: boolean, clientId?: string) {
+    private readonly onOp = (op: ISequencedDocumentMessage) => {
+        const rebaseP = this.pendingStateManager.rebaseAt(op.sequenceNumber);
+        if (rebaseP) {
+            this.scheduleManager.setPaused(true);
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            rebaseP.then(() => this.scheduleManager.setPaused(false));
+        }
+    };
+
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // There might be no change of state due to Container calling this API after loading runtime.
@@ -1004,15 +1015,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._connected = connected;
 
         if (changeOfState) {
-            if (this.context.pendingLocalState !== undefined) {
-                const pendingOps = this.pendingStateManager.getPendingMessages();
-                if (pendingOps.length > 0) {
-                    await Promise.all(pendingOps.map(async (op) => {
-                        return this.dataStores.loadChannelFromOp(op);
-                    }));
-                }
-                this.context.pendingLocalState = undefined;
-            }
+            this.deltaManager.off("op", this.onOp);
+            this.context.pendingLocalState = undefined;
             this.replayPendingStates();
         }
 

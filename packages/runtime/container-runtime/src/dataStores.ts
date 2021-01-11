@@ -272,18 +272,11 @@ export class DataStores implements IDisposable {
         context.reSubmit(envelope.contents, localOpMetadata);
     }
 
-    public rebaseOp(content: any, localOpMetadata: unknown) {
+    public async rebaseOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);
         assert(!!context, "There should be a store context for the op");
-        context.rebaseOp(envelope.contents, localOpMetadata);
-    }
-
-    public async loadChannelFromOp(content: any) {
-        const envelope = content as IEnvelope;
-        const context = this.contexts.get(envelope.address);
-        assert(!!context, "There should be a store context for the op");
-        return context.loadChannelFromOp(envelope.contents);
+        return context.rebaseOp(envelope.contents, localOpMetadata);
     }
 
     public processFluidDataStoreOp(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {

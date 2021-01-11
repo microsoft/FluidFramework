@@ -38,24 +38,9 @@ import { ChannelStorageService } from "./channelStorageService";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
 import { debug } from "./debug";
 
-interface IPendingProcess {
-    type: "process";
-    message: ISequencedDocumentMessage;
-    local: boolean;
-    localOpMetadata: unknown;
-}
-
-interface IPendingRebase {
-    type: "rebase";
-    message: ISequencedDocumentMessage;
-    localOpMetadata: unknown;
-}
-
-type IPendingAction = IPendingProcess | IPendingRebase;
-
 export class RemoteChannelContext implements IChannelContext {
     private isLoaded = false;
-    private pending: IPendingAction[] | undefined = [];
+    private pending: ISequencedDocumentMessage[] | undefined = [];
     private channelP: Promise<IChannel> | undefined;
     private channel: IChannel | undefined;
     private readonly services: {
@@ -130,12 +115,8 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public rebaseOp(message: ISequencedDocumentMessage, localOpMetadata: unknown) {
-        if (this.isLoaded) {
-            this.services.deltaConnection.rebaseOp(message, localOpMetadata);
-        } else {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pending!.push({ type: "rebase", message, localOpMetadata });
-        }
+        assert(this.isLoaded, "Remote channel must be loaded when rebasing op");
+        this.services.deltaConnection.rebaseOp(message, localOpMetadata);
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
@@ -144,13 +125,15 @@ export class RemoteChannelContext implements IChannelContext {
         if (this.isLoaded) {
             this.services.deltaConnection.process(message, local, localOpMetadata);
         } else {
+            assert(!local, "Remote channel must not be local when processing op");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pending!.push({ type: "process", message, local, localOpMetadata });
+            this.pending!.push(message);
         }
     }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
         assert(this.isLoaded, "Remote channel must be loaded when resubmitting op");
+
         this.services.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
@@ -240,21 +223,11 @@ export class RemoteChannelContext implements IChannelContext {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         for (const message of this.pending!) {
             try {
-                switch (message.type) {
-                    case "process":
-                        this.services.deltaConnection.process(message.message, message.local, message.localOpMetadata);
-                        break;
-                    case "rebase":
-                        this.services.deltaConnection.rebaseOp(message.message, message.localOpMetadata);
-                        break;
-                    default:
-                }
+                this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
             } catch (err) {
                 // record sequence number for easier debugging
                 const error = CreateContainerError(err);
-                if (message.type === "process") {
-                    error.sequenceNumber = message.message.sequenceNumber;
-                }
+                error.sequenceNumber = message.sequenceNumber;
                 throw error;
             }
         }

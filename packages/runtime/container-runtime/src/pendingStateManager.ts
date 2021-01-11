@@ -104,16 +104,9 @@ export class PendingStateManager {
         }
     }
 
-    public getPendingMessages(): any[] {
-        const pendingStates = [...this.pendingStates.toArray(), ...this.initialStates.toArray()];
-        const pendingMessages = pendingStates.filter((state) => state.type === "message");
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return (pendingMessages as IPendingMessage[]).map((message) => message.content);
-    }
-
     constructor(
         private readonly containerRuntime: ContainerRuntime,
-        private readonly rebaseOp: (content, localOpMetadata) => void,
+        private readonly rebaseOp: (content, localOpMetadata) => Promise<void>,
         initialState: IPendingLocalState | undefined,
     ) {
         this.initialStates = new Deque<IPendingState>(initialState?.pendingStates ?? []);
@@ -216,6 +209,36 @@ export class PendingStateManager {
         this.pendingStates.push(pendingFlush);
     }
 
+    public rebaseAt(seqNum: number) {
+        const rebasePromises: Promise<void>[] = [];
+        // rebase initial ops at sequence number
+        while (!this.initialStates.isEmpty()) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const nextState = this.initialStates.peekFront()!;
+            if (nextState.type === "message") {
+                if (nextState.referenceSequenceNumber > seqNum) {
+                    break; // nothing left to do at this sequence number
+                } else if (nextState.referenceSequenceNumber > 0 && nextState.referenceSequenceNumber < seqNum) {
+                    // this method should be called at every sequence number in order, so this should never happen
+                    if (nextState.clientSequenceNumber === this.initialClientSeqNum) {
+                        throw new Error("loaded from snapshot too recent to rebase pending initial ops");
+                    } else {
+                        throw new Error("gap in message sequence or messages out of order");
+                    }
+                }
+
+                // rebaseOp will cause the DDS to behave as if it has sent the op but not actually send it
+                rebasePromises.push(this.rebaseOp(nextState.content, nextState.localOpMetadata));
+            }
+
+            // then we push onto pendingStates which will cause PendingStateManager to resubmit when we connect
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.pendingStates.push(this.initialStates.shift()!);
+        }
+
+        return rebasePromises.length === 0 ? undefined : Promise.all(rebasePromises);
+    }
+
     /**
      * Processes a local message once it's ack'd by the server to verify that there was no data corruption and that
      * the batch information was preserved for batch messages. Also process remote messages that might have been
@@ -240,29 +263,8 @@ export class PendingStateManager {
      * they are ready to be acked or resubmitted.
      */
     private processRemoteMessage(message: ISequencedDocumentMessage) {
-        // rebase initial ops up to and including message sequence number
-        while (!this.initialStates.isEmpty()) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const nextState = this.initialStates.peekFront()!;
-            if (nextState.type === "message" && nextState.referenceSequenceNumber > message.sequenceNumber) {
-                break;
-            }
-
-            if (nextState.type === "message") {
-                if (nextState.clientSequenceNumber === this.initialClientSeqNum &&
-                    message.sequenceNumber > nextState.referenceSequenceNumber) {
-                    throw new Error("loaded from snapshot too recent to rebase pending initial ops");
-                }
-                // rebaseOp will cause the DDS to behave as if it has sent the op but not actually send it
-                this.rebaseOp(nextState.content, nextState.localOpMetadata);
-            }
-
-            // then we push onto pendingStates which will cause PendingStateManager to resubmit when we connect
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pendingStates.push(this.initialStates.shift()!);
-        }
-
-        // if this is an ack for a pending initial op, dequeue one message (possibly one we just queued)
+        // if this is an ack for a pending initial op, dequeue one message.
+        // we should have seen its ref seq num by now and already rebased the op
         if (message.clientId === this.initialClientId && message.clientSequenceNumber >= this.initialClientSeqNum) {
             while (!this.pendingStates.isEmpty()) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -407,15 +409,7 @@ export class PendingStateManager {
         assert(this.clientId !== this.containerRuntime.clientId, "replayPendingStates called twice for same clientId!");
         this.clientId = this.containerRuntime.clientId;
 
-        // rebase all remaining initial ops
-        while (!this.initialStates.isEmpty()) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const nextMessage = this.initialStates.shift()!;
-            if (nextMessage.type === "message") {
-                this.rebaseOp(nextMessage.content, nextMessage.localOpMetadata);
-            }
-            this.pendingStates.push(nextMessage);
-        }
+        assert(this.initialStates.isEmpty());
 
         let pendingStatesCount = this.pendingStates.length;
         if (pendingStatesCount === 0) {
