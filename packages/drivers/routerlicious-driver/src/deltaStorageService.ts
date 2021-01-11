@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { OutgoingHttpHeaders } from "http";
 import querystring from "querystring";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { IDeltaStorageService, IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
 import Axios from "axios";
+import * as uuid from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ITokenProvider } from "./tokens";
 import { DocumentStorageService } from "./documentStorageService";
 
@@ -44,7 +47,10 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
  * Provides access to the underlying delta storage on the server for routerlicious driver.
  */
 export class DeltaStorageService implements IDeltaStorageService {
-    constructor(private readonly url: string, private readonly tokenProvider: ITokenProvider) {
+    constructor(
+        private readonly url: string,
+        private readonly tokenProvider: ITokenProvider,
+        private readonly logger: ITelemetryLogger | undefined) {
     }
 
     public async get(
@@ -54,7 +60,9 @@ export class DeltaStorageService implements IDeltaStorageService {
         to?: number): Promise<ISequencedDocumentMessage[]> {
         const query = querystring.stringify({ from, to });
 
-        let headers: { Authorization: string } | null = null;
+        const headers: OutgoingHttpHeaders = {
+            "x-correlation-id": uuid.v4(),
+        };
 
         const storageToken = await this.tokenProvider.fetchStorageToken(
             tenantId,
@@ -62,13 +70,18 @@ export class DeltaStorageService implements IDeltaStorageService {
         );
 
         if (storageToken) {
-            headers = {
-                Authorization: `Basic ${fromUtf8ToBase64(`${tenantId}:${storageToken.jwt}`)}`,
-            };
+            headers.Authorization = `Basic ${fromUtf8ToBase64(`${tenantId}:${storageToken.jwt}`)}`;
         }
 
         const ops = await Axios.get<ISequencedDocumentMessage[]>(
             `${this.url}?${query}`, { headers });
+
+        if (this.logger) {
+            this.logger.sendTelemetryEvent({
+                eventName: "R11sDriverToServer",
+                correlationId: headers["x-correlation-id"] as string,
+            });
+        }
 
         return ops.data;
     }
