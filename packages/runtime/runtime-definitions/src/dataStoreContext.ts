@@ -189,8 +189,8 @@ export interface IFluidDataStoreChannel extends
     summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult>;
 
     /**
-     * Returns the GC data for this data store. It contains a list of GC nodes that contains references to
-     * other GC nodes.
+     * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
+     * including any of its children. Each node has a list of outbound routes to other GC nodes in the document.
      */
     getGCData(): Promise<IGarbageCollectionData>;
 

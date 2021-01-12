@@ -47,8 +47,10 @@ class SummaryNodeWithGC extends SummaryNode {
 /**
  * Extends the functionality of SummarizerNode to manage this node's garbage collection data:
  * - Adds a new API `getGCData` to return GC data of this node.
- * - Caches the result of getGCData method to be used if nothing changes between summaries.
+ * - Caches the result of `getGCData` to be used if nothing changes between summaries.
  * - Adds GC data to the result of summarize.
+ * - Manages the used routes of this node. These are used to identify if this node is referenced in the document
+ *   and to determine if the node's used state changed since last summary.
  * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  *   directly into summarizeInternal method.
  */
@@ -141,8 +143,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     /**
-     * Returns the GC data of this node. If nothing has changed since the last time we summarized, it tries to reuse
-     * existing data.
+     * Returns the GC data of this node. If nothing has changed since last summary, it tries to reuse the data from
+     * the previous summary. Else, it gets new GC data from the underlying Fluid object.
      */
     public async getGCData(): Promise<IGarbageCollectionData> {
         assert(this.getGCDataFn !== undefined, "GC data cannot be retrieved without getGCDataFn");

@@ -439,6 +439,14 @@ export class DataStores implements IDisposable {
         return builder.getSummaryTree();
     }
 
+    /**
+     * Generates data used for garbage collection. It does the following:
+     * 1. Calls into each child data store context to get its GC data.
+     * 2. Prefixs the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
+     *    idenfied as belonging to the child.
+     * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
+     *    the GC data of this channel.
+     */
     public async getGCData(): Promise<IGarbageCollectionData> {
         const builder = new GCDataBuilder();
         // Iterate over each store and get their GC data.
@@ -449,8 +457,8 @@ export class DataStores implements IDisposable {
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
                 const contextGCData = await context.getGCData();
-                // Prefix the child's id to the ids of GC nodes returned by it. This gradually builds the id of
-                // each node to be a path from the root.
+                // Prefix the child's id to the ids of its GC nodes so they can be identified as belonging to the child.
+                // This also gradually builds the id of each node to be a path from the root.
                 builder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
             }));
 
