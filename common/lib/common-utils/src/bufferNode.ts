@@ -57,12 +57,5 @@ export function stringToBuffer(input: string, encoding: string): ArrayBufferLike
  * @param blob - the binary blob
  * @returns the blob in string format
  */
-export const bufferToString = (blob: ArrayBufferLike): string => IsoBuffer.from(blob).toString("utf8");
-
-/**
- * Convert binary blob to base64 format
- *
- * @param blob - the binary blob
- * @returns the blob in base64 format
- */
-export const bufferToBase64 = (blob: ArrayBufferLike): string => IsoBuffer.from(blob).toString("base64");
+export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>
+    IsoBuffer.from(blob).toString(encoding);

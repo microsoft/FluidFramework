@@ -136,9 +136,39 @@ describe("Buffer isomorphism", () => {
         expect(nodeBufferBase64).toEqual(browserBufferBase64);
     });
 
-    test("bufferToString is compatible",() => {
+    test("bufferToString with utf8 encoding is compatible",() => {
         const test = "hello";
-        const buffer = BufferNode.stringToBuffer(test, "utf8");
-        console.log(BufferNode.bufferToString(buffer));
+        const nodeBufferUtf8 = BufferNode.stringToBuffer(test, "utf8");
+        const browserBufferUtf8 = BufferBrowser.stringToBuffer(test, "utf8");
+
+        const nodeStringUtf8 = BufferNode.bufferToString(nodeBufferUtf8, "utf8");
+        const browserStringUtf8 = BufferBrowser.bufferToString(browserBufferUtf8, "utf8");
+        expect(nodeStringUtf8).toEqual(browserStringUtf8);
+        expect(nodeStringUtf8).toEqual(test);
+        expect(browserStringUtf8).toEqual(test);
+
+        const nodeStringBase64 = BufferNode.bufferToString(nodeBufferUtf8, "base64");
+        const browserStringBase64 = BufferBrowser.bufferToString(browserBufferUtf8, "base64");
+        expect(nodeStringBase64).toEqual(browserStringBase64);
+        expect(nodeStringBase64).toEqual("aGVsbG8=");
+        expect(browserStringBase64).toEqual("aGVsbG8=");
+    });
+
+    test("bufferToString with base64 encoding is compatible",() => {
+        const test = "aGVsbG90aGVyZQ==";
+        const nodeBufferBase64 = BufferNode.stringToBuffer(test, "base64");
+        const browserBufferBase64 = BufferBrowser.stringToBuffer(test, "base64");
+
+        const nodeStringBase64 = BufferNode.bufferToString(nodeBufferBase64, "base64");
+        const browserStringBase64 = BufferBrowser.bufferToString(browserBufferBase64, "base64");
+        expect(nodeStringBase64).toEqual(browserStringBase64);
+        expect(nodeStringBase64).toEqual(test);
+        expect(browserStringBase64).toEqual(test);
+
+        const nodeStringUtf8 = BufferNode.bufferToString(nodeBufferBase64,"utf8");
+        const browserStringUtf8 = BufferBrowser.bufferToString(browserBufferBase64,"utf8");
+        expect(nodeStringUtf8).toEqual(browserStringUtf8);
+        expect(nodeStringUtf8).toEqual("hellothere");
+        expect(browserStringUtf8).toEqual("hellothere");
     });
 });
