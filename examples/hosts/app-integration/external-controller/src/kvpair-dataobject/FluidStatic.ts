@@ -11,17 +11,18 @@ import { DropletContainerRuntimeFactory } from "./containerCode";
 export class FluidDocument {
     constructor(private readonly container: Container, public readonly createNew: boolean) { }
 
-    public async createDroplet<T = any>(type: string, id: string) {
+    public async createDataObject<T = any>(type: string, id: string) {
         await this.container.request({ url: `/create/${type}/${id}` });
-        const droplet = await this.getDroplet<T>(id);
-        return droplet;
+        const dataObject = await this.getDataObject<T>(id);
+        return dataObject;
     }
 
-    public async getDroplet<T = any>(id: string) {
-        const droplet = await getObjectWithIdFromContainer<T>(id, this.container);
-        return droplet;
+    public async getDataObject<T = any>(id: string) {
+        const dataObject = await getObjectWithIdFromContainer<T>(id, this.container);
+        return dataObject;
     }
 }
+
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Fluid {
     public static async createDocument(docId: string): Promise<FluidDocument> {

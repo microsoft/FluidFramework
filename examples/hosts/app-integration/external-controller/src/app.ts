@@ -30,8 +30,8 @@ async function start(): Promise<void> {
     // Using the create handler, we can create our data object using a specific request shape.
     const dataObjectId = "dice";
     const keyValueDataObject: IKeyValueDataObject = createNew
-        ? await fluidDocument.createDroplet<KeyValueDataObject>(KeyValueInstantiationFactory.type, dataObjectId)
-        : await fluidDocument.getDroplet<KeyValueDataObject>(dataObjectId);
+        ? await fluidDocument.createDataObject<KeyValueDataObject>(KeyValueInstantiationFactory.type, dataObjectId)
+        : await fluidDocument.getDataObject<KeyValueDataObject>(dataObjectId);
 
     const diceRollerController = new DiceRollerController(keyValueDataObject);
     await diceRollerController.initialize(createNew);
