@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { LocalResolver } from "@fluidframework/local-driver";
+import { createLocalResolverCreateNewRequest, LocalResolver } from "@fluidframework/local-driver";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -76,7 +76,10 @@ describe("Table Document with Interception", () => {
             const deltaConnectionServer = LocalDeltaConnectionServer.create();
             const urlResolver = new LocalResolver();
             const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-            const container = await createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+            const container = await createAndAttachContainer(
+                codeDetails,
+                loader,
+                createLocalResolverCreateNewRequest(documentId));
             tableDocument = await requestFluidObject<TableDocument>(container, "default");
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -220,7 +223,7 @@ describe("Table Document with Interception", () => {
                     "We should have caught an assert in setCellValue because it detects an infinite recursion");
                 asserted = true;
             }
-            assert.equal(asserted, true, "setCellValue should have asserted because it detects inifinite recursion");
+            assert.equal(asserted, true, "setCellValue should have asserted because it detects infinite recursion");
 
             // Verify that the object is still usable:
             // Set useWrapper to false and call setCellValue on the wrapper again. Verify that we do not get an assert.
