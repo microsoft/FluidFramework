@@ -68,6 +68,11 @@ export class OdspSummaryUploadManager {
     ) {
     }
 
+    /**
+     * Builts the caches which will be used for blob deduping.
+     * @param snapshotTree - snapshot tree from which the dedup caches are built.
+     * @param path - path of the current node evaluated.
+     */
     public async buildCachesForDedup(snapshotTree: api.ISnapshotTree, path: string = ""): Promise<api.ISummaryTree> {
         assert(Object.keys(snapshotTree.commits).length === 0, "There should not be commit tree entries in snapshot");
 
@@ -106,6 +111,7 @@ export class OdspSummaryUploadManager {
         // If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
         // then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
         if (context.proposalHandle !== this.lastSummaryProposalHandle) {
+            this.logger.sendTelemetryEvent({ eventName: "", "LastProposedHandleMismatch": context.proposalHandle, lastSummaryProposalHandle: this.lastSummaryProposalHandle });
             this.blobTreeDedupCaches = { ...this.previousBlobTreeDedupCaches };
         } else {
             this.previousBlobTreeDedupCaches = { ...this.blobTreeDedupCaches };
@@ -281,6 +287,9 @@ export class OdspSummaryUploadManager {
                         reusedBlobs += result.reusedBlobs;
                         blobs += result.blobs;
                     } else {
+                        // Ideally we should not come here as we should have found it in cache. But in order to successfully upload the summary
+                        // we are just logging the event. Once we make sure that we don't have any telemetry for this, we would remove this.
+                        this.logger.sendTelemetryEvent({ eventName: "SummaryTreeHandleCacheMiss", parentHandle, handlePath: pathKey });
                         id = `${parentHandle}/${pathKey}`;
                         // TODO: SPO will deprecate this soon
                         if (summaryObject.handleType === api.SummaryType.Commit) {
