@@ -92,7 +92,7 @@ describe("Directory", () => {
                     assert.equal(valueChangedExpected, true, "valueChange event not expected");
                     valueChangedExpected = false;
 
-                    assert.equal(changed.key, "dwyane");
+                    assert.equal(changed.key, "dwayne");
                     assert.equal(changed.previousValue, previousValue);
                     assert.equal(changed.path, directory.absolutePath);
 
@@ -105,7 +105,7 @@ describe("Directory", () => {
                         "containedValueChanged event not expected for containedValueChanged event");
                     containedValueChangedExpected = false;
 
-                    assert.equal(changed.key, "dwyane");
+                    assert.equal(changed.key, "dwayne");
                     assert.equal(changed.previousValue, previousValue);
 
                     assert.equal(local, true, "local should be true for local action for containedValueChanged event");
@@ -126,7 +126,7 @@ describe("Directory", () => {
 
                 // Test set
                 previousValue = undefined;
-                directory.set("dwyane", "johnson");
+                directory.set("dwayne", "johnson");
                 assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
                 assert.equal(containedValueChangedExpected, false, "missing containedValueChanged event");
 
@@ -134,7 +134,7 @@ describe("Directory", () => {
                 previousValue = "johnson";
                 valueChangedExpected = true;
                 containedValueChangedExpected = true;
-                directory.delete("dwyane");
+                directory.delete("dwayne");
                 assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
                 assert.equal(containedValueChangedExpected, false, "missing containedValueChanged event");
 
