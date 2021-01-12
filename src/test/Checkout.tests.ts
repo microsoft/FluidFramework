@@ -388,13 +388,13 @@ export function checkoutTests(
 			const { checkout } = await setUpTestCheckout();
 
 			// Assert
-			expect(checkout.listenerCount).to.equal(1);
+			expect(checkout.tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(1);
 
 			// Act
 			checkout.dispose();
 
 			// Assert
-			expect(checkout.listenerCount).to.equal(0);
+			expect(checkout.tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(0);
 		});
 	});
 }
