@@ -1,14 +1,9 @@
 {
-	"name": "@intentional/shared-tree",
+	"name": "@fluid-example/shared-tree",
 	"version": "0.17.1",
 	"description": "Microsoft Whiteboard collaboration libraries",
-	"bugs": {
-		"url": "https://dev.azure.com/intentional/intent/_workitems"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration"
-	},
+	"homepage": "https://fluidframework.com",
+	"repository": "https://github.com/microsoft/FluidFramework",
 	"license": "MIT",
 	"author": "Microsoft",
 	"sideEffects": false,
@@ -16,9 +11,9 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile && npm run build:docs",
+		"build": "concurrently npm:build:compile npm:build:lint",
 		"build:compile": "concurrently npm:tsc npm:build:esnext",
-		"build:docs": "api-extractor run --local && copyfiles -u 2 ./_api-extractor-temp/doc-models/* ../../api-metadata/",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
@@ -28,16 +23,16 @@
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"test": "npm run test:mocha",
-		"test:mocha": "nyc --report-dir='./coverage' mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js",
+		"test:mocha": "nyc --report-dir='./coverage' mocha \"dist/**/*.tests.js\"",
 		"tsc": "tsc --pretty"
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^0.26.0",
-		"@fluidframework/container-definitions": "^0.31.1",
-		"@fluidframework/datastore-definitions": "^0.31.1",
-		"@fluidframework/protocol-definitions": "^0.1016.0",
-		"@fluidframework/shared-object-base": "^0.31.1",
-		"@fluidframework/telemetry-utils": "^0.31.1",
+		"@fluidframework/container-definitions": "0.33.0",
+		"@fluidframework/datastore-definitions": "0.33.0",
+		"@fluidframework/protocol-definitions": "^0.1017.1",
+		"@fluidframework/shared-object-base": "0.33.0",
+		"@fluidframework/telemetry-utils": "0.33.0",
 		"buffer": "^6.0.2",
 		"immutable": "^4.0.0-rc.12",
 		"sorted-btree": "^1.4.0",
@@ -46,14 +41,14 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^0.19.2",
 		"@fluidframework/eslint-config-fluid": "^0.21.0",
-		"@fluidframework/test-runtime-utils": "^0.31.1",
-		"@typescript-eslint/parser": "^4.7.0",
+		"@fluidframework/test-runtime-utils": "0.33.0",
+		"@typescript-eslint/parser": "~4.2.0",
 		"chai": "^4.2.0",
 		"concurrently": "^5.2.0",
 		"easy-table": "^1.1.1",
 		"env-cmd": "^10.1.0",
-		"mocha": "^8.2.1",
-		"nyc": "^15.1.0",
+		"mocha": "^8.1.1",
+		"nyc": "^15.0.0",
 		"rimraf": "^2.6.2"
 	},
 	"publishConfig": {

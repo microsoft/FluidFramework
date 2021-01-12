@@ -8,3 +8,6 @@ logs
 
 # Dependencies
 node_modules
+
+# Coverage
+.nyc_output

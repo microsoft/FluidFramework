@@ -217,7 +217,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		assert(old, 'can not replace node that does not exist');
 		const nodes = this.nodes.set(id, node);
 		const parents = this.parents.withMutations((mutableParents) => {
-			for (const [child, _] of this.getChildren(old)) {
+			for (const [child] of this.getChildren(old)) {
 				mutableParents.delete(child);
 			}
 			for (const [childId, parentData] of this.getChildren(node)) {
@@ -269,7 +269,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		assert(mutableParents.get(id) === undefined, 'node must be un-parented to be deleted');
 		const node = mutableNodes.get(id) ?? fail('node to delete must exist');
 		mutableNodes.delete(id);
-		for (const [child, _] of this.getChildren(node)) {
+		for (const [child] of this.getChildren(node)) {
 			mutableParents.delete(child);
 			if (deleteChildren) {
 				this.deleteRecursive(mutableNodes, mutableParents, child, deleteChildren);
@@ -281,7 +281,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		const checkedChildren = new Set<ID>([]);
 		for (const [k, v] of this.nodes) {
 			const d: T = v;
-			for (const [id, _] of this.getChildren(d)) {
+			for (const [id] of this.getChildren(d)) {
 				assert(!checkedChildren.has(id), 'the item tree tree must not contain cycles or multi-parented nodes');
 				assert(
 					(this.parents.get(id)?.parentNode ?? fail('each node must have associated metadata')) === k,
