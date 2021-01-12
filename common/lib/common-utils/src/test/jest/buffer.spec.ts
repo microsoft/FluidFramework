@@ -124,4 +124,21 @@ describe("Buffer isomorphism", () => {
         const browserStringBase64 = BufferBrowser.Uint8ArrayToString(testArray, "base64");
         expect(nodeStringBase64).toEqual(browserStringBase64);
     });
+
+    test("stringToBuffer is compatible", () => {
+        const test = "hello";
+        const nodeBufferUtf8 = BufferNode.stringToBuffer(test, "utf8");
+        const browserBufferUtf8 = BufferBrowser.stringToBuffer(test, "utf8");
+        expect(nodeBufferUtf8).toEqual(browserBufferUtf8);
+
+        const nodeBufferBase64 = BufferNode.stringToBuffer(test, "base64");
+        const browserBufferBase64 = BufferBrowser.stringToBuffer(test, "base64");
+        expect(nodeBufferBase64).toEqual(browserBufferBase64);
+    });
+
+    test("bufferToString is compatible",() => {
+        const test = "hello";
+        const buffer = BufferNode.stringToBuffer(test, "utf8");
+        console.log(BufferNode.bufferToString(buffer));
+    });
 });

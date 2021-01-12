@@ -30,6 +30,28 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
 }
 
 /**
+ * Convert base64 or utf8 string to array buffer
+ */
+export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike =>
+    IsoBuffer.from(input, encoding).buffer;
+
+/**
+ * Convert binary blob to string format
+ *
+ * @param blob - the binary blob
+ * @returns the blob in string format
+ */
+export const bufferToString = (blob: ArrayBufferLike): string => IsoBuffer.from(blob).toString("utf8");
+
+/**
+ * Convert binary blob to base64 format
+ *
+ * @param blob - the binary blob
+ * @returns the blob in base64 format
+ */
+export const bufferToBase64 = (blob: ArrayBufferLike): string => IsoBuffer.from(blob).toString("base64");
+
+/**
  * Minimal implementation of Buffer for our usages in the browser environment.
  */
 export class IsoBuffer extends Uint8Array {
