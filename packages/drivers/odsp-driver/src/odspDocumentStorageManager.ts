@@ -186,15 +186,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     eventName: "createBlob",
                     size: file.length,
                 },
-                async () => this.epochTracker.fetchAndParseAsJSON<api.ICreateBlobResponse>(
-                    url,
-                    {
-                        body: file,
-                        headers,
-                        method: "POST",
-                    },
-                    FetchType.createBlob,
-                ),
+                async (event) => {
+                    const res = await this.epochTracker.fetchAndParseAsJSON<api.ICreateBlobResponse>(
+                        url,
+                        {
+                            body: file,
+                            headers,
+                            method: "POST",
+                        },
+                        FetchType.createBlob,
+                    );
+                    event.end({ blobId: res.content.id });
+                    return res;
+                },
             );
         });
 
@@ -218,6 +222,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.logger,
                     {
                         eventName: "readDataBlob",
+                        blobId,
                         headers: Object.keys(headers).length !== 0 ? true : undefined,
                         waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
                     },
