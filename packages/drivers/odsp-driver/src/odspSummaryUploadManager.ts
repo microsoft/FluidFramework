@@ -27,8 +27,15 @@ import { TokenFetchOptions } from "./tokenFetch";
 /* eslint-disable max-len */
 
 interface IDedupCaches {
+    // Cache which contains mapping from blob sha to the blob path in summary. Path starts from ".app" or ".protocol"
     blobShaToPath: Map<string, string>,
+    // Cache which contains mapping from blob path to blob sha in summary. Path starts from ".app" or ".protocol".
+    // It is reverse mapping of "blobShaToPath" cache but the number entries in it are always >= number of entries in
+    // "blobShaToPath" cache as hash of multiple blobs can be same but not the path.
     pathToBlobSha: Map<string, string>,
+    // Cache which contains mapping from trees path to summary tree in the summary. Path starts from ".app" or ".protocol".
+    // The stored trees are fully expanded trees. However the blobs content are empty as we don't need them because their
+    // hashes are stored in the "pathToBlobSha" cache for a given path.
     treesPathToTree: Map<string, api.ISummaryTree>,
 }
 
@@ -73,10 +80,10 @@ export class OdspSummaryUploadManager {
                 encoding: "utf-8",
             };
             const hash = await hashFile(IsoBuffer.from(decodedBlobValue.content, decodedBlobValue.encoding));
-            // We are just setting the hash as content but we won't use it anywhere as it doesn't represent the actual content of blob.
+            // We are setting the content as empty because we won't use it anywhere. Instead we will use the hash of the blob from pathToBlobSha cache.
             summaryTree.tree[key] = {
                 type: api.SummaryType.Blob,
-                content: hash,
+                content: "",
             };
             const fullBlobPath = path === "" ? `.app/${key}` : `${path}/${key}`;
             this.blobTreeDedupCaches.blobShaToPath.set(hash, fullBlobPath);
@@ -131,13 +138,13 @@ export class OdspSummaryUploadManager {
             parentHandle,
             tree,
             blobTreeDedupCachesLatest,
-            0,
             ".app",
+            ".app",
+            false,
         );
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
             message: "app",
-            sequenceNumber: depth === 0 ? 1 : 2,
             type: SnapshotType.Channel,
         };
 
@@ -180,7 +187,7 @@ export class OdspSummaryUploadManager {
         parentHandle: string | undefined,
         tree: api.ISummaryTree,
         blobTreeDedupCachesLatest: IDedupCaches,
-        depth: number = 0,
+        rootNodeName: string,
         path: string = "",
         expanded: boolean = false,
     ) {
@@ -205,7 +212,7 @@ export class OdspSummaryUploadManager {
                         parentHandle,
                         summaryObject,
                         blobTreeDedupCachesLatest,
-                        depth + 1,
+                        rootNodeName,
                         currentPath,
                         expanded);
                     value = result.snapshotTree;
@@ -254,7 +261,7 @@ export class OdspSummaryUploadManager {
                     if (handlePath.length > 0 && !handlePath.startsWith("/")) {
                         handlePath = `/${handlePath}`;
                     }
-                    const pathKey = `${path}${handlePath}`;
+                    const pathKey = `${rootNodeName}/${handlePath}`;
                     // We try to get the summary tree from the cache so that we can expand it in order to dedup the blobs.
                     // We always send whole tree no matter what, even if some part of the tree did not change in order to dedup
                     // the blobs. However it may happen that the tree is not found in cache and then we have to use the handle.
@@ -265,7 +272,7 @@ export class OdspSummaryUploadManager {
                             parentHandle,
                             summaryTreeToExpand,
                             blobTreeDedupCachesLatest,
-                            depth + 1,
+                            rootNodeName,
                             currentPath,
                             true);
                         value = result.snapshotTree;

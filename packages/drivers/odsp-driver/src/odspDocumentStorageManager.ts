@@ -315,13 +315,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
 
         let finalTree: api.ISnapshotTree | undefined;
+        // For container loaded from detach new summary, we will not have a commit for ".app" in downloaded summary as the client uploaded both
+        // ".app" and ".protocol" trees by itself. For other summaries, we will have ".app" as commit because client previously only uploaded the
+        // app summary.
         if (commits && commits[".app"]) {
             // The latest snapshot is a summary
             // attempt to read .protocol from commits for backwards compat
             finalTree = await this.readSummaryTree(tree.id, commits[".protocol"] || hierarchicalTree.trees[".protocol"], commits[".app"] as string);
-        }
-
-        if (finalTree === undefined) {
+        } else {
             if (hierarchicalTree.blobs) {
                 const attributesBlob = hierarchicalTree.blobs.attributes;
                 if (attributesBlob) {
