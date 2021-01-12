@@ -94,7 +94,7 @@ export class RestWrapper {
                             this.request<T>(options, statusCode)
                                 .then(resolve)
                                 .catch(reject);
-                        });
+                        }, error.response.data.retryAfter * 1000);
                         return;
                     } else if (error.response && error.response.status !== statusCode) {
                         reject(error.response.status);
