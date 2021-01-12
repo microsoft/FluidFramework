@@ -11,5 +11,4 @@ export * from  "./Map";
 export * from  "./MergeTree";
 export * from  "./ProtocolDefinitions";
 export * from  "./Sequence";
-export * from  "./SharedObjectBase";
 export * from  "./ViewInterfaces";

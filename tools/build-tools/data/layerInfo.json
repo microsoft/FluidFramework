@@ -172,8 +172,7 @@
                 ],
                 "deps": [
                     "Hosts",
-                    "Runtime",
-                    "Server-Tools"
+                    "Runtime"
                 ]
             },
             "Examples": {
