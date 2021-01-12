@@ -94,7 +94,7 @@ export class OdspSummaryUploadManager {
         }
 
         for (const [key, tree] of Object.entries(snapshotTree.trees)) {
-            const fullTreePath = path === "" ? key === ".protocol" ? `${key}` : ".app" : `${path}/${key}`;
+            const fullTreePath = path === "" ? (key === ".protocol" ? ".protocol" : `.app/${key}`) : `${path}/${key}`;
             const subtree = await this.buildCachesForDedup(tree, fullTreePath);
             this.blobTreeDedupCaches.treesPathToTree.set(fullTreePath, subtree);
             summaryTree.tree[key] = subtree;
