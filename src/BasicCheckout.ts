@@ -5,7 +5,7 @@
 
 import { Edit } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
-import { SharedTree, SharedTreeEvent } from './SharedTree';
+import { SharedTree } from './SharedTree';
 import { Checkout } from './Checkout';
 
 /**
@@ -17,9 +17,9 @@ import { Checkout } from './Checkout';
  */
 export class BasicCheckout extends Checkout {
 	/**
-	 * A bound handler for 'committedEdit' SharedTreeEvent
+	 * A handler for 'committedEdit' SharedTreeEvent
 	 */
-	protected readonly editCommittedHandler = this.emitChange.bind(this);
+	protected readonly editCommittedHandler = () => this.emitChange();
 
 	/**
 	 * @param tree - the tree
