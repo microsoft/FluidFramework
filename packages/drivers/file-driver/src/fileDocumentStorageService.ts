@@ -6,7 +6,7 @@
 import fs from "fs";
 import { assert , fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { buildSnapshotTree, stringToBuffer } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@fluidframework/replay-driver";
 
@@ -103,6 +103,17 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
         }
         throw new Error(`Can't find blob ${sha}`);
     }
+
+    public async readBlob(sha: string): Promise<ArrayBufferLike> {
+        if (this.versionName !== undefined) {
+            const fileName = `${this.path}/${this.versionName}/decoded/${sha}`;
+            if (fs.existsSync(fileName)) {
+                const data = fs.readFileSync(fileName);
+                return data;
+            }
+        }
+        throw new Error(`Can't find blob ${sha}`);
+    }
 }
 
 export interface ISnapshotWriterStorage extends IDocumentStorageService {
@@ -140,6 +151,14 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
                 return blob;
             }
             return super.read(sha);
+        }
+
+        public async readBlob(sha: string): Promise<ArrayBufferLike> {
+            const blob = this.blobsWriter.get(sha);
+            if (blob !== undefined) {
+                return stringToBuffer(blob, "base64");
+            }
+            return super.readBlob(sha);
         }
 
         public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
