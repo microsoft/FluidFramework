@@ -90,12 +90,11 @@ export class RestWrapper {
                     }
 
                     if (error?.response?.status === 429 && error?.response?.data?.retryAfter > 0) {
-                        setTimeout(async () => {
+                        setTimeout(() => {
                             this.request<T>(options, statusCode)
                                 .then(resolve)
                                 .catch(reject);
                         }, error.response.data.retryAfter * 1000);
-                        return;
                     } else if (error.response && error.response.status !== statusCode) {
                         reject(error.response.status);
                     } else {
