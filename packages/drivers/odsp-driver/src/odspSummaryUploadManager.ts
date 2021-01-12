@@ -40,14 +40,17 @@ interface IDedupCaches {
 }
 
 export class OdspSummaryUploadManager {
-    // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
+    // This cache is associated with mapping sha to path for previous summary which belongs to lastSummaryProposalHandle.
     private blobTreeDedupCaches: IDedupCaches = {
         blobShaToPath: new Map(),
         pathToBlobSha: new Map(),
         treesPathToTree: new Map(),
     };
 
-    private backupBlobTreeDedupCaches: IDedupCaches = {
+    // This cache is associated with mapping sha to path for last acked summary. We check this by comparing the lastSummaryProposalHandle
+    // which the driver has with the proposedHandle received in summary context in writeSummaryTree call. If they match, it means the last
+    // uploaded summary got acked. However if the summary is not acked, then we overwrite the "blobTreeDedupCaches" with this cache.
+    private previousBlobTreeDedupCaches: IDedupCaches = {
         blobShaToPath: new Map(),
         pathToBlobSha: new Map(),
         treesPathToTree: new Map(),
@@ -101,13 +104,13 @@ export class OdspSummaryUploadManager {
 
     public async writeSummaryTree(tree: api.ISummaryTree, context: ISummaryContext) {
         // If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
-        // then re-initialize the caches with the backup ones.
+        // then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
         if (context.proposalHandle !== this.lastSummaryProposalHandle) {
-            this.blobTreeDedupCaches = { ...this.backupBlobTreeDedupCaches };
+            this.blobTreeDedupCaches = { ...this.previousBlobTreeDedupCaches };
+        } else {
+            this.previousBlobTreeDedupCaches = { ...this.blobTreeDedupCaches };
         }
-        this.backupBlobTreeDedupCaches = { ...this.blobTreeDedupCaches };
-
-        const { result, blobTreeDedupCachesLatest } = await this.writeSummaryTreeCore(context.ackHandle, tree, 0);
+        const { result, blobTreeDedupCachesLatest } = await this.writeSummaryTreeCore(context.ackHandle, tree);
         const id = result ? result.id : undefined;
         if (!result || !id) {
             throw new Error(`Failed to write summary tree`);
@@ -121,7 +124,6 @@ export class OdspSummaryUploadManager {
     private async writeSummaryTreeCore(
         parentHandle: string | undefined,
         tree: api.ISummaryTree,
-        depth: number,
     ): Promise<{
             result: ISnapshotResponse,
             blobTreeDedupCachesLatest: IDedupCaches,
