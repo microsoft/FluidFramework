@@ -23,7 +23,7 @@
             ]
         },
         {
-            "label": "fluid-build tsc $cwd",
+            "label": "fluid-build $cwd --nolint",
             "type": "process",
             "command": "node",
             "args": [
@@ -31,9 +31,8 @@
                 "--root",
                 "${workspaceRoot}",
                 "--vscode",
-                "${fileDirname}",
-                "-s",
-                "tsc"
+                "--nolint",
+                "${fileDirname}"
             ],
             "group": "build",
             "problemMatcher": [

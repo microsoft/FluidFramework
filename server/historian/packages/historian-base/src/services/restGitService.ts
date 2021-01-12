@@ -6,9 +6,10 @@
 import * as querystring from "querystring";
 import * as git from "@fluidframework/gitresources";
 import {
+    IGetRefParamsExternal,
     ICreateRefParamsExternal,
-    IPatchRefParamsExternal,
-    ITenantStorage } from "@fluidframework/server-services-core";
+    IPatchRefParamsExternal } from "@fluidframework/server-services-client";
+import { ITenantStorage } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
 import request from "request";
 import * as winston from "winston";
@@ -114,6 +115,13 @@ export class RestGitService {
     }
 
     public async getRef(ref: string): Promise<git.IRef> {
+        if (this.writeToExternalStorage) {
+            const getRefParams: IGetRefParamsExternal = {
+                config: { enabled: true },
+            };
+            const params = encodeURIComponent(JSON.stringify(getRefParams));
+            return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}?config=${params}`);
+        }
         return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}`);
     }
 

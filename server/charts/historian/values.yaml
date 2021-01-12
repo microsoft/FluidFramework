@@ -16,6 +16,11 @@ historian:
   error:
     track: true
     endpoint: "error_tracking_endpoint"
+  throttling:
+    maxRequestsPerMs: 1000000
+    maxRequestBurst: 1000000
+    minCooldownIntervalInMs: 1000000
+    minThrottleIntervalInMs: 1000000
 
 gitrest:
   name: gitrest

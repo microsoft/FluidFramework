@@ -266,7 +266,7 @@ describe("Matrix", () => {
             it(`Stress (numClients=${numClients} numOps=${numOps} syncProbability=${syncProbability} disconnectProbability=${disconnectProbability} seed=0x${seed.toString(16).padStart(8, "0")})`,
                 // Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
                 async function () {
-                    this.timeout(10000);
+                    this.timeout(15000);
 
                     await stress(numClients, numOps, syncProbability, disconnectProbability, seed);
                 }
