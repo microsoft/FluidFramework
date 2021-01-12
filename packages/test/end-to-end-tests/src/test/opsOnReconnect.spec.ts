@@ -290,9 +290,11 @@ describe("Ops on Reconnect", () => {
 
             // Get dataObject2 in the second container.
             const container2Object1Map1 = await container2Object1.getSharedObject<SharedMap>(map1Id);
-            const container2Object2 =
-                await container2Object1Map1.get<
-                    IFluidHandle<ITestFluidObject & IFluidLoadable>>("dataStore2Key").get();
+            assert(container2Object1Map1);
+            const container2Object2Handle =
+                container2Object1Map1.get<IFluidHandle<ITestFluidObject & IFluidLoadable>>("dataStore2Key");
+            assert(container2Object2Handle);
+            const container2Object2 = await container2Object2Handle.get();
             assert.ok(container2Object2, "Could not get dataStore2 in the second container");
 
             // Disconnect the client.
@@ -392,9 +394,10 @@ describe("Ops on Reconnect", () => {
 
             // Get dataObject2 in the second container.
             const container2Object1Map1 = await container2Object1.getSharedObject<SharedMap>(map1Id);
-            const container2Object2 =
-                await container2Object1Map1.get<
-                    IFluidHandle<ITestFluidObject & IFluidLoadable>>("dataStore2Key").get();
+            const container2Object2Handle =
+                container2Object1Map1.get<IFluidHandle<ITestFluidObject & IFluidLoadable>>("dataStore2Key");
+            assert(container2Object2Handle);
+            const container2Object2 = await container2Object2Handle.get();
             assert.ok(container2Object2, "Could not get dataStore2 in the second container");
 
             // Set values in the DDSes across the two dataStores interleaved with each other.

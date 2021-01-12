@@ -95,6 +95,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
+        assert(remoteSharedMapHandle);
 
         // Verify that the remote client's handle has the correct absolute path.
         assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
@@ -125,6 +126,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
+        assert(remoteSharedMapHandle);
 
         // Verify that the remote client's handle has the correct absolute path.
         assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
@@ -153,6 +155,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // Get the handle in the remote client.
         const remoteDataObjectHandle =
             secondContainerObject1._root.get<IFluidHandle<TestFluidObject>>("dataObject2");
+        assert(remoteDataObjectHandle);
 
         // Verify that the remote client's handle has the correct absolute path.
         assert.equal(remoteDataObjectHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");

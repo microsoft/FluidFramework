@@ -56,11 +56,11 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     });
 
     function expectAllValues(msg, key, path, value1, value2, value3) {
-        const user1Value = sharedDirectory1.getWorkingDirectory(path).get(key);
+        const user1Value = sharedDirectory1.getWorkingDirectory(path)?.get(key);
         assert.equal(user1Value, value1, `Incorrect value for ${key} in container 1 ${msg}`);
-        const user2Value = sharedDirectory2.getWorkingDirectory(path).get(key);
+        const user2Value = sharedDirectory2.getWorkingDirectory(path)?.get(key);
         assert.equal(user2Value, value2, `Incorrect value for ${key} in container 2 ${msg}`);
-        const user3Value = sharedDirectory3.getWorkingDirectory(path).get(key);
+        const user3Value = sharedDirectory3.getWorkingDirectory(path)?.get(key);
         assert.equal(user3Value, value3, `Incorrect value for ${key} in container 3 ${msg}`);
     }
 
@@ -76,6 +76,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         const dir1 = path ? sharedDirectory1.getWorkingDirectory(path) : sharedDirectory1;
         const dir2 = path ? sharedDirectory2.getWorkingDirectory(path) : sharedDirectory2;
         const dir3 = path ? sharedDirectory3.getWorkingDirectory(path) : sharedDirectory3;
+
+        assert(dir1);
+        assert(dir2);
+        assert(dir3);
 
         const keys1 = Array.from(dir1.keys());
         assert.equal(keys1.length, size, "Incorrect number of Keys in container 1");
@@ -150,6 +154,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             let user3ValueChangedCount: number = 0;
             sharedDirectory1.on("valueChanged", (changed, local, msg) => {
                 if (!local) {
+                    assert(msg);
                     if (msg.type === MessageType.Operation) {
                         assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 1");
                         user1ValueChangedCount = user1ValueChangedCount + 1;
@@ -158,6 +163,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             });
             sharedDirectory2.on("valueChanged", (changed, local, msg) => {
                 if (!local) {
+                    assert(msg);
                     if (msg.type === MessageType.Operation) {
                         assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 2");
                         user2ValueChangedCount = user2ValueChangedCount + 1;
@@ -166,6 +172,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             });
             sharedDirectory3.on("valueChanged", (changed, local, msg) => {
                 if (!local) {
+                    assert(msg);
                     if (msg.type === MessageType.Operation) {
                         assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 3");
                         user3ValueChangedCount = user3ValueChangedCount + 1;
@@ -298,9 +305,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 await args.opProcessingController.process();
 
                 const [map1, map2, map3] = await Promise.all([
-                    sharedDirectory1.get<IFluidHandle<ISharedMap>>("mapKey").get(),
-                    sharedDirectory2.get<IFluidHandle<ISharedMap>>("mapKey").get(),
-                    sharedDirectory3.get<IFluidHandle<ISharedMap>>("mapKey").get(),
+                    sharedDirectory1.get<IFluidHandle<ISharedMap>>("mapKey")?.get(),
+                    sharedDirectory2.get<IFluidHandle<ISharedMap>>("mapKey")?.get(),
+                    sharedDirectory3.get<IFluidHandle<ISharedMap>>("mapKey")?.get(),
                 ]);
 
                 assert.ok(map1, "Map did not correctly set as value in container 1");
@@ -332,6 +339,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
             expectAllAfterValues("testKey1", "testSubDir1", "testValue1");
             const subDir1 = sharedDirectory3.getWorkingDirectory("testSubDir1");
+            assert(subDir1);
             subDir1.delete("testKey1");
 
             await args.opProcessingController.process();
@@ -371,7 +379,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             await args.opProcessingController.process();
 
             expectAllSize(2, "testSubDir1");
-            sharedDirectory3.getWorkingDirectory("testSubDir1").clear();
+            sharedDirectory3.getWorkingDirectory("testSubDir1")?.clear();
 
             await args.opProcessingController.process();
 
@@ -384,6 +392,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             let user3ValueChangedCount: number = 0;
             sharedDirectory1.on("valueChanged", (changed, local, msg) => {
                 if (!local) {
+                    assert(msg);
                     if (msg.type === MessageType.Operation) {
                         assert.equal(changed.key, "testKey1", "Incorrect value for key in container 1");
                         assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 1");
@@ -393,6 +402,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             });
             sharedDirectory2.on("valueChanged", (changed, local, msg) => {
                 if (!local) {
+                    assert(msg);
                     if (msg.type === MessageType.Operation) {
                         assert.equal(changed.key, "testKey1", "Incorrect value for key in container 2");
                         assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 2");
@@ -402,6 +412,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             });
             sharedDirectory3.on("valueChanged", (changed, local, msg) => {
                 if (!local) {
+                    assert(msg);
                     if (msg.type === MessageType.Operation) {
                         assert.equal(changed.key, "testKey1", "Incorrect value for key in container 3");
                         assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 3");
@@ -565,10 +576,11 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
                 await args.opProcessingController.process();
 
-                // The new directory should be availble in the remote client and it should contain that key that was
+                // The new directory should be available in the remote client and it should contain that key that was
                 // set in local state.
-                const newDirectory2
-                    = await sharedDirectory2.get<IFluidHandle<SharedDirectory>>("newSharedDirectory").get();
+                const newDirectory2Handle = sharedDirectory2.get<IFluidHandle<SharedDirectory>>("newSharedDirectory");
+                assert(newDirectory2Handle);
+                const newDirectory2 = await newDirectory2Handle.get();
                 assert.equal(
                     newDirectory2.get("newKey"),
                     "newValue",
@@ -603,10 +615,11 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
                 await args.opProcessingController.process();
 
-                // The new directory should be availble in the remote client and it should contain that key that was
+                // The new directory should be available in the remote client and it should contain that key that was
                 // set in local state.
-                const newDirectory2
-                    = await sharedDirectory2.get<IFluidHandle<SharedDirectory>>("newSharedDirectory").get();
+                const newDirectory2Handle = sharedDirectory2.get<IFluidHandle<SharedDirectory>>("newSharedDirectory");
+                assert(newDirectory2Handle);
+                const newDirectory2 = await newDirectory2Handle.get();
                 assert.ok(
                     newDirectory2.getSubDirectory(subDirName),
                     "The subdirectory created in local state is not available in directory 2");

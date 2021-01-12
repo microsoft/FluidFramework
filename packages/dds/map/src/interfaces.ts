@@ -132,7 +132,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
      * @param key - Key to retrieve from
      * @returns The stored value, or undefined if the key is not set
      */
-    get<T = any>(key: string): T;
+    get<T = any>(key: string): T | undefined;
 
     /**
      * A form of get except it will only resolve the promise once the key exists in the directory.
@@ -161,7 +161,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
      * @param subdirName - Name of the child directory to get
      * @returns The requested IDirectory
      */
-    getSubDirectory(subdirName: string): IDirectory;
+    getSubDirectory(subdirName: string): IDirectory | undefined;
 
     /**
      * Checks whether this directory has a child directory with the given name.
@@ -188,14 +188,19 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
      * @param relativePath - Path of the IDirectory to get, relative to this IDirectory
      * @returns The requested IDirectory
      */
-    getWorkingDirectory(relativePath: string): IDirectory;
+    getWorkingDirectory(relativePath: string): IDirectory | undefined;
 }
 
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
         local: boolean,
-        op: ISequencedDocumentMessage,
+        op: ISequencedDocumentMessage | null,
+        target: IEventThisPlaceHolder,
+    ) => void);
+    (event: "clear", listener: (
+        local: boolean,
+        op: ISequencedDocumentMessage | null,
         target: IEventThisPlaceHolder,
     ) => void);
 }
@@ -234,8 +239,13 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
         local: boolean,
-        op: ISequencedDocumentMessage,
+        op: ISequencedDocumentMessage | null,
         target: IEventThisPlaceHolder) => void);
+    (event: "clear", listener: (
+        local: boolean,
+        op: ISequencedDocumentMessage | null,
+        target: IEventThisPlaceHolder
+    ) => void);
 }
 
 /**
@@ -247,7 +257,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
      * @param key - Key to retrieve from
      * @returns The stored value, or undefined if the key is not set
      */
-    get<T = any>(key: string): T;
+    get<T = any>(key: string): T | undefined;
 
     /**
      * A form of get except it will only resolve the promise once the key exists in the map.
@@ -302,7 +312,7 @@ export interface ISerializedValue {
     /**
      * String representation of the value.
      */
-    value: string;
+    value: string | undefined;
 }
 
 /**

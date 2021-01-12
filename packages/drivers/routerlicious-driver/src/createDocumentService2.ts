@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IDocumentService, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IErrorTrackingService } from "@fluidframework/protocol-definitions";
 import { ICredentials } from "@fluidframework/server-services-client";
@@ -27,6 +28,7 @@ export const createDocumentService2 = (
     errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
     disableCache = false,
     historianApi = true,
+    logger: ITelemetryLogger,
     credentials?: ICredentials): IDocumentService => new DocumentService2(
         resolvedUrl,
         ordererUrl,
@@ -36,6 +38,7 @@ export const createDocumentService2 = (
         disableCache,
         historianApi,
         credentials,
+        logger,
         tokenProvider,
         tenantId,
         documentId);

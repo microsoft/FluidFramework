@@ -72,6 +72,7 @@ export class TestDataObject extends DataObject {
 
     protected async hasInitialized() {
         const counterHandle = await this.root.wait<IFluidHandle<SharedCounter>>(counterKey);
+        assert(counterHandle);
         this.counter = await counterHandle.get();
     }
 }

@@ -85,6 +85,8 @@ function generate(
                 sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
                 sharedMap3.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
             ]);
+            assert(collection2Handle);
+            assert(collection3Handle);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
@@ -115,6 +117,8 @@ function generate(
                 sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
                 sharedMap3.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
             ]);
+            assert(collection2Handle);
+            assert(collection3Handle);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
@@ -155,6 +159,8 @@ function generate(
                 sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
                 sharedMap3.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
             ]);
+            assert(collection2Handle);
+            assert(collection3Handle);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
@@ -212,6 +218,7 @@ function generate(
             // Pull the collection off of the 2nd container
             const collection2Handle =
                 await sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection");
+            assert(collection2Handle);
             const collection2 = await collection2Handle.get();
 
             // acquire one handle in each container
@@ -230,6 +237,7 @@ function generate(
 
             const collection2Handle =
                 await sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection");
+            assert(collection2Handle);
             const collection2 = await collection2Handle.get();
 
             await collection1.add("testValue");
@@ -251,6 +259,7 @@ function generate(
 
             const collection2Handle =
                 await sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection");
+            assert(collection2Handle);
             const collection2 = await collection2Handle.get();
 
             let waitRejected = false;
@@ -273,6 +282,8 @@ function generate(
                 sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
                 sharedMap3.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
             ]);
+            assert(collection2Handle);
+            assert(collection3Handle);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
             await args.opProcessingController.pauseProcessing();
