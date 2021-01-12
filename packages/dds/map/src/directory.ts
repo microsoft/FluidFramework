@@ -450,7 +450,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * {@inheritDoc IDirectory.wait}
      */
-    public async wait<T = any>(key: string): Promise<T | undefined> {
+    public async wait<T = any>(key: string): Promise<T> {
         return this.root.wait<T>(key);
     }
 
@@ -650,10 +650,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         const message = content as IDirectoryOperation;
         const handler = this.messageHandlers.get(message.type);
-
-        // eslint-disable-next-line max-len
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
-        handler!.submit(message, localOpMetadata);
+        assert(handler !== undefined, `Missing message handler for message type: ${message.type}`);
+        handler.submit(message, localOpMetadata);
     }
 
     /**
@@ -743,11 +741,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         if (message.type === MessageType.Operation) {
             const op: IDirectoryOperation = message.contents as IDirectoryOperation;
-            if (this.messageHandlers.has(op.type)) {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.messageHandlers.get(op.type)!
-                    .process(op, local, message, localOpMetadata);
-            }
+            const handler = this.messageHandlers.get(op.type);
+            assert(handler !== undefined, `Missing message handler for message type: ${message.type}`);
+            handler.process(op, local, message, localOpMetadata);
         }
     }
 
@@ -993,7 +989,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     /**
      * {@inheritDoc IDirectory.wait}
      */
-    public async wait<T = any>(key: string): Promise<T | undefined> {
+    public async wait<T = any>(key: string): Promise<T> {
         // Return immediately if the value already exists
         if (this._storage.has(key)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1004,7 +1000,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         return new Promise<T>((resolve, reject) => {
             const callback = (changed: IDirectoryValueChanged) => {
                 if (this.absolutePath === changed.path && key === changed.key) {
-                    resolve(this.get<T>(changed.key));
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    resolve(this._storage.get(key)!.value as T);
                     this.directory.removeListener("valueChanged", callback);
                 }
             };

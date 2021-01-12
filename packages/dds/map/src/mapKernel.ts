@@ -288,17 +288,19 @@ export class MapKernel implements IValueTypeCreator {
     /**
      * {@inheritDoc ISharedMap.wait}
      */
-    public async wait<T = any>(key: string): Promise<T | undefined> {
+    public async wait<T = any>(key: string): Promise<T> {
         // Return immediately if the value already exists
         if (this.has(key)) {
-            return this.get<T>(key);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return this.get<T>(key)!;
         }
 
         // Otherwise subscribe to changes
         return new Promise<T>((resolve) => {
             const callback = (changed: IValueChanged) => {
                 if (key === changed.key) {
-                    resolve(this.get<T>(changed.key));
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    resolve(this.get<T>(changed.key)!);
                     this.eventEmitter.removeListener("valueChanged", callback);
                 }
             };

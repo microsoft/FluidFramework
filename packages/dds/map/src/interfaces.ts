@@ -139,7 +139,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
      * @param key - Key to retrieve from
      * @returns The stored value once available
      */
-    wait<T = any>(key: string): Promise<T | undefined>;
+    wait<T = any>(key: string): Promise<T>;
 
     /**
      * Sets the value stored at key to the provided value.
@@ -264,7 +264,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
      * @param key - Key to retrieve from
      * @returns The stored value once available
      */
-    wait<T = any>(key: string): Promise<T | undefined>;
+    wait<T = any>(key: string): Promise<T>;
 
     /**
      * Sets the value stored at key to the provided value.
