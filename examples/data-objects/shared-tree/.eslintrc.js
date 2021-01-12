@@ -11,6 +11,9 @@ module.exports = {
 	parser: '@typescript-eslint/parser',
 	root: true,
 	rules: {
+		// Recover "noUnusedLocals" behavior as part of linting.
+		'@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
+
 		'@typescript-eslint/quotes': [
 			'error',
 			'single',

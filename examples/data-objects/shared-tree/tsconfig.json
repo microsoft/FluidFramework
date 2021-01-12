@@ -4,6 +4,7 @@
 	"compilerOptions": {
 		"downlevelIteration": true,
 		"rootDir": "./src",
+		"noUnusedLocals": false,
 		"outDir": "./dist",
 		"types": ["mocha"]
 	},

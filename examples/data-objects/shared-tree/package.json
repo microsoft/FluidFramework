@@ -11,7 +11,7 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:build:lint",
+		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "concurrently npm:tsc npm:build:esnext",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -51,8 +51,8 @@
 		"easy-table": "^1.1.1",
 		"env-cmd": "^10.1.0",
 		"mocha": "^8.1.1",
-		"prettier": "^2.2.1",
 		"nyc": "^15.0.0",
+		"prettier": "^2.2.1",
 		"rimraf": "^2.6.2",
 		"typescript": "~3.7.4"
 	}
