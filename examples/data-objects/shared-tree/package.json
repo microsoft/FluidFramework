@@ -50,8 +50,5 @@
 		"mocha": "^8.1.1",
 		"nyc": "^15.0.0",
 		"rimraf": "^2.6.2"
-	},
-	"publishConfig": {
-		"registry": "https://pkgs.dev.azure.com/intentional/_packaging/intentional-npm/npm/registry/"
 	}
 }
