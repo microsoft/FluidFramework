@@ -498,7 +498,6 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         assert.strictEqual(dataStore2FromRC.runtime.id, dataStore2.runtime.id, "DataStore2 id should match");
     });
 
-    // eslint-disable-next-line max-len
     it("Container rehydration with not bounded data store handle stored in root of bound dataStore. The not bounded" +
         "data store also stores handle not bounded dds",
     async () => {
