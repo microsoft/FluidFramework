@@ -32,9 +32,9 @@ const defaultTenantService = new TestTenantService();
 
 /**
  * A helper method that will first send (limit) number of requests and assert they are not throttled,
- * and then send another request which exceeds the throttling limit, assert the throttling response is received.
+ * and then send another request which exceeds the throttling limit to assert the throttling response is received.
  */
-const sendRequestsTilThrottledWithAssertion = async (superTest: request.SuperTest<request.Test>, url: string, method: "get" | "post" | "patch" | "delete" = "get"): Promise<void> => {
+const sendRequestsTillThrottledWithAssertion = async (superTest: request.SuperTest<request.Test>, url: string, method: "get" | "post" | "patch" | "delete" = "get"): Promise<void> => {
     for (let i = 0; i < limit; i++) {
         // we're not interested in making the requests succeed with 200s, so just assert that not 429
         await superTest[method](url).expect((res) => {
@@ -81,16 +81,16 @@ describe("throttling", () => {
 
         describe("/git/blobs", () => {
             it("/ping", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, "/repos/ping");
+                await sendRequestsTillThrottledWithAssertion(superTest, "/repos/ping");
             });
             it("/:ignored?/:tenantId/git/blobs", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/blobs`, "post");
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/git/blobs`, "post");
             });
             it("/:ignored?/:tenantId/git/blobs/:sha", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/blobs/${sha}`);
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/git/blobs/${sha}`);
             });
             it("/:ignored?/:tenantId/git/blobs/raw/:sha", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/blobs/raw/${sha}`);
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/git/blobs/raw/${sha}`);
             });
         });
     });
@@ -152,16 +152,16 @@ describe("throttling", () => {
 
         describe("/git/commits", () => {
             it("/:ignored?/:tenantId/git/commits", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/commits`, "post");
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/git/commits`, "post");
             });
             it("/:ignored?/:tenantId/git/commits/:sha", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/commits/${sha}`);
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/git/commits/${sha}`);
             });
         });
 
         describe("/repo/commits", () => {
             it("/:ignored?/:tenantId/commits", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/commits`);
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/commits`);
             });
         });
     });
@@ -234,19 +234,19 @@ describe("throttling", () => {
 
         describe("/git/refs", () => {
             it("/:ignored?/:tenantId/git/refs", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs`);
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs`);
             });
             it("/:ignored?/:tenantId/git/refs/*", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs/*`);
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs/*`);
             });
             it("/:ignored?/:tenantId/git/refs post", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs`, "post");
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs`, "post");
             });
             it("/:ignored?/:tenantId/git/refs/* patch", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs/*`, "patch");
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs/*`, "patch");
             });
             it("/:ignored?/:tenantId/git/refs/* delete", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs/*`, "delete");
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/git/refs/*`, "delete");
             });
         });
     });
@@ -300,10 +300,10 @@ describe("throttling", () => {
 
         describe("/git/tags", () => {
             it("/:ignored?/:tenantId/git/tags", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/tags`, "post");
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/git/tags`, "post");
             });
             it("/:ignored?/:tenantId/git/tags/*", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/tags/*`);
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/git/tags/*`);
             });
         });
     });
@@ -343,10 +343,10 @@ describe("throttling", () => {
 
         describe("/git/trees", () => {
             it("/:ignored?/:tenantId/git/trees", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/trees`, "post");
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/git/trees`, "post");
             });
             it("/:ignored?/:tenantId/git/tags/:sha", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/git/trees/${sha}`);
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/git/trees/${sha}`);
             });
         });
     });
@@ -379,7 +379,7 @@ describe("throttling", () => {
 
         describe("/repo/contents", () => {
             it("/:ignored?/:tenantId/contents/*", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/contents/*`);
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/contents/*`);
             });
         });
     });
@@ -418,10 +418,10 @@ describe("throttling", () => {
 
         describe("/repo/headers", () => {
             it("/:ignored?/:tenantId/headers/:sha", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/headers/${sha}`);
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/headers/${sha}`);
             });
             it("/:ignored?/:tenantId/tree/:sha", async () => {
-                await sendRequestsTilThrottledWithAssertion(superTest, `/repos/${tenantId}/tree/${sha}`);
+                await sendRequestsTillThrottledWithAssertion(superTest, `/repos/${tenantId}/tree/${sha}`);
             });
         });
     });
