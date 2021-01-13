@@ -8,7 +8,7 @@ import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestFluidObject } from "@fluidframework/test-utils";
 import {
-    generateLocalNonCompatTest,
+    generateNonCompatTest,
     ITestObjectProvider,
 } from "./compatUtils";
 
@@ -18,10 +18,12 @@ async function ensureConnected(container: Container) {
     }
 }
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
     let container1: Container;
     let dataObject1: ITestFluidObject;
     beforeEach(async () => {
+        args = argsFactory();
         container1 = await args.makeTestContainer() as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         await ensureConnected(container1);
@@ -179,5 +181,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("Leader", () => {
-    generateLocalNonCompatTest(tests, { tinylicious: true });
+    generateNonCompatTest(tests, { tinylicious: true });
 });
