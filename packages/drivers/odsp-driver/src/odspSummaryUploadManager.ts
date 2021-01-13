@@ -81,12 +81,13 @@ export class OdspSummaryUploadManager {
         const prefixedSnapshotTree = this.addAppPrefixToSnapshotTree(snapshotTree);
         await this.buildCachesForDedupCore(prefixedSnapshotTree);
     }
+
     /**
      * Builts the caches which will be used for blob deduping.
      * @param snapshotTree - snapshot tree from which the dedup caches are built.
      * @param path - path of the current node evaluated.
      */
-    public async buildCachesForDedupCore(snapshotTree: api.ISnapshotTree, path: string = ""): Promise<api.ISummaryTree> {
+    private async buildCachesForDedupCore(snapshotTree: api.ISnapshotTree, path: string = ""): Promise<api.ISummaryTree> {
         assert(Object.keys(snapshotTree.commits).length === 0, "There should not be commit tree entries in snapshot");
 
         const summaryTree: api.ISummaryTree = {
