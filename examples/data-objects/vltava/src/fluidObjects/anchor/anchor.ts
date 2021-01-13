@@ -65,11 +65,11 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
 
     protected async hasInitialized() {
         this.defaultFluidObjectInternal =
-            (await this.root.get<IFluidHandle>(this.defaultFluidObjectId).get())
-                .IFluidHTMLView;
+            (await this.root.get<IFluidHandle>(this.defaultFluidObjectId)?.get())
+                ?.IFluidHTMLView;
 
         this.lastEditedFluidObject =
-            (await this.root.get<IFluidHandle>(this.lastEditedFluidObjectId).get())
-                .IFluidLastEditedTracker;
+            (await this.root.get<IFluidHandle>(this.lastEditedFluidObjectId)?.get())
+                ?.IFluidLastEditedTracker;
     }
 }

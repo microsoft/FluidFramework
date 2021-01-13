@@ -377,9 +377,9 @@ export class ScheduleManager {
         this.localPaused = localPaused;
         if (localPaused) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.deltaManager.inbound.systemPause();
+            this.deltaManager.inbound.pause();
         } else {
-            this.deltaManager.inbound.systemResume();
+            this.deltaManager.inbound.resume();
         }
     }
 
@@ -710,6 +710,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 throwOnFailure: true,
             },
         );
+        // Add self route (empty string) to used routes in the summarizer node as the runtime is always considered used.
+        this.summarizerNode.updateUsedRoutes([""]);
 
         this.dataStores = new DataStores(
             getSnapshotForDataStores(context.baseSnapshot, metadata.snapshotFormatVersion),
@@ -719,7 +721,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     summarizeInternal: SummarizeInternalFn,
                     getGCDataFn: () => Promise<IGarbageCollectionData>,
                     getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
-                    usedRoutes: string[],
                 ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,
@@ -727,7 +728,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     undefined,
                     getGCDataFn,
                     getInitialGCSummaryDetailsFn,
-                    usedRoutes,
                 ),
             this._logger);
 

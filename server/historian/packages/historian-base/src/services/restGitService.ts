@@ -6,10 +6,10 @@
 import * as querystring from "querystring";
 import * as git from "@fluidframework/gitresources";
 import {
+    IGetRefParamsExternal,
     ICreateRefParamsExternal,
-    IPatchRefParamsExternal,
-    ITenantStorage } from "@fluidframework/server-services-core";
-import { IGetRefParamsExternal } from "@fluidframework/server-services-client";
+    IPatchRefParamsExternal } from "@fluidframework/server-services-client";
+import { ITenantStorage } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
 import request from "request";
 import * as winston from "winston";
