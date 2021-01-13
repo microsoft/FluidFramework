@@ -17,7 +17,6 @@ import {
 	Constraint,
 	ConstraintEffect,
 	SetValue,
-	Payload,
 } from './PersistedTypes';
 import { EditValidationResult, SnapshotNode, Snapshot } from './Snapshot';
 
@@ -254,16 +253,15 @@ export class Transaction {
 
 		const node = this.view.getSnapshotNode(change.nodeToModify);
 		const { payload } = change;
-		let payloadToSet: Payload | undefined;
+		const newNode = { ...node };
 		if (payload === null) {
-			payloadToSet = undefined;
+			delete newNode.payload;
 		} else {
 			if (typeof payload.base64 !== 'string') {
 				return EditResult.Malformed;
 			}
-			payloadToSet = { base64: payload.base64 };
+			newNode.payload = { base64: payload.base64 };
 		}
-		const newNode: SnapshotNode = { ...node, payload: payloadToSet };
 		this._view = this.view.replaceNode(change.nodeToModify, newNode);
 		return EditResult.Applied;
 	}
@@ -284,7 +282,7 @@ export class Transaction {
 
 		const newNode: SnapshotNode = {
 			identifier: node.identifier,
-			payload: node.payload,
+			...(node.payload ? { payload: node.payload } : {}),
 			definition: node.definition,
 			traits,
 		};
