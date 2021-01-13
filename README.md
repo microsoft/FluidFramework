@@ -15,8 +15,8 @@ The initial tree, modified by all edits in order.
 
 The order of the edits is:
 
-1. All acknowledged edits, in the order agreed upon by fluid's consensus.
-2. All local edits (not acknowledged by fluid yet), in the order they were created.
+1. All acknowledged edits, in the order agreed upon by Fluid's consensus.
+2. All local edits (not acknowledged by Fluid yet), in the order they were created.
 
 # Getting Started
 
@@ -72,7 +72,7 @@ Note that this example isn't meant to be taken verbatim as valid code--it cheats
 
 ## Creating a SharedTree
 
-SharedTree follows typical [Fluid DDS conventions](https://fluidframework.com/docs/) and can be constructed with a fluid runtime instance:
+SharedTree follows typical [Fluid DDS conventions](https://fluidframework.com/docs/) and can be constructed with a Fluid runtime instance:
 
 ```typescript
 const tree = SharedTree.create(runtime);
@@ -132,14 +132,14 @@ Implementation-wise:
 Design wise:
 
 -   SharedTree is always created with an uninitialized state. It is up to the application to use the shared tree to initialize the tree to something else if needed.
--   There are still open questions regarding how SharedTree will relate to the rest of the fluid ecosystem.
-    For example, we do not have suggested design patterns for when users of SharedTree should used references to other fluid components versus including the data for children as subtrees.
+-   There are still open questions regarding how SharedTree will relate to the rest of the Fluid ecosystem.
+    For example, we do not have suggested design patterns for when users of SharedTree should used references to other Fluid components versus including the data for children as subtrees.
 
 # Edits
 
 An `Edit` is the basic unit of transactionality in `SharedTree`. It specifies how to modify a document via a sequence of changes (see [PersistedTypes.ts](.\src\PersistedTypes.ts)). Each edit applied to a version of the document (a Snapshot) produces a new version of the document.
 
-Once an edit is acknowledged by fluid (and thus it has a sequence number, and will be included in summaries), the version of the document it applies to is fixed: it will not be applied to any revision other than the one produced by its preceding edit, transitively ack to the initial tree.
+Once an edit is acknowledged by Fluid (and thus it has a sequence number, and will be included in summaries), the version of the document it applies to is fixed: it will not be applied to any revision other than the one produced by its preceding edit, transitively ack to the initial tree.
 There may be operations that will create new edits based on existing ones and apply them in a different context, but these are logically considered new edits.
 
 ## Conflicts

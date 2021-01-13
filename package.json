@@ -16,7 +16,7 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile && npm run build:docs",
+		"build": "npm run build:compile && npm run build:docs",
 		"build:compile": "concurrently npm:tsc npm:build:esnext",
 		"build:docs": "api-extractor run --local && copyfiles -u 2 ./_api-extractor-temp/doc-models/* ../../api-metadata/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -55,6 +55,7 @@
 		"env-cmd": "^10.1.0",
 		"mocha": "^8.2.1",
 		"nyc": "^15.1.0",
+		"prettier": "^2.2.1",
 		"rimraf": "^2.6.2"
 	},
 	"publishConfig": {

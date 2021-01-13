@@ -6,7 +6,7 @@
 const defaultFailMessage = 'Assertion failed';
 
 /**
- * Assertion failures in SharedTree will throw an exception containing this value as an `errorType`. The fluid runtime propagates this field
+ * Assertion failures in SharedTree will throw an exception containing this value as an `errorType`. The Fluid runtime propagates this field
  * in its handlings of errors thrown by containers. See
  * https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-utils/src/error.ts
  *
