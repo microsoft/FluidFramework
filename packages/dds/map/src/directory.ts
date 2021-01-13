@@ -1327,8 +1327,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         // needProcessStorageOperation should have returned false if local is true
         // so we can assume context is not undefined
 
-        // eslint-disable-next-line max-len
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.setCore(op.key, context!, local, message);
     }
 
