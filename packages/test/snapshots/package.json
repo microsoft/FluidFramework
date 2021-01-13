@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "@fluid-internal/replay-tool": "^0.33.0",
-    "@fluidframework/common-utils": "^0.26.0",
+    "@fluidframework/common-utils": "^0.27.0-0",
     "@fluidframework/merge-tree": "^0.33.0",
     "@fluidframework/protocol-definitions": "^0.1017.1",
     "assert": "^2.0.0",
