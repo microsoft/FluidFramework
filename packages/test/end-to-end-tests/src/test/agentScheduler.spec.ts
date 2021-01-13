@@ -107,8 +107,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
             dataObject1._root.set("tempKey1", "tempValue1");
-            await args.opProcessingController.process();
-
+            while (!container1.deltaManager.active) {
+                await args.opProcessingController.process();
+            }
             // Load existing Container for the second document.
             container2 = await args.loadTestContainer();
             scheduler2 = await requestFluidObject<TaskManager>(container2, taskSchedulerId)
@@ -118,7 +119,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
             dataObject2._root.set("tempKey2", "tempValue2");
-            await args.opProcessingController.process();
+            while (!container2.deltaManager.active) {
+                await args.opProcessingController.process();
+            }
         });
 
         it("No tasks initially", async () => {
