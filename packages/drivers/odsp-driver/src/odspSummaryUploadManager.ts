@@ -26,7 +26,7 @@ import { TokenFetchOptions } from "./tokenFetch";
 
 /* eslint-disable max-len */
 
-interface IDedupCaches {
+export interface IDedupCaches {
     // Cache which contains mapping from blob sha to the blob path in summary. Path starts from ".app" or ".protocol"
     blobShaToPath: Map<string, string>,
     // Cache which contains mapping from blob path to blob sha in summary. Path starts from ".app" or ".protocol".
@@ -124,6 +124,10 @@ export class OdspSummaryUploadManager {
         return summaryTree;
     }
 
+    /**
+     * Adds ".app" as prefix to paths which belongs to app snapshot tree.
+     * @param snapshotTree - Snapshot tree to which complete path will be added.
+     */
     private addAppPrefixToSnapshotTree(snapshotTree: api.ISnapshotTree): api.ISnapshotTree {
         const prefixedSnapshotTree: api.ISnapshotTree = {
             id: snapshotTree.id,
@@ -140,6 +144,10 @@ export class OdspSummaryUploadManager {
         return prefixedSnapshotTree;
     }
 
+    /**
+     * Adds ".app" as prefix to paths which belongs to app summary tree.
+     * @param summaryTree - Summary tree to which complete path will be added.
+     */
     private addAppPrefixToSummaryTree(summaryTree: api.ISummaryTree): api.ISummaryTree {
         const prefixedSummaryTree: api.ISummaryTree = {
             tree: {},
@@ -314,22 +322,20 @@ export class OdspSummaryUploadManager {
                         ? { content: summaryObject.content, encoding: "utf-8" }
                         : { content: Uint8ArrayToString(summaryObject.content, "base64"), encoding: "base64" };
                         hash = await hashFile(IsoBuffer.from(value.content, value.encoding));
+                        cachedPath = this.blobTreeDedupCaches.blobShaToPath.get(hash);
                     }
 
-                    assert(hash !== undefined, "hash should be set!");
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // cached path for the given blob. Also update the caches for future use.
                     if (cachedPath === undefined || parentHandle === undefined) {
                         blobs++;
-                        blobTreeDedupCachesLatest.blobShaToPath.set(hash, currentPath);
-                        blobTreeDedupCachesLatest.pathToBlobSha.set(currentPath, hash);
                     } else {
                         reusedBlobs++;
                         id = `${parentHandle}/${cachedPath}`;
-                        blobTreeDedupCachesLatest.blobShaToPath.set(hash, currentPath);
-                        blobTreeDedupCachesLatest.pathToBlobSha.set(currentPath, hash);
                         value = undefined;
                     }
+                    blobTreeDedupCachesLatest.blobShaToPath.set(hash, currentPath);
+                    blobTreeDedupCachesLatest.pathToBlobSha.set(currentPath, hash);
                     break;
                 }
                 case api.SummaryType.Handle: {

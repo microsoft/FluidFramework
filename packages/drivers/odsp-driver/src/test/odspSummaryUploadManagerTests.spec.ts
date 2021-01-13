@@ -5,12 +5,12 @@
 
 /* eslint-disable dot-notation */
 import { strict as assert } from "assert";
+import * as api from "@fluidframework/protocol-definitions";
 import { hashFile, IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { ISnapshotTree, ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { EpochTracker } from "../epochTracker";
 import { LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
-import { OdspSummaryUploadManager } from "../odspSummaryUploadManager";
+import { IDedupCaches, OdspSummaryUploadManager } from "../odspSummaryUploadManager";
 import { TokenFetchOptions } from "../tokenFetch";
 import { mockFetch } from "./mockFetch";
 
@@ -42,7 +42,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
             { content: "blob4", id: "blob4", size: 5, byteLength: 1, encoding: undefined });
         odspSummaryUploadManager["blobCache"].set("blob5",
             { content: "blob5", id: "blob5", size: 5, byteLength: 1, encoding: undefined });
-        const protocolTree: ISnapshotTree = {
+        const protocolTree: api.ISnapshotTree = {
             blobs: {
                 blob1: "blob1",
             },
@@ -51,7 +51,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
             trees: {},
         };
 
-        const defaultTree: ISnapshotTree = {
+        const defaultTree: api.ISnapshotTree = {
             blobs: {
                 blob2: "blob2",
             },
@@ -66,7 +66,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
                 },
             },
         };
-        const snapshotTree: ISnapshotTree = {
+        const snapshotTree: api.ISnapshotTree = {
             blobs: {
                 blob4: "blob4",
                 blob5: "blob5",
@@ -103,12 +103,12 @@ describe("Odsp Summary Upload Manager Tests", () => {
             ackHandle: "ackHandle",
         };
         odspSummaryUploadManager["lastSummaryProposalHandle"] = summaryContext.proposalHandle;
-        const rootBlob: ISummaryBlob = {
-            type: SummaryType.Blob,
+        const rootBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
             content: JSON.stringify("defaultDataStore"),
         };
-        const componentBlob: ISummaryBlob = {
-            type: SummaryType.Blob,
+        const componentBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
             content: JSON.stringify("rootattributes"),
         };
         const rootBlobHash = await hashFile(IsoBuffer.from(rootBlob.content, "utf-8"));
@@ -116,11 +116,11 @@ describe("Odsp Summary Upload Manager Tests", () => {
         const rootBlobPath = ".app/default/root";
         const componentBlobPath = ".app/default/component";
 
-        const appSummary: ISummaryTree = {
-            type: SummaryType.Tree,
+        const appSummary: api.ISummaryTree = {
+            type: api.SummaryType.Tree,
             tree: {
                 default: {
-                    type: SummaryType.Tree,
+                    type: api.SummaryType.Tree,
                     tree: {
                         component: componentBlob,
                         root: rootBlob,
@@ -144,10 +144,10 @@ describe("Odsp Summary Upload Manager Tests", () => {
             rootBlobPath, "Cache should contain hash of root blob");
 
         // Now delete both blobs and insert a new blob with content same as component blob
-        delete (appSummary.tree.default as ISummaryTree).tree.root;
-        delete (appSummary.tree.default as ISummaryTree).tree.component;
+        delete (appSummary.tree.default as api.ISummaryTree).tree.root;
+        delete (appSummary.tree.default as api.ISummaryTree).tree.component;
         appSummary.tree.default2 = {
-            type: SummaryType.Tree,
+            type: api.SummaryType.Tree,
             tree: {
                 component2: componentBlob,
             },
@@ -163,5 +163,66 @@ describe("Odsp Summary Upload Manager Tests", () => {
             "1 blobs should be in cache");
         assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.get(componentBlobHash),
             componentBlobNewPath, "Cache should contain hash of component blob 2");
+    });
+
+    it("Should dedup correct blobs(no handle expansion)", async () => {
+        const rootBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
+            content: JSON.stringify("defaultDataStore"),
+        };
+        const componentBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
+            content: JSON.stringify("rootattributes"),
+        };
+
+        const appSummary: api.ISummaryTree = {
+            type: api.SummaryType.Tree,
+            tree: {
+                default: {
+                    type: api.SummaryType.Tree,
+                    tree: {
+                        component: componentBlob,
+                        root: rootBlob,
+                    },
+                },
+            },
+        };
+
+        const blobTreeDedupCaches: IDedupCaches = {
+            blobShaToPath: new Map(),
+            pathToBlobSha: new Map(),
+            treesPathToTree: new Map(),
+        };
+        await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
+            undefined,
+            appSummary,
+            blobTreeDedupCaches,
+            ".app",
+        );
+
+        delete (appSummary.tree.default as api.ISummaryTree).tree.component;
+        // Now insert another blob with same content as component blob
+        appSummary.tree.default2 = {
+            type: api.SummaryType.Tree,
+            tree: {
+                component2: componentBlob,
+                header: {
+                    type: api.SummaryType.Blob,
+                    content: JSON.stringify("headerBlob"),
+                },
+            },
+        };
+        odspSummaryUploadManager["blobTreeDedupCaches"] = blobTreeDedupCaches;
+        const { snapshotTree, blobs, reusedBlobs } = await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
+            "ackHandle",
+            appSummary,
+            blobTreeDedupCaches,
+            ".app",
+        );
+        const serializedTree = JSON.stringify(snapshotTree);
+        assert(serializedTree.includes("\"id\":\"ackHandle/default/root\""), "Root blob should be deduped");
+        assert(serializedTree.includes("\"id\":\"ackHandle/default/component\""), "Component blob should be deduped");
+        assert.strictEqual(reusedBlobs, 2, "2 reused blobs should be there");
+        assert.strictEqual(blobs, 1, "1 blob(default2/header) is not deduped as content does not match");
     });
 });
