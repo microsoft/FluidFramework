@@ -167,6 +167,11 @@
         "port": 6379,
         "tls": false
     },
+    "redisForThrottling": {
+        "host": "redis",
+        "port": 6379,
+        "tls": false
+    },
     "error": {
         "track": false,
         "endpoint" : ""

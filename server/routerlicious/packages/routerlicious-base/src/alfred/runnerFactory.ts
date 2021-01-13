@@ -169,6 +169,19 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         const tenantManager = new services.TenantManager(authEndpoint);
 
+        // Redis connection for throttling.
+        const redisConfigForThrottling = config.get("redisForThrottling");
+        const redisOptionsForThrottling: redis.ClientOpts = { password: redisConfigForThrottling.pass };
+        if (redisConfigForThrottling.tls) {
+            redisOptionsForThrottling.tls = {
+                serverName: redisConfigForThrottling.host,
+            };
+        }
+        const redisClientForThrottling = redis.createClient(
+            redisConfigForThrottling.port,
+            redisConfigForThrottling.host,
+            redisOptionsForThrottling);
+
         // Rest API Throttler
         const throttleMaxRequestsPerMs =
             config.get("alfred:throttling:restCalls:maxPerMs") as number | undefined;
@@ -178,7 +191,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             config.get("alfred:throttling:restCalls:minCooldownIntervalInMs") as number | undefined;
         const throttleMinRequestThrottleIntervalInMs =
             config.get("alfred:throttling:restCalls:minThrottleIntervalInMs") as number | undefined;
-        const throttleStorageManager = new services.RedisThrottleStorageManager(redisClient);
+        const throttleStorageManager = new services.RedisThrottleStorageManager(redisClientForThrottling);
         const restThrottlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,
             throttleMaxRequestsPerMs,
