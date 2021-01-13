@@ -12,6 +12,10 @@
         "host": "redis",
         "port": 6379
     },
+    "redisForThrottling": {
+        "host": "redis",
+        "port": 6379
+    },
     "error": {
         "track": false,
         "endpoint" : ""

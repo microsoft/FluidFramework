@@ -169,6 +169,12 @@ data:
             "pass": "{{ .Values.redis2.password }}",
             "tls": {{ .Values.redis2.tls }}
         },
+        "redisForThrottling": {
+            "host": "{{ .Values.redisForThrottling.url }}",
+            "port": "{{ .Values.redisForThrottling.port }}",
+            "pass": "{{ .Values.redisForThrottling.password }}",
+            "tls": {{ .Values.redisForThrottling.tls }}
+        },
         "error": {
             "track": {{ .Values.error.track }},
             "endpoint": "{{ .Values.error.endpoint }}"

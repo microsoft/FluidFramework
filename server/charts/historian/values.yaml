@@ -9,6 +9,10 @@ historian:
     url: redis_url
     port: 6379
     tls: false
+  redisForThrottling:
+    url: redis_url
+    port: 6379
+    tls: false
   host: historian_host
   cert: historian_cert
   ingressClass: ingress_class
