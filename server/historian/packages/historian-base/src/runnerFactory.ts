@@ -49,11 +49,24 @@ export class HistorianResourcesFactory implements utils.IResourcesFactory<Histor
         const riddlerEndpoint = config.get("riddler");
         const riddler = new historianServices.RiddlerService(riddlerEndpoint, tenantCache);
 
+        // Redis connection for throttling.
+        const redisConfigForThrottling = config.get("redisForThrottling");
+        const redisOptionsForThrottling: redis.ClientOpts = { password: redisConfigForThrottling.pass };
+        if (redisConfigForThrottling.tls) {
+            redisOptionsForThrottling.tls = {
+                serverName: redisConfigForThrottling.host,
+            };
+        }
+        const redisClientForThrottling = redis.createClient(
+            redisConfigForThrottling.port,
+            redisConfigForThrottling.host,
+            redisOptionsForThrottling);
+
         const throttleMaxRequestsPerMs = config.get("throttling:maxRequestsPerMs") as number | undefined;
         const throttleMaxRequestBurst = config.get("throttling:maxRequestBurst") as number | undefined;
         const throttleMinCooldownIntervalInMs = config.get("throttling:minCooldownIntervalInMs") as number | undefined;
         const minThrottleIntervalInMs = config.get("throttling:minThrottleIntervalInMs") as number | undefined;
-        const throttleStorageManager = new services.RedisThrottleStorageManager(redisClient);
+        const throttleStorageManager = new services.RedisThrottleStorageManager(redisClientForThrottling);
         const throttlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,
             throttleMaxRequestsPerMs,
