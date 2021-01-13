@@ -12,14 +12,9 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     private readonly q = new Deque<T>();
 
     /**
-     * Tracks whether the system has requested the queue be paused.
+     * Tracks the number of pause requests for the queue
      */
-    private sysPause = 1;
-
-    /**
-     * Tracks whether the user of the container has requested the queue be paused.
-     */
-    private userPause = 0;
+    private pauseCount = 0;
 
     private error: any | undefined;
 
@@ -37,9 +32,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
      * @returns True if the queue is paused, false if not.
      */
     public get paused(): boolean {
-        // The queue can be paused by either the user or by the system (e.g. during snapshotting).  If either requests
-        // a pause, then the queue will pause.
-        return this.sysPause !== 0 || this.userPause !== 0;
+        return this.pauseCount !== 0;
     }
 
     public get length(): number {
@@ -84,7 +77,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public async pause(): Promise<void> {
-        this.userPause++;
+        this.pauseCount++;
         // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
         if (this.processingDeferred !== undefined) {
@@ -93,28 +86,21 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public resume(): void {
-        assert(this.userPause > 0);
-        this.userPause--;
+        assert(this.pauseCount > 0);
+        this.pauseCount--;
         if (!this.paused) {
             this.ensureProcessing();
         }
     }
 
+    // back-compat: usage removed in 0.33, remove in future versions
     public async systemPause(): Promise<void> {
-        this.sysPause++;
-        // If called from within the processing loop, we are in the middle of processing an op. Return a promise
-        // that will resolve when processing has actually stopped.
-        if (this.processingDeferred !== undefined) {
-            return this.processingDeferred.promise;
-        }
+        return this.pause();
     }
 
+    // back-compat: usage removed in 0.33, remove in future versions
     public systemResume(): void {
-        assert(this.sysPause > 0);
-        this.sysPause--;
-        if (!this.paused) {
-            this.ensureProcessing();
-        }
+        this.resume();
     }
 
     /**

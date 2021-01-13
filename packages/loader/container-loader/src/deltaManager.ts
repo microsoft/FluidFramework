@@ -915,9 +915,9 @@ export class DeltaManager
         this._inboundSignal.clear();
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this._inbound.systemPause();
+        this._inbound.pause();
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this._inboundSignal.systemPause();
+        this._inboundSignal.pause();
 
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
