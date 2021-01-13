@@ -31,7 +31,8 @@
                 "--root",
                 "${workspaceRoot}",
                 "--vscode",
-                "--nolint",
+                "--script",
+                "tsc",
                 "${fileDirname}"
             ],
             "group": "build",

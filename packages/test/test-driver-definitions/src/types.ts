@@ -7,5 +7,5 @@ import { ITestDriver } from "./interfaces";
 import { ILocalServerTestDriver } from "./localServerTestDriver";
 
 declare global {
-    export const getFluidTestDriver: () => ITestDriver | ILocalServerTestDriver;
+    export function getFluidTestDriver(): ITestDriver | ILocalServerTestDriver;
 }

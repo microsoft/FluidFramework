@@ -230,6 +230,6 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     });
 };
 
-describe("AgentScheduler", () => {
+describe.only("AgentScheduler", () => {
     generateTest(tests);
 });

@@ -12,7 +12,8 @@ import { TinyliciousTestDriver } from "./tinyliciousTestDriver";
 const envVar = "FLUID_TEST_DRIVER";
 const fluidTestDriverType = process.env[envVar]?.toLocaleLowerCase();
 let fluidTestDriver: ITestDriver | ILocalServerTestDriver | undefined;
-const getFluidTestDriver = (): ITestDriver | ILocalServerTestDriver => {
+const _global =  global as any;
+_global.getFluidTestDriver = (): ITestDriver | ILocalServerTestDriver => {
     if (fluidTestDriver === undefined) {
         switch (fluidTestDriverType) {
             case undefined:
@@ -42,14 +43,16 @@ const getFluidTestDriver = (): ITestDriver | ILocalServerTestDriver => {
 
 // can be async or not
 export const mochaGlobalSetup = async function() {
-    if (getFluidTestDriver() === undefined) {
-        throw new Error(`mochaGlobalSetup`);
+    if (_global.getFluidTestDriver === undefined
+        || _global.getFluidTestDriver() === undefined)  {
+        throw new Error(`beforeAll`);
     }
 };
 
 export const mochaHooks = {
     beforeAll() {
-        if (getFluidTestDriver() === undefined) {
+        if (_global.getFluidTestDriver === undefined
+            || _global.getFluidTestDriver() === undefined)  {
             throw new Error(`beforeAll`);
         }
     },
