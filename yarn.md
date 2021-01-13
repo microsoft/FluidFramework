@@ -1,6 +1,6 @@
 # yarn cheatsheet
 
-Note: this PR and PR #4593 are closely related.
+**Note:** closely related to PR #4593.
 
 This draft PR is an experiment of replacing our custom fluid-build tool and lerna with [yarn2
 workspaces](https://yarnpkg.com/features/workspaces) and [lage](https://microsoft.github.io/lage/).
@@ -68,7 +68,7 @@ useful from a monorepo management perspective.
 [1]: https://yarnpkg.com/features/workspaces#workspace-ranges-workspace
 [2]: https://yarnpkg.com/cli/dedupe
 [3]: https://yarnpkg.com/features/release-workflow
-[4]:
+[4]: https://yarnpkg.com/features/constraints
 ### Known issues and caveats
 
 #### Caching doesn't work
