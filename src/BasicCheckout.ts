@@ -17,15 +17,10 @@ import { Checkout } from './Checkout';
  */
 export class BasicCheckout extends Checkout {
 	/**
-	 * A handler for 'committedEdit' SharedTreeEvent
-	 */
-	protected readonly editCommittedHandler = () => this.emitChange();
-
-	/**
 	 * @param tree - the tree
 	 */
 	public constructor(tree: SharedTree) {
-		super(tree, tree.currentView);
+		super(tree, tree.currentView, () => this.emitChange());
 	}
 
 	protected handleNewEdit(edit: Edit, view: Snapshot): void {

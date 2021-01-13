@@ -56,7 +56,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 	/**
 	 * A bound handler for 'committedEdit' SharedTreeEvent
 	 */
-	protected readonly editCommittedHandler;
+	private editCommittedHandler;
 
 	/**
 	 * The shared tree this checkout views/edits.
@@ -74,10 +74,11 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 
 	public disposed: boolean = false;
 
-	protected constructor(tree: SharedTree, currentView: Snapshot) {
+	protected constructor(tree: SharedTree, currentView: Snapshot, onEditCommitted: any) {
 		super();
 		this.tree = tree;
 		this.previousView = currentView;
+		this.editCommittedHandler = onEditCommitted;
 
 		// If there is an ongoing edit, emitChange will no-op, which is fine.
 		this.tree.on(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
