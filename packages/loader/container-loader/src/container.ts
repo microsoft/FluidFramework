@@ -655,13 +655,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Stop inbound message processing while we complete the snapshot
         try {
-            await this.deltaManager.inbound.systemPause();
+            await this.deltaManager.inbound.pause();
             await this.snapshotCore(tagMessage, fullTree);
         } catch (ex) {
             this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
         } finally {
-            this.deltaManager.inbound.systemResume();
+            this.deltaManager.inbound.resume();
         }
     }
 
@@ -807,12 +807,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const codeDetails = this.getCodeDetailsFromQuorum();
 
         await Promise.all([
-            this.deltaManager.inbound.systemPause(),
-            this.deltaManager.inboundSignal.systemPause()]);
+            this.deltaManager.inbound.pause(),
+            this.deltaManager.inboundSignal.pause()]);
 
         if (await this.context.satisfies(codeDetails) === true) {
-            this.deltaManager.inbound.systemResume();
-            this.deltaManager.inboundSignal.systemResume();
+            this.deltaManager.inbound.resume();
+            this.deltaManager.inboundSignal.resume();
             return;
         }
 
@@ -882,8 +882,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         await this.loadContext(codeDetails, attributes, snapshot, state.prevState);
 
-        this.deltaManager.inbound.systemResume();
-        this.deltaManager.inboundSignal.systemResume();
+        this.deltaManager.inbound.resume();
+        this.deltaManager.inboundSignal.resume();
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
