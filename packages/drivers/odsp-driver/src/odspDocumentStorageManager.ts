@@ -340,7 +340,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
 
         if (this.hostPolicy.summarizerClient) {
-            // This returns a summary tree but we don't need it.
             await this.odspSummaryUploadManager.buildCachesForDedup(finalTree);
         }
         return finalTree;

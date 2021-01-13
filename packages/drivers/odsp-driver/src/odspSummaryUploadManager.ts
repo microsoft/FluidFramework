@@ -76,9 +76,17 @@ export class OdspSummaryUploadManager {
     /**
      * Builts the caches which will be used for blob deduping.
      * @param snapshotTree - snapshot tree from which the dedup caches are built.
+     */
+    public async buildCachesForDedup(snapshotTree: api.ISnapshotTree) {
+        const prefixedSnapshotTree = this.addAppPrefixToSnapshotTree(snapshotTree);
+        await this.buildCachesForDedupCore(prefixedSnapshotTree);
+    }
+    /**
+     * Builts the caches which will be used for blob deduping.
+     * @param snapshotTree - snapshot tree from which the dedup caches are built.
      * @param path - path of the current node evaluated.
      */
-    public async buildCachesForDedup(snapshotTree: api.ISnapshotTree, path: string = ""): Promise<api.ISummaryTree> {
+    public async buildCachesForDedupCore(snapshotTree: api.ISnapshotTree, path: string = ""): Promise<api.ISummaryTree> {
         assert(Object.keys(snapshotTree.commits).length === 0, "There should not be commit tree entries in snapshot");
 
         const summaryTree: api.ISummaryTree = {
@@ -99,23 +107,47 @@ export class OdspSummaryUploadManager {
                 type: api.SummaryType.Blob,
                 content: "",
             };
-            // The top level blobs, all belongs to app tree as the blobs for ".protocol" tree are all inside ".protocol" tree.
-            // So if path is empty, we add ".app" as prefix to the path.
-            const fullBlobPath = path === "" ? `.app/${key}` : `${path}/${key}`;
+            // fullBlobPath does not start with "/"
+            const fullBlobPath = path === "" ? key : `${path}/${key}`;
             this.blobTreeDedupCaches.blobShaToPath.set(hash, fullBlobPath);
             this.blobTreeDedupCaches.pathToBlobSha.set(fullBlobPath, hash);
         }
 
         for (const [key, tree] of Object.entries(snapshotTree.trees)) {
-            // All the entries that belongs to app tree does not start with ".app" in the tree that is sent to this function.
-            // So we check that if the path is empty, it means it is the top level nodes and then if it is not ".protocol",
-            // we add ".app" as prefix.
-            const fullTreePath = path === "" ? (key === ".protocol" ? ".protocol" : `.app/${key}`) : `${path}/${key}`;
-            const subtree = await this.buildCachesForDedup(tree, fullTreePath);
+            // fullTreePath does not start with "/"
+            const fullTreePath = path === "" ? key : `${path}/${key}`;
+            const subtree = await this.buildCachesForDedupCore(tree, fullTreePath);
             this.blobTreeDedupCaches.treesPathToTree.set(fullTreePath, subtree);
             summaryTree.tree[key] = subtree;
         }
         return summaryTree;
+    }
+
+    private addAppPrefixToSnapshotTree(snapshotTree: api.ISnapshotTree): api.ISnapshotTree {
+        const prefixedSnapshotTree: api.ISnapshotTree = {
+            id: snapshotTree.id,
+            commits: snapshotTree.commits,
+            trees: {},
+            blobs: {},
+        };
+        for (const [key, value] of Object.entries(snapshotTree.blobs)) {
+            prefixedSnapshotTree.blobs[`.app/${key}`] = value;
+        }
+        for (const [key, value] of Object.entries(snapshotTree.trees)) {
+            prefixedSnapshotTree.trees[key === ".protocol" ? `${key}` : `.app/${key}`] = value;
+        }
+        return prefixedSnapshotTree;
+    }
+
+    private addAppPrefixToSummaryTree(summaryTree: api.ISummaryTree): api.ISummaryTree {
+        const prefixedSummaryTree: api.ISummaryTree = {
+            tree: {},
+            type: api.SummaryType.Tree,
+        };
+        for (const [key, value] of Object.entries(summaryTree.tree)) {
+            prefixedSummaryTree.tree[`.app/${key}`] = value;
+        }
+        return prefixedSummaryTree;
     }
 
     public async writeSummaryTree(tree: api.ISummaryTree, context: ISummaryContext) {
@@ -158,10 +190,10 @@ export class OdspSummaryUploadManager {
         };
         const { snapshotTree, reusedBlobs, blobs } = await this.convertSummaryToSnapshotTree(
             parentHandle,
-            tree,
+            this.addAppPrefixToSummaryTree(tree),
             blobTreeDedupCachesLatest,
             ".app",
-            ".app",
+            "",
             false,
         );
         const snapshot: ISnapshotRequest = {
@@ -250,7 +282,7 @@ export class OdspSummaryUploadManager {
 
             let id: string | undefined;
             let value: SnapshotTreeValue | undefined;
-            const currentPath = `${path}/${key}`;
+            const currentPath = path === "" ? key : `${path}/${key}`;
             switch (summaryObject.type) {
                 case api.SummaryType.Tree: {
                     blobTreeDedupCachesLatest.treesPathToTree.set(currentPath, summaryObject);

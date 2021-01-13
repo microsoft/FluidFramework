@@ -6,7 +6,7 @@
 /* eslint-disable dot-notation */
 import { strict as assert } from "assert";
 import { hashFile, IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { EpochTracker } from "../epochTracker";
 import { LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
@@ -31,7 +31,73 @@ describe("Odsp Summary Upload Manager Tests", () => {
         );
     });
 
-    it("Should cache right blobs", async () => {
+    it("Should populate caches properly", async () => {
+        odspSummaryUploadManager["blobCache"].set("blob1",
+            { content: "blob1", id: "blob1", size: 5, byteLength: 1, encoding: undefined });
+        odspSummaryUploadManager["blobCache"].set("blob2",
+            { content: "blob2", id: "blob2", size: 5, byteLength: 1, encoding: undefined });
+        odspSummaryUploadManager["blobCache"].set("blob3",
+            { content: "blob2", id: "blob2", size: 5, byteLength: 1, encoding: undefined });
+        odspSummaryUploadManager["blobCache"].set("blob4",
+            { content: "blob4", id: "blob4", size: 5, byteLength: 1, encoding: undefined });
+        odspSummaryUploadManager["blobCache"].set("blob5",
+            { content: "blob5", id: "blob5", size: 5, byteLength: 1, encoding: undefined });
+        const protocolTree: ISnapshotTree = {
+            blobs: {
+                blob1: "blob1",
+            },
+            commits: {},
+            id: "id1",
+            trees: {},
+        };
+
+        const defaultTree: ISnapshotTree = {
+            blobs: {
+                blob2: "blob2",
+            },
+            commits: {},
+            id: "id2",
+            trees: {
+                tree1: {
+                    blobs: { blob3: "blob2" },
+                    commits: {},
+                    id: "id3",
+                    trees: {},
+                },
+            },
+        };
+        const snapshotTree: ISnapshotTree = {
+            blobs: {
+                blob4: "blob4",
+                blob5: "blob5",
+            },
+            commits: {},
+            id: "id4",
+            trees: {
+                ".protocol": protocolTree,
+                "default": defaultTree,
+            },
+        };
+
+        await odspSummaryUploadManager.buildCachesForDedup(snapshotTree);
+
+        assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.size, 4,
+            "4 blobs should be in cache as 4 blobs with different content");
+        assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].pathToBlobSha.size,
+            5, "Cache should 5 entries, one for each blob");
+        assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].treesPathToTree.size,
+            3, "Cache should 3 entries, one for each tree");
+
+        // Check some of the entries
+        assert(odspSummaryUploadManager["blobTreeDedupCaches"].treesPathToTree.has(".app/default/tree1"),
+            "Tree1 should be present");
+        assert(odspSummaryUploadManager["blobTreeDedupCaches"].pathToBlobSha.has(".app/default/tree1/blob3"),
+            "blob3 should be present");
+        assert(odspSummaryUploadManager["blobTreeDedupCaches"].pathToBlobSha.has(".protocol/blob1"),
+            "blob1 should be present");
+    });
+
+    it("Should cache right blobs using the cache built from previous summary", async () => {
         const summaryContext: ISummaryContext = {
             proposalHandle: "proposedHandle",
             ackHandle: "ackHandle",
