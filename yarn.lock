@@ -10833,14 +10833,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:^4.14.118":
-  version: 4.14.165
-  resolution: "@types/lodash@npm:4.14.165"
-  checksum: 525bfc34b0b591cc957125a961c70e63e5ad8b23cbd89b7594a5ea74823285b6d96993a7eec506e26b379ee52dc9dcd3a894ff210be4c97bccb536e62361dbc8
-  languageName: node
-  linkType: hard
-
-"@types/lodash@npm:^4.14.119":
+"@types/lodash@npm:^4.14.118, @types/lodash@npm:^4.14.119":
   version: 4.14.167
   resolution: "@types/lodash@npm:4.14.167"
   checksum: 40778f83a86392625b3d52c15f59171a0f6a35436128b8fb1e37f89162f7950dc98570f27bc99ce1e2e04084e64da41cb45146d091d5181e12c6733bcf16fac6

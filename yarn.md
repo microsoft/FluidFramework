@@ -60,19 +60,20 @@ It also has some very nice interactive package management features. Try going to
 typing `yarn add react-dom`. You can select from versions influenced by what is already used in the repo. You can also
 try `yarn upgrade-interactive`.
 
-It can help [deduplicate packages][2] within the repo: `yarn workspaces foreach dedupe --check`
+It can help [deduplicate packages][2] within the repo: `yarn workspaces foreach dedupe --check` (it's kind of slow...)
 
-There are also things I haven't fully explored, like the release workflows and constraints, but they look very useful
-from a monorepo management perspective.
+There are also things I haven't fully explored, like the [release workflows][3] and [constraints][4], but they look very
+useful from a monorepo management perspective.
 
 [1]: https://yarnpkg.com/features/workspaces#workspace-ranges-workspace
 [2]: https://yarnpkg.com/cli/dedupe
-
+[3]: https://yarnpkg.com/features/release-workflow
+[4]:
 ### Known issues and caveats
 
 #### Caching doesn't work
 
 lage's caching seems busted. Maybe an incompatibility with Yarn v2?
 
-#### 
+####
 
