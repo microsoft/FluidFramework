@@ -22,21 +22,22 @@ const documentId = location.hash.substring(1);
 document.title = documentId;
 
 async function start(): Promise<void> {
-    // Get Fluid Container (creates if new url)
+    // Get or create the document
     const fluidDocument = createNew
         ? await Fluid.createDocument(documentId)
         : await Fluid.getDocument(documentId);
 
-    // Using the create handler, we can create our data object using a specific request shape.
+    // We'll create the data object when we create the new document.
     const dataObjectId = "dice";
     const keyValueDataObject: IKeyValueDataObject = createNew
         ? await fluidDocument.createDataObject<KeyValueDataObject>(KeyValueInstantiationFactory.type, dataObjectId)
         : await fluidDocument.getDataObject<KeyValueDataObject>(dataObjectId);
 
+    // Our controller manipulates the data object (model).
     const diceRollerController = new DiceRollerController(keyValueDataObject);
     await diceRollerController.initialize(createNew);
 
-    // Given an IDiceRoller, we can render the value and provide controls for users to roll it.
+    // We render a view which uses the controller.
     const div = document.getElementById("content") as HTMLDivElement;
     renderDiceRoller(diceRollerController, div);
 }

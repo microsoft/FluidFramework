@@ -26,7 +26,7 @@ const createRequestHandler: RuntimeRequestHandler =
  * By including the createRequestHandler, we can create any droplet types we include in the registry on-demand.
  * These can then be retrieved via container.request("/dataObjectId").
  */
-export const DropletContainerRuntimeFactory = new BaseContainerRuntimeFactory(
+export const KeyValueContainerRuntimeFactory = new BaseContainerRuntimeFactory(
     [KeyValueInstantiationFactory.registryEntry],
     [],
     [createRequestHandler, innerRequestHandler],

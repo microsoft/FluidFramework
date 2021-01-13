@@ -8,7 +8,7 @@ import { getSessionStorageContainer } from "@fluidframework/get-session-storage-
 import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
 
 import { DiceRollerController } from "../src/controller";
-import { DropletContainerRuntimeFactory, KeyValueDataObject, KeyValueInstantiationFactory } from "../src/kvpair-dataobject";
+import { KeyValueContainerRuntimeFactory, KeyValueDataObject, KeyValueInstantiationFactory } from "../src/kvpair-dataobject";
 import { renderDiceRoller } from "../src/view";
 
 // Since this is a single page Fluid application we are generating a new document id
@@ -27,7 +27,7 @@ const documentId = window.location.hash.substring(1);
 export async function createContainerAndRenderInElement(element: HTMLDivElement, createNewFlag: boolean) {
     // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
     // to store ops.
-    const container = await getSessionStorageContainer(documentId, DropletContainerRuntimeFactory, createNewFlag);
+    const container = await getSessionStorageContainer(documentId, KeyValueContainerRuntimeFactory, createNewFlag);
 
     // Get the Default Object from the Container
     const dataObjectId = "dice";
