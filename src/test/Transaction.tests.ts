@@ -162,7 +162,8 @@ describe('Transaction', () => {
 			const transaction = new Transaction(initialSnapshot);
 			transaction.applyChange(Change.clearPayload(initialTree.identifier));
 			expect(transaction.result).equals(EditResult.Applied);
-			expect(transaction.view.getSnapshotNode(initialTree.identifier).payload).undefined;
+			expect({}.hasOwnProperty.call(transaction.view.getSnapshotNode(initialTree.identifier), 'payload')).false;
+			expect({}.hasOwnProperty.call(transaction.view.getChangeNode(initialTree.identifier), 'payload')).false;
 		});
 
 		it('can clear a set payload', () => {
@@ -177,7 +178,8 @@ describe('Transaction', () => {
 			expect(transaction.view.getSnapshotNode(initialTree.identifier).payload).not.undefined;
 			transaction.applyChange(Change.clearPayload(initialTree.identifier));
 			expect(transaction.result).equals(EditResult.Applied);
-			expect(transaction.view.getSnapshotNode(initialTree.identifier).payload).undefined;
+			expect({}.hasOwnProperty.call(transaction.view.getSnapshotNode(initialTree.identifier), 'payload')).false;
+			expect({}.hasOwnProperty.call(transaction.view.getChangeNode(initialTree.identifier), 'payload')).false;
 		});
 	});
 
@@ -255,10 +257,12 @@ describe('Transaction', () => {
 		it('can build a detached node', () => {
 			const transaction = new Transaction(initialSnapshot);
 			const identifier = uuidv4() as NodeId;
-			transaction.applyChange(Change.build([makeEmptyNode(identifier)], 0 as DetachedSequenceId));
+			const newNode = makeEmptyNode(identifier);
+			transaction.applyChange(Change.build([newNode], 0 as DetachedSequenceId));
 			expect(transaction.result).equals(EditResult.Applied);
 			expect(transaction.view.hasNode(identifier)).is.true;
 			expect(transaction.view.getParentSnapshotNode(identifier)).is.undefined;
+			expect(transaction.view.getChangeNode(identifier)).deep.equals(newNode);
 		});
 		it("is malformed if detached node id doesn't exist", () => {
 			const transaction = new Transaction(initialSnapshot);

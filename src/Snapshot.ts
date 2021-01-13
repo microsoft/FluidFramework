@@ -97,7 +97,7 @@ export class Snapshot {
 					);
 				}
 			}
-			const snapshotNode: SnapshotNode = { identifier, payload, definition, traits };
+			const snapshotNode: SnapshotNode = { identifier, ...(payload ? { payload } : {}), definition, traits };
 			newSnapshotNodes.set(snapshotNode.identifier, snapshotNode);
 			return snapshotNode.identifier;
 		}
@@ -128,7 +128,7 @@ export class Snapshot {
 
 		return {
 			identifier: node.identifier,
-			payload: node.payload,
+			...(node.payload ? { payload: node.payload } : {}),
 			definition: node.definition,
 			traits: makeTraits(node.traits),
 		};
