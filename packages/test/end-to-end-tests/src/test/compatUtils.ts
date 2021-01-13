@@ -47,6 +47,7 @@ export interface ITestObjectProvider {
     urlResolver: IUrlResolver | old.IUrlResolver,
     defaultCodeDetails: IFluidCodeDetails | old.IFluidCodeDetails,
     opProcessingController: OpProcessingController | old.OpProcessingController,
+    documentId: string;
 
 }
 

@@ -87,6 +87,10 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
 
     }
 
+    get documentId() {
+        return defaultDocumentId;
+    }
+
     get defaultCodeDetails() {
         return defaultCodeDetails;
     }
