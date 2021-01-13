@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, fromBase64ToUtf8, hashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { assert, hashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
@@ -39,6 +39,11 @@ interface IDedupCaches {
     treesPathToTree: Map<string, api.ISummaryTree>,
 }
 
+/**
+ * This class manages a summary upload. First it builts some caches from a downloaded summary which it then uses to dedup
+ * blobs in the summary getting uploaded. When it receives a call to upload summary, it converts the summary tree into
+ * a snapshot tree and while doing that dedup the blobs in the summary tree from the caches it built.
+ */
 export class OdspSummaryUploadManager {
     // This cache is associated with mapping sha to path for previous summary which belongs to lastSummaryProposalHandle.
     private blobTreeDedupCaches: IDedupCaches = {
@@ -83,22 +88,28 @@ export class OdspSummaryUploadManager {
         for (const [key, value] of Object.entries(snapshotTree.blobs)) {
             const blobValue = this.blobCache.get(value);
             assert(blobValue !== undefined, "Blob should exists");
-            const decodedBlobValue = {
-                content: blobValue instanceof ArrayBuffer ? IsoBuffer.from(blobValue).toString("utf8") : fromBase64ToUtf8(blobValue.content),
-                encoding: "utf-8",
-            };
-            const hash = await hashFile(IsoBuffer.from(decodedBlobValue.content, decodedBlobValue.encoding));
-            // We are setting the content as empty because we won't use it anywhere. Instead we will use the hash of the blob from pathToBlobSha cache.
+            const hash = await hashFile(
+                blobValue instanceof ArrayBuffer ?
+                    IsoBuffer.from(blobValue) :
+                        IsoBuffer.from(blobValue.content, blobValue.encoding ?? "utf-8"),
+            );
+            // We are setting the content as empty because we won't use it anywhere.
+            // Instead we will use the hash of the blob from pathToBlobSha cache.
             summaryTree.tree[key] = {
                 type: api.SummaryType.Blob,
                 content: "",
             };
+            // The top level blobs, all belongs to app tree as the blobs for ".protocol" tree are all inside ".protocol" tree.
+            // So if path is empty, we add ".app" as prefix to the path.
             const fullBlobPath = path === "" ? `.app/${key}` : `${path}/${key}`;
             this.blobTreeDedupCaches.blobShaToPath.set(hash, fullBlobPath);
             this.blobTreeDedupCaches.pathToBlobSha.set(fullBlobPath, hash);
         }
 
         for (const [key, tree] of Object.entries(snapshotTree.trees)) {
+            // All the entries that belongs to app tree does not start with ".app" in the tree that is sent to this function.
+            // So we check that if the path is empty, it means it is the top level nodes and then if it is not ".protocol",
+            // we add ".app" as prefix.
             const fullTreePath = path === "" ? (key === ".protocol" ? ".protocol" : `.app/${key}`) : `${path}/${key}`;
             const subtree = await this.buildCachesForDedup(tree, fullTreePath);
             this.blobTreeDedupCaches.treesPathToTree.set(fullTreePath, subtree);
@@ -111,7 +122,11 @@ export class OdspSummaryUploadManager {
         // If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
         // then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
         if (context.proposalHandle !== this.lastSummaryProposalHandle) {
-            this.logger.sendTelemetryEvent({ eventName: "", "LastProposedHandleMismatch": context.proposalHandle, lastSummaryProposalHandle: this.lastSummaryProposalHandle });
+            this.logger.sendTelemetryEvent({
+                eventName: "LastSummaryProposedHandleMismatch",
+                ackedSummaryProposedHandle: context.proposalHandle,
+                lastSummaryProposalHandle: this.lastSummaryProposalHandle,
+            });
             this.blobTreeDedupCaches = { ...this.previousBlobTreeDedupCaches };
         } else {
             this.previousBlobTreeDedupCaches = { ...this.blobTreeDedupCaches };
@@ -123,7 +138,6 @@ export class OdspSummaryUploadManager {
         }
         this.blobTreeDedupCaches = { ...blobTreeDedupCachesLatest };
         this.lastSummaryProposalHandle = id;
-
         return id;
     }
 
@@ -189,7 +203,31 @@ export class OdspSummaryUploadManager {
     }
 
     /**
-     * Converts a summary tree to ODSP tree
+     * Following are the goals of this function.
+     *  a.) Converts the summary tree to a snapshot/odsp tree to be uploaded. Always upload full snapshot tree.
+     *  b.) Blob deduping - Blob deduping means instead of creating a new blob on server we reuse a previous
+     *      blob which has same content as the blob being evaluated. In this case we send the server a path
+     *      of the previous blob as id so that server can refer to that blob and find out the actual contents
+     *      of the blob. We always send the path from the last uploaded summary as we always upload the full
+     *      snapshot tree instead of handles.
+     *      Handles: Whenever we evaluate a handle in current summary, we expect that a summary tree corresponding
+     *               to that handle exists in "treesPathToTree" cache. We get that tree and start evaluating it.
+     *               This leads us to dedup any blobs which could be deduped but wasn't because we can't refer to blobs
+     *               within same summary due to limitation of server. We set the "expanded" as true in that case.
+     *      Blobs: For a blob, we find the hash of the blobs using the contents so that we can match with the ones in
+     *             caches and if present we dedup them. Now when the expanded is true we always expect it to be present
+     *             in the cache because it means that it was also present in the last summary. So while expanding a handle
+     *             we make sure that we are not adding a new blob instead we are just deduping the ones which can be deduped.
+     *             If not expanding a handle, we still check whether the blob can de deduped. If so, we use the cachedPath
+     *             as id of the blob so that the server can refer to it.
+     *  c.) Building new trees/blobs dedup caches so that they can be used to dedup blobs in next summary.
+     * @param parentHandle - Handle of the last uploaded summary or detach new summary.
+     * @param tree - Summary Tree which will be converted to snapshot tree to be uploaded.
+     * @param blobTreeDedupCachesLatest - Blobs/Trees caches which will be build to be used in next summary upload
+     *  in order to dedup the blobs.
+     * @param rootNodeName - Root node name of the summary tree.
+     * @param path - Current path of node which is getting evaluated.
+     * @param expanded - True if we are currently expanding a handle by a tree stored in the cache.
      */
     private async convertSummaryToSnapshotTree(
         parentHandle: string | undefined,
@@ -231,7 +269,7 @@ export class OdspSummaryUploadManager {
                 case api.SummaryType.Blob: {
                     let hash: string | undefined;
                     let cachedPath: string | undefined;
-                    // If we are expanding the handle, then the blobPath should exist in the cache as we will get the blob
+                    // If we are expanding the handle, then the currentPath should exist in the cache as we will get the blob
                     // hash from the cache.
                     if (expanded) {
                         hash = this.blobTreeDedupCaches.pathToBlobSha.get(currentPath);
@@ -247,7 +285,7 @@ export class OdspSummaryUploadManager {
 
                     assert(hash !== undefined, "hash should be set!");
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
-                    // cached path for the given blob.
+                    // cached path for the given blob. Also update the caches for future use.
                     if (cachedPath === undefined || parentHandle === undefined) {
                         blobs++;
                         blobTreeDedupCachesLatest.blobShaToPath.set(hash, currentPath);
@@ -272,7 +310,7 @@ export class OdspSummaryUploadManager {
                     const pathKey = `${rootNodeName}/${handlePath}`;
                     // We try to get the summary tree from the cache so that we can expand it in order to dedup the blobs.
                     // We always send whole tree no matter what, even if some part of the tree did not change in order to dedup
-                    // the blobs. However it may happen that the tree is not found in cache and then we have to use the handle.
+                    // the blobs.
                     const summaryTreeToExpand = this.blobTreeDedupCaches.treesPathToTree.get(pathKey);
                     if (summaryTreeToExpand !== undefined) {
                         blobTreeDedupCachesLatest.treesPathToTree.set(currentPath, summaryTreeToExpand);
