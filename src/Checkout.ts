@@ -54,9 +54,9 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 	private previousView: Snapshot;
 
 	/**
-	 * A bound handler for 'committedEdit' SharedTreeEvent
+	 * A handler for 'committedEdit' SharedTreeEvent
 	 */
-	private editCommittedHandler;
+	private readonly editCommittedHandler;
 
 	/**
 	 * The shared tree this checkout views/edits.
