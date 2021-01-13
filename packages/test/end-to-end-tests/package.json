@@ -28,6 +28,7 @@
     "test": "start-server-and-test start:tinylicious:test 3000 test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:mocha": "mocha --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup -r node_modules/@fluidframework/test-drivers --unhandled-rejections=strict",
+    "test:mocha:tinylicious": "cross-env FLUID_TEST_DRIVER=tinylicious start-server-and-test start:tinylicious:test 3000 test:mocha",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "test:realsvc:mocha": "mocha --recursive dist/real-service-tests --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:realsvc:mocha:report": "npm run test:realsvc:mocha -- --timeout 4s --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/mocha-realsvc-junit-report.xml",

@@ -55,5 +55,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("DataObject", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

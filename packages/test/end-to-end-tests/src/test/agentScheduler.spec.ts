@@ -31,7 +31,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
             dataObject._root.set("tempKey", "tempValue");
-            await args.opProcessingController.process();
+
+            while (!container.deltaManager.active) {
+                await args.opProcessingController.process();
+            }
         });
 
         it("No tasks initially", async () => {

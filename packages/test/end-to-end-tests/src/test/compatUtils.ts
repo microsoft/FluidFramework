@@ -52,7 +52,6 @@ export interface ITestObjectProvider {
 
 export interface ITestOptions {
     serviceConfiguration?: Partial<IClientConfiguration>,
-    tinylicious?: boolean,
 }
 
 export enum DataObjectFactoryType {
@@ -287,6 +286,6 @@ export const generateTest = (
 ) => {
     describe("test", () => {
         generateNonCompatTest(tests, options);
-        generatCompatTest(tests, options);
+        // generatCompatTest(tests, options);
     });
 };

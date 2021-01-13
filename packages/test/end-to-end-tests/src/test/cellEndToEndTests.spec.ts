@@ -219,5 +219,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("Cell", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

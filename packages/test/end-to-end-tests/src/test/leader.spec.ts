@@ -181,5 +181,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("Leader", () => {
-    generateNonCompatTest(tests, { tinylicious: true });
+    generateNonCompatTest(tests);
 });
