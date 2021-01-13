@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-internal-modules
+import cloneDeep from "lodash/cloneDeep";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, hashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
@@ -199,7 +201,8 @@ export class OdspSummaryUploadManager {
         };
         const { snapshotTree, reusedBlobs, blobs } = await this.convertSummaryToSnapshotTree(
             parentHandle,
-            this.addAppPrefixToSummaryTree(tree),
+            // Clone as we change the blob contents.
+            cloneDeep(this.addAppPrefixToSummaryTree(tree)),
             blobTreeDedupCachesLatest,
             ".app",
             "",
@@ -324,7 +327,7 @@ export class OdspSummaryUploadManager {
                         hash = await hashFile(IsoBuffer.from(value.content, value.encoding));
                         cachedPath = this.blobTreeDedupCaches.blobShaToPath.get(hash);
                     }
-
+                    summaryObject.content = "";
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // cached path for the given blob. Also update the caches for future use.
                     if (cachedPath === undefined || parentHandle === undefined) {

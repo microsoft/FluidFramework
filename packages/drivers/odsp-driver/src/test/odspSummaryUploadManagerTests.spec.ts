@@ -5,6 +5,8 @@
 
 /* eslint-disable dot-notation */
 import { strict as assert } from "assert";
+// eslint-disable-next-line import/no-internal-modules
+import cloneDeep from "lodash/cloneDeep";
 import * as api from "@fluidframework/protocol-definitions";
 import { hashFile, IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
@@ -105,11 +107,11 @@ describe("Odsp Summary Upload Manager Tests", () => {
         odspSummaryUploadManager["lastSummaryProposalHandle"] = summaryContext.proposalHandle;
         const rootBlob: api.ISummaryBlob = {
             type: api.SummaryType.Blob,
-            content: JSON.stringify("defaultDataStore"),
+            content: JSON.stringify("root"),
         };
         const componentBlob: api.ISummaryBlob = {
             type: api.SummaryType.Blob,
-            content: JSON.stringify("rootattributes"),
+            content: JSON.stringify("component"),
         };
         const rootBlobHash = await hashFile(IsoBuffer.from(rootBlob.content, "utf-8"));
         const componentBlobHash = await hashFile(IsoBuffer.from(componentBlob.content, "utf-8"));
@@ -159,6 +161,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
                 summaryContext,
             );
         });
+
         assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.size, 1,
             "1 blobs should be in cache");
         assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.get(componentBlobHash),
@@ -168,11 +171,11 @@ describe("Odsp Summary Upload Manager Tests", () => {
     it("Should dedup correct blobs(no handle expansion)", async () => {
         const rootBlob: api.ISummaryBlob = {
             type: api.SummaryType.Blob,
-            content: JSON.stringify("defaultDataStore"),
+            content: JSON.stringify("root"),
         };
         const componentBlob: api.ISummaryBlob = {
             type: api.SummaryType.Blob,
-            content: JSON.stringify("rootattributes"),
+            content: JSON.stringify("component"),
         };
 
         const appSummary: api.ISummaryTree = {
@@ -195,7 +198,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
         };
         await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
             undefined,
-            appSummary,
+            cloneDeep(appSummary),
             blobTreeDedupCaches,
             ".app",
         );
@@ -220,9 +223,9 @@ describe("Odsp Summary Upload Manager Tests", () => {
             ".app",
         );
         const serializedTree = JSON.stringify(snapshotTree);
-        assert(serializedTree.includes("\"id\":\"ackHandle/default/root\""), "Root blob should be deduped");
-        assert(serializedTree.includes("\"id\":\"ackHandle/default/component\""), "Component blob should be deduped");
         assert.strictEqual(reusedBlobs, 2, "2 reused blobs should be there");
         assert.strictEqual(blobs, 1, "1 blob(default2/header) is not deduped as content does not match");
+        assert(serializedTree.includes("\"id\":\"ackHandle/default/root\""), "Root blob should be deduped");
+        assert(serializedTree.includes("\"id\":\"ackHandle/default/component\""), "Component blob should be deduped");
     });
 });
