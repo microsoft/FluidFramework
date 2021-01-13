@@ -124,11 +124,6 @@ export class PrefetchingCheckout extends Checkout {
 	private loadedView: LoadedView;
 
 	/**
-	 * A handler for 'committedEdit' SharedTreeEvent
-	 */
-	protected readonly editCommittedHandler =  () => this.setLoadingView();
-
-	/**
 	 * @param tree - the shared tree to view and edit.
 	 * @param prefetchFilter - filter which selects which nodes (based on their definition)
 	 * will be guaranteed to have their payloads available synchronously.
@@ -150,7 +145,7 @@ export class PrefetchingCheckout extends Checkout {
 	 * @param loadedView - the view to start at
 	 */
 	private constructor(tree: SharedTree, loadedView: LoadedView) {
-		super(tree, loadedView.view);
+		super(tree, loadedView.view, () => this.setLoadingView());
 		this.loadedView = loadedView;
 	}
 
