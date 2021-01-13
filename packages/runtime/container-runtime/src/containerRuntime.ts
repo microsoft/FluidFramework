@@ -622,6 +622,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private _connected: boolean;
 
+    private paused: boolean = false;
+
     public get connected(): boolean {
         return this._connected;
     }
@@ -999,12 +1001,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private readonly onOp = (op: ISequencedDocumentMessage) => {
+        assert(!this.paused);
+        this.paused = true;
+        this.scheduleManager.setPaused(true);
         const rebaseP = this.pendingStateManager.rebaseAt(op.sequenceNumber);
-        if (rebaseP) {
-            this.scheduleManager.setPaused(true);
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            rebaseP.then(() => this.scheduleManager.setPaused(false));
-        }
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        rebaseP.then(() => {
+            this.paused = false;
+            this.scheduleManager.setPaused(false);
+        });
     };
 
     public setConnectionState(connected: boolean, clientId?: string) {

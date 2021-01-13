@@ -295,7 +295,8 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     public async resolve(request: IRequest, pendingLocalState?: string): Promise<Container> {
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Resolve" }, async () => {
+        const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName }, async () => {
             const resolved = await this.resolveCore(
                 request,
                 pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,

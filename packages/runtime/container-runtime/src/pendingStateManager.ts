@@ -209,8 +209,7 @@ export class PendingStateManager {
         this.pendingStates.push(pendingFlush);
     }
 
-    public rebaseAt(seqNum: number) {
-        const rebasePromises: Promise<void>[] = [];
+    public async rebaseAt(seqNum: number) {
         // rebase initial ops at sequence number
         while (!this.initialStates.isEmpty()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -219,24 +218,17 @@ export class PendingStateManager {
                 if (nextState.referenceSequenceNumber > seqNum) {
                     break; // nothing left to do at this sequence number
                 } else if (nextState.referenceSequenceNumber > 0 && nextState.referenceSequenceNumber < seqNum) {
-                    // this method should be called at every sequence number in order, so this should never happen
-                    if (nextState.clientSequenceNumber === this.initialClientSeqNum) {
-                        throw new Error("loaded from snapshot too recent to rebase pending initial ops");
-                    } else {
-                        throw new Error("gap in message sequence or messages out of order");
-                    }
+                    throw new Error("loaded from snapshot too recent to rebase pending initial ops");
                 }
 
                 // rebaseOp will cause the DDS to behave as if it has sent the op but not actually send it
-                rebasePromises.push(this.rebaseOp(nextState.content, nextState.localOpMetadata));
+                await this.rebaseOp(nextState.content, nextState.localOpMetadata);
             }
 
             // then we push onto pendingStates which will cause PendingStateManager to resubmit when we connect
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pendingStates.push(this.initialStates.shift()!);
         }
-
-        return rebasePromises.length === 0 ? undefined : Promise.all(rebasePromises);
     }
 
     /**

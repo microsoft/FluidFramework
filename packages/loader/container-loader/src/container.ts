@@ -532,6 +532,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public getPendingLocalState(): string {
+        assert(this.attachState === AttachState.Attached);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid");
         const pendingState: IPendingLocalState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
