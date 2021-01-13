@@ -352,7 +352,7 @@ export class OdspSummaryUploadManager {
                     if (handlePath.length > 0 && !handlePath.startsWith("/")) {
                         handlePath = `/${handlePath}`;
                     }
-                    const pathKey = `${rootNodeName}/${handlePath}`;
+                    const pathKey = `${rootNodeName}${handlePath}`;
                     // We try to get the summary tree from the cache so that we can expand it in order to dedup the blobs.
                     // We always send whole tree no matter what, even if some part of the tree did not change in order to dedup
                     // the blobs.
