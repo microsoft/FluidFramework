@@ -13,8 +13,9 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
 
     /**
      * Tracks the number of pause requests for the queue
+     * The DeltaQueue is create initially paused.
      */
-    private pauseCount = 0;
+    private pauseCount = 1;
 
     private error: any | undefined;
 
