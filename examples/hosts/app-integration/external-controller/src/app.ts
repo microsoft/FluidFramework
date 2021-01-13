@@ -21,6 +21,8 @@ if (location.hash.length === 0) {
 const documentId = location.hash.substring(1);
 document.title = documentId;
 
+const dataObjectId = "dice";
+
 async function start(): Promise<void> {
     // Get or create the document
     const fluidDocument = createNew
@@ -28,7 +30,6 @@ async function start(): Promise<void> {
         : await Fluid.getDocument(documentId);
 
     // We'll create the data object when we create the new document.
-    const dataObjectId = "dice";
     const keyValueDataObject: IKeyValueDataObject = createNew
         ? await fluidDocument.createDataObject<KeyValueDataObject>(KeyValueInstantiationFactory.type, dataObjectId)
         : await fluidDocument.getDataObject<KeyValueDataObject>(dataObjectId);
