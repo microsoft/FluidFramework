@@ -205,6 +205,7 @@ export class OdspSummaryUploadManager {
             cloneDeep(this.addAppPrefixToSummaryTree(tree)),
             blobTreeDedupCachesLatest,
             ".app",
+            true,
             "",
             false,
         );
@@ -278,6 +279,7 @@ export class OdspSummaryUploadManager {
         tree: api.ISummaryTree,
         blobTreeDedupCachesLatest: IDedupCaches,
         rootNodeName: string,
+        allowHandleExpansion: boolean,
         path: string = "",
         expanded: boolean = false,
     ) {
@@ -303,6 +305,7 @@ export class OdspSummaryUploadManager {
                         summaryObject,
                         blobTreeDedupCachesLatest,
                         rootNodeName,
+                        allowHandleExpansion,
                         currentPath,
                         expanded);
                     value = result.snapshotTree;
@@ -354,13 +357,14 @@ export class OdspSummaryUploadManager {
                     // We always send whole tree no matter what, even if some part of the tree did not change in order to dedup
                     // the blobs.
                     const summaryTreeToExpand = this.blobTreeDedupCaches.treesPathToTree.get(pathKey);
-                    if (summaryTreeToExpand !== undefined) {
+                    if (summaryTreeToExpand !== undefined && allowHandleExpansion) {
                         blobTreeDedupCachesLatest.treesPathToTree.set(currentPath, summaryTreeToExpand);
                         const result = await this.convertSummaryToSnapshotTree(
                             parentHandle,
                             summaryTreeToExpand,
                             blobTreeDedupCachesLatest,
                             rootNodeName,
+                            allowHandleExpansion,
                             currentPath,
                             true);
                         value = result.snapshotTree;
