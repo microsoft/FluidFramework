@@ -99,7 +99,7 @@ export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
         newProps: Properties.PropertySet,
         op?: ops.ICombiningOp,
         seq?: number,
-        ollabWindow?: CollaborationWindow,
+        collabWindow?: CollaborationWindow,
     ): Properties.PropertySet | undefined;
     clone(): ISegment;
     canAppend(segment: ISegment): boolean;
