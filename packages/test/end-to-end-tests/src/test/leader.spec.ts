@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestFluidObject } from "@fluidframework/test-utils";
+import { ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 import {
     generateNonCompatTest,
     ITestObjectProvider,
@@ -14,7 +14,7 @@ import {
 
 async function ensureConnected(container: Container) {
     if (!container.connected) {
-        await new Promise((resolve, rejected) => container.on("connected", resolve));
+        await timeoutPromise((resolve, rejected) => container.on("connected", resolve));
     }
 }
 
