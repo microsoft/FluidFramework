@@ -4,7 +4,7 @@
  */
 
 import { Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { IUrlResolver, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
@@ -26,6 +26,7 @@ export abstract class BaseTestObjectProvider<TestContainerConfigType> {
      */
     constructor(
         private readonly createFluidEntryPoint: (testContainerConfig?: TestContainerConfigType) => fluidEntryPoint,
+        private readonly createCreateRequest: (docId: string) => IRequest,
     ) {
 
     }
@@ -67,7 +68,7 @@ export abstract class BaseTestObjectProvider<TestContainerConfigType> {
     public async makeTestContainer(testContainerConfig?: TestContainerConfigType) {
         const loader = this.makeTestLoader(testContainerConfig);
         const container =
-            await createAndAttachContainer(this.documentId, defaultCodeDetails, loader, this.urlResolver);
+            await createAndAttachContainer(defaultCodeDetails, loader, this.createCreateRequest(this.documentId));
         this.opProcessingController.addDeltaManagers(container.deltaManager);
         return container;
     }
