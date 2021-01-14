@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { fetchFailureStatusCode, offlineFetchFailureStatusCode } from "@fluidframework/odsp-doclib-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 /**
  * returns a promise that resolves after timeMs
@@ -255,8 +256,8 @@ async function logFetchResponse(
 ) {
     if (logger !== undefined) {
         const additionalProps = getAdditionalProps && (await getAdditionalProps(response, isFinalAttempt));
-        logger.sendTelemetryEvent({
-            subCategory: "Request",
+        const childLogger = ChildLogger.create(logger, "Request");
+        childLogger.sendTelemetryEvent({
             eventName: nameForLogging,
             isFinalAttempt,
             status: response.status,
