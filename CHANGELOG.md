@@ -1,5 +1,37 @@
 # Change Log
 
+## 0.19.2
+
+* chore: Add dispose functionality to FluidDocumentStore, Checkout and SharedTree
+  * Associated pull request: !26952
+* build: update fluid to 0.32.1
+  * Associated pull request: !27217
+* run api extractor
+* fix lint errors
+* move handler to contstructor
+* chore: Cleanup of shared-tree resulting from development tooling
+  * Associated pull request: !27186
+* improvement: ensure payloads do not appear as a property when empty
+  * Associated pull request: !27166
+* chore: Added API documentation generation to the build + misc. tooling cleanup
+  * Associated pull request: !27148
+* code review updates
+* remove dispose from basiccheckout as it has been added to parent abstract class
+* Squashed 'packages/shared-tree/' changes from 13a0d61e6..fa5bc426b
+* test: Add unit tests for LogViewer
+  * Associated pull request: !26985
+* improvment: minor forest related code cleanup and normalize package-lock
+  * Associated pull request: !27083
+* build: Add missing dev dependencies in `fluid-document-store` and `shared-tree`
+  * Associated pull request: !27097
+* docs: Merged changes from wikiMaster
+  * Associated pull request: !27077
+* docs: Fixed mermaid syntax
+* merge: merge releases/2021.01.2 into master
+  * Associated pull request: !27067
+* improvement: invalidate the dependents of all nodes within deleted document subtrees
+  * Associated pull request: !26984
+
 ## 0.17.1
 
 _Version update only._
