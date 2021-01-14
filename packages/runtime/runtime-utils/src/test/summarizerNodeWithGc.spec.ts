@@ -109,7 +109,7 @@ describe("SummarizerNodeWithGC Tests", () => {
         it("can return initial GC data when nothing has changed since last summary", async () => {
             // Set the data to be returned by getinitialGCSummaryDetails.
             initialGCSummaryDetails = {
-                usedRoutes: [],
+                usedRoutes: [""],
                 gcData: {
                     gcNodes: {
                         "/": [ node1Id ],
@@ -129,7 +129,7 @@ describe("SummarizerNodeWithGC Tests", () => {
             // Set initial GC data to undefined. This will force the summarizer node to generate GC data even though
             // nothing changed since last summary.
             initialGCSummaryDetails = {
-                usedRoutes: [],
+                usedRoutes: [""],
                 gcData: undefined,
             };
 
@@ -141,7 +141,7 @@ describe("SummarizerNodeWithGC Tests", () => {
             // Set initial GC data to undefined. This will force the summarizer node to generate GC data even though
             // nothing changed since last summary.
             initialGCSummaryDetails = {
-                usedRoutes: [],
+                usedRoutes: [""],
                 gcData: undefined,
             };
 
@@ -187,7 +187,7 @@ describe("SummarizerNodeWithGC Tests", () => {
             // Set initial GC data to undefined. This will force the summarizer node to generate GC data even though
             // nothing changed since last summary.
             initialGCSummaryDetails = {
-                usedRoutes: [],
+                usedRoutes: [""],
                 gcData: undefined,
             };
 
@@ -217,10 +217,10 @@ describe("SummarizerNodeWithGC Tests", () => {
         });
 
         it("can return empty GC data when summarizing without generating GC data", async () => {
-            // Set initial used routes to empty. Since the summarizer node's default used routes is also empty, this
-            // ensures that used routes is unchanged.
+            // Set initial used routes to self route. Since the summarizer node's default used routes is also this, it
+            // will ensure that used routes is unchanged.
             initialGCSummaryDetails = {
-                usedRoutes: [],
+                usedRoutes: [""],
             };
 
             // Call summarize with fullTree as false. This should try to get cached GC data. But since no GC data was
@@ -247,10 +247,10 @@ describe("SummarizerNodeWithGC Tests", () => {
         });
 
         it("can return GC data when used routes changed since last summary", async () => {
-            // Set initial used routes to have some value. This will force the summarizer to generate summary again
-            // because reference used route will be different from summarizer node's default used routes (empty).
+            // Set initial used routes to be empty. This will force the summarizer to generate summary again
+            // because reference used route will be different from summarizer node's default used routes (self route).
             initialGCSummaryDetails = {
-                usedRoutes: [""],
+                usedRoutes: [],
             };
 
             // Call getGCData to generate GC data. This will generate GC data even though nothing changes since initial

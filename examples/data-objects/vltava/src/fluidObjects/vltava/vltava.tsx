@@ -46,7 +46,8 @@ export class Vltava extends DataObject implements IFluidHTMLView {
     protected async hasInitialized() {
         this.dataModelInternal =
             new VltavaDataModel(
-                this.root.get<IFluidHandle>(defaultObjectId),
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.root.get<IFluidHandle>(defaultObjectId)!,
                 this.context,
                 this.runtime);
     }

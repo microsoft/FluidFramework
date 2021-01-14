@@ -44,6 +44,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
             const handle = await root.wait<IFluidHandle<ConsensusRegisterCollection<string | null>>>("scheduler");
+            assert(handle !== undefined);
             scheduler = await handle.get();
         }
         const agentScheduler = new AgentScheduler(runtime, context, scheduler);
@@ -230,7 +231,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             if (this.isActive() && currentClient === this.clientId) {
                 this.onNewTaskAssigned(key);
             } else {
-                await this.onTaskReasigned(key, currentClient);
+                await this.onTaskReassigned(key, currentClient);
             }
         });
 
@@ -274,7 +275,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         }
     }
 
-    private async onTaskReasigned(key: string, currentClient: string | null) {
+    private async onTaskReassigned(key: string, currentClient: string | null) {
         if (this.runningTasks.has(key)) {
             this.runningTasks.delete(key);
             this.emit("released", key);

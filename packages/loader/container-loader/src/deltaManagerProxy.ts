@@ -48,6 +48,7 @@ export class DeltaQueueProxy<T> extends EventForwarder<IDeltaQueueEvents<T>> imp
         return this.queue.toArray();
     }
 
+    // back-compat: usage removed in 0.33, remove in future versions
     public async systemPause(): Promise<void> {
         return this.pause();
     }
@@ -56,6 +57,7 @@ export class DeltaQueueProxy<T> extends EventForwarder<IDeltaQueueEvents<T>> imp
         return this.queue.pause();
     }
 
+    // back-compat: usage removed in 0.33, remove in future versions
     public async systemResume(): Promise<void> {
         return this.resume();
     }

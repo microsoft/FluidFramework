@@ -9,6 +9,7 @@ import { IFluidRouter } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ISharedDirectory } from "@fluidframework/map";
 import {
     generateLocalCompatTest,
     ILocalTestObjectProvider,
@@ -17,7 +18,7 @@ import {
 import * as oldTypes from "./oldVersionTypes";
 
 const runtimeOptions: IContainerRuntimeOptions = {
-     summaryConfigOverrides: { maxOps: 1 },
+    summaryConfigOverrides: { maxOps: 1 },
 };
 
 describe("loader/runtime compatibility", () => {
@@ -45,14 +46,18 @@ describe("loader/runtime compatibility", () => {
 
         it("can set/get on root directory", async function() {
             const test = ["fluid is", "pretty neat!"];
-            (dataObject._root as any).set(test[0], test[1]);
-            assert.strictEqual(await dataObject._root.wait(test[0]), test[1]);
+            // the new and old ISharedDirectory type isn't compatible currently, just cast to the new one
+            const root = dataObject._root as ISharedDirectory;
+            root.set(test[0], test[1]);
+            assert.strictEqual(await root.wait(test[0]), test[1]);
         });
 
         it("can summarize", async function() {
             const test = ["fluid is", "pretty neat!"];
-            (dataObject._root as any).set(test[0], test[1]);
-            assert.strictEqual(await dataObject._root.wait(test[0]), test[1]);
+            // the new and old ISharedDirectory type isn't compatible currently, just cast to the new one
+            const root = dataObject._root as ISharedDirectory;
+            root.set(test[0], test[1]);
+            assert.strictEqual(await root.wait(test[0]), test[1]);
 
             // wait for summary ack/nack
             await new Promise((resolve, reject) => container.on("op", (op) => {
@@ -66,8 +71,10 @@ describe("loader/runtime compatibility", () => {
 
         it("can load existing", async function() {
             const test = ["prague is", "also neat"];
-            (dataObject._root as any).set(test[0], test[1]);
-            assert.strictEqual(await dataObject._root.wait(test[0]), test[1]);
+            // the new and old ISharedDirectory type isn't compatible currently, just cast to the new one
+            const root = dataObject._root as ISharedDirectory;
+            root.set(test[0], test[1]);
+            assert.strictEqual(await root.wait(test[0]), test[1]);
 
             const containersP: Promise<IContainer | oldTypes.IContainer>[] = [
                 oldApi.loadContainer( // new everything
@@ -118,19 +125,32 @@ describe("loader/runtime compatibility", () => {
                 async (c) => requestFluidObject<TestDataObject | oldTypes.OldTestDataObject>(c as IFluidRouter, "default"))));
 
             // get initial test value from each data store
-            dataObjects.map(async (c) => assert.strictEqual(await c._root.wait(test[0]), test[1]));
+            dataObjects.map(async (c) => {
+                // the new and old ISharedDirectory type isn't compatible currently, just cast to the new one
+                const croot = c._root as ISharedDirectory;
+                assert.strictEqual(await croot.wait(test[0]), test[1]);
+            });
 
             // set a test value from every data store (besides initial)
             const test2 = [...Array(dataObjects.length).keys()].map((x) => x.toString());
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            dataObjects.map(async (c, i) => (c._root as any).set(test2[i], test2[i]));
+            dataObjects.map(async (c, i) => {
+                // the new and old ISharedDirectory type isn't compatible currently, just cast to the new one
+                const croot = c._root as ISharedDirectory;
+                croot.set(test2[i], test2[i]);
+            });
 
             // get every test value from every data store (besides initial)
             dataObjects.map(async (c) => test2.map(
-                async (testVal) => assert.strictEqual(await c._root.wait(testVal), testVal)));
+                async (testVal) => {
+                    // the new and old ISharedDirectory type isn't compatible currently, just cast to the new one
+                    const croot = c._root as ISharedDirectory;
+                    assert.strictEqual(await croot.wait(testVal), testVal);
+                }));
 
             // get every value from initial data store
-            test2.map(async (testVal) => assert.strictEqual(await dataObject._root.wait(testVal), testVal));
+            test2.map(async (testVal) => {
+                assert.strictEqual(await root.wait(testVal), testVal);
+            });
         });
     };
 

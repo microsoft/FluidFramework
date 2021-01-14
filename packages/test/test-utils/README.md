@@ -84,7 +84,7 @@ const matrix = testFluidObject.getSharedObject<SparseMatrix>("matrix");
 
 For example, consider the scenario where you perform some operations on a DDS and want to verify that the remote client's DDS have applied the operations. You have to wait until the op is sent to the server, the server processes the op, sends it to the remote client and the remote client processes the op.
 
-You can use the `OpProcessingController` to wait for all that to happen by calling `process` on it. Check how [SharedStringTest](..\end-to-end-tests\src\test\sharedStringEndToEndTests.spec.ts) does that.
+You can use the `OpProcessingController` to wait for all that to happen by calling `process` on it. Check how [SharedStringTest](../end-to-end-tests/src/test/sharedStringEndToEndTests.spec.ts) does that.
 
 ## Usage
 
@@ -145,6 +145,6 @@ These steps are demonstrated in the image below:
 > Note that the LocalDriver is created by the `createLocalLoader` method and does not need to explicitly created.
 
 ## Example
-The above usage is taken from [SharedStringTest](..\end-to-end-tests\src\test\sharedStringEndToEndTests.spec.ts) which is a very basic example of how to use these utils.
+The above usage is taken from [SharedStringTest](../end-to-end-tests/src/test/sharedStringEndToEndTests.spec.ts) which is a very basic example of how to use these utils.
 
-There are a number of other examples (some a little more complex) in the same [directory](..\end-to-end-tests\src\test).
+There are a number of other examples (some a little more complex) in the same [directory](../end-to-end-tests/src/test).
