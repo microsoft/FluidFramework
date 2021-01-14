@@ -79,6 +79,11 @@ redis2:
   port: 6379
   tls: false
 
+redisForThrottling:
+  url: redis_url
+  port: 6379
+  tls: false
+
 kafka:
   topics:
     rawdeltas: rawdeltas

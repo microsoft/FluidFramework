@@ -99,46 +99,40 @@ function selectProtocolVersion(connectVersions: string[]): string {
 }
 
 /**
- * When throttled, sends nack before returning.
- *
- * @returns true if throttled; false if not throttled or no throttler provided.
+ * @returns ThrottlingError if throttled; undefined if not throttled or no throttler provided.
  */
 function checkThrottle(
     throttler: core.IThrottler | undefined,
     throttleId: string,
-    socket: core.IWebSocket,
-    logger: core.ILogger): boolean {
+    logger?: core.ILogger): core.ThrottlingError | undefined {
     if (!throttler) {
-        return false;
+        return;
     }
+
     const messageMetaData = {
         key: throttleId,
         weight: 1,
         event_type: "throttling",
     };
+
     try {
         throttler.incrementCount(throttleId);
     } catch (e) {
         if (e instanceof core.ThrottlingError) {
-            logger.info(`Throttled: ${throttleId}`, { messageMetaData: {
-                ...messageMetaData,
-                reason: e.message,
-                retryAfterInSeconds: e.retryAfter,
-            } });
-            const nackMessage = createNackMessage(
-                e.code,
-                NackErrorType.ThrottlingError,
-                e.message,
-                e.retryAfter);
-            socket.emit("nack", "", [nackMessage]);
-            return true;
+            logger?.info(`Throttled: ${throttleId}`, {
+                messageMetaData: {
+                    ...messageMetaData,
+                    reason: e.message,
+                    retryAfterInSeconds: e.retryAfter,
+                },
+            });
+            return e;
         } else {
-            logger.error(
+            logger?.error(
                 `Throttle increment failed: ${safeStringify(e, undefined, 2)}`,
                 { messageMetaData });
         }
     }
-    return false;
 }
 
 export function configureWebSocketServices(
@@ -195,6 +189,13 @@ export function configureWebSocketServices(
         }
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
+            const throttleError = checkThrottle(
+                connectThrottler,
+                getSocketConnectThrottleId(message.tenantId),
+                logger);
+            if (throttleError) {
+                return Promise.reject(throttleError);
+            }
             if (!message.token) {
                 // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject("Must provide an authorization token");
@@ -354,15 +355,6 @@ export function configureWebSocketServices(
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (connectionMessage: IConnect) => {
-            const isThrottled = checkThrottle(
-                connectThrottler,
-                getSocketConnectThrottleId(connectionMessage.tenantId),
-                socket,
-                logger);
-            if (isThrottled) {
-                return;
-            }
-
             connectDocument(connectionMessage).then(
                 (message) => {
                     socket.emit("connect_document_success", message.connection);
@@ -385,12 +377,17 @@ export function configureWebSocketServices(
         socket.on(
             "submitOp",
             (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
-                const isThrottled = checkThrottle(
+                const throttleError = checkThrottle(
                     submitOpThrottler,
                     getSubmitOpThrottleId(clientId),
-                    socket,
                     logger);
-                if (isThrottled) {
+                if (throttleError) {
+                    const nackMessage = createNackMessage(
+                        throttleError.code,
+                        NackErrorType.ThrottlingError,
+                        throttleError.message,
+                        throttleError.retryAfter);
+                    socket.emit("nack", "", [nackMessage]);
                     return;
                 }
 

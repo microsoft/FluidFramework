@@ -59,7 +59,7 @@ export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newV
     return currentValue;
 }
 
-export function matchProperties(a: PropertySet, b: PropertySet) {
+export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined) {
     if (a) {
         if (!b) {
             return false;
