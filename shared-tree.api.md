@@ -9,6 +9,7 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import type { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -23,7 +24,6 @@ export class BasicCheckout extends Checkout {
     protected handleNewEdit(edit: Edit, view: Snapshot): void;
     // (undocumented)
     protected get latestCommittedView(): Snapshot;
-    readonly tree: SharedTree;
     // (undocumented)
     waitForPendingUpdates(): Promise<void>;
 }
@@ -69,14 +69,17 @@ export enum ChangeType {
 }
 
 // @public @sealed
-export abstract class Checkout extends EventEmitterWithErrorHandling {
-    protected constructor(currentView: Snapshot);
+export abstract class Checkout extends EventEmitterWithErrorHandling implements IDisposable {
+    protected constructor(tree: SharedTree, currentView: Snapshot, onEditCommitted: any);
     abortEdit(): void;
     applyChanges(...changes: Change[]): void;
     applyEdit(...changes: Change[]): EditId;
     closeEdit(): EditId;
     // (undocumented)
     get currentView(): Snapshot;
+    dispose(error?: Error): void;
+    // (undocumented)
+    disposed: boolean;
     protected emitChange(): void;
     // (undocumented)
     getEditStatus(): EditResult;
@@ -86,6 +89,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling {
     protected abstract readonly latestCommittedView: Snapshot;
     openEdit(): void;
     rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid;
+    readonly tree: SharedTree;
     // (undocumented)
     abstract waitForPendingUpdates(): Promise<void>;
 }
@@ -291,7 +295,6 @@ export class PrefetchingCheckout extends Checkout {
     protected get latestCommittedView(): Snapshot;
     // (undocumented)
     static load(tree: SharedTree, prefetchFilter: (node: Definition) => boolean): Promise<PrefetchingCheckout>;
-    readonly tree: SharedTree;
     // (undocumented)
     waitForPendingUpdates(): Promise<void>;
 }
