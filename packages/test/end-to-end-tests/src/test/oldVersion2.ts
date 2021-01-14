@@ -4,34 +4,34 @@
  */
 
 /* eslint-disable import/no-extraneous-dependencies */
-export * from "old-container-definitions";
-export * from "old-core-interfaces";
-export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions";
-export { IFluidDataStoreFactory } from "old-runtime-definitions";
-export { OpProcessingController } from "old-test-utils";
-export { LocalResolver } from "old-local-driver";
+export * from "old-container-definitions2";
+export * from "old-core-interfaces2";
+export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions2";
+export { IFluidDataStoreFactory } from "old-runtime-definitions2";
+export { OpProcessingController } from "old-test-utils2";
+export { LocalResolver } from "old-local-driver2";
 
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
-} from "old-aqueduct";
-import { SharedCell } from "old-cell";
-import { IContainer, IFluidModule, IRuntimeFactory } from "old-container-definitions";
-import { Loader } from "old-container-loader";
-import { IContainerRuntimeOptions } from "old-container-runtime";
-import { IFluidCodeDetails } from "old-core-interfaces";
-import { SharedCounter } from "old-counter";
-import { IChannelFactory } from "old-datastore-definitions";
-import { IDocumentServiceFactory } from "old-driver-definitions";
-import { Ink } from "old-ink";
-import { LocalDocumentServiceFactory, LocalResolver } from "old-local-driver";
-import { SharedDirectory, SharedMap } from "old-map";
-import { SharedMatrix } from "old-matrix";
-import { ConsensusQueue } from "old-ordered-collection";
-import { ConsensusRegisterCollection } from "old-register-collection";
-import { IFluidDataStoreFactory } from "old-runtime-definitions";
-import { SharedString, SparseMatrix } from "old-sequence";
+} from "old-aqueduct2";
+import { SharedCell } from "old-cell2";
+import { IContainer, IFluidModule, IRuntimeFactory } from "old-container-definitions2";
+import { Loader } from "old-container-loader2";
+import { IContainerRuntimeOptions } from "old-container-runtime2";
+import { IFluidCodeDetails } from "old-core-interfaces2";
+import { SharedCounter } from "old-counter2";
+import { IChannelFactory } from "old-datastore-definitions2";
+import { IDocumentServiceFactory } from "old-driver-definitions2";
+import { Ink } from "old-ink2";
+import { LocalDocumentServiceFactory, LocalResolver } from "old-local-driver2";
+import { SharedDirectory, SharedMap } from "old-map2";
+import { SharedMatrix } from "old-matrix2";
+import { ConsensusQueue } from "old-ordered-collection2";
+import { ConsensusRegisterCollection } from "old-register-collection2";
+import { IFluidDataStoreFactory } from "old-runtime-definitions2";
+import { SharedString, SparseMatrix } from "old-sequence2";
 import {
     ChannelFactoryRegistry,
     createAndAttachContainer,
@@ -41,7 +41,7 @@ import {
     OpProcessingController,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
-} from "old-test-utils";
+} from "old-test-utils2";
 
 import {
     createPrimedDataStoreFactory,
@@ -63,7 +63,7 @@ const defaultCodeDetails: IFluidCodeDetails = {
 };
 
 // This is a replica of the code in localLoader.ts in test-utils, but bind to the old version.
-// TODO: once 0.27 is the back-compat version that we test, we can just use the version in the old-test-utils
+// TODO: once 0.27 is the back-compat version that we test, we can just use the version in the old-test-utils2
 // However, if there are any changes to these class and code, we can shim it here.
 
 /**
@@ -247,7 +247,7 @@ function convertRegistry(registry: newVer.ChannelFactoryRegistry = []): ChannelF
 }
 
 function createOldPrimedDataStoreFactory(
-    registry?: newVer.ChannelFactoryRegistry,
+    registry?: newVer.ChannelFactoryRegistry
 ): IFluidDataStoreFactory {
     return new DataObjectFactory(
         OldTestDataObject.type,
@@ -297,7 +297,7 @@ export async function createOldContainer(
     server,
     urlResolver
 ): Promise<IContainer> {
-    const loader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
+    const loader = createLocalLoader(packageEntries, server, urlResolver);
     return createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
 }
 
@@ -351,3 +351,4 @@ export function createLocalTestObjectProvider(
 
     return localTestObjectProvider;
 }
+

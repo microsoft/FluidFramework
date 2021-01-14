@@ -4,51 +4,26 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, IFluidModule } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalTestObjectProvider } from "@fluidframework/test-utils";
-import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
     generateLocalCompatTest,
-    createOldPrimedDataStoreFactory,
-    createOldRuntimeFactory,
-    createPrimedDataStoreFactory,
-    createRuntimeFactory,
     ILocalTestObjectProvider,
-    OldTestDataObject,
     TestDataObject,
 } from "./compatUtils";
-import * as old from "./oldVersion";
+import * as oldTypes from "./oldVersionTypes";
 
 const runtimeOptions: IContainerRuntimeOptions = {
      summaryConfigOverrides: { maxOps: 1 },
 };
 
-async function loadContainer(
-    fluidModule: IFluidModule | old.IFluidModule,
-    deltaConnectionServer: ILocalDeltaConnectionServer,
-): Promise<IContainer> {
-    const localTestObjectProvider = new LocalTestObjectProvider(
-        () => fluidModule as IFluidModule, undefined, deltaConnectionServer);
-    return localTestObjectProvider.loadTestContainer();
-}
-
-async function loadContainerWithOldLoader(
-    fluidModule: IFluidModule | old.IFluidModule,
-    deltaConnectionServer: ILocalDeltaConnectionServer,
-): Promise<old.IContainer> {
-    const localTestObjectProvider = new old.LocalTestObjectProvider(
-        () => fluidModule as old.IFluidModule, undefined, deltaConnectionServer);
-    return localTestObjectProvider.loadTestContainer();
-}
-
 describe("loader/runtime compatibility", () => {
-    const tests = function(args: ILocalTestObjectProvider) {
-        let container: IContainer | old.IContainer;
-        let dataObject: TestDataObject | OldTestDataObject;
+    const tests = function(args: ILocalTestObjectProvider, oldApi: oldTypes.OldApi) {
+        let container: IContainer | oldTypes.IContainer;
+        let dataObject: TestDataObject | oldTypes.OldTestDataObject;
         let containerError: boolean = false;
 
         beforeEach(async function() {
@@ -94,47 +69,53 @@ describe("loader/runtime compatibility", () => {
             (dataObject._root as any).set(test[0], test[1]);
             assert.strictEqual(await dataObject._root.wait(test[0]), test[1]);
 
-            const containersP: Promise<IContainer | old.IContainer>[] = [
-                loadContainer( // new everything
-                    { fluidExport: createRuntimeFactory(
-                        TestDataObject.type,
-                        createPrimedDataStoreFactory(),
-                        runtimeOptions) },
+            const containersP: Promise<IContainer | oldTypes.IContainer>[] = [
+                oldApi.loadContainer( // new everything
+                    false, /* oldLoader */
+                    false, /* oldContainerRuntime */
+                    false, /* oldDataStoreRuntime */
+                    TestDataObject.type,
+                    runtimeOptions,
                     args.deltaConnectionServer),
-                loadContainerWithOldLoader( // old loader, new container/data store runtimes
-                    { fluidExport: createRuntimeFactory(
-                        TestDataObject.type,
-                        createPrimedDataStoreFactory(),
-                        runtimeOptions) },
+                oldApi.loadContainer( // old loader, new container/data store runtimes
+                    true, /* oldLoader */
+                    false, /* oldContainerRuntime */
+                    false, /* oldDataStoreRuntime */
+                    TestDataObject.type,
+                    runtimeOptions,
                     args.deltaConnectionServer),
-                loadContainerWithOldLoader( // old everything
-                    { fluidExport: createOldRuntimeFactory(
-                        TestDataObject.type,
-                        createOldPrimedDataStoreFactory(),
-                        runtimeOptions) },
+                oldApi.loadContainer( // old everything
+                    true, /* oldLoader */
+                    true, /* oldContainerRuntime */
+                    true, /* oldDataStoreRuntime */
+                    TestDataObject.type,
+                    runtimeOptions,
                     args.deltaConnectionServer),
-                loadContainer( // new loader, old container/data store runtimes
-                    { fluidExport: createOldRuntimeFactory(
-                        TestDataObject.type,
-                        createOldPrimedDataStoreFactory(),
-                        runtimeOptions) },
+                oldApi.loadContainer( // new loader, old container/data store runtimes
+                    false, /* oldLoader */
+                    true, /* oldContainerRuntime */
+                    true, /* oldDataStoreRuntime */
+                    TestDataObject.type,
+                    runtimeOptions,
                     args.deltaConnectionServer),
-                loadContainer( // new loader/container runtime, old data store runtime
-                    { fluidExport: createRuntimeFactory(
-                        TestDataObject.type,
-                        createOldPrimedDataStoreFactory(),
-                        runtimeOptions) },
+                oldApi.loadContainer( // new loader/container runtime, old data store runtime
+                    false, /* oldLoader */
+                    false, /* oldContainerRuntime */
+                    true, /* oldDataStoreRuntime */
+                    TestDataObject.type,
+                    runtimeOptions,
                     args.deltaConnectionServer),
-                loadContainerWithOldLoader( // old loader/container runtime, new data store runtime
-                    { fluidExport: createOldRuntimeFactory(
-                        TestDataObject.type,
-                        createPrimedDataStoreFactory(),
-                        runtimeOptions) },
+                oldApi.loadContainer( // old loader/container runtime, new data store runtime
+                    true, /* oldLoader */
+                    true, /* oldContainerRuntime */
+                    false, /* oldDataStoreRuntime */
+                    TestDataObject.type,
+                    runtimeOptions,
                     args.deltaConnectionServer),
             ];
 
             const dataObjects = await Promise.all(containersP.map(async (containerP) => containerP.then(
-                async (c) => requestFluidObject<TestDataObject | OldTestDataObject>(c as IFluidRouter, "default"))));
+                async (c) => requestFluidObject<TestDataObject | oldTypes.OldTestDataObject>(c as IFluidRouter, "default"))));
 
             // get initial test value from each data store
             dataObjects.map(async (c) => assert.strictEqual(await c._root.wait(test[0]), test[1]));

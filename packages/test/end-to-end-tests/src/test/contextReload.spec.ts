@@ -23,10 +23,10 @@ import {
     createLocalLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
+import { V1, V2 } from "./compatUtils";
+import * as oldTypes from "./oldVersionTypes";
 import * as old from "./oldVersion";
-
-const V1 = "0.1.0";
-const V2 = "0.2.0";
+import * as old2 from "./oldVersion2";
 
 // A simple dataStore with runtime/root exposed for testing purposes. Two
 // different versions (defined below) are used to test context reload.
@@ -51,36 +51,14 @@ class TestDataStoreV2 extends TestDataStore {
     }
 }
 
-// A simple old-version dataStore with runtime/root exposed for testing
-// purposes. Used to test compatibility of context reload between
-// different runtime versions.
-abstract class OldTestDataStore extends old.DataObject {
-    public static readonly type = "@fluid-example/test-dataStore";
-    public abstract readonly version: string;
-    public get _runtime() { return this.runtime; }
-    public get _root() { return this.root; }
-}
-
-class OldTestDataStoreV1 extends OldTestDataStore {
-    public static readonly version = V1;
-    public readonly version = V1;
-}
-
-class OldTestDataStoreV2 extends OldTestDataStore {
-    public static readonly version = V2;
-    public readonly version = V2;
-    public static readonly testKey = "version2";
-    protected async hasInitialized() {
-        this.root.set(OldTestDataStoreV2.testKey, true);
-    }
-}
+const oldApis = [old, old2];
 
 describe("context reload (hot-swap)", function() {
     const documentId = "contextReloadTest";
     const documentLoadUrl = `fluid-test://localhost/${documentId}`;
-    const codeDetails = (version: string): old.IFluidCodeDetails => {
+    const codeDetails = (version: string): oldTypes.IFluidCodeDetails => {
         return {
-            package: { name: TestDataStore.type, version } as unknown as old.IFluidPackage,
+            package: { name: TestDataStore.type, version } as unknown as oldTypes.IFluidPackage,
             config: {},
         };
     };
@@ -107,27 +85,12 @@ describe("context reload (hot-swap)", function() {
         return loader.resolve({ url: documentLoadUrl });
     }
 
-    async function createContainerWithOldLoader(packageEntries, server, urlResolver): Promise<old.IContainer> {
-        // back-compat remove in 0.34: cast of function
-        const loader = (old.createLocalLoader as any)(packageEntries, server, urlResolver, { hotSwapContext: true });
-        return old.createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
-    }
-
     const createRuntimeFactory = (dataStore): IRuntimeFactory => {
         const type = TestDataStore.type;
         const factory = new DataObjectFactory(type, dataStore, [], {});
         return new ContainerRuntimeFactoryWithDefaultDataStore(
             factory,
             [[type, Promise.resolve(factory)]],
-        );
-    };
-
-    const createOldRuntimeFactory = (dataStore): old.IRuntimeFactory => {
-        const type = OldTestDataStore.type;
-        const factory = new old.DataObjectFactory(type, dataStore, [], {});
-        return new old.ContainerRuntimeFactoryWithDefaultDataStore(
-            factory,
-            [[type, Promise.resolve(new old.DataObjectFactory(type, dataStore, [], {}))]],
         );
     };
 
@@ -280,49 +243,55 @@ describe("context reload (hot-swap)", function() {
         });
     });
 
-    describe("compat", () => {
-        describe("old loader, new runtime", () => {
-            beforeEach(async function() {
-                this.deltaConnectionServer = LocalDeltaConnectionServer.create();
-                this.urlResolver = new LocalResolver();
-                this.container = await createContainerWithOldLoader([
-                    [codeDetails(V1), createOldRuntimeFactory(OldTestDataStoreV1)],
-                    [codeDetails(V2), createRuntimeFactory(TestDataStoreV2)],
-                ], this.deltaConnectionServer, this.urlResolver);
-                this.dataStoreV1 = await requestFluidObject<OldTestDataStore>(this.container, "default");
-                assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
+    oldApis.forEach((oldApi: oldTypes.OldApi) => {
+        describe("compat", () => {
+            describe("old loader, new runtime", () => {
+                beforeEach(async function() {
+                    this.deltaConnectionServer = LocalDeltaConnectionServer.create();
+                    this.urlResolver = new LocalResolver();
+                    this.container = await oldApi.createOldContainer(
+                        documentId,
+                        [
+                            [codeDetails(V1), oldApi.createOldRuntimeFactory(oldApi.OldTestDataObjectV1)],
+                            [codeDetails(V2), createRuntimeFactory(TestDataStoreV2)],
+                        ],
+                        this.deltaConnectionServer,
+                        this.urlResolver);
+                    this.dataStoreV1 = await requestFluidObject<oldTypes.OldTestDataObject>(this.container, "default");
+                    assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 
-                this.opProcessingController = new old.OpProcessingController(this.deltaConnectionServer);
-                this.opProcessingController.addDeltaManagers(this.container.deltaManager);
+                    this.opProcessingController = new oldApi.OpProcessingController(this.deltaConnectionServer);
+                    this.opProcessingController.addDeltaManagers(this.container.deltaManager);
+                });
+
+                tests();
+
+                afterEach(async function() {
+                    await this.deltaConnectionServer.webSocketServer.close();
+                });
             });
+            describe("new loader, old runtime", () => {
+                beforeEach(async function() {
+                    this.deltaConnectionServer = LocalDeltaConnectionServer.create();
+                    this.urlResolver = new LocalResolver();
+                    this.container = await createContainer([
+                        [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
+                        [codeDetails(V2), oldApi.createOldRuntimeFactory(oldApi.OldTestDataObjectV2)],
+                    ],
+                    this.deltaConnectionServer,
+                    this.urlResolver);
+                    this.dataStoreV1 = await requestFluidObject<TestDataStore>(this.container, "default");
+                    assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 
-            tests();
+                    this.opProcessingController = new OpProcessingController();
+                    this.opProcessingController.addDeltaManagers(this.container.deltaManager);
+                });
 
-            afterEach(async function() {
-                await this.deltaConnectionServer.webSocketServer.close();
-            });
-        });
-        describe("new loader, old runtime", () => {
-            beforeEach(async function() {
-                this.deltaConnectionServer = LocalDeltaConnectionServer.create();
-                this.urlResolver = new LocalResolver();
-                this.container = await createContainer([
-                    [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
-                    [codeDetails(V2), createOldRuntimeFactory(OldTestDataStoreV2)],
-                ],
-                this.deltaConnectionServer,
-                this.urlResolver);
-                this.dataStoreV1 = await requestFluidObject<TestDataStore>(this.container, "default");
-                assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
+                tests();
 
-                this.opProcessingController = new OpProcessingController();
-                this.opProcessingController.addDeltaManagers(this.container.deltaManager);
-            });
-
-            tests();
-
-            afterEach(async function() {
-                await this.deltaConnectionServer.webSocketServer.close();
+                afterEach(async function() {
+                    await this.deltaConnectionServer.webSocketServer.close();
+                });
             });
         });
     });
