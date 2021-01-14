@@ -39,14 +39,14 @@ export function createLocalLoader(
 
 ### `createAndAttachContainer`
 
-This method creates and attaches a `Container` with the given `documentId`, `source` and an `IUrlResolver`. An `ILoader` should also be passed in that will be used to load the `Container`:
+This method creates and attaches a `Container` with the given `source` and an `attachRequest`. An `ILoader` should also be passed in that will be used to load the `Container`. The `attachRequest` format varies per url resolver. Most resolvers have helper methods for creating attach requests. You should use the
+helper method on the url resolver passed to the loader to generate the `attachRequest`:
 
 ```typescript
 export async function createAndAttachContainer(
-    documentId: string,
     source: IFluidCodeDetails,
     loader: ILoader,
-    urlResolver: IUrlResolver,
+    attachRequest: IRequest,
 ): Promise<IContainer>
 ```
 
