@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { TraitLabel } from './Identifiers';
-import { assert } from './Common';
+import { EditId, TraitLabel } from './Identifiers';
+import { assert, assertNotUndefined } from './Common';
 import { OrderedEditSet } from './EditLog';
 import { newEdit, setTrait } from './EditUtilities';
 import { ChangeNode, Edit, Change } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
 import { initialTree } from './InitialTree';
-import { BloomFilter } from 'bloomfilter';
-import { ISerializedHandle } from '@fluidframework/core-interfaces';
+import { IFluidHandle, ISerializedHandle } from '@fluidframework/core-interfaces';
 
 /**
  * Format version for summaries which is supported.
@@ -19,22 +18,17 @@ import { ISerializedHandle } from '@fluidframework/core-interfaces';
  */
 export const formatVersion = '0.0.2';
 
-export interface SerializedEditHandle {
-	readonly highestIndex: number;
-	readonly handle: ISerializedHandle;
-}
-
 /**
  * Handler for summarizing the tree state.
- * The handler is invoked when saving a summary. It accepts a view of the current state of the tree and the sequenced edits known
- * to the SharedTree.
+ * The handler is invoked when saving a summary. It accepts a view of the current state of the tree, the sequenced edits known
+ * to the SharedTree, and optional helpers for serializing the edit information.
  * @returns a summary of the supplied state.
  * @public
  */
 export type SharedTreeSummarizer = (
-	editBlobs: SerializedEditHandle[],
-	sequencedEdits: OrderedEditSet,
-	currentView: Snapshot
+	editLog: OrderedEditSet,
+	currentView: Snapshot,
+	serializationHelpers: SerializationHelpers
 ) => SharedTreeSummary;
 
 /**
@@ -50,22 +44,38 @@ export type ErrorString = string;
  */
 export interface SharedTreeSummary {
 	readonly currentTree: ChangeNode;
-	readonly editBlobs: readonly SerializedEditHandle[];
+
+	// TODO:#49901: Remove when writing version 0.1.0
+	readonly sequencedEdits?: readonly { id: EditId; changes: readonly Change[] }[];
 
 	/**
-	 * A serialized bloom filter used to check edit ID uniqueness.
+	 * Information that can populate an edit log.
 	 */
-	readonly editIdFilter?: BloomFilter;
-
-	/**
-	 * A list of edits that have not been blobbed.
-	 */
-	readonly sequencedEdits?: readonly Edit[];
+	readonly editHistory?: SerializedEditLogSummary;
 
 	/**
 	 * Field on summary under which version is stored.
 	 */
 	readonly version: string;
+}
+
+/**
+ * A serialized version of an edit log summary.
+ */
+export interface SerializedEditLogSummary {
+	/**
+	 * A list of either handles corresponding to a chunk of edits or the edit chunk.
+	 */
+	readonly editChunks?: readonly (ISerializedHandle | Edit[])[];
+
+	/**
+	 * A list of edits IDs for all sequenced edits.
+	 */
+	readonly editIds: readonly EditId[];
+}
+
+export interface SerializationHelpers {
+	serializeHandle: (handle: IFluidHandle<ArrayBufferLike>) => ISerializedHandle;
 }
 
 /**
@@ -91,15 +101,39 @@ export function deserialize(jsonSummary: string): SharedTreeSummary | ErrorStrin
 		return 'Summary is not an object';
 	}
 
-	const { currentTree, editBlobs, editIdFilter, sequencedEdits, version } = summary;
+	const { version, currentTree } = summary;
 
 	if (version !== formatVersion) {
 		return 'Summary format version not supported';
 	}
 
-	if (currentTree !== undefined && editBlobs !== undefined && editIdFilter !== undefined) {
-		// TODO:#45414: Add more robust validation of the summary's fields. Even if they are present, they may be malformed.
-		return { currentTree, editBlobs, editIdFilter, sequencedEdits, version };
+	if (currentTree !== undefined) {
+		/** -------- FORMAT VERSION 0.0.2 --------- */
+		const { sequencedEdits } = summary;
+
+		if (sequencedEdits !== undefined) {
+			// TODO:#45414: Add more robust validation of the summary's fields. Even if they are present, they may be malformed.
+			return { currentTree, sequencedEdits, version };
+		}
+		/** --------- END OF FORMAT VERSION 0.0.2 --------- */
+
+		// TODO:#49901: Use the following deserialization code for format version 0.1.0, remove version 0.0.2
+		/** -------- FORMAT VERSION 0.1.0 --------- */
+		const { editHistory } = summary;
+
+		if (editHistory !== undefined) {
+			if (typeof editHistory !== 'object') {
+				return 'Edit history is not an object';
+			}
+
+			const { editChunks, editIds } = editHistory;
+
+			// TODO:#45414: Add more robust validation of the summary's fields. Even if they are present, they may be malformed.
+			if (editChunks !== undefined && editIds !== undefined) {
+				return { currentTree, editHistory, version };
+			}
+		}
+		/** --------- END OF FORMAT VERSION 0.1.0 --------- */
 	}
 
 	return 'Missing fields on summary';
@@ -110,19 +144,51 @@ export function deserialize(jsonSummary: string): SharedTreeSummary | ErrorStrin
  * @public
  */
 export function fullHistorySummarizer(
-	editBlobs: SerializedEditHandle[],
-	sequencedEdits: OrderedEditSet,
-	currentView: Snapshot
+	editLog: OrderedEditSet,
+	currentView: Snapshot,
+	_serializationHelpers: SerializationHelpers
 ): SharedTreeSummary {
-	const edits = Array.from(sequencedEdits);
-	const serializableEditIdFilter = [].slice.call(sequencedEdits.editIdFilter.buckets);
+	const editLogSummary = editLog.getEditLogSummary();
+	const editChunks = assertNotUndefined(editLogSummary.editChunks);
+	const editIds = assertNotUndefined(editLogSummary.editIds);
+
+	const sequencedEdits: { changes: readonly Change[]; id: EditId }[] = [];
+	assertNotUndefined(editChunks).forEach((chunk, index) => {
+		assert(
+			Array.isArray(chunk),
+			'Handles should not be included in the summary until format version 0.1.0 is being written.'
+		);
+
+		chunk.forEach(({ changes }) => {
+			sequencedEdits.push({
+				changes,
+				id: assertNotUndefined(editIds[index], 'Number of edits should match number of edit IDs.'),
+			});
+		});
+	});
+
 	return {
 		currentTree: currentView.getChangeNodeTree(),
-		editBlobs,
-		editIdFilter: serializableEditIdFilter,
-		sequencedEdits: edits,
+		sequencedEdits,
 		version: formatVersion,
 	};
+
+	// TODO:#49901: Use the following summary generation code once format version 0.1.0 can be written.
+	// const { serializeHandle } = serializationHelpers;
+	// return {
+	// 	currentTree: currentView.getChangeNodeTree(),
+	// 	editHistory: {
+	// 		editChunks: editChunks.map((chunk) => {
+	// 			if (Array.isArray(chunk)) {
+	// 				return chunk;
+	// 			}
+
+	// 			return serializeHandle(chunk);
+	// 		}),
+	// 		editIds,
+	// 	},
+	// 	version: formatVersion,
+	// };
 }
 
 /**
@@ -131,9 +197,9 @@ export function fullHistorySummarizer(
  * @public
  */
 export function noHistorySummarizer(
-	_editBlobs: SerializedEditHandle[],
-	_sequencedEdits: OrderedEditSet,
-	currentView: Snapshot
+	_editLog: OrderedEditSet,
+	currentView: Snapshot,
+	_serializationHelpers: SerializationHelpers
 ): SharedTreeSummary {
 	const currentTree = currentView.getChangeNodeTree();
 	const rootId = currentTree.identifier;
@@ -147,10 +213,21 @@ export function noHistorySummarizer(
 		currentTree.identifier === initialTree.identifier && currentTree.definition === initialTree.definition,
 		'root definition and identifier should be immutable.'
 	);
+	const [id, edit] = newEdit(changes);
+
 	return {
-		version: formatVersion,
-		editBlobs: [],
-		sequencedEdits: [newEdit(changes)],
 		currentTree,
+		sequencedEdits: [{ id, changes: edit.changes }],
+		version: formatVersion,
 	};
+
+	// TODO:#49901: Use the following summary generation code once version 0.1.0 can be written.
+	// return {
+	// 	currentTree,
+	// 	editHistory: {
+	// 		editChunks: [[edit]],
+	// 		editIds: [id],
+	// 	},
+	// 	version: formatVersion,
+	// };
 }

@@ -44,7 +44,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 	};
 
 	return describe('Revert', () => {
-		it('works for Insert', () => {
+		it('works for Insert', async () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const secondTree = localMode
 				? undefined
@@ -61,7 +61,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const undoId: EditId = undoTree.editor.revert(insertId);
+			const undoId: EditId = await undoTree.editor.revert(insertId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -77,7 +77,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(leftTraitAfterUndo.length).to.equal(1);
 
 			// Redo testing
-			undoTree.editor.revert(undoId);
+			await undoTree.editor.revert(undoId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -93,7 +93,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(leftTraitAfterRedo.length).to.equal(2);
 		});
 
-		it('works for Detach', () => {
+		it('works for Detach', async () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const secondTree = localMode
 				? undefined
@@ -111,7 +111,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const undoId: EditId = undoTree.editor.revert(deleteId);
+			const undoId: EditId = await undoTree.editor.revert(deleteId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -126,7 +126,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(leftTraitAfterUndo.length).to.equal(2);
 
 			// Redo testing
-			undoTree.editor.revert(undoId);
+			await undoTree.editor.revert(undoId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -142,7 +142,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 		});
 
 		// TODO:#46649: Enable tests once SetValue support is added
-		it.skip('works for SetValue', () => {
+		it.skip('works for SetValue', async () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const secondTree = localMode
 				? undefined
@@ -160,7 +160,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const undoId: EditId = undoTree.editor.revert(setValueId);
+			const undoId: EditId = await undoTree.editor.revert(setValueId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -177,7 +177,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.payload).to.be.undefined;
 
 			// Redo testing
-			undoTree.editor.revert(undoId);
+			await undoTree.editor.revert(undoId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -194,7 +194,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterRedo.payload?.base64).to.equal('test');
 		});
 
-		it('works for out-of-order Insert', () => {
+		it('works for out-of-order Insert', async () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const secondTree = localMode
 				? undefined
@@ -213,7 +213,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const undoId: EditId = undoTree.editor.revert(firstInsertId);
+			const undoId: EditId = await undoTree.editor.revert(firstInsertId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -233,7 +233,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.identifier).to.equal(secondNode.identifier);
 
 			// Redo testing
-			undoTree.editor.revert(undoId);
+			await undoTree.editor.revert(undoId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -248,7 +248,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(leftTraitAfterRedo.length).to.equal(3);
 		});
 
-		it('works for out-of-order Detach', () => {
+		it('works for out-of-order Detach', async () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const secondTree = localMode
 				? undefined
@@ -268,7 +268,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const undoId: EditId = undoTree.editor.revert(deleteId);
+			const undoId: EditId = await undoTree.editor.revert(deleteId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -287,7 +287,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.identifier).to.equal(firstNode.identifier);
 
 			// Redo testing
-			undoTree.editor.revert(undoId);
+			await undoTree.editor.revert(undoId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -303,7 +303,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 		});
 
 		// TODO:#46649: Enable tests once SetValue support is added
-		it.skip('works for out-of-order SetValue', () => {
+		it.skip('works for out-of-order SetValue', async () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const secondTree = localMode
 				? undefined
@@ -321,7 +321,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const undoId: EditId = undoTree.editor.revert(setValueId);
+			const undoId: EditId = await undoTree.editor.revert(setValueId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -338,7 +338,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.payload).to.be.undefined;
 
 			// Redo testing
-			undoTree.editor.revert(undoId);
+			await undoTree.editor.revert(undoId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();

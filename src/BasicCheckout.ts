@@ -7,6 +7,7 @@ import { Edit } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
 import { SharedTree, SharedTreeEvent } from './SharedTree';
 import { Checkout } from './Checkout';
+import { EditId } from './Identifiers';
 
 /**
  * Basic Session that stays up to date with the SharedTree.
@@ -33,11 +34,11 @@ export class BasicCheckout extends Checkout {
 		this.tree.on(SharedTreeEvent.EditCommitted, () => this.emitChange());
 	}
 
-	protected handleNewEdit(edit: Edit, view: Snapshot): void {
+	protected handleNewEdit(id: EditId, edit: Edit, view: Snapshot): void {
 		// Since external edits could have been applied while currentEdit was pending,
 		// do not use the produced view: just go to the newest revision
 		// (which processLocalEdit will do, including invalidation).
-		this.tree.processLocalEdit(edit);
+		this.tree.processLocalEdit(id, edit);
 	}
 
 	protected get latestCommittedView(): Snapshot {

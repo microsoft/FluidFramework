@@ -104,18 +104,18 @@ export abstract class Checkout extends EventEmitterWithErrorHandling {
 		this.currentEdit = undefined;
 		const editingResult = currentEdit.close();
 		assert(editingResult.result === EditResult.Applied, 'Locally constructed edits must be well-formed and valid');
-		const edit = newEdit(editingResult.changes);
+		const [id, edit] = newEdit(editingResult.changes);
 
-		this.handleNewEdit(edit, editingResult.snapshot);
+		this.handleNewEdit(id, edit, editingResult.snapshot);
 
-		return edit.id;
+		return id;
 	}
 
 	/**
 	 * Take any needed action between when an edit is completed.
 	 * Usually this will include submitting it to a SharedTree.
 	 */
-	protected abstract handleNewEdit(edit: Edit, view: Snapshot): void;
+	protected abstract handleNewEdit(id: EditId, edit: Edit, view: Snapshot): void;
 
 	/**
 	 * Applies the supplied changes to the tree and emits a change event.

@@ -4,7 +4,7 @@
  */
 
 import { assert, fail } from './Common';
-import { Definition, NodeId } from './Identifiers';
+import { Definition, EditId, NodeId } from './Identifiers';
 import { Edit, Payload } from './PersistedTypes';
 import { SnapshotNode, Snapshot } from './Snapshot';
 import { BlobId, SharedTree, SharedTreeEvent } from './SharedTree';
@@ -161,7 +161,7 @@ export class PrefetchingCheckout extends Checkout {
 		return this.loadedView.view;
 	}
 
-	protected handleNewEdit(edit: Edit, view: Snapshot): void {
+	protected handleNewEdit(id: EditId, edit: Edit, view: Snapshot): void {
 		// We want to avoid the case where the new edit show up (while in progress),
 		// then disappears (because its not in loadedView yet),
 		// then reappears (once loadedView is updated to include it).
@@ -179,7 +179,7 @@ export class PrefetchingCheckout extends Checkout {
 		this.loadedView = this.loadedView.assertSynchronousLoadNext(view);
 
 		// Apply the edit: this will start loading a revision that includes edit.
-		this.tree.processLocalEdit(edit);
+		this.tree.processLocalEdit(id, edit);
 	}
 
 	public async waitForPendingUpdates(): Promise<void> {

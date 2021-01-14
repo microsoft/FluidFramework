@@ -4,8 +4,6 @@
 
 ```ts
 
-import { BloomFilter } from 'bloomfilter';
-import BTree from 'sorted-btree';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -23,7 +21,7 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 export class BasicCheckout extends Checkout {
     constructor(tree: SharedTree);
     // (undocumented)
-    protected handleNewEdit(edit: Edit, view: Snapshot): void;
+    protected handleNewEdit(id: EditId, edit: Edit, view: Snapshot): void;
     // (undocumented)
     protected get latestCommittedView(): Snapshot;
     readonly tree: SharedTree;
@@ -86,7 +84,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling {
     protected emitChange(): void;
     // (undocumented)
     getEditStatus(): EditResult;
-    protected abstract handleNewEdit(edit: Edit, view: Snapshot): void;
+    protected abstract handleNewEdit(id: EditId, edit: Edit, view: Snapshot): void;
     // @internal (undocumented)
     hasOpenEdit(): boolean;
     protected abstract readonly latestCommittedView: Snapshot;
@@ -148,7 +146,6 @@ export type DetachedSequenceId = number & {
 // @public
 export interface Edit {
     readonly changes: readonly Change[];
-    readonly id: EditId;
 }
 
 // @public
@@ -161,24 +158,21 @@ export type EditId = UuidString & {
 // @internal @sealed
 export class EditLog implements OrderedEditSet {
     // (undocumented)
-    [Symbol.iterator](): IterableIterator<Edit>;
-    constructor(sequencedEdits?: readonly Edit[], idFilter?: BloomFilter);
-    addLocalEdit(edit: Edit): void;
-    addSequencedEdit(edit: Edit): void;
-    // Warning: (ae-forgotten-export) The symbol "EditHandleState" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    editBlobHandles: BTree<number, EditHandleState>;
-    // (undocumented)
-    get editIdFilter(): BloomFilter;
+    [Symbol.iterator](): IterableIterator<EditId>;
+    constructor(options?: EditLogSummary);
+    addLocalEdit(id: EditId, edit: Edit): void;
+    addSequencedEdit(id: EditId, edit: Edit): void;
     // (undocumented)
     equals(other: EditLog): boolean;
     // (undocumented)
-    getAtIndex(index: number): Edit;
-    // Warning: (ae-forgotten-export) The symbol "EditHandle" needs to be exported by the entry point index.d.ts
-    //
+    getAtIndex(index: number): Promise<Edit>;
     // (undocumented)
-    getEditHandles(): EditHandle[];
+    getAtIndexSynchronous(index: number): Edit;
+    // (undocumented)
+    getEditIds(): readonly EditId[];
+    getEditLogSummary(): EditLogSummary;
+    // (undocumented)
+    idOf(index: number): EditId;
     // (undocumented)
     indexOf(editId: EditId): number;
     // (undocumented)
@@ -188,8 +182,19 @@ export class EditLog implements OrderedEditSet {
     get numberOfLocalEdits(): number;
     get numberOfSequencedEdits(): number;
     // (undocumented)
-    tryGetEdit(editId: EditId): Edit | undefined;
+    processEditChunkHandle(chunkHandle: IFluidHandle<ArrayBufferLike>, chunkIndex: number): void;
+    sequenceLocalEdits(): void;
+    // (undocumented)
+    tryGetEdit(editId: EditId): Promise<Edit | undefined>;
     versionIdentifier(): unknown;
+}
+
+// Warning: (ae-internal-missing-underscore) The name "EditLogSummary" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export interface EditLogSummary {
+    readonly editChunks: readonly (IFluidHandle<ArrayBufferLike> | Edit[])[];
+    readonly editIds: readonly EditId[];
 }
 
 // @public
@@ -204,6 +209,11 @@ export enum EditResult {
     // (undocumented)
     Malformed = 0
 }
+
+// Warning: (ae-internal-missing-underscore) The name "editsPerChunk" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export const editsPerChunk = 10;
 
 // @public
 export enum EditValidationResult {
@@ -237,7 +247,8 @@ export const Insert: {
 //
 // @internal
 export interface LogViewer {
-    getSnapshot(revision: number): Snapshot;
+    getSnapshot(revision: number): Promise<Snapshot>;
+    getSnapshotSynchronous(revision: number): Snapshot;
     setKnownRevision(revision: number, view: Snapshot): void;
 }
 
@@ -272,19 +283,23 @@ export interface NodeInTrait {
 // @public @sealed
 export interface OrderedEditSet {
     // (undocumented)
-    [Symbol.iterator](): IterableIterator<Edit>;
+    [Symbol.iterator](): IterableIterator<EditId>;
     // (undocumented)
-    editIdFilter: BloomFilter;
+    getAtIndex(index: number): Promise<Edit>;
     // (undocumented)
-    getAtIndex(index: number): Edit;
+    getAtIndexSynchronous(index: number): Edit;
+    // Warning: (ae-incompatible-release-tags) The symbol "getEditLogSummary" is marked as @public, but its signature references "EditLogSummary" which is marked as @internal
+    //
     // (undocumented)
-    getEditHandles(): EditHandle[];
+    getEditLogSummary(): EditLogSummary;
+    // (undocumented)
+    idOf(index: number): EditId;
     // (undocumented)
     indexOf(editId: EditId): number;
     // (undocumented)
     length: number;
     // (undocumented)
-    tryGetEdit(editId: EditId): Edit | undefined;
+    tryGetEdit(editId: EditId): Promise<Edit | undefined>;
 }
 
 // @public
@@ -301,7 +316,7 @@ export type PlaceIndex = number & {
 // @public @sealed
 export class PrefetchingCheckout extends Checkout {
     // (undocumented)
-    protected handleNewEdit(edit: Edit, view: Snapshot): void;
+    protected handleNewEdit(id: EditId, edit: Edit, view: Snapshot): void;
     // (undocumented)
     protected get latestCommittedView(): Snapshot;
     // (undocumented)
@@ -333,7 +348,9 @@ export class SharedTree extends SharedObject {
     applyEdit(...changes: Change[]): EditId;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree;
     // (undocumented)
-    createRevert(editId: EditId): Change[];
+    createRevert(editId: EditId): Promise<Change[]>;
+    // (undocumented)
+    createRevertSynchronous(editId: EditId): Change[];
     // (undocumented)
     get currentView(): Snapshot;
     // (undocumented)
@@ -358,17 +375,17 @@ export class SharedTree extends SharedObject {
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean): void;
     // @internal
-    processLocalEdit(edit: Edit): void;
+    processLocalEdit(id: EditId, edit: Edit): void;
     // (undocumented)
     protected registerCore(): void;
     // @internal
     saveSummary(): SharedTreeSummary;
     // (undocumented)
-    serializeHandleWithEdit(edits: Edit[]): Promise<ISerializedHandle>;
-    // (undocumented)
     snapshotCore(): ITree;
     summarizer: SharedTreeSummarizer;
-    }
+    // (undocumented)
+    toSerializable(value: IFluidHandle<ArrayBufferLike>): ISerializedHandle;
+}
 
 // @public
 export const sharedTreeAssertionErrorType = "SharedTreeAssertion";
@@ -382,12 +399,13 @@ export class SharedTreeEditor {
     insert(nodes: EditNode[], destination: StablePlace): EditId;
     move(source: ChangeNode, destination: StablePlace): EditId;
     move(source: StableRange, destination: StablePlace): EditId;
-    revert(edit: EditId): EditId;
+    revert(edit: EditId): Promise<EditId>;
     }
 
 // @public
 export enum SharedTreeEvent {
-    EditCommitted = "committedEdit"
+    EditCommitted = "committedEdit",
+    EditsBlobbed = "blobbedEdits"
 }
 
 // @public @sealed
@@ -405,19 +423,22 @@ export class SharedTreeFactory implements IChannelFactory {
     get type(): string;
 }
 
-// Warning: (ae-forgotten-export) The symbol "SerializedEditHandle" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "SerializationHelpers" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type SharedTreeSummarizer = (editBlobs: SerializedEditHandle[], sequencedEdits: OrderedEditSet, currentView: Snapshot) => SharedTreeSummary;
+export type SharedTreeSummarizer = (editLog: OrderedEditSet, currentView: Snapshot, serializationHelpers: SerializationHelpers) => SharedTreeSummary;
 
 // @public
 export interface SharedTreeSummary {
     // (undocumented)
     readonly currentTree: ChangeNode;
+    // Warning: (ae-forgotten-export) The symbol "SerializedEditLogSummary" needs to be exported by the entry point index.d.ts
+    readonly editHistory?: SerializedEditLogSummary;
     // (undocumented)
-    readonly editBlobs: readonly SerializedEditHandle[];
-    readonly editIdFilter?: BloomFilter;
-    readonly sequencedEdits?: readonly Edit[];
+    readonly sequencedEdits?: readonly {
+        id: EditId;
+        changes: readonly Change[];
+    }[];
     readonly version: string;
 }
 

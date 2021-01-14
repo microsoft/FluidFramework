@@ -52,6 +52,10 @@ export interface SharedTreeTestingOptions {
 	 * If not set, full history will be preserved.
 	 */
 	summarizer?: SharedTreeSummarizer;
+	/**
+	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
+	 */
+	setupEditId?: EditId;
 }
 
 export const testTrait: TraitLocation = {
@@ -63,7 +67,7 @@ export const testTrait: TraitLocation = {
 export function setUpTestSharedTree(
 	options: SharedTreeTestingOptions = { localMode: true }
 ): SharedTreeTestingComponents {
-	const { id, initialTree, localMode, containerRuntimeFactory } = options;
+	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId } = options;
 
 	const componentRuntime = new MockFluidDataStoreRuntime();
 	// Enable expensiveValidation
@@ -84,7 +88,7 @@ export function setUpTestSharedTree(
 	}
 
 	if (initialTree !== undefined) {
-		setTestTree(tree, initialTree);
+		setTestTree(tree, initialTree, setupEditId);
 	}
 
 	return {
@@ -95,10 +99,10 @@ export function setUpTestSharedTree(
 }
 
 /** Sets testTrait to contain `node`. */
-export function setTestTree(tree: SharedTree, node: ChangeNode): EditId {
-	const edit = newEdit(setTrait(testTrait, [node]));
-	tree.processLocalEdit(edit);
-	return edit.id;
+export function setTestTree(tree: SharedTree, node: ChangeNode, overrideId?: EditId): EditId {
+	const [id, edit] = newEdit(setTrait(testTrait, [node]));
+	tree.processLocalEdit(overrideId || id, edit);
+	return id;
 }
 
 /** Creates an empty node for testing purposes. */
@@ -136,6 +140,12 @@ export const left: ChangeNode = makeEmptyNode();
 /** Right node of 'simpleTestTree' */
 export const right: ChangeNode = makeEmptyNode();
 
+/** Left node of 'simpleTestTree' */
+export const leftConsistent: ChangeNode = makeEmptyNode('a083857d-a8e1-447a-ba7c-92fd0be9db2b' as NodeId);
+
+/** Right node of 'simpleTestTree' */
+export const rightConsistent: ChangeNode = makeEmptyNode('78849e85-cb7f-4b93-9fdc-18439c60fe30' as NodeId);
+
 /** Label for the 'left' trait in 'simpleTestTree' */
 export const leftTraitLabel = 'left' as TraitLabel;
 
@@ -146,6 +156,12 @@ export const rightTraitLabel = 'right' as TraitLabel;
 export const simpleTestTree: ChangeNode = {
 	...makeEmptyNode(),
 	traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
+};
+
+/** A simple, three node tree useful for testing. Contains one node under a 'left' trait and one under a 'right' trait. */
+export const simpleTestTreeConsistent: ChangeNode = {
+	...makeEmptyNode('25de3875-9537-47ec-8699-8a85e772a509' as NodeId),
+	traits: { [leftTraitLabel]: [leftConsistent], [rightTraitLabel]: [rightConsistent] },
 };
 
 /** Convenient pre-made TraitLocation for the left trait of 'simpleTestTree'. */

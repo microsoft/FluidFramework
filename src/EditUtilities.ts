@@ -15,10 +15,10 @@ import { Edit, ChangeNodeSequence, EditNode, ChangeNode, Change, StableRange, Tr
 /**
  * Returns true if the provided Edits have equivalent properties.
  */
-export function compareEdits(editA: Edit, editB: Edit): boolean {
+export function compareEdits(editIdA: EditId, editIdB: EditId): boolean {
 	// TODO #45414: We should also be deep comparing the list of changes in the edit. This is not straightforward.
 	// We can use our edit validation code when we write it since it will need to do deep walks of the changes.
-	return editA.id === editB.id;
+	return editIdA === editIdB;
 }
 
 /**
@@ -105,6 +105,6 @@ export function setTrait(trait: TraitLocation, nodes: ChangeNodeSequence<EditNod
 /**
  * Generates a new edit object from the supplied changes.
  */
-export function newEdit(changes: readonly Change[]): Edit {
-	return { id: uuidv4() as EditId, changes };
+export function newEdit(changes: readonly Change[]): [EditId, Edit] {
+	return [uuidv4() as EditId, { changes }];
 }

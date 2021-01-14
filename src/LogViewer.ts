@@ -27,7 +27,20 @@ export interface LogViewer {
 	 *  - revision 1 means the output of editLog.getAtIndex(0) (or initialSnapshot if there is no edit 0).
 	 *  - revision Number.POSITIVE_INFINITY means the newest revision.
 	 */
-	getSnapshot(revision: number): Snapshot;
+	getSnapshot(revision: number): Promise<Snapshot>;
+
+	/**
+	 * Returns the snapshot at a revision added during the current session.
+	 *
+	 * Revision numbers correspond to indexes in `editLog`.
+	 * Revision X means the revision output by the largest index in `editLog` less than (but not equal to) X.
+	 *
+	 * For example:
+	 *  - revision 0 means the initialSnapshot.
+	 *  - revision 1 means the output of editLog.getAtIndex(0) (or initialSnapshot if there is no edit 0).
+	 *  - revision Number.POSITIVE_INFINITY means the newest revision.
+	 */
+	getSnapshotSynchronous(revision: number): Snapshot;
 
 	/**
 	 * Specify that a particular revision is known to have the specified snapshot.
@@ -82,7 +95,7 @@ export class CachingLogViewer implements LogViewer {
 		this.expensiveValidation = expensiveValidation;
 	}
 
-	public getSnapshot(revision: number): Snapshot {
+	public async getSnapshot(revision: number): Promise<Snapshot> {
 		if (revision === Number.POSITIVE_INFINITY) {
 			if (this.lastVersionIdentifier === this.log.versionIdentifier()) {
 				return this.lastHeadSnapshot;
@@ -94,7 +107,7 @@ export class CachingLogViewer implements LogViewer {
 
 		let currentSnapshot = startSnapshot;
 		for (let i = startRevision; i < revision && i < this.log.length; i++) {
-			const edit = this.log.getAtIndex(i);
+			const edit = await this.log.getAtIndex(i);
 			const editingResult = new Transaction(currentSnapshot).applyChanges(edit.changes).close();
 			if (editingResult.result === EditResult.Applied) {
 				currentSnapshot = editingResult.snapshot;
@@ -117,7 +130,42 @@ export class CachingLogViewer implements LogViewer {
 		return currentSnapshot;
 	}
 
-	public setKnownRevision(revision: number, snapshot: Snapshot): void {
+	public getSnapshotSynchronous(revision: number): Snapshot {
+		if (revision === Number.POSITIVE_INFINITY) {
+			if (this.lastVersionIdentifier === this.log.versionIdentifier()) {
+				return this.lastHeadSnapshot;
+			}
+		}
+
+		const [startRevision, startSnapshot] =
+			this.sequencedSnapshotCache.nextLowerPair(revision + 1) ?? fail('No preceding snapshot cached.');
+
+		let currentSnapshot = startSnapshot;
+		for (let i = startRevision; i < revision && i < this.log.length; i++) {
+			const edit = this.log.getAtIndexSynchronous(i);
+			const editingResult = new Transaction(currentSnapshot).applyChanges(edit.changes).close();
+			if (editingResult.result === EditResult.Applied) {
+				currentSnapshot = editingResult.snapshot;
+			}
+
+			// Only cache the snapshot if the edit has a final revision number assigned by Fluid.
+			// This avoids having to invalidate cache entries when concurrent edits cause local revision
+			// numbers to change when acknowledged.
+			if (i < this.log.numberOfSequencedEdits) {
+				const revision = i + 1; // Revision is the result of the edit being applied.
+				this.sequencedSnapshotCache.set(revision, currentSnapshot);
+			}
+		}
+
+		if (revision === Number.POSITIVE_INFINITY) {
+			this.lastVersionIdentifier = this.log.versionIdentifier();
+			this.lastHeadSnapshot = currentSnapshot;
+		}
+
+		return currentSnapshot;
+	}
+
+	public async setKnownRevision(revision: number, snapshot: Snapshot): Promise<void> {
 		if (this.expensiveValidation) {
 			assert(Number.isInteger(revision), 'revision must be an integer');
 			assert(
@@ -125,7 +173,7 @@ export class CachingLogViewer implements LogViewer {
 				'revision must correspond to the result of a SequencedEdit'
 			);
 			const computed = this.getSnapshot(revision);
-			assert(computed.equals(snapshot), 'setKnownRevision passed invalid snapshot');
+			assert((await computed).equals(snapshot), 'setKnownRevision passed invalid snapshot');
 		}
 		this.sequencedSnapshotCache.set(revision, snapshot);
 	}

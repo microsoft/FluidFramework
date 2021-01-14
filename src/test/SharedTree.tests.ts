@@ -170,7 +170,7 @@ describe('SharedTree', () => {
 			// Trying to insert next to the deleted node should drop, confirm that it doesn't
 			// change the snapshot
 			assertNoDelta(tree, () => {
-				tree.processLocalEdit(newEdit(Insert.create([secondNode], StablePlace.after(firstNode))));
+				tree.processLocalEdit(...newEdit(Insert.create([secondNode], StablePlace.after(firstNode))));
 			});
 
 			const leftTrait = tree.currentView.getTrait(leftTraitLocation);
@@ -190,7 +190,7 @@ describe('SharedTree', () => {
 			assertNoDelta(tree, () => {
 				// Trying to delete from before firstNode to after secondNode should drop
 				tree.processLocalEdit(
-					newEdit([
+					...newEdit([
 						Delete.create(
 							StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode))
 						),
@@ -199,7 +199,7 @@ describe('SharedTree', () => {
 
 				// Trying to delete from after thirdNode to before firstNode should drop
 				tree.processLocalEdit(
-					newEdit([
+					...newEdit([
 						Delete.create(StableRange.from(StablePlace.after(thirdNode)).to(StablePlace.before(firstNode))),
 					])
 				);
@@ -214,7 +214,7 @@ describe('SharedTree', () => {
 			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
 
 			assertNoDelta(tree, () => {
-				tree.processLocalEdit(newEdit([Change.build([], 0 as DetachedSequenceId)]));
+				tree.processLocalEdit(...newEdit([Change.build([], 0 as DetachedSequenceId)]));
 			});
 		});
 
@@ -339,12 +339,12 @@ describe('SharedTree', () => {
 			const leftTrait = secondTree.currentView.getTrait(leftTraitLocation);
 			expect(leftTrait.length).to.equal(1);
 
-			const edits = Array.from(tree.edits);
+			const editIds = Array.from(tree.edits);
 
 			// Edit 0 creates initial tree
-			expect(edits[1].id).is.equal(firstEditId);
-			expect(edits[2].id).is.equal(secondEditId);
-			expect(edits[3].id).is.equal(thirdEditId);
+			expect(editIds[1]).is.equal(firstEditId);
+			expect(editIds[2]).is.equal(secondEditId);
+			expect(editIds[3]).is.equal(thirdEditId);
 		});
 
 		it('tolerates invalid detaches', () => {
@@ -380,11 +380,11 @@ describe('SharedTree', () => {
 			const leftTrait = tree.currentView.getTrait(leftTraitLocation);
 			expect(leftTrait.length).to.equal(3);
 
-			const edits = Array.from(tree.edits);
+			const editIds = Array.from(tree.edits);
 			// Edit 0 creates initial tree
-			expect(edits[1].id).to.equal(firstEditId);
-			expect(edits[2].id).to.equal(secondEditId);
-			expect(edits[3].id).to.equal(thirdEditId);
+			expect(editIds[1]).to.equal(firstEditId);
+			expect(editIds[2]).to.equal(secondEditId);
+			expect(editIds[3]).to.equal(thirdEditId);
 		});
 
 		it('tolerates malformed inserts', () => {
@@ -396,17 +396,17 @@ describe('SharedTree', () => {
 
 			containerRuntimeFactory.processAllMessages();
 
-			let edit;
+			let id, edit;
 			assertNoDelta(tree, () => {
 				const build = Change.build([], 0 as DetachedSequenceId);
-				edit = newEdit([build]);
-				secondTree.processLocalEdit(edit);
+				[id, edit] = newEdit([build]);
+				secondTree.processLocalEdit(id, edit);
 				containerRuntimeFactory.processAllMessages();
 			});
 
-			const edits = Array.from(tree.edits);
+			const editIds = Array.from(tree.edits);
 			// Edit 0 creates initial tree
-			expect(edits[1].id).to.equal(edit.id);
+			expect(editIds[1]).to.equal(id);
 		});
 
 		runSharedTreeUndoRedoTestSuite({ localMode: false });
@@ -507,7 +507,7 @@ describe('SharedTree', () => {
 			expect(tree.equals(secondTree)).to.be.true;
 		});
 
-		it('can be used without history preservation', () => {
+		it('can be used without history preservation', async () => {
 			const { tree } = setUpTestSharedTree({
 				initialTree: simpleTestTree,
 				localMode: true,
@@ -526,7 +526,7 @@ describe('SharedTree', () => {
 			// The history should have been dropped by the default handling behavior.
 			// It will contain a single entry setting the tree to equal the head revision.
 			expect(tree.edits.length).to.equal(1);
-			expect(tree.edits.tryGetEdit(editID)).to.be.undefined;
+			expect(await tree.edits.tryGetEdit(editID)).to.be.undefined;
 		});
 	});
 
