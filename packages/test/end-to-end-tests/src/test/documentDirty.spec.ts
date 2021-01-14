@@ -103,7 +103,7 @@ describe("Document Dirty", () => {
         });
 
         return createAndAttachContainer(
-            codeDetails, loader, urlResolver.createCreateNewRequest(documentId))
+            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     beforeEach(async () => {
