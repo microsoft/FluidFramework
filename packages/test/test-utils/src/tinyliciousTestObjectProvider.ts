@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IUrlResolver, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 
 import { InsecureTokenProvider, InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
@@ -19,13 +19,13 @@ export class TinyliciousTestObjectProvider<TestContainerConfigType>
     extends BaseTestObjectProvider<TestContainerConfigType> {
     private _documentId: string | undefined;
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
-    private _urlResolver: IUrlResolver | undefined;
+    private _urlResolver: InsecureUrlResolver | undefined;
     private _opProcessingController: OpProcessingController | undefined;
 
     constructor(
         createFluidEntryPoint: (testContainerConfig?: TestContainerConfigType) => fluidEntryPoint,
     ) {
-        super(createFluidEntryPoint);
+        super(createFluidEntryPoint, (docId)=>this.urlResolver.createCreateNewRequest(docId));
     }
 
     get documentId() {

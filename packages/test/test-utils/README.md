@@ -117,7 +117,8 @@ The typical usage for testing a Fluid object is as follows:
 5. Create and attach a `Container` by giving it a `documentId` which is used as a URL to resolve the container:
     ```typescript
     const documentId = "testDocument";
-    const container = await createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+    const container = await createAndAttachContainer(
+            codeDetails, loader, urlResolver.createCreateNewRequest(documentId))
     ```
     > We used the same `IFluidCodeDetails` that was used to create the `Loader` in step 3.
 

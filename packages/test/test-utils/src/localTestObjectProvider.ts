@@ -4,7 +4,11 @@
  */
 
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import {
+    createLocalResolverCreateNewRequest,
+    LocalDocumentServiceFactory,
+    LocalResolver,
+} from "@fluidframework/local-driver";
 import { IClientConfiguration } from "@fluidframework/protocol-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { BaseTestObjectProvider } from "./baseTestObjectProvider";
@@ -44,7 +48,7 @@ export class LocalTestObjectProvider<TestContainerConfigType>
         private readonly serviceConfiguration?: Partial<IClientConfiguration>,
         private _deltaConnectionServer?: ILocalDeltaConnectionServer | undefined,
     ) {
-        super(createFluidEntryPoint);
+        super(createFluidEntryPoint, (docId)=>createLocalResolverCreateNewRequest(docId));
     }
 
     get deltaConnectionServer() {

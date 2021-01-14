@@ -76,7 +76,8 @@ describe("Table Document with Interception", () => {
             const deltaConnectionServer = LocalDeltaConnectionServer.create();
             const urlResolver = new LocalResolver();
             const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-            const container = await createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+            const container = await createAndAttachContainer(
+            codeDetails, loader, urlResolver.createCreateNewRequest(documentId))
             tableDocument = await requestFluidObject<TableDocument>(container, "default");
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
