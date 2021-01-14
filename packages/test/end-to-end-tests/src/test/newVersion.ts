@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-extraneous-dependencies */
 export {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
@@ -36,3 +37,4 @@ export { SharedMatrix } from "@fluidframework/matrix";
 export { ConsensusQueue } from "@fluidframework/ordered-collection";
 export { IClientConfiguration } from "@fluidframework/protocol-definitions";
 export { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+/* eslint-enable import/no-extraneous-dependencies */
