@@ -7,7 +7,7 @@ import { assert, fail } from './Common';
 import { Definition, NodeId } from './Identifiers';
 import { Edit, Payload } from './PersistedTypes';
 import { SnapshotNode, Snapshot } from './Snapshot';
-import { BlobId, SharedTree, SharedTreeEvent } from './SharedTree';
+import { BlobId, SharedTree } from './SharedTree';
 import { initialTree } from './InitialTree';
 import { Checkout } from './Checkout';
 
@@ -114,11 +114,6 @@ class LoadedView {
  */
 export class PrefetchingCheckout extends Checkout {
 	/**
-	 * The shared tree this checkout views/edits.
-	 */
-	public readonly tree: SharedTree;
-
-	/**
 	 * A revision newer than loadedView that is still loading.
 	 */
 	private loadingView?: Promise<LoadedView>;
@@ -150,10 +145,7 @@ export class PrefetchingCheckout extends Checkout {
 	 * @param loadedView - the view to start at
 	 */
 	private constructor(tree: SharedTree, loadedView: LoadedView) {
-		super(loadedView.view);
-		this.tree = tree;
-		// TODO:#49101: unsubscribe? Use addListener?
-		this.tree.on(SharedTreeEvent.EditCommitted, () => this.setLoadingView());
+		super(tree, loadedView.view, () => this.setLoadingView());
 		this.loadedView = loadedView;
 	}
 

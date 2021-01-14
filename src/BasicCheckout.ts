@@ -5,7 +5,7 @@
 
 import { Edit } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
-import { SharedTree, SharedTreeEvent } from './SharedTree';
+import { SharedTree } from './SharedTree';
 import { Checkout } from './Checkout';
 
 /**
@@ -17,20 +17,10 @@ import { Checkout } from './Checkout';
  */
 export class BasicCheckout extends Checkout {
 	/**
-	 * The shared tree this checkout views/edits.
-	 */
-	public readonly tree: SharedTree;
-
-	/**
 	 * @param tree - the tree
 	 */
 	public constructor(tree: SharedTree) {
-		super(tree.currentView);
-		this.tree = tree;
-
-		// TODO:#49101: unsubscribe? Use addListener?
-		// If there is an ongoing edit, emitChange will no-op, which is fine.
-		this.tree.on(SharedTreeEvent.EditCommitted, () => this.emitChange());
+		super(tree, tree.currentView, () => this.emitChange());
 	}
 
 	protected handleNewEdit(edit: Edit, view: Snapshot): void {
