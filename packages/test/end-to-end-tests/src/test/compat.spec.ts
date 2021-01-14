@@ -47,12 +47,14 @@ async function loadContainerWithOldLoader(
 }
 
 describe("loader/runtime compatibility", () => {
-    const tests = function(args: ILocalTestObjectProvider) {
+    const tests = function(argsFactory: () => ILocalTestObjectProvider) {
+        let args: ILocalTestObjectProvider;
         let container: IContainer | old.IContainer;
         let dataObject: TestDataObject | OldTestDataObject;
         let containerError: boolean = false;
 
         beforeEach(async function() {
+            args = argsFactory();
             assert(args.deltaConnectionServer !== undefined);
             container = await args.makeTestContainer();
             container.on("warning", () => containerError = true);
