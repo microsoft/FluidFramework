@@ -256,7 +256,8 @@ describe("context reload (hot-swap)", function() {
                             [codeDetails(V2), createRuntimeFactory(TestDataStoreV2)],
                         ],
                         this.deltaConnectionServer,
-                        this.urlResolver);
+                        this.urlResolver,
+                        defaultCodeDetails);
                     this.dataStoreV1 = await requestFluidObject<oldTypes.OldTestDataObject>(this.container, "default");
                     assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 

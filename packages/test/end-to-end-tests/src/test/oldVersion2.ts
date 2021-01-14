@@ -295,10 +295,11 @@ export async function createOldContainer(
     documentId,
     packageEntries,
     server,
-    urlResolver
+    urlResolver,
+    codeDetails,
 ): Promise<IContainer> {
     const loader = createLocalLoader(packageEntries, server, urlResolver);
-    return createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
+    return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
 }
 
 export async function loadContainer(
