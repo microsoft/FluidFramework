@@ -22,14 +22,30 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const getSnapshot = (container) =>
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        container.context.runtime.pendingStateManager.getLocalState();
-
 const lots = 30;
 const testKey = "test key";
 const testKey2 = "another test key";
 const testValue = "test value";
+
+type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void;
+
+// load container, pause, create (local) ops from callback, then optionally send ops before closing container
+const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
+    const container = await args.loadTestContainer(testContainerConfig) as IContainer;
+    await args.opProcessingController.process();
+    await args.opProcessingController.pauseProcessing(container.deltaManager as any);
+    const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+    assert(dataStore.runtime.deltaManager.outbound.paused);
+    const map = await dataStore.getSharedObject<SharedMap>(mapId);
+    cb(container, dataStore, map);
+    const pendingOps = container.getPendingLocalState();
+    if (send) {
+        await args.opProcessingController.process();
+    }
+    container.close();
+    assert.ok(pendingOps);
+    return pendingOps;
+};
 
 const tests = (args: ITestObjectProvider) => {
     let loader: ILoader;
@@ -49,17 +65,9 @@ const tests = (args: ITestObjectProvider) => {
     });
 
     it("resends op", async function() {
-        // load container and pause, send op, get pending ops, close container
-        const container2 = await args.loadTestContainer(testContainerConfig) as IContainer;
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
-        await args.opProcessingController.pauseProcessing(container2.deltaManager as any);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        assert(dataStore2.runtime.deltaManager.outbound.paused);
-        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        map2.set(testKey, testValue);
-        const pendingOps = container2.getPendingLocalState();
-        container2.close();
-        assert.ok(pendingOps);
+        const pendingOps = await getPendingOps(args, false, (c, d, map) => {
+            map.set(testKey, testValue);
+        });
 
         // load container with pending ops, which should resend the op not sent by previous container
         const container3 = await loader.resolve(
@@ -74,38 +82,22 @@ const tests = (args: ITestObjectProvider) => {
     });
 
     it("doesn't resend successful op", async function() {
-        // load container and pause, send op, get pending ops, resume container
-        const container2 = await args.loadTestContainer(testContainerConfig);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        await new Promise((res) => container2.on("connected", res));
-        await args.opProcessingController.process();
-        await args.opProcessingController.pauseProcessing(container2.deltaManager as any);
-        map2.set(testKey, testValue);
-        const pendingOps = getSnapshot(container2);
-        assert.ok(pendingOps);
-        await args.opProcessingController.process();
-        container2.close();
-
-        container1.on("op", (op) => {
-            if (op.contents?.contents?.address === "default") {
-                assert.strictEqual(op.clientId, (container2 as any).clientId);
-            }
+        const pendingOps = await getPendingOps(args, true, (c, d, map) => {
+            map.set(testKey, "something unimportant");
         });
+
+        map1.set(testKey, testValue);
+        await args.opProcessingController.process();
 
         // load with pending ops, which it should not resend because they were already sent successfully
         const container3 = await loader.resolve(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
-            JSON.stringify({
-                pendingRuntimeState: pendingOps,
-                url: "fluid-test://localhost:3000/tenantId/defaultDocumentId",
-            }),
+            pendingOps,
         );
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 
-        // wait to see if the op is resent
         await args.opProcessingController.process();
 
         assert.strictEqual(await map1.wait(testKey), testValue);
@@ -113,18 +105,9 @@ const tests = (args: ITestObjectProvider) => {
     });
 
     it("resends a lot of ops", async function() {
-        // load container and pause, send ops, get pending ops, close container
-        const container2 = await args.loadTestContainer(testContainerConfig) as IContainer;
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
-        await args.opProcessingController.pauseProcessing(container2.deltaManager as any);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        assert(dataStore2.runtime.deltaManager.outbound.paused);
-        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-
-        [...Array(lots).keys()].map((i) => map2.set(i.toString(), i));
-        const pendingOps = container2.getPendingLocalState();
-        container2.close();
-        assert.ok(pendingOps);
+        const pendingOps = await getPendingOps(args, false, (c, d, map) => {
+            [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+        });
 
         // load container with pending ops, which should resend the ops not sent by previous container
         const container3 = await loader.resolve(
@@ -141,20 +124,9 @@ const tests = (args: ITestObjectProvider) => {
     });
 
     it("doesn't resend a lot of successful ops", async function() {
-        // load container and pause, send ops, get pending ops, resume container
-        const container2 = await args.loadTestContainer(testContainerConfig);
-        await new Promise((res) => container2.on("connected", res));
-        await args.opProcessingController.process();
-        await args.opProcessingController.pauseProcessing(container2.deltaManager as any);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        assert(dataStore2.runtime.deltaManager.outbound.paused);
-        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-
-        [...Array(lots).keys()].map((i) => map2.set(i.toString(), i));
-        const pendingOps = getSnapshot(container2);
-        assert.ok(pendingOps);
-        await args.opProcessingController.process();
-        container2.close();
+        const pendingOps = await getPendingOps(args, true, (c, d, map) => {
+            [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+        });
 
         // send a bunch from first container that should not be overwritten
         [...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
@@ -163,10 +135,7 @@ const tests = (args: ITestObjectProvider) => {
         // load container with pending ops, which should not resend the ops sent by previous container
         const container3 = await loader.resolve(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
-            JSON.stringify({
-                pendingRuntimeState: pendingOps,
-                url: "fluid-test://localhost:3000/tenantId/defaultDocumentId",
-            }),
+            pendingOps,
         );
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
@@ -179,18 +148,11 @@ const tests = (args: ITestObjectProvider) => {
     });
 
     it("resends batched ops", async function() {
-        const container2 = await args.loadTestContainer(testContainerConfig) as IContainer;
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
-        await args.opProcessingController.pauseProcessing(container2.deltaManager as any);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        assert(dataStore2.runtime.deltaManager.outbound.paused);
-        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        (container2 as any).context.runtime.orderSequentially(() => {
-            [...Array(lots).keys()].map((i) => map2.set(i.toString(), i));
+        const pendingOps = await getPendingOps(args, false, (container, d, map) => {
+            (container as any).context.runtime.orderSequentially(() => {
+                [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+            });
         });
-        const pendingOps = container2.getPendingLocalState();
-        container2.close();
-        assert.ok(pendingOps);
 
         // load container with pending ops, which should resend the ops not sent by previous container
         const container3 = await loader.resolve(
@@ -207,20 +169,11 @@ const tests = (args: ITestObjectProvider) => {
     });
 
     it("doesn't resend successful batched ops", async function() {
-        const container2 = await args.loadTestContainer(testContainerConfig);
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
-        await args.opProcessingController.process();
-        await args.opProcessingController.pauseProcessing(container2.deltaManager as any);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        assert(dataStore2.runtime.deltaManager.outbound.paused);
-        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        (container2 as any).context.runtime.orderSequentially(() => {
-            [...Array(lots).keys()].map((i) => map2.set(i.toString(), i));
+        const pendingOps = await getPendingOps(args, false, (container, d, map) => {
+            (container as any).context.runtime.orderSequentially(() => {
+                [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+            });
         });
-        const pendingOps = getSnapshot(container2);
-        assert.ok(pendingOps);
-        await args.opProcessingController.process();
-        container2.close();
 
         // send a bunch from first container that should not be overwritten
         [...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
@@ -228,10 +181,7 @@ const tests = (args: ITestObjectProvider) => {
         // load container with pending ops, which should not resend the ops sent by previous container
         const container3 = await loader.resolve(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
-            JSON.stringify({
-                pendingRuntimeState: pendingOps,
-                url: "fluid-test://localhost:3000/tenantId/defaultDocumentId",
-            }),
+            pendingOps,
         );
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
@@ -246,17 +196,9 @@ const tests = (args: ITestObjectProvider) => {
     it("resends chunked op", async function() {
         const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
-        const container2 = await args.loadTestContainer(testContainerConfig) as IContainer;
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
-        await args.opProcessingController.pauseProcessing(container2.deltaManager as any);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        assert(dataStore2.runtime.deltaManager.outbound.paused);
-        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-
-        map2.set(testKey, bigString);
-        const pendingOps = container2.getPendingLocalState();
-        container2.close();
-        assert.ok(pendingOps);
+        const pendingOps = await getPendingOps(args, false, (c, d, map) => {
+            map.set(testKey, bigString);
+        });
 
         // load container with pending ops, which should resend the ops not sent by previous container
         const container3 = await loader.resolve(
@@ -273,21 +215,10 @@ const tests = (args: ITestObjectProvider) => {
     it("doesn't resend successful chunked op", async function() {
         const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
-        const container2 = await args.loadTestContainer(testContainerConfig);
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
-        await args.opProcessingController.process();
-        await args.opProcessingController.pauseProcessing(container2.deltaManager as any);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        assert(dataStore2.runtime.deltaManager.outbound.paused);
-        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-
-        map2.set(testKey, bigString);
-        map2.set(testKey2, bigString);
-
-        const pendingOps = getSnapshot(container2);
-        assert.ok(pendingOps);
-        await args.opProcessingController.process();
-        container2.close();
+        const pendingOps = await getPendingOps(args, false, (c, d, map) => {
+            map.set(testKey, bigString);
+            map.set(testKey2, bigString);
+        });
 
         // set on first container which should not be overwritten
         map1.set(testKey, testValue);
@@ -296,10 +227,7 @@ const tests = (args: ITestObjectProvider) => {
         // load container with pending ops, which should resend the ops not sent by previous container
         const container3 = await loader.resolve(
             { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
-            JSON.stringify({
-                pendingRuntimeState: pendingOps,
-                url: "fluid-test://localhost:3000/tenantId/defaultDocumentId",
-            }),
+            pendingOps,
         );
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
@@ -309,6 +237,50 @@ const tests = (args: ITestObjectProvider) => {
         assert.strictEqual(await map3.wait(testKey), testValue);
         assert.strictEqual(await map1.wait(testKey2), testValue);
         assert.strictEqual(await map3.wait(testKey2), testValue);
+    });
+
+    it("pending map clear resend", async function() {
+        [...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
+        await args.opProcessingController.process();
+
+        const pendingOps = await getPendingOps(args, false, (c, d, map) => {
+            map.clear();
+        });
+
+        const container3 = await loader.resolve(
+            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            pendingOps,
+        );
+        args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
+        const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+        await args.opProcessingController.process();
+        await Promise.all([...Array(lots).keys()].map(
+            async (i) => assert.strictEqual(await map1.get(i.toString()), undefined)));
+        await Promise.all([...Array(lots).keys()].map(
+            async (i) => assert.strictEqual(await map3.get(i.toString()), undefined)));
+    });
+
+    it("successful map clear no resend", async function() {
+        const pendingOps = await getPendingOps(args, true, (c, d, map) => {
+            map.clear();
+        });
+
+        [...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
+        await args.opProcessingController.process();
+
+        const container3 = await loader.resolve(
+            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            pendingOps,
+        );
+        args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
+        const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+        await args.opProcessingController.process();
+        await Promise.all([...Array(lots).keys()].map(
+            async (i) => assert.strictEqual(await map1.get(i.toString()), testValue)));
+        await Promise.all([...Array(lots).keys()].map(
+            async (i) => assert.strictEqual(await map3.get(i.toString()), testValue)));
     });
 };
 
