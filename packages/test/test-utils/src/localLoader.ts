@@ -40,19 +40,18 @@ export function createLocalLoader(
 
 /**
  * Creates a detached Container and attaches it.
- * @param documentId - The documentId for the container.
  * @param source - The code details used to create the Container.
  * @param loader - The loader to use to initialize the container.
- * @param urlresolver - The url resolver to get the create new request from.
+ * @param attachRequest - The request to create new from.
  */
 
 export async function createAndAttachContainer(
     source: IFluidCodeDetails,
     loader: ILoader,
-    request: IRequest,
+    attachRequest: IRequest,
 ): Promise<IContainer> {
     const container = await loader.createDetachedContainer(source);
-    await container.attach(request);
+    await container.attach(attachRequest);
 
     return container;
 }

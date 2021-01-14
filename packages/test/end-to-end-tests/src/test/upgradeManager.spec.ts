@@ -13,12 +13,7 @@ import {
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
-import {
-    createLocalResolverCreateNewRequest,
-    LocalDocumentServiceFactory,
-    LocalResolver,
-} from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -52,7 +47,7 @@ describe("UpgradeManager (hot-swap)", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: IUrlResolver;
+    let urlResolver: LocalResolver;
     let documentServiceFactory: LocalDocumentServiceFactory;
     let opProcessingController: OpProcessingController;
 
@@ -65,7 +60,8 @@ describe("UpgradeManager (hot-swap)", () => {
             options: { hotSwapContext: true },
         });
 
-        return createAndAttachContainer(codeDetails, loader, createLocalResolverCreateNewRequest(documentId));
+        return createAndAttachContainer(
+            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {

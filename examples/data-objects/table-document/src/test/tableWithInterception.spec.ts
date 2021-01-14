@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { createLocalResolverCreateNewRequest, LocalResolver } from "@fluidframework/local-driver";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -77,9 +77,7 @@ describe("Table Document with Interception", () => {
             const urlResolver = new LocalResolver();
             const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
             const container = await createAndAttachContainer(
-                codeDetails,
-                loader,
-                createLocalResolverCreateNewRequest(documentId));
+            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
             tableDocument = await requestFluidObject<TableDocument>(container, "default");
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

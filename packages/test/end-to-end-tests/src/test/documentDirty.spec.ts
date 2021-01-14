@@ -10,7 +10,6 @@ import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
-    createLocalResolverCreateNewRequest,
     LocalDocumentServiceFactory,
     LocalResolver,
 } from "@fluidframework/local-driver";
@@ -106,7 +105,8 @@ describe("Document Dirty", () => {
             codeLoader,
         });
 
-        return createAndAttachContainer(codeDetails, loader, createLocalResolverCreateNewRequest(documentId));
+        return createAndAttachContainer(
+            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     beforeEach(async () => {
