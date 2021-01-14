@@ -15,7 +15,7 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { createLocalResolverCreateNewRequest, LocalResolver } from "@fluidframework/local-driver";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
@@ -97,9 +97,9 @@ describe("context reload (hot-swap)", function() {
                     typeof code.package === "object" && code.package.version === version ? resolve() : reject()))));
     };
 
-    async function createContainer(packageEntries, server, urlResolver): Promise<IContainer> {
+    async function createContainer(packageEntries, server, urlResolver: LocalResolver): Promise<IContainer> {
         const loader: ILoader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
-        return createAndAttachContainer(defaultCodeDetails, loader, createLocalResolverCreateNewRequest(documentId));
+        return createAndAttachContainer(defaultCodeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(packageEntries, server, urlResolver): Promise<IContainer> {
