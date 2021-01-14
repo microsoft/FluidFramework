@@ -82,6 +82,7 @@ export class OdspSummaryUploadManager {
     public async buildCachesForDedup(snapshotTree: api.ISnapshotTree) {
         const prefixedSnapshotTree = this.addAppPrefixToSnapshotTree(snapshotTree);
         await this.buildCachesForDedupCore(prefixedSnapshotTree);
+        this.previousBlobTreeDedupCaches = { ...this.blobTreeDedupCaches };
     }
 
     /**
@@ -146,21 +147,6 @@ export class OdspSummaryUploadManager {
         return prefixedSnapshotTree;
     }
 
-    /**
-     * Adds ".app" as prefix to paths which belongs to app summary tree.
-     * @param summaryTree - Summary tree to which complete path will be added.
-     */
-    private addAppPrefixToSummaryTree(summaryTree: api.ISummaryTree): api.ISummaryTree {
-        const prefixedSummaryTree: api.ISummaryTree = {
-            tree: {},
-            type: api.SummaryType.Tree,
-        };
-        for (const [key, value] of Object.entries(summaryTree.tree)) {
-            prefixedSummaryTree.tree[`.app/${key}`] = value;
-        }
-        return prefixedSummaryTree;
-    }
-
     public async writeSummaryTree(tree: api.ISummaryTree, context: ISummaryContext) {
         // If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
         // then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
@@ -202,7 +188,7 @@ export class OdspSummaryUploadManager {
         const { snapshotTree, reusedBlobs, blobs } = await this.convertSummaryToSnapshotTree(
             parentHandle,
             // Clone as we change the blob contents.
-            cloneDeep(this.addAppPrefixToSummaryTree(tree)),
+            cloneDeep(tree),
             blobTreeDedupCachesLatest,
             ".app",
             true,
@@ -296,7 +282,7 @@ export class OdspSummaryUploadManager {
 
             let id: string | undefined;
             let value: SnapshotTreeValue | undefined;
-            const currentPath = path === "" ? key : `${path}/${key}`;
+            const currentPath = path === "" ? `${rootNodeName}/${key}` : `${path}/${key}`;
             switch (summaryObject.type) {
                 case api.SummaryType.Tree: {
                     blobTreeDedupCachesLatest.treesPathToTree.set(currentPath, summaryObject);

@@ -190,7 +190,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
                 },
             },
         };
-        const prefixedAppTree = odspSummaryUploadManager["addAppPrefixToSummaryTree"](appSummary);
+
         const blobTreeDedupCaches: IDedupCaches = {
             blobShaToPath: new Map(),
             pathToBlobSha: new Map(),
@@ -198,7 +198,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
         };
         await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
             undefined,
-            cloneDeep(prefixedAppTree),
+            cloneDeep(appSummary),
             blobTreeDedupCaches,
             ".app",
             true,
@@ -206,7 +206,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
 
         delete (appSummary.tree.default as api.ISummaryTree).tree.component;
         // Now insert another blob with same content as component blob
-        prefixedAppTree.tree[".app/default2"] = {
+        appSummary.tree.default2 = {
             type: api.SummaryType.Tree,
             tree: {
                 component2: componentBlob,
@@ -219,7 +219,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
         odspSummaryUploadManager["blobTreeDedupCaches"] = blobTreeDedupCaches;
         const { snapshotTree, blobs, reusedBlobs } = await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
             "ackHandle",
-            prefixedAppTree,
+            appSummary,
             blobTreeDedupCaches,
             ".app",
             true,
@@ -259,7 +259,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
                 },
             },
         };
-        const prefixedAppTree = odspSummaryUploadManager["addAppPrefixToSummaryTree"](appSummary);
+
         const blobTreeDedupCaches: IDedupCaches = {
             blobShaToPath: new Map(),
             pathToBlobSha: new Map(),
@@ -267,14 +267,14 @@ describe("Odsp Summary Upload Manager Tests", () => {
         };
         await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
             undefined,
-            cloneDeep(prefixedAppTree),
+            cloneDeep(appSummary),
             blobTreeDedupCaches,
             ".app",
             true,
         );
 
         // Now insert another blob with same content as component blob
-        prefixedAppTree.tree[".app/default2"] = {
+        appSummary.tree.default2 = {
             type: api.SummaryType.Tree,
             tree: {
                 component2: componentBlob,
@@ -284,7 +284,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
                 },
             },
         };
-        prefixedAppTree.tree[".app/default"] = {
+        appSummary.tree.default = {
             type: api.SummaryType.Handle,
             handle: "default",
             handleType: api.SummaryType.Tree,
@@ -292,7 +292,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
         odspSummaryUploadManager["blobTreeDedupCaches"] = blobTreeDedupCaches;
         const { snapshotTree, blobs, reusedBlobs } = await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
             "ackHandle",
-            prefixedAppTree,
+            appSummary,
             blobTreeDedupCaches,
             ".app",
             true,
