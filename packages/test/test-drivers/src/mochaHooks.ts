@@ -45,15 +45,6 @@ _global.getFluidTestDriver = (): ITestDriver | ILocalServerTestDriver => {
 export const mochaGlobalSetup = async function() {
     if (_global.getFluidTestDriver === undefined
         || _global.getFluidTestDriver() === undefined)  {
-        throw new Error(`beforeAll`);
+        throw new Error("getFluidTestDriver does not exist or did not return a driver");
     }
-};
-
-export const mochaHooks = {
-    beforeAll() {
-        if (_global.getFluidTestDriver === undefined
-            || _global.getFluidTestDriver() === undefined)  {
-            throw new Error(`beforeAll`);
-        }
-    },
 };
