@@ -737,7 +737,8 @@ export class Client {
             let newOp: ops.IMergeTreeDeltaOp | undefined;
             switch (resetOp.type) {
                 case ops.MergeTreeDeltaType.ANNOTATE:
-                    assert(segment.propertyManager.hasPendingProperties(), "Segment has no pending properties");
+                    assert(segment.propertyManager?.hasPendingProperties() === true,
+                        "Segment has no pending properties");
                     newOp = OpBuilder.createAnnotateRangeOp(
                         segmentPosition,
                         segmentPosition + segment.cachedLength,

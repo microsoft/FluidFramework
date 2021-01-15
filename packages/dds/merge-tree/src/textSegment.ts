@@ -126,7 +126,7 @@ interface ITextAndMarkerAccumulator extends ITextAccumulator {
 }
 
 function isTextAndMarkerAccumulator(accum: ITextAccumulator): accum is ITextAndMarkerAccumulator {
-    return accum.parallelArrays;
+    return accum.parallelArrays === true;
 }
 
 type ITextAccumulatorType = ITextAccumulator | ITextAndMarkerAccumulator;
