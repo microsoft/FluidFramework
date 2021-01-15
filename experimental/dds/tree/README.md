@@ -1,4 +1,4 @@
-# Shared Tree
+# @fluidexperimental/tree
 
 A [Fluid](https://fluidframework.com/) SharedObject Tree with:
 
