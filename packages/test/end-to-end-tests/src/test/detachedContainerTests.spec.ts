@@ -619,7 +619,8 @@ describe("Detached Container", () => {
         let args: ITestObjectProvider;
         let request: IRequest;
         let loader: Loader;
-        beforeEach(()=>{
+
+        beforeEach(async () => {
             args = argsFactory();
             request = createLocalResolverCreateNewRequest(args.documentId);
             loader = args.makeTestLoader(testContainerConfig) as Loader;
