@@ -10,6 +10,7 @@ import * as nconf from "nconf";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
 import * as uuid from "uuid";
 import * as winston from "winston";
+import { getCommonMessageMetaData } from "./utils";
 
 export interface IExternalStorageManager {
     read(tenantId: string, documentId: string): Promise<boolean>;
@@ -37,7 +38,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
 
     public async read(tenantId: string, documentId: string): Promise<boolean> {
         if (!this.config.get("externalStorage:enabled")) {
-            winston.info("External storage is not enabled");
+            winston.info("External storage is not enabled", { messageMetaData: getCommonMessageMetaData() });
             return false;
         }
         await Axios.post<void>(
@@ -49,7 +50,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
                 },
             }).catch((error) => {
                 const messageMetaData = { tenantId, documentId };
-                winston.error(`Failed to read document: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
+                winston.error(`Failed to read document: ${safeStringify(error, undefined, 2)}`, { messageMetaData:  { ...messageMetaData, ...getCommonMessageMetaData() } });
                 return false;
             });
 
@@ -58,7 +59,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
 
     public async write(tenantId: string, ref: string, sha: string, update: boolean): Promise<void> {
         if (!this.config.get("externalStorage:enabled")) {
-            winston.info("External storage is not enabled");
+            winston.info("External storage is not enabled", { messageMetaData: getCommonMessageMetaData() });
             return;
         }
         await Axios.post<void>(
@@ -74,7 +75,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
                 },
             }).catch((error) => {
                 const messageMetaData = { tenantId, ref };
-                winston.error(`Failed to write to file: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
+                winston.error(`Failed to write to file: ${safeStringify(error, undefined, 2)}`, { messageMetaData:  { ...messageMetaData, ...getCommonMessageMetaData() } });
                 throw error;
             });
     }

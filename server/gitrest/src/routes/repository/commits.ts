@@ -51,7 +51,7 @@ export async function getCommits(
 
         return Promise.all(detailedCommits);
     } catch (err) {
-        winston.info(`getCommits error: ${err}`);
+        winston.info(`getCommits error: ${err}`, { messageMetaData:  utils.getCommonMessageMetaData() });
         try {
             const result = await externalStorageManager.read(repo, ref);
             if (!result) {
@@ -60,7 +60,7 @@ export async function getCommits(
             return getCommits(repoManager, owner, repo, ref, count, externalStorageManager);
         } catch (bridgeError) {
             // If file does not exist or error trying to look up commit, return the original error.
-            winston.error(`BridgeError: ${bridgeError}`);
+            winston.error(`BridgeError: ${bridgeError}`, { messageMetaData:  utils.getCommonMessageMetaData() });
             return Promise.reject(err);
         }
     }

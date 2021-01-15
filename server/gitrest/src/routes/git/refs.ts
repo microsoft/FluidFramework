@@ -54,16 +54,16 @@ async function getRef(
             try {
                 const result = await externalStorageManager.read(repo, fileName);
                 if (!result) {
-                    winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${repo} ref: ${refId}`);
+                    winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${repo} ref: ${refId}`, { messageMetaData:  utils.getCommonMessageMetaData() });
                     return Promise.reject(err);
                 }
                 return getRef(repoManager, owner, repo, refId, getRefParams, externalStorageManager);
             } catch (bridgeError) {
-                winston.error(`Giving up on creating ref. BridgeError: ${safeStringify(bridgeError, undefined, 2)}`);
+                winston.error(`Giving up on creating ref. BridgeError: ${safeStringify(bridgeError, undefined, 2)}`, { messageMetaData:  utils.getCommonMessageMetaData() });
                 return Promise.reject(err);
             }
         }
-        winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${repo} ref: ${refId}`);
+        winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${repo} ref: ${refId}`, { messageMetaData:  utils.getCommonMessageMetaData() });
         return Promise.reject(err);
     }
 }
@@ -87,7 +87,7 @@ async function createRef(
         try {
             await externalStorageManager.write(repo, createParams.ref, createParams.sha, false);
         } catch (e) {
-            winston.error(`Error writing to file ${e}`);
+            winston.error(`Error writing to file ${e}`, { messageMetaData:  utils.getCommonMessageMetaData() });
         }
     }
 
@@ -125,7 +125,7 @@ async function patchRef(
             await externalStorageManager.write(repo, refId, patchParams.sha, true);
         } catch (error) {
             winston.error(`External storage write failed while trying to update file 
-            ${safeStringify(error, undefined, 2)}, ${repo} / ${refId}`);
+            ${safeStringify(error, undefined, 2)}, ${repo} / ${refId}`, { messageMetaData:  utils.getCommonMessageMetaData() });
         }
     }
 

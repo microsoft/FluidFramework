@@ -9,7 +9,7 @@ import { getCorrelationId } from "@fluidframework/server-services-utils";
 import * as uuid from "uuid";
 import * as request from "request-promise-native";
 import * as winston from "winston";
-import { getTokenLifetimeInSec } from "../utils";
+import { getCommonMessageMetaData, getTokenLifetimeInSec } from "../utils";
 import { ITenantService } from "./definitions";
 import { RedisTenantCache } from "./redisTenantCache";
 
@@ -32,11 +32,11 @@ export class RiddlerService implements ITenantService {
 
     private async getTenantDetails(tenantId: string): Promise<ITenantConfig> {
         const cachedDetail = await this.cache.get(tenantId).catch((error) => {
-            winston.error(`Error fetching tenant details from cache`, error);
+            winston.error(`Error fetching tenant details from cache`, { message: error, messageMetaData: getCommonMessageMetaData() });
             return null;
         });
         if (cachedDetail) {
-            winston.info(`Resolving tenant details from cache`);
+            winston.info(`Resolving tenant details from cache`, { messageMetaData: getCommonMessageMetaData() });
             return JSON.parse(cachedDetail) as ITenantConfig;
         }
         const details = await request.get(
@@ -48,19 +48,19 @@ export class RiddlerService implements ITenantService {
                 json: true,
             }) as ITenantConfig;
         this.cache.set(tenantId, JSON.stringify(details)).catch((error) => {
-            winston.error(`Error caching tenant details to redis`, error);
+            winston.error(`Error caching tenant details to redis`, { message: error, messageMetaData: getCommonMessageMetaData() });
         });
         return details;
     }
 
     private async verifyToken(tenantId: string, token: string): Promise<void> {
         const cachedToken = await this.cache.exists(token).catch((error) => {
-            winston.error(`Error fetching token from cache`, error);
+            winston.error(`Error fetching token from cache`, { message: error, messageMetaData: getCommonMessageMetaData() });
             return false;
         });
 
         if (cachedToken) {
-            winston.info(`Resolving token from cache`);
+            winston.info(`Resolving token from cache`, { messageMetaData: getCommonMessageMetaData() });
             return;
         }
 
@@ -83,7 +83,7 @@ export class RiddlerService implements ITenantService {
             tokenLifetimeInSec = Math.round(tokenLifetimeInSec - ((tokenLifetimeInSec * 5) / 100));
         }
         this.cache.set(token, "", tokenLifetimeInSec).catch((error) => {
-            winston.error(`Error caching token to redis`, error);
+            winston.error(`Error caching token to redis`, { message: error, messageMetaData: getCommonMessageMetaData() });
         });
     }
 }

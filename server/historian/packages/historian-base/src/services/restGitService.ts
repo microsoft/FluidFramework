@@ -15,6 +15,7 @@ import request from "request";
 import * as winston from "winston";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
 import { ICache } from "./definitions";
+import { getCommonMessageMetaData } from "../utils";
 
 // We include the historian version in the user-agent string
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -64,7 +65,7 @@ export class RestGitService {
 
         // Fetch the full blob so we can have it in cache
         this.getBlob(createResults.sha, true).catch((error) => {
-            winston.error(`Error fetching blob ${createResults.sha}`);
+            winston.error(`Error fetching blob ${createResults.sha}`, { messageMetaData: getCommonMessageMetaData() });
         });
 
         return createResults;
@@ -100,11 +101,11 @@ export class RestGitService {
 
         // Also fetch the tree for the commit to have it in cache
         this.getTree(commit.tree.sha, true, true).catch((error) => {
-            winston.error(`Error fetching commit tree ${commit.tree.sha}`);
+            winston.error(`Error fetching commit tree ${commit.tree.sha}`, { messageMetaData: getCommonMessageMetaData() });
         });
         // ... as well as pull in the header for it
         this.getHeader(commit.sha, true).catch((error) => {
-            winston.error(`Error fetching header ${commit.sha}`);
+            winston.error(`Error fetching header ${commit.sha}`, { messageMetaData: getCommonMessageMetaData() });
         });
 
         return commit;
@@ -352,7 +353,7 @@ export class RestGitService {
                     if (error) {
                         return reject(error);
                     } else if (response.statusCode !== statusCode) {
-                        winston.info(response.body);
+                        winston.info(response.body, { messageMetaData: getCommonMessageMetaData() });
                         return reject(response.statusCode);
                     } else {
                         return resolve(response.body);
@@ -367,7 +368,7 @@ export class RestGitService {
     private setCache<T>(key: string, value: T) {
         // Attempt to cache to Redis - log any errors but don't fail
         this.cache.set(key, value).catch((error) => {
-            winston.error(`Error caching ${key} to redis`, error);
+            winston.error(`Error caching ${key} to redis`, { message: error, messageMetaData: getCommonMessageMetaData() });
         });
     }
 
@@ -375,17 +376,17 @@ export class RestGitService {
         if (useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue = await this.cache.get<T>(key).catch((error) => {
-                winston.error(`Error fetching ${key} from cache`, error);
+                winston.error(`Error fetching ${key} from cache`, { message: error, messageMetaData: getCommonMessageMetaData() });
                 return null;
             });
 
             if (cachedValue) {
-                winston.info(`Resolving ${key} from cache`);
+                winston.info(`Resolving ${key} from cache`, { messageMetaData: getCommonMessageMetaData() });
                 return cachedValue;
             }
 
             // Value is not cached - fetch it with the provided function and then cache the value
-            winston.info(`Fetching ${key}`);
+            winston.info(`Fetching ${key}`, { messageMetaData: getCommonMessageMetaData() });
             const value = await fetch();
             this.setCache(key, value);
 

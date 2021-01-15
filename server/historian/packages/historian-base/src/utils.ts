@@ -4,6 +4,7 @@
  */
 
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import { getCorrelationId } from "@fluidframework/server-services-utils";
 import * as jwt from "jsonwebtoken";
 
 export function normalizePort(val) {
@@ -28,4 +29,9 @@ export function getTokenLifetimeInSec(token: string): number {
         return (claims.exp - Math.round((new Date().getTime()) / 1000));
     }
     return undefined;
+}
+
+export function getCommonMessageMetaData() {
+    const correlationId = getCorrelationId();
+    return correlationId ? { "CorrelationId": correlationId } : undefined ;
 }

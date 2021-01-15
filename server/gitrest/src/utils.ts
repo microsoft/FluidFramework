@@ -8,6 +8,7 @@ import * as path from "path";
 import * as util from "util";
 import git from "nodegit";
 import * as resources from "@fluidframework/gitresources";
+import { getCorrelationId } from "@fluidframework/server-services-utils";
 import * as winston from "winston";
 
 const exists = util.promisify(fs.exists);
@@ -101,7 +102,7 @@ export class RepositoryManager {
         const isBare: any = 1;
         const repository = git.Repository.init(`${this.baseDir}/${repoPath}`, isBare);
         this.repositoryCache[repoPath] = repository;
-        winston.info(`Created a new repo for owner ${owner} reponame: ${name}`);
+        winston.info(`Created a new repo for owner ${owner} reponame: ${name}`, { messageMetaData:  getCommonMessageMetaData() });
 
         return repository;
     }
@@ -113,7 +114,7 @@ export class RepositoryManager {
             const directory = `${this.baseDir}/${repoPath}`;
 
             if (!await exists(directory)) {
-                winston.info(`Repo does not exist ${directory}`);
+                winston.info(`Repo does not exist ${directory}`, { messageMetaData:  getCommonMessageMetaData() });
                 return Promise.reject(`Repo does not exist ${directory}`);
             }
 
@@ -138,4 +139,9 @@ export class RepositoryManager {
 
         return repoPath;
     }
+}
+
+export function getCommonMessageMetaData() {
+    const correlationId = getCorrelationId();
+    return correlationId ? { "CorrelationId": correlationId } : undefined ;
 }
