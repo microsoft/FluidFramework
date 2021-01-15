@@ -24,6 +24,7 @@ import {
  } from "@fluidframework/driver-definitions";
 import { NetworkErrorBasic } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
 
 describe("SharedString", () => {
     it("Failure to Load in Shared String", async ()=>{
@@ -129,6 +130,74 @@ describe("SharedString", () => {
                 await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
                 assert.fail("expected failure");
             } catch {}
+        }
+    });
+
+    it("Text operations successfully round trip on detached create", async ()=>{
+        const deltaConnectionServer = LocalDeltaConnectionServer.create();
+        const stringId = "sharedStringKey";
+        const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+        const fluidExport: SupportedExportInterfaces = {
+            IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
+        };
+        const text = "hello world";
+        const documentId = "sstest";
+        let initialText = "";
+        { // creating client
+            const urlResolver = new LocalResolver();
+            const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+            const codeDetails = { package: "no-dynamic-pkg" };
+            const codeLoader = new LocalCodeLoader([
+                [codeDetails, fluidExport],
+            ]);
+
+            const loader = new Loader({
+                urlResolver,
+                documentServiceFactory,
+                codeLoader,
+            });
+
+            const container = await loader.createDetachedContainer(codeDetails);
+            const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+            const sharedString  = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
+            assert(sharedString);
+
+            for (let i = 0; i < 10; i++) {
+                sharedString.insertText(0, text);
+
+                const segInfo = sharedString.getContainingSegment(3);
+                sharedString.insertAtReferencePosition(
+                    sharedString.createPositionReference(segInfo.segment, segInfo.offset, ReferenceType.SlideOnRemove),
+                    new TextSegment(text));
+
+                sharedString.removeRange(0,5);
+
+                const length = sharedString.getLength();
+                sharedString.replaceText(length - 5, length, text);
+            }
+            initialText = sharedString.getText();
+
+            await container.attach(urlResolver.createCreateNewRequest(documentId));
+        }
+        { // normal load client
+            const urlResolver = new LocalResolver();
+            const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+            const codeDetails = { package: "no-dynamic-pkg" };
+            const codeLoader = new LocalCodeLoader([
+                [codeDetails, fluidExport],
+            ]);
+
+            const loader = new Loader({
+                urlResolver,
+                documentServiceFactory,
+                codeLoader,
+            });
+
+            const container = await loader.resolve(urlResolver.createCreateNewRequest(documentId));
+            const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+            const sharedString  = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
+            assert(sharedString);
+            assert.strictEqual(sharedString.getText(), initialText);
         }
     });
 });

@@ -2077,9 +2077,14 @@ export class MergeTree {
             }
             return false;
         });
-        const localSeq = ++this.collabWindow.localSeq;
-        insertSegment.seq = UnassignedSequenceNumber;
-        insertSegment.localSeq = localSeq;
+
+        if (this.collabWindow.collaborating) {
+            insertSegment.localSeq = ++this.collabWindow.localSeq;
+            insertSegment.seq = UnassignedSequenceNumber;
+        }else {
+            insertSegment.seq = UniversalSequenceNumber;
+        }
+
         insertSegment.clientId = clientId;
 
         if (Marker.is(insertSegment)) {
@@ -2103,7 +2108,7 @@ export class MergeTree {
         }
 
         if (this.collabWindow.collaborating) {
-            this.addToPendingList(insertSegment, undefined, localSeq);
+            this.addToPendingList(insertSegment, undefined, insertSegment.localSeq);
         }
     }
 
