@@ -65,9 +65,6 @@ const testContainerConfig: ITestContainerConfig = {
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
-    });
     let request: IRequest;
     let loader: Loader;
 
@@ -81,6 +78,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     });
 
     beforeEach(async () => {
+        args = argsFactory();
         request = createLocalResolverCreateNewRequest(args.documentId);
         loader = args.makeTestLoader(testContainerConfig) as Loader;
     });

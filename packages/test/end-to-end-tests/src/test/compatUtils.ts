@@ -48,7 +48,6 @@ export interface ITestObjectProvider {
     defaultCodeDetails: IFluidCodeDetails | old.IFluidCodeDetails,
     opProcessingController: OpProcessingController | old.OpProcessingController,
     documentId: string;
-
 }
 
 export interface ITestOptions {
