@@ -145,23 +145,6 @@ export function fullHistorySummarizer(
 		sequencedEdits,
 		version: formatVersion,
 	};
-
-	// TODO:#49901: Use the following summary generation code once format version 0.1.0 can be written.
-	// const { serializeHandle } = serializationHelpers;
-	// return {
-	// 	currentTree: currentView.getChangeNodeTree(),
-	// 	editHistory: {
-	// 		editChunks: editChunks.map((chunk) => {
-	// 			if (Array.isArray(chunk)) {
-	// 				return chunk;
-	// 			}
-
-	// 			return serializeHandle(chunk);
-	// 		}),
-	// 		editIds,
-	// 	},
-	// 	version: formatVersion,
-	// };
 }
 
 /**
@@ -193,14 +176,4 @@ export function noHistorySummarizer(
 		sequencedEdits: [{ id, changes: edit.changes }],
 		version: formatVersion,
 	};
-
-	// TODO:#49901: Use the following summary generation code once version 0.1.0 can be written.
-	// return {
-	// 	currentTree,
-	// 	editHistory: {
-	// 		editChunks: [[edit]],
-	// 		editIds: [id],
-	// 	},
-	// 	version: formatVersion,
-	// };
 }

@@ -303,30 +303,6 @@ export class SharedTree extends SharedObject {
 		return JSON.parse(stringified);
 	}
 
-	// TODO:#49901: Do not upload edit chunks until format version 0.1.0 is written.
-	// /** Uploads the edit chunk and sends the chunk index along with the resulting handle as an op. */
-	// private async uploadEditChunk(edits: Edit[], chunkIndex: number): Promise<void> {
-	// 	const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
-	// 	this.submitLocalMessage({
-	// 		editHandle: this.toSerializable(editHandle),
-	// 		chunkIndex,
-	// 		type: 'handle',
-	// 	});
-	// 	this.emit(SharedTreeEvent.EditsBlobbed);
-	// }
-
-	// private initiateEditChunkUpload(): void {
-	// 	// Initiate upload of any edit chunks not yet uploaded.
-	// 	const editChunks = this.editLog.getEditLogSummary().editChunks;
-	// 	if (editChunks !== undefined) {
-	// 		editChunks.forEach((chunk, index) => {
-	// 			if (Array.isArray(chunk) && chunk.length === editsPerChunk) {
-	// 				this.uploadEditChunk(chunk, index);
-	// 			}
-	// 		});
-	// 	}
-	// }
-
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
 	 */
@@ -370,9 +346,6 @@ export class SharedTree extends SharedObject {
 			);
 			this.editLog.sequenceLocalEdits();
 		}
-
-		// TODO:#49901: Do not upload edit chunks until format version 0.1.0 is written.
-		// this.initiateEditChunkUpload();
 
 		return this.summarizer(this.editLog, this.currentView, { serializeHandle: this.toSerializable.bind(this) });
 	}
