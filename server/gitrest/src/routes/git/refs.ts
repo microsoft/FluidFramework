@@ -54,16 +54,19 @@ async function getRef(
             try {
                 const result = await externalStorageManager.read(repo, fileName);
                 if (!result) {
-                    winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${repo} ref: ${refId}`, { messageMetaData:  utils.getCommonMessageMetaData() });
+                    winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${repo} ref: ${refId}`,
+                        { messageMetaData:  utils.getCommonMessageMetaData() });
                     return Promise.reject(err);
                 }
                 return getRef(repoManager, owner, repo, refId, getRefParams, externalStorageManager);
             } catch (bridgeError) {
-                winston.error(`Giving up on creating ref. BridgeError: ${safeStringify(bridgeError, undefined, 2)}`, { messageMetaData:  utils.getCommonMessageMetaData() });
+                winston.error(`Giving up on creating ref. BridgeError: ${safeStringify(bridgeError, undefined, 2)}`,
+                    { messageMetaData:  utils.getCommonMessageMetaData() });
                 return Promise.reject(err);
             }
         }
-        winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${repo} ref: ${refId}`, { messageMetaData:  utils.getCommonMessageMetaData() });
+        winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${repo} ref: ${refId}`,
+            { messageMetaData:  utils.getCommonMessageMetaData() });
         return Promise.reject(err);
     }
 }
@@ -125,7 +128,8 @@ async function patchRef(
             await externalStorageManager.write(repo, refId, patchParams.sha, true);
         } catch (error) {
             winston.error(`External storage write failed while trying to update file 
-            ${safeStringify(error, undefined, 2)}, ${repo} / ${refId}`, { messageMetaData:  utils.getCommonMessageMetaData() });
+                ${safeStringify(error, undefined, 2)}, ${repo} / ${refId}`,
+                { messageMetaData:  utils.getCommonMessageMetaData() });
         }
     }
 

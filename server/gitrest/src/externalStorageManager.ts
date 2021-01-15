@@ -50,7 +50,8 @@ export class ExternalStorageManager implements IExternalStorageManager {
                 },
             }).catch((error) => {
                 const messageMetaData = { tenantId, documentId };
-                winston.error(`Failed to read document: ${safeStringify(error, undefined, 2)}`, { messageMetaData:  { ...messageMetaData, ...getCommonMessageMetaData() } });
+                winston.error(`Failed to read document: ${safeStringify(error, undefined, 2)}`,
+                    { messageMetaData:  { ...messageMetaData, ...getCommonMessageMetaData() } });
                 return false;
             });
 
@@ -75,7 +76,8 @@ export class ExternalStorageManager implements IExternalStorageManager {
                 },
             }).catch((error) => {
                 const messageMetaData = { tenantId, ref };
-                winston.error(`Failed to write to file: ${safeStringify(error, undefined, 2)}`, { messageMetaData:  { ...messageMetaData, ...getCommonMessageMetaData() } });
+                winston.error(`Failed to write to file: ${safeStringify(error, undefined, 2)}`,
+                    { messageMetaData:  { ...messageMetaData, ...getCommonMessageMetaData() } });
                 throw error;
             });
     }

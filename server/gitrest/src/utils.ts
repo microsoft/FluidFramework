@@ -102,7 +102,8 @@ export class RepositoryManager {
         const isBare: any = 1;
         const repository = git.Repository.init(`${this.baseDir}/${repoPath}`, isBare);
         this.repositoryCache[repoPath] = repository;
-        winston.info(`Created a new repo for owner ${owner} reponame: ${name}`, { messageMetaData:  getCommonMessageMetaData() });
+        winston.info(`Created a new repo for owner ${owner} reponame: ${name}`,
+            { messageMetaData:  getCommonMessageMetaData() });
 
         return repository;
     }
@@ -143,5 +144,5 @@ export class RepositoryManager {
 
 export function getCommonMessageMetaData() {
     const correlationId = getCorrelationId();
-    return correlationId ? { "CorrelationId": correlationId } : undefined ;
+    return correlationId ? { correlationId } : undefined;
 }

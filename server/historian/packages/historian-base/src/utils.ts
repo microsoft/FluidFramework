@@ -33,5 +33,5 @@ export function getTokenLifetimeInSec(token: string): number {
 
 export function getCommonMessageMetaData() {
     const correlationId = getCorrelationId();
-    return correlationId ? { "CorrelationId": correlationId } : undefined ;
+    return correlationId ? { correlationId } : undefined;
 }

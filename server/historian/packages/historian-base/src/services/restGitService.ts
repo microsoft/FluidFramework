@@ -14,8 +14,8 @@ import * as uuid from "uuid";
 import request from "request";
 import * as winston from "winston";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
-import { ICache } from "./definitions";
 import { getCommonMessageMetaData } from "../utils";
+import { ICache } from "./definitions";
 
 // We include the historian version in the user-agent string
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -101,7 +101,8 @@ export class RestGitService {
 
         // Also fetch the tree for the commit to have it in cache
         this.getTree(commit.tree.sha, true, true).catch((error) => {
-            winston.error(`Error fetching commit tree ${commit.tree.sha}`, { messageMetaData: getCommonMessageMetaData() });
+            winston.error(`Error fetching commit tree ${commit.tree.sha}`,
+                { messageMetaData: getCommonMessageMetaData() });
         });
         // ... as well as pull in the header for it
         this.getHeader(commit.sha, true).catch((error) => {
@@ -368,7 +369,8 @@ export class RestGitService {
     private setCache<T>(key: string, value: T) {
         // Attempt to cache to Redis - log any errors but don't fail
         this.cache.set(key, value).catch((error) => {
-            winston.error(`Error caching ${key} to redis`, { message: error, messageMetaData: getCommonMessageMetaData() });
+            winston.error(`Error caching ${key} to redis`,
+                { message: error, messageMetaData: getCommonMessageMetaData() });
         });
     }
 
@@ -376,7 +378,8 @@ export class RestGitService {
         if (useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue = await this.cache.get<T>(key).catch((error) => {
-                winston.error(`Error fetching ${key} from cache`, { message: error, messageMetaData: getCommonMessageMetaData() });
+                winston.error(`Error fetching ${key} from cache`,
+                    { message: error, messageMetaData: getCommonMessageMetaData() });
                 return null;
             });
 

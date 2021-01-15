@@ -32,7 +32,8 @@ export class RiddlerService implements ITenantService {
 
     private async getTenantDetails(tenantId: string): Promise<ITenantConfig> {
         const cachedDetail = await this.cache.get(tenantId).catch((error) => {
-            winston.error(`Error fetching tenant details from cache`, { message: error, messageMetaData: getCommonMessageMetaData() });
+            winston.error(`Error fetching tenant details from cache`,
+                { message: error, messageMetaData: getCommonMessageMetaData() });
             return null;
         });
         if (cachedDetail) {
@@ -48,14 +49,16 @@ export class RiddlerService implements ITenantService {
                 json: true,
             }) as ITenantConfig;
         this.cache.set(tenantId, JSON.stringify(details)).catch((error) => {
-            winston.error(`Error caching tenant details to redis`, { message: error, messageMetaData: getCommonMessageMetaData() });
+            winston.error(`Error caching tenant details to redis`,
+                { message: error, messageMetaData: getCommonMessageMetaData() });
         });
         return details;
     }
 
     private async verifyToken(tenantId: string, token: string): Promise<void> {
         const cachedToken = await this.cache.exists(token).catch((error) => {
-            winston.error(`Error fetching token from cache`, { message: error, messageMetaData: getCommonMessageMetaData() });
+            winston.error(`Error fetching token from cache`,
+                { message: error, messageMetaData: getCommonMessageMetaData() });
             return false;
         });
 
@@ -83,7 +86,8 @@ export class RiddlerService implements ITenantService {
             tokenLifetimeInSec = Math.round(tokenLifetimeInSec - ((tokenLifetimeInSec * 5) / 100));
         }
         this.cache.set(token, "", tokenLifetimeInSec).catch((error) => {
-            winston.error(`Error caching token to redis`, { message: error, messageMetaData: getCommonMessageMetaData() });
+            winston.error(`Error caching token to redis`,
+                { message: error, messageMetaData: getCommonMessageMetaData() });
         });
     }
 }
