@@ -6,6 +6,8 @@
 import { ITestDriver } from "./interfaces";
 import { ILocalServerTestDriver } from "./localServerTestDriver";
 
+export type TestDriver = ITestDriver | ILocalServerTestDriver;
+
 declare global {
-    export function getFluidTestDriver(): ITestDriver | ILocalServerTestDriver;
+    export function getFluidTestDriver(): TestDriver;
 }

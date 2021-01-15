@@ -7,7 +7,7 @@ import { Loader, waitContainerToCatchUp } from "@fluidframework/container-loader
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { v4 as uuid } from "uuid";
-import { ILocalServerTestDriver, ITestDriver } from "@fluidframework/test-driver-definitions";
+import { TestDriver } from "@fluidframework/test-driver-definitions";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
 import { OpProcessingController } from "./opProcessingController";
@@ -32,7 +32,7 @@ export  class TestObjectProvider<TestContainerConfigType> {
      * and factory for TestFluidObject
      */
     constructor(
-        public readonly driver: ITestDriver | ILocalServerTestDriver,
+        public readonly driver: TestDriver,
         private readonly createFluidEntryPoint: (testContainerConfig?: TestContainerConfigType) => fluidEntryPoint,
     ) {
 
