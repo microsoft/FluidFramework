@@ -25,6 +25,7 @@ describe("Shared Directory with Interception", () => {
             }
 
             let currentSubDir = root.getSubDirectory(attributionDirectoryName);
+            assert(currentSubDir);
             if (path === "/") {
                 return currentSubDir;
             }
@@ -58,7 +59,7 @@ describe("Shared Directory with Interception", () => {
 
         /**
          * This callback creates / gets an attribution directory that is a subdirectory of the given directory. It sets
-         * the user attribute in the attribution directory againist the same key used in the original set.
+         * the user attribute in the attribution directory against the same key used in the original set.
          * For example - For directory /foo, it sets the attribute in /foo/attribute
          */
         function subDirectoryinterceptionCb(
@@ -69,7 +70,8 @@ describe("Shared Directory with Interception", () => {
             if (!subDirectory.hasSubDirectory(attributionDirectoryName)) {
                 subDirectory.createSubDirectory(attributionDirectoryName);
             }
-            const attributionDirectory: IDirectory = subDirectory.getSubDirectory(attributionDirectoryName);
+            const attributionDirectory = subDirectory.getSubDirectory(attributionDirectoryName);
+            assert(attributionDirectory);
             attributionDirectory.set(key, userAttributes);
         }
 
@@ -96,10 +98,11 @@ describe("Shared Directory with Interception", () => {
 
         // Verifies that the props are stored correctly in the attribution sub directory - a sub directory
         // of the given directory with name `attributionDirectoryName`.
-        function verifySubDirectoryArrtibution(directory: IDirectory, key: string, value: string, props?: any) {
+        function verifySubDirectoryAttribution(directory: IDirectory, key: string, value: string, props?: any) {
             assert.equal(directory.get(key), value, "The retrieved value should match the value that was set");
 
             const attributionDir = directory.getSubDirectory(attributionDirectoryName);
+            assert(attributionDir);
             if (props === undefined) {
                 assert.equal(
                     attributionDir,
@@ -158,6 +161,7 @@ describe("Shared Directory with Interception", () => {
             // Verify that attribution directory `/attribution` was created for root and the user attribute
             // set on it.
             const rootAttribution = root.getSubDirectory(attributionDirectoryName);
+            assert(rootAttribution);
             assert.equal(
                 rootAttribution.get(key), userAttributes, "The user attrributes set via callback should exist");
 
@@ -170,6 +174,7 @@ describe("Shared Directory with Interception", () => {
             // Verify that attribution directory `/attribution/foo` was created for /foo and the user attribute
             // set on it.
             const fooAttribution = rootAttribution.getSubDirectory("foo");
+            assert(fooAttribution);
             assert.equal(
                 fooAttribution.get(key), userAttributes, "The user attributes set via callback should exist");
 
@@ -182,6 +187,7 @@ describe("Shared Directory with Interception", () => {
             // Verify that attribution directory `/attribution/foo/bar` was created for /foo/bar and the user
             // attribute set on it.
             const barAttribution = fooAttribution.getSubDirectory("bar");
+            assert(barAttribution);
             assert.equal(
                 barAttribution.get(key), userAttributes, "The user attributes set via callback should exist");
         });
@@ -204,41 +210,55 @@ describe("Shared Directory with Interception", () => {
             const key: string = "level";
             let value: string = "root";
             root.set(key, value);
-            verifySubDirectoryArrtibution(root, key, value, userAttributes);
+            verifySubDirectoryAttribution(root, key, value, userAttributes);
 
             // Create the level 1 directory `/foo`.
             const foo = root.createSubDirectory("foo");
             value = "level1";
             foo.set(key, value);
-            verifySubDirectoryArrtibution(foo, key, value, userAttributes);
+            verifySubDirectoryAttribution(foo, key, value, userAttributes);
 
             // Create the level 2 directory `/foo/bar`.
             const bar = foo.createSubDirectory("bar");
             value = "level2";
             bar.set(key, value);
-            verifySubDirectoryArrtibution(bar, key, value, userAttributes);
+            verifySubDirectoryAttribution(bar, key, value, userAttributes);
         });
 
-        it("should be able to get a wrapped subDirectory via getSubDirectory and getWorkingDirectory", async () => {
+        it("should be able to get a wrapped subDirectory via getSubDirectory/getWorkingDirectory", async () => {
             const root = createDirectoryWithInterception(sharedDirectory, dataStoreContext, subDirectoryinterceptionCb);
 
             // Create a sub directory and get it via getSubDirectory.
             root.createSubDirectory("foo");
             const foo = root.getSubDirectory("foo");
+            assert(foo);
+
             // Set a key and verify that user attribute is set via the interception callback.
             let key: string = "color";
             let value: string = "green";
             foo.set(key, value);
-            verifySubDirectoryArrtibution(foo, key, value, userAttributes);
+            verifySubDirectoryAttribution(foo, key, value, userAttributes);
 
             // Create a sub directory via the unwrapped object and get its working directory via the wrapper.
             sharedDirectory.createSubDirectory("bar");
             const bar = root.getWorkingDirectory("bar");
+            assert(bar);
+
             // Set a key and verify that user attribute is set via the interception callback.
             key = "permission";
             value = "read";
             bar.set(key, value);
-            verifySubDirectoryArrtibution(bar, key, value, userAttributes);
+            verifySubDirectoryAttribution(bar, key, value, userAttributes);
+        });
+
+        it("should get undefined for non-existent subDirectory via getSubDirectory/getWorkingDirectory", async () => {
+            const root = createDirectoryWithInterception(sharedDirectory, dataStoreContext, subDirectoryinterceptionCb);
+
+            const foo = root.getSubDirectory("foo");
+            assert.strictEqual(foo, undefined);
+
+            const bar = root.getWorkingDirectory("bar");
+            assert.strictEqual(bar, undefined);
         });
 
         /**

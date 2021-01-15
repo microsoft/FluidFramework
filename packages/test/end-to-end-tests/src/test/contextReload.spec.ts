@@ -97,9 +97,9 @@ describe("context reload (hot-swap)", function() {
                     typeof code.package === "object" && code.package.version === version ? resolve() : reject()))));
     };
 
-    async function createContainer(packageEntries, server, urlResolver): Promise<IContainer> {
+    async function createContainer(packageEntries, server, urlResolver: LocalResolver): Promise<IContainer> {
         const loader: ILoader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
-        return createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
+        return createAndAttachContainer(defaultCodeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(packageEntries, server, urlResolver): Promise<IContainer> {
@@ -108,7 +108,8 @@ describe("context reload (hot-swap)", function() {
     }
 
     async function createContainerWithOldLoader(packageEntries, server, urlResolver): Promise<old.IContainer> {
-        const loader = old.createLocalLoader(packageEntries, server, urlResolver);
+        // back-compat remove in 0.34: cast of function
+        const loader = (old.createLocalLoader as any)(packageEntries, server, urlResolver, { hotSwapContext: true });
         return old.createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
     }
 

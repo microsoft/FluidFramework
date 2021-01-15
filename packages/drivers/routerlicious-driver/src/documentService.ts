@@ -8,6 +8,7 @@ import * as api from "@fluidframework/driver-definitions";
 import { IClient, IErrorTrackingService } from "@fluidframework/protocol-definitions";
 import { GitManager, Historian, ICredentials, IGitCache } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
@@ -29,6 +30,7 @@ export class DocumentService implements api.IDocumentService {
         private readonly historianApi: boolean,
         private readonly directCredentials: ICredentials | undefined,
         private readonly gitCache: IGitCache | undefined,
+        private readonly logger: ITelemetryLogger | undefined,
         protected tokenProvider: ITokenProvider,
         protected tenantId: string,
         protected documentId: string,
@@ -101,7 +103,7 @@ export class DocumentService implements api.IDocumentService {
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
         assert(this.documentStorageService, "Storage service not initialized");
 
-        const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, this.tokenProvider);
+        const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, this.tokenProvider, this.logger);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId,
             deltaStorage, this.documentStorageService);
     }

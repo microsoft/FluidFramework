@@ -35,10 +35,6 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
         return this.readWithRetry(async () => this.internalStorageService.readBlob(id));
     }
 
-    public async readString(id: string): Promise<string> {
-        return this.readWithRetry(async () => this.internalStorageService.readString(id));
-    }
-
     private async delay(timeMs: number): Promise<void> {
         return new Promise((resolve) => setTimeout(() => resolve(), timeMs));
     }

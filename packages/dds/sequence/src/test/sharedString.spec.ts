@@ -12,7 +12,6 @@ import {
     reservedMarkerIdKey,
     reservedMarkerSimpleTypeKey,
     reservedTileLabelsKey,
-    SnapshotLegacy,
 } from "@fluidframework/merge-tree";
 import {
     MockFluidDataStoreRuntime,
@@ -65,9 +64,8 @@ describe("SharedString", () => {
 
             const subTree = summarizeResult.summary.tree.content as ISummaryTree;
             const subTreeObjectKeys = Object.keys(subTree.tree);
-            assert.strictEqual(subTreeObjectKeys.length, 2, "sub tree should have two entries");
+            assert.strictEqual(subTreeObjectKeys.length, 1, "sub tree should have two entries");
             assert.strictEqual(subTreeObjectKeys[0], "header", "header not present in sub tree");
-            assert.strictEqual(subTreeObjectKeys[1], SnapshotLegacy.catchupOps, "catchupOps not present in sub tree");
 
             return summarizeResult.summary;
         }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fromBase64ToUtf8, gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { assert, gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy } from "@fluidframework/protocol-base";
@@ -71,14 +71,6 @@ export class DocumentStorageService implements IDocumentStorageService {
         const value = await this.manager.getBlob(blobId);
         this.blobsShaCache.set(value.sha, "");
         return value.content;
-    }
-
-    /**
-     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
-     */
-    public async readString(blobId: string): Promise<string> {
-        const base64Result = await this.read(blobId);
-        return fromBase64ToUtf8(base64Result);
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {

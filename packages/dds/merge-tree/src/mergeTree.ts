@@ -31,11 +31,11 @@ import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 
 export interface ReferencePosition {
-    properties: Properties.PropertySet;
+    properties?: Properties.PropertySet;
     refType: ops.ReferenceType;
     // True if this reference is a segment.
     isLeaf(): boolean;
-    getSegment(): ISegment;
+    getSegment(): ISegment | undefined;
     getOffset(): number;
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp);
     hasTileLabels();
@@ -64,7 +64,7 @@ export interface IMergeBlock extends IMergeNodeCommon {
     childCount: number;
     children: IMergeNode[];
     partialLengths?: PartialSequenceLengths;
-    hierBlock(): IHierBlock;
+    hierBlock(): IHierBlock | undefined;
     assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean);
     setOrdinal(child: IMergeNode, index: number);
 }
@@ -87,7 +87,7 @@ export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
     readonly type: string;
     readonly segmentGroups: SegmentGroupCollection;
     readonly trackingCollection: TrackingGroupCollection;
-    propertyManager: SegmentPropertiesManager;
+    propertyManager?: SegmentPropertiesManager;
     localSeq?: number;
     localRemovedSeq?: number;
     seq?: number;  // If not present assumed to be previous to window min
@@ -95,11 +95,16 @@ export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
     localRefs?: LocalReferenceCollection;
     removalsByBranch?: IRemovalInfo[];
     properties?: Properties.PropertySet;
-    addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): Properties.PropertySet;
+    addProperties(
+        newProps: Properties.PropertySet,
+        op?: ops.ICombiningOp,
+        seq?: number,
+        collabWindow?: CollaborationWindow,
+    ): Properties.PropertySet | undefined;
     clone(): ISegment;
     canAppend(segment: ISegment): boolean;
     append(segment: ISegment): void;
-    splitAt(pos: number): ISegment;
+    splitAt(pos: number): ISegment | undefined;
     toJSONObject(): any;
     /**
      * Acks the current segment against the segment group, op, and merge tree.
@@ -123,7 +128,7 @@ export interface IMarkerModifiedAction {
 export interface ISegmentAction<TClientData> {
     // eslint-disable-next-line @typescript-eslint/prefer-function-type
     (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
-        end: number, accum?: TClientData): boolean;
+        end: number, accum: TClientData): boolean;
 }
 
 export interface ISegmentChanges {
@@ -159,7 +164,7 @@ export interface InsertContext {
     candidateSegment?: ISegment;
     prepareEvents?: boolean;
     structureChange?: boolean;
-    leaf: (segment: ISegment, pos: number, ic: InsertContext) => ISegmentChanges;
+    leaf: (segment: ISegment | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
     continuePredicate?: (continueFromBlock: IMergeBlock) => boolean;
 }
 
@@ -341,7 +346,7 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
         this.children = new Array<IMergeNode>(MaxNodesInBlock);
     }
 
-    hierBlock() {
+    hierBlock(): HierMergeBlock | undefined {
         return undefined;
     }
 
@@ -434,14 +439,14 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public seq: number = UniversalSequenceNumber;
     index: number;
     ordinal: string;
-    removedSeq: number;
-    removedClientId: number;
-    removedClientOverlap: number[];
+    removedSeq?: number;
+    removedClientId?: number;
+    removedClientOverlap?: number[];
     removalsByBranch?: IRemovalInfo[];
     readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
-    propertyManager: SegmentPropertiesManager;
-    properties: Properties.PropertySet;
+    propertyManager?: SegmentPropertiesManager;
+    properties?: Properties.PropertySet;
     localRefs?: LocalReferenceCollection;
     abstract readonly type: string;
     localSeq?: number;
@@ -454,8 +459,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         return this.propertyManager.addProperties(newProps, op, seq, collabWindow);
     }
 
-    hasProperty(key: string) {
-        return this.properties && (this.properties[key] !== undefined);
+    hasProperty(key: string): boolean {
+        return !!this.properties && (this.properties[key] !== undefined);
     }
 
     isLeaf() {
@@ -521,7 +526,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         }
     }
 
-    public splitAt(pos: number): ISegment {
+    public splitAt(pos: number): ISegment | undefined {
         if (pos > 0) {
             const leafSegment = this.createSplitSegmentAt(pos);
             if (leafSegment) {
@@ -569,7 +574,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
     abstract clone(): ISegment;
     abstract append(segment: ISegment): void;
-    protected abstract createSplitSegmentAt(pos: number): BaseSegment;
+    protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
 }
 
 export const reservedTileLabelsKey = "referenceTileLabels";
@@ -634,7 +639,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
     }
     public readonly type = Marker.type;
 
-    nestBuddy: Marker;
     public static make(
         refType: ops.ReferenceType, props?: Properties.PropertySet) {
         const marker = new Marker(refType);
@@ -679,7 +683,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
     }
 
     hasSimpleType(simpleTypeName: string) {
-        return this.hasProperty(reservedMarkerSimpleTypeKey) &&
+        return !!this.properties &&
             this.properties[reservedMarkerSimpleTypeKey] === simpleTypeName;
     }
 
@@ -687,7 +691,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
         return this.properties;
     }
 
-    getId(): string {
+    getId(): string | undefined {
         if (this.properties && this.properties[reservedMarkerIdKey]) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return this.properties[reservedMarkerIdKey];
@@ -1215,7 +1219,7 @@ export class MergeTree {
                 // and update the block's info.
                 for (let childIndex = 0;
                     childIndex < maxChildren && nodeIndex < nodes.length;   // While we still have children & nodes left
-                    childIndex++, nodeIndex++                               // Advance to next child & node
+                    childIndex++ , nodeIndex++                               // Advance to next child & node
                 ) {
                     // Insert the next node into the current block
                     this.addNode(block, nodes[nodeIndex]);
@@ -1287,7 +1291,7 @@ export class MergeTree {
     }
 
     private scourNode(node: IMergeBlock, holdNodes: IMergeNode[]) {
-        let prevSegment: ISegment;
+        let prevSegment: ISegment | undefined;
         for (let k = 0; k < node.childCount; k++) {
             const childNode = node.children[k];
             if (childNode.isLeaf()) {
@@ -1654,7 +1658,7 @@ export class MergeTree {
             }
             return segment.removalsByBranch[index];
         } else {
-            return <IRemovalInfo>segment;
+            return segment as IRemovalInfo;
         }
     }
 
@@ -1792,13 +1796,13 @@ export class MergeTree {
 
     private search<TClientData>(
         pos: number, refSeq: number, clientId: number,
-        actions?: SegmentActions<TClientData>, clientData?: TClientData): ISegment {
+        actions?: SegmentActions<TClientData>, clientData?: TClientData): ISegment | undefined {
         return this.searchBlock(this.root, pos, 0, refSeq, clientId, actions, clientData);
     }
 
     private searchBlock<TClientData>(
         block: IMergeBlock, pos: number, segpos: number, refSeq: number, clientId: number,
-        actions?: SegmentActions<TClientData>, clientData?: TClientData): ISegment {
+        actions?: SegmentActions<TClientData>, clientData?: TClientData): ISegment | undefined {
         const children = block.children;
         if (actions && actions.pre) {
             actions.pre(block, segpos, refSeq, clientId, undefined, undefined, clientData);
@@ -1832,7 +1836,7 @@ export class MergeTree {
 
     private backwardSearch<TClientData>(
         pos: number, refSeq: number, clientId: number,
-        actions?: SegmentActions<TClientData>, clientData?: TClientData): ISegment {
+        actions?: SegmentActions<TClientData>, clientData?: TClientData): ISegment | undefined {
         const len = this.getLength(refSeq, clientId);
         if (pos > len) {
             return undefined;
@@ -1842,7 +1846,7 @@ export class MergeTree {
 
     private backwardSearchBlock<TClientData>(
         block: IMergeBlock, pos: number, segEnd: number, refSeq: number, clientId: number,
-        actions?: SegmentActions<TClientData>, clientData?: TClientData): ISegment {
+        actions?: SegmentActions<TClientData>, clientData?: TClientData): ISegment | undefined {
         const children = block.children;
         if (actions && actions.pre) {
             actions.pre(block, segEnd, refSeq, clientId, undefined, undefined, clientData);
@@ -1981,7 +1985,14 @@ export class MergeTree {
         return pos;
     }
 
-    public insertSegments(pos: number, segments: ISegment[], refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs) {
+    public insertSegments(
+        pos: number,
+        segments: ISegment[],
+        refSeq: number,
+        clientId: number,
+        seq: number,
+        opArgs: IMergeTreeDeltaOpArgs | undefined,
+    ) {
         // const tt = MergeTree.traceTraversal;
         // MergeTree.traceTraversal = true;
         this.ensureIntervalBoundary(pos, refSeq, clientId);
@@ -2030,7 +2041,7 @@ export class MergeTree {
             // and split the blocks until we find a block with
             // room
             let block = segment.parent;
-            let ordinalUpdateNode = block;
+            let ordinalUpdateNode: IMergeBlock | undefined = block;
             while (block !== undefined) {
                 if (block.childCount >= MaxNodesInBlock) {
                     const splitNode = this.split(block);
@@ -2067,7 +2078,7 @@ export class MergeTree {
             rebalanceTree(splitSeg.next);
             startSeg = splitSeg.next;
         }
-        this.leftExcursion<ISegment>(startSeg, (backSeg) => {
+        this.leftExcursion(startSeg, (backSeg) => {
             if (!backSeg.isLeaf()) {
                 return true;
             }
@@ -2082,9 +2093,14 @@ export class MergeTree {
             }
             return false;
         });
-        const localSeq = ++this.collabWindow.localSeq;
-        insertSegment.seq = UnassignedSequenceNumber;
-        insertSegment.localSeq = localSeq;
+
+        if (this.collabWindow.collaborating) {
+            insertSegment.localSeq = ++this.collabWindow.localSeq;
+            insertSegment.seq = UnassignedSequenceNumber;
+        }else {
+            insertSegment.seq = UniversalSequenceNumber;
+        }
+
         insertSegment.clientId = clientId;
 
         if (Marker.is(insertSegment)) {
@@ -2108,7 +2124,7 @@ export class MergeTree {
         }
 
         if (this.collabWindow.collaborating) {
-            this.addToPendingList(insertSegment, undefined, localSeq);
+            this.addToPendingList(insertSegment, undefined, insertSegment.localSeq);
         }
     }
 
@@ -2294,8 +2310,7 @@ export class MergeTree {
     }
 
     // Visit segments starting from node's left siblings, then up to node's parent
-    private leftExcursion<TClientData>(node: IMergeNode, leafAction: ISegmentAction<TClientData>) {
-        const actions = { leaf: leafAction };
+    private leftExcursion(node: IMergeNode, leafAction: ISegmentAction<undefined>) {
         let go = true;
         let startNode = node;
         let parent = startNode.parent;
@@ -2309,10 +2324,10 @@ export class MergeTree {
                 if (matchedStart) {
                     if (!node.isLeaf()) {
                         const childBlock = node;
-                        go = this.nodeMapReverse(childBlock, actions, 0, UniversalSequenceNumber,
-                            this.collabWindow.clientId, undefined);
+                        go = this.nodeMapReverse(childBlock, leafAction, 0, UniversalSequenceNumber,
+                            this.collabWindow.clientId);
                     } else {
-                        go = leafAction(node, 0, UniversalSequenceNumber, this.collabWindow.clientId, 0, 0);
+                        go = leafAction(node, 0, UniversalSequenceNumber, this.collabWindow.clientId, 0, 0, undefined);
                     }
                     if (!go) {
                         return;
@@ -2327,7 +2342,7 @@ export class MergeTree {
     }
 
     // Visit segments starting from node's right siblings, then up to node's parent
-    private rightExcursion<TClientData>(node: IMergeNode, leafAction: ISegmentAction<TClientData>) {
+    private rightExcursion(node: IMergeNode, leafAction: ISegmentAction<undefined>) {
         const actions = { leaf: leafAction };
         let go = true;
         let startNode = node;
@@ -2345,7 +2360,7 @@ export class MergeTree {
                         go = this.nodeMap(childBlock, actions, 0, UniversalSequenceNumber, this.collabWindow.clientId,
                             undefined);
                     } else {
-                        go = leafAction(node, 0, UniversalSequenceNumber, this.collabWindow.clientId, 0, 0);
+                        go = leafAction(node, 0, UniversalSequenceNumber, this.collabWindow.clientId, 0, 0, undefined);
                     }
                     if (!go) {
                         return;
@@ -2365,7 +2380,7 @@ export class MergeTree {
         const children = block.children;
         let childIndex: number;
         let child: IMergeNode;
-        let newNode: IMergeNode;
+        let newNode: IMergeNode | undefined;
         let fromSplit: IMergeBlock;
         let found = false;
         for (childIndex = 0; childIndex < block.childCount; childIndex++) {
@@ -2586,7 +2601,7 @@ export class MergeTree {
         this.ensureIntervalBoundary(end, refSeq, clientId);
         const deltaSegments: IMergeTreeSegmentDelta[] = [];
         const localSeq = seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
-        let segmentGroup: SegmentGroup;
+        let segmentGroup: SegmentGroup | undefined;
 
         const annotateSegment = (segment: ISegment) => {
             const propertyDeltas = segment.addProperties(props, combiningOp, seq, this.collabWindow);
@@ -2764,9 +2779,8 @@ export class MergeTree {
 
     private blockUpdate(block: IMergeBlock) {
         let len = 0;
-        let hierBlock: IHierBlock;
-        if (MergeTree.blockUpdateMarkers) {
-            hierBlock = block.hierBlock();
+        const hierBlock = block.hierBlock();
+        if (hierBlock) {
             hierBlock.rightmostTiles = Properties.createMap<Marker>();
             hierBlock.leftmostTiles = Properties.createMap<Marker>();
             hierBlock.rangeStacks = {};
@@ -2774,7 +2788,7 @@ export class MergeTree {
         for (let i = 0; i < block.childCount; i++) {
             const child = block.children[i];
             len += nodeTotalLength(this, child);
-            if (MergeTree.blockUpdateMarkers) {
+            if (hierBlock) {
                 hierBlock.addNodeReferences(this, child);
             }
             if (this.blockUpdateActions) {
@@ -2784,7 +2798,8 @@ export class MergeTree {
         block.cachedLength = len;
     }
 
-    private blockUpdatePathLengths(block: IMergeBlock, seq: number, clientId: number, newStructure = false) {
+    private blockUpdatePathLengths(startBlock: IMergeBlock, seq: number, clientId: number, newStructure = false) {
+        let block: IMergeBlock | undefined = startBlock;
         while (block !== undefined) {
             if (newStructure) {
                 this.nodeUpdateLengthNewStructure(block);
@@ -2864,7 +2879,9 @@ export class MergeTree {
 
     public incrementalBlockMap<TContext>(stateStack: Collections.Stack<IncrementalMapState<TContext>>) {
         while (!stateStack.empty()) {
-            const state = stateStack.top();
+            // We already check the stack is not empty
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const state = stateStack.top()!;
             if (state.op !== IncrementalExecOp.Go) {
                 return;
             }
@@ -2919,7 +2936,7 @@ export class MergeTree {
 
     private nodeMap<TClientData>(
         node: IMergeBlock, actions: SegmentActions<TClientData>, pos: number, refSeq: number,
-        clientId: number, accum?: TClientData, start?: number, end?: number) {
+        clientId: number, accum: TClientData, start?: number, end?: number) {
         if (start === undefined) {
             start = 0;
         }
@@ -3000,9 +3017,9 @@ export class MergeTree {
     }
 
     // Straight call every segment; goes until leaf action returns false
-    private nodeMapReverse<TClientData>(
-        block: IMergeBlock, actions: SegmentActions<TClientData>, pos: number, refSeq: number,
-        clientId: number, accum?: TClientData) {
+    private nodeMapReverse(
+        block: IMergeBlock, leafAction: ISegmentAction<undefined>, pos: number, refSeq: number,
+        clientId: number) {
         let go = true;
         const children = block.children;
         for (let childIndex = block.childCount - 1; childIndex >= 0; childIndex--) {
@@ -3011,10 +3028,10 @@ export class MergeTree {
                 // Found entry containing pos
                 if (!child.isLeaf()) {
                     if (go) {
-                        go = this.nodeMapReverse(child, actions, pos, refSeq, clientId, accum);
+                        go = this.nodeMapReverse(child, leafAction, pos, refSeq, clientId);
                     }
                 } else {
-                    go = actions.leaf(child, pos, refSeq, clientId, 0, 0, accum);
+                    go = leafAction(child, pos, refSeq, clientId, 0, 0, undefined);
                 }
             }
             if (!go) {

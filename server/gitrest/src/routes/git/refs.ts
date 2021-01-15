@@ -4,8 +4,12 @@
  */
 
 import { IRef } from "@fluidframework/gitresources";
-import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-core";
+import {
+    IGetRefParamsExternal,
+    ICreateRefParamsExternal,
+    IPatchRefParamsExternal } from "@fluidframework/server-services-client";
 import { Response, Router } from "express";
+import safeStringify from "json-stringify-safe";
 import * as nconf from "nconf";
 import git from "nodegit";
 import * as winston from "winston";
@@ -36,6 +40,7 @@ async function getRef(
     owner: string,
     repo: string,
     refId: string,
+    getRefParams: IGetRefParamsExternal | undefined,
     externalStorageManager: IExternalStorageManager): Promise<IRef> {
     const repository = await repoManager.open(owner, repo);
     try {
@@ -45,17 +50,21 @@ async function getRef(
         // Lookup external storage if commit does not exist.
         const fileName = refId.substring(refId.lastIndexOf("/") + 1);
         // If file does not exist or error trying to look up commit, return the original error.
-        try {
-            const result = await externalStorageManager.read(repo, fileName);
-            if (!result) {
-                winston.error(`getRef error: ${err} repo: ${repo} ref: ${refId}`);
+        if (getRefParams?.config?.enabled) {
+            try {
+                const result = await externalStorageManager.read(repo, fileName);
+                if (!result) {
+                    winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${repo} ref: ${refId}`);
+                    return Promise.reject(err);
+                }
+                return getRef(repoManager, owner, repo, refId, getRefParams, externalStorageManager);
+            } catch (bridgeError) {
+                winston.error(`Giving up on creating ref. BridgeError: ${safeStringify(bridgeError, undefined, 2)}`);
                 return Promise.reject(err);
             }
-            return getRef(repoManager, owner, repo, refId, externalStorageManager);
-        } catch (bridgeError) {
-            winston.error(`Giving up on creating ref. BridgeError: ${bridgeError}`);
-            return Promise.reject(err);
         }
+        winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${repo} ref: ${refId}`);
+        return Promise.reject(err);
     }
 }
 
@@ -114,8 +123,9 @@ async function patchRef(
     if (patchParams.config?.enabled) {
         try {
             await externalStorageManager.write(repo, refId, patchParams.sha, true);
-        } catch (e) {
-            winston.error(`External storage write failed while trying to update file ${repo} / ${refId}`);
+        } catch (error) {
+            winston.error(`External storage write failed while trying to update file 
+            ${safeStringify(error, undefined, 2)}, ${repo} / ${refId}`);
         }
     }
 
@@ -159,6 +169,7 @@ export function create(
             request.params.owner,
             request.params.repo,
             getRefId(request.params[0]),
+            utils.getReadParams(request.query?.config),
             externalStorageManager);
         handleResponse(resultP, response);
     });
