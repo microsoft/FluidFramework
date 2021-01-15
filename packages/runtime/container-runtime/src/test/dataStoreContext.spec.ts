@@ -69,7 +69,6 @@ describe("Data Store Context Tests", () => {
                 { throwOnFailure: true },
                 getGCDataFn,
                 getInitialGCSummaryDetailsFn,
-                [] /* usedRoutes */, // Data store will be unreferenced by default
             );
 
             const factory: IFluidDataStoreFactory = {
@@ -271,17 +270,17 @@ describe("Data Store Context Tests", () => {
                 // Get the summarizer node for this data store which tracks its referenced state.
                 const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
                 assert.strictEqual(
-                    dataStoreSummarizerNode?.isReferenced(), false, "Data store should be unreferenced by default");
+                    dataStoreSummarizerNode?.isReferenced(), true, "Data store should be referenced by default");
+
+                // Update the used routes to not include route to the data store.
+                localDataStoreContext.updateUsedRoutes([]);
+                assert.strictEqual(
+                    dataStoreSummarizerNode?.isReferenced(), false, "Data store should now be unreferenced");
 
                 // Add the data store's route (empty string) to its used routes.
                 localDataStoreContext.updateUsedRoutes([""]);
                 assert.strictEqual(
                     dataStoreSummarizerNode?.isReferenced(), true, "Data store should now be referenced");
-
-                // Update the data store to not have any used routes.
-                localDataStoreContext.updateUsedRoutes([]);
-                assert.strictEqual(
-                    dataStoreSummarizerNode?.isReferenced(), false, "Data store should now be unreferenced");
             });
         });
     });
@@ -313,7 +312,6 @@ describe("Data Store Context Tests", () => {
                 undefined,
                 getGCDataFn,
                 getInitialGCSummaryDetailsFn,
-                [] /* usedRoutes */, // Data store will be unreferenced by default
             );
 
             const factory: { [key: string]: any } = {};
@@ -505,7 +503,9 @@ describe("Data Store Context Tests", () => {
                 const blob = summarizeResult.summary.tree[gcBlobKey] as ISummaryBlob;
 
                 const contents = JSON.parse(blob.content as string) as IGarbageCollectionSummaryDetails;
-                assert.deepStrictEqual(contents, gcDetails, "GC data from summary is incorrect.");
+                assert.deepStrictEqual(contents.gcData, gcDetails.gcData, "GC data from summary is incorrect.");
+
+                assert.deepStrictEqual(contents.usedRoutes, [""], "Used routes should be the default");
             });
 
             it("can generate GC data with GC details in initial summary", async () => {
@@ -557,7 +557,7 @@ describe("Data Store Context Tests", () => {
                     snapshotFormatVersion: undefined,
                 };
                 const gcDetails: IGarbageCollectionSummaryDetails = {
-                    usedRoutes: [],
+                    usedRoutes: [""], // Set initial used routes to be same as the default used routes.
                 };
                 const attributesBuffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
                 const gcDetailsBuffer = IsoBuffer.from(JSON.stringify(gcDetails), "utf-8");
@@ -584,14 +584,14 @@ describe("Data Store Context Tests", () => {
                     createSummarizerNodeFn,
                 );
 
-                // The data in the store has not changed since last summary and the reference used routes and current
-                // used routes (default) are both empty. So, summarize should return a handle.
+                // The data in the store has not changed since last summary and the reference used routes (from initial
+                // used routes) and current used routes (default) are both empty. So, summarize should return a handle.
                 let summarizeResult = await remotedDataStoreContext.summarize(false /* fullTree */);
                 assert(summarizeResult.summary.type === SummaryType.Handle,
                     "summarize should return a handle since nothing changed");
 
-                // Update the used routes of the data store.
-                remotedDataStoreContext.updateUsedRoutes([""]);
+                // Update the used routes of the data store to a different value than current.
+                remotedDataStoreContext.updateUsedRoutes([]);
 
                 // Since the used state has changed, it should generate a full summary tree.
                 summarizeResult = await remotedDataStoreContext.summarize(false /* fullTree */);
@@ -622,20 +622,20 @@ describe("Data Store Context Tests", () => {
                     createSummarizerNodeFn,
                 );
 
-                // Get the summarizer node for this data store which tracks its used state.
+                // Get the summarizer node for this data store which tracks its referenced state.
                 const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
                 assert.strictEqual(
-                    dataStoreSummarizerNode?.isReferenced(), false, "Data store should be unreferenced by default");
+                    dataStoreSummarizerNode?.isReferenced(), true, "Data store should be referenced by default");
+
+                // Update the used routes to not include route to the data store.
+                remotedDataStoreContext.updateUsedRoutes([]);
+                assert.strictEqual(
+                    dataStoreSummarizerNode?.isReferenced(), false, "Data store should now be unreferenced");
 
                 // Add the data store's route (empty string) to its used routes.
                 remotedDataStoreContext.updateUsedRoutes([""]);
                 assert.strictEqual(
                     dataStoreSummarizerNode?.isReferenced(), true, "Data store should now be referenced");
-
-                // Update the data store to not have any used routes.
-                remotedDataStoreContext.updateUsedRoutes([]);
-                assert.strictEqual(
-                    dataStoreSummarizerNode?.isReferenced(), false, "Data store should now be unreferenced");
             });
         });
     });

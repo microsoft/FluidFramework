@@ -47,8 +47,10 @@ class SummaryNodeWithGC extends SummaryNode {
 /**
  * Extends the functionality of SummarizerNode to manage this node's garbage collection data:
  * - Adds a new API `getGCData` to return GC data of this node.
- * - Caches the result of getGCData method to be used if nothing changes between summaries.
+ * - Caches the result of `getGCData` to be used if nothing changes between summaries.
  * - Adds GC data to the result of summarize.
+ * - Manages the used routes of this node. These are used to identify if this node is referenced in the document
+ *   and to determine if the node's used state changed since last summary.
  * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  *   directly into summarizeInternal method.
  */
@@ -64,6 +66,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     // The GC details of this node in the initial summary.
     private readonly gcDetailsInInitialSummaryP: LazyPromise<IGarbageCollectionSummaryDetails>;
 
+    // Set used routes to have self route by default. This makes the node referenced by default. This is done to ensure
+    // that this node is not marked as collected when running GC has been disabled. Once, the option to disable GC is
+    // removed (from runGC flag in IContainerRuntimeOptions), this should be changed to be have no routes by default.
+    private _usedRoutes: string[] = [""];
     public get usedRoutes(): string[] {
         return this._usedRoutes;
     }
@@ -83,7 +89,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         wipSummaryLogger?: ITelemetryLogger,
         private readonly getGCDataFn?: () => Promise<IGarbageCollectionData>,
         getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
-        private _usedRoutes: string[] = [],
     ) {
         super(
             logger,
@@ -138,8 +143,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     /**
-     * Returns the GC data of this node. If nothing has changed since the last time we summarized, it tries to reuse
-     * existing data.
+     * Returns the GC data of this node. If nothing has changed since last summary, it tries to reuse the data from
+     * the previous summary. Else, it gets new GC data from the underlying Fluid object.
      */
     public async getGCData(): Promise<IGarbageCollectionData> {
         assert(this.getGCDataFn !== undefined, "GC data cannot be retrieved without getGCDataFn");
@@ -270,7 +275,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         config: ISummarizerNodeConfig = {},
         getGCDataFn?: () => Promise<IGarbageCollectionData>,
         getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
-        usedRoutes?: string[],
     ): ISummarizerNodeWithGC {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
 
@@ -285,7 +289,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             this.wipSummaryLogger,
             getGCDataFn,
             getInitialGCSummaryDetailsFn,
-            usedRoutes,
         );
 
         // If a summary is in progress, update the child's work-in-progress state.
@@ -378,5 +381,4 @@ export const createRootSummarizerNodeWithGC = (
     undefined /* wipSummaryLogger */,
     getGCDataFn,
     getInitialGCSummaryDetailsFn,
-    [""] /* usedRoutes */, // Add self route (empty string) because root node is always considered used.
 );

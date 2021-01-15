@@ -212,10 +212,7 @@ describe("Routerlicious", () => {
                                 assert.fail("Connection should have failed");
                             })
                             .catch((err) => {
-                                if (err instanceof Array && err[0]?.content) {
-                                    return err[0].content;
-                                }
-                                assert.fail("Connection failed for other reason(s) than a nack");
+                                return err;
                             }) as INackContent;
                         assert.strictEqual(failedConnectMessage.code, 429);
                         assert.strictEqual(failedConnectMessage.type, NackErrorType.ThrottlingError);
