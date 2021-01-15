@@ -23,7 +23,7 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
     chunkSegmentCount: number;
     chunkLengthChars: number;
     totalLengthChars: number;
-totalSegmentCount: number;
+    totalSegmentCount: number;
     chunkSequenceNumber: number;
     chunkMinSequenceNumber?: number;
     segmentTexts: JsonSegmentSpecs[];
