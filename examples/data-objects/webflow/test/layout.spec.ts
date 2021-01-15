@@ -109,10 +109,14 @@ describe("Layout", () => {
         });
 
         it("Insert paragraph", async () => {
+            console.log("blah");
             doc.insertText(0, "023");
+            console.log("blah");
             // Force contiguous text segment to split into three segments.
             doc.annotate(1, 2, { zamboni: false });
+            console.log("blah");
             await check();
+            console.log("blah");
             doc.insertParagraph(1);
             await check();
         });
