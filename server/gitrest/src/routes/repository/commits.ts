@@ -18,7 +18,7 @@ export async function getCommits(
     repo: string,
     ref: string,
     count: number,
-    readParams: IGetRefParamsExternal,
+    readParams: IGetRefParamsExternal | undefined,
     externalStorageManager: IExternalStorageManager): Promise<resources.ICommitDetails[]> {
     const repository = await repoManager.open(owner, repo);
     try {
