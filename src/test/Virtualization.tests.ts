@@ -1,68 +1,122 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
 
-import { IsoBuffer } from '@fluidframework/common-utils';
-import { Loader } from '@fluidframework/container-loader';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { LocalDocumentServiceFactory, LocalResolver } from '@fluidframework/local-driver';
+// import { IsoBuffer } from '@fluidframework/common-utils';
+import { DataObject } from '@fluidframework/aqueduct';
+import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
+import { Container } from '@fluidframework/container-loader';
+import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
-import { LocalDeltaConnectionServer } from '@fluidframework/server-local-server';
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
-	LocalCodeLoader,
-	SupportedExportInterfaces,
+	LocalTestObjectProvider,
+	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 } from '@fluidframework/test-utils';
-import { expect } from 'chai';
-import { compareEdits } from '../EditUtilities';
+// import { expect } from 'chai';
+import { editsPerChunk } from '../EditLog';
+import { newEdit, setTrait } from '../EditUtilities';
 import { EditId } from '../Identifiers';
-import { Delete, Edit, StableRange } from '../PersistedTypes';
+import { Edit } from '../PersistedTypes';
 import { SharedTree } from '../SharedTree';
-import { makeTestNode } from './utilities/TestUtilities';
+import { makeTestNode, testTrait } from './utilities/TestUtilities';
+import { expect } from 'chai';
+import { ISerializedHandle } from '@fluidframework/core-interfaces';
+import { assertNotUndefined } from '../Common';
 
-describe.only('SharedTree virtualization', () => {
-	it('can serialize and deserialize an IFluidHandle', async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		const stringId = 'tree';
-		const registry: ChannelFactoryRegistry = [[stringId, SharedTree.getFactory()]];
-		const fluidExport: SupportedExportInterfaces = {
-			IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
-		};
-		const documentId = 'test';
+export class TestDataObject extends DataObject {
+	public static readonly type = '@fluid-example/test-dataStore';
+	public get _context() {
+		return this.context;
+	}
+	public get _runtime() {
+		return this.runtime;
+	}
+	public get _root() {
+		return this.root;
+	}
+}
 
-		// Create the client
-		const urlResolver = new LocalResolver();
-		const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-		const codeDetails = { package: 'no-dynamic-pkg' };
-		const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
+enum DataObjectFactoryType {
+	Primed, // default
+	Test,
+}
 
-		const loader = new Loader({
-			urlResolver,
-			documentServiceFactory,
-			codeLoader,
-		});
+interface ITestContainerConfig {
+	// TestFluidDataObject instead of PrimedDataStore
+	fluidDataObjectType?: DataObjectFactoryType;
 
-		const container = await loader.createDetachedContainer(codeDetails);
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');
-		const sharedTree = await dataObject.root.get<IFluidHandle<SharedTree>>(stringId).get();
+	// And array of channel name and DDS factory pair to create on container creation time
+	registry?: ChannelFactoryRegistry;
 
-		await container.attach(urlResolver.createCreateNewRequest(documentId));
+	// Container runtime options for the container instance
+	runtimeOptions?: IContainerRuntimeOptions;
+}
 
-		const node = makeTestNode();
-		const editId = '75dd0d7d-ea87-40cf-8860-dc2b9d827597' as EditId;
-		const expectedEdit: Edit = {
-			changes: [Delete.create(StableRange.only(node))],
-			id: editId,
-		};
+const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
+	return new TestFluidObjectFactory(registry);
+};
 
-		const serializedHandle = await sharedTree.serializeHandleWithEdit([expectedEdit]);
-		const deserializedHandle = sharedTree.deserializeHandle(serializedHandle);
+describe.skip('SharedTree history virtualization', () => {
+	const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+		new TestContainerRuntimeFactory(
+			TestDataObject.type,
+			createTestFluidDataStoreFactory(containerOptions?.registry),
+			containerOptions?.runtimeOptions || { initialSummarizerDelayMs: 0 }
+		);
 
-		const editsReceived = JSON.parse(IsoBuffer.from(await deserializedHandle.get()).toString()).edits[0];
-		expect(compareEdits(editsReceived, expectedEdit)).to.be.true;
+	const localTestObjectProvider = new LocalTestObjectProvider(runtimeFactory);
+
+	const treeId = 'test';
+	const registry: ChannelFactoryRegistry = [[treeId, SharedTree.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
+	let sharedTree1: SharedTree;
+	let sharedTree2: SharedTree;
+
+	beforeEach(async () => {
+		const container1 = (await localTestObjectProvider.makeTestContainer(testContainerConfig)) as Container;
+		const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, 'default');
+		sharedTree1 = await dataObject1.getSharedObject<SharedTree>(treeId);
 	});
 
-	it('can blob most recent sequenced edits and save the blob handle to the summary', () => {});
+	// TODO:#49901: Enable test when format version 0.1.0 is written.
+	it.skip('test', async () => {
+		const expectedEdits: Edit[] = [];
+		const expectedEditIds: EditId[] = [];
 
-	it('can load an edit from a blob', () => {});
+		// Add enough edits to make up one chunk
+		while (expectedEdits.length < editsPerChunk) {
+			const [id, edit] = newEdit(setTrait(testTrait, [makeTestNode()]));
+			expectedEditIds.push(id);
+			expectedEdits.push(edit);
+			sharedTree1.processLocalEdit(id, edit);
+		}
+
+		// Wait for the ops to to be submitted and processed across the containers.
+		await localTestObjectProvider.opProcessingController.process();
+
+		// Create summaries until the chunk handle is returned
+		let handle: ISerializedHandle | undefined = undefined;
+
+		while (handle === undefined) {
+			const chunk = assertNotUndefined(assertNotUndefined(sharedTree1.saveSummary().editHistory).editChunks)[0];
+			if (Array.isArray(chunk)) {
+				continue;
+			}
+
+			handle = chunk;
+		}
+
+		// Load a second tree
+		const container2 = (await localTestObjectProvider.loadTestContainer(testContainerConfig)) as Container;
+		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, 'default');
+		sharedTree2 = await dataObject2.getSharedObject<SharedTree>(treeId);
+
+		// Ensure chunked edit can be retrieved
+		expect(sharedTree2.edits.getAtIndex(2)).to.equal(expectedEdits[2]);
+	});
 });
