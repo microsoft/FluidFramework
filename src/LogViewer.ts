@@ -190,8 +190,8 @@ export class CachingLogViewer implements LogViewer {
 				revision <= this.log.numberOfSequencedEdits + 1,
 				'revision must correspond to the result of a SequencedEdit'
 			);
-			const computed = this.getSnapshot(revision);
-			assert((await computed).equals(snapshot), 'setKnownRevision passed invalid snapshot');
+			const computed = await this.getSnapshot(revision);
+			assert(computed.equals(snapshot), 'setKnownRevision passed invalid snapshot');
 		}
 		this.sequencedSnapshotCache.set(revision, snapshot);
 	}

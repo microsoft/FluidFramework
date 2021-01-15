@@ -1,51 +1,60 @@
-import { ISerializedHandle } from '@fluidframework/core-interfaces';
-import { assert } from './Common';
 import { editsPerChunk } from './EditLog';
 import { EditId } from './Identifiers';
 import { Edit } from './PersistedTypes';
-import { deserialize, ErrorString, SharedTreeSummary } from './Summary';
+import { ErrorString, SharedTreeSummary } from './Summary';
 
 const readFormatVersion = '0.1.0';
 
-export function transpileSummaryToReadFormat(summary: string): SharedTreeSummary | ErrorString {
-	const parsedSummary = JSON.parse(summary);
-	const { version } = parsedSummary;
+/**
+ * @returns SharedTreeSummary that can be used to initialize a SharedTree, or an ErrorString if the summary could not be transpiled.
+ * */
+export function transpileSummaryToReadFormat(summary: SharedTreeSummary): SharedTreeSummary | ErrorString {
+	const { currentTree, version } = summary;
 
 	if (version === readFormatVersion) {
-		return deserialize(summary);
-	}
+		const { editHistory } = summary;
 
-	if (version === '0.0.2') {
-		const oldSummary = deserialize(summary);
-
-		if (typeof oldSummary === 'string') {
-			return oldSummary;
-		}
-
-		const { currentTree, sequencedEdits } = oldSummary;
-		const editChunks: (ISerializedHandle | Edit[])[] = [];
-		const editIds: EditId[] = [];
-
-		sequencedEdits?.map(({ changes, id }) => {
-			editIds.push(id);
-			const lastEditChunk = editChunks[editChunks.length - 1];
-			assert(Array.isArray(lastEditChunk));
-			if (lastEditChunk.length < editsPerChunk) {
-				lastEditChunk.push({ changes });
-			} else {
-				editChunks.push([{ changes }]);
+		if (editHistory !== undefined) {
+			if (typeof editHistory !== 'object') {
+				return 'Edit history is not an object';
 			}
-		});
 
-		return {
-			currentTree,
-			editHistory: {
-				editChunks,
-				editIds,
-			},
-			version: readFormatVersion,
-		};
+			const { editChunks, editIds } = editHistory;
+
+			// TODO:#45414: Add more robust validation of the summary's fields. Even if they are present, they may be malformed.
+			if (editChunks !== undefined && editIds !== undefined) {
+				return { currentTree, editHistory, version };
+			}
+		}
+	} else if (version === '0.0.2') {
+		const { sequencedEdits } = summary;
+
+		if (sequencedEdits !== undefined) {
+			const editChunks: Edit[][] = [];
+			const editIds: EditId[] = [];
+
+			sequencedEdits?.map(({ changes, id }) => {
+				editIds.push(id);
+				const lastEditChunk = editChunks[editChunks.length - 1];
+				if (lastEditChunk !== undefined && lastEditChunk.length < editsPerChunk) {
+					lastEditChunk.push({ changes });
+				} else {
+					editChunks.push([{ changes }]);
+				}
+			});
+
+			return {
+				currentTree,
+				editHistory: {
+					editChunks,
+					editIds,
+				},
+				version: readFormatVersion,
+			};
+		}
+	} else {
+		return 'Format version is not supported';
 	}
 
-	return 'Format version is not supported';
+	return 'Missing fields on summary';
 }

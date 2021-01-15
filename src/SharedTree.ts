@@ -27,7 +27,14 @@ import { newEdit } from './EditUtilities';
 import { EditId } from './Identifiers';
 import { SharedTreeFactory } from './Factory';
 import { Snapshot } from './Snapshot';
-import { SharedTreeSummarizer, formatVersion, serialize, SharedTreeSummary, fullHistorySummarizer } from './Summary';
+import {
+	SharedTreeSummarizer,
+	formatVersion,
+	serialize,
+	SharedTreeSummary,
+	fullHistorySummarizer,
+	deserialize,
+} from './Summary';
 import * as HistoryEditFactory from './HistoryEditFactory';
 import { initialTree } from './InitialTree';
 import { CachingLogViewer, LogViewer } from './LogViewer';
@@ -47,7 +54,7 @@ export type ErrorString = string;
 const initialSummary: SharedTreeSummary = {
 	version: formatVersion,
 	currentTree: initialTree,
-	editHistory: { editChunks: [], editIds: [] },
+	sequencedEdits: [],
 };
 
 /**
@@ -286,11 +293,11 @@ export class SharedTree extends SharedObject {
 		return HistoryEditFactory.revert(edit, revision);
 	}
 
-	public deserializeHandle(serializedHandle: ISerializedHandle): IFluidHandle<ArrayBufferLike> {
+	private deserializeHandle(serializedHandle: ISerializedHandle): IFluidHandle<ArrayBufferLike> {
 		return this.serializer.parse(JSON.stringify(serializedHandle));
 	}
 
-	public toSerializable(value: IFluidHandle<ArrayBufferLike>): ISerializedHandle {
+	private toSerializable(value: IFluidHandle<ArrayBufferLike>): ISerializedHandle {
 		// Stringify to convert to the serialized handle values - and then parse
 		const stringified = this.serializer.stringify(value, this.handle);
 		return JSON.parse(stringified);
@@ -384,7 +391,11 @@ export class SharedTree extends SharedObject {
 		summary: SharedTreeSummary,
 		expensiveValidation: boolean
 	): { editLog: EditLog; logViewer: LogViewer } {
-		const { editHistory, currentTree } = summary;
+		const transpiledSummary = transpileSummaryToReadFormat(summary);
+		if (typeof transpiledSummary === 'string') {
+			fail(transpiledSummary); // TODO: Where does this error propagate?
+		}
+		const { editHistory, currentTree } = transpiledSummary;
 		const { editChunks, editIds } = assertNotUndefined(
 			editHistory,
 			'Transpiling should result in editChunks being populated.'
@@ -435,7 +446,7 @@ export class SharedTree extends SharedObject {
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const header = await storage.read(snapshotFileName);
-		const summary = transpileSummaryToReadFormat(fromBase64ToUtf8(header));
+		const summary = deserialize(fromBase64ToUtf8(header));
 		if (typeof summary === 'string') {
 			fail(summary); // TODO: Where does this error propagate?
 		}

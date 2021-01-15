@@ -91,7 +91,7 @@ type OrderedEditId = SequencedOrderedEditId | LocalOrderedEditId;
  * The number of edits associated with each blob.
  * @internal
  */
-export const editsPerChunk = 10;
+export const editsPerChunk = 100;
 
 /**
  * The number of blobs to be loaded in memory at any time.
@@ -137,8 +137,8 @@ export class EditLog implements OrderedEditSet {
 			return { handle: chunk };
 		});
 
-		this.maximumEvictedIndex = this.editChunks.length - 1;
 		this.editIds = editIds.slice();
+		this.maximumEvictedIndex = (this.editChunks.length - 1) * editsPerChunk - 1;
 
 		this.editIds.forEach((id, index) => this.allEditIds.set(id, { isLocal: false, index }));
 	}
@@ -201,7 +201,7 @@ export class EditLog implements OrderedEditSet {
 	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.idOf}
 	 */
 	public idOf(index: number): EditId {
-		if (this.numberOfSequencedEdits < index) {
+		if (this.numberOfSequencedEdits <= index) {
 			return this.localEditIds[index - this.numberOfSequencedEdits];
 		}
 

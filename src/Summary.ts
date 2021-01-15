@@ -5,7 +5,7 @@
 
 import { EditId, TraitLabel } from './Identifiers';
 import { assert, assertNotUndefined } from './Common';
-import { OrderedEditSet } from './EditLog';
+import { editsPerChunk, OrderedEditSet } from './EditLog';
 import { newEdit, setTrait } from './EditUtilities';
 import { ChangeNode, Edit, Change } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
@@ -102,37 +102,8 @@ export function deserialize(jsonSummary: string): SharedTreeSummary | ErrorStrin
 
 	const { version, currentTree } = summary;
 
-	if (version !== formatVersion) {
-		return 'Summary format version not supported';
-	}
-
-	if (currentTree !== undefined) {
-		/** -------- FORMAT VERSION 0.0.2 --------- */
-		const { sequencedEdits } = summary;
-
-		if (sequencedEdits !== undefined) {
-			// TODO:#45414: Add more robust validation of the summary's fields. Even if they are present, they may be malformed.
-			return { currentTree, sequencedEdits, version };
-		}
-		/** --------- END OF FORMAT VERSION 0.0.2 --------- */
-
-		// TODO:#49901: Use the following deserialization code for format version 0.1.0, remove version 0.0.2
-		/** -------- FORMAT VERSION 0.1.0 --------- */
-		const { editHistory } = summary;
-
-		if (editHistory !== undefined) {
-			if (typeof editHistory !== 'object') {
-				return 'Edit history is not an object';
-			}
-
-			const { editChunks, editIds } = editHistory;
-
-			// TODO:#45414: Add more robust validation of the summary's fields. Even if they are present, they may be malformed.
-			if (editChunks !== undefined && editIds !== undefined) {
-				return { currentTree, editHistory, version };
-			}
-		}
-		/** --------- END OF FORMAT VERSION 0.1.0 --------- */
+	if (version !== undefined && currentTree !== undefined) {
+		return { version, currentTree, ...summary };
 	}
 
 	return 'Missing fields on summary';
@@ -152,16 +123,19 @@ export function fullHistorySummarizer(
 	const editIds = assertNotUndefined(editLogSummary.editIds);
 
 	const sequencedEdits: { changes: readonly Change[]; id: EditId }[] = [];
-	assertNotUndefined(editChunks).forEach((chunk, index) => {
+	assertNotUndefined(editChunks).forEach((chunk, chunkIndex) => {
 		assert(
 			Array.isArray(chunk),
 			'Handles should not be included in the summary until format version 0.1.0 is being written.'
 		);
 
-		chunk.forEach(({ changes }) => {
+		chunk.forEach(({ changes }, editIndex) => {
 			sequencedEdits.push({
 				changes,
-				id: assertNotUndefined(editIds[index], 'Number of edits should match number of edit IDs.'),
+				id: assertNotUndefined(
+					editIds[chunkIndex * editsPerChunk + editIndex],
+					'Number of edits should match number of edit IDs.'
+				),
 			});
 		});
 	});

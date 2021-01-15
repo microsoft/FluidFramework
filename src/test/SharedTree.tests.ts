@@ -26,6 +26,7 @@ import {
 	assertNoDelta,
 } from './utilities/TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
+import { transpileSummaryToReadFormat } from '../SummaryBackCompatibility';
 
 describe('SharedTree', () => {
 	describe('SharedTree before initialization', () => {
@@ -475,14 +476,7 @@ describe('SharedTree', () => {
 			tree.editor.insert(newNode, StablePlace.before(left));
 			containerRuntimeFactory.processAllMessages();
 
-			const serialized = serialize(tree.saveSummary());
-
-			// The second tree is not caught up to the first tree yet
-			expect(tree.equals(secondTree)).to.be.false;
-
-			const summary = deserialize(serialized);
-			assert.typeOf(summary, 'object');
-			secondTree.loadSummary(summary as SharedTreeSummary);
+			secondTree.loadSummary(tree.saveSummary());
 
 			// Trees should have equal state since we deserialized the first tree's state into the second tree
 			expect(tree.equals(secondTree)).to.be.true;
@@ -494,14 +488,10 @@ describe('SharedTree', () => {
 
 			containerRuntimeFactory.processAllMessages();
 
-			const serialized = serialize(tree.saveSummary());
-
 			// The second tree is not caught up to the first tree yet
 			expect(tree.equals(secondTree)).to.be.false;
 
-			const summary = deserialize(serialized);
-			assert.typeOf(summary, 'object');
-			secondTree.loadSummary(summary as SharedTreeSummary);
+			secondTree.loadSummary(tree.saveSummary());
 
 			// Trees should have equal state since we deserialized the first tree's state into the second tree
 			expect(tree.equals(secondTree)).to.be.true;
@@ -526,7 +516,7 @@ describe('SharedTree', () => {
 			// The history should have been dropped by the default handling behavior.
 			// It will contain a single entry setting the tree to equal the head revision.
 			expect(tree.edits.length).to.equal(1);
-			expect(await tree.edits.tryGetEdit(editID)).to.be.undefined;
+			expect(tree.edits.tryGetEdit(editID)).to.be.undefined;
 		});
 	});
 
