@@ -131,7 +131,11 @@ export function assertNoDelta(tree: SharedTree, editor: () => void) {
 	editor();
 	const snapshotB = tree.currentView;
 	const delta = snapshotA.delta(snapshotB);
-	expect(delta).deep.equals([]);
+	expect(delta).deep.equals({
+		changed: [],
+		added: [],
+		removed: [],
+	});
 }
 
 /** Left node of 'simpleTestTree' */

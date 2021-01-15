@@ -6,7 +6,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { assert, compareArrays } from './Common';
 import { DetachedSequenceId, EditId } from './Identifiers';
-import { Edit, ChangeNodeSequence, EditNode, ChangeNode, Change, StableRange, TraitLocation } from './PersistedTypes';
+import { Edit, TreeNodeSequence, EditNode, ChangeNode, Change, StableRange, TraitLocation } from './PersistedTypes';
 
 /**
  * Functions for constructing and comparing Edits.
@@ -95,7 +95,7 @@ export function compareTraits(traitA: TraitLocation, traitB: TraitLocation): boo
  * Create a sequence of changes that resets the contents of `trait`.
  * @public
  */
-export function setTrait(trait: TraitLocation, nodes: ChangeNodeSequence<EditNode>): readonly Change[] {
+export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[] {
 	const id = 0 as DetachedSequenceId;
 	const traitContents = StableRange.all(trait);
 

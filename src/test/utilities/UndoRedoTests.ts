@@ -6,8 +6,8 @@
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { makeEmptyNode, setUpTestSharedTree } from './TestUtilities';
 import { Change, ChangeNode, StablePlace } from '../../PersistedTypes';
+import { makeEmptyNode, setUpTestSharedTree } from './TestUtilities';
 
 export interface SharedTreeTestOptions {
 	/** Determines if the tests should be run in local state or connected state with a remote SharedTree */

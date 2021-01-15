@@ -4,6 +4,7 @@
  */
 
 import { fromBase64ToUtf8 } from '@fluidframework/common-utils';
+import { IFluidHandle, IFluidSerializer, ISerializedHandle } from '@fluidframework/core-interfaces';
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
 import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
@@ -24,14 +25,12 @@ import {
 } from './PersistedTypes';
 import { newEdit } from './EditUtilities';
 import { EditId } from './Identifiers';
-// eslint-disable-next-line import/no-cycle
 import { SharedTreeFactory } from './Factory';
 import { Snapshot } from './Snapshot';
 import { SharedTreeSummarizer, formatVersion, serialize, SharedTreeSummary, fullHistorySummarizer } from './Summary';
 import * as HistoryEditFactory from './HistoryEditFactory';
 import { initialTree } from './InitialTree';
 import { CachingLogViewer, LogViewer } from './LogViewer';
-import { IFluidHandle, ISerializedHandle } from '@fluidframework/core-interfaces';
 import { transpileSummaryToReadFormat } from './SummaryBackCompatibility';
 
 /**
@@ -43,7 +42,6 @@ const snapshotFileName = 'header';
  * A developer facing (non-localized) error message.
  * TODO: better error system.
  */
-// eslint-disable-next-line import/no-unused-modules
 export type ErrorString = string;
 
 const initialSummary: SharedTreeSummary = {
@@ -323,9 +321,9 @@ export class SharedTree extends SharedObject {
 	// }
 
 	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
 	 */
-	public snapshotCore(): ITree {
+	public snapshotCore(_serializer: IFluidSerializer): ITree {
 		const tree: ITree = {
 			entries: [
 				{
@@ -404,7 +402,7 @@ export class SharedTree extends SharedObject {
 			editIds,
 		};
 		const editLog = new EditLog(editLogOptions);
-		const logViewer = new CachingLogViewer(editLog, expensiveValidation);
+		const logViewer = new CachingLogViewer(editLog, initialTree, expensiveValidation);
 
 		// TODO:#47830: Store the associated revision on the snapshot.
 		// The current view should only be stored in the cache if the revision it's associated with is known.

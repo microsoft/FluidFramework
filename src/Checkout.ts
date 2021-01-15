@@ -4,12 +4,14 @@
  */
 
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { assert } from './Common';
 import { EditId } from './Identifiers';
 import { Change, Edit, EditResult } from './PersistedTypes';
 import { newEdit } from './EditUtilities';
 import { EditValidationResult, Snapshot } from './Snapshot';
 import { Transaction } from './Transaction';
+import { SharedTree, SharedTreeEvent } from './SharedTree';
 
 /**
  * An event emitted by a `Checkout` to indicate a state change
@@ -36,7 +38,7 @@ export enum CheckoutEvent {
  * @public
  * @sealed
  */
-export abstract class Checkout extends EventEmitterWithErrorHandling {
+export abstract class Checkout extends EventEmitterWithErrorHandling implements IDisposable {
 	/**
 	 * The view of the latest committed revision.
 	 * Does not include changes from any open edits.
@@ -52,6 +54,16 @@ export abstract class Checkout extends EventEmitterWithErrorHandling {
 	private previousView: Snapshot;
 
 	/**
+	 * A handler for 'committedEdit' SharedTreeEvent
+	 */
+	private readonly editCommittedHandler;
+
+	/**
+	 * The shared tree this checkout views/edits.
+	 */
+	public readonly tree: SharedTree;
+
+	/**
 	 * Holds the state required to manage the currently open edit.
 	 * Undefined if there is currently not an open edit.
 	 *
@@ -60,9 +72,16 @@ export abstract class Checkout extends EventEmitterWithErrorHandling {
 	 */
 	private currentEdit?: Transaction;
 
-	protected constructor(currentView: Snapshot) {
+	public disposed: boolean = false;
+
+	protected constructor(tree: SharedTree, currentView: Snapshot, onEditCommitted: any) {
 		super();
+		this.tree = tree;
 		this.previousView = currentView;
+		this.editCommittedHandler = onEditCommitted;
+
+		// If there is an ongoing edit, emitChange will no-op, which is fine.
+		this.tree.on(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
 	}
 
 	/**
@@ -205,7 +224,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling {
 	protected emitChange(): void {
 		const delta = this.previousView.delta(this.currentView);
 		this.previousView = this.currentView;
-		if (delta.length !== 0) {
+		if (delta.changed.length !== 0 || delta.removed.length !== 0 || delta.added.length !== 0) {
 			this.emit(CheckoutEvent.ViewChange, delta);
 		}
 	}
@@ -214,4 +233,19 @@ export abstract class Checkout extends EventEmitterWithErrorHandling {
 	 * @returns a Promise which completes after all currently known edits are available in this checkout.
 	 */
 	public abstract waitForPendingUpdates(): Promise<void>;
+
+	/**
+	 * release all unmanaged resources
+	 * e.g. unregister event listeners
+	 */
+	public dispose(error?: Error): void {
+		if (this.disposed) {
+			return;
+		}
+
+		this.disposed = true;
+
+		// remove registered listener
+		this.tree.off(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
+	}
 }

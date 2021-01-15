@@ -13,15 +13,13 @@ import {
 	Detach,
 	EditNode,
 	Insert,
-	NodeData,
+	TreeNode,
 	Constraint,
 	ConstraintEffect,
 	SetValue,
-	Payload,
 } from './PersistedTypes';
 import { EditValidationResult, SnapshotNode, Snapshot } from './Snapshot';
 
-// eslint-disable-next-line import/no-unused-modules
 export type EditingResult =
 	| { result: EditResult.Invalid | EditResult.Malformed; changes: readonly Change[] }
 	| { result: EditResult.Applied; changes: readonly Change[]; snapshot: Snapshot };
@@ -255,22 +253,21 @@ export class Transaction {
 
 		const node = this.view.getSnapshotNode(change.nodeToModify);
 		const { payload } = change;
-		let payloadToSet: Payload | undefined;
+		const newNode = { ...node };
 		if (payload === null) {
-			payloadToSet = undefined;
+			delete newNode.payload;
 		} else {
 			if (typeof payload.base64 !== 'string') {
 				return EditResult.Malformed;
 			}
-			payloadToSet = { base64: payload.base64 };
+			newNode.payload = { base64: payload.base64 };
 		}
-		const newNode: SnapshotNode = { ...node, payload: payloadToSet };
 		this._view = this.view.replaceNode(change.nodeToModify, newNode);
 		return EditResult.Applied;
 	}
 
 	private createSnapshotNodeForTree(
-		node: NodeData<EditNode>,
+		node: TreeNode<EditNode>,
 		map: Map<NodeId, SnapshotNode>,
 		onInvalidDetachedId: () => void
 	): NodeId {
@@ -285,7 +282,7 @@ export class Transaction {
 
 		const newNode: SnapshotNode = {
 			identifier: node.identifier,
-			payload: node.payload,
+			...(node.payload ? { payload: node.payload } : {}),
 			definition: node.definition,
 			traits,
 		};

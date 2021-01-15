@@ -35,7 +35,6 @@ export type SharedTreeSummarizer = (
  * A developer facing (non-localized) error message.
  * TODO: better error system.
  */
-// eslint-disable-next-line import/no-unused-modules
 export type ErrorString = string;
 
 /**

@@ -4,6 +4,11 @@
  */
 
 import { expect } from 'chai';
+import { SharedTree, SharedTreeEvent } from '../SharedTree';
+import { Delete, EditResult, Insert, Move, StableRange, StablePlace, Side } from '../PersistedTypes';
+import { Checkout, CheckoutEvent } from '../Checkout';
+import { setTrait } from '../EditUtilities';
+import { EditValidationResult } from '../Snapshot';
 import {
 	left,
 	leftTraitLocation,
@@ -14,11 +19,6 @@ import {
 	SharedTreeTestingOptions,
 	simpleTestTree,
 } from './utilities/TestUtilities';
-import { SharedTree, SharedTreeEvent } from '../SharedTree';
-import { Delete, EditResult, Insert, Move, StableRange, StablePlace, Side } from '../PersistedTypes';
-import { Checkout, CheckoutEvent } from '../Checkout';
-import { setTrait } from '../EditUtilities';
-import { EditValidationResult } from '../Snapshot';
 
 /**
  * Checkout test suite
@@ -381,6 +381,20 @@ export function checkoutTests(
 			const rebaseResult = checkout.rebaseCurrentEdit();
 			expect(rebaseResult).equals(EditValidationResult.Invalid);
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.true;
+		});
+
+		it('can dispose and remove listeners', async () => {
+			// Arrange
+			const { checkout } = await setUpTestCheckout();
+
+			// Assert
+			expect(checkout.tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(1);
+
+			// Act
+			checkout.dispose();
+
+			// Assert
+			expect(checkout.tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(0);
 		});
 	});
 }

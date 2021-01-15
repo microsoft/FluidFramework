@@ -4,20 +4,17 @@
  */
 
 import { assert, assertNotUndefined, compareIterables, fail } from './Common';
-import { NodeId, Definition, TraitLabel } from './Identifiers';
-import { ChangeNode, TraitMap, Payload, TraitLocation, StableRange, Side, StablePlace } from './PersistedTypes';
+import { NodeId, TraitLabel } from './Identifiers';
+import { ChangeNode, TraitMap, TraitLocation, StableRange, Side, StablePlace, NodeData } from './PersistedTypes';
 import { compareTraits } from './EditUtilities';
-import { createForest, Forest as GenericForest } from './Forest';
+import { createForest, Delta, Forest as GenericForest } from './Forest';
 
 /**
  * An immutable view of a distributed tree node.
  * @public
  */
-export interface SnapshotNode {
-	readonly identifier: NodeId;
+export interface SnapshotNode extends NodeData {
 	readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
-	readonly payload?: Payload;
-	readonly definition: Definition;
 }
 
 /**
@@ -100,7 +97,7 @@ export class Snapshot {
 					);
 				}
 			}
-			const snapshotNode: SnapshotNode = { identifier, payload, definition, traits };
+			const snapshotNode: SnapshotNode = { identifier, ...(payload ? { payload } : {}), definition, traits };
 			newSnapshotNodes.set(snapshotNode.identifier, snapshotNode);
 			return snapshotNode.identifier;
 		}
@@ -131,7 +128,7 @@ export class Snapshot {
 
 		return {
 			identifier: node.identifier,
-			payload: node.payload,
+			...(node.payload ? { payload: node.payload } : {}),
 			definition: node.definition,
 			traits: makeTraits(node.traits),
 		};
@@ -473,10 +470,10 @@ export class Snapshot {
 	/**
 	 * Calculate the difference between two `Snapshot`s
 	 * @param snapshot - the other snapshot to compare to this one
-	 * @returns a list of ids, one for each id that is present in both snapshots but has a different value in each.
+	 * @returns A {@link Delta} which nodes must be changed, added, and removed to get from `this` to `snapshot`.
 	 * The snapshots must share a root.
 	 */
-	public delta(snapshot: Snapshot): NodeId[] {
+	public delta(snapshot: Snapshot): Delta<NodeId> {
 		assert(this.root === snapshot.root, 'Delta can only be calculated between snapshots that share a root');
 		return this.forest.delta(snapshot.forest, compareSnapshotNodes);
 	}

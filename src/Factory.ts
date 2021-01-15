@@ -10,7 +10,6 @@ import {
 	IChannelFactory,
 } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-// eslint-disable-next-line import/no-cycle
 import { SharedTree } from './SharedTree';
 
 /**
@@ -50,7 +49,12 @@ export class SharedTreeFactory implements IChannelFactory {
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.load}
 	 */
-	public async load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices): Promise<ISharedObject> {
+	public async load(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		_channelAttributes: Readonly<IChannelAttributes>
+	): Promise<ISharedObject> {
 		const sharedTree = new SharedTree(runtime, id);
 		await sharedTree.load(services);
 		return sharedTree;

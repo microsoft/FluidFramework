@@ -83,7 +83,7 @@ export type Change = Insert | Detach | Build | SetValue | Constraint;
  */
 export interface Build {
 	readonly destination: DetachedSequenceId;
-	readonly source: ChangeNodeSequence<EditNode>;
+	readonly source: TreeNodeSequence<EditNode>;
 	readonly type: typeof ChangeType.Build;
 }
 
@@ -219,14 +219,14 @@ export enum ConstraintEffect {
  * @public
  */
 export interface TraitMap<TChild = ChangeNode> {
-	readonly [key: string]: ChangeNodeSequence<TChild>;
+	readonly [key: string]: TreeNodeSequence<TChild>;
 }
 
 /**
  * A sequence of Nodes that make up a trait under a Node
  * @public
  */
-export type ChangeNodeSequence<TChild = ChangeNode> = readonly TChild[];
+export type TreeNodeSequence<TChild = ChangeNode> = readonly TChild[];
 
 /**
  * Valid if (transitively) all DetachedSequenceId are used according to their rules (use here counts as a destination),
@@ -251,8 +251,7 @@ export interface Payload {
  * The fields required by a node in a tree
  * @public
  */
-export interface NodeData<TChild> {
-	readonly traits: TraitMap<TChild>;
+export interface NodeData {
 	readonly payload?: Payload;
 
 	/**
@@ -269,10 +268,18 @@ export interface NodeData<TChild> {
 }
 
 /**
- * JSON-compatible Node type. Objects of type `ChangeNode` will be persisted in `Change`s (under Edits) in the SharedTree history.
+ * Satisfies `NodeData` and may contain children under traits (which may or may not be `TreeNodes`)
  * @public
  */
-export type ChangeNode = NodeData<ChangeNode>;
+export interface TreeNode<TChild> extends NodeData {
+	readonly traits: TraitMap<TChild>;
+}
+
+/**
+ * JSON-compatible Node type. Objects of type `ChangeNode` will be persisted in `Changes` (under Edits) in the SharedTree history.
+ * @public
+ */
+export type ChangeNode = TreeNode<ChangeNode>;
 
 /**
  * Node or sequence of Nodes for use in a Build change.
@@ -283,7 +290,7 @@ export type ChangeNode = NodeData<ChangeNode>;
  * These optimized formats should also be used within snapshots.
  * @public
  */
-export type EditNode = NodeData<EditNode> | DetachedSequenceId;
+export type EditNode = TreeNode<EditNode> | DetachedSequenceId;
 
 /**
  * The result of an attempt to apply the changes in an Edit.
@@ -453,7 +460,7 @@ export const StableRange = {
  * @public
  */
 export const Change = {
-	build: (source: ChangeNodeSequence<EditNode>, destination: DetachedSequenceId): Build => ({
+	build: (source: TreeNodeSequence<EditNode>, destination: DetachedSequenceId): Build => ({
 		destination,
 		source,
 		type: ChangeType.Build,

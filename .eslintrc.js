@@ -9,7 +9,11 @@ module.exports = {
 	// to shared-tree, which references @typescript-eslint/parser@~4.2.0 rather than @2.17.0. The former supports more advanced array
 	// types which are used in several modules.
 	parser: '@typescript-eslint/parser',
+	root: true,
 	rules: {
+		// Recover "noUnusedLocals" behavior as part of linting.
+		'@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
+
 		'@typescript-eslint/quotes': [
 			'error',
 			'single',
@@ -32,8 +36,6 @@ module.exports = {
 		'prefer-arrow/prefer-arrow-functions': 'off',
 		'no-null/no-null': 'off', // Payloads use null
 		'no-redeclare': 'off', // Persisted type factories need to be classes to pass the typescript version of this rule
-		'header/header': 'off', // Picking up config from @intentional/shared-configuration still
-		'@typescript-eslint/no-shadow': 'off', // Same as above, though this isn't enabled in fluid config
 	},
 	overrides: [
 		{
@@ -50,9 +52,6 @@ module.exports = {
 					},
 				],
 				'import/no-internal-modules': 'off',
-
-				// This could be re-enabled with some minor fixes
-				'chai-friendly/no-unused-expressions': 'off',
 			},
 		},
 		{

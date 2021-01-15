@@ -6,7 +6,7 @@
 const defaultFailMessage = 'Assertion failed';
 
 /**
- * Assertion failures in SharedTree will throw an exception containing this value as an `errorType`. The fluid runtime propagates this field
+ * Assertion failures in SharedTree will throw an exception containing this value as an `errorType`. The Fluid runtime propagates this field
  * in its handlings of errors thrown by containers. See
  * https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-utils/src/error.ts
  *
@@ -51,7 +51,7 @@ export function assert(condition: unknown, message?: string, containsPII = false
 export function fail(message: string = defaultFailMessage, containsPII = false): never {
 	if (process.env.NODE_ENV !== 'production') {
 		debugger;
-		console.error(message); // eslint-disable-line no-console
+		console.error(message);
 	}
 
 	throw new SharedTreeAssertionError(containsPII ? 'Assertion failed' : message);
@@ -150,7 +150,6 @@ export function compareArrays<T>(
 /**
  * Function which does nothing (no-ops).
  */
-// eslint-disable-next-line import/no-unused-modules
 export function noop(): void {
 	// noop
 }
