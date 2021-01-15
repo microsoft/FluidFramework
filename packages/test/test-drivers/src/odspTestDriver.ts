@@ -20,6 +20,7 @@ import {
 } from "@fluidframework/tool-utils";
 import { IClientConfig } from "@fluidframework/odsp-doclib-utils";
 import { ITestDriver } from "./interfaces";
+import { pkgVersion } from "./packageVersion";
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({
     type: "password",
@@ -54,6 +55,7 @@ export class OdspTestDriver implements ITestDriver {
     }
 
     public readonly type = "odsp";
+    public readonly version = pkgVersion;
     private readonly odspTokenManager = new OdspTokenManager(odspTokensCache);
     constructor(
         private readonly config: Readonly<IOdspConfig>,

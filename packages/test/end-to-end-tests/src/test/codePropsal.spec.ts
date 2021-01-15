@@ -92,7 +92,7 @@ describe("CodeProposal.EndToEnd", () => {
     async function createContainer(code: IFluidCodeDetails): Promise<IContainer> {
         const urlResolver = new LocalResolver();
         const loader = createLoader(urlResolver);
-        return createAndAttachContainer(documentId, code, loader, urlResolver);
+        return createAndAttachContainer(code, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(): Promise<IContainer> {

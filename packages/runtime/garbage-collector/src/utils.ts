@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
 /**
@@ -18,6 +19,28 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
     return {
         gcNodes: clonedGCNodes,
     };
+}
+
+/**
+ * Helper function that generates the used routes of the children from a given node's used routes.
+ * @param usedRoutes - The used routes of a node.
+ * @returns A map of used routes of each children of the the given node.
+ */
+export function getChildNodesUsedRoutes(usedRoutes: string[]) {
+    const usedNodesRoutes: Map<string, string[]> = new Map();
+    for (const route of usedRoutes) {
+        assert(route.startsWith("/"), "Used route should always be an absolute route");
+        const childId = route.split("/")[1];
+        const childUsedRoute = route.slice(childId.length + 1);
+
+        const childUsedRoutes = usedNodesRoutes.get(childId);
+        if (childUsedRoutes !== undefined) {
+            childUsedRoutes.push(childUsedRoute);
+        } else {
+            usedNodesRoutes.set(childId, [ childUsedRoute ]);
+        }
+    }
+    return usedNodesRoutes;
 }
 
 export class GCDataBuilder implements IGarbageCollectionData {

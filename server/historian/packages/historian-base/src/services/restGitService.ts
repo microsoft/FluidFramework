@@ -6,10 +6,10 @@
 import * as querystring from "querystring";
 import * as git from "@fluidframework/gitresources";
 import {
+    IGetRefParamsExternal,
     ICreateRefParamsExternal,
-    IPatchRefParamsExternal,
-    ITenantStorage } from "@fluidframework/server-services-core";
-import { IGetRefParamsExternal } from "@fluidframework/server-services-client";
+    IPatchRefParamsExternal } from "@fluidframework/server-services-client";
+import { ITenantStorage } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
 import request from "request";
 import * as winston from "winston";
@@ -76,9 +76,17 @@ export class RestGitService {
     }
 
     public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
+        let config;
+        if (this.writeToExternalStorage) {
+            const getRefParams: IGetRefParamsExternal = {
+                config: { enabled: true },
+            };
+            config = encodeURIComponent(JSON.stringify(getRefParams));
+        }
         const query = querystring.stringify({
             count,
             sha,
+            config,
         });
         return this.get(`/repos/${this.getRepoPath()}/commits?${query}`);
     }
