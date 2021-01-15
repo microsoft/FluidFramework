@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-experimental/fluid-main",
+  "name": "@fluid-experimental/experimental-fluidframework",
   "version": "0.33.0",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
